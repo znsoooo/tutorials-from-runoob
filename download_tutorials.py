@@ -7,7 +7,9 @@ import urllib.request
 
 from lxml import etree
 
-HOME_PAGE = 'http://www.runoob.com'
+WWW       = 'www.runoob.com'
+HOME_PAGE = 'http://' + WWW
+
 errors = []
 
 
@@ -62,7 +64,26 @@ def GetTutorial():
         GetSubTutorial(title, url)
 
 
+def WashHtmls():
+    for file in glob.glob('html/**/*.html', recursive=True):
+        with open(file, encoding='u8') as f:
+            text = f.read()
+
+        # replace homepage to `/`
+        # e.g. 'http://homepage/', 'https://homepage/', '//homepage/', 'homepage/'
+        text = re.sub(r'''(?<=href=['"])[^'"]*?''' + re.escape(WWW) + '/', '/', text)
+
+        # replace `/` to relative path
+        level = file.count('\\') - 1
+        rel = '../' * level or './'
+        text = re.sub(r'''(?<=href=['"])/''', rel, text)
+
+        with open(file, 'w', encoding='u8') as f:
+            f.write(text)
+
+
 if __name__ == '__main__':
     GetTutorial()
+    WashHtmls()
     print('errors:')
     print('\n'.join(errors))
