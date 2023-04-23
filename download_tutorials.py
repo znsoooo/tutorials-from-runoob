@@ -18,7 +18,7 @@ def SaveHtml(url, data):
     folder = os.path.dirname(path)
     if folder:
         os.makedirs(folder, exist_ok=True)
-    with open(path, 'w', encoding='u8') as f:
+    with open(path, 'wb') as f:
         f.write(data)
 
 
@@ -45,7 +45,7 @@ def GetSubTutorial(title, url):
         url2 = HOME_PAGE + url2 if '/' in url2 else base + url2
         print('| - ' + url2)
         try:
-            data2 = GetContent(url2).decode()
+            data2 = GetContent(url2)
             SaveHtml(url2, data2)
         except Exception:
             errors.append(url2)
@@ -54,7 +54,7 @@ def GetSubTutorial(title, url):
 def GetTutorial():
     url = HOME_PAGE + '/index.html'
     data = GetContent(url)
-    SaveHtml(url, data.decode())
+    SaveHtml(url, data)
     html = etree.HTML(data)
     theme = html.xpath('/html/body/div[4]/div/div[2]/div/a')
     for a in theme:
@@ -66,19 +66,19 @@ def GetTutorial():
 
 def WashHtmls():
     for file in glob.glob('html/**/*.html', recursive=True):
-        with open(file, encoding='u8') as f:
+        with open(file, 'rb') as f:
             text = f.read()
 
         # replace homepage to `/`
         # e.g. 'http://homepage/', 'https://homepage/', '//homepage/', 'homepage/'
-        text = re.sub(r'''(?<=href=['"])[^'"]*?''' + re.escape(WWW) + '/', '/', text)
+        text = re.sub(rf'''(?<=href=['"])[^'"]*?{re.escape(WWW)}/'''.encode(), b'/', text)
 
         # replace `/` to relative path
         level = file.count('\\') - 1
         rel = '../' * level or './'
-        text = re.sub(r'''(?<=href=['"])/''', rel, text)
+        text = re.sub(rb'''(?<=href=['"])/''', rel.encode(), text)
 
-        with open(file, 'w', encoding='u8') as f:
+        with open(file, 'wb') as f:
             f.write(text)
 
 
