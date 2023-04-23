@@ -1,0 +1,1234 @@
+<!Doctype html>
+<html>
+<head>
+	<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+	<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+	<title>享元模式 | 菜鸟教程</title>
+
+  <meta name='robots' content='max-image-preview:large' />
+<link rel='stylesheet' id='classic-theme-styles-css' href='http://www.runoob.com/wp-includes/css/classic-themes.min.css?ver=6.2' type='text/css' media='all' />
+<link rel="canonical" href="http://www.runoob.com/design-pattern/flyweight-pattern.html" />
+<meta name="keywords" content="享元模式">
+<meta name="description" content="享元模式  享元模式（Flyweight Pattern）主要用于减少创建对象的数量，以减少内存占用和提高性能。这种类型的设计模式属于结构型模式，它提供了减少对象数量从而改善应用所需的对象结构的方式。 享元模式尝试重用现有的同类对象，如果未找到匹配的对象，则创建新对象。我们将通过创建 5 个对象来画出 20 个分布于不同位置的圆来演示这种模式。由于只有 5 种可用的颜色，所以 color 属性被用来检查现有的 Circle 对象。  介..">
+		
+	<link rel="shortcut icon" href="https://static.runoob.com/images/favicon.ico">
+	<link rel="stylesheet" href="/wp-content/themes/runoob/style.css?v=1.170" type="text/css" media="all" />	
+	<link rel="stylesheet" href="https://cdn.staticfile.org/font-awesome/4.7.0/css/font-awesome.min.css" media="all" />	
+  <!--[if gte IE 9]><!-->
+  <script src="https://cdn.staticfile.org/jquery/2.0.3/jquery.min.js"></script>
+  <!--<![endif]-->
+  <!--[if lt IE 9]>
+     <script src="https://cdn.staticfile.org/jquery/1.9.1/jquery.min.js"></script>
+     <script src="https://cdn.staticfile.org/html5shiv/r29/html5.min.js"></script>
+  <![endif]-->
+  <link rel="apple-touch-icon" href="https://static.runoob.com/images/icon/mobile-icon.png"/>
+  <meta name="apple-mobile-web-app-title" content="菜鸟教程">
+</head>
+<body>
+
+<!--  头部 -->
+<div class="container logo-search">
+
+  <div class="col search row-search-mobile">
+    <form action="index.php">
+      <input class="placeholder" placeholder="搜索……" name="s" autocomplete="off">
+      
+    </form>
+  </div>
+
+  <div class="row">
+    <div class="col logo">
+      <h1><a href="/">菜鸟教程 -- 学的不仅是技术，更是梦想！</a></h1>
+    </div>
+        <div class="col right-list"> 
+    <button class="btn btn-responsive-nav btn-inverse" data-toggle="collapse" data-target=".nav-main-collapse" id="pull" style=""> <i class="fa fa-navicon"></i> </button>
+    </div>
+        
+    <div class="col search search-desktop last">
+      <div class="search-input" >
+      <form action="//www.runoob.com/" target="_blank">
+        <input class="placeholder" id="s" name="s" placeholder="搜索……"  autocomplete="off" style="height: 44px;">
+      </form>
+      
+      </div>
+    </div>
+  </div>
+</div>
+
+
+
+<!-- 导航栏 -->
+<!-- 导航栏 -->
+<div class="container navigation">
+	<div class="row">
+		<div class="col nav">
+			<ul class="pc-nav" id="runoob-detail-nav">
+				<li><a href="//www.runoob.com/">首页</a></li>
+				<li><a href="/html/html-tutorial.html">HTML</a></li>
+				<li><a href="/css/css-tutorial.html">CSS</a></li>
+				<li><a href="/js/js-tutorial.html">JavaScript</a></li>
+				<li><a href="javascript:void(0);" data-id="vue">Vue</a></li>
+				<li><a href="javascript:void(0);" data-id="bootstrap">Bootstrap</a></li>
+				<li><a href="/nodejs/nodejs-tutorial.html">NodeJS</a></li>
+				<li><a href="/python3/python3-tutorial.html">Python3</a></li>
+				<li><a href="/python/python-tutorial.html">Python2</a></li>
+				<li><a href="/java/java-tutorial.html">Java</a></li>
+				<li><a href="/cprogramming/c-tutorial.html">C</a></li>
+				<li><a href="/cplusplus/cpp-tutorial.html">C++</a></li>
+				<li><a href="/csharp/csharp-tutorial.html">C#</a></li>
+				<li><a href="/go/go-tutorial.html">Go</a></li>
+				<li><a href="/sql/sql-tutorial.html">SQL</a></li>
+				<li><a href="/linux/linux-tutorial.html">Linux</a></li>
+				<li><a href="/jquery/jquery-tutorial.html">jQuery</a></li>
+				<li><a href="/browser-history">本地书签</a></li>
+				<!--
+			
+				<li><a href="/w3cnote/knowledge-start.html" style="font-weight: bold;" onclick="_hmt.push(['_trackEvent', '星球', 'click', 'start'])" title="我的圈子">我的圈子</a></li>				
+				<li><a href="javascript:;" class="runoob-pop">登录</a></li>
+				-->
+      		</ul>
+			<ul class="mobile-nav">
+				<li><a href="//www.runoob.com/">首页</a></li>
+				<li><a href="/html/html-tutorial.html">HTML</a></li>
+				<li><a href="/css/css-tutorial.html">CSS</a></li>
+				<li><a href="/js/js-tutorial.html">JS</a></li>
+				<li><a href="/browser-history">本地书签</a></li>
+				<li><a href="javascript:void(0)" class="search-reveal">Search</a> </li>
+			</ul>
+			
+		</div>
+	</div>
+</div>
+
+<div class="container sub-navigation sub-navigation-articles" style="display:none">
+	<div class="row">
+		<div class="col nav-sub">
+		<ul id="python">
+			<li class="cat-item"><a href="/python3/python3-tutorial.html">Python3 教程 <i class="fa fa-external-link" aria-hidden="true"></i></a></li>
+			<li class="cat-item"><a href="/python/python-tutorial.html">Python2 教程 <i class="fa fa-external-link" aria-hidden="true"></i></a></li>
+		</ul>
+		<ul id="vue">
+			<li class="cat-item"><a href="/vue3/vue3-tutorial.html">Vue3 教程 <i class="fa fa-external-link" aria-hidden="true"></i></a></li>
+			<li class="cat-item"><a href="/vue/vue-tutorial.html">vue2 教程 <i class="fa fa-external-link" aria-hidden="true"></i></a></li>
+		</ul>
+
+		<ul id="bootstrap">
+			<li class="cat-item"><a href="/bootstrap/bootstrap-tutorial.html">Bootstrap3 教程 <i class="fa fa-external-link" aria-hidden="true"></i></a></li>
+			<li class="cat-item"><a href="/bootstrap4/bootstrap4-tutorial.html">Bootstrap4 教程 <i class="fa fa-external-link" aria-hidden="true"></i></a></li>
+			<li class="cat-item"><a href="/bootstrap5/bootstrap5-tutorial.html">Bootstrap5 教程 <i class="fa fa-external-link" aria-hidden="true"></i></a></li>
+			<li class="cat-item"><a href="/bootstrap/bootstrap-v2-tutorial.html">Bootstrap2 教程 <i class="fa fa-external-link" aria-hidden="true"></i></a></li>
+		</ul>
+		</div>
+	</div>
+</div><!--  内容  -->
+<div class="container main">
+	<!-- 中间 -->
+	<div class="row">
+	
+<div class="runoob-col-md2">
+<div class="left-column">
+	<div class="tab" style="overflow: hidden;text-overflow: ellipsis;white-space: nowrap;">
+	<i class="fa fa-list" aria-hidden="true"></i> 
+	<span>设计模式</span>
+	<a data-cate="145" href="javascript:void(0);" title="夜间模式"  id="moon"><i class="fa fa-moon-o" aria-hidden="true" style="line-height: 28px;font-size: 1.2em;margin: 2px 4px 0;"></i></a>
+	<a data-cate="145" style="display:none;" href="javascript:void(0);" title="日间模式"  id="sun" ><i class="fa fa-sun-o" aria-hidden="true" style="line-height: 28px;font-size: 1.2em;margin: 2px 4px 0;line-height: 28px;
+}"></i></a>
+
+	</div>
+	<div class="sidebar-box gallery-list">
+		<div class="design" id="leftcolumn">
+						<a target="_top" title="设计模式"  href="/design-pattern/design-pattern-tutorial.html" >
+			设计模式			</a>
+						<a target="_top" title="设计模式简介"  href="/design-pattern/design-pattern-intro.html" >
+			设计模式简介			</a>
+						<a target="_top" title="工厂模式"  href="/design-pattern/factory-pattern.html" >
+			工厂模式			</a>
+						<a target="_top" title="抽象工厂模式"  href="/design-pattern/abstract-factory-pattern.html" >
+			抽象工厂模式			</a>
+						<a target="_top" title="单例模式"  href="/design-pattern/singleton-pattern.html" >
+			单例模式			</a>
+						<a target="_top" title="建造者模式"  href="/design-pattern/builder-pattern.html" >
+			建造者模式			</a>
+						<a target="_top" title="原型模式"  href="/design-pattern/prototype-pattern.html" >
+			原型模式			</a>
+						<a target="_top" title="适配器模式"  href="/design-pattern/adapter-pattern.html" >
+			适配器模式			</a>
+						<a target="_top" title="桥接模式"  href="/design-pattern/bridge-pattern.html" >
+			桥接模式			</a>
+						<a target="_top" title="过滤器模式"  href="/design-pattern/filter-pattern.html" >
+			过滤器模式			</a>
+						<a target="_top" title="组合模式"  href="/design-pattern/composite-pattern.html" >
+			组合模式			</a>
+						<a target="_top" title="装饰器模式"  href="/design-pattern/decorator-pattern.html" >
+			装饰器模式			</a>
+						<a target="_top" title="外观模式"  href="/design-pattern/facade-pattern.html" >
+			外观模式			</a>
+						<a target="_top" title="享元模式"  href="/design-pattern/flyweight-pattern.html" >
+			享元模式			</a>
+						<a target="_top" title="代理模式"  href="/design-pattern/proxy-pattern.html" >
+			代理模式			</a>
+						<a target="_top" title="责任链模式"  href="/design-pattern/chain-of-responsibility-pattern.html" >
+			责任链模式			</a>
+						<a target="_top" title="命令模式"  href="/design-pattern/command-pattern.html" >
+			命令模式			</a>
+						<a target="_top" title="解释器模式"  href="/design-pattern/interpreter-pattern.html" >
+			解释器模式			</a>
+						<a target="_top" title="迭代器模式"  href="/design-pattern/iterator-pattern.html" >
+			迭代器模式			</a>
+						<a target="_top" title="中介者模式"  href="/design-pattern/mediator-pattern.html" >
+			中介者模式			</a>
+						<a target="_top" title="备忘录模式"  href="/design-pattern/memento-pattern.html" >
+			备忘录模式			</a>
+						<a target="_top" title="观察者模式"  href="/design-pattern/observer-pattern.html" >
+			观察者模式			</a>
+						<a target="_top" title="状态模式"  href="/design-pattern/state-pattern.html" >
+			状态模式			</a>
+						<a target="_top" title="空对象模式"  href="/design-pattern/null-object-pattern.html" >
+			空对象模式			</a>
+						<a target="_top" title="策略模式"  href="/design-pattern/strategy-pattern.html" >
+			策略模式			</a>
+						<a target="_top" title="模板模式"  href="/design-pattern/template-pattern.html" >
+			模板模式			</a>
+						<a target="_top" title="访问者模式"  href="/design-pattern/visitor-pattern.html" >
+			访问者模式			</a>
+						<a target="_top" title="MVC 模式"  href="/design-pattern/mvc-pattern.html" >
+			MVC 模式			</a>
+						<a target="_top" title="业务代表模式"  href="/design-pattern/business-delegate-pattern.html" >
+			业务代表模式			</a>
+						<a target="_top" title="组合实体模式"  href="/design-pattern/composite-entity-pattern.html" >
+			组合实体模式			</a>
+						<a target="_top" title="数据访问对象模式"  href="/design-pattern/data-access-object-pattern.html" >
+			数据访问对象模式			</a>
+						<a target="_top" title="前端控制器模式"  href="/design-pattern/front-controller-pattern.html" >
+			前端控制器模式			</a>
+						<a target="_top" title="拦截过滤器模式"  href="/design-pattern/intercepting-filter-pattern.html" >
+			拦截过滤器模式			</a>
+						<a target="_top" title="服务定位器模式"  href="/design-pattern/service-locator-pattern.html" >
+			服务定位器模式			</a>
+						<a target="_top" title="传输对象模式"  href="/design-pattern/transfer-object-pattern.html" >
+			传输对象模式			</a>
+			<br><h2 class="left">设计模式<span class="left_h2">其他</span></h2>			<a target="_top" title="设计模式资源"  href="/design-pattern/design-pattern-resources.html" >
+			设计模式资源			</a>
+				
+		</div>
+	</div>	
+</div>
+</div>	<div class="col middle-column">
+		
+	
+	<div class="article">
+		
+		<div class="previous-next-links">
+			<div class="previous-design-link"><i style="font-size:16px;" class="fa fa-arrow-left" aria-hidden="true"></i> <a href="http://www.runoob.com/design-pattern/facade-pattern.html" rel="prev"> 外观模式</a> </div>
+			<div class="next-design-link"><a href="http://www.runoob.com/design-pattern/proxy-pattern.html" rel="next"> 代理模式</a> <i style="font-size:16px;" class="fa fa-arrow-right" aria-hidden="true"></i></div>
+		</div>
+<div class="article-heading-ad" style="display: block;">
+<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-5751451760833794"
+     crossorigin="anonymous"></script>
+<!-- 728*90 固定 -->
+<ins class="adsbygoogle"
+     style="display:inline-block;width:728px;height:90px"
+     data-ad-client="ca-pub-5751451760833794"
+     data-ad-slot="2147566827"></ins>
+<script>
+     (adsbygoogle = window.adsbygoogle || []).push({});
+</script>
+		</div>
+		<div class="article-body">
+		
+			<div class="article-intro" id="content">
+			
+			<h1>享元模式</h1>
+
+<p>享元模式（Flyweight Pattern）主要用于减少创建对象的数量，以减少内存占用和提高性能。这种类型的设计模式属于结构型模式，它提供了减少对象数量从而改善应用所需的对象结构的方式。</p>
+<p>享元模式尝试重用现有的同类对象，如果未找到匹配的对象，则创建新对象。我们将通过创建 5 个对象来画出 20 个分布于不同位置的圆来演示这种模式。由于只有 5 种可用的颜色，所以 color 属性被用来检查现有的 <i>Circle</i> 对象。</p>
+
+<h2 class="tutheader">介绍</h2>
+<p><b>意图：</b>运用共享技术有效地支持大量细粒度的对象。</p>
+<p><b>主要解决：</b>在有大量对象时，有可能会造成内存溢出，我们把其中共同的部分抽象出来，如果有相同的业务请求，直接返回在内存中已有的对象，避免重新创建。</p>
+<p><b>何时使用：</b>
+1、系统中有大量对象。
+2、这些对象消耗大量内存。
+3、这些对象的状态大部分可以外部化。
+4、这些对象可以按照内蕴状态分为很多组，当把外蕴对象从对象中剔除出来时，每一组对象都可以用一个对象来代替。
+5、系统不依赖于这些对象身份，这些对象是不可分辨的。
+</p>
+<p><b>如何解决：</b>用唯一标识码判断，如果在内存中有，则返回这个唯一标识码所标识的对象。</p>
+<p><b>关键代码：</b>用 HashMap 存储这些对象。</p>
+<p><b>应用实例：</b>
+1、JAVA 中的 String，如果有则返回，如果没有则创建一个字符串保存在字符串缓存池里面。
+2、数据库的连接池。
+</p>
+<p><b>优点：</b>大大减少对象的创建，降低系统的内存，使效率提高。</p>
+<p><b>缺点：</b>提高了系统的复杂度，需要分离出外部状态和内部状态，而且外部状态具有固有化的性质，不应该随着内部状态的变化而变化，否则会造成系统的混乱。</p>
+<p><b>使用场景：</b>
+1、系统有大量相似对象。
+2、需要缓冲池的场景。
+</p>
+<p><b>注意事项：</b>
+1、注意划分外部状态和内部状态，否则可能会引起线程安全问题。
+2、这些类必须有一个工厂对象加以控制。
+</p>
+
+<h2 class="tutheader">实现</h2>
+<p>我们将创建一个 <i>Shape</i> 接口和实现了 <i>Shape</i> 接口的实体类 <i>Circle</i>。下一步是定义工厂类 <i>ShapeFactory</i>。</p>
+<p><i>ShapeFactory</i> 有一个 <i>Circle</i> 的 <i>HashMap</i>，其中键名为 <i>Circle</i> 对象的颜色。无论何时接收到请求，都会创建一个特定颜色的圆。<i>ShapeFactory</i> 检查它的 <i>HashMap</i> 中的 circle 对象，如果找到 <i>Circle</i> 对象，则返回该对象，否则将创建一个存储在 hashmap 中以备后续使用的新对象，并把该对象返回到客户端。</p>
+<p><i>FlyWeightPatternDemo</i> 类使用 <i>ShapeFactory</i> 来获取 <i>Shape</i> 对象。它将向 <i>ShapeFactory</i> 传递信息（<i>red / green / blue/ black / white</i>），以便获取它所需对象的颜色。</p>
+<img decoding="async" src="https://www.runoob.com/wp-content/uploads/2014/08/20201015-fiyweight.svg" alt="享元模式的 UML 图" />
+<h3>步骤 1</h3>
+<p>创建一个接口。</p>
+
+<div class="example"> 
+<h2 class="example">Shape.java</h2> 
+<div class="example_code">
+<div class="hl-main"><span class="hl-reserved">public</span><span class="hl-code"> </span><span class="hl-reserved">interface</span><span class="hl-code"> </span><span class="hl-identifier">Shape</span><span class="hl-code"> </span><span class="hl-brackets">{</span><span class="hl-code">
+   </span><span class="hl-types">void</span><span class="hl-code"> </span><span class="hl-identifier">draw</span><span class="hl-brackets">(</span><span class="hl-brackets">)</span><span class="hl-code">;
+</span><span class="hl-brackets">}</span></div>
+</div></div>
+<h3>步骤 2</h3>
+<p>创建实现接口的实体类。</p>
+
+<div class="example"> 
+<h2 class="example">Circle.java</h2> 
+<div class="example_code">
+<div class="hl-main"><span class="hl-reserved">public</span><span class="hl-code"> </span><span class="hl-reserved">class</span><span class="hl-code"> </span><span class="hl-identifier">Circle</span><span class="hl-code"> </span><span class="hl-reserved">implements</span><span class="hl-code"> </span><span class="hl-identifier">Shape</span><span class="hl-code"> </span><span class="hl-brackets">{</span><span class="hl-code">
+   </span><span class="hl-reserved">private</span><span class="hl-code"> </span><span class="hl-identifier">String</span><span class="hl-code"> </span><span class="hl-identifier">color</span><span class="hl-code">;
+   </span><span class="hl-reserved">private</span><span class="hl-code"> </span><span class="hl-types">int</span><span class="hl-code"> </span><span class="hl-identifier">x</span><span class="hl-code">;
+   </span><span class="hl-reserved">private</span><span class="hl-code"> </span><span class="hl-types">int</span><span class="hl-code"> </span><span class="hl-identifier">y</span><span class="hl-code">;
+   </span><span class="hl-reserved">private</span><span class="hl-code"> </span><span class="hl-types">int</span><span class="hl-code"> </span><span class="hl-identifier">radius</span><span class="hl-code">;
+ 
+   </span><span class="hl-reserved">public</span><span class="hl-code"> </span><span class="hl-identifier">Circle</span><span class="hl-brackets">(</span><span class="hl-identifier">String</span><span class="hl-code"> </span><span class="hl-identifier">color</span><span class="hl-brackets">)</span><span class="hl-brackets">{</span><span class="hl-code">
+      </span><span class="hl-reserved">this</span><span class="hl-code">.</span><span class="hl-identifier">color</span><span class="hl-code"> = </span><span class="hl-identifier">color</span><span class="hl-code">;     
+   </span><span class="hl-brackets">}</span><span class="hl-code">
+ 
+   </span><span class="hl-reserved">public</span><span class="hl-code"> </span><span class="hl-types">void</span><span class="hl-code"> </span><span class="hl-identifier">setX</span><span class="hl-brackets">(</span><span class="hl-types">int</span><span class="hl-code"> </span><span class="hl-identifier">x</span><span class="hl-brackets">)</span><span class="hl-code"> </span><span class="hl-brackets">{</span><span class="hl-code">
+      </span><span class="hl-reserved">this</span><span class="hl-code">.</span><span class="hl-identifier">x</span><span class="hl-code"> = </span><span class="hl-identifier">x</span><span class="hl-code">;
+   </span><span class="hl-brackets">}</span><span class="hl-code">
+ 
+   </span><span class="hl-reserved">public</span><span class="hl-code"> </span><span class="hl-types">void</span><span class="hl-code"> </span><span class="hl-identifier">setY</span><span class="hl-brackets">(</span><span class="hl-types">int</span><span class="hl-code"> </span><span class="hl-identifier">y</span><span class="hl-brackets">)</span><span class="hl-code"> </span><span class="hl-brackets">{</span><span class="hl-code">
+      </span><span class="hl-reserved">this</span><span class="hl-code">.</span><span class="hl-identifier">y</span><span class="hl-code"> = </span><span class="hl-identifier">y</span><span class="hl-code">;
+   </span><span class="hl-brackets">}</span><span class="hl-code">
+ 
+   </span><span class="hl-reserved">public</span><span class="hl-code"> </span><span class="hl-types">void</span><span class="hl-code"> </span><span class="hl-identifier">setRadius</span><span class="hl-brackets">(</span><span class="hl-types">int</span><span class="hl-code"> </span><span class="hl-identifier">radius</span><span class="hl-brackets">)</span><span class="hl-code"> </span><span class="hl-brackets">{</span><span class="hl-code">
+      </span><span class="hl-reserved">this</span><span class="hl-code">.</span><span class="hl-identifier">radius</span><span class="hl-code"> = </span><span class="hl-identifier">radius</span><span class="hl-code">;
+   </span><span class="hl-brackets">}</span><span class="hl-code">
+ 
+   @</span><span class="hl-identifier">Override</span><span class="hl-code">
+   </span><span class="hl-reserved">public</span><span class="hl-code"> </span><span class="hl-types">void</span><span class="hl-code"> </span><span class="hl-identifier">draw</span><span class="hl-brackets">(</span><span class="hl-brackets">)</span><span class="hl-code"> </span><span class="hl-brackets">{</span><span class="hl-code">
+      </span><span class="hl-identifier">System</span><span class="hl-code">.</span><span class="hl-identifier">out</span><span class="hl-code">.</span><span class="hl-identifier">println</span><span class="hl-brackets">(</span><span class="hl-quotes">&quot;</span><span class="hl-string">Circle: Draw() [Color : </span><span class="hl-quotes">&quot;</span><span class="hl-code"> + </span><span class="hl-identifier">color</span><span class="hl-code"> 
+         +</span><span class="hl-quotes">&quot;</span><span class="hl-string">, x : </span><span class="hl-quotes">&quot;</span><span class="hl-code"> + </span><span class="hl-identifier">x</span><span class="hl-code"> +</span><span class="hl-quotes">&quot;</span><span class="hl-string">, y :</span><span class="hl-quotes">&quot;</span><span class="hl-code"> + </span><span class="hl-identifier">y</span><span class="hl-code"> +</span><span class="hl-quotes">&quot;</span><span class="hl-string">, radius :</span><span class="hl-quotes">&quot;</span><span class="hl-code"> + </span><span class="hl-identifier">radius</span><span class="hl-brackets">)</span><span class="hl-code">;
+   </span><span class="hl-brackets">}</span><span class="hl-code">
+</span><span class="hl-brackets">}</span></div>
+</div></div>
+<h3>步骤 3</h3>
+<p>创建一个工厂，生成基于给定信息的实体类的对象。</p>
+
+<div class="example"> 
+<h2 class="example">ShapeFactory.java</h2> 
+<div class="example_code">
+<div class="hl-main"><span class="hl-reserved">import</span><span class="hl-code"> </span><span class="hl-identifier">java</span><span class="hl-code">.</span><span class="hl-identifier">util</span><span class="hl-code">.</span><span class="hl-identifier">HashMap</span><span class="hl-code">;
+ 
+</span><span class="hl-reserved">public</span><span class="hl-code"> </span><span class="hl-reserved">class</span><span class="hl-code"> </span><span class="hl-identifier">ShapeFactory</span><span class="hl-code"> </span><span class="hl-brackets">{</span><span class="hl-code">
+   </span><span class="hl-reserved">private</span><span class="hl-code"> </span><span class="hl-types">static</span><span class="hl-code"> </span><span class="hl-types">final</span><span class="hl-code"> </span><span class="hl-identifier">HashMap</span><span class="hl-code">&lt;</span><span class="hl-identifier">String</span><span class="hl-code">, </span><span class="hl-identifier">Shape</span><span class="hl-code">&gt; </span><span class="hl-identifier">circleMap</span><span class="hl-code"> = </span><span class="hl-reserved">new</span><span class="hl-code"> </span><span class="hl-identifier">HashMap</span><span class="hl-code">&lt;&gt;</span><span class="hl-brackets">(</span><span class="hl-brackets">)</span><span class="hl-code">;
+ 
+   </span><span class="hl-reserved">public</span><span class="hl-code"> </span><span class="hl-types">static</span><span class="hl-code"> </span><span class="hl-identifier">Shape</span><span class="hl-code"> </span><span class="hl-identifier">getCircle</span><span class="hl-brackets">(</span><span class="hl-identifier">String</span><span class="hl-code"> </span><span class="hl-identifier">color</span><span class="hl-brackets">)</span><span class="hl-code"> </span><span class="hl-brackets">{</span><span class="hl-code">
+      </span><span class="hl-identifier">Circle</span><span class="hl-code"> </span><span class="hl-identifier">circle</span><span class="hl-code"> = </span><span class="hl-brackets">(</span><span class="hl-identifier">Circle</span><span class="hl-brackets">)</span><span class="hl-identifier">circleMap</span><span class="hl-code">.</span><span class="hl-identifier">get</span><span class="hl-brackets">(</span><span class="hl-identifier">color</span><span class="hl-brackets">)</span><span class="hl-code">;
+ 
+      </span><span class="hl-reserved">if</span><span class="hl-brackets">(</span><span class="hl-identifier">circle</span><span class="hl-code"> == </span><span class="hl-reserved">null</span><span class="hl-brackets">)</span><span class="hl-code"> </span><span class="hl-brackets">{</span><span class="hl-code">
+         </span><span class="hl-identifier">circle</span><span class="hl-code"> = </span><span class="hl-reserved">new</span><span class="hl-code"> </span><span class="hl-identifier">Circle</span><span class="hl-brackets">(</span><span class="hl-identifier">color</span><span class="hl-brackets">)</span><span class="hl-code">;
+         </span><span class="hl-identifier">circleMap</span><span class="hl-code">.</span><span class="hl-identifier">put</span><span class="hl-brackets">(</span><span class="hl-identifier">color</span><span class="hl-code">, </span><span class="hl-identifier">circle</span><span class="hl-brackets">)</span><span class="hl-code">;
+         </span><span class="hl-identifier">System</span><span class="hl-code">.</span><span class="hl-identifier">out</span><span class="hl-code">.</span><span class="hl-identifier">println</span><span class="hl-brackets">(</span><span class="hl-quotes">&quot;</span><span class="hl-string">Creating circle of color : </span><span class="hl-quotes">&quot;</span><span class="hl-code"> + </span><span class="hl-identifier">color</span><span class="hl-brackets">)</span><span class="hl-code">;
+      </span><span class="hl-brackets">}</span><span class="hl-code">
+      </span><span class="hl-reserved">return</span><span class="hl-code"> </span><span class="hl-identifier">circle</span><span class="hl-code">;
+   </span><span class="hl-brackets">}</span><span class="hl-code">
+</span><span class="hl-brackets">}</span></div>
+</div></div>
+<h3>步骤 4</h3>
+<p>使用该工厂，通过传递颜色信息来获取实体类的对象。</p>
+
+<div class="example"> 
+<h2 class="example">FlyweightPatternDemo.java</h2> 
+<div class="example_code">
+<div class="hl-main"><span class="hl-reserved">public</span><span class="hl-code"> </span><span class="hl-reserved">class</span><span class="hl-code"> </span><span class="hl-identifier">FlyweightPatternDemo</span><span class="hl-code"> </span><span class="hl-brackets">{</span><span class="hl-code">
+   </span><span class="hl-reserved">private</span><span class="hl-code"> </span><span class="hl-types">static</span><span class="hl-code"> </span><span class="hl-types">final</span><span class="hl-code"> </span><span class="hl-identifier">String</span><span class="hl-code"> </span><span class="hl-identifier">colors</span><span class="hl-brackets">[</span><span class="hl-brackets">]</span><span class="hl-code"> = 
+      </span><span class="hl-brackets">{</span><span class="hl-code"> </span><span class="hl-quotes">&quot;</span><span class="hl-string">Red</span><span class="hl-quotes">&quot;</span><span class="hl-code">, </span><span class="hl-quotes">&quot;</span><span class="hl-string">Green</span><span class="hl-quotes">&quot;</span><span class="hl-code">, </span><span class="hl-quotes">&quot;</span><span class="hl-string">Blue</span><span class="hl-quotes">&quot;</span><span class="hl-code">, </span><span class="hl-quotes">&quot;</span><span class="hl-string">White</span><span class="hl-quotes">&quot;</span><span class="hl-code">, </span><span class="hl-quotes">&quot;</span><span class="hl-string">Black</span><span class="hl-quotes">&quot;</span><span class="hl-code"> </span><span class="hl-brackets">}</span><span class="hl-code">;
+   </span><span class="hl-reserved">public</span><span class="hl-code"> </span><span class="hl-types">static</span><span class="hl-code"> </span><span class="hl-types">void</span><span class="hl-code"> </span><span class="hl-identifier">main</span><span class="hl-brackets">(</span><span class="hl-identifier">String</span><span class="hl-brackets">[</span><span class="hl-brackets">]</span><span class="hl-code"> </span><span class="hl-identifier">args</span><span class="hl-brackets">)</span><span class="hl-code"> </span><span class="hl-brackets">{</span><span class="hl-code">
+ 
+      </span><span class="hl-reserved">for</span><span class="hl-brackets">(</span><span class="hl-types">int</span><span class="hl-code"> </span><span class="hl-identifier">i</span><span class="hl-code">=</span><span class="hl-number">0</span><span class="hl-code">; </span><span class="hl-identifier">i</span><span class="hl-code"> &lt; </span><span class="hl-number">20</span><span class="hl-code">; ++</span><span class="hl-identifier">i</span><span class="hl-brackets">)</span><span class="hl-code"> </span><span class="hl-brackets">{</span><span class="hl-code">
+         </span><span class="hl-identifier">Circle</span><span class="hl-code"> </span><span class="hl-identifier">circle</span><span class="hl-code"> = 
+            </span><span class="hl-brackets">(</span><span class="hl-identifier">Circle</span><span class="hl-brackets">)</span><span class="hl-identifier">ShapeFactory</span><span class="hl-code">.</span><span class="hl-identifier">getCircle</span><span class="hl-brackets">(</span><span class="hl-identifier">getRandomColor</span><span class="hl-brackets">(</span><span class="hl-brackets">)</span><span class="hl-brackets">)</span><span class="hl-code">;
+         </span><span class="hl-identifier">circle</span><span class="hl-code">.</span><span class="hl-identifier">setX</span><span class="hl-brackets">(</span><span class="hl-identifier">getRandomX</span><span class="hl-brackets">(</span><span class="hl-brackets">)</span><span class="hl-brackets">)</span><span class="hl-code">;
+         </span><span class="hl-identifier">circle</span><span class="hl-code">.</span><span class="hl-identifier">setY</span><span class="hl-brackets">(</span><span class="hl-identifier">getRandomY</span><span class="hl-brackets">(</span><span class="hl-brackets">)</span><span class="hl-brackets">)</span><span class="hl-code">;
+         </span><span class="hl-identifier">circle</span><span class="hl-code">.</span><span class="hl-identifier">setRadius</span><span class="hl-brackets">(</span><span class="hl-number">100</span><span class="hl-brackets">)</span><span class="hl-code">;
+         </span><span class="hl-identifier">circle</span><span class="hl-code">.</span><span class="hl-identifier">draw</span><span class="hl-brackets">(</span><span class="hl-brackets">)</span><span class="hl-code">;
+      </span><span class="hl-brackets">}</span><span class="hl-code">
+   </span><span class="hl-brackets">}</span><span class="hl-code">
+   </span><span class="hl-reserved">private</span><span class="hl-code"> </span><span class="hl-types">static</span><span class="hl-code"> </span><span class="hl-identifier">String</span><span class="hl-code"> </span><span class="hl-identifier">getRandomColor</span><span class="hl-brackets">(</span><span class="hl-brackets">)</span><span class="hl-code"> </span><span class="hl-brackets">{</span><span class="hl-code">
+      </span><span class="hl-reserved">return</span><span class="hl-code"> </span><span class="hl-identifier">colors</span><span class="hl-brackets">[</span><span class="hl-brackets">(</span><span class="hl-types">int</span><span class="hl-brackets">)</span><span class="hl-brackets">(</span><span class="hl-identifier">Math</span><span class="hl-code">.</span><span class="hl-identifier">random</span><span class="hl-brackets">(</span><span class="hl-brackets">)</span><span class="hl-code">*</span><span class="hl-identifier">colors</span><span class="hl-code">.</span><span class="hl-identifier">length</span><span class="hl-brackets">)</span><span class="hl-brackets">]</span><span class="hl-code">;
+   </span><span class="hl-brackets">}</span><span class="hl-code">
+   </span><span class="hl-reserved">private</span><span class="hl-code"> </span><span class="hl-types">static</span><span class="hl-code"> </span><span class="hl-types">int</span><span class="hl-code"> </span><span class="hl-identifier">getRandomX</span><span class="hl-brackets">(</span><span class="hl-brackets">)</span><span class="hl-code"> </span><span class="hl-brackets">{</span><span class="hl-code">
+      </span><span class="hl-reserved">return</span><span class="hl-code"> </span><span class="hl-brackets">(</span><span class="hl-types">int</span><span class="hl-brackets">)</span><span class="hl-brackets">(</span><span class="hl-identifier">Math</span><span class="hl-code">.</span><span class="hl-identifier">random</span><span class="hl-brackets">(</span><span class="hl-brackets">)</span><span class="hl-code">*</span><span class="hl-number">100</span><span class="hl-code"> </span><span class="hl-brackets">)</span><span class="hl-code">;
+   </span><span class="hl-brackets">}</span><span class="hl-code">
+   </span><span class="hl-reserved">private</span><span class="hl-code"> </span><span class="hl-types">static</span><span class="hl-code"> </span><span class="hl-types">int</span><span class="hl-code"> </span><span class="hl-identifier">getRandomY</span><span class="hl-brackets">(</span><span class="hl-brackets">)</span><span class="hl-code"> </span><span class="hl-brackets">{</span><span class="hl-code">
+      </span><span class="hl-reserved">return</span><span class="hl-code"> </span><span class="hl-brackets">(</span><span class="hl-types">int</span><span class="hl-brackets">)</span><span class="hl-brackets">(</span><span class="hl-identifier">Math</span><span class="hl-code">.</span><span class="hl-identifier">random</span><span class="hl-brackets">(</span><span class="hl-brackets">)</span><span class="hl-code">*</span><span class="hl-number">100</span><span class="hl-brackets">)</span><span class="hl-code">;
+   </span><span class="hl-brackets">}</span><span class="hl-code">
+</span><span class="hl-brackets">}</span></div>
+</div></div>
+<h3>步骤 5</h3>
+<p>执行程序，输出结果：</p>
+<pre>
+Creating circle of color : Black
+Circle: Draw() [Color : Black, x : 36, y :71, radius :100
+Creating circle of color : Green
+Circle: Draw() [Color : Green, x : 27, y :27, radius :100
+Creating circle of color : White
+Circle: Draw() [Color : White, x : 64, y :10, radius :100
+Creating circle of color : Red
+Circle: Draw() [Color : Red, x : 15, y :44, radius :100
+Circle: Draw() [Color : Green, x : 19, y :10, radius :100
+Circle: Draw() [Color : Green, x : 94, y :32, radius :100
+Circle: Draw() [Color : White, x : 69, y :98, radius :100
+Creating circle of color : Blue
+Circle: Draw() [Color : Blue, x : 13, y :4, radius :100
+Circle: Draw() [Color : Green, x : 21, y :21, radius :100
+Circle: Draw() [Color : Blue, x : 55, y :86, radius :100
+Circle: Draw() [Color : White, x : 90, y :70, radius :100
+Circle: Draw() [Color : Green, x : 78, y :3, radius :100
+Circle: Draw() [Color : Green, x : 64, y :89, radius :100
+Circle: Draw() [Color : Blue, x : 3, y :91, radius :100
+Circle: Draw() [Color : Blue, x : 62, y :82, radius :100
+Circle: Draw() [Color : Green, x : 97, y :61, radius :100
+Circle: Draw() [Color : Green, x : 86, y :12, radius :100
+Circle: Draw() [Color : Green, x : 38, y :93, radius :100
+Circle: Draw() [Color : Red, x : 76, y :82, radius :100
+Circle: Draw() [Color : Blue, x : 95, y :82, radius :100
+</pre>			<!-- 其他扩展 -->
+						
+			</div>
+			
+		</div>
+		
+		<div class="previous-next-links">
+			<div class="previous-design-link"><i style="font-size:16px;" class="fa fa-arrow-left" aria-hidden="true"></i> <a href="http://www.runoob.com/design-pattern/facade-pattern.html" rel="prev"> 外观模式</a> </div>
+			<div class="next-design-link"><a href="http://www.runoob.com/design-pattern/proxy-pattern.html" rel="next"> 代理模式</a> <i style="font-size:16px;" class="fa fa-arrow-right" aria-hidden="true"></i></div>
+		</div>
+		<!-- 笔记列表 -->
+		<style>
+.wrapper {
+  /*text-transform: uppercase; */
+  background: #ececec;
+  color: #555;
+  cursor: help;
+  font-family: "Gill Sans", Impact, sans-serif;
+  font-size: 20px;
+  position: relative;
+  text-align: center;
+  width: 200px;
+  -webkit-transform: translateZ(0); /* webkit flicker fix */
+  -webkit-font-smoothing: antialiased; /* webkit text rendering fix */
+}
+
+.wrapper .tooltip {
+  white-space: nowrap;
+  font-size: 14px;
+  text-align: left;
+  background: #96b97d;
+  bottom: 100%;
+  color: #fff;
+  display: block;
+  left: -25px;
+  margin-bottom: 15px;
+  opacity: 0;
+  padding: 14px;
+  pointer-events: none;
+  position: absolute;
+  
+  -webkit-transform: translateY(10px);
+     -moz-transform: translateY(10px);
+      -ms-transform: translateY(10px);
+       -o-transform: translateY(10px);
+          transform: translateY(10px);
+  -webkit-transition: all .25s ease-out;
+     -moz-transition: all .25s ease-out;
+      -ms-transition: all .25s ease-out;
+       -o-transition: all .25s ease-out;
+          transition: all .25s ease-out;
+  -webkit-box-shadow: 2px 2px 6px rgba(0, 0, 0, 0.28);
+     -moz-box-shadow: 2px 2px 6px rgba(0, 0, 0, 0.28);
+      -ms-box-shadow: 2px 2px 6px rgba(0, 0, 0, 0.28);
+       -o-box-shadow: 2px 2px 6px rgba(0, 0, 0, 0.28);
+          box-shadow: 2px 2px 6px rgba(0, 0, 0, 0.28);
+}
+.tooltip a {
+	color:#fff;
+}
+/* This bridges the gap so you can mouse into the tooltip without it disappearing */
+.wrapper .tooltip:before {
+  bottom: -20px;
+  content: " ";
+  display: block;
+  height: 20px;
+  left: 0;
+  position: absolute;
+  width: 100%;
+}  
+
+/* CSS Triangles - see Trevor's post */
+.wrapper .tooltip:after {
+  border-left: solid transparent 10px;
+  border-right: solid transparent 10px;
+  border-top: solid #96b97d 10px;
+  bottom: -10px;
+  content: " ";
+  height: 0;
+  left: 20%;
+  margin-left: -13px;
+  position: absolute;
+  width: 0;
+}
+.wrapper .tooltip1 {
+	margin-left: 50px;
+	padding-top: 0px;
+}
+/*
+.wrapper:hover .tooltip {
+  opacity: 1;
+  pointer-events: auto;
+  -webkit-transform: translateY(0px);
+     -moz-transform: translateY(0px);
+      -ms-transform: translateY(0px);
+       -o-transform: translateY(0px);
+          transform: translateY(0px);
+}
+*/
+/* IE can just show/hide with no transition */
+.lte8 .wrapper .tooltip {
+  display: none;
+}
+
+.lte8 .wrapper:hover .tooltip {
+  display: block;
+}
+
+</style>
+
+<link rel="stylesheet" href="https://static.runoob.com/assets/upvotejs/dist/upvotejs/upvotejs.css">
+<script src="https://static.runoob.com/assets/upvotejs/dist/upvotejs/upvotejs.vanilla.js"></script>
+<script src="https://static.runoob.com/assets/upvotejs/dist/upvotejs/upvotejs.jquery.js"></script>
+<div class="title" id="comments">
+	<h2 class="">
+    <div class="altblock">
+				<i style="font-size:28px;margin-top: 8px;" class="fa fa-plus-square" aria-hidden="true"></i>
+		    </div>
+    <span class="mw-headline" id="qa_headline">4  篇笔记</span>
+	<span class="mw-headline" id="user_add_note" style="float:right;line-height: 62px;padding-right: 14px;"><i class="fa fa-pencil-square-o" aria-hidden="true"></i>  写笔记</span>
+    </h2>
+</div>
+
+<div id="postcomments"  style="display:none;" >
+	<ol class="commentlist">
+		<li class="comment even thread-even depth-1" id="comment-37478"><span class="comt-f">#0</span><div class="comt-avatar wrapper"><i style="font-size:36px;" class="fa fa-user-circle" aria-hidden="true"></i><div class="tooltip"><p><i class="fa fa-user" aria-hidden="true"></i>&nbsp;&nbsp;&nbsp;yjb</p><p><i class="fa fa-envelope" aria-hidden="true"></i>&nbsp;&nbsp;151***64310@163.com</p></div><div id="runoobvote-id-37478" data-commid = "37478" class="upvotejs"><a class="upvote"></a> <span class="count">66</span></div></div><div class="comt-main" id="div-comment-37478"><p>享元模式，换句话说就是共享对象，在某些对象需要重复创建，且最终只需要得到单一结果的情况下使用。因为此种模式是利用先前创建的已有对象，通过某种规则去判断当前所需对象是否可以利用原有对象做相应修改后得到想要的效果，如以上教程的实例，创建了20个不同效果的圆，但相同颜色的圆只需要创建一次便可，相同颜色的只需要引用原有对象，改变其坐标值便可。此种模式下，同一颜色的圆虽然位置不同，但其地址都是同一个，所以说此模式适用于结果注重单一结果的情况。</p><p>举一个简单例子，一个游戏中有不同的英雄角色，同一类型的角色也有不同属性的英雄，如刺客类型的英雄有很多个，按此种模式设计，利用英雄所属类型去引用原有同一类型的英雄实例，然后对其相应属性进行修改，便可得到最终想得到的最新英雄；比如说你创建了第一个刺客型英雄，然后需要设计第二个刺客型英雄，你利用第一个英雄改变属性得到第二个刺客英雄，最新的刺客英雄是诞生了，但第一个刺客英雄的属性也随之变得与第二个相同，这种情况显然是不可以的。</p><div class="comt-meta wrapper"><span class="comt-author"><a target="_blank" href="javascript:;">yjb</a><div class="tooltip tooltip1"><p><i class="fa fa-user" aria-hidden="true"></i>&nbsp;&nbsp;&nbsp;yjb</p><p><i class="fa fa-envelope" aria-hidden="true"></i>&nbsp;&nbsp;151***64310@163.com</p></div></span>4年前 (2018-11-27)</div></div></li><!-- #comment-## -->
+<li class="comment odd alt thread-odd thread-alt depth-1" id="comment-51411"><span class="comt-f">#0</span><div class="comt-avatar wrapper"><i style="font-size:36px;" class="fa fa-user-circle" aria-hidden="true"></i><div class="tooltip"><p><i class="fa fa-user" aria-hidden="true"></i>&nbsp;&nbsp;&nbsp;Siskin.xu</p><p><i class="fa fa-envelope" aria-hidden="true"></i>&nbsp;&nbsp;sis***@sohu.com</p></div><div id="runoobvote-id-51411" data-commid = "51411" class="upvotejs"><a class="upvote"></a> <span class="count">0</span></div></div><div class="comt-main" id="div-comment-51411"><p>Python方式：</p>
+<pre># Flyweight Pattern with Python Code
+from abc import abstractmethod,ABCMeta
+import random
+
+#创建一个Shape接口
+class Shape(metaclass=ABCMeta):
+    @abstractmethod
+    def draw(self):
+        pass
+# 创建实现接口的实体类Circle
+class Circle(Shape):
+    _color=""
+    _x =0
+    _y =0
+    _radius = 0
+
+    def __init__(self, inColor):
+        self._color = inColor
+    def setX(self, inX):
+        self._x = inX
+    def setY(self,inY):
+        self._y = inY
+    def setRadius(self,inRadius):
+        self._radius = inRadius
+    def draw(self):
+        print("Circle: Draw() [Color : {0}, x : {1}, y : {2}, radius : {3}]".format(self._color,self._x,self._y,self._radius))
+
+# 创建一个工厂，生成基于给定信息的实体类的对象
+class ShapeFactory():
+    circleMap = {}
+    @staticmethod
+    def getCircle(inColor):
+        circle = None
+        if inColor in ShapeFactory.circleMap :
+            circle = ShapeFactory.circleMap[inColor]
+        else:
+            circle = Circle(inColor)
+            aCircle = {inColor:circle}
+            ShapeFactory.circleMap.update(aCircle)
+            print("Creating circle of color : " + inColor)
+        return circle
+# 调用输出
+if __name__ == '__main__':
+    colors = ["Red","Green","Blue","White","Black"]
+
+    def getRandomColor():
+        return colors[random.randint(0,len(colors)-1)]
+    def getRandom():
+        return random.randint(1,100)
+
+    for i in range(20):
+        ranColor = getRandomColor()
+        circle = ShapeFactory.getCircle(ranColor)
+        circle.setX(getRandom())
+        circle.setY(getRandom())
+        circle.setRadius(getRandom())
+        circle.draw()</pre><div class="comt-meta wrapper"><span class="comt-author"><a target="_blank" href="javascript:;">Siskin.xu</a><div class="tooltip tooltip1"><p><i class="fa fa-user" aria-hidden="true"></i>&nbsp;&nbsp;&nbsp;Siskin.xu</p><p><i class="fa fa-envelope" aria-hidden="true"></i>&nbsp;&nbsp;sis***@sohu.com</p></div></span>3年前 (2020-03-09)</div></div></li><!-- #comment-## -->
+<li class="comment even thread-even depth-1" id="comment-51484"><span class="comt-f">#0</span><div class="comt-avatar wrapper"><i style="font-size:36px;" class="fa fa-user-circle" aria-hidden="true"></i><div class="tooltip"><p><i class="fa fa-user" aria-hidden="true"></i>&nbsp;&nbsp;&nbsp;Siskin.xu</p><p><i class="fa fa-envelope" aria-hidden="true"></i>&nbsp;&nbsp;sis***@sohu.com</p></div><div id="runoobvote-id-51484" data-commid = "51484" class="upvotejs"><a class="upvote"></a> <span class="count">1</span></div></div><div class="comt-main" id="div-comment-51484"><p>Python 代码：</p>
+<pre># Flyweight Pattern with Python Code
+from abc import abstractmethod,ABCMeta
+import random
+
+#创建一个Shape接口
+class Shape(metaclass=ABCMeta):
+    @abstractmethod
+    def draw(self):
+        pass
+# 创建实现接口的实体类Circle
+class Circle(Shape):
+    _color=""
+    _x =0
+    _y =0
+    _radius = 0
+
+    def __init__(self, inColor):
+        self._color = inColor
+    def setX(self, inX):
+        self._x = inX
+    def setY(self,inY):
+        self._y = inY
+    def setRadius(self,inRadius):
+        self._radius = inRadius
+    def draw(self):
+        print("Circle: Draw() [Color : {0}, x : {1}, y : {2}, radius : {3}]".format(self._color,self._x,self._y,self._radius))
+
+# 创建一个工厂，生成基于给定信息的实体类的对象
+class ShapeFactory():
+    circleMap = {}
+    @staticmethod
+    def getCircle(inColor):
+        circle = None
+        if inColor in ShapeFactory.circleMap :
+            circle = ShapeFactory.circleMap[inColor]
+        else:
+            circle = Circle(inColor)
+            aCircle = {inColor:circle}
+            ShapeFactory.circleMap.update(aCircle)
+            print("Creating circle of color : " + inColor)
+        return circle
+# 调用输出
+if __name__ == '__main__':
+    colors = ["Red","Green","Blue","White","Black"]
+
+    def getRandomColor():
+        return colors[random.randint(0,len(colors)-1)]
+    def getRandom():
+        return random.randint(1,100)
+
+    for i in range(20):
+        ranColor = getRandomColor()
+        circle = ShapeFactory.getCircle(ranColor)
+        circle.setX(getRandom())
+        circle.setY(getRandom())
+        circle.setRadius(getRandom())
+        circle.draw()</pre><div class="comt-meta wrapper"><span class="comt-author"><a target="_blank" href="javascript:;">Siskin.xu</a><div class="tooltip tooltip1"><p><i class="fa fa-user" aria-hidden="true"></i>&nbsp;&nbsp;&nbsp;Siskin.xu</p><p><i class="fa fa-envelope" aria-hidden="true"></i>&nbsp;&nbsp;sis***@sohu.com</p></div></span>3年前 (2020-03-11)</div></div></li><!-- #comment-## -->
+<li class="comment odd alt thread-odd thread-alt depth-1" id="comment-64234"><span class="comt-f">#0</span><div class="comt-avatar wrapper"><i style="font-size:36px;" class="fa fa-user-circle" aria-hidden="true"></i><div class="tooltip"><p><i class="fa fa-user" aria-hidden="true"></i>&nbsp;&nbsp;&nbsp;squid233</p><p><i class="fa fa-envelope" aria-hidden="true"></i>&nbsp;&nbsp;513***220@qq.com</p></div><div id="runoobvote-id-64234" data-commid = "64234" class="upvotejs"><a class="upvote"></a> <span class="count">2</span></div></div><div class="comt-main" id="div-comment-64234"><p>C++ 实现：</p>
+
+<pre>// 享元模式
+#include &lt;iostream&gt;
+#include &lt;map&gt;
+#include &lt;ctime&gt;
+
+using namespace std;
+
+class Shape {
+public:
+    virtual void draw() = 0;
+};
+class Circle : public Shape {
+private:
+    string color;
+    int x;
+    int y;
+    int radius;
+public:
+    Circle(string color): color(color), x(0), y(0), radius(0) {}
+
+    void setX(int newx) {
+        x = newx;
+    }
+
+    void setY(int newy) {
+        y = newy;
+    }
+
+    void setRadius(int newradius) {
+        radius = newradius;
+    }
+
+    void draw() {
+        cout &lt;&lt; "Circle: Draw() [Color : " &lt;&lt; color
+             &lt;&lt; ", x : " &lt;&lt; x &lt;&lt; ", y :" &lt;&lt; y &lt;&lt; ", radius :" &lt;&lt; radius
+             &lt;&lt; endl;
+    }
+};
+class ShapeFactory {
+public:
+    static map&lt;string, Shape*&gt; circleMap;
+
+    static Shape* getCircle(string color) {
+        if (circleMap.count(color) &gt; 0) {
+            return circleMap[color];
+        }
+        auto shape = new Circle(color);
+        circleMap[color] = shape;
+        cout &lt;&lt; "Creating circle of color : " &lt;&lt; color &lt;&lt; endl;
+        return shape;
+    }
+
+    static void cleanup() {
+        for (auto e : circleMap) {
+            delete e.second;
+        }
+    }
+};
+
+// 生成随机数
+double random() {
+    return (rand() % 10) * 0.1;
+}
+
+string colors[] = {"Red", "Green", "Blue", "White", "Black"};
+string getRandomColor() {
+    return colors[(int)(random() * sizeof(colors) / sizeof(colors[0]))];
+}
+int getRandomX() {
+    return (int)(random() * 100);
+}
+int getRandomY() {
+    return (int)(random() * 100);
+}
+
+// 定义circleMap
+map&lt;string, Shape*&gt; ShapeFactory::circleMap;
+
+int main() {
+    srand(time(0));
+    for (int i = 0; i &lt; 20; ++i) {
+        Circle circle = *(Circle*)ShapeFactory::getCircle(getRandomColor());
+        circle.setX(getRandomX());
+        circle.setY(getRandomY());
+        circle.setRadius(100);
+        circle.draw();
+    }
+    ShapeFactory::cleanup();
+    return 0;
+}</pre><div class="comt-meta wrapper"><span class="comt-author"><a target="_blank" href="javascript:;">squid233</a><div class="tooltip tooltip1"><p><i class="fa fa-user" aria-hidden="true"></i>&nbsp;&nbsp;&nbsp;squid233</p><p><i class="fa fa-envelope" aria-hidden="true"></i>&nbsp;&nbsp;513***220@qq.com</p></div></span>2年前 (2021-06-05)</div></div></li><!-- #comment-## -->
+	</ol>
+	<div class="pagenav">
+			</div>
+</div>
+<div id="respond" class="no_webshot"> 
+		<div class="comment-signarea" style="display:none; padding: 20px 20px;"> 
+	<h3 class="text-muted" id="share_code" style="color: #799961;"><i class="fa fa-pencil-square-o" aria-hidden="true"></i> 点我分享笔记</h3>
+	<!--
+	<p style="font-size:14px;">笔记需要是本篇文章的内容扩展！</p><br>
+	<p style="font-size:12px;"><a href="//www.runoob.com/tougao" target="_blank">文章投稿，可点击这里</a></p>
+	<p style="font-size:14px;"><a href="/w3cnote/runoob-user-test-intro.html#invite" target="_blank">注册邀请码获取方式</a></p>
+		<h3 class="text-muted"><i class="fa fa-info-circle" aria-hidden="true"></i> 分享笔记前必须<a href="javascript:;" class="runoob-pop">登录</a>！</h3>
+		<p><a href="/w3cnote/runoob-user-test-intro.html#invite" target="_blank">注册邀请码获取方式</a></p>-->
+	</div>
+		
+	<form action="/wp-content/themes/runoob/option/addnote.php" method="post" id="commentform" style="display:none;">
+		<div class="comt">
+			<div class="comt-title">
+				<i style="font-size:36px;" class="fa fa-user-circle" aria-hidden="true"></i>				<p><a id="cancel-comment-reply-link" href="javascript:;">取消</a></p>
+			</div>
+			<div class="comt-box">
+			<div id="mded"></div>
+			
+				<div class="comt-ctrl">
+					<div class="comt-tips"><input type='hidden' name='comment_post_ID' value='8917' id='comment_post_ID' />
+<input type='hidden' name='comment_parent' id='comment_parent' value='0' />
+</div>
+					<button type="submit" name="submit" id="submit" tabindex="5"><i class="fa fa-pencil" aria-hidden="true"></i> 分享笔记</button>
+				</div>
+			</div>
+		
+				
+					<div class="comt-comterinfo"> 
+						<ul id="comment-author-info">
+							<li class="form-inline"><label class="hide" for="author">昵称</label><input class="ipt" type="text" name="author" id="author" value="" tabindex="2" placeholder="昵称"><span class="text-muted">昵称 (必填)</span></li>
+							<li class="form-inline"><label class="hide" for="email">邮箱</label><input class="ipt" type="text" name="email" id="email" value="" tabindex="3" placeholder="邮箱"><span class="text-muted">邮箱 (必填)</span></li>
+							<li class="form-inline"><label class="hide" for="url">引用地址</label><input class="ipt" type="text" name="url" id="url" value="" tabindex="4" placeholder="引用地址"><span class="text-muted">引用地址</span></li>
+						</ul>
+					</div>
+				
+			
+		</div>
+
+	</form>
+	</div>
+<script type="text/javascript">
+$(function() {
+	//初始化编辑器
+	
+	var editor = new Simditor({
+	  textarea: $('#mded'),
+	  placeholder: '写笔记...',
+	  upload:false,
+	 // upload: {url:'/api/comment_upload_file.php',params: null,fileKey: 'upload_file',connectionCount: 1,leaveConfirm: '文件正在上传，您确定离开?'},
+	  defaultImage: 'https://www.runoob.com/images/logo.png',
+	  codeLanguages: '',
+	  autosave: 'editor-content',
+	  toolbar: [  'bold','code','ul','ol','image' ]
+	});
+	editor.on('selectionchanged', function() {
+		$(".code-popover").hide();
+	});
+
+	// 提交数据
+	$("#share_code").click(function() {
+		$(".comment-signarea").hide();
+		$("#commentform").show();
+		
+	});
+	$("#user_add_note").click(function() {
+		$(".comment-signarea").hide();
+		$("#commentform").show();
+		$('html, body').animate({
+       	    scrollTop: $("#respond").offset().top
+    	}, 200);
+	});
+
+	// 提交笔记
+	var commentform=$('#commentform');
+	commentform.prepend('<div id="comment-status" style="display:none;" ></div>');
+	var statusdiv=$('#comment-status');
+	
+	commentform.submit(function(e){
+		e.preventDefault();
+		var noteContent = editor.getValue();
+		// console.log(noteContent);
+		noteContent = noteContent.replace(/<pre><code>/g,"<pre>");
+		noteContent = noteContent.replace(/<\/code><\/pre>/g,"</pre>");
+		
+		// 系列化表单数据
+		var comment_parent = 0;
+		var is_user_logged_in = $("#is_user_logged_in").val();
+		var comment_post_ID =  8917;
+		var _wp_unfiltered_html_comment = $("#_wp_unfiltered_html_comment").val();
+		var comment = noteContent;
+		var author = $("#author").val();
+		var url = $("#url").val();
+		var email = $("#email").val();
+		if(isBlank(author) && is_user_logged_in==0) {
+			statusdiv.html('<p  class="ajax-error">请输入昵称！</p>').show();
+		} else if(isBlank(email)  && is_user_logged_in==0) {
+			statusdiv.html('<p  class="ajax-error">请输入邮箱！</p>').show();
+		} else {
+			// var formdata=commentform.serialize() + "&comment=" + noteContent ;
+			// 添加状态信息
+			statusdiv.html('<p>Processing...</p>').show();
+			// 获取表单提交地址
+			var formurl=commentform.attr('action');
+			
+			// 异步提交
+			$.ajax({
+					type: 'post',
+					url: formurl,
+					dataType:'json',
+					data: {"comment_parent":comment_parent,"comment_post_ID":comment_post_ID, "_wp_unfiltered_html_comment":_wp_unfiltered_html_comment,"comment":comment,"url":url, "email":email,"author":author},
+					error: function(XMLHttpRequest, textStatus, errorThrown){
+					statusdiv.html('<p class="ajax-error" >数据不完整或表单提交太快了！</p>').show();
+				},
+				success: function(data, textStatus){
+					if(data.errorno=="0") {
+						$("#submit").prop('disabled', true);
+						statusdiv.html('<p class="ajax-success" >笔记已提交审核，感谢分享笔记！</p>').show();
+						alert('笔记已提交审核，感谢分享笔记！');
+					}else{
+						statusdiv.html('<p class="ajax-error" >'+data.msg+'</p>').show();
+					}
+					commentform.find('textarea[name=comment]').val('');
+				}
+			});
+			setTimeout(function(){
+		        $("#submit").prop('disabled', false);
+		    }, 10*1000);
+		}
+		return false;
+
+	});
+	$(".comt-author").click(function() {
+		href = $(this).children("a").attr("href");
+		if(href.indexOf("/note/")!=-1) {
+			var win = window.open(href, '_blank');
+  			win.focus();
+		}
+	});
+	$(".comt-meta span").hover(function(){
+		$(this).children(".tooltip").css({ "opacity": 1, "pointer-events": "auto"});
+	},function(){
+		$(this).children(".tooltip").removeAttr("style");
+	});
+	/*
+	$(".wrapper i").hover(function(){
+		$(this).siblings(".tooltip").css({ "opacity": 1, "pointer-events": "auto"});
+	},function(){
+		$(this).siblings(".tooltip").css({ "opacity": 0, "pointer-events": "auto"});
+	});
+	*/
+	//Upvote.create('runoobvote-id', {callback: vote_callback});
+	var ajaxurl = 'https://www.runoob.com/wp-admin/admin-ajax.php';
+	var callback = function(data) {
+		//console.log($('#runoobvote-id').upvote('upvoted'));
+		//console.log($('#runoobvote-id').upvote('downvoted'));
+		//console.log(data);
+		_vote_action = data.action;
+		id_arr = data.id.split('-');
+		um_id= id_arr[2];
+		//console.log(um_id);
+		
+		var re = /^[1-9]+/;
+		if (re.test(um_id)) { 
+			var ajax_data = {
+				_vote_action: _vote_action,
+				action: "pinglun_zan",
+				um_id: um_id,
+				um_action: "ding"
+			};
+			//console.log(ajax_data);
+			$.post(ajaxurl,ajax_data,function(status){
+				//if(status.vote_num>999) {
+				//	_voteHtml = '<span style="display: block; text-align: center;font-size: 20px; color: #6a737c; margin: 8px 0;">'+kFormatter(status.vote_num) +'</span>';
+				//	$("#runoobvote-id-" + um_id + " .count").hide().after(_voteHtml);
+				//}
+				
+			});
+		}
+	};
+	if($('#comments').length && $('.upvotejs').length){
+		$('.upvotejs').upvote({id: 8917, callback: callback});
+	
+		$.post(ajaxurl,{"action":"pinglun_zan","postid":8917},function(data){  
+			$(data).each(function(key,value) {
+				$("#runoobvote-id-" + value.commid + " .upvote").addClass(value.upvotejs_class);
+				$("#runoobvote-id-" + value.commid + " .downvote").addClass(value.downvote_class);
+				$("#runoobvote-id-" + value.commid + " .count").text(value.upvote_count);
+			})
+		},'json');
+		
+	}
+	
+	
+});
+function isBlank(str) {
+    return (!str || /^\s*$/.test(str));
+}
+function kFormatter(num) {
+	// return num;
+    return Math.abs(num) > 999 ? Math.sign(num)*((Math.abs(num)/1000).toFixed(1)) + 'k' : Math.sign(num)*Math.abs(num)
+}
+
+</script>
+
+<link rel="stylesheet" href="/wp-content/themes/runoob/assets/css/qa.css?1.44">
+<link rel="stylesheet" type="text/css" href="https://cdn.staticfile.org/simditor/2.3.6/styles/simditor.min.css" />
+<script type="text/javascript" src="https://static.runoob.com/assets/simditor/2.3.6/scripts/module.js"></script>
+<script type="text/javascript" src="//static.runoob.com/assets/simditor/2.3.6/scripts/hotkeys.js"></script>
+<script type="text/javascript" src="//static.runoob.com/assets/simditor/2.3.6/scripts/uploader.js"></script>
+<script type="text/javascript" src="https://cdn.staticfile.org/simditor/2.3.6/lib/simditor.min.js"></script>
+<script type="text/javascript" src="https://static.runoob.com/assets/simditor/2.3.6/scripts/simditor-autosave.js"></script>
+		<div class="sidebar-box ">
+				
+
+<style>	
+.responsive_ad1 { display:none; }
+@media(min-width: 800px) { .responsive_ad1 {  display:block;margin:0 auto;} }
+</style>
+<div id="ad-336280" >
+
+<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-5751451760833794"
+     crossorigin="anonymous"></script>
+<!-- 移动版 自动调整 -->
+<ins class="adsbygoogle"
+     style="display:block"
+     data-ad-client="ca-pub-5751451760833794"
+     data-ad-slot="1691338467"
+     data-ad-format="auto"
+     data-full-width-responsive="true"></ins>
+<script>
+     (adsbygoogle = window.adsbygoogle || []).push({});
+</script>
+		</div>
+				</div>
+		
+	</div>
+</div>
+	
+
+<!-- 右边栏 -->
+<div class="fivecol last right-column">
+
+<style>
+.sidebar-tree .double-li {
+    width:300px;
+}
+.sidebar-tree .double-li li {
+    width: 44%;
+    line-height: 1.5em;
+    border-bottom: 1px solid #ccc;
+    float: left;
+    display: inline;
+}
+</style>
+
+    
+        <div class="sidebar-box re-box re-box-large">
+        <div class="sidebar-box recommend-here" style="margin: 0 auto;">
+            <a href="javascript:void(0);" style="font-size: 16px; color:#64854c;font-weight:bold;"> <i class="fa fa-list" aria-hidden="true"></i> 分类导航</a>
+        </div>
+    <div class="sidebar-box sidebar-cate">
+        
+        <div class="sidebar-tree" >
+            <ul><li style="margin: 0;"><a href="javascript:void(0);" class="tit"> HTML / CSS</a><ul class="double-li"><li><a title="HTML 教程" href="//www.runoob.com/html/html-tutorial.html">HTML 教程</a></li><li><a title="HTML5 教程" href="//www.runoob.com/html/html5-intro.html">HTML5 教程</a></li><li><a title="CSS 教程" href="//www.runoob.com/css/css-tutorial.html">CSS 教程</a></li><li><a title="CSS3 教程" href="//www.runoob.com/css3/css3-tutorial.html">CSS3 教程</a></li><li><a title="Bootstrap3 教程" href="//www.runoob.com/bootstrap/bootstrap-tutorial.html">Bootstrap3 教程</a></li><li><a title="Bootstrap4 教程" href="//www.runoob.com/bootstrap4/bootstrap4-tutorial.html">Bootstrap4 教程</a></li><li><a title="Bootstrap5 教程" href="//www.runoob.com/bootstrap5/bootstrap5-tutorial.html">Bootstrap5 教程</a></li><li><a title="Font Awesome 教程" href="//www.runoob.com/font-awesome/fontawesome-tutorial.html">Font Awesome 教程</a></li><li><a title="Foundation 教程" href="//www.runoob.com/foundation/foundation-tutorial.html">Foundation 教程</a></li></ul></li><li style="margin: 0;"><a href="javascript:void(0);" class="tit"> JavaScript</a><ul class="double-li"><li><a title="JavaScript 教程" href="//www.runoob.com/js/js-tutorial.html">JavaScript 教程</a></li><li><a title="HTML DOM 教程" href="//www.runoob.com/htmldom/htmldom-tutorial.html">HTML DOM 教程</a></li><li><a title="jQuery 教程" href="//www.runoob.com/jquery/jquery-tutorial.html">jQuery 教程</a></li><li><a title="AngularJS 教程" href="//www.runoob.com/angularjs/angularjs-tutorial.html">AngularJS 教程</a></li><li><a title="AngularJS2 教程" href="//www.runoob.com/angularjs2/angularjs2-tutorial.html">AngularJS2 教程</a></li><li><a title="Vue.js 教程" href="//www.runoob.com/vue2/vue-tutorial.html">Vue.js 教程</a></li><li><a title="Vue3 教程" href="//www.runoob.com/vue3/vue3-tutorial.html">Vue3 教程</a></li><li><a title="React 教程" href="//www.runoob.com/react/react-tutorial.html">React 教程</a></li><li><a title="TypeScript 教程" href="//www.runoob.com/typescript/ts-tutorial.html">TypeScript 教程</a></li><li><a title="jQuery UI 教程" href="//www.runoob.com/jqueryui/jqueryui-tutorial.html">jQuery UI 教程</a></li><li><a title="jQuery EasyUI 教程" href="//www.runoob.com/jeasyui/jqueryeasyui-tutorial.html">jQuery EasyUI 教程</a></li><li><a title="Node.js 教程" href="//www.runoob.com/nodejs/nodejs-tutorial.html">Node.js 教程</a></li><li><a title="AJAX 教程" href="//www.runoob.com/ajax/ajax-tutorial.html">AJAX 教程</a></li><li><a title="JSON 教程" href="//www.runoob.com/json/json-tutorial.html">JSON 教程</a></li><li><a title="Echarts 教程" href="//www.runoob.com/echarts/echarts-tutorial.html">Echarts 教程</a></li><li><a title="Chart.js 教程" href="//www.runoob.com/chartjs/chartjs-tutorial.html">Chart.js 教程</a></li><li><a title="Highcharts 教程" href="//www.runoob.com/highcharts/highcharts-tutorial.html">Highcharts 教程</a></li><li><a title="Google 地图 教程" href="//www.runoob.com/googleapi/google-maps-basic.html">Google 地图 教程</a></li></ul></li><li style="margin: 0;"><a href="javascript:void(0);" class="tit"> 服务端</a><ul class="double-li"><li><a title="Python 教程" href="//www.runoob.com/python3/python3-tutorial.html">Python 教程</a></li><li><a title="Python2.x 教程" href="//www.runoob.com/python/python-tutorial.html">Python2.x 教程</a></li><li><a title="Linux 教程" href="//www.runoob.com/linux/linux-tutorial.html">Linux 教程</a></li><li><a title="Docker 教程" href="//www.runoob.com/docker/docker-tutorial.html">Docker 教程</a></li><li><a title="Ruby 教程" href="//www.runoob.com/ruby/ruby-tutorial.html">Ruby 教程</a></li><li><a title="Java 教程" href="//www.runoob.com/java/java-tutorial.html">Java 教程</a></li><li><a title="C 教程" href="//www.runoob.com/c/c-tutorial.html">C 教程</a></li><li><a title="C++ 教程" href="//www.runoob.com/cplusplus/cpp-tutorial.html">C++ 教程</a></li><li><a title="Perl 教程" href="//www.runoob.com/perl/perl-tutorial.html">Perl 教程</a></li><li><a title="Servlet 教程" href="//www.runoob.com/servlet/servlet-tutorial.html">Servlet 教程</a></li><li><a title="JSP 教程" href="//www.runoob.com/jsp/jsp-tutorial.html">JSP 教程</a></li><li><a title="Lua 教程" href="//www.runoob.com/lua/lua-tutorial.html">Lua 教程</a></li><li><a title="Rust 教程" href="//www.runoob.com/rust/rust-tutorial.html">Rust 教程</a></li><li><a title="Scala 教程" href="//www.runoob.com/scala/scala-tutorial.html">Scala 教程</a></li><li><a title="Go 教程" href="//www.runoob.com/go/go-tutorial.html">Go 教程</a></li><li><a title="PHP 教程" href="//www.runoob.com/php/php-tutorial.html">PHP 教程</a></li><li><a title="数据结构与算法" href="//www.runoob.com/data-structures/data-structures-tutorial.html">数据结构与算法</a></li><li><a title="Django 教程" href="//www.runoob.com/django/django-tutorial.html">Django 教程</a></li><li><a title="Zookeeper 教程" href="//www.runoob.com/w3cnote/zookeeper-tutorial.html">Zookeeper 教程</a></li><li><a title="设计模式" href="//www.runoob.com/design-pattern/design-pattern-tutorial.html">设计模式</a></li><li><a title="正则表达式" href="//www.runoob.com/regexp/regexp-tutorial.html">正则表达式</a></li><li><a title="Maven 教程" href="//www.runoob.com/maven/maven-tutorial.html">Maven 教程</a></li><li><a title="Verilog 教程" href="//www.runoob.com/w3cnote/verilog-tutorial.html">Verilog 教程</a></li><li><a title="ASP 教程" href="//www.runoob.com/asp/asp-tutorial.html">ASP 教程</a></li><li><a title="AppML 教程" href="//www.runoob.com/appml/appml-tutorial.html">AppML 教程</a></li><li><a title="VBScript 教程" href="//www.runoob.com/vbscript/vbscript-tutorial.html">VBScript 教程</a></li></ul></li><li style="margin: 0;"><a href="javascript:void(0);" class="tit"> 数据库</a><ul class="double-li"><li><a title="SQL 教程" href="//www.runoob.com/sql/sql-tutorial.html">SQL 教程</a></li><li><a title="MySQL 教程" href="//www.runoob.com/mysql/mysql-tutorial.html">MySQL 教程</a></li><li><a title="PostgreSQL 教程" href="//www.runoob.com/postgresql/postgresql-tutorial.html">PostgreSQL 教程</a></li><li><a title="SQLite 教程" href="//www.runoob.com/sqlite/sqlite-tutorial.html">SQLite 教程</a></li><li><a title="MongoDB 教程" href="//www.runoob.com/mongodb/mongodb-tutorial.html">MongoDB 教程</a></li><li><a title="Redis 教程" href="//www.runoob.com/redis/redis-tutorial.html">Redis 教程</a></li><li><a title="Memcached 教程" href="//www.runoob.com/Memcached/Memcached-tutorial.html">Memcached 教程</a></li></ul></li><li style="margin: 0;"><a href="javascript:void(0);" class="tit"> 数据分析</a><ul class="double-li"><li><a title="Python 教程" href="//www.runoob.com/python3/python3-tutorial.html">Python 教程</a></li><li><a title="NumPy 教程" href="//www.runoob.com/numpy/numpy-tutorial.html">NumPy 教程</a></li><li><a title="Pandas 教程" href="//www.runoob.com/pandas/pandas-tutorial.html">Pandas 教程</a></li><li><a title="Matplotlib 教程" href="//www.runoob.com/matplotlib/matplotlib-tutorial.html">Matplotlib 教程</a></li><li><a title="Scipy 教程" href="//www.runoob.com/scipy/scipy-tutorial.html">Scipy 教程</a></li><li><a title="R 教程" href="//www.runoob.com/r/r-tutorial.html">R 教程</a></li><li><a title="Julia 教程" href="//www.runoob.com/julia/julia-tutorial.html">Julia 教程</a></li></ul></li><li style="margin: 0;"><a href="javascript:void(0);" class="tit"> 移动端</a><ul class="double-li"><li><a title="Android 教程" href="//www.runoob.com/w3cnote/android-tutorial-intro.html">Android 教程</a></li><li><a title="Swift 教程" href="//www.runoob.com/swift/swift-tutorial.html">Swift 教程</a></li><li><a title="jQuery Mobile 教程" href="//www.runoob.com/jquerymobile/jquerymobile-tutorial.html">jQuery Mobile 教程</a></li><li><a title="ionic 教程" href="//www.runoob.com/ionic/ionic-tutorial.html">ionic 教程</a></li><li><a title="Kotlin 教程" href="//www.runoob.com/kotlin/kotlin-tutorial.html">Kotlin 教程</a></li></ul></li><li style="margin: 0;"><a href="javascript:void(0);" class="tit"> XML 教程</a><ul class="double-li"><li><a title="XML 教程" href="//www.runoob.com/xml/xml-tutorial.html">XML 教程</a></li><li><a title="DTD 教程" href="//www.runoob.com/dtd/dtd-tutorial.html">DTD 教程</a></li><li><a title="XML DOM 教程" href="//www.runoob.com/dom/dom-tutorial.html">XML DOM 教程</a></li><li><a title="XSLT 教程" href="//www.runoob.com/xsl/xsl-tutorial.html">XSLT 教程</a></li><li><a title="XPath 教程" href="//www.runoob.com/xpath/xpath-tutorial.html">XPath 教程</a></li><li><a title="XQuery 教程" href="//www.runoob.com/xquery/xquery-tutorial.html">XQuery 教程</a></li><li><a title="XLink 教程" href="//www.runoob.com/xlink/xlink-tutorial.html">XLink 教程</a></li><li><a title="XPointer 教程" href="//www.runoob.com/xlink/xlink-tutorial.html">XPointer 教程</a></li><li><a title="XML Schema 教程" href="//www.runoob.com/schema/schema-tutorial.html">XML Schema 教程</a></li><li><a title="XSL-FO 教程" href="//www.runoob.com/xslfo/xslfo-tutorial.html">XSL-FO 教程</a></li><li><a title="SVG 教程" href="//www.runoob.com/svg/svg-tutorial.html">SVG 教程</a></li></ul></li><li style="margin: 0;"><a href="javascript:void(0);" class="tit"> ASP.NET</a><ul class="double-li"><li><a title="ASP.NET 教程" href="//www.runoob.com/aspnet/aspnet-tutorial.html">ASP.NET 教程</a></li><li><a title="C# 教程" href="//www.runoob.com/csharp/csharp-tutorial.html">C# 教程</a></li><li><a title="Web Pages 教程" href="//www.runoob.com/aspnet/webpages-intro.html">Web Pages 教程</a></li><li><a title="Razor 教程" href="//www.runoob.com/aspnet/razor-intro.html">Razor 教程</a></li><li><a title="MVC 教程" href="//www.runoob.com/aspnet/mvc-intro.html">MVC 教程</a></li><li><a title="Web Forms 教程" href="//www.runoob.com/aspnet/aspnet-intro.html">Web Forms 教程</a></li></ul></li><li style="margin: 0;"><a href="javascript:void(0);" class="tit"> Web Service</a><ul class="double-li"><li><a title="Web Service 教程" href="//www.runoob.com/webservices/webservices-tutorial.html">Web Service 教程</a></li><li><a title="WSDL 教程" href="//www.runoob.com/wsdl/wsdl-tutorial.html">WSDL 教程</a></li><li><a title="SOAP 教程" href="//www.runoob.com/soap/soap-tutorial.html">SOAP 教程</a></li><li><a title="RSS 教程" href="//www.runoob.com/rss/rss-tutorial.html">RSS 教程</a></li><li><a title="RDF 教程" href="//www.runoob.com/rdf/rdf-tutorial.html">RDF 教程</a></li></ul></li><li style="margin: 0;"><a href="javascript:void(0);" class="tit"> 开发工具</a><ul class="double-li"><li><a title="Eclipse 教程" href="//www.runoob.com/eclipse/eclipse-tutorial.html">Eclipse 教程</a></li><li><a title="Git 教程" href="//www.runoob.com/git/git-tutorial.html">Git 教程</a></li><li><a title="Svn 教程" href="//www.runoob.com/svn/svn-tutorial.html">Svn 教程</a></li><li><a title="Markdown 教程" href="//www.runoob.com/markdown/md-tutorial.html">Markdown 教程</a></li></ul></li><li style="margin: 0;"><a href="javascript:void(0);" class="tit"> 网站建设</a><ul class="double-li"><li><a title="HTTP 教程" href="//www.runoob.com/http/http-tutorial.html">HTTP 教程</a></li><li><a title="网站建设指南" href="//www.runoob.com/web/web-buildingprimer.html">网站建设指南</a></li><li><a title="浏览器信息" href="//www.runoob.com/browsers/browser-information.html">浏览器信息</a></li><li><a title="网站主机教程" href="//www.runoob.com/hosting/hosting-tutorial.html">网站主机教程</a></li><li><a title="TCP/IP 教程" href="//www.runoob.com/tcpip/tcpip-tutorial.html">TCP/IP 教程</a></li><li><a title="W3C 教程" href="//www.runoob.com/w3c/w3c-tutorial.html">W3C 教程</a></li><li><a title="网站品质" href="//www.runoob.com/quality/quality-tutorial.html">网站品质</a></li></ul></li></ul>            </div>
+    
+    </div>
+    </div>
+    <br>
+    
+    <div class="sidebar-box re-box re-box-large">
+        <div class="sidebar-box recommend-here">
+            <a href="javascript:void(0);">Advertisement</a>
+        </div>
+        <div class="re-600160" id="sidebar-right-re">
+                <script async src="//pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script>
+        <!-- 侧栏1 -->
+        <ins class="adsbygoogle"
+             style="display:inline-block;width:160px;height:600px"
+             data-ad-client="ca-pub-5751451760833794"
+             data-ad-slot="4106274865"></ins>
+        <script>
+        (adsbygoogle = window.adsbygoogle || []).push({});
+        </script>
+                </div>
+    </div>
+</div></div>
+
+</div>
+
+<script>
+var aid = 8917;
+function coll() {
+	$.post( '/wp-content/themes/runoob/option/user/userinfo.php', {aid:aid, action:"collarticle", opt:'add'},function( data ) {
+		if(data.error==0) {
+			$("#content").find("h1:first").find("a").attr("href","javascript:void(0);");
+			$("#content").find("h1:first").find("img").attr("src","http://www.runoob.com/wp-content/themes/runoob/assets/img/coll2.png").css({width:32+"px",height:32+"px"});
+		}
+		alert(data.msg);
+	},'json');
+}
+</script>
+
+
+<!-- 反馈对话框开始 -->
+<script src="/wp-content/themes/runoob/assets/feedback/stable/2.0/feedback.js?1.0"></script>
+<link rel="stylesheet" href="/wp-content/themes/runoob/assets/feedback/stable/2.0/feedback.css?1.0" />
+<script type="text/javascript">
+$.feedback({
+    ajaxURL: '/feedback/runoob_feedback.php',
+	html2canvasURL: '/wp-content/themes/runoob/assets/feedback/stable/2.0/html2canvas.js',
+	onClose: function () {
+         window.location.reload();
+    }
+});
+</script>
+<!-- 反馈对话框结束 -->
+<button class="feedback-btn feedback-btn-gray">反馈/建议</button>
+<!-- 底部 -->
+<div id="footer" class="mar-t50">
+   <div class="runoob-block">
+    <div class="runoob cf">
+     <dl>
+      <dt>
+       在线实例
+      </dt>
+      <dd>
+       &middot;<a target="_blank" href="/html/html-examples.html">HTML 实例</a>
+      </dd>
+      <dd>
+       &middot;<a target="_blank" href="/css/css-examples.html">CSS 实例</a>
+      </dd>
+      <dd>
+       &middot;<a target="_blank" href="/js/js-examples.html">JavaScript 实例</a>
+      </dd>
+      <dd>
+       &middot;<a target="_blank" href="/ajx/ajax-examples.html">Ajax 实例</a>
+      </dd>
+       <dd>
+       &middot;<a target="_blank" href="/jquery/jquery-examples.html">jQuery 实例</a>
+      </dd>
+      <dd>
+       &middot;<a target="_blank" href="/xml/xml-examples.html">XML 实例</a>
+      </dd>
+      <dd>
+       &middot;<a target="_blank" href="/java/java-examples.html">Java 实例</a>
+      </dd>
+     
+     </dl>
+     <dl>
+      <dt>
+      字符集&工具
+      </dt>
+      <dd>
+       &middot; <a target="_blank" href="/charsets/html-charsets.html">HTML 字符集设置</a>
+      </dd>
+      <dd>
+       &middot; <a target="_blank" href="/tags/html-ascii.html">HTML ASCII 字符集</a>
+      </dd>
+     <dd>
+       &middot; <a target="_blank" href="https://c.runoob.com/front-end/6939/">JS 混淆/加密</a>
+      </dd> 
+      <dd>
+       &middot; <a target="_blank" href="https://c.runoob.com/front-end/6232/">PNG/JPEG 图片压缩</a>
+      </dd>
+      <dd>
+       &middot; <a target="_blank" href="/tags/html-colorpicker.html">HTML 拾色器</a>
+      </dd>
+      <dd>
+       &middot; <a target="_blank" href="//c.runoob.com/front-end/53">JSON 格式化工具</a>
+      </dd>
+      <dd>
+       &middot; <a target="_blank" href="//c.runoob.com/front-end/6680/">随机数生成器</a>
+      </dd>
+     </dl>
+     <dl>
+      <dt>
+       最新更新
+      </dt>
+                   <dd>
+       &middot;
+      <a href="http://www.runoob.com/python3/python-ai-draw.html" title="Python AI 绘画">Python AI 绘画</a>
+      </dd>
+              <dd>
+       &middot;
+      <a href="http://www.runoob.com/w3cnote/cursor-editor.html" title="神辅助 Cursor 编辑器，加入 GPT-4 让编码更轻松！">神辅助 Cursor ...</a>
+      </dd>
+              <dd>
+       &middot;
+      <a href="http://www.runoob.com/jsref/jsref-flatmap-array.html" title="JavaScript flatMap()  方法">JavaScript flat...</a>
+      </dd>
+              <dd>
+       &middot;
+      <a href="http://www.runoob.com/jsref/jsref-flat-array.html" title="JavaScript flat() 方法">JavaScript flat...</a>
+      </dd>
+              <dd>
+       &middot;
+      <a href="http://www.runoob.com/jsref/jsref-at-array.html" title="JavaScript at() 方法">JavaScript at()...</a>
+      </dd>
+              <dd>
+       &middot;
+      <a href="http://www.runoob.com/jsref/jsref-of-array.html" title="JavaScript of() 方法">JavaScript of()...</a>
+      </dd>
+              <dd>
+       &middot;
+      <a href="http://www.runoob.com/pandas/pandas-functions.html" title="Pandas 常用函数">Pandas 常用函数</a>
+      </dd>
+             </dl>
+     <dl>
+      <dt>
+       站点信息
+      </dt>
+      <dd>
+       &middot;
+       <a target="_blank" href="mailto:admin@runoob.com" rel="external nofollow">意见反馈</a>
+       </dd>
+      <dd>
+       &middot;
+      <a target="_blank" href="/disclaimer">免责声明</a>
+       </dd>
+      <dd>
+       &middot;
+       <a target="_blank" href="/aboutus">关于我们</a>
+       </dd>
+      <dd>
+       &middot;
+      <a target="_blank" href="/archives">文章归档</a>
+      </dd>
+    
+     </dl>
+    
+     <div class="search-share">
+      <div class="app-download">
+        <div>
+         <strong>关注微信</strong>
+        </div>
+      </div>
+      <div class="share">
+      <img width="128" height="128" src="/wp-content/themes/runoob/assets/images/qrcode.png" />
+       </div>
+     </div>
+     
+    </div>
+   </div>
+   <div class="w-1000 copyright">
+     Copyright &copy; 2013-2023    <strong><a href="//www.runoob.com/" target="_blank">菜鸟教程</a></strong>&nbsp;
+    <strong><a href="//www.runoob.com/" target="_blank">runoob.com</a></strong> All Rights Reserved. 备案号：<a target="_blank" rel="nofollow" href="https://beian.miit.gov.cn/">闽ICP备15012807号-1</a>
+   </div>
+  </div>
+  <div class="fixed-btn">
+    <a class="go-top" href="javascript:void(0)" title="返回顶部"> <i class="fa fa-angle-up"></i></a>
+    <a class="qrcode"  href="javascript:void(0)" title="关注我们"><i class="fa fa-qrcode"></i></a>
+    <a class="writer" style="display:none" href="javascript:void(0)"   title="标记/收藏"><i class="fa fa-star" aria-hidden="true"></i></a>
+    <!-- qrcode modal -->
+    <div id="bottom-qrcode" class="modal panel-modal hide fade in">
+      <h4>微信关注</h4>
+      <div class="panel-body"><img alt="微信关注" width="128" height="128" src="/wp-content/themes/runoob/assets/images/qrcode.png"></div> 
+    </div>
+  </div>
+
+ <div style="display:none;">
+<script async src="https://www.googletagmanager.com/gtag/js?id=UA-84264393-2"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+
+  gtag('config', 'UA-84264393-2');
+</script>
+<script>
+var _hmt = _hmt || [];
+(function() {
+  var hm = document.createElement("script");
+  hm.src = "https://hm.baidu.com/hm.js?3eec0b7da6548cf07db3bc477ea905ee";
+  var s = document.getElementsByTagName("script")[0]; 
+  s.parentNode.insertBefore(hm, s);
+})();
+</script>
+
+</div>
+<script>
+window.jsui={
+    www: 'https://www.runoob.com',
+    uri: 'https://www.runoob.com/wp-content/themes/runoob'
+};
+</script>
+
+<script src="https://static.runoob.com/assets/libs/hl/run_prettify.js"></script>
+<script src="/wp-content/themes/runoob/assets/js/main.min.js?v=1.156"></script>
+
+</body>
+</html>

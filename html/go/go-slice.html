@@ -1,0 +1,1834 @@
+<!Doctype html>
+<html>
+<head>
+	<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+	<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+	<title>Go 语言切片(Slice) | 菜鸟教程</title>
+
+  <meta name='robots' content='max-image-preview:large' />
+<link rel='stylesheet' id='classic-theme-styles-css' href='http://www.runoob.com/wp-includes/css/classic-themes.min.css?ver=6.2' type='text/css' media='all' />
+<link rel="canonical" href="http://www.runoob.com/go/go-slice.html" />
+<meta name="keywords" content="Go 语言切片(Slice)">
+<meta name="description" content="Go 语言切片(Slice)  Go 语言切片是对数组的抽象。  Go 数组的长度不可改变，在特定场景中这样的集合就不太适用，Go 中提供了一种灵活，功能强悍的内置类型切片(“动态数组&#039;)，与数组相比切片的长度是不固定的，可以追加元素，在追加时可能使切片的容量增大。    定义切片  你可以声明一个未指定大小的数组来定义切片：  var identifier []type   切片不需要说明长度。  或使用 make() 函数..">
+		
+	<link rel="shortcut icon" href="https://static.runoob.com/images/favicon.ico">
+	<link rel="stylesheet" href="/wp-content/themes/runoob/style.css?v=1.170" type="text/css" media="all" />	
+	<link rel="stylesheet" href="https://cdn.staticfile.org/font-awesome/4.7.0/css/font-awesome.min.css" media="all" />	
+  <!--[if gte IE 9]><!-->
+  <script src="https://cdn.staticfile.org/jquery/2.0.3/jquery.min.js"></script>
+  <!--<![endif]-->
+  <!--[if lt IE 9]>
+     <script src="https://cdn.staticfile.org/jquery/1.9.1/jquery.min.js"></script>
+     <script src="https://cdn.staticfile.org/html5shiv/r29/html5.min.js"></script>
+  <![endif]-->
+  <link rel="apple-touch-icon" href="https://static.runoob.com/images/icon/mobile-icon.png"/>
+  <meta name="apple-mobile-web-app-title" content="菜鸟教程">
+</head>
+<body>
+
+<!--  头部 -->
+<div class="container logo-search">
+
+  <div class="col search row-search-mobile">
+    <form action="index.php">
+      <input class="placeholder" placeholder="搜索……" name="s" autocomplete="off">
+      
+    </form>
+  </div>
+
+  <div class="row">
+    <div class="col logo">
+      <h1><a href="/">菜鸟教程 -- 学的不仅是技术，更是梦想！</a></h1>
+    </div>
+        <div class="col right-list"> 
+    <button class="btn btn-responsive-nav btn-inverse" data-toggle="collapse" data-target=".nav-main-collapse" id="pull" style=""> <i class="fa fa-navicon"></i> </button>
+    </div>
+        
+    <div class="col search search-desktop last">
+      <div class="search-input" >
+      <form action="//www.runoob.com/" target="_blank">
+        <input class="placeholder" id="s" name="s" placeholder="搜索……"  autocomplete="off" style="height: 44px;">
+      </form>
+      
+      </div>
+    </div>
+  </div>
+</div>
+
+
+
+<!-- 导航栏 -->
+<!-- 导航栏 -->
+<div class="container navigation">
+	<div class="row">
+		<div class="col nav">
+			<ul class="pc-nav" id="runoob-detail-nav">
+				<li><a href="//www.runoob.com/">首页</a></li>
+				<li><a href="/html/html-tutorial.html">HTML</a></li>
+				<li><a href="/css/css-tutorial.html">CSS</a></li>
+				<li><a href="/js/js-tutorial.html">JavaScript</a></li>
+				<li><a href="javascript:void(0);" data-id="vue">Vue</a></li>
+				<li><a href="javascript:void(0);" data-id="bootstrap">Bootstrap</a></li>
+				<li><a href="/nodejs/nodejs-tutorial.html">NodeJS</a></li>
+				<li><a href="/python3/python3-tutorial.html">Python3</a></li>
+				<li><a href="/python/python-tutorial.html">Python2</a></li>
+				<li><a href="/java/java-tutorial.html">Java</a></li>
+				<li><a href="/cprogramming/c-tutorial.html">C</a></li>
+				<li><a href="/cplusplus/cpp-tutorial.html">C++</a></li>
+				<li><a href="/csharp/csharp-tutorial.html">C#</a></li>
+				<li><a href="/go/go-tutorial.html">Go</a></li>
+				<li><a href="/sql/sql-tutorial.html">SQL</a></li>
+				<li><a href="/linux/linux-tutorial.html">Linux</a></li>
+				<li><a href="/jquery/jquery-tutorial.html">jQuery</a></li>
+				<li><a href="/browser-history">本地书签</a></li>
+				<!--
+			
+				<li><a href="/w3cnote/knowledge-start.html" style="font-weight: bold;" onclick="_hmt.push(['_trackEvent', '星球', 'click', 'start'])" title="我的圈子">我的圈子</a></li>				
+				<li><a href="javascript:;" class="runoob-pop">登录</a></li>
+				-->
+      		</ul>
+			<ul class="mobile-nav">
+				<li><a href="//www.runoob.com/">首页</a></li>
+				<li><a href="/html/html-tutorial.html">HTML</a></li>
+				<li><a href="/css/css-tutorial.html">CSS</a></li>
+				<li><a href="/js/js-tutorial.html">JS</a></li>
+				<li><a href="/browser-history">本地书签</a></li>
+				<li><a href="javascript:void(0)" class="search-reveal">Search</a> </li>
+			</ul>
+			
+		</div>
+	</div>
+</div>
+
+<div class="container sub-navigation sub-navigation-articles" style="display:none">
+	<div class="row">
+		<div class="col nav-sub">
+		<ul id="python">
+			<li class="cat-item"><a href="/python3/python3-tutorial.html">Python3 教程 <i class="fa fa-external-link" aria-hidden="true"></i></a></li>
+			<li class="cat-item"><a href="/python/python-tutorial.html">Python2 教程 <i class="fa fa-external-link" aria-hidden="true"></i></a></li>
+		</ul>
+		<ul id="vue">
+			<li class="cat-item"><a href="/vue3/vue3-tutorial.html">Vue3 教程 <i class="fa fa-external-link" aria-hidden="true"></i></a></li>
+			<li class="cat-item"><a href="/vue/vue-tutorial.html">vue2 教程 <i class="fa fa-external-link" aria-hidden="true"></i></a></li>
+		</ul>
+
+		<ul id="bootstrap">
+			<li class="cat-item"><a href="/bootstrap/bootstrap-tutorial.html">Bootstrap3 教程 <i class="fa fa-external-link" aria-hidden="true"></i></a></li>
+			<li class="cat-item"><a href="/bootstrap4/bootstrap4-tutorial.html">Bootstrap4 教程 <i class="fa fa-external-link" aria-hidden="true"></i></a></li>
+			<li class="cat-item"><a href="/bootstrap5/bootstrap5-tutorial.html">Bootstrap5 教程 <i class="fa fa-external-link" aria-hidden="true"></i></a></li>
+			<li class="cat-item"><a href="/bootstrap/bootstrap-v2-tutorial.html">Bootstrap2 教程 <i class="fa fa-external-link" aria-hidden="true"></i></a></li>
+		</ul>
+		</div>
+	</div>
+</div><!--  内容  -->
+<div class="container main">
+	<!-- 中间 -->
+	<div class="row">
+	
+<div class="runoob-col-md2">
+<div class="left-column">
+	<div class="tab" style="overflow: hidden;text-overflow: ellipsis;white-space: nowrap;">
+	<i class="fa fa-list" aria-hidden="true"></i> 
+	<span>Go 语言教程</span>
+	<a data-cate="177" href="javascript:void(0);" title="夜间模式"  id="moon"><i class="fa fa-moon-o" aria-hidden="true" style="line-height: 28px;font-size: 1.2em;margin: 2px 4px 0;"></i></a>
+	<a data-cate="177" style="display:none;" href="javascript:void(0);" title="日间模式"  id="sun" ><i class="fa fa-sun-o" aria-hidden="true" style="line-height: 28px;font-size: 1.2em;margin: 2px 4px 0;line-height: 28px;
+}"></i></a>
+
+	</div>
+	<div class="sidebar-box gallery-list">
+		<div class="design" id="leftcolumn">
+						<a target="_top" title="Go 语言教程"  href="/go/go-tutorial.html" >
+			Go 语言教程			</a>
+						<a target="_top" title="Go 语言环境安装"  href="/go/go-environment.html" >
+			Go 语言环境安装			</a>
+						<a target="_top" title="Go 语言结构"  href="/go/go-program-structure.html" >
+			Go 语言结构			</a>
+						<a target="_top" title="Go 语言基础语法"  href="/go/go-basic-syntax.html" >
+			Go 语言基础语法			</a>
+						<a target="_top" title="Go 语言数据类型"  href="/go/go-data-types.html" >
+			Go 语言数据类型			</a>
+						<a target="_top" title="Go 语言变量"  href="/go/go-variables.html" >
+			Go 语言变量			</a>
+						<a target="_top" title="Go 语言常量"  href="/go/go-constants.html" >
+			Go 语言常量			</a>
+						<a target="_top" title="Go 语言运算符"  href="/go/go-operators.html" >
+			Go 语言运算符			</a>
+						<a target="_top" title="Go 语言条件语句"  href="/go/go-decision-making.html" >
+			Go 语言条件语句			</a>
+						<a target="_top" title="Go 语言循环语句"  href="/go/go-loops.html" >
+			Go 语言循环语句			</a>
+						<a target="_top" title="Go 语言函数"  href="/go/go-functions.html" >
+			Go 语言函数			</a>
+						<a target="_top" title="Go 语言变量作用域"  href="/go/go-scope-rules.html" >
+			Go 语言变量作用域			</a>
+						<a target="_top" title="Go 语言数组"  href="/go/go-arrays.html" >
+			Go 语言数组			</a>
+						<a target="_top" title="Go 语言指针"  href="/go/go-pointers.html" >
+			Go 语言指针			</a>
+						<a target="_top" title="Go 语言结构体"  href="/go/go-structures.html" >
+			Go 语言结构体			</a>
+						<a target="_top" title="Go 语言切片(Slice)"  href="/go/go-slice.html" >
+			Go 语言切片(Slice)			</a>
+						<a target="_top" title="Go 语言范围(Range)"  href="/go/go-range.html" >
+			Go 语言范围(Range)			</a>
+						<a target="_top" title="Go 语言 Map(集合)"  href="/go/go-map.html" >
+			Go 语言 Map(集合)			</a>
+						<a target="_top" title="Go 语言递归函数"  href="/go/go-recursion.html" >
+			Go 语言递归函数			</a>
+						<a target="_top" title="Go 语言类型转换"  href="/go/go-type-casting.html" >
+			Go 语言类型转换			</a>
+						<a target="_top" title="Go 语言接口"  href="/go/go-interfaces.html" >
+			Go 语言接口			</a>
+						<a target="_top" title="Go 错误处理"  href="/go/go-error-handling.html" >
+			Go 错误处理			</a>
+			<a target="_top" title="Go 并发" href="/go/go-concurrent.html">Go 并发			</a>			<a target="_top" title="Go 语言开发工具"  href="/go/go-ide.html" >
+			Go 语言开发工具			</a>
+				
+		</div>
+	</div>	
+</div>
+</div>	<div class="col middle-column">
+		
+	
+	<div class="article">
+		
+		<div class="previous-next-links">
+			<div class="previous-design-link"><i style="font-size:16px;" class="fa fa-arrow-left" aria-hidden="true"></i> <a href="http://www.runoob.com/go/go-structures.html" rel="prev"> Go 语言结构体</a> </div>
+			<div class="next-design-link"><a href="http://www.runoob.com/go/go-range.html" rel="next"> Go 语言范围(Range)</a> <i style="font-size:16px;" class="fa fa-arrow-right" aria-hidden="true"></i></div>
+		</div>
+<div class="article-heading-ad" style="display: block;">
+<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-5751451760833794"
+     crossorigin="anonymous"></script>
+<!-- 728*90 固定 -->
+<ins class="adsbygoogle"
+     style="display:inline-block;width:728px;height:90px"
+     data-ad-client="ca-pub-5751451760833794"
+     data-ad-slot="2147566827"></ins>
+<script>
+     (adsbygoogle = window.adsbygoogle || []).push({});
+</script>
+		</div>
+		<div class="article-body">
+		
+			<div class="article-intro" id="content">
+			
+			<h1>Go 语言切片(Slice)</h1>
+
+<p>Go 语言切片是对数组的抽象。</p>
+
+<p>Go 数组的长度不可改变，在特定场景中这样的集合就不太适用，Go 中提供了一种灵活，功能强悍的内置类型切片("动态数组")，与数组相比切片的长度是不固定的，可以追加元素，在追加时可能使切片的容量增大。</p>
+
+<hr />
+
+<h2>定义切片</h2>
+
+<p>你可以声明一个未指定大小的数组来定义切片：</p>
+
+<pre>var identifier []type
+</pre>
+
+<p>切片不需要说明长度。</p>
+
+<p>或使用 <strong>make()</strong> 函数来创建切片:</p>
+
+<pre>var slice1 []type = make([]type, len)
+
+也可以简写为
+
+slice1 := make([]type, len)
+</pre>
+
+<p>也可以指定容量，其中 <strong>capacity</strong> 为可选参数。</p>
+
+<pre>make([]T, length, capacity)
+</pre>
+
+<p>这里 len 是数组的长度并且也是切片的初始长度。</p>
+
+<h3>切片初始化</h3>
+
+<pre>s :=[] int {1,2,3 } 
+</pre>
+
+<p>直接初始化切片，<span class="marked">[]</span> 表示是切片类型，<strong>{1,2,3}</strong> 初始化值依次是 <span class="marked">1,2,3</span>，其 <strong>cap=len=3</strong>。</p>
+
+<pre>s := arr[:] 
+</pre>
+
+<p>初始化切片 <strong>s</strong>，是数组 arr 的引用。</p>
+
+<pre>s := arr[startIndex:endIndex] 
+</pre>
+
+<p>将 arr 中从下标 startIndex 到 endIndex-1 下的元素创建为一个新的切片。</p>
+
+<pre>s := arr[startIndex:] 
+</pre>
+
+<p>默认 endIndex 时将表示一直到arr的最后一个元素。</p>
+
+<pre>s := arr[:endIndex] 
+</pre>
+
+<p>默认 startIndex 时将表示从 arr 的第一个元素开始。</p>
+
+<pre>s1 := s[startIndex:endIndex] 
+</pre>
+
+<p>通过切片 s 初始化切片 s1。</p>
+
+<pre>s :=make([]int,len,cap) 
+</pre>
+
+<p>通过内置函数 <strong>make()</strong> 初始化切片<strong>s</strong>，<strong>[]int</strong> 标识为其元素类型为 int 的切片。</p>
+
+<hr />
+
+<h2>len() 和 cap() 函数</h2>
+
+<p>切片是可索引的，并且可以由 len() 方法获取长度。</p>
+
+<p>切片提供了计算容量的方法 cap() 可以测量切片最长可以达到多少。</p>
+
+<p>以下为具体实例：</p>
+<div class="example"><h2 class="example">实例</h2> <div class="example_code">
+<span style="color: #b1b100; font-weight: bold;">package</span> main<br />
+<br />
+<span style="color: #b1b100; font-weight: bold;">import</span> <span style="color: #cc66cc;">&quot;fmt&quot;</span><br />
+<br />
+<span style="color: #993333;">func</span> main<span style="color: #339933;">()</span> <span style="color: #339933;">{</span><br />
+&nbsp; &nbsp;<span style="color: #b1b100; font-weight: bold;">var</span> numbers <span style="color: #339933;">=</span> <span style="color: #000066;">make</span><span style="color: #339933;">([]</span><span style="color: #993333;">int</span><span style="color: #339933;">,</span><span style="color: #cc66cc;">3</span><span style="color: #339933;">,</span><span style="color: #cc66cc;">5</span><span style="color: #339933;">)</span><br />
+<br />
+&nbsp; &nbsp;printSlice<span style="color: #339933;">(</span>numbers<span style="color: #339933;">)</span><br />
+<span style="color: #339933;">}</span><br />
+<br />
+<span style="color: #993333;">func</span> printSlice<span style="color: #339933;">(</span>x <span style="color: #339933;">[]</span><span style="color: #993333;">int</span><span style="color: #339933;">){</span><br />
+&nbsp; &nbsp;fmt<span style="color: #339933;">.</span>Printf<span style="color: #339933;">(</span><span style="color: #cc66cc;">&quot;len=%d cap=%d slice=%v<span style="color: #000099; font-weight: bold;">\n</span>&quot;</span><span style="color: #339933;">,</span><span style="color: #000066;">len</span><span style="color: #339933;">(</span>x<span style="color: #339933;">),</span><span style="color: #000066;">cap</span><span style="color: #339933;">(</span>x<span style="color: #339933;">),</span>x<span style="color: #339933;">)</span><br />
+<span style="color: #339933;">}</span><br />
+</div></div>
+
+
+<p>以上实例运行输出结果为:</p>
+
+<pre>len=3 cap=5 slice=[0 0 0]
+</pre>
+
+<hr />
+
+<h2>空(nil)切片</h2>
+
+<p>一个切片在未初始化之前默认为 nil，长度为 0，实例如下：</p>
+<div class="example"><h2 class="example">实例</h2> <div class="example_code">
+<span style="color: #b1b100; font-weight: bold;">package</span> main<br />
+<br />
+<span style="color: #b1b100; font-weight: bold;">import</span> <span style="color: #cc66cc;">&quot;fmt&quot;</span><br />
+<br />
+<span style="color: #993333;">func</span> main<span style="color: #339933;">()</span> <span style="color: #339933;">{</span><br />
+&nbsp; &nbsp;<span style="color: #b1b100; font-weight: bold;">var</span> numbers <span style="color: #339933;">[]</span><span style="color: #993333;">int</span><br />
+<br />
+&nbsp; &nbsp;printSlice<span style="color: #339933;">(</span>numbers<span style="color: #339933;">)</span><br />
+<br />
+&nbsp; &nbsp;<span style="color: #b1b100; font-weight: bold;">if</span><span style="color: #339933;">(</span>numbers <span style="color: #339933;">==</span> <span style="color: #000000; font-weight: bold;">nil</span><span style="color: #339933;">){</span><br />
+&nbsp; &nbsp; &nbsp; fmt<span style="color: #339933;">.</span>Printf<span style="color: #339933;">(</span><span style="color: #cc66cc;">&quot;切片是空的&quot;</span><span style="color: #339933;">)</span><br />
+&nbsp; &nbsp;<span style="color: #339933;">}</span><br />
+<span style="color: #339933;">}</span><br />
+<br />
+<span style="color: #993333;">func</span> printSlice<span style="color: #339933;">(</span>x <span style="color: #339933;">[]</span><span style="color: #993333;">int</span><span style="color: #339933;">){</span><br />
+&nbsp; &nbsp;fmt<span style="color: #339933;">.</span>Printf<span style="color: #339933;">(</span><span style="color: #cc66cc;">&quot;len=%d cap=%d slice=%v<span style="color: #000099; font-weight: bold;">\n</span>&quot;</span><span style="color: #339933;">,</span><span style="color: #000066;">len</span><span style="color: #339933;">(</span>x<span style="color: #339933;">),</span><span style="color: #000066;">cap</span><span style="color: #339933;">(</span>x<span style="color: #339933;">),</span>x<span style="color: #339933;">)</span><br />
+<span style="color: #339933;">}</span><br />
+</div></div>
+
+<p>以上实例运行输出结果为:</p>
+
+<pre>len=0 cap=0 slice=[]
+切片是空的
+</pre>
+
+<hr />
+
+<h2>切片截取</h2>
+
+<p>可以通过设置下限及上限来设置截取切片 <em>[lower-bound:upper-bound]</em>，实例如下：</p>
+
+<div class="example"><h2 class="example">实例</h2> <div class="example_code">
+<span style="color: #b1b100; font-weight: bold;">package</span> main<br />
+<br />
+<span style="color: #b1b100; font-weight: bold;">import</span> <span style="color: #cc66cc;">&quot;fmt&quot;</span><br />
+<br />
+<span style="color: #993333;">func</span> main<span style="color: #339933;">()</span> <span style="color: #339933;">{</span><br />
+&nbsp; &nbsp;<span style="color: #666666; font-style: italic;">/* 创建切片 */</span><br />
+&nbsp; &nbsp;numbers <span style="color: #339933;">:=</span> <span style="color: #339933;">[]</span><span style="color: #993333;">int</span><span style="color: #339933;">{</span><span style="color: #cc66cc;">0</span><span style="color: #339933;">,</span><span style="color: #cc66cc;">1</span><span style="color: #339933;">,</span><span style="color: #cc66cc;">2</span><span style="color: #339933;">,</span><span style="color: #cc66cc;">3</span><span style="color: #339933;">,</span><span style="color: #cc66cc;">4</span><span style="color: #339933;">,</span><span style="color: #cc66cc;">5</span><span style="color: #339933;">,</span><span style="color: #cc66cc;">6</span><span style="color: #339933;">,</span><span style="color: #cc66cc;">7</span><span style="color: #339933;">,</span><span style="color: #cc66cc;">8</span><span style="color: #339933;">}</span> &nbsp; <br />
+&nbsp; &nbsp;printSlice<span style="color: #339933;">(</span>numbers<span style="color: #339933;">)</span><br />
+<br />
+&nbsp; &nbsp;<span style="color: #666666; font-style: italic;">/* 打印原始切片 */</span><br />
+&nbsp; &nbsp;fmt<span style="color: #339933;">.</span><span style="">Println</span><span style="color: #339933;">(</span><span style="color: #cc66cc;">&quot;numbers ==&quot;</span><span style="color: #339933;">,</span> numbers<span style="color: #339933;">)</span><br />
+<br />
+&nbsp; &nbsp;<span style="color: #666666; font-style: italic;">/* 打印子切片从索引1(包含) 到索引4(不包含)*/</span><br />
+&nbsp; &nbsp;fmt<span style="color: #339933;">.</span><span style="">Println</span><span style="color: #339933;">(</span><span style="color: #cc66cc;">&quot;numbers[1:4] ==&quot;</span><span style="color: #339933;">,</span> numbers<span style="color: #339933;">[</span><span style="color: #cc66cc;">1</span><span style="color: #339933;">:</span><span style="color: #cc66cc;">4</span><span style="color: #339933;">])</span><br />
+<br />
+&nbsp; &nbsp;<span style="color: #666666; font-style: italic;">/* 默认下限为 0*/</span><br />
+&nbsp; &nbsp;fmt<span style="color: #339933;">.</span><span style="">Println</span><span style="color: #339933;">(</span><span style="color: #cc66cc;">&quot;numbers[:3] ==&quot;</span><span style="color: #339933;">,</span> numbers<span style="color: #339933;">[:</span><span style="color: #cc66cc;">3</span><span style="color: #339933;">])</span><br />
+<br />
+&nbsp; &nbsp;<span style="color: #666666; font-style: italic;">/* 默认上限为 len(s)*/</span><br />
+&nbsp; &nbsp;fmt<span style="color: #339933;">.</span><span style="">Println</span><span style="color: #339933;">(</span><span style="color: #cc66cc;">&quot;numbers[4:] ==&quot;</span><span style="color: #339933;">,</span> numbers<span style="color: #339933;">[</span><span style="color: #cc66cc;">4</span><span style="color: #339933;">:])</span><br />
+<br />
+&nbsp; &nbsp;numbers1 <span style="color: #339933;">:=</span> <span style="color: #000066;">make</span><span style="color: #339933;">([]</span><span style="color: #993333;">int</span><span style="color: #339933;">,</span><span style="color: #cc66cc;">0</span><span style="color: #339933;">,</span><span style="color: #cc66cc;">5</span><span style="color: #339933;">)</span><br />
+&nbsp; &nbsp;printSlice<span style="color: #339933;">(</span>numbers1<span style="color: #339933;">)</span><br />
+<br />
+&nbsp; &nbsp;<span style="color: #666666; font-style: italic;">/* 打印子切片从索引 &nbsp;0(包含) 到索引 2(不包含) */</span><br />
+&nbsp; &nbsp;number2 <span style="color: #339933;">:=</span> numbers<span style="color: #339933;">[:</span><span style="color: #cc66cc;">2</span><span style="color: #339933;">]</span><br />
+&nbsp; &nbsp;printSlice<span style="color: #339933;">(</span>number2<span style="color: #339933;">)</span><br />
+<br />
+&nbsp; &nbsp;<span style="color: #666666; font-style: italic;">/* 打印子切片从索引 2(包含) 到索引 5(不包含) */</span><br />
+&nbsp; &nbsp;number3 <span style="color: #339933;">:=</span> numbers<span style="color: #339933;">[</span><span style="color: #cc66cc;">2</span><span style="color: #339933;">:</span><span style="color: #cc66cc;">5</span><span style="color: #339933;">]</span><br />
+&nbsp; &nbsp;printSlice<span style="color: #339933;">(</span>number3<span style="color: #339933;">)</span><br />
+<br />
+<span style="color: #339933;">}</span><br />
+<br />
+<span style="color: #993333;">func</span> printSlice<span style="color: #339933;">(</span>x <span style="color: #339933;">[]</span><span style="color: #993333;">int</span><span style="color: #339933;">){</span><br />
+&nbsp; &nbsp;fmt<span style="color: #339933;">.</span>Printf<span style="color: #339933;">(</span><span style="color: #cc66cc;">&quot;len=%d cap=%d slice=%v<span style="color: #000099; font-weight: bold;">\n</span>&quot;</span><span style="color: #339933;">,</span><span style="color: #000066;">len</span><span style="color: #339933;">(</span>x<span style="color: #339933;">),</span><span style="color: #000066;">cap</span><span style="color: #339933;">(</span>x<span style="color: #339933;">),</span>x<span style="color: #339933;">)</span><br />
+<span style="color: #339933;">}</span><br />
+</div></div>
+
+<p>执行以上代码输出结果为：</p>
+
+<pre>len=9 cap=9 slice=[0 1 2 3 4 5 6 7 8]
+numbers == [0 1 2 3 4 5 6 7 8]
+numbers[1:4] == [1 2 3]
+numbers[:3] == [0 1 2]
+numbers[4:] == [4 5 6 7 8]
+len=0 cap=5 slice=[]
+len=2 cap=9 slice=[0 1]
+len=3 cap=7 slice=[2 3 4]
+</pre>
+
+<hr />
+
+<h2>append() 和 copy() 函数</h2>
+
+<p>如果想增加切片的容量，我们必须创建一个新的更大的切片并把原分片的内容都拷贝过来。</p>
+
+<p>下面的代码描述了从拷贝切片的 copy 方法和向切片追加新元素的 append 方法。</p>
+
+<div class="example"><h2 class="example">实例</h2> <div class="example_code">
+<span style="color: #b1b100; font-weight: bold;">package</span> main<br />
+<br />
+<span style="color: #b1b100; font-weight: bold;">import</span> <span style="color: #cc66cc;">&quot;fmt&quot;</span><br />
+<br />
+<span style="color: #993333;">func</span> main<span style="color: #339933;">()</span> <span style="color: #339933;">{</span><br />
+&nbsp; &nbsp;<span style="color: #b1b100; font-weight: bold;">var</span> numbers <span style="color: #339933;">[]</span><span style="color: #993333;">int</span><br />
+&nbsp; &nbsp;printSlice<span style="color: #339933;">(</span>numbers<span style="color: #339933;">)</span><br />
+<br />
+&nbsp; &nbsp;<span style="color: #666666; font-style: italic;">/* 允许追加空切片 */</span><br />
+&nbsp; &nbsp;numbers <span style="color: #339933;">=</span> append<span style="color: #339933;">(</span>numbers<span style="color: #339933;">,</span> <span style="color: #cc66cc;">0</span><span style="color: #339933;">)</span><br />
+&nbsp; &nbsp;printSlice<span style="color: #339933;">(</span>numbers<span style="color: #339933;">)</span><br />
+<br />
+&nbsp; &nbsp;<span style="color: #666666; font-style: italic;">/* 向切片添加一个元素 */</span><br />
+&nbsp; &nbsp;numbers <span style="color: #339933;">=</span> append<span style="color: #339933;">(</span>numbers<span style="color: #339933;">,</span> <span style="color: #cc66cc;">1</span><span style="color: #339933;">)</span><br />
+&nbsp; &nbsp;printSlice<span style="color: #339933;">(</span>numbers<span style="color: #339933;">)</span><br />
+<br />
+&nbsp; &nbsp;<span style="color: #666666; font-style: italic;">/* 同时添加多个元素 */</span><br />
+&nbsp; &nbsp;numbers <span style="color: #339933;">=</span> append<span style="color: #339933;">(</span>numbers<span style="color: #339933;">,</span> <span style="color: #cc66cc;">2</span><span style="color: #339933;">,</span><span style="color: #cc66cc;">3</span><span style="color: #339933;">,</span><span style="color: #cc66cc;">4</span><span style="color: #339933;">)</span><br />
+&nbsp; &nbsp;printSlice<span style="color: #339933;">(</span>numbers<span style="color: #339933;">)</span><br />
+<br />
+&nbsp; &nbsp;<span style="color: #666666; font-style: italic;">/* 创建切片 numbers1 是之前切片的两倍容量*/</span><br />
+&nbsp; &nbsp;numbers1 <span style="color: #339933;">:=</span> <span style="color: #000066;">make</span><span style="color: #339933;">([]</span><span style="color: #993333;">int</span><span style="color: #339933;">,</span> <span style="color: #000066;">len</span><span style="color: #339933;">(</span>numbers<span style="color: #339933;">),</span> <span style="color: #339933;">(</span><span style="color: #000066;">cap</span><span style="color: #339933;">(</span>numbers<span style="color: #339933;">))</span><span style="color: #339933;">*</span><span style="color: #cc66cc;">2</span><span style="color: #339933;">)</span><br />
+<br />
+&nbsp; &nbsp;<span style="color: #666666; font-style: italic;">/* 拷贝 numbers 的内容到 numbers1 */</span><br />
+&nbsp; &nbsp;<span style="color: #000066;">copy</span><span style="color: #339933;">(</span>numbers1<span style="color: #339933;">,</span>numbers<span style="color: #339933;">)</span><br />
+&nbsp; &nbsp;printSlice<span style="color: #339933;">(</span>numbers1<span style="color: #339933;">)</span> &nbsp; <br />
+<span style="color: #339933;">}</span><br />
+<br />
+<span style="color: #993333;">func</span> printSlice<span style="color: #339933;">(</span>x <span style="color: #339933;">[]</span><span style="color: #993333;">int</span><span style="color: #339933;">){</span><br />
+&nbsp; &nbsp;fmt<span style="color: #339933;">.</span>Printf<span style="color: #339933;">(</span><span style="color: #cc66cc;">&quot;len=%d cap=%d slice=%v<span style="color: #000099; font-weight: bold;">\n</span>&quot;</span><span style="color: #339933;">,</span><span style="color: #000066;">len</span><span style="color: #339933;">(</span>x<span style="color: #339933;">),</span><span style="color: #000066;">cap</span><span style="color: #339933;">(</span>x<span style="color: #339933;">),</span>x<span style="color: #339933;">)</span><br />
+<span style="color: #339933;">}</span><br />
+</div></div>
+
+
+<p>以上代码执行输出结果为：</p>
+
+<pre>len=0 cap=0 slice=[]
+len=1 cap=1 slice=[0]
+len=2 cap=2 slice=[0 1]
+len=5 cap=6 slice=[0 1 2 3 4]
+len=5 cap=12 slice=[0 1 2 3 4]
+</pre>			<!-- 其他扩展 -->
+						
+			</div>
+			
+		</div>
+		
+		<div class="previous-next-links">
+			<div class="previous-design-link"><i style="font-size:16px;" class="fa fa-arrow-left" aria-hidden="true"></i> <a href="http://www.runoob.com/go/go-structures.html" rel="prev"> Go 语言结构体</a> </div>
+			<div class="next-design-link"><a href="http://www.runoob.com/go/go-range.html" rel="next"> Go 语言范围(Range)</a> <i style="font-size:16px;" class="fa fa-arrow-right" aria-hidden="true"></i></div>
+		</div>
+		<!-- 笔记列表 -->
+		<style>
+.wrapper {
+  /*text-transform: uppercase; */
+  background: #ececec;
+  color: #555;
+  cursor: help;
+  font-family: "Gill Sans", Impact, sans-serif;
+  font-size: 20px;
+  position: relative;
+  text-align: center;
+  width: 200px;
+  -webkit-transform: translateZ(0); /* webkit flicker fix */
+  -webkit-font-smoothing: antialiased; /* webkit text rendering fix */
+}
+
+.wrapper .tooltip {
+  white-space: nowrap;
+  font-size: 14px;
+  text-align: left;
+  background: #96b97d;
+  bottom: 100%;
+  color: #fff;
+  display: block;
+  left: -25px;
+  margin-bottom: 15px;
+  opacity: 0;
+  padding: 14px;
+  pointer-events: none;
+  position: absolute;
+  
+  -webkit-transform: translateY(10px);
+     -moz-transform: translateY(10px);
+      -ms-transform: translateY(10px);
+       -o-transform: translateY(10px);
+          transform: translateY(10px);
+  -webkit-transition: all .25s ease-out;
+     -moz-transition: all .25s ease-out;
+      -ms-transition: all .25s ease-out;
+       -o-transition: all .25s ease-out;
+          transition: all .25s ease-out;
+  -webkit-box-shadow: 2px 2px 6px rgba(0, 0, 0, 0.28);
+     -moz-box-shadow: 2px 2px 6px rgba(0, 0, 0, 0.28);
+      -ms-box-shadow: 2px 2px 6px rgba(0, 0, 0, 0.28);
+       -o-box-shadow: 2px 2px 6px rgba(0, 0, 0, 0.28);
+          box-shadow: 2px 2px 6px rgba(0, 0, 0, 0.28);
+}
+.tooltip a {
+	color:#fff;
+}
+/* This bridges the gap so you can mouse into the tooltip without it disappearing */
+.wrapper .tooltip:before {
+  bottom: -20px;
+  content: " ";
+  display: block;
+  height: 20px;
+  left: 0;
+  position: absolute;
+  width: 100%;
+}  
+
+/* CSS Triangles - see Trevor's post */
+.wrapper .tooltip:after {
+  border-left: solid transparent 10px;
+  border-right: solid transparent 10px;
+  border-top: solid #96b97d 10px;
+  bottom: -10px;
+  content: " ";
+  height: 0;
+  left: 20%;
+  margin-left: -13px;
+  position: absolute;
+  width: 0;
+}
+.wrapper .tooltip1 {
+	margin-left: 50px;
+	padding-top: 0px;
+}
+/*
+.wrapper:hover .tooltip {
+  opacity: 1;
+  pointer-events: auto;
+  -webkit-transform: translateY(0px);
+     -moz-transform: translateY(0px);
+      -ms-transform: translateY(0px);
+       -o-transform: translateY(0px);
+          transform: translateY(0px);
+}
+*/
+/* IE can just show/hide with no transition */
+.lte8 .wrapper .tooltip {
+  display: none;
+}
+
+.lte8 .wrapper:hover .tooltip {
+  display: block;
+}
+
+</style>
+
+<link rel="stylesheet" href="https://static.runoob.com/assets/upvotejs/dist/upvotejs/upvotejs.css">
+<script src="https://static.runoob.com/assets/upvotejs/dist/upvotejs/upvotejs.vanilla.js"></script>
+<script src="https://static.runoob.com/assets/upvotejs/dist/upvotejs/upvotejs.jquery.js"></script>
+<div class="title" id="comments">
+	<h2 class="">
+    <div class="altblock">
+				<i style="font-size:28px;margin-top: 8px;" class="fa fa-plus-square" aria-hidden="true"></i>
+		    </div>
+    <span class="mw-headline" id="qa_headline">24  篇笔记</span>
+	<span class="mw-headline" id="user_add_note" style="float:right;line-height: 62px;padding-right: 14px;"><i class="fa fa-pencil-square-o" aria-hidden="true"></i>  写笔记</span>
+    </h2>
+</div>
+
+<div id="postcomments"  style="display:none;" >
+	<ol class="commentlist">
+		<li class="comment even thread-even depth-1" id="comment-21876"><span class="comt-f">#0</span><div class="comt-avatar wrapper"><i style="font-size:36px;" class="fa fa-user-circle" aria-hidden="true"></i><div class="tooltip"><p><i class="fa fa-user" aria-hidden="true"></i>&nbsp;&nbsp;&nbsp;老逗先生</p><p><i class="fa fa-envelope" aria-hidden="true"></i>&nbsp;&nbsp;104***5037@qq.com</p></div><div id="runoobvote-id-21876" data-commid = "21876" class="upvotejs"><a class="upvote"></a> <span class="count">29</span></div></div><div class="comt-main" id="div-comment-21876"><pre>package main
+import "fmt"
+
+func main() {
+   numbers := []int{0,1,2,3,4,5,6,7,8}
+   printSlice(numbers)
+   fmt.Println("numbers ==",numbers)
+   numbers1 := numbers[1:4]
+   printSlice(numbers1)
+   fmt.Println("numbers[:3] ==", numbers[:3])
+   numbers2 :=numbers[4:]
+   printSlice(numbers2)
+   numbers3 := make([]int,0,5)
+   printSlice(numbers3)
+   numbers4 := numbers[:2]
+   printSlice(numbers4)
+}
+
+func printSlice(x []int){
+   fmt.Printf("len=%d cap=%d slice=%v\n",len(x),cap(x),x)
+}</pre>
+
+
+<p>输出结果：</p>
+
+
+<pre>len=9 cap=9 slice=[0 1 2 3 4 5 6 7 8]
+numbers == [0 1 2 3 4 5 6 7 8]
+len=3 cap=8 slice=[1 2 3]
+numbers[:3] == [0 1 2]
+len=5 cap=5 slice=[4 5 6 7 8]
+len=0 cap=5 slice=[]
+len=2 cap=9 slice=[0 1]</pre>
+
+
+<p>我们可以看出切片，实际的是获取数组的某一部分，<strong>len切片&lt;=cap切片&lt;=len数组</strong>，切片由三部分组成：指向底层数组的指针、len、cap。</p><div class="comt-meta wrapper"><span class="comt-author"><a target="_blank" href="javascript:;">老逗先生</a><div class="tooltip tooltip1"><p><i class="fa fa-user" aria-hidden="true"></i>&nbsp;&nbsp;&nbsp;老逗先生</p><p><i class="fa fa-envelope" aria-hidden="true"></i>&nbsp;&nbsp;104***5037@qq.com</p></div></span>5年前 (2017-12-20)</div></div></li><!-- #comment-## -->
+<li class="comment byuser comment-author-tianqixin bypostauthor odd alt thread-odd thread-alt depth-1" id="comment-25527"><span class="comt-f">#0</span><div class="comt-avatar wrapper"><i style="font-size:36px;" class="fa fa-user-circle" aria-hidden="true"></i><div class="tooltip"><p><i class="fa fa-user" aria-hidden="true"></i>&nbsp;&nbsp;&nbsp;LeonWilliam</p><p><i class="fa fa-envelope" aria-hidden="true"></i>&nbsp;&nbsp;257***8572@qq.com</p></div><div id="runoobvote-id-25527" data-commid = "25527" class="upvotejs"><a class="upvote"></a> <span class="count">10</span></div></div><div class="comt-main" id="div-comment-25527"><pre>package main
+
+import "fmt"
+
+func main() {
+   sliceTest()
+   twoDimensionArray()
+}
+
+func sliceTest() {
+   arr := []int{1, 2, 3, 4, 5}
+   s := arr[:]
+   for e := range s {
+      fmt.Println(s[e])
+   }
+   s1 := make([]int, 3)
+   for e := range s1 {
+      fmt.Println(s1[e])
+   }
+}
+
+func twoDimensionArray() {
+   /* 数组 - 5 行 2 列*/
+   var a = [][]int{{0, 0}, {1, 2}, {2}, {3, 6}, {4, 8}}
+   var i, j int
+
+   /* 输出数组元素 */
+   for i = 0; i &lt; len(a); i++ {
+      for j = 0; j &lt; len(a[i]); j++ {
+         fmt.Printf("a[%d][%d] = %d\n", i, j, a[i][j])
+      }
+   }
+}</pre>
+
+<p>sliceTest 函数是切片测试代码，简单的两种初始化方式。</p>
+
+<p>twoDimensionsArray 函数是二维数组测试函数。</p>
+
+<p>测试结果:</p>
+
+<p>1.二维数组中的元素(一位数组)个数 &gt; 限制的列数,异常;</p>
+
+<p>2.二维数组中的元素(一位数组)个数 &lt;= 限制的列数,正常;</p>
+
+<p>假设列数为 3, 某个一位数组 {1}, 则后两个元素,默认为 0。</p><div class="comt-meta wrapper"><span class="comt-author"><a target="_blank" href="javascript:;">LeonWilliam</a><div class="tooltip tooltip1"><p><i class="fa fa-user" aria-hidden="true"></i>&nbsp;&nbsp;&nbsp;LeonWilliam</p><p><i class="fa fa-envelope" aria-hidden="true"></i>&nbsp;&nbsp;257***8572@qq.com</p></div></span>5年前 (2018-03-26)</div></div></li><!-- #comment-## -->
+<li class="comment even thread-even depth-1" id="comment-37226"><span class="comt-f">#0</span><div class="comt-avatar wrapper"><i style="font-size:36px;" class="fa fa-user-circle" aria-hidden="true"></i><div class="tooltip"><p><i class="fa fa-user" aria-hidden="true"></i>&nbsp;&nbsp;&nbsp;jean</p><p><i class="fa fa-envelope" aria-hidden="true"></i>&nbsp;&nbsp;333***2@qq.com</p></div><div id="runoobvote-id-37226" data-commid = "37226" class="upvotejs"><a class="upvote"></a> <span class="count">43</span></div></div><div class="comt-main" id="div-comment-37226"><p>我们基于原数组或者切片创建一个新的切片后，那么新的切片的大小和容量是多少呢？</p>
+
+<p>这里有个公式，对于底层数组容量是 <strong>k</strong> 的切片 <span class="marked">slice[i:j]</span> 来说：</p>
+
+<pre>长度: j-i
+容量: k-i</pre>
+<p>例子：</p>
+<pre>package main
+
+import "fmt"
+func main() {
+    numbers:=[]int{0,1,2,3,4,5,6,7,8,9,10}
+    printSlice(numbers)
+    fmt.Printf("%d\n",numbers[1:3])
+    fmt.Printf("%d\n",numbers[2:7])
+    fmt.Printf("%d\n",numbers[:3])
+    fmt.Printf("%d\n",numbers[4:])
+    number1:=make([]int,0,5)
+    number2:=numbers[:3]
+    printSlice(number1)
+    printSlice(number2)
+    number3:=numbers[2:5]
+    printSlice(number3)
+    number4:=numbers[3:8]
+    printSlice(number4)
+}
+
+func printSlice(x []int) {
+    fmt.Printf("len=%d  cap=%d   slice=%v\n",len(x),cap(x),x)
+}</pre>
+<p>执行结果:</p>
+
+<pre>len=11  cap=11   slice=[0 1 2 3 4 5 6 7 8 9 10]
+[1 2]
+[2 3 4 5 6]
+[0 1 2]
+[4 5 6 7 8 9 10]
+len=0  cap=5   slice=[]
+len=3  cap=11   slice=[0 1 2]
+len=3  cap=9   slice=[2 3 4]
+len=5  cap=8   slice=[3 4 5 6 7]</pre><div class="comt-meta wrapper"><span class="comt-author"><a target="_blank" href="javascript:;">jean</a><div class="tooltip tooltip1"><p><i class="fa fa-user" aria-hidden="true"></i>&nbsp;&nbsp;&nbsp;jean</p><p><i class="fa fa-envelope" aria-hidden="true"></i>&nbsp;&nbsp;333***2@qq.com</p></div></span>4年前 (2018-11-21)</div></div></li><!-- #comment-## -->
+<li class="comment odd alt thread-odd thread-alt depth-1" id="comment-39031"><span class="comt-f">#0</span><div class="comt-avatar wrapper"><i style="font-size:36px;" class="fa fa-user-circle" aria-hidden="true"></i><div class="tooltip"><p><i class="fa fa-user" aria-hidden="true"></i>&nbsp;&nbsp;&nbsp;amano</p><p><i class="fa fa-envelope" aria-hidden="true"></i>&nbsp;&nbsp;106***6790@qq.com</p></div><div id="runoobvote-id-39031" data-commid = "39031" class="upvotejs"><a class="upvote"></a> <span class="count">53</span></div></div><div class="comt-main" id="div-comment-39031"><pre>numbers := []int{0,1,2,3,4,5,6,7,8}
+number3 := numbers[2:5]
+printSlice(number3)</pre>
+<p>结果为:</p>
+<pre>len=3 cap=7 slice=[2 3 4]</pre>
+<p>capacity 为 7 是因为 number3 的 ptr 指向第三个元素， 后面还剩 2,3,4,5,6,7,8, 所以 cap=7。</p>
+
+<p>如：</p>
+
+<pre>number4 := numbers[5:]
+printSlice(number4)</pre>
+<p>结果为：</p>
+<pre>len=4 cap=4 slice=[5 6 7 8]</pre>
+<p>capacity 为 4 是因为 number4 的 ptr 指向第六个元素， 后面还剩 5,6,7,8 所以 cap=4。</p>
+
+<div class="comt-meta wrapper"><span class="comt-author"><a target="_blank" href="javascript:;">amano</a><div class="tooltip tooltip1"><p><i class="fa fa-user" aria-hidden="true"></i>&nbsp;&nbsp;&nbsp;amano</p><p><i class="fa fa-envelope" aria-hidden="true"></i>&nbsp;&nbsp;106***6790@qq.com</p></div></span>4年前 (2019-01-16)</div></div></li><!-- #comment-## -->
+<li class="comment even thread-even depth-1" id="comment-40129"><span class="comt-f">#0</span><div class="comt-avatar wrapper"><i style="font-size:36px;" class="fa fa-user-circle" aria-hidden="true"></i><div class="tooltip"><p><i class="fa fa-user" aria-hidden="true"></i>&nbsp;&nbsp;&nbsp;ABC123</p><p><i class="fa fa-envelope" aria-hidden="true"></i>&nbsp;&nbsp;abc***c.com</p></div><div id="runoobvote-id-40129" data-commid = "40129" class="upvotejs"><a class="upvote"></a> <span class="count">26</span></div></div><div class="comt-main" id="div-comment-40129"><p data-title="Go 合并数组">合并多个数组：</p>
+
+<pre>package main
+import "fmt"
+
+func main() {
+    var arr1 = []int{1,2,3}
+    var arr2 = []int{4,5,6}
+    var arr3 = []int{7,8,9}
+    var s1 = append(append(arr1, arr2...), arr3...)
+    fmt.Printf("s1: %v\n", s1)
+}</pre>
+<p>输出结果：</p>
+
+<pre>s1: [1 2 3 4 5 6 7 8 9]</pre><div class="comt-meta wrapper"><span class="comt-author"><a target="_blank" href="/note/40129">ABC123</a><div class="tooltip tooltip1"><p><i class="fa fa-user" aria-hidden="true"></i>&nbsp;&nbsp;&nbsp;ABC123</p><p><i class="fa fa-envelope" aria-hidden="true"></i>&nbsp;&nbsp;abc***c.com</p></div></span>4年前 (2019-02-26)</div></div></li><!-- #comment-## -->
+<li class="comment odd alt thread-odd thread-alt depth-1" id="comment-40412"><span class="comt-f">#0</span><div class="comt-avatar wrapper"><i style="font-size:36px;" class="fa fa-user-circle" aria-hidden="true"></i><div class="tooltip"><p><i class="fa fa-user" aria-hidden="true"></i>&nbsp;&nbsp;&nbsp;lslxdx</p><p><i class="fa fa-envelope" aria-hidden="true"></i>&nbsp;&nbsp;lsl***@163.com</p></div><div id="runoobvote-id-40412" data-commid = "40412" class="upvotejs"><a class="upvote"></a> <span class="count">43</span></div></div><div class="comt-main" id="div-comment-40412"><p>在做函数调用时，slice 按引用传递，array 按值传递：</p>
+
+<pre>package main
+
+import "fmt"
+
+func main(){
+  changeSliceTest()
+}
+
+func changeSliceTest() {
+    arr1 := []int{1, 2, 3}
+    arr2 := [3]int{1, 2, 3}
+    arr3 := [3]int{1, 2, 3}
+
+    fmt.Println("before change arr1, ", arr1)
+    changeSlice(arr1) // slice 按引用传递
+    fmt.Println("after change arr1, ", arr1)
+
+    fmt.Println("before change arr2, ", arr2)
+    changeArray(arr2) // array 按值传递
+    fmt.Println("after change arr2, ", arr2)
+
+    fmt.Println("before change arr3, ", arr3)
+    changeArrayByPointer(&amp;arr3) // 可以显式取array的 指针
+    fmt.Println("after change arr3, ", arr3)
+}
+
+func changeSlice(arr []int) {
+    arr[0] = 9999
+}
+
+func changeArray(arr [3]int) {
+    arr[0] = 6666
+}
+
+func changeArrayByPointer(arr *[3]int) {
+    arr[0] = 6666
+}</pre>
+
+<p>输出结果为：</p>
+<pre>before change arr1,  [1 2 3]
+after change arr1,  [9999 2 3]
+before change arr2,  [1 2 3]
+after change arr2,  [1 2 3]
+before change arr3,  [1 2 3]
+after change arr3,  [6666 2 3]</pre><div class="comt-meta wrapper"><span class="comt-author"><a target="_blank" href="javascript:;">lslxdx</a><div class="tooltip tooltip1"><p><i class="fa fa-user" aria-hidden="true"></i>&nbsp;&nbsp;&nbsp;lslxdx</p><p><i class="fa fa-envelope" aria-hidden="true"></i>&nbsp;&nbsp;lsl***@163.com</p></div></span>4年前 (2019-03-05)</div></div></li><!-- #comment-## -->
+<li class="comment even thread-even depth-1" id="comment-41001"><span class="comt-f">#0</span><div class="comt-avatar wrapper"><i style="font-size:36px;" class="fa fa-user-circle" aria-hidden="true"></i><div class="tooltip"><p><i class="fa fa-user" aria-hidden="true"></i>&nbsp;&nbsp;&nbsp;berakcup</p><p><i class="fa fa-envelope" aria-hidden="true"></i>&nbsp;&nbsp;104***3071@qq.com</p></div><div id="runoobvote-id-41001" data-commid = "41001" class="upvotejs"><a class="upvote"></a> <span class="count">46</span></div></div><div class="comt-main" id="div-comment-41001"><p>append() 和 copy() 部分，貌似有没说明白的地方。</p>
+
+<p>当 <strong>numbers = [0, 1]</strong> 时，<strong>append(numbers, 2, 3, 4)</strong> 为什么 cap 从 2 变成 6 ？</p>
+
+<p>经过实践得知，append(list, [params])，先判断 list 的 cap 长度是否大于等于 <strong>len(list) + len([params])</strong>，如果大于那么 cap 不变，否则 cap 等于 <strong>max{cap(list), cap[params]}</strong>，所以当 append(numbers, 2, 3, 4) cap 从 2 变成 6。</p>
+
+<div class="comt-meta wrapper"><span class="comt-author"><a target="_blank" href="javascript:;">berakcup</a><div class="tooltip tooltip1"><p><i class="fa fa-user" aria-hidden="true"></i>&nbsp;&nbsp;&nbsp;berakcup</p><p><i class="fa fa-envelope" aria-hidden="true"></i>&nbsp;&nbsp;104***3071@qq.com</p></div></span>4年前 (2019-03-20)</div></div></li><!-- #comment-## -->
+<li class="comment odd alt thread-odd thread-alt depth-1" id="comment-41282"><span class="comt-f">#0</span><div class="comt-avatar wrapper"><i style="font-size:36px;" class="fa fa-user-circle" aria-hidden="true"></i><div class="tooltip"><p><i class="fa fa-user" aria-hidden="true"></i>&nbsp;&nbsp;&nbsp;andriyy</p><p><i class="fa fa-envelope" aria-hidden="true"></i>&nbsp;&nbsp;ano***ous@abc.com</p></div><div id="runoobvote-id-41282" data-commid = "41282" class="upvotejs"><a class="upvote"></a> <span class="count">20</span></div></div><div class="comt-main" id="div-comment-41282"><p>使用 copy 函数要注意对于 copy(dst, src)，要初始化 dst 的 size，否则无法复制。</p>
+
+<p>错误示例:</p>
+
+<pre>dst := make([]int, 0)
+src := []int{1, 2, 3}
+copy(dst, src)
+printSlice(src)
+printSlice(dst)
+
+func printSlice(x []int){
+   fmt.Printf("len=%d cap=%d slice=%v\n",len(x),cap(x),x)
+}</pre>
+<p>输出结果:</p>
+
+<pre>len=3 cap=3 slice=[1 2 3]
+len=0 cap=0 slice=[]</pre>
+<p>正确示例:</p>
+
+<pre>dst := make([]int, 3)  // 令size=3
+src := []int{1, 2, 3}
+copy(dst, src)
+printSlice(src)
+printSlice(dst)</pre>
+<p>输出结果:</p>
+
+<pre>len=3 cap=3 slice=[1 2 3]
+len=3 cap=3 slice=[1 2 3]</pre><div class="comt-meta wrapper"><span class="comt-author"><a target="_blank" href="javascript:;">andriyy</a><div class="tooltip tooltip1"><p><i class="fa fa-user" aria-hidden="true"></i>&nbsp;&nbsp;&nbsp;andriyy</p><p><i class="fa fa-envelope" aria-hidden="true"></i>&nbsp;&nbsp;ano***ous@abc.com</p></div></span>4年前 (2019-03-27)</div></div></li><!-- #comment-## -->
+<li class="comment even thread-even depth-1" id="comment-42456"><span class="comt-f">#0</span><div class="comt-avatar wrapper"><i style="font-size:36px;" class="fa fa-user-circle" aria-hidden="true"></i><div class="tooltip"><p><i class="fa fa-user" aria-hidden="true"></i>&nbsp;&nbsp;&nbsp;Noah</p><p><i class="fa fa-envelope" aria-hidden="true"></i>&nbsp;&nbsp;lh_***9@126.com</p></div><div id="runoobvote-id-42456" data-commid = "42456" class="upvotejs"><a class="upvote"></a> <span class="count">11</span></div></div><div class="comt-main" id="div-comment-42456"><p>实例：</p>
+
+
+<pre>package main
+
+import "fmt"
+
+func main() {
+   var array = []int{1, 2, 3, 4, 5}
+   printSlice(array)
+   slice := array[1:]
+   printSlice(slice)
+   array[1] = 100
+   printSlice(slice)
+}
+
+func printSlice(x []int){
+   fmt.Printf("len=%d cap=%d slice=%v\n", len(x), cap(x), x)
+}</pre>
+
+
+<p>以上代码执行输出结果为：</p>
+
+<pre>len=5 cap=5 slice=[1 2 3 4 5]
+len=4 cap=4 slice=[2 3 4 5]
+len=4 cap=4 slice=[100 3 4 5]</pre><div class="comt-meta wrapper"><span class="comt-author"><a target="_blank" href="javascript:;">Noah</a><div class="tooltip tooltip1"><p><i class="fa fa-user" aria-hidden="true"></i>&nbsp;&nbsp;&nbsp;Noah</p><p><i class="fa fa-envelope" aria-hidden="true"></i>&nbsp;&nbsp;lh_***9@126.com</p></div></span>4年前 (2019-05-05)</div></div></li><!-- #comment-## -->
+<li class="comment odd alt thread-odd thread-alt depth-1" id="comment-42985"><span class="comt-f">#0</span><div class="comt-avatar wrapper"><i style="font-size:36px;" class="fa fa-user-circle" aria-hidden="true"></i><div class="tooltip"><p><i class="fa fa-user" aria-hidden="true"></i>&nbsp;&nbsp;&nbsp;gibson1112</p><p><i class="fa fa-envelope" aria-hidden="true"></i>&nbsp;&nbsp;185***72536@163.com</p></div><div id="runoobvote-id-42985" data-commid = "42985" class="upvotejs"><a class="upvote"></a> <span class="count">55</span></div></div><div class="comt-main" id="div-comment-42985"><p>切片内部结构：</p>
+
+<pre>struct Slice
+{   
+    byte*    array;       // actual data
+    uintgo    len;        // number of elements
+    uintgo    cap;        // allocated number of elements
+
+};</pre>
+
+<p>第一个字段表示 array 的指针，是真实数据的指针第二个是表示 slice 的长度，第三个是表示 slice 的容量。</p>
+
+<p>所以 <strong>unsafe.Sizeof(切片)</strong>永远都是 24。</p>
+
+<p>当把 slice 作为参数，本身传递的是值，但其内容就 <strong>byte* array</strong>，实际传递的是引用，所以可以在函数内部修改，但如果对 slice 本身做 append，而且导致 slice 进行了扩容，实际扩容的是函数内复制的一份切片，对于函数外面的切片没有变化。</p>
+
+<pre>package main
+
+import (
+"fmt"
+"unsafe"
+)
+
+func main() {
+    slice_test := []int{1, 2, 3, 4, 5}
+    fmt.Println(unsafe.Sizeof(slice_test))
+    fmt.Printf("main:%#v,%#v,%#v\n", slice_test, len(slice_test), cap(slice_test))
+    slice_value(slice_test)
+    fmt.Printf("main:%#v,%#v,%#v\n", slice_test, len(slice_test), cap(slice_test))
+    slice_ptr(&amp;slice_test)
+    fmt.Printf("main:%#v,%#v,%#v\n", slice_test, len(slice_test), cap(slice_test))
+    fmt.Println(unsafe.Sizeof(slice_test))
+}
+
+func slice_value(slice_test []int) {
+    slice_test[1] = 100                // 函数外的slice确实有被修改
+    slice_test = append(slice_test, 6) // 函数外的不变
+    fmt.Printf("slice_value:%#v,%#v,%#v\n", slice_test, len(slice_test), cap(slice_test))
+}
+
+func slice_ptr(slice_test *[]int) { // 这样才能修改函数外的slice
+    *slice_test = append(*slice_test, 7)
+    fmt.Printf("slice_ptr:%#v,%#v,%#v\n", *slice_test, len(*slice_test), cap(*slice_test))
+}</pre>
+
+<p>结果如下：</p>
+
+<pre>24
+main:[]int{1, 2, 3, 4, 5},5,5
+slice_value:[]int{1, 100, 3, 4, 5, 6},6,10
+main:[]int{1, 100, 3, 4, 5},5,5
+slice_ptr:[]int{1, 100, 3, 4, 5, 7},6,10
+main:[]int{1, 100, 3, 4, 5, 7},6,10
+24</pre><div class="comt-meta wrapper"><span class="comt-author"><a target="_blank" href="javascript:;">gibson1112</a><div class="tooltip tooltip1"><p><i class="fa fa-user" aria-hidden="true"></i>&nbsp;&nbsp;&nbsp;gibson1112</p><p><i class="fa fa-envelope" aria-hidden="true"></i>&nbsp;&nbsp;185***72536@163.com</p></div></span>4年前 (2019-05-21)</div></div></li><!-- #comment-## -->
+<li class="comment even thread-even depth-1" id="comment-43365"><span class="comt-f">#0</span><div class="comt-avatar wrapper"><i style="font-size:36px;" class="fa fa-user-circle" aria-hidden="true"></i><div class="tooltip"><p><i class="fa fa-user" aria-hidden="true"></i>&nbsp;&nbsp;&nbsp;ragonli</p><p><i class="fa fa-envelope" aria-hidden="true"></i>&nbsp;&nbsp;rag***ig@gmail.com</p></div><div id="runoobvote-id-43365" data-commid = "43365" class="upvotejs"><a class="upvote"></a> <span class="count">13</span></div></div><div class="comt-main" id="div-comment-43365"><p>slice 的底层是数组指针，所以 slice <strong>a</strong> 和 <strong>s</strong> 指向的是同一个底层数组，所以当修改 <strong>s[0]</strong> 时，<strong>a</strong> 也会被修改。</p>
+
+
+<pre>package main
+import "fmt"
+func main() {
+    s := []int{1, 2, 3} // len=3, cap=3
+    a := s
+    s[0] = 888
+    s = append(s, 4)
+    fmt.Println(a, len(a), cap(a)) // 输出：[888 2 3] 3 3
+    fmt.Println(s, len(s), cap(s)) // 输出：[888 2 3 4] 4 6
+}</pre><div class="comt-meta wrapper"><span class="comt-author"><a target="_blank" href="javascript:;">ragonli</a><div class="tooltip tooltip1"><p><i class="fa fa-user" aria-hidden="true"></i>&nbsp;&nbsp;&nbsp;ragonli</p><p><i class="fa fa-envelope" aria-hidden="true"></i>&nbsp;&nbsp;rag***ig@gmail.com</p></div></span>4年前 (2019-06-04)</div></div></li><!-- #comment-## -->
+<li class="comment odd alt thread-odd thread-alt depth-1" id="comment-44518"><span class="comt-f">#0</span><div class="comt-avatar wrapper"><i style="font-size:36px;" class="fa fa-user-circle" aria-hidden="true"></i><div class="tooltip"><p><i class="fa fa-user" aria-hidden="true"></i>&nbsp;&nbsp;&nbsp;乱码kun</p><p><i class="fa fa-envelope" aria-hidden="true"></i>&nbsp;&nbsp;ly1***657282@gmail.com</p></div><div id="runoobvote-id-44518" data-commid = "44518" class="upvotejs"><a class="upvote"></a> <span class="count">125</span></div></div><div class="comt-main" id="div-comment-44518"><p>当append(list, [params])，先判断 list 的 cap 长度是否大于等于 <strong>len(list) + len([params])</strong>，如果大于那么 cap 不变，否则 cap = <b>2 * </b><b>max{cap(list), cap[params]}</b>，所以当 append(numbers, 2, 3, 4) cap 从 2 变成 6。</p><p>前面已有相关详解，很可惜关键部分把“2 * ”给漏了，在此补充。</p><div class="comt-meta wrapper"><span class="comt-author"><a target="_blank" href="javascript:;">乱码kun</a><div class="tooltip tooltip1"><p><i class="fa fa-user" aria-hidden="true"></i>&nbsp;&nbsp;&nbsp;乱码kun</p><p><i class="fa fa-envelope" aria-hidden="true"></i>&nbsp;&nbsp;ly1***657282@gmail.com</p></div></span>4年前 (2019-07-11)</div></div></li><!-- #comment-## -->
+<li class="comment even thread-even depth-1" id="comment-44683"><span class="comt-f">#0</span><div class="comt-avatar wrapper"><i style="font-size:36px;" class="fa fa-user-circle" aria-hidden="true"></i><div class="tooltip"><p><i class="fa fa-user" aria-hidden="true"></i>&nbsp;&nbsp;&nbsp;Aaron_kitty</p><p><i class="fa fa-envelope" aria-hidden="true"></i>&nbsp;&nbsp;235***8645@qq.com</p></div><div id="runoobvote-id-44683" data-commid = "44683" class="upvotejs"><a class="upvote"></a> <span class="count">16</span></div></div><div class="comt-main" id="div-comment-44683"><p>关于cap为何变为6的问题，我认为以上解释均为错，你们可以试试添加7个元素</p><p>cap就是10.</p><p>cap*2小于<b>len(list) + len([params])</b>则cap = <b>len(list) + len([params])+1</b>,反之cap=cap*2</p><p>查阅官方文档说</p><p>切片一旦初始化，就总是伴随着一个包含其元素的基本数组。 因此，切片与其数组及其它本数组的切片共享存储； 与此相反，不同的数组总是表示其不同的存储。</p><p>切片的基本数组可扩展其切片的结尾。容量是该扩展的量度： 它是切片的长度和切片往后数组的长度之和；长度达到其容量的切片可通过从原切片 （§Slices）‘切下’一个新的来创建。 切片&nbsp;a&nbsp;的容量可使用内建函数&nbsp;cap(a)&nbsp;获取。</p><p>并未指出规律性，以上规律是我个人总结。</p><div class="comt-meta wrapper"><span class="comt-author"><a target="_blank" href="javascript:;">Aaron_kitty</a><div class="tooltip tooltip1"><p><i class="fa fa-user" aria-hidden="true"></i>&nbsp;&nbsp;&nbsp;Aaron_kitty</p><p><i class="fa fa-envelope" aria-hidden="true"></i>&nbsp;&nbsp;235***8645@qq.com</p></div></span>4年前 (2019-07-16)</div></div></li><!-- #comment-## -->
+<li class="comment odd alt thread-odd thread-alt depth-1" id="comment-45287"><span class="comt-f">#0</span><div class="comt-avatar wrapper"><i style="font-size:36px;" class="fa fa-user-circle" aria-hidden="true"></i><div class="tooltip"><p><i class="fa fa-user" aria-hidden="true"></i>&nbsp;&nbsp;&nbsp;疏林如有诉</p><p><i class="fa fa-envelope" aria-hidden="true"></i>&nbsp;&nbsp;191***4098@qq.com</p></div><div id="runoobvote-id-45287" data-commid = "45287" class="upvotejs"><a class="upvote"></a> <span class="count">15</span></div></div><div class="comt-main" id="div-comment-45287"><p>我觉得前面关于 cap 为什么会变成6的问题的解答都不太正确。</p>
+
+<p>当添加 6 个元素时按照上面的说法 cap 的值应该分别为 12,9；但是经过实践得到的 cap 值为 8，可见以上几种说法都不是很全面。</p>
+
+<p>经过多个数据的实验我发现 cap 的值只能为偶数。</p>
+
+<p><strong>实验数据如下：</strong></p>
+
+<p>当起始cap为2时，添加2个元素时cap为4，添加3个元素时cap为6，添加4个元素时cap为6，添加5个元素时cap为8，添加6个元素时cap为8，添加7个元素时cap为10，添加8个元素时cap为10……</p>
+
+<p>当起始cap为1时，添加2个元素时cap为4，添加3个元素时cap为4，添加4个元素时cap为6，添加5个元素时cap为6，添加6个元素时cap为8，添加7个元素时cap为8，添加8个元素时cap为10……</p>
+
+<p>所以我总结出来的经验是，添加元素后当len[list]+len[params]&gt;cap时；cap的值需要修改。</p>
+
+<p><strong>若len[list]+len[params]为偶数，则cap=len[list]+len[params]</strong></p>
+
+<p><strong>若len[list]+len[params]为奇数，则cap=len[list]+len[params]+1</strong></p>
+
+<p>以上为个人总结经验。</p><div class="comt-meta wrapper"><span class="comt-author"><a target="_blank" href="javascript:;">疏林如有诉</a><div class="tooltip tooltip1"><p><i class="fa fa-user" aria-hidden="true"></i>&nbsp;&nbsp;&nbsp;疏林如有诉</p><p><i class="fa fa-envelope" aria-hidden="true"></i>&nbsp;&nbsp;191***4098@qq.com</p></div></span>4年前 (2019-08-01)</div></div></li><!-- #comment-## -->
+<li class="comment even thread-even depth-1" id="comment-45353"><span class="comt-f">#0</span><div class="comt-avatar wrapper"><i style="font-size:36px;" class="fa fa-user-circle" aria-hidden="true"></i><div class="tooltip"><p><i class="fa fa-user" aria-hidden="true"></i>&nbsp;&nbsp;&nbsp;Raindeavor</p><p><i class="fa fa-envelope" aria-hidden="true"></i>&nbsp;&nbsp;wyw***ele@163.com</p></div><div id="runoobvote-id-45353" data-commid = "45353" class="upvotejs"><a class="upvote"></a> <span class="count">20</span></div></div><div class="comt-main" id="div-comment-45353"><p>关于 cap 为何变为 6 的问题，我认为楼上解释也不对，哈哈。</p>
+
+<p>1、当同时添加多个元素时：</p>
+<pre>len(list)+len([params]) 为偶数：cap=len(list)+len([params])
+
+len(list)+len([params]) 为奇数：cap=len(list)+len([params])+1</pre>
+
+<p>即 cap 始终为偶数。</p>
+
+<p>2、当一个一个添加元素时：</p>
+
+<pre>len(list)+1&lt;=cap:   cap=cap
+
+len(list)+1&gt;cap:     cap=2*cap</pre>
+
+<p>即 cap 总是呈 2 倍的增加(也是偶数)。</p>
+
+<p>以上规律是我观察输出后的个人总结，初学 Go，没查文档什么的，总结的有问题还请楼下指出，嘿嘿。</p><div class="comt-meta wrapper"><span class="comt-author"><a target="_blank" href="javascript:;">Raindeavor</a><div class="tooltip tooltip1"><p><i class="fa fa-user" aria-hidden="true"></i>&nbsp;&nbsp;&nbsp;Raindeavor</p><p><i class="fa fa-envelope" aria-hidden="true"></i>&nbsp;&nbsp;wyw***ele@163.com</p></div></span>4年前 (2019-08-02)</div></div></li><!-- #comment-## -->
+<li class="comment odd alt thread-odd thread-alt depth-1" id="comment-46650"><span class="comt-f">#0</span><div class="comt-avatar wrapper"><i style="font-size:36px;" class="fa fa-user-circle" aria-hidden="true"></i><div class="tooltip"><p><i class="fa fa-user" aria-hidden="true"></i>&nbsp;&nbsp;&nbsp;Eternity味道</p><p><i class="fa fa-envelope" aria-hidden="true"></i>&nbsp;&nbsp;271***298@qq.com</p></div><div id="runoobvote-id-46650" data-commid = "46650" class="upvotejs"><a class="upvote"></a> <span class="count">9</span></div></div><div class="comt-main" id="div-comment-46650"><p>关于切片容量 cap，当切片容量不够时，cap 会自动扩容到 2 倍：</p>
+
+<pre>package main
+import "fmt"
+func main() {
+    var numbers []int
+    printSlice(numbers)
+ 
+    /* 允许追加空切片 */
+    numbers = append(numbers, 0)
+    printSlice(numbers)
+ 
+    /* 向切片添加一个元素 */
+    numbers = append(numbers, 1)
+    printSlice(numbers)
+ 
+    /* 注意cap容量的变化 */
+    numbers = append(numbers, 2)
+    printSlice(numbers)
+    numbers = append(numbers, 3)
+    printSlice(numbers)
+    numbers = append(numbers, 4)  // 可以看出，容量不够时，cap会自动扩容到2倍
+    printSlice(numbers)
+
+ }
+ 
+ func printSlice(x []int){
+    fmt.Printf("len=%d cap=%d slice=%v\n",len(x),cap(x),x)
+ }</pre>
+<p>当一个一个元素追加到切片中，切片容量变化过程为：</p>
+
+<pre>0 -&gt; 1
+1 -&gt; 2
+2 -&gt; 4
+4 -&gt; 8 </pre><div class="comt-meta wrapper"><span class="comt-author"><a target="_blank" href="javascript:;">Eternity味道</a><div class="tooltip tooltip1"><p><i class="fa fa-user" aria-hidden="true"></i>&nbsp;&nbsp;&nbsp;Eternity味道</p><p><i class="fa fa-envelope" aria-hidden="true"></i>&nbsp;&nbsp;271***298@qq.com</p></div></span>4年前 (2019-09-11)</div></div></li><!-- #comment-## -->
+<li class="comment even thread-even depth-1" id="comment-47696"><span class="comt-f">#0</span><div class="comt-avatar wrapper"><i style="font-size:36px;" class="fa fa-user-circle" aria-hidden="true"></i><div class="tooltip"><p><i class="fa fa-user" aria-hidden="true"></i>&nbsp;&nbsp;&nbsp;go语言初学者</p><p><i class="fa fa-envelope" aria-hidden="true"></i>&nbsp;&nbsp;Bao***_snow@163.com</p></div><div id="runoobvote-id-47696" data-commid = "47696" class="upvotejs"><a class="upvote"></a> <span class="count">19</span></div></div><div class="comt-main" id="div-comment-47696"><p>关于楼上所讨论的 cap 由 2-&gt; 6，根据查阅文档，可以得出一个结论：通过 append() 函数向数组中添加元素，首先 cap 会以二倍的速度增长，如果发现增长 2 倍以上的容量可以满足扩容后的需求，那么 cap*2，否则就会看扩容后数组的 length 是多少 cap=length+1。</p><div class="comt-meta wrapper"><span class="comt-author"><a target="_blank" href="javascript:;">go语言初学者</a><div class="tooltip tooltip1"><p><i class="fa fa-user" aria-hidden="true"></i>&nbsp;&nbsp;&nbsp;go语言初学者</p><p><i class="fa fa-envelope" aria-hidden="true"></i>&nbsp;&nbsp;Bao***_snow@163.com</p></div></span>4年前 (2019-10-21)</div></div></li><!-- #comment-## -->
+<li class="comment odd alt thread-odd thread-alt depth-1" id="comment-49965"><span class="comt-f">#0</span><div class="comt-avatar wrapper"><i style="font-size:36px;" class="fa fa-user-circle" aria-hidden="true"></i><div class="tooltip"><p><i class="fa fa-user" aria-hidden="true"></i>&nbsp;&nbsp;&nbsp;bullet</p><p><i class="fa fa-envelope" aria-hidden="true"></i>&nbsp;&nbsp;jia***angyu@163.com</p><p><i class="fa fa-external-link" aria-hidden="true"></i> <a rel="nofollow" target="_blank" href="https://blog.csdn.net/zhngcho/article/details/82424005">&nbsp;&nbsp;参考地址</a></p></div><div id="runoobvote-id-49965" data-commid = "49965" class="upvotejs"><a class="upvote"></a> <span class="count">2</span></div></div><div class="comt-main" id="div-comment-49965"><p data-title="golang 切片截取参数详解">以 <span class="marked">s := []int{0, 1, 2, 3, 4, 5, 6, 7, 8, 9}</span> 为例：</p>
+
+<p>建议：做 slice 截取时建议用两个参数，尤其是从底层数组进行切片操作时，因为这样在进行第一次 append 操作时，会给切片重新分配空间，这样减少切片对数组的影响。</p>
+
+<p>结论：<strong>s = s[low : high : max]</strong> 切片的三个参数的切片截取的意义为 low 为截取的起始下标（含）， high 为窃取的结束下标（不含 high），max 为切片保留的原切片的最大下标（不含 max）；即新切片从老切片的 low 下标元素开始，len = high - low, cap = max - low；high 和 max 一旦超出在老切片中越界，就会发生 runtime err，slice out of range。另外如果省略第三个参数的时候，第三个参数默认和第二个参数相同，即 len = cap。</p>
+<pre>
+package main
+ 
+import "fmt"
+ 
+func main(){
+    s := []int {0, 1, 2, 3, 4, 5, 6,7, 8, 9}
+ 
+    s = s[1:9:10]
+    fmt.Println(s)
+    fmt.Println(len(s))
+    fmt.Println(cap(s))
+}</pre>
+<p>运行结果：</p>
+
+<pre>[1 2 3 4 5 6 7 8]
+8
+9</pre>
+
+<p>修改 max 值，发生越界错误:</p>
+<pre>
+package main
+ 
+import "fmt"
+ 
+func main(){
+    s := []int {0, 1, 2, 3, 4, 5, 6,7, 8, 9}
+ 
+    s = s[1:9:13]  // 修改 max 值为 13
+    fmt.Println(s)
+    fmt.Println(len(s))
+    fmt.Println(cap(s))
+}</pre>
+
+<p>执行后，错误信息如下：</p>
+<pre>panic: runtime error: slice bounds out of range
+
+goroutine 1 [running]:</pre><div class="comt-meta wrapper"><span class="comt-author"><a target="_blank" href="/note/49965">bullet</a><div class="tooltip tooltip1"><p><i class="fa fa-user" aria-hidden="true"></i>&nbsp;&nbsp;&nbsp;bullet</p><p><i class="fa fa-envelope" aria-hidden="true"></i>&nbsp;&nbsp;jia***angyu@163.com</p><p><i class="fa fa-external-link" aria-hidden="true"></i> <a rel="nofollow" target="_blank" href="https://blog.csdn.net/zhngcho/article/details/82424005">&nbsp;&nbsp;参考地址</a></p></div></span>3年前 (2020-01-10)</div></div></li><!-- #comment-## -->
+<li class="comment even thread-even depth-1" id="comment-53151"><span class="comt-f">#0</span><div class="comt-avatar wrapper"><i style="font-size:36px;" class="fa fa-user-circle" aria-hidden="true"></i><div class="tooltip"><p><i class="fa fa-user" aria-hidden="true"></i>&nbsp;&nbsp;&nbsp;da蘑菇大</p><p><i class="fa fa-envelope" aria-hidden="true"></i>&nbsp;&nbsp;860***289@qq.com</p></div><div id="runoobvote-id-53151" data-commid = "53151" class="upvotejs"><a class="upvote"></a> <span class="count">8</span></div></div><div class="comt-main" id="div-comment-53151"><p>append 会让切片和与他相关的切片脱钩，但地址不变：</p>
+
+<pre>package main
+
+import (
+    "fmt"
+)
+
+func main() {
+    a := []int{1, 2, 3, 4}
+    b := a
+    printSlice(a, "part1  a")
+    printSlice(b, "part1  b")
+    fmt.Printf("\n")
+
+    a[0] = 9
+    printSlice(a, "part2  a")
+    printSlice(b, "part2  b")
+    fmt.Printf("\n")
+
+    a = append(a, 5)
+    a[0] = 1
+    printSlice(a, "part3  a")
+    printSlice(b, "part3  b")
+    fmt.Printf("\n")
+
+    c := a
+    d := &amp;a
+    printSlice(a, "part4  a")
+    printSlice(c, "part4  c")
+    printSlice(c, "part4  d")
+    fmt.Printf("\n")
+
+    a = append(a, 6)
+    printSlice(a, "part5  a")
+    printSlice(c, "part5  c")
+    printSlice(*d, "part5 *d")
+
+}
+func printSlice(x []int, y string) {
+    fmt.Printf("%v len=%d cap=%d slice=%v\n", y, len(x), cap(x), x)
+}</pre>
+<p>输出：</p>
+
+<pre>part1  a len=4 cap=4 slice=[1 2 3 4]
+part1  b len=4 cap=4 slice=[1 2 3 4]
+
+part2  a len=4 cap=4 slice=[9 2 3 4]
+part2  b len=4 cap=4 slice=[9 2 3 4]
+
+part3  a len=5 cap=8 slice=[1 2 3 4 5]
+part3  b len=4 cap=4 slice=[9 2 3 4]
+
+part4  a len=5 cap=8 slice=[1 2 3 4 5]
+part4  c len=5 cap=8 slice=[1 2 3 4 5]
+part4  d len=5 cap=8 slice=[1 2 3 4 5]
+
+part5  a len=6 cap=8 slice=[1 2 3 4 5 6]
+part5  c len=5 cap=8 slice=[1 2 3 4 5]
+part5 *d len=6 cap=8 slice=[1 2 3 4 5 6]</pre><div class="comt-meta wrapper"><span class="comt-author"><a target="_blank" href="javascript:;">da蘑菇大</a><div class="tooltip tooltip1"><p><i class="fa fa-user" aria-hidden="true"></i>&nbsp;&nbsp;&nbsp;da蘑菇大</p><p><i class="fa fa-envelope" aria-hidden="true"></i>&nbsp;&nbsp;860***289@qq.com</p></div></span>3年前 (2020-04-28)</div></div></li><!-- #comment-## -->
+<li class="comment odd alt thread-odd thread-alt depth-1" id="comment-54323"><span class="comt-f">#0</span><div class="comt-avatar wrapper"><i style="font-size:36px;" class="fa fa-user-circle" aria-hidden="true"></i><div class="tooltip"><p><i class="fa fa-user" aria-hidden="true"></i>&nbsp;&nbsp;&nbsp;网友小王</p><p><i class="fa fa-envelope" aria-hidden="true"></i>&nbsp;&nbsp;770***908@qq.com</p></div><div id="runoobvote-id-54323" data-commid = "54323" class="upvotejs"><a class="upvote"></a> <span class="count">16</span></div></div><div class="comt-main" id="div-comment-54323"><pre>len=5 cap=6 slice=[0 1 2 3 4]</pre>
+<p>为什么这里的 cap 不是 5 呢？</p>
+<p>
+要弄清楚这个问题，先要理解如下代码：</p>
+
+<pre>// 每次cap改变，指向array的ptr就会变化一次
+s := make([]int, 1)
+fmt.Printf("len:%d cap: %d array ptr: %v \n", len(s), cap(s), *(*unsafe.Pointer)(unsafe.Pointer(&amp;s)))
+
+for i := 0; i &lt; 5; i++ {
+    s = append(s, i)
+    fmt.Printf("len:%d cap: %d array ptr: %v \n", len(s), cap(s), *(*unsafe.Pointer)(unsafe.Pointer(&amp;s)))
+}
+fmt.Println("Array:", s)</pre>
+<p>以上代码执行输出结果为：</p>
+
+<pre>len:1 cap: 1 array ptr: 0xc8200640f0
+len:2 cap: 2 array ptr: 0xc820064110
+len:3 cap: 4 array ptr: 0xc8200680c0
+len:4 cap: 4 array ptr: 0xc8200680c0
+len:5 cap: 8 array ptr: 0xc82006c080
+len:6 cap: 8 array ptr: 0xc82006c080
+Array: [0 0 1 2 3 4]</pre><p>
+<strong>解释：</strong>每次cap改变的时候指向array内存的指针都在变化。当在使用 append 的时候，如果 cap==len 了这个时候就会新开辟一块更大内存，然后把之前的数据复制过去（实际go在append的时候放大cap是有规律的。在 cap 小于1024的情况下是每次扩大到 2 * cap ，当大于1024之后就每次扩大到 1.25 * cap 。所以上面的测试中cap变化是 1, 2, 4, 8）。</p><div class="comt-meta wrapper"><span class="comt-author"><a target="_blank" href="javascript:;">网友小王</a><div class="tooltip tooltip1"><p><i class="fa fa-user" aria-hidden="true"></i>&nbsp;&nbsp;&nbsp;网友小王</p><p><i class="fa fa-envelope" aria-hidden="true"></i>&nbsp;&nbsp;770***908@qq.com</p></div></span>3年前 (2020-06-09)</div></div></li><!-- #comment-## -->
+<li class="comment even thread-even depth-1" id="comment-56326"><span class="comt-f">#0</span><div class="comt-avatar wrapper"><i style="font-size:36px;" class="fa fa-user-circle" aria-hidden="true"></i><div class="tooltip"><p><i class="fa fa-user" aria-hidden="true"></i>&nbsp;&nbsp;&nbsp;是小飞呀</p><p><i class="fa fa-envelope" aria-hidden="true"></i>&nbsp;&nbsp;211***3262@qq.com</p><p><i class="fa fa-external-link" aria-hidden="true"></i> <a rel="nofollow" target="_blank" href="https://www.liwenzhou.com/posts/Go/06_slice/">&nbsp;&nbsp;参考地址</a></p></div><div id="runoobvote-id-56326" data-commid = "56326" class="upvotejs"><a class="upvote"></a> <span class="count">29</span></div></div><div class="comt-main" id="div-comment-56326"><p>
+可以通过查看$GOROOT/src/runtime/slice.go源码，其中扩容相关代码如下：</p>
+
+<pre>newcap := old.cap
+doublecap := newcap + newcap
+if cap &gt; doublecap {
+    newcap = cap
+} else {
+    if old.len &lt; 1024 {
+        newcap = doublecap
+    } else {
+        // Check 0 &lt; newcap to detect overflow
+        // and prevent an infinite loop.
+        for 0 &lt; newcap &amp;&amp; newcap &lt; cap {
+            newcap += newcap / 4
+        }
+        // Set newcap to the requested cap when
+        // the newcap calculation overflowed.
+        if newcap &lt;= 0 {
+            newcap = cap
+        }
+    }
+}</pre>
+<p>从上面的代码可以看出以下内容：</p><ul><li>首先判断，如果新申请容量（cap）大于2倍的旧容量（old.cap），最终容量（newcap）就是新申请的容量（cap）。</li><li>否则判断，如果旧切片的长度小于1024，则最终容量(newcap)就是旧容量(old.cap)的两倍，即（newcap=doublecap），</li><li>否则判断，如果旧切片长度大于等于1024，则最终容量（newcap）从旧容量（old.cap）开始循环增加原来的1/4，即（newcap=old.cap,for {newcap += newcap/4}）直到最终容量（newcap）大于等于新申请的容量(cap)，即（newcap &gt;= cap）</li><li>如果最终容量（cap）计算值溢出，则最终容量（cap）就是新申请容量（cap）。</li></ul><p>需要注意的是，切片扩容还会根据切片中元素的类型不同而做不同的处理，比如<code>int</code>和<code>string</code>类型的处理方式就不一样。</p><div class="comt-meta wrapper"><span class="comt-author"><a target="_blank" href="javascript:;">是小飞呀</a><div class="tooltip tooltip1"><p><i class="fa fa-user" aria-hidden="true"></i>&nbsp;&nbsp;&nbsp;是小飞呀</p><p><i class="fa fa-envelope" aria-hidden="true"></i>&nbsp;&nbsp;211***3262@qq.com</p><p><i class="fa fa-external-link" aria-hidden="true"></i> <a rel="nofollow" target="_blank" href="https://www.liwenzhou.com/posts/Go/06_slice/">&nbsp;&nbsp;参考地址</a></p></div></span>3年前 (2020-08-18)</div></div></li><!-- #comment-## -->
+<li class="comment odd alt thread-odd thread-alt depth-1" id="comment-60996"><span class="comt-f">#0</span><div class="comt-avatar wrapper"><i style="font-size:36px;" class="fa fa-user-circle" aria-hidden="true"></i><div class="tooltip"><p><i class="fa fa-user" aria-hidden="true"></i>&nbsp;&nbsp;&nbsp;dopsie</p><p><i class="fa fa-envelope" aria-hidden="true"></i>&nbsp;&nbsp;850***208@qq.com</p></div><div id="runoobvote-id-60996" data-commid = "60996" class="upvotejs"><a class="upvote"></a> <span class="count">6</span></div></div><div class="comt-main" id="div-comment-60996"><p>楼上对于扩容后的容量说明都在发生扩容的代码逻辑中，没有说明这段代码中的参数 cap(申请容量) 是怎么计算的 。 </p>
+<p>
+经过多次的测试，我这边猜测是在 append 发生扩容时，申请容量是 原切片容量 + 追加的长度，如果是单数则 +1，再将这个容量传入扩容的方法进行判断，以讨论的 cap 变为6的代码为例：  </p>
+<p>
+原切片为 []int{1, 2} ，长度为2（记为 len1 = 2），容量为2（记为 cap1 =2）。</p>
+
+<p>追加的长度为 {3, 4, 5}，长度为3（记为 len2= 3），此时进行扩容，申请容量为6（记为 cap2 = cap1+len2，cap2 为单数，则+1，cap2 = 6），将 cap2 带入楼上的扩容判断逻辑。</p>
+<p>
+申请容量 cap2 大于2倍的旧容量（cap1 = 2），则newcap = cap2 = 6</p>
+<p>
+部分测试打印如下：</p>
+
+<pre>len=0 cap=0 slice=[]
+len=2 cap=2 slice=[0 1]    // len1 = 2，cap1 = 2
+len=5 cap=6 slice=[0 1 2 3 4]    // len2 = 3，cap2 = cap1+len2 = 5，单数+1，cap2 = 6
+len=0 cap=0 slice=[]
+len=2 cap=2 slice=[0 1]   // len1 = 2，cap1 = 2
+len=6 cap=6 slice=[0 1 2 3 4 5]    // len2 = 3，cap2 = cap1+len2 = 6</pre><div class="comt-meta wrapper"><span class="comt-author"><a target="_blank" href="javascript:;">dopsie</a><div class="tooltip tooltip1"><p><i class="fa fa-user" aria-hidden="true"></i>&nbsp;&nbsp;&nbsp;dopsie</p><p><i class="fa fa-envelope" aria-hidden="true"></i>&nbsp;&nbsp;850***208@qq.com</p></div></span>2年前 (2021-01-26)</div></div></li><!-- #comment-## -->
+<li class="comment even thread-even depth-1" id="comment-72280"><span class="comt-f">#0</span><div class="comt-avatar wrapper"><i style="font-size:36px;" class="fa fa-user-circle" aria-hidden="true"></i><div class="tooltip"><p><i class="fa fa-user" aria-hidden="true"></i>&nbsp;&nbsp;&nbsp;多喝热水</p><p><i class="fa fa-envelope" aria-hidden="true"></i>&nbsp;&nbsp;610***322@qq.com</p></div><div id="runoobvote-id-72280" data-commid = "72280" class="upvotejs"><a class="upvote"></a> <span class="count">2</span></div></div><div class="comt-main" id="div-comment-72280"><p>关于 <strong>append</strong> 会让切片与其他相关切片脱钩的问题：</p>
+
+<pre>package main
+import "fmt"
+
+func main() {
+   x := make([]int, 4)
+   a := x[:2]
+   a[0] = 1   
+   fmt.Println(a)
+   fmt.Println(x)
+   a = append(a, 2)
+   a[0] = 0   
+   fmt.Println(a)
+   fmt.Println(x)
+   fmt.Printf("切片a的地址：%p\n", a)
+   fmt.Printf("切片x的地址：%p\n", x)
+   fmt.Println()
+
+   y := make([]int, 4)
+   b := y
+   b[0] = 1   
+   fmt.Println(b)
+   fmt.Println(y)
+   b = append(b, 2)
+   b[0] = 0   
+   fmt.Println(b)
+   fmt.Println(y)
+   fmt.Printf("切片b的地址：%p\n", b)
+   fmt.Printf("切片y的地址：%p\n", y)
+   fmt.Println()
+}</pre>
+<p>输出结果：</p>
+
+<pre>[1 0]
+[1 0 0 0]
+[0 0 2]
+[0 0 2 0]
+切片a的地址：0x14000130000
+切片x的地址：0x14000130000
+
+[1 0 0 0]
+[1 0 0 0]
+[0 0 0 0 2]
+[1 0 0 0]
+切片b的地址：0x1400012e080
+切片y的地址：0x14000130040</pre><p>
+猜测脱钩的情况是由于切片底层数组扩张（创建了新数组替换旧数组）导致。</p><div class="comt-meta wrapper"><span class="comt-author"><a target="_blank" href="javascript:;">多喝热水</a><div class="tooltip tooltip1"><p><i class="fa fa-user" aria-hidden="true"></i>&nbsp;&nbsp;&nbsp;多喝热水</p><p><i class="fa fa-envelope" aria-hidden="true"></i>&nbsp;&nbsp;610***322@qq.com</p></div></span>12个月前 (05-02)</div></div></li><!-- #comment-## -->
+<li class="comment odd alt thread-odd thread-alt depth-1" id="comment-73770"><span class="comt-f">#0</span><div class="comt-avatar wrapper"><i style="font-size:36px;" class="fa fa-user-circle" aria-hidden="true"></i><div class="tooltip"><p><i class="fa fa-user" aria-hidden="true"></i>&nbsp;&nbsp;&nbsp;vivisol</p><p><i class="fa fa-envelope" aria-hidden="true"></i>&nbsp;&nbsp;viv***l@foxmail.com</p></div><div id="runoobvote-id-73770" data-commid = "73770" class="upvotejs"><a class="upvote"></a> <span class="count">0</span></div></div><div class="comt-main" id="div-comment-73770"><p><a href="#div-comment-53151" rel="nofollow ugc"><span class="marked">@da蘑菇大</span></a></p>
+
+<p>提供了一个很好的例子，但是这个例子只在 <span class="marked">cap(b)≤len(a)</span> 的情况下成立；但是在 <span class="marked">cap(b)&gt;len(a)</span> 时，append 并不能使切片脱钩。</p>
+
+先看看<a href="#div-comment-53151" rel="nofollow ugc"><span class="marked">@da蘑菇大</span></a>原始代码：
+
+<pre>package main
+
+import (
+    "fmt"
+)
+
+func main() {
+    a := []int{1, 2, 3, 4}
+    b := a
+    printSlice(a, "part1  a")
+    printSlice(b, "part1  b")
+    fmt.Printf("\n")
+
+    a[0] = 9
+    printSlice(a, "part2  a")
+    printSlice(b, "part2  b")
+    fmt.Printf("\n")
+
+    a = append(a, 5)
+    a[0] = 1
+    printSlice(a, "part3  a")
+    printSlice(b, "part3  b")
+    fmt.Printf("\n")
+
+    c := a
+    d := &amp;a
+    printSlice(a, "part4  a")
+    printSlice(c, "part4  c")
+    printSlice(*d, "part4  d") //这是更改后的，原始代码：printSlice(c, "part4  d") 
+    fmt.Printf("\n")
+
+    a = append(a, 6)
+    printSlice(a, "part5  a")
+    printSlice(c, "part5  c")
+    printSlice(*d, "part5 *d")
+
+}
+func printSlice(x []int, y string) {
+    fmt.Printf("%v len=%d cap=%d slice=%v\n", y, len(x), cap(x), x)
+}</pre><p>
+运行结果为：</p>
+
+<pre>part1  a len=4 cap=4 slice=[1 2 3 4]
+part1  b len=4 cap=4 slice=[1 2 3 4]
+
+part2  a len=4 cap=4 slice=[9 2 3 4]
+part2  b len=4 cap=4 slice=[9 2 3 4]
+
+part3  a len=5 cap=8 slice=[1 2 3 4 5]
+part3  b len=4 cap=4 slice=[9 2 3 4]
+
+part4  a len=5 cap=8 slice=[1 2 3 4 5]
+part4  c len=5 cap=8 slice=[1 2 3 4 5]
+part4  d len=5 cap=8 slice=[1 2 3 4 5]
+
+part5  a len=6 cap=8 slice=[1 2 3 4 5 6]
+part5  c len=5 cap=8 slice=[1 2 3 4 5]
+part5 *d len=6 cap=8 slice=[1 2 3 4 5 6]</pre>
+<p>在 <strong>part3</strong> 中，通过 <span class="marked">a[0]=1</span> 修改了 <span class="marked">a[0]</span> 的值，但是 <span class="marked">b[0]</span> 的值并没有改变；通过 <span class="marked">a=append(a,5)</span> 增加了一个数据，<strong>b</strong> 切片没有增加数据；这只是在 <strong>b</strong> 的 <strong>cap</strong> 比较小的情况下才会出现的情况；如果 <strong>b</strong> 的 <strong>cap</strong> 足够大呢？</p>
+
+<p>将代码修改成：</p>
+
+<pre>package main
+
+import (
+    "fmt"
+)
+
+func main() {
+    a := make([]int, 4, 10)
+    printSlice(a, "part1  a")
+    a[0] = 1
+    a[1] = 2
+    a[2] = 3
+    a[3] = 4
+    b := a
+    printSlice(a, "part1  a")
+    printSlice(b, "part1  b")
+    fmt.Printf("\n")
+
+    a[0] = 99
+    printSlice(a, "part2  a")
+    printSlice(b, "part2  b")
+    fmt.Printf("\n")
+
+    a = append(a, 5)
+    a[0] = 100
+    printSlice(a, "part3  a")
+    printSlice(b, "part3  b")
+    fmt.Printf("\n")
+
+    c := a
+    d := &amp;a
+    printSlice(a, "part4  a")
+    printSlice(c, "part4  c")
+    printSlice(*d, "part4  d")
+    fmt.Printf("\n")
+
+    a = append(a, 6)
+    printSlice(a, "part5  a")
+    printSlice(c, "part5  c")
+    printSlice(*d, "part5 *d")
+
+}
+func printSlice(x []int, y string) {
+    fmt.Printf("%v len=%d cap=%d slice=%v\n", y, len(x), cap(x), x)
+}</pre><p>
+运行结果：</p>
+
+<pre>part1  a len=4 cap=10 slice=[0 0 0 0]
+part1  a len=4 cap=10 slice=[1 2 3 4] 
+part1  b len=4 cap=10 slice=[1 2 3 4] 
+
+part2  a len=4 cap=10 slice=[99 2 3 4]
+part2  b len=4 cap=10 slice=[99 2 3 4]
+
+part3  a len=5 cap=10 slice=[100 2 3 4 5]
+part3  b len=4 cap=10 slice=[100 2 3 4]
+
+part4  a len=5 cap=10 slice=[100 2 3 4 5]
+part4  c len=5 cap=10 slice=[100 2 3 4 5]
+part4  d len=5 cap=10 slice=[100 2 3 4 5]
+
+part5  a len=6 cap=10 slice=[100 2 3 4 5 6]
+part5  c len=5 cap=10 slice=[100 2 3 4 5]
+part5 *d len=6 cap=10 slice=[100 2 3 4 5 6]</pre>
+<p>修改后的代码中，将 <strong>a, b</strong> 的 <strong>cap</strong> 都设置成 <strong>10</strong>；</p>
+
+<p>在 <strong>part3</strong> 部分，通过 <span class="marked">a[0]</span> 修改 <span class="marked">a[0]</span> 值，<span class="marked">b[0]</span> 值也会跟着修改；通过 <span class="marked">a=append(a, 5)</span> 可以给 <span class="marked">a</span> 增加数据项，但是 <span class="marked">b</span> 的数据项并没有增加；</p>
+<p>
+通过上面的试验可以发现，通过 <span class="marked">b:=a</span> 引用的方式，当 <span class="marked">cap(b)</span> 小于 <span class="marked">len(a)</span>，修改 <span class="marked">a[i]</span> 的值并不会改变 <span class="marked">b[i]</span> 的值；但是如果 <span class="marked">cap(b)≥len(a)</span> 时，修改 <span class="marked">a(i)</span> 的值就会改变 <span class="marked">b(i)</span> 的值；</p>
+<p>
+要想使两个切片同步改变，最好的方式是使用切片指针来实现，也就是上面的 <span class="marked">*d</span>。</p><div class="comt-meta wrapper"><span class="comt-author"><a target="_blank" href="javascript:;">vivisol</a><div class="tooltip tooltip1"><p><i class="fa fa-user" aria-hidden="true"></i>&nbsp;&nbsp;&nbsp;vivisol</p><p><i class="fa fa-envelope" aria-hidden="true"></i>&nbsp;&nbsp;viv***l@foxmail.com</p></div></span>10个月前 (07-07)</div></div></li><!-- #comment-## -->
+	</ol>
+	<div class="pagenav">
+			</div>
+</div>
+<div id="respond" class="no_webshot"> 
+		<div class="comment-signarea" style="display:none; padding: 20px 20px;"> 
+	<h3 class="text-muted" id="share_code" style="color: #799961;"><i class="fa fa-pencil-square-o" aria-hidden="true"></i> 点我分享笔记</h3>
+	<!--
+	<p style="font-size:14px;">笔记需要是本篇文章的内容扩展！</p><br>
+	<p style="font-size:12px;"><a href="//www.runoob.com/tougao" target="_blank">文章投稿，可点击这里</a></p>
+	<p style="font-size:14px;"><a href="/w3cnote/runoob-user-test-intro.html#invite" target="_blank">注册邀请码获取方式</a></p>
+		<h3 class="text-muted"><i class="fa fa-info-circle" aria-hidden="true"></i> 分享笔记前必须<a href="javascript:;" class="runoob-pop">登录</a>！</h3>
+		<p><a href="/w3cnote/runoob-user-test-intro.html#invite" target="_blank">注册邀请码获取方式</a></p>-->
+	</div>
+		
+	<form action="/wp-content/themes/runoob/option/addnote.php" method="post" id="commentform" style="display:none;">
+		<div class="comt">
+			<div class="comt-title">
+				<i style="font-size:36px;" class="fa fa-user-circle" aria-hidden="true"></i>				<p><a id="cancel-comment-reply-link" href="javascript:;">取消</a></p>
+			</div>
+			<div class="comt-box">
+			<div id="mded"></div>
+			
+				<div class="comt-ctrl">
+					<div class="comt-tips"><input type='hidden' name='comment_post_ID' value='12442' id='comment_post_ID' />
+<input type='hidden' name='comment_parent' id='comment_parent' value='0' />
+</div>
+					<button type="submit" name="submit" id="submit" tabindex="5"><i class="fa fa-pencil" aria-hidden="true"></i> 分享笔记</button>
+				</div>
+			</div>
+		
+				
+					<div class="comt-comterinfo"> 
+						<ul id="comment-author-info">
+							<li class="form-inline"><label class="hide" for="author">昵称</label><input class="ipt" type="text" name="author" id="author" value="" tabindex="2" placeholder="昵称"><span class="text-muted">昵称 (必填)</span></li>
+							<li class="form-inline"><label class="hide" for="email">邮箱</label><input class="ipt" type="text" name="email" id="email" value="" tabindex="3" placeholder="邮箱"><span class="text-muted">邮箱 (必填)</span></li>
+							<li class="form-inline"><label class="hide" for="url">引用地址</label><input class="ipt" type="text" name="url" id="url" value="" tabindex="4" placeholder="引用地址"><span class="text-muted">引用地址</span></li>
+						</ul>
+					</div>
+				
+			
+		</div>
+
+	</form>
+	</div>
+<script type="text/javascript">
+$(function() {
+	//初始化编辑器
+	
+	var editor = new Simditor({
+	  textarea: $('#mded'),
+	  placeholder: '写笔记...',
+	  upload:false,
+	 // upload: {url:'/api/comment_upload_file.php',params: null,fileKey: 'upload_file',connectionCount: 1,leaveConfirm: '文件正在上传，您确定离开?'},
+	  defaultImage: 'https://www.runoob.com/images/logo.png',
+	  codeLanguages: '',
+	  autosave: 'editor-content',
+	  toolbar: [  'bold','code','ul','ol','image' ]
+	});
+	editor.on('selectionchanged', function() {
+		$(".code-popover").hide();
+	});
+
+	// 提交数据
+	$("#share_code").click(function() {
+		$(".comment-signarea").hide();
+		$("#commentform").show();
+		
+	});
+	$("#user_add_note").click(function() {
+		$(".comment-signarea").hide();
+		$("#commentform").show();
+		$('html, body').animate({
+       	    scrollTop: $("#respond").offset().top
+    	}, 200);
+	});
+
+	// 提交笔记
+	var commentform=$('#commentform');
+	commentform.prepend('<div id="comment-status" style="display:none;" ></div>');
+	var statusdiv=$('#comment-status');
+	
+	commentform.submit(function(e){
+		e.preventDefault();
+		var noteContent = editor.getValue();
+		// console.log(noteContent);
+		noteContent = noteContent.replace(/<pre><code>/g,"<pre>");
+		noteContent = noteContent.replace(/<\/code><\/pre>/g,"</pre>");
+		
+		// 系列化表单数据
+		var comment_parent = 0;
+		var is_user_logged_in = $("#is_user_logged_in").val();
+		var comment_post_ID =  12442;
+		var _wp_unfiltered_html_comment = $("#_wp_unfiltered_html_comment").val();
+		var comment = noteContent;
+		var author = $("#author").val();
+		var url = $("#url").val();
+		var email = $("#email").val();
+		if(isBlank(author) && is_user_logged_in==0) {
+			statusdiv.html('<p  class="ajax-error">请输入昵称！</p>').show();
+		} else if(isBlank(email)  && is_user_logged_in==0) {
+			statusdiv.html('<p  class="ajax-error">请输入邮箱！</p>').show();
+		} else {
+			// var formdata=commentform.serialize() + "&comment=" + noteContent ;
+			// 添加状态信息
+			statusdiv.html('<p>Processing...</p>').show();
+			// 获取表单提交地址
+			var formurl=commentform.attr('action');
+			
+			// 异步提交
+			$.ajax({
+					type: 'post',
+					url: formurl,
+					dataType:'json',
+					data: {"comment_parent":comment_parent,"comment_post_ID":comment_post_ID, "_wp_unfiltered_html_comment":_wp_unfiltered_html_comment,"comment":comment,"url":url, "email":email,"author":author},
+					error: function(XMLHttpRequest, textStatus, errorThrown){
+					statusdiv.html('<p class="ajax-error" >数据不完整或表单提交太快了！</p>').show();
+				},
+				success: function(data, textStatus){
+					if(data.errorno=="0") {
+						$("#submit").prop('disabled', true);
+						statusdiv.html('<p class="ajax-success" >笔记已提交审核，感谢分享笔记！</p>').show();
+						alert('笔记已提交审核，感谢分享笔记！');
+					}else{
+						statusdiv.html('<p class="ajax-error" >'+data.msg+'</p>').show();
+					}
+					commentform.find('textarea[name=comment]').val('');
+				}
+			});
+			setTimeout(function(){
+		        $("#submit").prop('disabled', false);
+		    }, 10*1000);
+		}
+		return false;
+
+	});
+	$(".comt-author").click(function() {
+		href = $(this).children("a").attr("href");
+		if(href.indexOf("/note/")!=-1) {
+			var win = window.open(href, '_blank');
+  			win.focus();
+		}
+	});
+	$(".comt-meta span").hover(function(){
+		$(this).children(".tooltip").css({ "opacity": 1, "pointer-events": "auto"});
+	},function(){
+		$(this).children(".tooltip").removeAttr("style");
+	});
+	/*
+	$(".wrapper i").hover(function(){
+		$(this).siblings(".tooltip").css({ "opacity": 1, "pointer-events": "auto"});
+	},function(){
+		$(this).siblings(".tooltip").css({ "opacity": 0, "pointer-events": "auto"});
+	});
+	*/
+	//Upvote.create('runoobvote-id', {callback: vote_callback});
+	var ajaxurl = 'https://www.runoob.com/wp-admin/admin-ajax.php';
+	var callback = function(data) {
+		//console.log($('#runoobvote-id').upvote('upvoted'));
+		//console.log($('#runoobvote-id').upvote('downvoted'));
+		//console.log(data);
+		_vote_action = data.action;
+		id_arr = data.id.split('-');
+		um_id= id_arr[2];
+		//console.log(um_id);
+		
+		var re = /^[1-9]+/;
+		if (re.test(um_id)) { 
+			var ajax_data = {
+				_vote_action: _vote_action,
+				action: "pinglun_zan",
+				um_id: um_id,
+				um_action: "ding"
+			};
+			//console.log(ajax_data);
+			$.post(ajaxurl,ajax_data,function(status){
+				//if(status.vote_num>999) {
+				//	_voteHtml = '<span style="display: block; text-align: center;font-size: 20px; color: #6a737c; margin: 8px 0;">'+kFormatter(status.vote_num) +'</span>';
+				//	$("#runoobvote-id-" + um_id + " .count").hide().after(_voteHtml);
+				//}
+				
+			});
+		}
+	};
+	if($('#comments').length && $('.upvotejs').length){
+		$('.upvotejs').upvote({id: 12442, callback: callback});
+	
+		$.post(ajaxurl,{"action":"pinglun_zan","postid":12442},function(data){  
+			$(data).each(function(key,value) {
+				$("#runoobvote-id-" + value.commid + " .upvote").addClass(value.upvotejs_class);
+				$("#runoobvote-id-" + value.commid + " .downvote").addClass(value.downvote_class);
+				$("#runoobvote-id-" + value.commid + " .count").text(value.upvote_count);
+			})
+		},'json');
+		
+	}
+	
+	
+});
+function isBlank(str) {
+    return (!str || /^\s*$/.test(str));
+}
+function kFormatter(num) {
+	// return num;
+    return Math.abs(num) > 999 ? Math.sign(num)*((Math.abs(num)/1000).toFixed(1)) + 'k' : Math.sign(num)*Math.abs(num)
+}
+
+</script>
+
+<link rel="stylesheet" href="/wp-content/themes/runoob/assets/css/qa.css?1.44">
+<link rel="stylesheet" type="text/css" href="https://cdn.staticfile.org/simditor/2.3.6/styles/simditor.min.css" />
+<script type="text/javascript" src="https://static.runoob.com/assets/simditor/2.3.6/scripts/module.js"></script>
+<script type="text/javascript" src="//static.runoob.com/assets/simditor/2.3.6/scripts/hotkeys.js"></script>
+<script type="text/javascript" src="//static.runoob.com/assets/simditor/2.3.6/scripts/uploader.js"></script>
+<script type="text/javascript" src="https://cdn.staticfile.org/simditor/2.3.6/lib/simditor.min.js"></script>
+<script type="text/javascript" src="https://static.runoob.com/assets/simditor/2.3.6/scripts/simditor-autosave.js"></script>
+		<div class="sidebar-box ">
+				
+
+<style>	
+.responsive_ad1 { display:none; }
+@media(min-width: 800px) { .responsive_ad1 {  display:block;margin:0 auto;} }
+</style>
+<div id="ad-336280" >
+
+<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-5751451760833794"
+     crossorigin="anonymous"></script>
+<!-- 移动版 自动调整 -->
+<ins class="adsbygoogle"
+     style="display:block"
+     data-ad-client="ca-pub-5751451760833794"
+     data-ad-slot="1691338467"
+     data-ad-format="auto"
+     data-full-width-responsive="true"></ins>
+<script>
+     (adsbygoogle = window.adsbygoogle || []).push({});
+</script>
+		</div>
+				</div>
+		
+	</div>
+</div>
+	
+
+<!-- 右边栏 -->
+<div class="fivecol last right-column">
+
+<style>
+.sidebar-tree .double-li {
+    width:300px;
+}
+.sidebar-tree .double-li li {
+    width: 44%;
+    line-height: 1.5em;
+    border-bottom: 1px solid #ccc;
+    float: left;
+    display: inline;
+}
+</style>
+
+    
+        <div class="sidebar-box re-box re-box-large">
+        <div class="sidebar-box recommend-here" style="margin: 0 auto;">
+            <a href="javascript:void(0);" style="font-size: 16px; color:#64854c;font-weight:bold;"> <i class="fa fa-list" aria-hidden="true"></i> 分类导航</a>
+        </div>
+    <div class="sidebar-box sidebar-cate">
+        
+        <div class="sidebar-tree" >
+            <ul><li style="margin: 0;"><a href="javascript:void(0);" class="tit"> HTML / CSS</a><ul class="double-li"><li><a title="HTML 教程" href="//www.runoob.com/html/html-tutorial.html">HTML 教程</a></li><li><a title="HTML5 教程" href="//www.runoob.com/html/html5-intro.html">HTML5 教程</a></li><li><a title="CSS 教程" href="//www.runoob.com/css/css-tutorial.html">CSS 教程</a></li><li><a title="CSS3 教程" href="//www.runoob.com/css3/css3-tutorial.html">CSS3 教程</a></li><li><a title="Bootstrap3 教程" href="//www.runoob.com/bootstrap/bootstrap-tutorial.html">Bootstrap3 教程</a></li><li><a title="Bootstrap4 教程" href="//www.runoob.com/bootstrap4/bootstrap4-tutorial.html">Bootstrap4 教程</a></li><li><a title="Bootstrap5 教程" href="//www.runoob.com/bootstrap5/bootstrap5-tutorial.html">Bootstrap5 教程</a></li><li><a title="Font Awesome 教程" href="//www.runoob.com/font-awesome/fontawesome-tutorial.html">Font Awesome 教程</a></li><li><a title="Foundation 教程" href="//www.runoob.com/foundation/foundation-tutorial.html">Foundation 教程</a></li></ul></li><li style="margin: 0;"><a href="javascript:void(0);" class="tit"> JavaScript</a><ul class="double-li"><li><a title="JavaScript 教程" href="//www.runoob.com/js/js-tutorial.html">JavaScript 教程</a></li><li><a title="HTML DOM 教程" href="//www.runoob.com/htmldom/htmldom-tutorial.html">HTML DOM 教程</a></li><li><a title="jQuery 教程" href="//www.runoob.com/jquery/jquery-tutorial.html">jQuery 教程</a></li><li><a title="AngularJS 教程" href="//www.runoob.com/angularjs/angularjs-tutorial.html">AngularJS 教程</a></li><li><a title="AngularJS2 教程" href="//www.runoob.com/angularjs2/angularjs2-tutorial.html">AngularJS2 教程</a></li><li><a title="Vue.js 教程" href="//www.runoob.com/vue2/vue-tutorial.html">Vue.js 教程</a></li><li><a title="Vue3 教程" href="//www.runoob.com/vue3/vue3-tutorial.html">Vue3 教程</a></li><li><a title="React 教程" href="//www.runoob.com/react/react-tutorial.html">React 教程</a></li><li><a title="TypeScript 教程" href="//www.runoob.com/typescript/ts-tutorial.html">TypeScript 教程</a></li><li><a title="jQuery UI 教程" href="//www.runoob.com/jqueryui/jqueryui-tutorial.html">jQuery UI 教程</a></li><li><a title="jQuery EasyUI 教程" href="//www.runoob.com/jeasyui/jqueryeasyui-tutorial.html">jQuery EasyUI 教程</a></li><li><a title="Node.js 教程" href="//www.runoob.com/nodejs/nodejs-tutorial.html">Node.js 教程</a></li><li><a title="AJAX 教程" href="//www.runoob.com/ajax/ajax-tutorial.html">AJAX 教程</a></li><li><a title="JSON 教程" href="//www.runoob.com/json/json-tutorial.html">JSON 教程</a></li><li><a title="Echarts 教程" href="//www.runoob.com/echarts/echarts-tutorial.html">Echarts 教程</a></li><li><a title="Chart.js 教程" href="//www.runoob.com/chartjs/chartjs-tutorial.html">Chart.js 教程</a></li><li><a title="Highcharts 教程" href="//www.runoob.com/highcharts/highcharts-tutorial.html">Highcharts 教程</a></li><li><a title="Google 地图 教程" href="//www.runoob.com/googleapi/google-maps-basic.html">Google 地图 教程</a></li></ul></li><li style="margin: 0;"><a href="javascript:void(0);" class="tit"> 服务端</a><ul class="double-li"><li><a title="Python 教程" href="//www.runoob.com/python3/python3-tutorial.html">Python 教程</a></li><li><a title="Python2.x 教程" href="//www.runoob.com/python/python-tutorial.html">Python2.x 教程</a></li><li><a title="Linux 教程" href="//www.runoob.com/linux/linux-tutorial.html">Linux 教程</a></li><li><a title="Docker 教程" href="//www.runoob.com/docker/docker-tutorial.html">Docker 教程</a></li><li><a title="Ruby 教程" href="//www.runoob.com/ruby/ruby-tutorial.html">Ruby 教程</a></li><li><a title="Java 教程" href="//www.runoob.com/java/java-tutorial.html">Java 教程</a></li><li><a title="C 教程" href="//www.runoob.com/c/c-tutorial.html">C 教程</a></li><li><a title="C++ 教程" href="//www.runoob.com/cplusplus/cpp-tutorial.html">C++ 教程</a></li><li><a title="Perl 教程" href="//www.runoob.com/perl/perl-tutorial.html">Perl 教程</a></li><li><a title="Servlet 教程" href="//www.runoob.com/servlet/servlet-tutorial.html">Servlet 教程</a></li><li><a title="JSP 教程" href="//www.runoob.com/jsp/jsp-tutorial.html">JSP 教程</a></li><li><a title="Lua 教程" href="//www.runoob.com/lua/lua-tutorial.html">Lua 教程</a></li><li><a title="Rust 教程" href="//www.runoob.com/rust/rust-tutorial.html">Rust 教程</a></li><li><a title="Scala 教程" href="//www.runoob.com/scala/scala-tutorial.html">Scala 教程</a></li><li><a title="Go 教程" href="//www.runoob.com/go/go-tutorial.html">Go 教程</a></li><li><a title="PHP 教程" href="//www.runoob.com/php/php-tutorial.html">PHP 教程</a></li><li><a title="数据结构与算法" href="//www.runoob.com/data-structures/data-structures-tutorial.html">数据结构与算法</a></li><li><a title="Django 教程" href="//www.runoob.com/django/django-tutorial.html">Django 教程</a></li><li><a title="Zookeeper 教程" href="//www.runoob.com/w3cnote/zookeeper-tutorial.html">Zookeeper 教程</a></li><li><a title="设计模式" href="//www.runoob.com/design-pattern/design-pattern-tutorial.html">设计模式</a></li><li><a title="正则表达式" href="//www.runoob.com/regexp/regexp-tutorial.html">正则表达式</a></li><li><a title="Maven 教程" href="//www.runoob.com/maven/maven-tutorial.html">Maven 教程</a></li><li><a title="Verilog 教程" href="//www.runoob.com/w3cnote/verilog-tutorial.html">Verilog 教程</a></li><li><a title="ASP 教程" href="//www.runoob.com/asp/asp-tutorial.html">ASP 教程</a></li><li><a title="AppML 教程" href="//www.runoob.com/appml/appml-tutorial.html">AppML 教程</a></li><li><a title="VBScript 教程" href="//www.runoob.com/vbscript/vbscript-tutorial.html">VBScript 教程</a></li></ul></li><li style="margin: 0;"><a href="javascript:void(0);" class="tit"> 数据库</a><ul class="double-li"><li><a title="SQL 教程" href="//www.runoob.com/sql/sql-tutorial.html">SQL 教程</a></li><li><a title="MySQL 教程" href="//www.runoob.com/mysql/mysql-tutorial.html">MySQL 教程</a></li><li><a title="PostgreSQL 教程" href="//www.runoob.com/postgresql/postgresql-tutorial.html">PostgreSQL 教程</a></li><li><a title="SQLite 教程" href="//www.runoob.com/sqlite/sqlite-tutorial.html">SQLite 教程</a></li><li><a title="MongoDB 教程" href="//www.runoob.com/mongodb/mongodb-tutorial.html">MongoDB 教程</a></li><li><a title="Redis 教程" href="//www.runoob.com/redis/redis-tutorial.html">Redis 教程</a></li><li><a title="Memcached 教程" href="//www.runoob.com/Memcached/Memcached-tutorial.html">Memcached 教程</a></li></ul></li><li style="margin: 0;"><a href="javascript:void(0);" class="tit"> 数据分析</a><ul class="double-li"><li><a title="Python 教程" href="//www.runoob.com/python3/python3-tutorial.html">Python 教程</a></li><li><a title="NumPy 教程" href="//www.runoob.com/numpy/numpy-tutorial.html">NumPy 教程</a></li><li><a title="Pandas 教程" href="//www.runoob.com/pandas/pandas-tutorial.html">Pandas 教程</a></li><li><a title="Matplotlib 教程" href="//www.runoob.com/matplotlib/matplotlib-tutorial.html">Matplotlib 教程</a></li><li><a title="Scipy 教程" href="//www.runoob.com/scipy/scipy-tutorial.html">Scipy 教程</a></li><li><a title="R 教程" href="//www.runoob.com/r/r-tutorial.html">R 教程</a></li><li><a title="Julia 教程" href="//www.runoob.com/julia/julia-tutorial.html">Julia 教程</a></li></ul></li><li style="margin: 0;"><a href="javascript:void(0);" class="tit"> 移动端</a><ul class="double-li"><li><a title="Android 教程" href="//www.runoob.com/w3cnote/android-tutorial-intro.html">Android 教程</a></li><li><a title="Swift 教程" href="//www.runoob.com/swift/swift-tutorial.html">Swift 教程</a></li><li><a title="jQuery Mobile 教程" href="//www.runoob.com/jquerymobile/jquerymobile-tutorial.html">jQuery Mobile 教程</a></li><li><a title="ionic 教程" href="//www.runoob.com/ionic/ionic-tutorial.html">ionic 教程</a></li><li><a title="Kotlin 教程" href="//www.runoob.com/kotlin/kotlin-tutorial.html">Kotlin 教程</a></li></ul></li><li style="margin: 0;"><a href="javascript:void(0);" class="tit"> XML 教程</a><ul class="double-li"><li><a title="XML 教程" href="//www.runoob.com/xml/xml-tutorial.html">XML 教程</a></li><li><a title="DTD 教程" href="//www.runoob.com/dtd/dtd-tutorial.html">DTD 教程</a></li><li><a title="XML DOM 教程" href="//www.runoob.com/dom/dom-tutorial.html">XML DOM 教程</a></li><li><a title="XSLT 教程" href="//www.runoob.com/xsl/xsl-tutorial.html">XSLT 教程</a></li><li><a title="XPath 教程" href="//www.runoob.com/xpath/xpath-tutorial.html">XPath 教程</a></li><li><a title="XQuery 教程" href="//www.runoob.com/xquery/xquery-tutorial.html">XQuery 教程</a></li><li><a title="XLink 教程" href="//www.runoob.com/xlink/xlink-tutorial.html">XLink 教程</a></li><li><a title="XPointer 教程" href="//www.runoob.com/xlink/xlink-tutorial.html">XPointer 教程</a></li><li><a title="XML Schema 教程" href="//www.runoob.com/schema/schema-tutorial.html">XML Schema 教程</a></li><li><a title="XSL-FO 教程" href="//www.runoob.com/xslfo/xslfo-tutorial.html">XSL-FO 教程</a></li><li><a title="SVG 教程" href="//www.runoob.com/svg/svg-tutorial.html">SVG 教程</a></li></ul></li><li style="margin: 0;"><a href="javascript:void(0);" class="tit"> ASP.NET</a><ul class="double-li"><li><a title="ASP.NET 教程" href="//www.runoob.com/aspnet/aspnet-tutorial.html">ASP.NET 教程</a></li><li><a title="C# 教程" href="//www.runoob.com/csharp/csharp-tutorial.html">C# 教程</a></li><li><a title="Web Pages 教程" href="//www.runoob.com/aspnet/webpages-intro.html">Web Pages 教程</a></li><li><a title="Razor 教程" href="//www.runoob.com/aspnet/razor-intro.html">Razor 教程</a></li><li><a title="MVC 教程" href="//www.runoob.com/aspnet/mvc-intro.html">MVC 教程</a></li><li><a title="Web Forms 教程" href="//www.runoob.com/aspnet/aspnet-intro.html">Web Forms 教程</a></li></ul></li><li style="margin: 0;"><a href="javascript:void(0);" class="tit"> Web Service</a><ul class="double-li"><li><a title="Web Service 教程" href="//www.runoob.com/webservices/webservices-tutorial.html">Web Service 教程</a></li><li><a title="WSDL 教程" href="//www.runoob.com/wsdl/wsdl-tutorial.html">WSDL 教程</a></li><li><a title="SOAP 教程" href="//www.runoob.com/soap/soap-tutorial.html">SOAP 教程</a></li><li><a title="RSS 教程" href="//www.runoob.com/rss/rss-tutorial.html">RSS 教程</a></li><li><a title="RDF 教程" href="//www.runoob.com/rdf/rdf-tutorial.html">RDF 教程</a></li></ul></li><li style="margin: 0;"><a href="javascript:void(0);" class="tit"> 开发工具</a><ul class="double-li"><li><a title="Eclipse 教程" href="//www.runoob.com/eclipse/eclipse-tutorial.html">Eclipse 教程</a></li><li><a title="Git 教程" href="//www.runoob.com/git/git-tutorial.html">Git 教程</a></li><li><a title="Svn 教程" href="//www.runoob.com/svn/svn-tutorial.html">Svn 教程</a></li><li><a title="Markdown 教程" href="//www.runoob.com/markdown/md-tutorial.html">Markdown 教程</a></li></ul></li><li style="margin: 0;"><a href="javascript:void(0);" class="tit"> 网站建设</a><ul class="double-li"><li><a title="HTTP 教程" href="//www.runoob.com/http/http-tutorial.html">HTTP 教程</a></li><li><a title="网站建设指南" href="//www.runoob.com/web/web-buildingprimer.html">网站建设指南</a></li><li><a title="浏览器信息" href="//www.runoob.com/browsers/browser-information.html">浏览器信息</a></li><li><a title="网站主机教程" href="//www.runoob.com/hosting/hosting-tutorial.html">网站主机教程</a></li><li><a title="TCP/IP 教程" href="//www.runoob.com/tcpip/tcpip-tutorial.html">TCP/IP 教程</a></li><li><a title="W3C 教程" href="//www.runoob.com/w3c/w3c-tutorial.html">W3C 教程</a></li><li><a title="网站品质" href="//www.runoob.com/quality/quality-tutorial.html">网站品质</a></li></ul></li></ul>            </div>
+    
+    </div>
+    </div>
+    <br>
+    
+    <div class="sidebar-box re-box re-box-large">
+        <div class="sidebar-box recommend-here">
+            <a href="javascript:void(0);">Advertisement</a>
+        </div>
+        <div class="re-600160" id="sidebar-right-re">
+                <script async src="//pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script>
+        <!-- 侧栏1 -->
+        <ins class="adsbygoogle"
+             style="display:inline-block;width:160px;height:600px"
+             data-ad-client="ca-pub-5751451760833794"
+             data-ad-slot="4106274865"></ins>
+        <script>
+        (adsbygoogle = window.adsbygoogle || []).push({});
+        </script>
+                </div>
+    </div>
+</div></div>
+
+</div>
+
+<script>
+var aid = 12442;
+function coll() {
+	$.post( '/wp-content/themes/runoob/option/user/userinfo.php', {aid:aid, action:"collarticle", opt:'add'},function( data ) {
+		if(data.error==0) {
+			$("#content").find("h1:first").find("a").attr("href","javascript:void(0);");
+			$("#content").find("h1:first").find("img").attr("src","http://www.runoob.com/wp-content/themes/runoob/assets/img/coll2.png").css({width:32+"px",height:32+"px"});
+		}
+		alert(data.msg);
+	},'json');
+}
+</script>
+
+
+<!-- 反馈对话框开始 -->
+<script src="/wp-content/themes/runoob/assets/feedback/stable/2.0/feedback.js?1.0"></script>
+<link rel="stylesheet" href="/wp-content/themes/runoob/assets/feedback/stable/2.0/feedback.css?1.0" />
+<script type="text/javascript">
+$.feedback({
+    ajaxURL: '/feedback/runoob_feedback.php',
+	html2canvasURL: '/wp-content/themes/runoob/assets/feedback/stable/2.0/html2canvas.js',
+	onClose: function () {
+         window.location.reload();
+    }
+});
+</script>
+<!-- 反馈对话框结束 -->
+<button class="feedback-btn feedback-btn-gray">反馈/建议</button>
+<!-- 底部 -->
+<div id="footer" class="mar-t50">
+   <div class="runoob-block">
+    <div class="runoob cf">
+     <dl>
+      <dt>
+       在线实例
+      </dt>
+      <dd>
+       &middot;<a target="_blank" href="/html/html-examples.html">HTML 实例</a>
+      </dd>
+      <dd>
+       &middot;<a target="_blank" href="/css/css-examples.html">CSS 实例</a>
+      </dd>
+      <dd>
+       &middot;<a target="_blank" href="/js/js-examples.html">JavaScript 实例</a>
+      </dd>
+      <dd>
+       &middot;<a target="_blank" href="/ajx/ajax-examples.html">Ajax 实例</a>
+      </dd>
+       <dd>
+       &middot;<a target="_blank" href="/jquery/jquery-examples.html">jQuery 实例</a>
+      </dd>
+      <dd>
+       &middot;<a target="_blank" href="/xml/xml-examples.html">XML 实例</a>
+      </dd>
+      <dd>
+       &middot;<a target="_blank" href="/java/java-examples.html">Java 实例</a>
+      </dd>
+     
+     </dl>
+     <dl>
+      <dt>
+      字符集&工具
+      </dt>
+      <dd>
+       &middot; <a target="_blank" href="/charsets/html-charsets.html">HTML 字符集设置</a>
+      </dd>
+      <dd>
+       &middot; <a target="_blank" href="/tags/html-ascii.html">HTML ASCII 字符集</a>
+      </dd>
+     <dd>
+       &middot; <a target="_blank" href="https://c.runoob.com/front-end/6939/">JS 混淆/加密</a>
+      </dd> 
+      <dd>
+       &middot; <a target="_blank" href="https://c.runoob.com/front-end/6232/">PNG/JPEG 图片压缩</a>
+      </dd>
+      <dd>
+       &middot; <a target="_blank" href="/tags/html-colorpicker.html">HTML 拾色器</a>
+      </dd>
+      <dd>
+       &middot; <a target="_blank" href="//c.runoob.com/front-end/53">JSON 格式化工具</a>
+      </dd>
+      <dd>
+       &middot; <a target="_blank" href="//c.runoob.com/front-end/6680/">随机数生成器</a>
+      </dd>
+     </dl>
+     <dl>
+      <dt>
+       最新更新
+      </dt>
+                   <dd>
+       &middot;
+      <a href="http://www.runoob.com/python3/python-ai-draw.html" title="Python AI 绘画">Python AI 绘画</a>
+      </dd>
+              <dd>
+       &middot;
+      <a href="http://www.runoob.com/w3cnote/cursor-editor.html" title="神辅助 Cursor 编辑器，加入 GPT-4 让编码更轻松！">神辅助 Cursor ...</a>
+      </dd>
+              <dd>
+       &middot;
+      <a href="http://www.runoob.com/jsref/jsref-flatmap-array.html" title="JavaScript flatMap()  方法">JavaScript flat...</a>
+      </dd>
+              <dd>
+       &middot;
+      <a href="http://www.runoob.com/jsref/jsref-flat-array.html" title="JavaScript flat() 方法">JavaScript flat...</a>
+      </dd>
+              <dd>
+       &middot;
+      <a href="http://www.runoob.com/jsref/jsref-at-array.html" title="JavaScript at() 方法">JavaScript at()...</a>
+      </dd>
+              <dd>
+       &middot;
+      <a href="http://www.runoob.com/jsref/jsref-of-array.html" title="JavaScript of() 方法">JavaScript of()...</a>
+      </dd>
+              <dd>
+       &middot;
+      <a href="http://www.runoob.com/pandas/pandas-functions.html" title="Pandas 常用函数">Pandas 常用函数</a>
+      </dd>
+             </dl>
+     <dl>
+      <dt>
+       站点信息
+      </dt>
+      <dd>
+       &middot;
+       <a target="_blank" href="mailto:admin@runoob.com" rel="external nofollow">意见反馈</a>
+       </dd>
+      <dd>
+       &middot;
+      <a target="_blank" href="/disclaimer">免责声明</a>
+       </dd>
+      <dd>
+       &middot;
+       <a target="_blank" href="/aboutus">关于我们</a>
+       </dd>
+      <dd>
+       &middot;
+      <a target="_blank" href="/archives">文章归档</a>
+      </dd>
+    
+     </dl>
+    
+     <div class="search-share">
+      <div class="app-download">
+        <div>
+         <strong>关注微信</strong>
+        </div>
+      </div>
+      <div class="share">
+      <img width="128" height="128" src="/wp-content/themes/runoob/assets/images/qrcode.png" />
+       </div>
+     </div>
+     
+    </div>
+   </div>
+   <div class="w-1000 copyright">
+     Copyright &copy; 2013-2023    <strong><a href="//www.runoob.com/" target="_blank">菜鸟教程</a></strong>&nbsp;
+    <strong><a href="//www.runoob.com/" target="_blank">runoob.com</a></strong> All Rights Reserved. 备案号：<a target="_blank" rel="nofollow" href="https://beian.miit.gov.cn/">闽ICP备15012807号-1</a>
+   </div>
+  </div>
+  <div class="fixed-btn">
+    <a class="go-top" href="javascript:void(0)" title="返回顶部"> <i class="fa fa-angle-up"></i></a>
+    <a class="qrcode"  href="javascript:void(0)" title="关注我们"><i class="fa fa-qrcode"></i></a>
+    <a class="writer" style="display:none" href="javascript:void(0)"   title="标记/收藏"><i class="fa fa-star" aria-hidden="true"></i></a>
+    <!-- qrcode modal -->
+    <div id="bottom-qrcode" class="modal panel-modal hide fade in">
+      <h4>微信关注</h4>
+      <div class="panel-body"><img alt="微信关注" width="128" height="128" src="/wp-content/themes/runoob/assets/images/qrcode.png"></div> 
+    </div>
+  </div>
+
+ <div style="display:none;">
+<script async src="https://www.googletagmanager.com/gtag/js?id=UA-84264393-2"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+
+  gtag('config', 'UA-84264393-2');
+</script>
+<script>
+var _hmt = _hmt || [];
+(function() {
+  var hm = document.createElement("script");
+  hm.src = "https://hm.baidu.com/hm.js?3eec0b7da6548cf07db3bc477ea905ee";
+  var s = document.getElementsByTagName("script")[0]; 
+  s.parentNode.insertBefore(hm, s);
+})();
+</script>
+
+</div>
+<script>
+window.jsui={
+    www: 'https://www.runoob.com',
+    uri: 'https://www.runoob.com/wp-content/themes/runoob'
+};
+</script>
+
+<script src="https://static.runoob.com/assets/libs/hl/run_prettify.js"></script>
+<script src="/wp-content/themes/runoob/assets/js/main.min.js?v=1.156"></script>
+
+</body>
+</html>

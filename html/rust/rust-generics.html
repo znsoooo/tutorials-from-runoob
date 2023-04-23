@@ -1,0 +1,1060 @@
+<!Doctype html>
+<html>
+<head>
+	<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+	<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+	<title>Rust 泛型与特性 | 菜鸟教程</title>
+
+  <meta name='robots' content='max-image-preview:large' />
+<link rel='stylesheet' id='classic-theme-styles-css' href='http://www.runoob.com/wp-includes/css/classic-themes.min.css?ver=6.2' type='text/css' media='all' />
+<link rel="canonical" href="http://www.runoob.com/rust/rust-generics.html" />
+<meta name="keywords" content="Rust 泛型与特性">
+<meta name="description" content="Rust 泛型与特性 泛型是一个编程语言不可或缺的机制。C++ 语言中用“模板”来实现泛型，而 C 语言中没有泛型的机制，这也导致 C 语言难以构建类型复杂的工程。 泛型机制是编程语言用于表达类型抽象的机制，一般用于功能确定、数据类型待定的类，如链表、映射表等。 在函数中定义泛型 这是一个对整型数字选择排序的方法： 实例 [mycode4 type=&#039;rust&#039;] fn max(array: &amp;[i32]) ..">
+		
+	<link rel="shortcut icon" href="https://static.runoob.com/images/favicon.ico">
+	<link rel="stylesheet" href="/wp-content/themes/runoob/style.css?v=1.170" type="text/css" media="all" />	
+	<link rel="stylesheet" href="https://cdn.staticfile.org/font-awesome/4.7.0/css/font-awesome.min.css" media="all" />	
+  <!--[if gte IE 9]><!-->
+  <script src="https://cdn.staticfile.org/jquery/2.0.3/jquery.min.js"></script>
+  <!--<![endif]-->
+  <!--[if lt IE 9]>
+     <script src="https://cdn.staticfile.org/jquery/1.9.1/jquery.min.js"></script>
+     <script src="https://cdn.staticfile.org/html5shiv/r29/html5.min.js"></script>
+  <![endif]-->
+  <link rel="apple-touch-icon" href="https://static.runoob.com/images/icon/mobile-icon.png"/>
+  <meta name="apple-mobile-web-app-title" content="菜鸟教程">
+</head>
+<body>
+
+<!--  头部 -->
+<div class="container logo-search">
+
+  <div class="col search row-search-mobile">
+    <form action="index.php">
+      <input class="placeholder" placeholder="搜索……" name="s" autocomplete="off">
+      
+    </form>
+  </div>
+
+  <div class="row">
+    <div class="col logo">
+      <h1><a href="/">菜鸟教程 -- 学的不仅是技术，更是梦想！</a></h1>
+    </div>
+        <div class="col right-list"> 
+    <button class="btn btn-responsive-nav btn-inverse" data-toggle="collapse" data-target=".nav-main-collapse" id="pull" style=""> <i class="fa fa-navicon"></i> </button>
+    </div>
+        
+    <div class="col search search-desktop last">
+      <div class="search-input" >
+      <form action="//www.runoob.com/" target="_blank">
+        <input class="placeholder" id="s" name="s" placeholder="搜索……"  autocomplete="off" style="height: 44px;">
+      </form>
+      
+      </div>
+    </div>
+  </div>
+</div>
+
+
+
+<!-- 导航栏 -->
+<!-- 导航栏 -->
+<div class="container navigation">
+	<div class="row">
+		<div class="col nav">
+			<ul class="pc-nav" id="runoob-detail-nav">
+				<li><a href="//www.runoob.com/">首页</a></li>
+				<li><a href="/html/html-tutorial.html">HTML</a></li>
+				<li><a href="/css/css-tutorial.html">CSS</a></li>
+				<li><a href="/js/js-tutorial.html">JavaScript</a></li>
+				<li><a href="javascript:void(0);" data-id="vue">Vue</a></li>
+				<li><a href="javascript:void(0);" data-id="bootstrap">Bootstrap</a></li>
+				<li><a href="/nodejs/nodejs-tutorial.html">NodeJS</a></li>
+				<li><a href="/python3/python3-tutorial.html">Python3</a></li>
+				<li><a href="/python/python-tutorial.html">Python2</a></li>
+				<li><a href="/java/java-tutorial.html">Java</a></li>
+				<li><a href="/cprogramming/c-tutorial.html">C</a></li>
+				<li><a href="/cplusplus/cpp-tutorial.html">C++</a></li>
+				<li><a href="/csharp/csharp-tutorial.html">C#</a></li>
+				<li><a href="/go/go-tutorial.html">Go</a></li>
+				<li><a href="/sql/sql-tutorial.html">SQL</a></li>
+				<li><a href="/linux/linux-tutorial.html">Linux</a></li>
+				<li><a href="/jquery/jquery-tutorial.html">jQuery</a></li>
+				<li><a href="/browser-history">本地书签</a></li>
+				<!--
+			
+				<li><a href="/w3cnote/knowledge-start.html" style="font-weight: bold;" onclick="_hmt.push(['_trackEvent', '星球', 'click', 'start'])" title="我的圈子">我的圈子</a></li>				
+				<li><a href="javascript:;" class="runoob-pop">登录</a></li>
+				-->
+      		</ul>
+			<ul class="mobile-nav">
+				<li><a href="//www.runoob.com/">首页</a></li>
+				<li><a href="/html/html-tutorial.html">HTML</a></li>
+				<li><a href="/css/css-tutorial.html">CSS</a></li>
+				<li><a href="/js/js-tutorial.html">JS</a></li>
+				<li><a href="/browser-history">本地书签</a></li>
+				<li><a href="javascript:void(0)" class="search-reveal">Search</a> </li>
+			</ul>
+			
+		</div>
+	</div>
+</div>
+
+<div class="container sub-navigation sub-navigation-articles" style="display:none">
+	<div class="row">
+		<div class="col nav-sub">
+		<ul id="python">
+			<li class="cat-item"><a href="/python3/python3-tutorial.html">Python3 教程 <i class="fa fa-external-link" aria-hidden="true"></i></a></li>
+			<li class="cat-item"><a href="/python/python-tutorial.html">Python2 教程 <i class="fa fa-external-link" aria-hidden="true"></i></a></li>
+		</ul>
+		<ul id="vue">
+			<li class="cat-item"><a href="/vue3/vue3-tutorial.html">Vue3 教程 <i class="fa fa-external-link" aria-hidden="true"></i></a></li>
+			<li class="cat-item"><a href="/vue/vue-tutorial.html">vue2 教程 <i class="fa fa-external-link" aria-hidden="true"></i></a></li>
+		</ul>
+
+		<ul id="bootstrap">
+			<li class="cat-item"><a href="/bootstrap/bootstrap-tutorial.html">Bootstrap3 教程 <i class="fa fa-external-link" aria-hidden="true"></i></a></li>
+			<li class="cat-item"><a href="/bootstrap4/bootstrap4-tutorial.html">Bootstrap4 教程 <i class="fa fa-external-link" aria-hidden="true"></i></a></li>
+			<li class="cat-item"><a href="/bootstrap5/bootstrap5-tutorial.html">Bootstrap5 教程 <i class="fa fa-external-link" aria-hidden="true"></i></a></li>
+			<li class="cat-item"><a href="/bootstrap/bootstrap-v2-tutorial.html">Bootstrap2 教程 <i class="fa fa-external-link" aria-hidden="true"></i></a></li>
+		</ul>
+		</div>
+	</div>
+</div><!--  内容  -->
+<div class="container main">
+	<!-- 中间 -->
+	<div class="row">
+	
+<div class="runoob-col-md2">
+<div class="left-column">
+	<div class="tab" style="overflow: hidden;text-overflow: ellipsis;white-space: nowrap;">
+	<i class="fa fa-list" aria-hidden="true"></i> 
+	<span>Rust 教程</span>
+	<a data-cate="240" href="javascript:void(0);" title="夜间模式"  id="moon"><i class="fa fa-moon-o" aria-hidden="true" style="line-height: 28px;font-size: 1.2em;margin: 2px 4px 0;"></i></a>
+	<a data-cate="240" style="display:none;" href="javascript:void(0);" title="日间模式"  id="sun" ><i class="fa fa-sun-o" aria-hidden="true" style="line-height: 28px;font-size: 1.2em;margin: 2px 4px 0;line-height: 28px;
+}"></i></a>
+
+	</div>
+	<div class="sidebar-box gallery-list">
+		<div class="design" id="leftcolumn">
+						<a target="_top" title="Rust 教程"  href="/rust/rust-tutorial.html" >
+			Rust 教程			</a>
+						<a target="_top" title="Rust 环境搭建"  href="/rust/rust-setup.html" >
+			Rust 环境搭建			</a>
+						<a target="_top" title="Cargo 教程"  href="/rust/cargo-tutorial.html" >
+			Cargo 教程			</a>
+						<a target="_top" title="Rust 输出到命令行"  href="/rust/rust-println.html" >
+			Rust 输出到命令行			</a>
+						<a target="_top" title="Rust 基础语法"  href="/rust/rust-basic-syntax.html" >
+			Rust 基础语法			</a>
+						<a target="_top" title="Rust 数据类型"  href="/rust/rust-data-types.html" >
+			Rust 数据类型			</a>
+						<a target="_top" title="Rust 注释"  href="/rust/rust-comments.html" >
+			Rust 注释			</a>
+						<a target="_top" title="Rust 函数"  href="/rust/rust-function.html" >
+			Rust 函数			</a>
+						<a target="_top" title="Rust 条件语句"  href="/rust/rust-conditions.html" >
+			Rust 条件语句			</a>
+						<a target="_top" title="Rust 循环"  href="/rust/rust-loop.html" >
+			Rust 循环			</a>
+						<a target="_top" title="Rust 所有权"  href="/rust/rust-ownership.html" >
+			Rust 所有权			</a>
+						<a target="_top" title="Rust Slice（切片）类型"  href="/rust/rust-slice.html" >
+			Rust Slice（切片）类型			</a>
+						<a target="_top" title="Rust 结构体"  href="/rust/rust-struct.html" >
+			Rust 结构体			</a>
+						<a target="_top" title="Rust 枚举类"  href="/rust/rust-enum.html" >
+			Rust 枚举类			</a>
+						<a target="_top" title="Rust 组织管理"  href="/rust/rust-project-management.html" >
+			Rust 组织管理			</a>
+						<a target="_top" title="Rust 错误处理"  href="/rust/rust-error-handle.html" >
+			Rust 错误处理			</a>
+						<a target="_top" title="Rust 泛型与特性"  href="/rust/rust-generics.html" >
+			Rust 泛型与特性			</a>
+						<a target="_top" title="Rust 生命周期"  href="/rust/rust-lifetime.html" >
+			Rust 生命周期			</a>
+						<a target="_top" title="Rust 文件与 IO"  href="/rust/rust-file-io.html" >
+			Rust 文件与 IO			</a>
+						<a target="_top" title="Rust 集合与字符串"  href="/rust/rust-collection-string.html" >
+			Rust 集合与字符串			</a>
+						<a target="_top" title="Rust 面向对象"  href="/rust/rust-object.html" >
+			Rust 面向对象			</a>
+						<a target="_top" title="Rust 并发编程"  href="/rust/rust-concurrency.html" >
+			Rust 并发编程			</a>
+				
+		</div>
+	</div>	
+</div>
+</div>	<div class="col middle-column">
+		
+	
+	<div class="article">
+		
+		<div class="previous-next-links">
+			<div class="previous-design-link"><i style="font-size:16px;" class="fa fa-arrow-left" aria-hidden="true"></i> <a href="http://www.runoob.com/rust/rust-error-handle.html" rel="prev"> Rust 错误处理</a> </div>
+			<div class="next-design-link"><a href="http://www.runoob.com/rust/rust-lifetime.html" rel="next"> Rust 生命周期</a> <i style="font-size:16px;" class="fa fa-arrow-right" aria-hidden="true"></i></div>
+		</div>
+<div class="article-heading-ad" style="display: block;">
+<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-5751451760833794"
+     crossorigin="anonymous"></script>
+<!-- 728*90 固定 -->
+<ins class="adsbygoogle"
+     style="display:inline-block;width:728px;height:90px"
+     data-ad-client="ca-pub-5751451760833794"
+     data-ad-slot="2147566827"></ins>
+<script>
+     (adsbygoogle = window.adsbygoogle || []).push({});
+</script>
+		</div>
+		<div class="article-body">
+		
+			<div class="article-intro" id="content">
+			
+			<h1>Rust 泛型与特性</h1><p>
+泛型是一个编程语言不可或缺的机制。</p><p>C++ 语言中用"模板"来实现泛型，而 C 语言中没有泛型的机制，这也导致 C 语言难以构建类型复杂的工程。</p><p>
+泛型机制是编程语言用于表达类型抽象的机制，一般用于功能确定、数据类型待定的类，如链表、映射表等。</p>
+<h3>在函数中定义泛型</h3><p>
+这是一个对整型数字选择排序的方法：</p>
+<div class="example"><h2 class="example">实例</h2> <div class="example_code">
+<span style="color: #708;">fn</span> max<span style="">&#40;</span>array<span style="">:</span> <span style="">&amp;</span><span style="">&#91;</span><span style="color: #05a;">i32</span><span style="">&#93;</span><span style="">&#41;</span> <span style="">-&gt;</span> <span style="color: #05a;">i32</span> <span style="">&#123;</span><br />
+    <span style="color: #708;">let</span> <span style="color: #708;">mut</span> max_index <span style="">=</span> <span style="color: #0000dd;">0</span><span style="">;</span><br />
+    <span style="color: #708;">let</span> <span style="color: #708;">mut</span> i <span style="">=</span> <span style="color: #0000dd;">1</span><span style="">;</span><br />
+    <span style="color: #708;">while</span> i <span style="">&lt;</span> array.len<span style="">&#40;</span><span style="">&#41;</span> <span style="">&#123;</span><br />
+        <span style="color: #708;">if</span> array<span style="">&#91;</span>i<span style="">&#93;</span> <span style="">&gt;</span> array<span style="">&#91;</span>max_index<span style="">&#93;</span> <span style="">&#123;</span><br />
+            max_index <span style="">=</span> i<span style="">;</span><br />
+        <span style="">&#125;</span><br />
+        i <span style="">+=</span> <span style="color: #0000dd;">1</span><span style="">;</span><br />
+    <span style="">&#125;</span><br />
+    array<span style="">&#91;</span>max_index<span style="">&#93;</span><br />
+<span style="">&#125;</span><br />
+<br />
+<span style="color: #708;">fn</span> main<span style="">&#40;</span><span style="">&#41;</span> <span style="">&#123;</span><br />
+    <span style="color: #708;">let</span> a <span style="">=</span> <span style="">&#91;</span><span style="color: #0000dd;">2</span><span style="">,</span> <span style="color: #0000dd;">4</span><span style="">,</span> <span style="color: #0000dd;">6</span><span style="">,</span> <span style="color: #0000dd;">3</span><span style="">,</span> <span style="color: #0000dd;">1</span><span style="">&#93;</span><span style="">;</span><br />
+    println<span style="">!</span><span style="">&#40;</span><span style="color: #a11;">&quot;max = {}&quot;</span><span style="">,</span> max<span style="">&#40;</span><span style="">&amp;</span>a<span style="">&#41;</span><span style="">&#41;</span><span style="">;</span><br />
+<span style="">&#125;</span><br />
+</div></div>
+<p>运行结果：</p>
+<pre>max = 6</pre><p>
+这是一个简单的取最大值程序，可以用于处理 i32 数字类型的数据，但无法用于 f64 类型的数据。通过使用泛型我们可以使这个函数可以利用到各个类型中去。但实际上并不是所有的数据类型都可以比大小，所以接下来一段代码并不是用来运行的，而是用来描述一下函数泛型的语法格式：</p>
+<div class="example"><h2 class="example">实例</h2> <div class="example_code">
+<span style="color: #708;">fn</span> max<span style="">&lt;</span>T<span style="">&gt;</span><span style="">&#40;</span>array<span style="">:</span> <span style="">&amp;</span><span style="">&#91;</span>T<span style="">&#93;</span><span style="">&#41;</span> <span style="">-&gt;</span> T <span style="">&#123;</span><br />
+    <span style="color: #708;">let</span> <span style="color: #708;">mut</span> max_index <span style="">=</span> <span style="color: #0000dd;">0</span><span style="">;</span><br />
+    <span style="color: #708;">let</span> <span style="color: #708;">mut</span> i <span style="">=</span> <span style="color: #0000dd;">1</span><span style="">;</span><br />
+    <span style="color: #708;">while</span> i <span style="">&lt;</span> array.len<span style="">&#40;</span><span style="">&#41;</span> <span style="">&#123;</span><br />
+        <span style="color: #708;">if</span> array<span style="">&#91;</span>i<span style="">&#93;</span> <span style="">&gt;</span> array<span style="">&#91;</span>max_index<span style="">&#93;</span> <span style="">&#123;</span><br />
+            max_index <span style="">=</span> i<span style="">;</span><br />
+        <span style="">&#125;</span><br />
+        i <span style="">+=</span> <span style="color: #0000dd;">1</span><span style="">;</span><br />
+    <span style="">&#125;</span><br />
+    array<span style="">&#91;</span>max_index<span style="">&#93;</span><br />
+<span style="">&#125;</span><br />
+</div></div>
+<h3>结构体与枚举类中的泛型</h3><p>
+在之前我们学习的 Option 和 Result 枚举类就是泛型的。</p><p>Rust 中的结构体和枚举类都可以实现泛型机制。</p>
+<pre>struct&nbsp;Point&lt;T&gt;&nbsp;{
+&nbsp;&nbsp;&nbsp;&nbsp;x:&nbsp;T,
+&nbsp;&nbsp;&nbsp;&nbsp;y:&nbsp;T
+}</pre><p>
+这是一个点坐标结构体，T 表示描述点坐标的数字类型。我们可以这样使用：</p>
+<pre>let&nbsp;p1&nbsp;=&nbsp;Point&nbsp;{x:&nbsp;1,&nbsp;y:&nbsp;2};
+let&nbsp;p2&nbsp;=&nbsp;Point&nbsp;{x:&nbsp;1.0,&nbsp;y:&nbsp;2.0};</pre><p>
+使用时并没有声明类型，这里使用的是自动类型机制，但不允许出现类型不匹配的情况如下：</p><pre>
+let&nbsp;p&nbsp;=&nbsp;Point&nbsp;{x:&nbsp;1,&nbsp;y:&nbsp;2.0};</pre><p>
+x 与 1 绑定时就已经将 T 设定为 i32，所以不允许再出现 f64 的类型。如果我们想让 x 与 y 用不同的数据类型表示，可以使用两个泛型标识符：</p><pre>
+struct&nbsp;Point&lt;T1, T2&gt;&nbsp;{
+&nbsp;&nbsp;&nbsp;&nbsp;x:&nbsp;T1,
+&nbsp;&nbsp;&nbsp;&nbsp;y:&nbsp;T2
+}</pre><p>
+
+在枚举类中表示泛型的方法诸如 Option 和 Result：</p><pre>
+enum Option&lt;T&gt; {
+    Some(T),
+    None,
+}
+
+enum Result&lt;T, E&gt; {
+    Ok(T),
+    Err(E),
+}</pre><p>
+
+结构体与枚举类都可以定义方法，那么方法也应该实现泛型的机制，否则泛型的类将无法被有效的方法操作。</p><div class="example"><h2 class="example">实例</h2> <div class="example_code">
+<span style="color: #708;">struct</span> Point<span style="">&lt;</span>T<span style="">&gt;</span> <span style="">&#123;</span><br />
+&nbsp; &nbsp; x<span style="">:</span> T<span style="">,</span><br />
+&nbsp; &nbsp; y<span style="">:</span> T<span style="">,</span><br />
+<span style="">&#125;</span><br />
+<br />
+impl<span style="">&lt;</span>T<span style="">&gt;</span> Point<span style="">&lt;</span>T<span style="">&gt;</span> <span style="">&#123;</span><br />
+&nbsp; &nbsp; <span style="color: #708;">fn</span> x<span style="">&#40;</span><span style="">&amp;</span><span style="color: #708;">self</span><span style="">&#41;</span> <span style="">-&gt;</span> <span style="">&amp;</span>T <span style="">&#123;</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; <span style="">&amp;</span><span style="color: #708;">self</span>.x<br />
+&nbsp; &nbsp; <span style="">&#125;</span><br />
+<span style="">&#125;</span><br />
+<br />
+<span style="color: #708;">fn</span> main<span style="">&#40;</span><span style="">&#41;</span> <span style="">&#123;</span><br />
+&nbsp; &nbsp; <span style="color: #708;">let</span> p <span style="">=</span> Point <span style="">&#123;</span> x<span style="">:</span> <span style="color: #0000dd;">1</span><span style="">,</span> y<span style="">:</span> <span style="color: #0000dd;">2</span> <span style="">&#125;</span><span style="">;</span><br />
+&nbsp; &nbsp; println<span style="">!</span><span style="">&#40;</span><span style="color: #a11;">&quot;p.x = {}&quot;</span><span style="">,</span> p.x<span style="">&#40;</span><span style="">&#41;</span><span style="">&#41;</span><span style="">;</span><br />
+<span style="">&#125;</span><br />
+</div></div>
+<p>运行结果：</p><pre>
+p.x = 1</pre><p>
+注意，impl 关键字的后方必须有 <span class="marked">&lt;T&gt;</span>，因为它后面的 T 是以之为榜样的。但我们也可以为其中的一种泛型添加方法：</p><pre>
+impl Point&lt;f64&gt; {
+    fn x(&amp;self) -&gt; f64 {
+        self.x
+    }
+}</pre>
+impl 块本身的泛型并没有阻碍其内部方法具有泛型的能力：
+<pre>impl&lt;T, U&gt; Point&lt;T, U&gt; {
+    fn mixup&lt;V, W&gt;(self, other: Point&lt;V, W&gt;) -&gt; Point&lt;T, W&gt; {
+        Point {
+            x: self.x,
+            y: other.y,
+        }
+    }
+}</pre><p>
+方法 mixup 将一个 Point&lt;T, U&gt; 点的 x 与 Point&lt;V, W&gt; 点的 y 融合成一个类型为 Point&lt;T, W&gt; 的新点。</p>
+<hr>
+<h2>特性</h2><p>
+特性（trait）概念接近于 Java 中的接口（Interface），但两者不完全相同。特性与接口相同的地方在于它们都是一种行为规范，可以用于标识哪些类有哪些方法。</p><p>
+特性在 Rust 中用 trait 表示：</p>
+<pre>trait Descriptive {
+    fn describe(&amp;self) -&gt; String;
+}</pre>
+<p>Descriptive 规定了实现者必需有 <span class="marked">describe(&self) -&gt; String</span> 方法。</p><p>我们用它实现一个结构体：</p>
+<div class="example"><h2 class="example">实例</h2> <div class="example_code">
+<span style="color: #708;">struct</span> Person <span style="">&#123;</span><br />
+&nbsp; &nbsp; name<span style="">:</span> String<span style="">,</span><br />
+&nbsp; &nbsp; age<span style="">:</span> <span style="color: #05a;">u8</span><br />
+<span style="">&#125;</span><br />
+<br />
+<span style="color: #708;">impl</span> Descriptive <span style="color: #708;">for</span> Person <span style="">&#123;</span><br />
+&nbsp; &nbsp; <span style="color: #708;">fn</span> describe<span style="">&#40;</span><span style="">&amp;</span><span style="color: #708;">self</span><span style="">&#41;</span> <span style="">-&gt;</span> String <span style="">&#123;</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; format<span style="">!</span><span style="">&#40;</span><span style="color: #a11;">&quot;{} {}&quot;</span><span style="">,</span> <span style="color: #708;">self</span>.name<span style="">,</span> <span style="color: #708;">self</span>.age<span style="">&#41;</span><br />
+&nbsp; &nbsp; <span style="">&#125;</span><br />
+<span style="">&#125;</span><br />
+</div></div>
+<p>格式是：</p><pre>
+impl &lt;特性名&gt; for &lt;所实现的类型名&gt;</pre><p>
+Rust 同一个类可以实现多个特性，每个 impl 块只能实现一个。</p>
+<h3>默认特性</h3>
+<p>这是特性与接口的不同点：接口只能规范方法而不能定义方法，但特性可以定义方法作为默认方法，因为是"默认"，所以对象既可以重新定义方法，也可以不重新定义方法使用默认的方法：</p>
+<div class="example"><h2 class="example">实例</h2> <div class="example_code">
+<span style="color: #708;">trait</span> Descriptive <span style="">&#123;</span><br />
+&nbsp; &nbsp; <span style="color: #708;">fn</span> describe<span style="">&#40;</span><span style="">&amp;</span><span style="color: #708;">self</span><span style="">&#41;</span> <span style="">-&gt;</span> String <span style="">&#123;</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; String<span style="">::</span><span style="color: #164;">from</span><span style="">&#40;</span><span style="color: #a11;">&quot;[Object]&quot;</span><span style="">&#41;</span><br />
+&nbsp; &nbsp; <span style="">&#125;</span><br />
+<span style="">&#125;</span><br />
+<br />
+<span style="color: #708;">struct</span> Person <span style="">&#123;</span><br />
+&nbsp; &nbsp; name<span style="">:</span> String<span style="">,</span><br />
+&nbsp; &nbsp; age<span style="">:</span> <span style="color: #05a;">u8</span><br />
+<span style="">&#125;</span><br />
+<br />
+<span style="color: #708;">impl</span> Descriptive <span style="color: #708;">for</span> Person <span style="">&#123;</span><br />
+&nbsp; &nbsp; <span style="color: #708;">fn</span> describe<span style="">&#40;</span><span style="">&amp;</span><span style="color: #708;">self</span><span style="">&#41;</span> <span style="">-&gt;</span> String <span style="">&#123;</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; format<span style="">!</span><span style="">&#40;</span><span style="color: #a11;">&quot;{} {}&quot;</span><span style="">,</span> <span style="color: #708;">self</span>.name<span style="">,</span> <span style="color: #708;">self</span>.age<span style="">&#41;</span><br />
+&nbsp; &nbsp; <span style="">&#125;</span><br />
+<span style="">&#125;</span><br />
+<br />
+<span style="color: #708;">fn</span> main<span style="">&#40;</span><span style="">&#41;</span> <span style="">&#123;</span><br />
+&nbsp; &nbsp; <span style="color: #708;">let</span> cali <span style="">=</span> Person <span style="">&#123;</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; name<span style="">:</span> String<span style="">::</span><span style="color: #164;">from</span><span style="">&#40;</span><span style="color: #a11;">&quot;Cali&quot;</span><span style="">&#41;</span><span style="">,</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; age<span style="">:</span> <span style="color: #0000dd;">24</span><br />
+&nbsp; &nbsp; <span style="">&#125;</span><span style="">;</span><br />
+&nbsp; &nbsp; println<span style="">!</span><span style="">&#40;</span><span style="color: #a11;">&quot;{}&quot;</span><span style="">,</span> cali.describe<span style="">&#40;</span><span style="">&#41;</span><span style="">&#41;</span><span style="">;</span><br />
+<span style="">&#125;</span><br />
+</div></div>
+<p>运行结果：</p>
+<pre>Cali 24</pre><p>
+如果我们将 impl Descriptive for Person 块中的内容去掉，那么运行结果就是：</p><pre>
+[Object]</pre>
+<h3>特性做参数</h3>
+<p>很多情况下我们需要传递一个函数做参数，例如回调函数、设置按钮事件等。在 Java 中函数必须以接口实现的类实例来传递，在 Rust 中可以通过传递特性参数来实现：</p>
+<pre>fn output(object: impl Descriptive) {
+    println!("{}", object.describe());
+}</pre>
+<p>任何实现了 Descriptive 特性的对象都可以作为这个函数的参数，这个函数没必要了解传入对象有没有其他属性或方法，只需要了解它一定有 Descriptive 特性规范的方法就可以了。当然，此函数内也无法使用其他的属性与方法。</p><p>
+特性参数还可以用这种等效语法实现：</p>
+<pre>fn output&lt;T: Descriptive&gt;(object: T) {
+    println!("{}", object.describe());
+}</pre><p>
+这是一种风格类似泛型的语法糖，这种语法糖在有多个参数类型均是特性的情况下十分实用：</p><pre>
+fn output_two&lt;T: Descriptive&gt;(arg1: T, arg2: T) {
+    println!("{}", arg1.describe());
+    println!("{}", arg2.describe());
+}</pre>
+<p>特性作类型表示时如果涉及多个特性，可以用 <span class="marked">+</span> 符号表示，例如：</p>
+<pre>fn notify(item: impl Summary + Display)
+fn notify&lt;T: Summary + Display&gt;(item: T)</pre>
+<p><strong>注意：</strong>仅用于表示类型的时候，并不意味着可以在 impl 块中使用。</p>
+<p>复杂的实现关系可以使用 where 关键字简化，例如：</p>
+<pre>fn some_function&lt;T: Display + Clone, U: Clone + Debug&gt;(t: T, u: U)</pre>
+<p>可以简化成：</p>
+<pre>fn some_function&lt;T, U&gt;(t: T, u: U) -&gt; i32
+    where T: Display + Clone,
+          U: Clone + Debug</pre>
+<p>在了解这个语法之后，泛型章节中的"取最大值"案例就可以真正实现了：</p>
+<div class="example"><h2 class="example">实例</h2> <div class="example_code">
+<span style="color: #708;">trait</span> Comparable <span style="">&#123;</span><br />
+&nbsp; &nbsp; <span style="color: #708;">fn</span> compare<span style="">&#40;</span><span style="">&amp;</span><span style="color: #708;">self</span><span style="">,</span> object<span style="">:</span> <span style="">&amp;</span>Self<span style="">&#41;</span> <span style="">-&gt;</span> <span style="color: #05a;">i8</span><span style="">;</span><br />
+<span style="">&#125;</span><br />
+<br />
+<span style="color: #708;">fn</span> max<span style="">&lt;</span>T<span style="">:</span> Comparable<span style="">&gt;</span><span style="">&#40;</span>array<span style="">:</span> <span style="">&amp;</span><span style="">&#91;</span>T<span style="">&#93;</span><span style="">&#41;</span> <span style="">-&gt;</span> <span style="">&amp;</span>T <span style="">&#123;</span><br />
+&nbsp; &nbsp; <span style="color: #708;">let</span> <span style="color: #708;">mut</span> max_index <span style="">=</span> <span style="color: #0000dd;">0</span><span style="">;</span><br />
+&nbsp; &nbsp; <span style="color: #708;">let</span> <span style="color: #708;">mut</span> i <span style="">=</span> <span style="color: #0000dd;">1</span><span style="">;</span><br />
+&nbsp; &nbsp; <span style="color: #708;">while</span> i <span style="">&lt;</span> array.len<span style="">&#40;</span><span style="">&#41;</span> <span style="">&#123;</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; <span style="color: #708;">if</span> array<span style="">&#91;</span>i<span style="">&#93;</span>.compare<span style="">&#40;</span><span style="">&amp;</span>array<span style="">&#91;</span>max_index<span style="">&#93;</span><span style="">&#41;</span> <span style="">&gt;</span> <span style="color: #0000dd;">0</span> <span style="">&#123;</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; max_index <span style="">=</span> i<span style="">;</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; <span style="">&#125;</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; i <span style="">+=</span> <span style="color: #0000dd;">1</span><span style="">;</span><br />
+&nbsp; &nbsp; <span style="">&#125;</span><br />
+&nbsp; &nbsp; <span style="">&amp;</span>array<span style="">&#91;</span>max_index<span style="">&#93;</span><br />
+<span style="">&#125;</span><br />
+<br />
+<span style="color: #708;">impl</span> Comparable <span style="color: #708;">for</span> <span style="color: #05a;">f64</span> <span style="">&#123;</span><br />
+&nbsp; &nbsp; <span style="color: #708;">fn</span> compare<span style="">&#40;</span><span style="">&amp;</span><span style="color: #708;">self</span><span style="">,</span> object<span style="">:</span> <span style="">&amp;</span><span style="color: #05a;">f64</span><span style="">&#41;</span> <span style="">-&gt;</span> <span style="color: #05a;">i8</span> <span style="">&#123;</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; <span style="color: #708;">if</span> <span style="">&amp;</span><span style="color: #708;">self</span> <span style="">&gt;</span> <span style="">&amp;</span>object <span style="">&#123;</span> <span style="color: #0000dd;">1</span> <span style="">&#125;</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; <span style="color: #708;">else</span> <span style="color: #708;">if</span> <span style="">&amp;</span><span style="color: #708;">self</span> <span style="">==</span> <span style="">&amp;</span>object <span style="">&#123;</span> <span style="color: #0000dd;">0</span> <span style="">&#125;</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; <span style="color: #708;">else</span> <span style="">&#123;</span> <span style="">-</span><span style="color: #0000dd;">1</span> <span style="">&#125;</span><br />
+&nbsp; &nbsp; <span style="">&#125;</span><br />
+<span style="">&#125;</span><br />
+<br />
+<span style="color: #708;">fn</span> main<span style="">&#40;</span><span style="">&#41;</span> <span style="">&#123;</span><br />
+&nbsp; &nbsp; <span style="color: #708;">let</span> arr <span style="">=</span> <span style="">&#91;</span><span style="color:#800080;">1.0</span><span style="">,</span> <span style="color:#800080;">3.0</span><span style="">,</span> <span style="color:#800080;">5.0</span><span style="">,</span> <span style="color:#800080;">4.0</span><span style="">,</span> <span style="color:#800080;">2.0</span><span style="">&#93;</span><span style="">;</span><br />
+&nbsp; &nbsp; println<span style="">!</span><span style="">&#40;</span><span style="color: #a11;">&quot;maximum of arr is {}&quot;</span><span style="">,</span> max<span style="">&#40;</span><span style="">&amp;</span>arr<span style="">&#41;</span><span style="">&#41;</span><span style="">;</span><br />
+<span style="">&#125;</span><br />
+</div></div>
+<p>运行结果：</p><pre>
+maximum of arr is 5</pre>
+<p><strong>Tip:</strong> 由于需要声明 compare 函数的第二参数必须与实现该特性的类型相同，所以 Self （注意大小写）关键字就代表了当前类型（不是实例）本身。</p>
+<h3>特性做返回值</h3>
+<p>特性做返回值格式如下：</p>
+<div class="example"><h2 class="example">实例</h2> <div class="example_code">
+<span style="color: #708;">fn</span> person<span style="">&#40;</span><span style="">&#41;</span> <span style="">-&gt;</span> <span style="color: #708;">impl</span> Descriptive <span style="">&#123;</span><br />
+&nbsp; &nbsp; Person <span style="">&#123;</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; name<span style="">:</span> String<span style="">::</span><span style="color: #164;">from</span><span style="">&#40;</span><span style="color: #a11;">&quot;Cali&quot;</span><span style="">&#41;</span><span style="">,</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; age<span style="">:</span> <span style="color: #0000dd;">24</span><br />
+&nbsp; &nbsp; <span style="">&#125;</span><br />
+<span style="">&#125;</span><br />
+</div></div>
+<p>但是有一点，特性做返回值只接受实现了该特性的对象做返回值且在同一个函数中所有可能的返回值类型必须完全一样。比如结构体 A 与结构体 B 都实现了特性 Trait，下面这个函数就是错误的：</p>
+<div class="example"><h2 class="example">实例</h2> <div class="example_code">
+<span style="color: #708;">fn</span> some_function<span style="">&#40;</span><span style="color: #05a;">bool</span> bl<span style="">&#41;</span> <span style="">-&gt;</span> <span style="color: #708;">impl</span> Descriptive <span style="">&#123;</span><br />
+&nbsp; &nbsp; <span style="color: #708;">if</span> bl <span style="">&#123;</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; <span style="color: #708;">return</span> A <span style="">&#123;</span><span style="">&#125;</span><span style="">;</span><br />
+&nbsp; &nbsp; <span style="">&#125;</span> <span style="color: #708;">else</span> <span style="">&#123;</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; <span style="color: #708;">return</span> B <span style="">&#123;</span><span style="">&#125;</span><span style="">;</span><br />
+&nbsp; &nbsp; <span style="">&#125;</span><br />
+<span style="">&#125;</span><br />
+</div></div>
+<h3>有条件实现方法</h3>
+<p>impl 功能十分强大，我们可以用它实现类的方法。但对于泛型类来说，有时我们需要区分一下它所属的泛型已经实现的方法来决定它接下来该实现的方法：</p>
+<pre>struct A&lt;T&gt; {}
+
+impl&lt;T: B + C&gt; A&lt;T&gt; {
+    fn d(&amp;self) {}
+}</pre><p>
+这段代码声明了 A&lt;T&gt; 类型必须在 T 已经实现 B 和 C 特性的前提下才能有效实现此 impl 块。</p>			<!-- 其他扩展 -->
+						
+			</div>
+			
+		</div>
+		
+		<div class="previous-next-links">
+			<div class="previous-design-link"><i style="font-size:16px;" class="fa fa-arrow-left" aria-hidden="true"></i> <a href="http://www.runoob.com/rust/rust-error-handle.html" rel="prev"> Rust 错误处理</a> </div>
+			<div class="next-design-link"><a href="http://www.runoob.com/rust/rust-lifetime.html" rel="next"> Rust 生命周期</a> <i style="font-size:16px;" class="fa fa-arrow-right" aria-hidden="true"></i></div>
+		</div>
+		<!-- 笔记列表 -->
+		<style>
+.wrapper {
+  /*text-transform: uppercase; */
+  background: #ececec;
+  color: #555;
+  cursor: help;
+  font-family: "Gill Sans", Impact, sans-serif;
+  font-size: 20px;
+  position: relative;
+  text-align: center;
+  width: 200px;
+  -webkit-transform: translateZ(0); /* webkit flicker fix */
+  -webkit-font-smoothing: antialiased; /* webkit text rendering fix */
+}
+
+.wrapper .tooltip {
+  white-space: nowrap;
+  font-size: 14px;
+  text-align: left;
+  background: #96b97d;
+  bottom: 100%;
+  color: #fff;
+  display: block;
+  left: -25px;
+  margin-bottom: 15px;
+  opacity: 0;
+  padding: 14px;
+  pointer-events: none;
+  position: absolute;
+  
+  -webkit-transform: translateY(10px);
+     -moz-transform: translateY(10px);
+      -ms-transform: translateY(10px);
+       -o-transform: translateY(10px);
+          transform: translateY(10px);
+  -webkit-transition: all .25s ease-out;
+     -moz-transition: all .25s ease-out;
+      -ms-transition: all .25s ease-out;
+       -o-transition: all .25s ease-out;
+          transition: all .25s ease-out;
+  -webkit-box-shadow: 2px 2px 6px rgba(0, 0, 0, 0.28);
+     -moz-box-shadow: 2px 2px 6px rgba(0, 0, 0, 0.28);
+      -ms-box-shadow: 2px 2px 6px rgba(0, 0, 0, 0.28);
+       -o-box-shadow: 2px 2px 6px rgba(0, 0, 0, 0.28);
+          box-shadow: 2px 2px 6px rgba(0, 0, 0, 0.28);
+}
+.tooltip a {
+	color:#fff;
+}
+/* This bridges the gap so you can mouse into the tooltip without it disappearing */
+.wrapper .tooltip:before {
+  bottom: -20px;
+  content: " ";
+  display: block;
+  height: 20px;
+  left: 0;
+  position: absolute;
+  width: 100%;
+}  
+
+/* CSS Triangles - see Trevor's post */
+.wrapper .tooltip:after {
+  border-left: solid transparent 10px;
+  border-right: solid transparent 10px;
+  border-top: solid #96b97d 10px;
+  bottom: -10px;
+  content: " ";
+  height: 0;
+  left: 20%;
+  margin-left: -13px;
+  position: absolute;
+  width: 0;
+}
+.wrapper .tooltip1 {
+	margin-left: 50px;
+	padding-top: 0px;
+}
+/*
+.wrapper:hover .tooltip {
+  opacity: 1;
+  pointer-events: auto;
+  -webkit-transform: translateY(0px);
+     -moz-transform: translateY(0px);
+      -ms-transform: translateY(0px);
+       -o-transform: translateY(0px);
+          transform: translateY(0px);
+}
+*/
+/* IE can just show/hide with no transition */
+.lte8 .wrapper .tooltip {
+  display: none;
+}
+
+.lte8 .wrapper:hover .tooltip {
+  display: block;
+}
+
+</style>
+
+<link rel="stylesheet" href="https://static.runoob.com/assets/upvotejs/dist/upvotejs/upvotejs.css">
+<script src="https://static.runoob.com/assets/upvotejs/dist/upvotejs/upvotejs.vanilla.js"></script>
+<script src="https://static.runoob.com/assets/upvotejs/dist/upvotejs/upvotejs.jquery.js"></script>
+<div id="respond" class="no_webshot"> 
+		<div class="comment-signarea" style=" padding: 20px 20px;"> 
+	<h3 class="text-muted" id="share_code" style="color: #799961;"><i class="fa fa-pencil-square-o" aria-hidden="true"></i> 点我分享笔记</h3>
+	<!--
+	<p style="font-size:14px;">笔记需要是本篇文章的内容扩展！</p><br>
+	<p style="font-size:12px;"><a href="//www.runoob.com/tougao" target="_blank">文章投稿，可点击这里</a></p>
+	<p style="font-size:14px;"><a href="/w3cnote/runoob-user-test-intro.html#invite" target="_blank">注册邀请码获取方式</a></p>
+		<h3 class="text-muted"><i class="fa fa-info-circle" aria-hidden="true"></i> 分享笔记前必须<a href="javascript:;" class="runoob-pop">登录</a>！</h3>
+		<p><a href="/w3cnote/runoob-user-test-intro.html#invite" target="_blank">注册邀请码获取方式</a></p>-->
+	</div>
+		
+	<form action="/wp-content/themes/runoob/option/addnote.php" method="post" id="commentform" style="display:none;">
+		<div class="comt">
+			<div class="comt-title">
+				<i style="font-size:36px;" class="fa fa-user-circle" aria-hidden="true"></i>				<p><a id="cancel-comment-reply-link" href="javascript:;">取消</a></p>
+			</div>
+			<div class="comt-box">
+			<div id="mded"></div>
+			
+				<div class="comt-ctrl">
+					<div class="comt-tips"><input type='hidden' name='comment_post_ID' value='22268' id='comment_post_ID' />
+<input type='hidden' name='comment_parent' id='comment_parent' value='0' />
+</div>
+					<button type="submit" name="submit" id="submit" tabindex="5"><i class="fa fa-pencil" aria-hidden="true"></i> 分享笔记</button>
+				</div>
+			</div>
+		
+				
+					<div class="comt-comterinfo"> 
+						<ul id="comment-author-info">
+							<li class="form-inline"><label class="hide" for="author">昵称</label><input class="ipt" type="text" name="author" id="author" value="" tabindex="2" placeholder="昵称"><span class="text-muted">昵称 (必填)</span></li>
+							<li class="form-inline"><label class="hide" for="email">邮箱</label><input class="ipt" type="text" name="email" id="email" value="" tabindex="3" placeholder="邮箱"><span class="text-muted">邮箱 (必填)</span></li>
+							<li class="form-inline"><label class="hide" for="url">引用地址</label><input class="ipt" type="text" name="url" id="url" value="" tabindex="4" placeholder="引用地址"><span class="text-muted">引用地址</span></li>
+						</ul>
+					</div>
+				
+			
+		</div>
+
+	</form>
+	</div>
+<script type="text/javascript">
+$(function() {
+	//初始化编辑器
+	
+	var editor = new Simditor({
+	  textarea: $('#mded'),
+	  placeholder: '写笔记...',
+	  upload:false,
+	 // upload: {url:'/api/comment_upload_file.php',params: null,fileKey: 'upload_file',connectionCount: 1,leaveConfirm: '文件正在上传，您确定离开?'},
+	  defaultImage: 'https://www.runoob.com/images/logo.png',
+	  codeLanguages: '',
+	  autosave: 'editor-content',
+	  toolbar: [  'bold','code','ul','ol','image' ]
+	});
+	editor.on('selectionchanged', function() {
+		$(".code-popover").hide();
+	});
+
+	// 提交数据
+	$("#share_code").click(function() {
+		$(".comment-signarea").hide();
+		$("#commentform").show();
+		
+	});
+	$("#user_add_note").click(function() {
+		$(".comment-signarea").hide();
+		$("#commentform").show();
+		$('html, body').animate({
+       	    scrollTop: $("#respond").offset().top
+    	}, 200);
+	});
+
+	// 提交笔记
+	var commentform=$('#commentform');
+	commentform.prepend('<div id="comment-status" style="display:none;" ></div>');
+	var statusdiv=$('#comment-status');
+	
+	commentform.submit(function(e){
+		e.preventDefault();
+		var noteContent = editor.getValue();
+		// console.log(noteContent);
+		noteContent = noteContent.replace(/<pre><code>/g,"<pre>");
+		noteContent = noteContent.replace(/<\/code><\/pre>/g,"</pre>");
+		
+		// 系列化表单数据
+		var comment_parent = 0;
+		var is_user_logged_in = $("#is_user_logged_in").val();
+		var comment_post_ID =  22268;
+		var _wp_unfiltered_html_comment = $("#_wp_unfiltered_html_comment").val();
+		var comment = noteContent;
+		var author = $("#author").val();
+		var url = $("#url").val();
+		var email = $("#email").val();
+		if(isBlank(author) && is_user_logged_in==0) {
+			statusdiv.html('<p  class="ajax-error">请输入昵称！</p>').show();
+		} else if(isBlank(email)  && is_user_logged_in==0) {
+			statusdiv.html('<p  class="ajax-error">请输入邮箱！</p>').show();
+		} else {
+			// var formdata=commentform.serialize() + "&comment=" + noteContent ;
+			// 添加状态信息
+			statusdiv.html('<p>Processing...</p>').show();
+			// 获取表单提交地址
+			var formurl=commentform.attr('action');
+			
+			// 异步提交
+			$.ajax({
+					type: 'post',
+					url: formurl,
+					dataType:'json',
+					data: {"comment_parent":comment_parent,"comment_post_ID":comment_post_ID, "_wp_unfiltered_html_comment":_wp_unfiltered_html_comment,"comment":comment,"url":url, "email":email,"author":author},
+					error: function(XMLHttpRequest, textStatus, errorThrown){
+					statusdiv.html('<p class="ajax-error" >数据不完整或表单提交太快了！</p>').show();
+				},
+				success: function(data, textStatus){
+					if(data.errorno=="0") {
+						$("#submit").prop('disabled', true);
+						statusdiv.html('<p class="ajax-success" >笔记已提交审核，感谢分享笔记！</p>').show();
+						alert('笔记已提交审核，感谢分享笔记！');
+					}else{
+						statusdiv.html('<p class="ajax-error" >'+data.msg+'</p>').show();
+					}
+					commentform.find('textarea[name=comment]').val('');
+				}
+			});
+			setTimeout(function(){
+		        $("#submit").prop('disabled', false);
+		    }, 10*1000);
+		}
+		return false;
+
+	});
+	$(".comt-author").click(function() {
+		href = $(this).children("a").attr("href");
+		if(href.indexOf("/note/")!=-1) {
+			var win = window.open(href, '_blank');
+  			win.focus();
+		}
+	});
+	$(".comt-meta span").hover(function(){
+		$(this).children(".tooltip").css({ "opacity": 1, "pointer-events": "auto"});
+	},function(){
+		$(this).children(".tooltip").removeAttr("style");
+	});
+	/*
+	$(".wrapper i").hover(function(){
+		$(this).siblings(".tooltip").css({ "opacity": 1, "pointer-events": "auto"});
+	},function(){
+		$(this).siblings(".tooltip").css({ "opacity": 0, "pointer-events": "auto"});
+	});
+	*/
+	//Upvote.create('runoobvote-id', {callback: vote_callback});
+	var ajaxurl = 'https://www.runoob.com/wp-admin/admin-ajax.php';
+	var callback = function(data) {
+		//console.log($('#runoobvote-id').upvote('upvoted'));
+		//console.log($('#runoobvote-id').upvote('downvoted'));
+		//console.log(data);
+		_vote_action = data.action;
+		id_arr = data.id.split('-');
+		um_id= id_arr[2];
+		//console.log(um_id);
+		
+		var re = /^[1-9]+/;
+		if (re.test(um_id)) { 
+			var ajax_data = {
+				_vote_action: _vote_action,
+				action: "pinglun_zan",
+				um_id: um_id,
+				um_action: "ding"
+			};
+			//console.log(ajax_data);
+			$.post(ajaxurl,ajax_data,function(status){
+				//if(status.vote_num>999) {
+				//	_voteHtml = '<span style="display: block; text-align: center;font-size: 20px; color: #6a737c; margin: 8px 0;">'+kFormatter(status.vote_num) +'</span>';
+				//	$("#runoobvote-id-" + um_id + " .count").hide().after(_voteHtml);
+				//}
+				
+			});
+		}
+	};
+	if($('#comments').length && $('.upvotejs').length){
+		$('.upvotejs').upvote({id: 22268, callback: callback});
+	
+		$.post(ajaxurl,{"action":"pinglun_zan","postid":22268},function(data){  
+			$(data).each(function(key,value) {
+				$("#runoobvote-id-" + value.commid + " .upvote").addClass(value.upvotejs_class);
+				$("#runoobvote-id-" + value.commid + " .downvote").addClass(value.downvote_class);
+				$("#runoobvote-id-" + value.commid + " .count").text(value.upvote_count);
+			})
+		},'json');
+		
+	}
+	
+	
+});
+function isBlank(str) {
+    return (!str || /^\s*$/.test(str));
+}
+function kFormatter(num) {
+	// return num;
+    return Math.abs(num) > 999 ? Math.sign(num)*((Math.abs(num)/1000).toFixed(1)) + 'k' : Math.sign(num)*Math.abs(num)
+}
+
+</script>
+
+<link rel="stylesheet" href="/wp-content/themes/runoob/assets/css/qa.css?1.44">
+<link rel="stylesheet" type="text/css" href="https://cdn.staticfile.org/simditor/2.3.6/styles/simditor.min.css" />
+<script type="text/javascript" src="https://static.runoob.com/assets/simditor/2.3.6/scripts/module.js"></script>
+<script type="text/javascript" src="//static.runoob.com/assets/simditor/2.3.6/scripts/hotkeys.js"></script>
+<script type="text/javascript" src="//static.runoob.com/assets/simditor/2.3.6/scripts/uploader.js"></script>
+<script type="text/javascript" src="https://cdn.staticfile.org/simditor/2.3.6/lib/simditor.min.js"></script>
+<script type="text/javascript" src="https://static.runoob.com/assets/simditor/2.3.6/scripts/simditor-autosave.js"></script>
+		<div class="sidebar-box ">
+				
+
+<style>	
+.responsive_ad1 { display:none; }
+@media(min-width: 800px) { .responsive_ad1 {  display:block;margin:0 auto;} }
+</style>
+<div id="ad-336280" >
+
+<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-5751451760833794"
+     crossorigin="anonymous"></script>
+<!-- 移动版 自动调整 -->
+<ins class="adsbygoogle"
+     style="display:block"
+     data-ad-client="ca-pub-5751451760833794"
+     data-ad-slot="1691338467"
+     data-ad-format="auto"
+     data-full-width-responsive="true"></ins>
+<script>
+     (adsbygoogle = window.adsbygoogle || []).push({});
+</script>
+		</div>
+				</div>
+		
+	</div>
+</div>
+	
+
+<!-- 右边栏 -->
+<div class="fivecol last right-column">
+
+<style>
+.sidebar-tree .double-li {
+    width:300px;
+}
+.sidebar-tree .double-li li {
+    width: 44%;
+    line-height: 1.5em;
+    border-bottom: 1px solid #ccc;
+    float: left;
+    display: inline;
+}
+</style>
+
+    
+        <div class="sidebar-box re-box re-box-large">
+        <div class="sidebar-box recommend-here" style="margin: 0 auto;">
+            <a href="javascript:void(0);" style="font-size: 16px; color:#64854c;font-weight:bold;"> <i class="fa fa-list" aria-hidden="true"></i> 分类导航</a>
+        </div>
+    <div class="sidebar-box sidebar-cate">
+        
+        <div class="sidebar-tree" >
+            <ul><li style="margin: 0;"><a href="javascript:void(0);" class="tit"> HTML / CSS</a><ul class="double-li"><li><a title="HTML 教程" href="//www.runoob.com/html/html-tutorial.html">HTML 教程</a></li><li><a title="HTML5 教程" href="//www.runoob.com/html/html5-intro.html">HTML5 教程</a></li><li><a title="CSS 教程" href="//www.runoob.com/css/css-tutorial.html">CSS 教程</a></li><li><a title="CSS3 教程" href="//www.runoob.com/css3/css3-tutorial.html">CSS3 教程</a></li><li><a title="Bootstrap3 教程" href="//www.runoob.com/bootstrap/bootstrap-tutorial.html">Bootstrap3 教程</a></li><li><a title="Bootstrap4 教程" href="//www.runoob.com/bootstrap4/bootstrap4-tutorial.html">Bootstrap4 教程</a></li><li><a title="Bootstrap5 教程" href="//www.runoob.com/bootstrap5/bootstrap5-tutorial.html">Bootstrap5 教程</a></li><li><a title="Font Awesome 教程" href="//www.runoob.com/font-awesome/fontawesome-tutorial.html">Font Awesome 教程</a></li><li><a title="Foundation 教程" href="//www.runoob.com/foundation/foundation-tutorial.html">Foundation 教程</a></li></ul></li><li style="margin: 0;"><a href="javascript:void(0);" class="tit"> JavaScript</a><ul class="double-li"><li><a title="JavaScript 教程" href="//www.runoob.com/js/js-tutorial.html">JavaScript 教程</a></li><li><a title="HTML DOM 教程" href="//www.runoob.com/htmldom/htmldom-tutorial.html">HTML DOM 教程</a></li><li><a title="jQuery 教程" href="//www.runoob.com/jquery/jquery-tutorial.html">jQuery 教程</a></li><li><a title="AngularJS 教程" href="//www.runoob.com/angularjs/angularjs-tutorial.html">AngularJS 教程</a></li><li><a title="AngularJS2 教程" href="//www.runoob.com/angularjs2/angularjs2-tutorial.html">AngularJS2 教程</a></li><li><a title="Vue.js 教程" href="//www.runoob.com/vue2/vue-tutorial.html">Vue.js 教程</a></li><li><a title="Vue3 教程" href="//www.runoob.com/vue3/vue3-tutorial.html">Vue3 教程</a></li><li><a title="React 教程" href="//www.runoob.com/react/react-tutorial.html">React 教程</a></li><li><a title="TypeScript 教程" href="//www.runoob.com/typescript/ts-tutorial.html">TypeScript 教程</a></li><li><a title="jQuery UI 教程" href="//www.runoob.com/jqueryui/jqueryui-tutorial.html">jQuery UI 教程</a></li><li><a title="jQuery EasyUI 教程" href="//www.runoob.com/jeasyui/jqueryeasyui-tutorial.html">jQuery EasyUI 教程</a></li><li><a title="Node.js 教程" href="//www.runoob.com/nodejs/nodejs-tutorial.html">Node.js 教程</a></li><li><a title="AJAX 教程" href="//www.runoob.com/ajax/ajax-tutorial.html">AJAX 教程</a></li><li><a title="JSON 教程" href="//www.runoob.com/json/json-tutorial.html">JSON 教程</a></li><li><a title="Echarts 教程" href="//www.runoob.com/echarts/echarts-tutorial.html">Echarts 教程</a></li><li><a title="Chart.js 教程" href="//www.runoob.com/chartjs/chartjs-tutorial.html">Chart.js 教程</a></li><li><a title="Highcharts 教程" href="//www.runoob.com/highcharts/highcharts-tutorial.html">Highcharts 教程</a></li><li><a title="Google 地图 教程" href="//www.runoob.com/googleapi/google-maps-basic.html">Google 地图 教程</a></li></ul></li><li style="margin: 0;"><a href="javascript:void(0);" class="tit"> 服务端</a><ul class="double-li"><li><a title="Python 教程" href="//www.runoob.com/python3/python3-tutorial.html">Python 教程</a></li><li><a title="Python2.x 教程" href="//www.runoob.com/python/python-tutorial.html">Python2.x 教程</a></li><li><a title="Linux 教程" href="//www.runoob.com/linux/linux-tutorial.html">Linux 教程</a></li><li><a title="Docker 教程" href="//www.runoob.com/docker/docker-tutorial.html">Docker 教程</a></li><li><a title="Ruby 教程" href="//www.runoob.com/ruby/ruby-tutorial.html">Ruby 教程</a></li><li><a title="Java 教程" href="//www.runoob.com/java/java-tutorial.html">Java 教程</a></li><li><a title="C 教程" href="//www.runoob.com/c/c-tutorial.html">C 教程</a></li><li><a title="C++ 教程" href="//www.runoob.com/cplusplus/cpp-tutorial.html">C++ 教程</a></li><li><a title="Perl 教程" href="//www.runoob.com/perl/perl-tutorial.html">Perl 教程</a></li><li><a title="Servlet 教程" href="//www.runoob.com/servlet/servlet-tutorial.html">Servlet 教程</a></li><li><a title="JSP 教程" href="//www.runoob.com/jsp/jsp-tutorial.html">JSP 教程</a></li><li><a title="Lua 教程" href="//www.runoob.com/lua/lua-tutorial.html">Lua 教程</a></li><li><a title="Rust 教程" href="//www.runoob.com/rust/rust-tutorial.html">Rust 教程</a></li><li><a title="Scala 教程" href="//www.runoob.com/scala/scala-tutorial.html">Scala 教程</a></li><li><a title="Go 教程" href="//www.runoob.com/go/go-tutorial.html">Go 教程</a></li><li><a title="PHP 教程" href="//www.runoob.com/php/php-tutorial.html">PHP 教程</a></li><li><a title="数据结构与算法" href="//www.runoob.com/data-structures/data-structures-tutorial.html">数据结构与算法</a></li><li><a title="Django 教程" href="//www.runoob.com/django/django-tutorial.html">Django 教程</a></li><li><a title="Zookeeper 教程" href="//www.runoob.com/w3cnote/zookeeper-tutorial.html">Zookeeper 教程</a></li><li><a title="设计模式" href="//www.runoob.com/design-pattern/design-pattern-tutorial.html">设计模式</a></li><li><a title="正则表达式" href="//www.runoob.com/regexp/regexp-tutorial.html">正则表达式</a></li><li><a title="Maven 教程" href="//www.runoob.com/maven/maven-tutorial.html">Maven 教程</a></li><li><a title="Verilog 教程" href="//www.runoob.com/w3cnote/verilog-tutorial.html">Verilog 教程</a></li><li><a title="ASP 教程" href="//www.runoob.com/asp/asp-tutorial.html">ASP 教程</a></li><li><a title="AppML 教程" href="//www.runoob.com/appml/appml-tutorial.html">AppML 教程</a></li><li><a title="VBScript 教程" href="//www.runoob.com/vbscript/vbscript-tutorial.html">VBScript 教程</a></li></ul></li><li style="margin: 0;"><a href="javascript:void(0);" class="tit"> 数据库</a><ul class="double-li"><li><a title="SQL 教程" href="//www.runoob.com/sql/sql-tutorial.html">SQL 教程</a></li><li><a title="MySQL 教程" href="//www.runoob.com/mysql/mysql-tutorial.html">MySQL 教程</a></li><li><a title="PostgreSQL 教程" href="//www.runoob.com/postgresql/postgresql-tutorial.html">PostgreSQL 教程</a></li><li><a title="SQLite 教程" href="//www.runoob.com/sqlite/sqlite-tutorial.html">SQLite 教程</a></li><li><a title="MongoDB 教程" href="//www.runoob.com/mongodb/mongodb-tutorial.html">MongoDB 教程</a></li><li><a title="Redis 教程" href="//www.runoob.com/redis/redis-tutorial.html">Redis 教程</a></li><li><a title="Memcached 教程" href="//www.runoob.com/Memcached/Memcached-tutorial.html">Memcached 教程</a></li></ul></li><li style="margin: 0;"><a href="javascript:void(0);" class="tit"> 数据分析</a><ul class="double-li"><li><a title="Python 教程" href="//www.runoob.com/python3/python3-tutorial.html">Python 教程</a></li><li><a title="NumPy 教程" href="//www.runoob.com/numpy/numpy-tutorial.html">NumPy 教程</a></li><li><a title="Pandas 教程" href="//www.runoob.com/pandas/pandas-tutorial.html">Pandas 教程</a></li><li><a title="Matplotlib 教程" href="//www.runoob.com/matplotlib/matplotlib-tutorial.html">Matplotlib 教程</a></li><li><a title="Scipy 教程" href="//www.runoob.com/scipy/scipy-tutorial.html">Scipy 教程</a></li><li><a title="R 教程" href="//www.runoob.com/r/r-tutorial.html">R 教程</a></li><li><a title="Julia 教程" href="//www.runoob.com/julia/julia-tutorial.html">Julia 教程</a></li></ul></li><li style="margin: 0;"><a href="javascript:void(0);" class="tit"> 移动端</a><ul class="double-li"><li><a title="Android 教程" href="//www.runoob.com/w3cnote/android-tutorial-intro.html">Android 教程</a></li><li><a title="Swift 教程" href="//www.runoob.com/swift/swift-tutorial.html">Swift 教程</a></li><li><a title="jQuery Mobile 教程" href="//www.runoob.com/jquerymobile/jquerymobile-tutorial.html">jQuery Mobile 教程</a></li><li><a title="ionic 教程" href="//www.runoob.com/ionic/ionic-tutorial.html">ionic 教程</a></li><li><a title="Kotlin 教程" href="//www.runoob.com/kotlin/kotlin-tutorial.html">Kotlin 教程</a></li></ul></li><li style="margin: 0;"><a href="javascript:void(0);" class="tit"> XML 教程</a><ul class="double-li"><li><a title="XML 教程" href="//www.runoob.com/xml/xml-tutorial.html">XML 教程</a></li><li><a title="DTD 教程" href="//www.runoob.com/dtd/dtd-tutorial.html">DTD 教程</a></li><li><a title="XML DOM 教程" href="//www.runoob.com/dom/dom-tutorial.html">XML DOM 教程</a></li><li><a title="XSLT 教程" href="//www.runoob.com/xsl/xsl-tutorial.html">XSLT 教程</a></li><li><a title="XPath 教程" href="//www.runoob.com/xpath/xpath-tutorial.html">XPath 教程</a></li><li><a title="XQuery 教程" href="//www.runoob.com/xquery/xquery-tutorial.html">XQuery 教程</a></li><li><a title="XLink 教程" href="//www.runoob.com/xlink/xlink-tutorial.html">XLink 教程</a></li><li><a title="XPointer 教程" href="//www.runoob.com/xlink/xlink-tutorial.html">XPointer 教程</a></li><li><a title="XML Schema 教程" href="//www.runoob.com/schema/schema-tutorial.html">XML Schema 教程</a></li><li><a title="XSL-FO 教程" href="//www.runoob.com/xslfo/xslfo-tutorial.html">XSL-FO 教程</a></li><li><a title="SVG 教程" href="//www.runoob.com/svg/svg-tutorial.html">SVG 教程</a></li></ul></li><li style="margin: 0;"><a href="javascript:void(0);" class="tit"> ASP.NET</a><ul class="double-li"><li><a title="ASP.NET 教程" href="//www.runoob.com/aspnet/aspnet-tutorial.html">ASP.NET 教程</a></li><li><a title="C# 教程" href="//www.runoob.com/csharp/csharp-tutorial.html">C# 教程</a></li><li><a title="Web Pages 教程" href="//www.runoob.com/aspnet/webpages-intro.html">Web Pages 教程</a></li><li><a title="Razor 教程" href="//www.runoob.com/aspnet/razor-intro.html">Razor 教程</a></li><li><a title="MVC 教程" href="//www.runoob.com/aspnet/mvc-intro.html">MVC 教程</a></li><li><a title="Web Forms 教程" href="//www.runoob.com/aspnet/aspnet-intro.html">Web Forms 教程</a></li></ul></li><li style="margin: 0;"><a href="javascript:void(0);" class="tit"> Web Service</a><ul class="double-li"><li><a title="Web Service 教程" href="//www.runoob.com/webservices/webservices-tutorial.html">Web Service 教程</a></li><li><a title="WSDL 教程" href="//www.runoob.com/wsdl/wsdl-tutorial.html">WSDL 教程</a></li><li><a title="SOAP 教程" href="//www.runoob.com/soap/soap-tutorial.html">SOAP 教程</a></li><li><a title="RSS 教程" href="//www.runoob.com/rss/rss-tutorial.html">RSS 教程</a></li><li><a title="RDF 教程" href="//www.runoob.com/rdf/rdf-tutorial.html">RDF 教程</a></li></ul></li><li style="margin: 0;"><a href="javascript:void(0);" class="tit"> 开发工具</a><ul class="double-li"><li><a title="Eclipse 教程" href="//www.runoob.com/eclipse/eclipse-tutorial.html">Eclipse 教程</a></li><li><a title="Git 教程" href="//www.runoob.com/git/git-tutorial.html">Git 教程</a></li><li><a title="Svn 教程" href="//www.runoob.com/svn/svn-tutorial.html">Svn 教程</a></li><li><a title="Markdown 教程" href="//www.runoob.com/markdown/md-tutorial.html">Markdown 教程</a></li></ul></li><li style="margin: 0;"><a href="javascript:void(0);" class="tit"> 网站建设</a><ul class="double-li"><li><a title="HTTP 教程" href="//www.runoob.com/http/http-tutorial.html">HTTP 教程</a></li><li><a title="网站建设指南" href="//www.runoob.com/web/web-buildingprimer.html">网站建设指南</a></li><li><a title="浏览器信息" href="//www.runoob.com/browsers/browser-information.html">浏览器信息</a></li><li><a title="网站主机教程" href="//www.runoob.com/hosting/hosting-tutorial.html">网站主机教程</a></li><li><a title="TCP/IP 教程" href="//www.runoob.com/tcpip/tcpip-tutorial.html">TCP/IP 教程</a></li><li><a title="W3C 教程" href="//www.runoob.com/w3c/w3c-tutorial.html">W3C 教程</a></li><li><a title="网站品质" href="//www.runoob.com/quality/quality-tutorial.html">网站品质</a></li></ul></li></ul>            </div>
+    
+    </div>
+    </div>
+    <br>
+    
+    <div class="sidebar-box re-box re-box-large">
+        <div class="sidebar-box recommend-here">
+            <a href="javascript:void(0);">Advertisement</a>
+        </div>
+        <div class="re-600160" id="sidebar-right-re">
+                <script async src="//pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script>
+        <!-- 侧栏1 -->
+        <ins class="adsbygoogle"
+             style="display:inline-block;width:160px;height:600px"
+             data-ad-client="ca-pub-5751451760833794"
+             data-ad-slot="4106274865"></ins>
+        <script>
+        (adsbygoogle = window.adsbygoogle || []).push({});
+        </script>
+                </div>
+    </div>
+</div></div>
+
+</div>
+
+<script>
+var aid = 22268;
+function coll() {
+	$.post( '/wp-content/themes/runoob/option/user/userinfo.php', {aid:aid, action:"collarticle", opt:'add'},function( data ) {
+		if(data.error==0) {
+			$("#content").find("h1:first").find("a").attr("href","javascript:void(0);");
+			$("#content").find("h1:first").find("img").attr("src","http://www.runoob.com/wp-content/themes/runoob/assets/img/coll2.png").css({width:32+"px",height:32+"px"});
+		}
+		alert(data.msg);
+	},'json');
+}
+</script>
+
+
+<!-- 反馈对话框开始 -->
+<script src="/wp-content/themes/runoob/assets/feedback/stable/2.0/feedback.js?1.0"></script>
+<link rel="stylesheet" href="/wp-content/themes/runoob/assets/feedback/stable/2.0/feedback.css?1.0" />
+<script type="text/javascript">
+$.feedback({
+    ajaxURL: '/feedback/runoob_feedback.php',
+	html2canvasURL: '/wp-content/themes/runoob/assets/feedback/stable/2.0/html2canvas.js',
+	onClose: function () {
+         window.location.reload();
+    }
+});
+</script>
+<!-- 反馈对话框结束 -->
+<button class="feedback-btn feedback-btn-gray">反馈/建议</button>
+<!-- 底部 -->
+<div id="footer" class="mar-t50">
+   <div class="runoob-block">
+    <div class="runoob cf">
+     <dl>
+      <dt>
+       在线实例
+      </dt>
+      <dd>
+       &middot;<a target="_blank" href="/html/html-examples.html">HTML 实例</a>
+      </dd>
+      <dd>
+       &middot;<a target="_blank" href="/css/css-examples.html">CSS 实例</a>
+      </dd>
+      <dd>
+       &middot;<a target="_blank" href="/js/js-examples.html">JavaScript 实例</a>
+      </dd>
+      <dd>
+       &middot;<a target="_blank" href="/ajx/ajax-examples.html">Ajax 实例</a>
+      </dd>
+       <dd>
+       &middot;<a target="_blank" href="/jquery/jquery-examples.html">jQuery 实例</a>
+      </dd>
+      <dd>
+       &middot;<a target="_blank" href="/xml/xml-examples.html">XML 实例</a>
+      </dd>
+      <dd>
+       &middot;<a target="_blank" href="/java/java-examples.html">Java 实例</a>
+      </dd>
+     
+     </dl>
+     <dl>
+      <dt>
+      字符集&工具
+      </dt>
+      <dd>
+       &middot; <a target="_blank" href="/charsets/html-charsets.html">HTML 字符集设置</a>
+      </dd>
+      <dd>
+       &middot; <a target="_blank" href="/tags/html-ascii.html">HTML ASCII 字符集</a>
+      </dd>
+     <dd>
+       &middot; <a target="_blank" href="https://c.runoob.com/front-end/6939/">JS 混淆/加密</a>
+      </dd> 
+      <dd>
+       &middot; <a target="_blank" href="https://c.runoob.com/front-end/6232/">PNG/JPEG 图片压缩</a>
+      </dd>
+      <dd>
+       &middot; <a target="_blank" href="/tags/html-colorpicker.html">HTML 拾色器</a>
+      </dd>
+      <dd>
+       &middot; <a target="_blank" href="//c.runoob.com/front-end/53">JSON 格式化工具</a>
+      </dd>
+      <dd>
+       &middot; <a target="_blank" href="//c.runoob.com/front-end/6680/">随机数生成器</a>
+      </dd>
+     </dl>
+     <dl>
+      <dt>
+       最新更新
+      </dt>
+                   <dd>
+       &middot;
+      <a href="http://www.runoob.com/python3/python-ai-draw.html" title="Python AI 绘画">Python AI 绘画</a>
+      </dd>
+              <dd>
+       &middot;
+      <a href="http://www.runoob.com/w3cnote/cursor-editor.html" title="神辅助 Cursor 编辑器，加入 GPT-4 让编码更轻松！">神辅助 Cursor ...</a>
+      </dd>
+              <dd>
+       &middot;
+      <a href="http://www.runoob.com/jsref/jsref-flatmap-array.html" title="JavaScript flatMap()  方法">JavaScript flat...</a>
+      </dd>
+              <dd>
+       &middot;
+      <a href="http://www.runoob.com/jsref/jsref-flat-array.html" title="JavaScript flat() 方法">JavaScript flat...</a>
+      </dd>
+              <dd>
+       &middot;
+      <a href="http://www.runoob.com/jsref/jsref-at-array.html" title="JavaScript at() 方法">JavaScript at()...</a>
+      </dd>
+              <dd>
+       &middot;
+      <a href="http://www.runoob.com/jsref/jsref-of-array.html" title="JavaScript of() 方法">JavaScript of()...</a>
+      </dd>
+              <dd>
+       &middot;
+      <a href="http://www.runoob.com/pandas/pandas-functions.html" title="Pandas 常用函数">Pandas 常用函数</a>
+      </dd>
+             </dl>
+     <dl>
+      <dt>
+       站点信息
+      </dt>
+      <dd>
+       &middot;
+       <a target="_blank" href="mailto:admin@runoob.com" rel="external nofollow">意见反馈</a>
+       </dd>
+      <dd>
+       &middot;
+      <a target="_blank" href="/disclaimer">免责声明</a>
+       </dd>
+      <dd>
+       &middot;
+       <a target="_blank" href="/aboutus">关于我们</a>
+       </dd>
+      <dd>
+       &middot;
+      <a target="_blank" href="/archives">文章归档</a>
+      </dd>
+    
+     </dl>
+    
+     <div class="search-share">
+      <div class="app-download">
+        <div>
+         <strong>关注微信</strong>
+        </div>
+      </div>
+      <div class="share">
+      <img width="128" height="128" src="/wp-content/themes/runoob/assets/images/qrcode.png" />
+       </div>
+     </div>
+     
+    </div>
+   </div>
+   <div class="w-1000 copyright">
+     Copyright &copy; 2013-2023    <strong><a href="//www.runoob.com/" target="_blank">菜鸟教程</a></strong>&nbsp;
+    <strong><a href="//www.runoob.com/" target="_blank">runoob.com</a></strong> All Rights Reserved. 备案号：<a target="_blank" rel="nofollow" href="https://beian.miit.gov.cn/">闽ICP备15012807号-1</a>
+   </div>
+  </div>
+  <div class="fixed-btn">
+    <a class="go-top" href="javascript:void(0)" title="返回顶部"> <i class="fa fa-angle-up"></i></a>
+    <a class="qrcode"  href="javascript:void(0)" title="关注我们"><i class="fa fa-qrcode"></i></a>
+    <a class="writer" style="display:none" href="javascript:void(0)"   title="标记/收藏"><i class="fa fa-star" aria-hidden="true"></i></a>
+    <!-- qrcode modal -->
+    <div id="bottom-qrcode" class="modal panel-modal hide fade in">
+      <h4>微信关注</h4>
+      <div class="panel-body"><img alt="微信关注" width="128" height="128" src="/wp-content/themes/runoob/assets/images/qrcode.png"></div> 
+    </div>
+  </div>
+
+ <div style="display:none;">
+<script async src="https://www.googletagmanager.com/gtag/js?id=UA-84264393-2"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+
+  gtag('config', 'UA-84264393-2');
+</script>
+<script>
+var _hmt = _hmt || [];
+(function() {
+  var hm = document.createElement("script");
+  hm.src = "https://hm.baidu.com/hm.js?3eec0b7da6548cf07db3bc477ea905ee";
+  var s = document.getElementsByTagName("script")[0]; 
+  s.parentNode.insertBefore(hm, s);
+})();
+</script>
+
+</div>
+<script>
+window.jsui={
+    www: 'https://www.runoob.com',
+    uri: 'https://www.runoob.com/wp-content/themes/runoob'
+};
+</script>
+
+<script src="https://static.runoob.com/assets/libs/hl/run_prettify.js"></script>
+<script src="/wp-content/themes/runoob/assets/js/main.min.js?v=1.156"></script>
+
+</body>
+</html>

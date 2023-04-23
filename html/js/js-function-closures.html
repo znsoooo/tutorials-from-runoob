@@ -1,0 +1,1449 @@
+<!Doctype html>
+<html>
+<head>
+	<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+	<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+	<title>JavaScript 闭包 | 菜鸟教程</title>
+
+  <meta name='robots' content='max-image-preview:large' />
+<link rel='stylesheet' id='classic-theme-styles-css' href='http://www.runoob.com/wp-includes/css/classic-themes.min.css?ver=6.2' type='text/css' media='all' />
+<link rel="canonical" href="http://www.runoob.com/js/js-function-closures.html" />
+<meta name="keywords" content="JavaScript 闭包">
+<meta name="description" content="JavaScript 闭包    JavaScript 变量可以是局部变量或全局变量。 私有变量可以用到闭包。  全局变量 函数可以访问由函数内部定义的变量，如：  实例  [mycode3 type=&#039;js&#039;] function myFunction() {     var a = 4;     return a * a; } [/mycode3]  尝试一下 »    函数也可以访问函数外部定义的变量，如：  实..">
+		
+	<link rel="shortcut icon" href="https://static.runoob.com/images/favicon.ico">
+	<link rel="stylesheet" href="/wp-content/themes/runoob/style.css?v=1.170" type="text/css" media="all" />	
+	<link rel="stylesheet" href="https://cdn.staticfile.org/font-awesome/4.7.0/css/font-awesome.min.css" media="all" />	
+  <!--[if gte IE 9]><!-->
+  <script src="https://cdn.staticfile.org/jquery/2.0.3/jquery.min.js"></script>
+  <!--<![endif]-->
+  <!--[if lt IE 9]>
+     <script src="https://cdn.staticfile.org/jquery/1.9.1/jquery.min.js"></script>
+     <script src="https://cdn.staticfile.org/html5shiv/r29/html5.min.js"></script>
+  <![endif]-->
+  <link rel="apple-touch-icon" href="https://static.runoob.com/images/icon/mobile-icon.png"/>
+  <meta name="apple-mobile-web-app-title" content="菜鸟教程">
+</head>
+<body>
+
+<!--  头部 -->
+<div class="container logo-search">
+
+  <div class="col search row-search-mobile">
+    <form action="index.php">
+      <input class="placeholder" placeholder="搜索……" name="s" autocomplete="off">
+      
+    </form>
+  </div>
+
+  <div class="row">
+    <div class="col logo">
+      <h1><a href="/">菜鸟教程 -- 学的不仅是技术，更是梦想！</a></h1>
+    </div>
+        <div class="col right-list"> 
+    <button class="btn btn-responsive-nav btn-inverse" data-toggle="collapse" data-target=".nav-main-collapse" id="pull" style=""> <i class="fa fa-navicon"></i> </button>
+    </div>
+        
+    <div class="col search search-desktop last">
+      <div class="search-input" >
+      <form action="//www.runoob.com/" target="_blank">
+        <input class="placeholder" id="s" name="s" placeholder="搜索……"  autocomplete="off" style="height: 44px;">
+      </form>
+      
+      </div>
+    </div>
+  </div>
+</div>
+
+
+
+<!-- 导航栏 -->
+<!-- 导航栏 -->
+<div class="container navigation">
+	<div class="row">
+		<div class="col nav">
+			<ul class="pc-nav" id="runoob-detail-nav">
+				<li><a href="//www.runoob.com/">首页</a></li>
+				<li><a href="/html/html-tutorial.html">HTML</a></li>
+				<li><a href="/css/css-tutorial.html">CSS</a></li>
+				<li><a href="/js/js-tutorial.html">JavaScript</a></li>
+				<li><a href="javascript:void(0);" data-id="vue">Vue</a></li>
+				<li><a href="javascript:void(0);" data-id="bootstrap">Bootstrap</a></li>
+				<li><a href="/nodejs/nodejs-tutorial.html">NodeJS</a></li>
+				<li><a href="/python3/python3-tutorial.html">Python3</a></li>
+				<li><a href="/python/python-tutorial.html">Python2</a></li>
+				<li><a href="/java/java-tutorial.html">Java</a></li>
+				<li><a href="/cprogramming/c-tutorial.html">C</a></li>
+				<li><a href="/cplusplus/cpp-tutorial.html">C++</a></li>
+				<li><a href="/csharp/csharp-tutorial.html">C#</a></li>
+				<li><a href="/go/go-tutorial.html">Go</a></li>
+				<li><a href="/sql/sql-tutorial.html">SQL</a></li>
+				<li><a href="/linux/linux-tutorial.html">Linux</a></li>
+				<li><a href="/jquery/jquery-tutorial.html">jQuery</a></li>
+				<li><a href="/browser-history">本地书签</a></li>
+				<!--
+			
+				<li><a href="/w3cnote/knowledge-start.html" style="font-weight: bold;" onclick="_hmt.push(['_trackEvent', '星球', 'click', 'start'])" title="我的圈子">我的圈子</a></li>				
+				<li><a href="javascript:;" class="runoob-pop">登录</a></li>
+				-->
+      		</ul>
+			<ul class="mobile-nav">
+				<li><a href="//www.runoob.com/">首页</a></li>
+				<li><a href="/html/html-tutorial.html">HTML</a></li>
+				<li><a href="/css/css-tutorial.html">CSS</a></li>
+				<li><a href="/js/js-tutorial.html">JS</a></li>
+				<li><a href="/browser-history">本地书签</a></li>
+				<li><a href="javascript:void(0)" class="search-reveal">Search</a> </li>
+			</ul>
+			
+		</div>
+	</div>
+</div>
+
+<div class="container sub-navigation sub-navigation-articles" style="display:none">
+	<div class="row">
+		<div class="col nav-sub">
+		<ul id="python">
+			<li class="cat-item"><a href="/python3/python3-tutorial.html">Python3 教程 <i class="fa fa-external-link" aria-hidden="true"></i></a></li>
+			<li class="cat-item"><a href="/python/python-tutorial.html">Python2 教程 <i class="fa fa-external-link" aria-hidden="true"></i></a></li>
+		</ul>
+		<ul id="vue">
+			<li class="cat-item"><a href="/vue3/vue3-tutorial.html">Vue3 教程 <i class="fa fa-external-link" aria-hidden="true"></i></a></li>
+			<li class="cat-item"><a href="/vue/vue-tutorial.html">vue2 教程 <i class="fa fa-external-link" aria-hidden="true"></i></a></li>
+		</ul>
+
+		<ul id="bootstrap">
+			<li class="cat-item"><a href="/bootstrap/bootstrap-tutorial.html">Bootstrap3 教程 <i class="fa fa-external-link" aria-hidden="true"></i></a></li>
+			<li class="cat-item"><a href="/bootstrap4/bootstrap4-tutorial.html">Bootstrap4 教程 <i class="fa fa-external-link" aria-hidden="true"></i></a></li>
+			<li class="cat-item"><a href="/bootstrap5/bootstrap5-tutorial.html">Bootstrap5 教程 <i class="fa fa-external-link" aria-hidden="true"></i></a></li>
+			<li class="cat-item"><a href="/bootstrap/bootstrap-v2-tutorial.html">Bootstrap2 教程 <i class="fa fa-external-link" aria-hidden="true"></i></a></li>
+		</ul>
+		</div>
+	</div>
+</div><!--  内容  -->
+<div class="container main">
+	<!-- 中间 -->
+	<div class="row">
+	
+<div class="runoob-col-md2">
+<div class="left-column">
+	<div class="tab" style="overflow: hidden;text-overflow: ellipsis;white-space: nowrap;">
+	<i class="fa fa-list" aria-hidden="true"></i> 
+	<span>Javascript 教程</span>
+	<a data-cate="7" href="javascript:void(0);" title="夜间模式"  id="moon"><i class="fa fa-moon-o" aria-hidden="true" style="line-height: 28px;font-size: 1.2em;margin: 2px 4px 0;"></i></a>
+	<a data-cate="7" style="display:none;" href="javascript:void(0);" title="日间模式"  id="sun" ><i class="fa fa-sun-o" aria-hidden="true" style="line-height: 28px;font-size: 1.2em;margin: 2px 4px 0;line-height: 28px;
+}"></i></a>
+
+	</div>
+	<div class="sidebar-box gallery-list">
+		<div class="design" id="leftcolumn">
+						<a target="_top" title="JavaScript 教程"  href="/js/js-tutorial.html" >
+			JavaScript 教程			</a>
+						<a target="_top" title="JavaScript 简介"  href="/js/js-intro.html" >
+			JavaScript 简介			</a>
+						<a target="_top" title="JavaScript 用法"  href="/js/js-howto.html" >
+			JavaScript 用法			</a>
+			<a target="_top" title="JavaScript Chrome 中运行 " href="js-chrome.html"> JavaScript Chrome 中运行</a>			<a target="_top" title="JavaScript 输出"  href="/js/js-output.html" >
+			JavaScript 输出			</a>
+			<a target="_top" title="JavaScript 语法 " href="js-syntax.html"> JavaScript 语法 </a>			<a target="_top" title="JavaScript 语句"  href="/js/js-statements.html" >
+			JavaScript 语句			</a>
+						<a target="_top" title="JavaScript 注释"  href="/js/js-comments.html" >
+			JavaScript 注释			</a>
+						<a target="_top" title="JavaScript  变量"  href="/js/js-variables.html" >
+			JavaScript  变量			</a>
+						<a target="_top" title="JavaScript 数据类型"  href="/js/js-datatypes.html" >
+			JavaScript 数据类型			</a>
+						<a target="_top" title="JavaScript 对象"  href="/js/js-obj-intro.html" >
+			JavaScript 对象			</a>
+						<a target="_top" title="JavaScript 函数"  href="/js/js-functions.html" >
+			JavaScript 函数			</a>
+			<a target="_top" title="JavaScript 作用域" href="/js/js-scope.html"> JavaScript 作用域 </a>
+<a target="_top" title="JavaScript 事件" href="/js/js-events.html"> JavaScript 事件 </a>
+<a target="_top" title="JavaScript 字符串" href="/js/js-strings.html"> JavaScript 字符串</a>			<a target="_top" title="JavaScript 运算符"  href="/js/js-operators.html" >
+			JavaScript 运算符			</a>
+						<a target="_top" title="JavaScript 比较和逻辑运算符"  href="/js/js-comparisons.html" >
+			JavaScript 比较			</a>
+						<a target="_top" title="JavaScript If&#8230;Else 语句"  href="/js/js-if-else.html" >
+			JavaScript 条件语句			</a>
+						<a target="_top" title="JavaScript switch 语句"  href="/js/js-switch.html" >
+			JavaScript switch 语句			</a>
+						<a target="_top" title="JavaScript for 循环"  href="/js/js-loop-for.html" >
+			JavaScript for 循环			</a>
+						<a target="_top" title="JavaScript while 循环"  href="/js/js-loop-while.html" >
+			JavaScript while 循环			</a>
+						<a target="_top" title="JavaScript break 和 continue 语句"  href="/js/js-break.html" >
+			JavaScript break 和 continue 语句			</a>
+			<a target="_top" title="JavaScript typeof" href="js-typeof.html"> JavaScript typeof </a>
+<a target="_top" title="JavaScript 类型转换" href="js-type-conversion.html"> JavaScript 类型转换 </a>
+<a target="_top" title="JavaScript 正则表达式" href="js-regexp.html"> JavaScript 正则表达式 </a>			<a target="_top" title="JavaScript 错误 &#8211; Throw、Try 和 Catch"  href="/js/js-errors.html" >
+			JavaScript  错误			</a>
+			<a target="_top" title="JavaScript 调试" href="js-debugging.html"> JavaScript 调试</a>
+<a target="_top" title="JavaScript 变量提升" href="js-hoisting.html"> JavaScript 变量提升</a>
+<a target="_top" title="JavaScript 严格模式"   href="js-strict.html"> JavaScript 严格模式</a>
+<a target="_top" title="JavaScript 使用误区"   href="js-mistakes.html"> JavaScript 使用误区</a>
+<a target="_top" title="JavaScript 表单"   href="js-validation.html"> JavaScript 表单
+</a>			<a target="_top" title="JavaScript 表单验证"  href="/js/js-form-validation.html" >
+			JavaScript 表单验证			</a>
+			<a target="_top" href="/js/js-validation-api.html">
+JavaScript 验证 API</a>
+<a target="_top" href="/js/js-reserved.html">	JavaScript 保留关键字	</a>
+<a target="_top" href="/js/js-this.html">	JavaScript this	</a>
+<a target="_top" href="/js/js-let-const.html">	JavaScript let 和 const	</a>
+
+<a target="_top" href="/js/js-json.html"> JavaScript JSON	</a>
+<a target="_top" href="/js/js-void.html"> JavaScript void </a>
+<a target="_top" href="/js/js-async.html"> JavaScript 异步编程	</a>
+<a target="_top" href="/js/js-promise.html"> JavaScript Promise </a>
+<a target="_top" href="/js/js-conventions.html"> JavaScript 代码规范 </a>
+<br>
+<h2 class="left"><span class="left_h2">JS</span> 函数</h2>
+<a target="_top" title="JavaScript 函数定义" href="js-function-definition.html"> JavaScript 函数定义 </a>
+<a target="_top" title="JavaScript 函数参数" href="js-function-parameters.html"> JavaScript 函数参数 </a>
+<a target="_top" title="JavaScript 函数调用" href="js-function-invocation.html"> JavaScript 函数调用 </a>
+<a target="_top" title="JavaScript 闭包" href="js-function-closures.html"> JavaScript 闭包 </a>
+
+
+<br>
+<h2 class="left"><span class="left_h2">JS</span> 类</h2>
+<a target="_top" title="JavaScript 类" href="js-class-intro.html"> JavaScript 类 </a>
+<a target="_top" title="JavaScript 类继承" href="js-class-inheritance.html"> JavaScript 类继承 </a>
+<a target="_top" title="JavaScript 静态方法 " href="js-class-static.html"> JavaScript 静态方法 </a>
+<br>
+<h2 class="left"><span class="left_h2">JS</span> HTML DOM</h2>			<a target="_top" title="JavaScript HTML DOM"  href="/js/js-htmldom.html" >
+			DOM 简介			</a>
+						<a target="_top" title="JavaScript HTML DOM 改变 HTML 内容"  href="/js/js-htmldom-html.html" >
+			DOM HTML			</a>
+						<a target="_top" title="JavaScript HTML DOM 改变 CSS"  href="/js/js-htmldom-css.html" >
+			DOM CSS			</a>
+						<a target="_top" title="JavaScript HTML DOM 事件"  href="/js/js-htmldom-events.html" >
+			DOM 事件			</a>
+			<a target="_top" href="js-htmldom-eventlistener.html" >DOM EventListener</a>			<a target="_top" title="JavaScript HTML DOM 元素 (节点)"  href="/js/js-htmldom-elements.html" >
+			DOM 元素			</a>
+			<a target="_top" title="JavaScript HTML DOM 集合(Collection)" href="js-htmldom-collections.html"> HTMLCollection 对象 </a>
+
+<a target="_top" title="JavaScript HTML DOM 节点列表" href="js-htmldom-nodelist.html"> NodeList 对象 </a>
+<br><h2 class="left"><span class="left_h2">JS</span> 高级教程</h2>			<a target="_top" title="JavaScript 对象"  href="/js/js-objects.html" >
+			JavaScript 对象			</a>
+			<a target="_top" title="JavaScript prototype" href="/js/js-object-prototype.html"> JavaScript prototype
+</a>			<a target="_top" title="JavaScript Number 对象"  href="/js/js-obj-number.html" >
+			JavaScript Number 对象			</a>
+						<a target="_top" title="JavaScript 字符串（String）对象"  href="/js/js-obj-string.html" >
+			JavaScript String			</a>
+						<a target="_top" title="JavaScript Date（日期）对象"  href="/js/js-obj-date.html" >
+			JavaScript Date（日期）			</a>
+						<a target="_top" title="JavaScript  Array（数组）对象"  href="/js/js-obj-array.html" >
+			JavaScript  Array（数组）			</a>
+						<a target="_top" title="JavaScript Boolean（布尔）对象"  href="/js/js-obj-boolean.html" >
+			JavaScript Boolean（布尔）			</a>
+						<a target="_top" title="JavaScript Math（算数）对象"  href="/js/js-obj-math.html" >
+			JavaScript Math（算数）			</a>
+						<a target="_top" title="JavaScript RegExp 对象"  href="/js/js-obj-regexp.html" >
+			JavaScript RegExp 对象			</a>
+			<br><h2 class="left"><span class="left_h2">JS</span> 浏览器BOM</h2>			<a target="_top" title="JavaScript Window"  href="/js/js-window.html" >
+			JavaScript Window			</a>
+						<a target="_top" title="JavaScript Window Screen"  href="/js/js-window-screen.html" >
+			JavaScript Window Screen			</a>
+						<a target="_top" title="JavaScript Window Location"  href="/js/js-window-location.html" >
+			JavaScript Window Location			</a>
+						<a target="_top" title="JavaScript Window History"  href="/js/js-window-history.html" >
+			JavaScript Window History			</a>
+						<a target="_top" title="JavaScript Window Navigator"  href="/js/js-window-navigator.html" >
+			JavaScript Navigator			</a>
+						<a target="_top" title="JavaScript 弹窗"  href="/js/js-popup.html" >
+			JavaScript 弹窗			</a>
+						<a target="_top" title="JavaScript 计时事件"  href="/js/js-timing.html" >
+			JavaScript 计时事件			</a>
+						<a target="_top" title="JavaScript Cookie"  href="/js/js-cookies.html" >
+			JavaScript Cookie			</a>
+			<br><h2 class="left"><span class="left_h2">JS</span> 库</h2>			<a target="_top" title="JavaScript 库"  href="/js/js-libraries.html" >
+			JavaScript 库			</a>
+						<a target="_top" title="JavaScript 测试 jQuery"  href="/js/js-lib-jquery.html" >
+			JavaScript 测试 jQuery			</a>
+						<a target="_top" title="JavaScript 测试 Prototype"  href="/js/js-lib-prototype.html" >
+			JavaScript 测试 Prototype			</a>
+			<br><h2 class="left"><span class="left_h2">JS</span> 实例</h2>			<a target="_top" title="JavaScript 实例"  href="/js/js-examples.html" >
+			JavaScript 实例			</a>
+						<a target="_top" title="JavaScript 对象实例"  href="/js/js-ex-objects.html" >
+			JavaScript 对象实例			</a>
+						<a target="_top" title="JavaScript 浏览器对象实例"  href="/js/js-ex-browser.html" >
+			JavaScript 浏览器对象实例			</a>
+						<a target="_top" title="JavaScript HTML DOM 实例"  href="/js/js-ex-dom.html" >
+			JavaScript HTML DOM 实例			</a>
+						<a target="_top" title="JavaScript 总结"  href="/js/js-summary.html" >
+			JavaScript 总结			</a>
+			<br><h2 class="left"><span class="left_h2">JS</span> 参考手册</h2>
+<a target="_top" href="/jsref/jsref-tutorial.html">JavaScript 对象</a>
+<a target="_top" href="/jsref/dom-obj-document.html">HTML DOM 对象</a>			<a target="_top" title="JavaScript 异步编程"  href="/js/js-async.html" >
+			JavaScript 异步编程			</a>
+						<a target="_top" title="JavaScript 静态方法"  href="/js/js-class-static.html" >
+			JavaScript 静态方法			</a>
+				
+		</div>
+	</div>	
+</div>
+</div>	<div class="col middle-column">
+		
+	
+	<div class="article">
+		
+		<div class="previous-next-links">
+			<div class="previous-design-link"><i style="font-size:16px;" class="fa fa-arrow-left" aria-hidden="true"></i> <a href="http://www.runoob.com/js/js-function-invocation.html" rel="prev"> JavaScript 函数调用</a> </div>
+			<div class="next-design-link"><a href="http://www.runoob.com/js/js-regexp.html" rel="next"> JavaScript 正则表达式</a> <i style="font-size:16px;" class="fa fa-arrow-right" aria-hidden="true"></i></div>
+		</div>
+<div class="article-heading-ad" style="display: block;">
+<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-5751451760833794"
+     crossorigin="anonymous"></script>
+<!-- 728*90 固定 -->
+<ins class="adsbygoogle"
+     style="display:inline-block;width:728px;height:90px"
+     data-ad-client="ca-pub-5751451760833794"
+     data-ad-slot="2147566827"></ins>
+<script>
+     (adsbygoogle = window.adsbygoogle || []).push({});
+</script>
+		</div>
+		<div class="article-body">
+		
+			<div class="article-intro" id="content">
+			
+			<h1>JavaScript <span class="color_h1">闭包</span>
+</h1>
+
+<hr>
+<p class="intro">JavaScript 变量可以是局部变量或全局变量。</p>
+<p class="intro">私有变量可以用到闭包。</p>
+<hr>
+<h2>全局变量</h2>
+<p>函数可以访问由函数内部定义的变量，如：</p>
+<div class="example">
+<h2 class="example">实例</h2>
+<div class="example_code">
+<div class="hl-main"><span class="hl-reserved">function</span><span class="hl-code"> </span><span class="hl-identifier">myFunction</span><span class="hl-brackets">(</span><span class="hl-brackets">)</span><span class="hl-code"> </span><span class="hl-brackets">{</span><span class="hl-code">
+    </span><span class="hl-reserved">var</span><span class="hl-code"> </span><span class="hl-identifier">a</span><span class="hl-code"> = </span><span class="hl-number">4</span><span class="hl-code">;
+    </span><span class="hl-reserved">return</span><span class="hl-code"> </span><span class="hl-identifier">a</span><span class="hl-code"> * </span><span class="hl-identifier">a</span><span class="hl-code">;
+</span><span class="hl-brackets">}</span></div>
+</div>
+<br><a class="tryitbtn" href="/try/try.php?filename=tryjs_function_scope2" target="_blank" rel="noopener noreferrer">尝试一下 »</a>
+</div>
+
+
+<p>函数也可以访问函数外部定义的变量，如：</p>
+<div class="example">
+<h2 class="example">实例</h2>
+<div class="example_code">
+<div class="hl-main"><span class="hl-reserved">var</span><span class="hl-code"> </span><span class="hl-identifier">a</span><span class="hl-code"> = </span><span class="hl-number">4</span><span class="hl-code">;
+</span><span class="hl-reserved">function</span><span class="hl-code"> </span><span class="hl-identifier">myFunction</span><span class="hl-brackets">(</span><span class="hl-brackets">)</span><span class="hl-code"> </span><span class="hl-brackets">{</span><span class="hl-code">
+    </span><span class="hl-reserved">return</span><span class="hl-code"> </span><span class="hl-identifier">a</span><span class="hl-code"> * </span><span class="hl-identifier">a</span><span class="hl-code">;
+</span><span class="hl-brackets">}</span></div>
+</div>
+<br><a class="tryitbtn" href="/try/try.php?filename=tryjs_function_scope1" target="_blank" rel="noopener noreferrer">尝试一下 »</a>
+</div>
+
+
+<p>后面一个实例中， <strong>a</strong> 是一个 <strong>全局</strong> 
+变量。 </p>
+<p>在web页面中全局变量属于 window 对象。</p>
+<p>全局变量可应用于页面上的所有脚本。</p>
+<p>在第一个实例中， <strong>a</strong> 是一个 <strong>局部</strong> 
+变量。</p>
+<p>局部变量只能用于定义它函数内部。对于其他的函数或脚本代码是不可用的。</p>
+<p>全局和局部变量即便名称相同，它们也是两个不同的变量。修改其中一个，不会影响另一个的值。 </p>
+
+<table class="lamp"><tr>
+<th style="width:34px"><img decoding="async" src="/images/lamp.jpg" alt="Note" style="height:32px;width:32px"></th>
+<td>变量声明时如果不使用 <strong>var</strong> 关键字，那么它就是一个全局变量，即便它在函数内定义。</td>
+</tr></table>
+<br><hr>
+<h2>变量生命周期</h2>
+<p>全局变量的作用域是全局性的，即在整个JavaScript程序中，全局变量处处都在。</p>
+<p>而在函数内部声明的变量，只在函数内部起作用。这些变量是局部变量，作用域是局部性的；函数的参数也是局部性的，只在函数内部起作用。</p>
+
+<hr>
+<h2>计数器困境</h2>
+<p>设想下如果你想统计一些数值，且该计数器在所有函数中都是可用的。</p>
+<p>你可以使用全局变量，函数设置计数器递增：</p>
+<div class="example">
+<h2 class="example">实例</h2>
+<div class="example_code">
+<div class="hl-main"><span class="hl-reserved">var</span><span class="hl-code"> </span><span class="hl-identifier">counter</span><span class="hl-code"> = </span><span class="hl-number">0</span><span class="hl-code">;
+ 
+</span><span class="hl-reserved">function</span><span class="hl-code"> </span><span class="hl-identifier">add</span><span class="hl-brackets">(</span><span class="hl-brackets">)</span><span class="hl-code"> </span><span class="hl-brackets">{</span><span class="hl-code">
+   </span><span class="hl-reserved">return</span><span class="hl-code"> </span><span class="hl-identifier">counter</span><span class="hl-code"> += </span><span class="hl-number">1</span><span class="hl-code">;
+</span><span class="hl-brackets">}</span><span class="hl-code">
+ 
+</span><span class="hl-identifier">add</span><span class="hl-brackets">(</span><span class="hl-brackets">)</span><span class="hl-code">;
+</span><span class="hl-identifier">add</span><span class="hl-brackets">(</span><span class="hl-brackets">)</span><span class="hl-code">;
+</span><span class="hl-identifier">add</span><span class="hl-brackets">(</span><span class="hl-brackets">)</span><span class="hl-code">;
+ 
+</span><span class="hl-comment">//</span><span class="hl-comment"> 计数器现在为 3</span><span class="hl-comment"></span></div>
+</div>
+<br><a class="tryitbtn" href="/try/try.php?filename=tryjs_function_counter" target="_blank" rel="noopener noreferrer">尝试一下 »</a>
+</div>
+
+<p><img decoding="async" width="50%" src="https://www.runoob.com/wp-content/uploads/2014/10/9924C424-32A8-41D7-A45A-D45C4EF705E8.jpg"></p>
+<p>计数器数值在执行 add() 函数时发生变化。</p>
+
+
+<p>但问题来了，页面上的任何脚本都能改变计数器，即便没有调用 add() 函数。</p>
+<p>如果我在函数内声明计数器，如果没有调用函数将无法修改计数器的值：</p>
+<div class="example">
+<h2 class="example">实例</h2>
+<div class="example_code">
+<div class="hl-main"><span class="hl-reserved">function</span><span class="hl-code"> </span><span class="hl-identifier">add</span><span class="hl-brackets">(</span><span class="hl-brackets">)</span><span class="hl-code"> </span><span class="hl-brackets">{</span><span class="hl-code">
+    </span><span class="hl-reserved">var</span><span class="hl-code"> </span><span class="hl-identifier">counter</span><span class="hl-code"> = </span><span class="hl-number">0</span><span class="hl-code">;
+    </span><span class="hl-reserved">return</span><span class="hl-code"> </span><span class="hl-identifier">counter</span><span class="hl-code"> += </span><span class="hl-number">1</span><span class="hl-code">;
+</span><span class="hl-brackets">}</span><span class="hl-code">
+ 
+</span><span class="hl-identifier">add</span><span class="hl-brackets">(</span><span class="hl-brackets">)</span><span class="hl-code">;
+</span><span class="hl-identifier">add</span><span class="hl-brackets">(</span><span class="hl-brackets">)</span><span class="hl-code">;
+</span><span class="hl-identifier">add</span><span class="hl-brackets">(</span><span class="hl-brackets">)</span><span class="hl-code">;
+ 
+</span><span class="hl-comment">//</span><span class="hl-comment"> 本意是想输出 3, 但事与愿违，输出的都是 1 !</span><span class="hl-comment"></span></div>
+</div>
+<br><a class="tryitbtn" href="/try/try.php?filename=tryjs_function_counter2" target="_blank" rel="noopener noreferrer">尝试一下 »</a>
+</div>
+
+<p><img decoding="async" width="50%" src="https://www.runoob.com/wp-content/uploads/2014/10/9F2F9936-952B-4F21-B69F-27E61927CED9.jpg"></p>
+<p>以上代码将无法正确输出，每次我调用 add() 函数，计数器都会设置为 1。</p>
+<p><strong> JavaScript 内嵌函数可以解决该问题。</strong></p>
+<hr>
+<h2>JavaScript 内嵌函数</h2>
+<p>所有函数都能访问全局变量。   </p>
+<p>实际上，在 JavaScript 中，所有函数都能访问它们上一层的作用域。</p>
+<p>JavaScript 支持嵌套函数。嵌套函数可以访问上一层的函数变量。 </p>
+
+
+<p>该实例中，内嵌函数 <strong>plus()</strong> 可以访问父函数的 <strong>counter</strong> 变量：</p>
+<div class="example">
+	<h2 class="example">实例</h2>
+<div class="example_code">
+<div class="hl-main"><span class="hl-reserved">function</span><span class="hl-code"> </span><span class="hl-identifier">add</span><span class="hl-brackets">(</span><span class="hl-brackets">)</span><span class="hl-code"> </span><span class="hl-brackets">{</span><span class="hl-code">
+    </span><span class="hl-reserved">var</span><span class="hl-code"> </span><span class="hl-identifier">counter</span><span class="hl-code"> = </span><span class="hl-number">0</span><span class="hl-code">;
+    </span><span class="hl-reserved">function</span><span class="hl-code"> </span><span class="hl-identifier">plus</span><span class="hl-brackets">(</span><span class="hl-brackets">)</span><span class="hl-code"> </span><span class="hl-brackets">{</span><span class="hl-identifier">counter</span><span class="hl-code"> += </span><span class="hl-number">1</span><span class="hl-code">;</span><span class="hl-brackets">}</span><span class="hl-code">
+    </span><span class="hl-identifier">plus</span><span class="hl-brackets">(</span><span class="hl-brackets">)</span><span class="hl-code">;    
+    </span><span class="hl-reserved">return</span><span class="hl-code"> </span><span class="hl-identifier">counter</span><span class="hl-code">; 
+</span><span class="hl-brackets">}</span></div></div>
+<br><a class="tryitbtn" href="/try/try.php?filename=tryjs_function_counter1" target="_blank" rel="noopener noreferrer">尝试一下 »</a>
+</div>
+
+
+<p>如果我们能在外部访问  <strong>plus()</strong> 函数，这样就能解决计数器的困境。
+</p>
+<p>我们同样需要确保 <strong>counter = 0</strong> 只执行一次。</p>
+<p><strong>我们需要闭包。</strong></p>
+<hr>
+<h2>JavaScript 闭包</h2>
+<p>还记得函数自我调用吗？该函数会做什么？</p>
+<div class="example">
+<h2 class="example">实例</h2>
+<div class="example_code">
+<div class="hl-main"><span class="hl-reserved">var</span><span class="hl-code"> </span><span class="hl-identifier">add</span><span class="hl-code"> = </span><span class="hl-brackets">(</span><span class="hl-reserved">function</span><span class="hl-code"> </span><span class="hl-brackets">(</span><span class="hl-brackets">)</span><span class="hl-code"> </span><span class="hl-brackets">{</span><span class="hl-code">
+    </span><span class="hl-reserved">var</span><span class="hl-code"> </span><span class="hl-identifier">counter</span><span class="hl-code"> = </span><span class="hl-number">0</span><span class="hl-code">;
+    </span><span class="hl-reserved">return</span><span class="hl-code"> </span><span class="hl-reserved">function</span><span class="hl-code"> </span><span class="hl-brackets">(</span><span class="hl-brackets">)</span><span class="hl-code"> </span><span class="hl-brackets">{</span><span class="hl-reserved">return</span><span class="hl-code"> </span><span class="hl-identifier">counter</span><span class="hl-code"> += </span><span class="hl-number">1</span><span class="hl-code">;</span><span class="hl-brackets">}</span><span class="hl-code">
+</span><span class="hl-brackets">}</span><span class="hl-brackets">)</span><span class="hl-brackets">(</span><span class="hl-brackets">)</span><span class="hl-code">;
+ 
+</span><span class="hl-identifier">add</span><span class="hl-brackets">(</span><span class="hl-brackets">)</span><span class="hl-code">;
+</span><span class="hl-identifier">add</span><span class="hl-brackets">(</span><span class="hl-brackets">)</span><span class="hl-code">;
+</span><span class="hl-identifier">add</span><span class="hl-brackets">(</span><span class="hl-brackets">)</span><span class="hl-code">;
+ 
+</span><span class="hl-comment">//</span><span class="hl-comment"> 计数器为 3</span><span class="hl-comment"></span></div>
+</div>
+<br><a class="tryitbtn" href="/try/try.php?filename=tryjs_function_counter3" target="_blank" rel="noopener noreferrer">尝试一下 »</a>
+</div>
+
+
+<h2>实例解析</h2>
+<p>变量 <strong>add</strong> 指定了函数自我调用的返回字值。 </p>
+<p>自我调用函数只执行一次。设置计数器为 0。并返回函数表达式。</p>
+<p>add变量可以作为一个函数使用。非常棒的部分是它可以访问函数上一层作用域的计数器。 </p>
+<p>这个叫作 JavaScript <strong>闭包。</strong>它使得函数拥有私有变量变成可能。</p>
+<p>计数器受匿名函数的作用域保护，只能通过 add 方法修改。</p>
+
+<table class="lamp"><tr>
+<th style="width:34px"><img decoding="async" src="/images/lamp.jpg" alt="Note" style="height:32px;width:32px"></th>
+<td>
+<p>闭包是一种保护私有变量的机制，在函数执行时形成私有的作用域，保护里面的私有变量不受外界干扰。</p>
+<p>直观的说就是形成一个不销毁的栈环境。</p>
+</td>
+</tr></table>			<!-- 其他扩展 -->
+						
+			</div>
+			
+		</div>
+		
+		<div class="previous-next-links">
+			<div class="previous-design-link"><i style="font-size:16px;" class="fa fa-arrow-left" aria-hidden="true"></i> <a href="http://www.runoob.com/js/js-function-invocation.html" rel="prev"> JavaScript 函数调用</a> </div>
+			<div class="next-design-link"><a href="http://www.runoob.com/js/js-regexp.html" rel="next"> JavaScript 正则表达式</a> <i style="font-size:16px;" class="fa fa-arrow-right" aria-hidden="true"></i></div>
+		</div>
+		<!-- 笔记列表 -->
+		<style>
+.wrapper {
+  /*text-transform: uppercase; */
+  background: #ececec;
+  color: #555;
+  cursor: help;
+  font-family: "Gill Sans", Impact, sans-serif;
+  font-size: 20px;
+  position: relative;
+  text-align: center;
+  width: 200px;
+  -webkit-transform: translateZ(0); /* webkit flicker fix */
+  -webkit-font-smoothing: antialiased; /* webkit text rendering fix */
+}
+
+.wrapper .tooltip {
+  white-space: nowrap;
+  font-size: 14px;
+  text-align: left;
+  background: #96b97d;
+  bottom: 100%;
+  color: #fff;
+  display: block;
+  left: -25px;
+  margin-bottom: 15px;
+  opacity: 0;
+  padding: 14px;
+  pointer-events: none;
+  position: absolute;
+  
+  -webkit-transform: translateY(10px);
+     -moz-transform: translateY(10px);
+      -ms-transform: translateY(10px);
+       -o-transform: translateY(10px);
+          transform: translateY(10px);
+  -webkit-transition: all .25s ease-out;
+     -moz-transition: all .25s ease-out;
+      -ms-transition: all .25s ease-out;
+       -o-transition: all .25s ease-out;
+          transition: all .25s ease-out;
+  -webkit-box-shadow: 2px 2px 6px rgba(0, 0, 0, 0.28);
+     -moz-box-shadow: 2px 2px 6px rgba(0, 0, 0, 0.28);
+      -ms-box-shadow: 2px 2px 6px rgba(0, 0, 0, 0.28);
+       -o-box-shadow: 2px 2px 6px rgba(0, 0, 0, 0.28);
+          box-shadow: 2px 2px 6px rgba(0, 0, 0, 0.28);
+}
+.tooltip a {
+	color:#fff;
+}
+/* This bridges the gap so you can mouse into the tooltip without it disappearing */
+.wrapper .tooltip:before {
+  bottom: -20px;
+  content: " ";
+  display: block;
+  height: 20px;
+  left: 0;
+  position: absolute;
+  width: 100%;
+}  
+
+/* CSS Triangles - see Trevor's post */
+.wrapper .tooltip:after {
+  border-left: solid transparent 10px;
+  border-right: solid transparent 10px;
+  border-top: solid #96b97d 10px;
+  bottom: -10px;
+  content: " ";
+  height: 0;
+  left: 20%;
+  margin-left: -13px;
+  position: absolute;
+  width: 0;
+}
+.wrapper .tooltip1 {
+	margin-left: 50px;
+	padding-top: 0px;
+}
+/*
+.wrapper:hover .tooltip {
+  opacity: 1;
+  pointer-events: auto;
+  -webkit-transform: translateY(0px);
+     -moz-transform: translateY(0px);
+      -ms-transform: translateY(0px);
+       -o-transform: translateY(0px);
+          transform: translateY(0px);
+}
+*/
+/* IE can just show/hide with no transition */
+.lte8 .wrapper .tooltip {
+  display: none;
+}
+
+.lte8 .wrapper:hover .tooltip {
+  display: block;
+}
+
+</style>
+
+<link rel="stylesheet" href="https://static.runoob.com/assets/upvotejs/dist/upvotejs/upvotejs.css">
+<script src="https://static.runoob.com/assets/upvotejs/dist/upvotejs/upvotejs.vanilla.js"></script>
+<script src="https://static.runoob.com/assets/upvotejs/dist/upvotejs/upvotejs.jquery.js"></script>
+<div class="title" id="comments">
+	<h2 class="">
+    <div class="altblock">
+				<i style="font-size:28px;margin-top: 8px;" class="fa fa-plus-square" aria-hidden="true"></i>
+		    </div>
+    <span class="mw-headline" id="qa_headline">15  篇笔记</span>
+	<span class="mw-headline" id="user_add_note" style="float:right;line-height: 62px;padding-right: 14px;"><i class="fa fa-pencil-square-o" aria-hidden="true"></i>  写笔记</span>
+    </h2>
+</div>
+
+<div id="postcomments"  style="display:none;" >
+	<ol class="commentlist">
+		<li class="comment even thread-even depth-1" id="comment-15233"><span class="comt-f">#0</span><div class="comt-avatar wrapper"><i style="font-size:36px;" class="fa fa-user-circle" aria-hidden="true"></i><div class="tooltip"><p><i class="fa fa-user" aria-hidden="true"></i>&nbsp;&nbsp;&nbsp;Mid</p><p><i class="fa fa-envelope" aria-hidden="true"></i>&nbsp;&nbsp;279***549@qq.com</p></div><div id="runoobvote-id-15233" data-commid = "15233" class="upvotejs"><a class="upvote"></a> <span class="count">207</span></div></div><div class="comt-main" id="div-comment-15233"><p>我按我的理解总结下JavaScript闭包吧：</p><p>闭包就是一个函数引用另一个函数的变量，因为变量被引用着所以不会被回收，因此可以用来封装一个私有变量。这是优点也是缺点，不必要的闭包只会增加内存消耗。</p><p>或者说闭包就是子函数可以使用父函数的局部变量，还有父函数的参数。</p><div class="comt-meta wrapper"><span class="comt-author"><a target="_blank" href="javascript:;">Mid</a><div class="tooltip tooltip1"><p><i class="fa fa-user" aria-hidden="true"></i>&nbsp;&nbsp;&nbsp;Mid</p><p><i class="fa fa-envelope" aria-hidden="true"></i>&nbsp;&nbsp;279***549@qq.com</p></div></span>6年前 (2017-07-21)</div></div></li><!-- #comment-## -->
+<li class="comment odd alt thread-odd thread-alt depth-1" id="comment-21106"><span class="comt-f">#0</span><div class="comt-avatar wrapper"><i style="font-size:36px;" class="fa fa-user-circle" aria-hidden="true"></i><div class="tooltip"><p><i class="fa fa-user" aria-hidden="true"></i>&nbsp;&nbsp;&nbsp;WosLovesLife</p><p><i class="fa fa-envelope" aria-hidden="true"></i>&nbsp;&nbsp;zha***0h00@126.com</p></div><div id="runoobvote-id-21106" data-commid = "21106" class="upvotejs"><a class="upvote"></a> <span class="count">483</span></div></div><div class="comt-main" id="div-comment-21106"><p>我猜想可能很多人看到最后这个计数器问题都会感到困惑, 我也一样。</p>
+
+<p>经过代码验证, 发现其中的奥妙在于：</p>
+
+
+
+<pre>var add = (function () {
+    var counter = 0;
+    return function () {return counter += 1;}
+})();</pre>
+
+<p>注意: 为什么上面这段代码没有直接写的 function add (){...} 而是把function赋值给了变量add呢?</p>
+
+<p>我们通常会想当然的认为每次调用 add() 都会重走一遍add()中的代码块, 但其实不然。</p>
+
+<p>注意add方法中的return, 它return的并不是1,2,3这样的数值,而是return了一个方法,并且把这个方法赋值给了add变量。</p>
+
+<p>那么在这个function自运行一遍之后,其实最后赋值给add的是return counter += 1 这段代码。</p>
+
+<p>所以后面每次调用add() 其实都是在调用return counter += 1。</p> 
+
+<p>再结合文章之前所说的, 闭包会持有父方法的局部变量并且不会随父方法销毁而销毁, 所以这个counter其实就是来自于第一次function执行时创建的变量。</p>
+
+<p>我写了一段demo如下</p>
+
+
+
+<pre>var tempFunc;
+var add = (function () {
+    var counter = 0;
+    tempFunc = function () { return counter += 1; }
+    return tempFunc
+})();
+function myFunction() {
+    console.log("add === tempFunc : " + (add === tempFunc))
+    document.getElementById("addOneS").innerHTML = add();
+}</pre>
+<div class="comt-meta wrapper"><span class="comt-author"><a target="_blank" href="javascript:;">WosLovesLife</a><div class="tooltip tooltip1"><p><i class="fa fa-user" aria-hidden="true"></i>&nbsp;&nbsp;&nbsp;WosLovesLife</p><p><i class="fa fa-envelope" aria-hidden="true"></i>&nbsp;&nbsp;zha***0h00@126.com</p></div></span>5年前 (2017-12-02)</div></div></li><!-- #comment-## -->
+<li class="comment even thread-even depth-1" id="comment-21238"><span class="comt-f">#0</span><div class="comt-avatar wrapper"><i style="font-size:36px;" class="fa fa-user-circle" aria-hidden="true"></i><div class="tooltip"><p><i class="fa fa-user" aria-hidden="true"></i>&nbsp;&nbsp;&nbsp;张玉东</p><p><i class="fa fa-envelope" aria-hidden="true"></i>&nbsp;&nbsp;166***9846@qq.com</p></div><div id="runoobvote-id-21238" data-commid = "21238" class="upvotejs"><a class="upvote"></a> <span class="count">88</span></div></div><div class="comt-main" id="div-comment-21238"><p>理解闭包可以将以上代码分解如下：</p>
+
+<pre>function outerFunction() {
+    var counter = 0;
+    function innerFunction(){
+        return counter += 1;
+    }
+    return innerFunction;
+    /*
+     注意 typeof innerFunction 是：function；而typeof innerFunction（）是number；
+    */
+}
+var add = outerFunction();
+
+/* 
+调用 outerFunction()返回的是内部函数innerFucntion,那么调用几次add()将调用几次
+内部函数inner Function，内部函数公用了counter，所以能够计数,所以说闭包就是将内部嵌套函数变成外部可调用的。
+*/
+
+add();
+add();
+add();</pre><div class="comt-meta wrapper"><span class="comt-author"><a target="_blank" href="javascript:;">张玉东</a><div class="tooltip tooltip1"><p><i class="fa fa-user" aria-hidden="true"></i>&nbsp;&nbsp;&nbsp;张玉东</p><p><i class="fa fa-envelope" aria-hidden="true"></i>&nbsp;&nbsp;166***9846@qq.com</p></div></span>5年前 (2017-12-05)</div></div></li><!-- #comment-## -->
+<li class="comment odd alt thread-odd thread-alt depth-1" id="comment-23535"><span class="comt-f">#0</span><div class="comt-avatar wrapper"><i style="font-size:36px;" class="fa fa-user-circle" aria-hidden="true"></i><div class="tooltip"><p><i class="fa fa-user" aria-hidden="true"></i>&nbsp;&nbsp;&nbsp;MRL</p><p><i class="fa fa-envelope" aria-hidden="true"></i>&nbsp;&nbsp;lwq***@163.com</p></div><div id="runoobvote-id-23535" data-commid = "23535" class="upvotejs"><a class="upvote"></a> <span class="count">30</span></div></div><div class="comt-main" id="div-comment-23535"><p>闭包就是在提供了一个在外部访问另一个函数内部局部变量的方式。</p>
+<pre>var add = (function(){
+    var count = 0;//外部访问的计数器，局部变量.
+    var fun = function(){
+        return ++count;
+    }
+    return fun;
+})();
+    
+    //还可以这样写
+    var add2 = (function(){
+        var count = 0;//外部访问的计数器，局部变量.
+        function plus(){
+            return ++count;
+    }
+    return plus;
+})();
+    
+//还可以这样写
+var add3 = (function(){
+    var count = 0;//外部访问的计数器，局部变量.
+    return function(){
+        return ++count;
+    }
+})();</pre><div class="comt-meta wrapper"><span class="comt-author"><a target="_blank" href="javascript:;">MRL</a><div class="tooltip tooltip1"><p><i class="fa fa-user" aria-hidden="true"></i>&nbsp;&nbsp;&nbsp;MRL</p><p><i class="fa fa-envelope" aria-hidden="true"></i>&nbsp;&nbsp;lwq***@163.com</p></div></span>5年前 (2018-01-26)</div></div></li><!-- #comment-## -->
+<li class="comment even thread-even depth-1" id="comment-25020"><span class="comt-f">#0</span><div class="comt-avatar wrapper"><i style="font-size:36px;" class="fa fa-user-circle" aria-hidden="true"></i><div class="tooltip"><p><i class="fa fa-user" aria-hidden="true"></i>&nbsp;&nbsp;&nbsp;风之翼</p><p><i class="fa fa-envelope" aria-hidden="true"></i>&nbsp;&nbsp;kof***dj@aliyun.com</p></div><div id="runoobvote-id-25020" data-commid = "25020" class="upvotejs"><a class="upvote"></a> <span class="count">124</span></div></div><div class="comt-main" id="div-comment-25020"><p>闭包就是个bug。我相信作者在写javascript的时候都没想到用户会这么用。</p>
+
+<p>闭包其实是利用了一个变量退出作用域的时候，暂时没有被销毁，它的值还在，如果后面有变量也叫这个名字，那这个数据会被重新利用起来。你会发现，后面你使用的这个名字一样的变量是有初值的。下面的例子可以看出问题来。</p>
+
+<pre>
+&lt;p&gt;局部变量计数。&lt;/p&gt;
+&lt;button type="button" onclick="myFunction()"&gt;计数!&lt;/button&gt;
+&lt;p id="demo"&gt;0&lt;/p&gt;
+&lt;script&gt;
+{
+    var tmp = 2; //理论上在退出语句块后，这个变量要被释放掉的。包括内存可能被回收。但事实并非如此，会影响后面和他同名的变量
+}
+
+var add = (function () {
+    //var counter = 0; //这里注释掉.其实和上面的tmp一样的道理。这里在函数自己执行完后就应该销毁了的。
+    //return function () {return counter  += 1;} //这里的counter已经不是上面的counter了，是一个全局变量。有初值，受上面影响，初值为0
+    return function () {return tmp += 1;} //这里tmp就是个全局变量。它是有初值的。为上面的2
+
+})();
+function myFunction(){
+    document.getElementById("demo").innerHTML = add();//3
+    document.getElementById("demo").innerHTML = add();//4
+    document.getElementById("demo").innerHTML = add(); //5
+}
+
+&lt;/script&gt;
+</pre>
+<p><a class="tryitbtn" href="https://c.runoob.com/codedemo/5402" target="_blank" rel="nofollow">尝试一下 »</a></p>
+
+<p>执行上面的代码可以看的很清楚。计数器一样正常工作。</p>
+
+<p>所以，闭包就是利用了个bug: 退出作用域的变量不会立即销毁。会影响后面的同名变量。</p>
+
+<p>但不知道后面的javascript版本会不会修改这种机制。</p>
+
+<p>所以代码这么写是不可靠的。太依赖于javascript的内部实现了。</p>
+
+<p><strong>其实要实现全局计数器的需求。正常的做法是:</strong></p>
+
+<p>定义一个全局对象。这个对象定义自己的属性和方法add。</p>
+
+<p>用的时候 <span class="marked">对象.add</span> 就可以了。这个才正常。</p>
+
+<p>上面用闭包的方式太过巧妙，给人的感觉就是在夹缝中求生存。用起来也不舒服吧。</p><div class="comt-meta wrapper"><span class="comt-author"><a target="_blank" href="javascript:;">风之翼</a><div class="tooltip tooltip1"><p><i class="fa fa-user" aria-hidden="true"></i>&nbsp;&nbsp;&nbsp;风之翼</p><p><i class="fa fa-envelope" aria-hidden="true"></i>&nbsp;&nbsp;kof***dj@aliyun.com</p></div></span>5年前 (2018-03-14)</div></div></li><!-- #comment-## -->
+<li class="comment odd alt thread-odd thread-alt depth-1" id="comment-29010"><span class="comt-f">#0</span><div class="comt-avatar wrapper"><i style="font-size:36px;" class="fa fa-user-circle" aria-hidden="true"></i><div class="tooltip"><p><i class="fa fa-user" aria-hidden="true"></i>&nbsp;&nbsp;&nbsp;TriumPH</p><p><i class="fa fa-envelope" aria-hidden="true"></i>&nbsp;&nbsp;870***185@qq.com</p></div><div id="runoobvote-id-29010" data-commid = "29010" class="upvotejs"><a class="upvote"></a> <span class="count">33</span></div></div><div class="comt-main" id="div-comment-29010"><p>5楼说的太对了，这个 bug 用着真不痛快，针对这个例子写了点代码：</p>
+
+
+
+<p>局部变量计数。</p>
+<pre>&lt;button type="button" onclick="myFunction()"&gt;计数!&lt;/button&gt;
+&lt;p id="demo"&gt;0&lt;/p&gt;
+&lt;script&gt;
+var add = new Object();
+add.count = 0;
+add.plus = function()
+{
+    this.count++;
+}
+function myFunction(){
+    add.plus();
+    document.getElementById("demo").innerHTML = add.count;
+}
+&lt;/script&gt;</pre>
+<p><a class="tryitbtn" href="https://c.runoob.com/codedemo/5401" target="_blank" rel="nofollow">尝试一下 »</a></p>
+<p>感觉可以用正常的手段解决这类问题了。</p><div class="comt-meta wrapper"><span class="comt-author"><a target="_blank" href="javascript:;">TriumPH</a><div class="tooltip tooltip1"><p><i class="fa fa-user" aria-hidden="true"></i>&nbsp;&nbsp;&nbsp;TriumPH</p><p><i class="fa fa-envelope" aria-hidden="true"></i>&nbsp;&nbsp;870***185@qq.com</p></div></span>5年前 (2018-07-02)</div></div></li><!-- #comment-## -->
+<li class="comment even thread-even depth-1" id="comment-30315"><span class="comt-f">#0</span><div class="comt-avatar wrapper"><i style="font-size:36px;" class="fa fa-user-circle" aria-hidden="true"></i><div class="tooltip"><p><i class="fa fa-user" aria-hidden="true"></i>&nbsp;&nbsp;&nbsp;Silmeria</p><p><i class="fa fa-envelope" aria-hidden="true"></i>&nbsp;&nbsp;sil***ia9@qq.com</p></div><div id="runoobvote-id-30315" data-commid = "30315" class="upvotejs"><a class="upvote"></a> <span class="count">156</span></div></div><div class="comt-main" id="div-comment-30315"><p>针对 <span class="marked">5楼、6楼</span> 的一些错误进行指明：</p>
+
+<p><span class="marked">5楼</span>：{ var tmp = 2 }  JS 中语句块不能独立作用域，这样写等同于声明了一个全局变量 tmp = 2，所以不存在该语句块内代码执行完毕后 tmp 就被销毁的情况。</p>
+
+<p><span class="marked">6楼</span>：变量 add，以及 add 的 count 属性、plus() 方法都是公共的，这意味着其他代码可以直接修改你的 count 属性，造成不必要的麻烦</p>
+
+<p><strong>闭包要解决的问题是：</strong>一个函数可以拥有私有变量，并且外部可以通过闭包访问该私有变量，如特权方法（类似 JavaBean 的写法）：</p>
+
+<pre>&lt;script&gt;
+function Student(value) {
+    var name = value;
+    this.getName = function() { return name; };
+    this.setName = function(value) {name = value; };
+}
+&lt;script&gt;</pre><div class="comt-meta wrapper"><span class="comt-author"><a target="_blank" href="javascript:;">Silmeria</a><div class="tooltip tooltip1"><p><i class="fa fa-user" aria-hidden="true"></i>&nbsp;&nbsp;&nbsp;Silmeria</p><p><i class="fa fa-envelope" aria-hidden="true"></i>&nbsp;&nbsp;sil***ia9@qq.com</p></div></span>5年前 (2018-07-27)</div></div></li><!-- #comment-## -->
+<li class="comment odd alt thread-odd thread-alt depth-1" id="comment-41479"><span class="comt-f">#0</span><div class="comt-avatar wrapper"><i style="font-size:36px;" class="fa fa-user-circle" aria-hidden="true"></i><div class="tooltip"><p><i class="fa fa-user" aria-hidden="true"></i>&nbsp;&nbsp;&nbsp;c-dev</p><p><i class="fa fa-envelope" aria-hidden="true"></i>&nbsp;&nbsp;284***590@qq.com</p></div><div id="runoobvote-id-41479" data-commid = "41479" class="upvotejs"><a class="upvote"></a> <span class="count">241</span></div></div><div class="comt-main" id="div-comment-41479">
+<span class="marked">5楼</span>和<span class="marked">6楼</span>完全没有理解闭包。
+
+<p>为此举的例子和结论也是错误的。</p>
+
+<p>此技巧是js为其没有“访问修饰符”而创建出“私有属性”。</p>
+
+<p>以包含面向对象编程语言的基本特征“封装性”的很妙的处理方法。</p>
+
+<p>并不是 bug，人人都要会用。</p>
+
+<p>希望能在旁边直接注明。</p>
+
+<p>新手若没看7楼会直接被误导！</p>
+<p>想了一个比较奇怪的生动例子:</p>
+
+<p>一个人需要被检查身体（操作私有属性）;</p>
+<p>但是不能直接杀人去检查（破坏封装性）;</p>
+<p>用了一个检查工具放在它的身体里收集数据（一个公有类，闭包访问私有属性）;</p>
+<p>检查完毕把这个工具拿出来获取检查过的数据（在没有破坏封装性的情况，使用这个公有类操纵了私有属性，完成了任务）。</p><div class="comt-meta wrapper"><span class="comt-author"><a target="_blank" href="javascript:;">c-dev</a><div class="tooltip tooltip1"><p><i class="fa fa-user" aria-hidden="true"></i>&nbsp;&nbsp;&nbsp;c-dev</p><p><i class="fa fa-envelope" aria-hidden="true"></i>&nbsp;&nbsp;284***590@qq.com</p></div></span>4年前 (2019-04-02)</div></div></li><!-- #comment-## -->
+<li class="comment even thread-even depth-1" id="comment-48075"><span class="comt-f">#0</span><div class="comt-avatar wrapper"><i style="font-size:36px;" class="fa fa-user-circle" aria-hidden="true"></i><div class="tooltip"><p><i class="fa fa-user" aria-hidden="true"></i>&nbsp;&nbsp;&nbsp;flag233</p><p><i class="fa fa-envelope" aria-hidden="true"></i>&nbsp;&nbsp;132***4037@qq.com</p></div><div id="runoobvote-id-48075" data-commid = "48075" class="upvotejs"><a class="upvote"></a> <span class="count">64</span></div></div><div class="comt-main" id="div-comment-48075">
+<p>加上了注释就好懂了：</p>
+
+<pre>var add =function () {
+    var counter = 0;
+    window.alert("父方法"); // 只有在 add 赋值时执行一次 
+    return function () {
+        window.alert("子方法");  // 每次执行 add() 都会执行
+        return counter += 1;
+
+    }    
+    // counter 作用域在父函数中, 自然在其子函数中也能使用,但因为
+    // 子函数还需要使用了count, 所以 count 不随着父函数一起释放。    
+    // 利用在 function(){}() 的形式自动执行一遍父匿名函数, 赋给 add 子方法。
+}();
+
+function myFunction(){
+    document.getElementById("demo").innerHTML = add();  //这里add()执行的就是子方法
+}</pre>
+<p><a class="tryitbtn" href="https://c.runoob.com/codedemo/5635" target="_blank" rel="noopener noreferrer nofollow">尝试一下 »</a></p><div class="comt-meta wrapper"><span class="comt-author"><a target="_blank" href="javascript:;">flag233</a><div class="tooltip tooltip1"><p><i class="fa fa-user" aria-hidden="true"></i>&nbsp;&nbsp;&nbsp;flag233</p><p><i class="fa fa-envelope" aria-hidden="true"></i>&nbsp;&nbsp;132***4037@qq.com</p></div></span>4年前 (2019-11-01)</div></div></li><!-- #comment-## -->
+<li class="comment odd alt thread-odd thread-alt depth-1" id="comment-49274"><span class="comt-f">#0</span><div class="comt-avatar wrapper"><i style="font-size:36px;" class="fa fa-user-circle" aria-hidden="true"></i><div class="tooltip"><p><i class="fa fa-user" aria-hidden="true"></i>&nbsp;&nbsp;&nbsp;咚伊夏</p><p><i class="fa fa-envelope" aria-hidden="true"></i>&nbsp;&nbsp;416***884@qq.com</p></div><div id="runoobvote-id-49274" data-commid = "49274" class="upvotejs"><a class="upvote"></a> <span class="count">16</span></div></div><div class="comt-main" id="div-comment-49274"><p>对以上示例的一部分理解:</p>
+
+<pre>var add = function () 
+{
+    var counter = 0;
+    alert("父方法"); // 只有在 add 赋值时执行一次
+    var add_child = function(id) {
+        var counter_res = 0;
+        if(id === 1)
+        {
+            counter_res = counter + 1;
+        }
+        else if(id === 2)
+        {
+            counter++;
+            counter_res += counter;
+        }
+        else
+        {
+          counter_res = 0;
+        }
+        alert("子方法");  // 每次执行 add() 都会执行
+        return counter_res;
+    };
+    return add_child;
+    // counter 作用域在父函数中, 自然在其子函数中也能使用,但因为
+    // 子函数还需要使用count, 所以 count 不随着父函数一起释放。
+    // 利用在 function(){}() 的形式自动执行一遍父匿名函数, 赋给 add 子方法。
+}();
+
+/*
+add = function(){}，是一个函数的普通定义方式，
+但是 add = function(){}()，会在add定义时即执行一次function(){}，
+这样做的目的是为了给function(){}中的变量赋初始值，并将add_child=function(){}这个函数返回给add这个变量。
+当以后执行add()这个函数时，其实执行的是add_child=function(){}。
+这样做，闭包的目的就在于，你通过add这个对象访问不到counter这个变量，无形中创造了一个私有变量。
+*/
+
+add(1);
+add(2);
+add(2);</pre>
+<p><a target="_blank" href="https://c.runoob.com/codedemo/5641" class="tryitbtn" rel="noopener noreferrer nofollow ugc">尝试一下 »</a></p>
+<p>执行结果：</p>
+
+<pre>父方法
+子方法 1
+子方法 1
+子方法 2</pre><div class="comt-meta wrapper"><span class="comt-author"><a target="_blank" href="javascript:;">咚伊夏</a><div class="tooltip tooltip1"><p><i class="fa fa-user" aria-hidden="true"></i>&nbsp;&nbsp;&nbsp;咚伊夏</p><p><i class="fa fa-envelope" aria-hidden="true"></i>&nbsp;&nbsp;416***884@qq.com</p></div></span>3年前 (2019-12-13)</div></div></li><!-- #comment-## -->
+<li class="comment even thread-even depth-1" id="comment-49864"><span class="comt-f">#0</span><div class="comt-avatar wrapper"><i style="font-size:36px;" class="fa fa-user-circle" aria-hidden="true"></i><div class="tooltip"><p><i class="fa fa-user" aria-hidden="true"></i>&nbsp;&nbsp;&nbsp;Dennis</p><p><i class="fa fa-envelope" aria-hidden="true"></i>&nbsp;&nbsp;yif***chaoran@163.com</p></div><div id="runoobvote-id-49864" data-commid = "49864" class="upvotejs"><a class="upvote"></a> <span class="count">22</span></div></div><div class="comt-main" id="div-comment-49864"><p><strong>5 楼</strong>：<span class="marked">{ var tmp = 2 }</span> JS 中语句块不能独立作用域，这样写等同于声明了一个全局变量 tmp = 2，所以不存在该语句块内代码执行完毕后 tmp 就被销毁的情况。</p>
+
+<strong>6 楼</strong>：<p>变量 add，以及 add 的 count 属性、plus() 方法都是公共的，这意味着其他代码可以直接修改你的 count 属性，造成不必要的麻烦。</p>
+
+<p>闭包要解决的问题是：一个函数可以拥有私有变量，并且外部可以通过闭包访问该私有变量，如特权方法（类似 JavaBean 的写法）。</p>
+
+<p>针对以上言论，需要反驳一下。</p>
+
+<p><strong>6 楼</strong>：变量 add，以及 add 的 count 属性、plus() 方法都是公共的，这意味着其他代码可以直接修改你的 count 属性，造成不必要的麻烦。</p>
+
+<p>这句话，本身就存在问题，6楼是使用new构造了一个object，并且再对object的属性和方法进行赋值，后面直接onclick 调object.method()就行了，所谓的方法都是公开的，这个的确，但是要知道纵使是公开的，也必须使用这个对象访问或者修改才行，而不是所谓的直接可以修改。</p>
+
+<pre>var count;
+var myObj=new Object;
+myObj.count=2; //这里的myObj.count与上面声明的count可不是一个东西。</pre>
+<p>另外：</p>
+
+<pre>&lt;script&gt;
+function Student(value) {
+    var name = value;
+    this.getName = function() { return name; };
+    this.setName = function(value) {name = value; };
+}
+&lt;script&gt;</pre>
+<p>以上代码，难道不觉得很像是在声明一个对象？并且为了使用所谓的 function 的闭包，还非得使用下 this 关键词，到最后还需要使用 new 构造下 Student，并且为了保证能对该函数的私有变量 name 赋值，还搞了个函数的变量传过去，用起来真的是非常别扭，并且，这个方法好像在全局也都可以通过 Student 来访问吧？</p>
+
+<pre>&lt;script&gt;
+function Student(value) {
+    var name = value;
+    this.getName = function() { return name; };
+    this.setName = function(value) {name = value; };
+}
+myStu=new Student("name");
+//我是不是可以在script内任意一个地方通过myStu.setName("name")来修改name值？
+&lt;script&gt;</pre>
+<p>所以，其实核心的需求就是，我可以搞一个局部的变量，并且这个变量的生命周期还必须是类全局性质的，但又需要与全局变量区分开，那就直接用对象咯，声明一个对象，再定义下这个对象的某个属性值，那这个属性值变量本来就必须通过这个对象来访问，也即已经达到了将这个变量限制在这个对象的范围内。</p>
+
+<p>这个时候，又何必多次一举，非得使用所谓的闭包，更何况，你不觉得如果把一个函数定义为一个对象的方法，本身就已经是一种闭包了吗？为啥还非得用 function 达到？</p><div class="comt-meta wrapper"><span class="comt-author"><a target="_blank" href="javascript:;">Dennis</a><div class="tooltip tooltip1"><p><i class="fa fa-user" aria-hidden="true"></i>&nbsp;&nbsp;&nbsp;Dennis</p><p><i class="fa fa-envelope" aria-hidden="true"></i>&nbsp;&nbsp;yif***chaoran@163.com</p></div></span>3年前 (2020-01-06)</div></div></li><!-- #comment-## -->
+<li class="comment odd alt thread-odd thread-alt depth-1" id="comment-50009"><span class="comt-f">#0</span><div class="comt-avatar wrapper"><i style="font-size:36px;" class="fa fa-user-circle" aria-hidden="true"></i><div class="tooltip"><p><i class="fa fa-user" aria-hidden="true"></i>&nbsp;&nbsp;&nbsp;jordan chen</p><p><i class="fa fa-envelope" aria-hidden="true"></i>&nbsp;&nbsp;che***2890@gmail.com</p></div><div id="runoobvote-id-50009" data-commid = "50009" class="upvotejs"><a class="upvote"></a> <span class="count">52</span></div></div><div class="comt-main" id="div-comment-50009"><p>看了上面大家的讨论我也说一些自己的看法。</p><p>关于第一个争论，闭包的存在以及使用是否是合理且必须的，我觉得答案是“YES！”。</p><p>我个人的观点为: 使用闭包这一种实现方式来调用一个对象中的私有属性，更符合面向对象编程的思维逻辑以及现代编程的发展趋势。</p><p>举例说明：如果我们把计数器这一对象中的count值设置为共有属性，的确可以在不用闭包方法的同时解决相同的问题。但是如果看的长远一点儿，计数器function可能在整段代码中只是小小的一个功能而已，除去这个功能之外，还会包含类似的功能模块，比如取平均值function，混合统计function等等。那我们是否为了让Window可以直接调用，而把其余的function的关键属性全部要设置成全局属性呢？</p><p>如果全部设置成全局属性，那么代码岂不是在退化？对象的封装越来越不完善，更加趋近于面向过程的编程理念了。同时，对于日后的修改和更新会造成更加的不便利。</p><p>关于面对对象的编程思维，是什么？好处是什么我想我不用在这里再多加赘述了。</p><p>一个好的面向对象编程，就是要实现完善的封装，并提供访问内部数据的接口。</p><p>如果我们日后想去修改计数器这个功能，我们只需要修改其内在属性即可。完全不用考虑对于全局变量的调整。因为具体在全局的实现还是通过闭包函数来实现。</p><p>最后举例描述一下闭包函数：</p><p>你去一家饭店吃饭，大厅区域相当于全局区域（public），而闭包函数就相当于服务员。想点菜的话找服务员即可。</p><p>如果没有服务员，那你如何知道后厨都做哪些菜呢？同时后厨又是一个闲人免进的地方（后厨相当于函数内部，你从外部无法访问，根本不让你进去）</p><p>那么后厨只能把所有本应只放在后厨里面的菜，全部摆到外面来给你看。（把内部的 属性count变成全局属性）那么这个饭店一定会乱七八糟，登不上大雅之堂。</p><p>但是如果有了服务员，你可以通过服务员来知晓后厨的菜样，并且完成点单。服务员（闭包函数）实现了外部直接访问函数内部属性。</p><div class="comt-meta wrapper"><span class="comt-author"><a target="_blank" href="javascript:;">jordan chen</a><div class="tooltip tooltip1"><p><i class="fa fa-user" aria-hidden="true"></i>&nbsp;&nbsp;&nbsp;jordan chen</p><p><i class="fa fa-envelope" aria-hidden="true"></i>&nbsp;&nbsp;che***2890@gmail.com</p></div></span>3年前 (2020-01-12)</div></div></li><!-- #comment-## -->
+<li class="comment even thread-even depth-1" id="comment-50469"><span class="comt-f">#0</span><div class="comt-avatar wrapper"><i style="font-size:36px;" class="fa fa-user-circle" aria-hidden="true"></i><div class="tooltip"><p><i class="fa fa-user" aria-hidden="true"></i>&nbsp;&nbsp;&nbsp;MCCF</p><p><i class="fa fa-envelope" aria-hidden="true"></i>&nbsp;&nbsp;353***4841@qq.com</p></div><div id="runoobvote-id-50469" data-commid = "50469" class="upvotejs"><a class="upvote"></a> <span class="count">56</span></div></div><div class="comt-main" id="div-comment-50469"><p>闭包是<b>调用私有属性的接口</b>。作为一个一直学习C++的程序员，看到这个立即热泪盈眶。</p><p>好吧，但在此看到这里爆发的争论，我希望提一点：<b>闭包是实现面向对象所必须的</b>。</p><p>实际上，11楼根本未能理解闭包，甚至未能理解面向对象的含义。面向对象的基本要素是<b>封装性</b>：也许我们需要private的变量，也就是不能够直接改变只能借由方法改变的属性。而所谓“用对象就能取代闭包”，但是闭包实际上真正的意义应当用在对象构造器中的。</p><p>比如，我们希望对象有一个属性，只允许增加不许减少，而且每次只能用add函数给它加上某个偶数。这时闭包就体现了其用处。这个例子可以说是比较统一的解决了上面所提出的所有问题。</p><pre>
+function NumPro(val){
+    var counter=val;
+    this.add=function(num){
+        if(num%2==0) counter+=num;
+    }
+    this.num=function(){
+        return counter;
+    }
+}
+//alert(counter);      //报错
+alert(NumPro.counter); //输出undefined(显而易见的)
+var a=new NumPro(0);
+alert(a.counter);      //输出undefined(不在this中)
+alert(a.num());        //输出0
+a.add(2);
+alert(a.num());        //输出2
+a.add(1);
+alert(a.num());        //输出2(仅允许偶数)
+a.add(10);
+alert(a.num());        //输出12
+var b=new NumPro(-2);
+alert(b.num());        //输出-2
+</pre><p>显然，闭包并不仅仅是由于“作用域中的变量不会销毁”——直接输出变量会直接报错，也不能通过函数名访问属性；在两个对象中所输出的值没有任何关系。同时，它又能限制对属性的直接操作——不在this中的变量无法从外部访问。</p><p>因此，闭包是被设计好的，并不是一个bug。实际上，如果接触过Java或其它面向对象语言会有很深的感触——Javascript 的面向对象往往出人意料（它甚至没有Class）。但这不意味着它不能实现其它语言中的private效果。这样看，此处的闭包仅仅是把this.counter=num改成var counter=num而已。</p><p>当然，闭包不完全是如此，比如正文中返回一个函数<b>（名）</b>的巧妙方法。不过，闭包意味着函数中的私有变量不会立即销毁，可被内嵌的函数访问。这就足够了。</p><p>另外，实验证明函数不仅仅可访问上一层函数的私有变量——父函数的父函数，以及更上层函数的变量都可访问（但不推荐这样做……这似乎往往只是降低代码可读性）。但是，如果使用：</p><pre>
+NumPro.prototype.numEx=function(){
+    return counter;
+}
+</pre><p>如果counter是NumPro函数内定义的，这个函数使用后将会报错（它的原型函数显然不含有counter变量，即使含有也不清楚如何处理）。</p><div class="comt-meta wrapper"><span class="comt-author"><a target="_blank" href="javascript:;">MCCF</a><div class="tooltip tooltip1"><p><i class="fa fa-user" aria-hidden="true"></i>&nbsp;&nbsp;&nbsp;MCCF</p><p><i class="fa fa-envelope" aria-hidden="true"></i>&nbsp;&nbsp;353***4841@qq.com</p></div></span>3年前 (2020-02-05)</div></div></li><!-- #comment-## -->
+<li class="comment odd alt thread-odd thread-alt depth-1" id="comment-52593"><span class="comt-f">#0</span><div class="comt-avatar wrapper"><i style="font-size:36px;" class="fa fa-user-circle" aria-hidden="true"></i><div class="tooltip"><p><i class="fa fa-user" aria-hidden="true"></i>&nbsp;&nbsp;&nbsp;elize</p><p><i class="fa fa-envelope" aria-hidden="true"></i>&nbsp;&nbsp;239***0360@qq.com</p></div><div id="runoobvote-id-52593" data-commid = "52593" class="upvotejs"><a class="upvote"></a> <span class="count">7</span></div></div><div class="comt-main" id="div-comment-52593"><p>文章中说过<b>函数自调用</b>就是</p><pre>
+var para = (function(){  alert(1); })();  //定义时已经执行一次，打印原文中的add()会发现alert(1)只会出现一次
+</pre><p>同样还有:</p>
+<pre>
++/~/-/!function(){
+  alert(2);
+}();
+
+;(function defend(){
+  alert(3);
+}());   
+</pre><p><b>add实际以子函数声明内容在运行</b>：于是&nbsp;add拿到的是里面的子函数(取别名f2，内容如下)，也不是counter++这个表达式，实践后发现是否return无关紧要，而且文章中连续执行了三次add()，只有函数才能被()执行，counter++只是逻辑而已;</p><pre>
+//原文示例：
+
+var add = (function () {
+    var counter = 0;
+    return function () {
+        return counter += 1;
+    }
+})();
+ 
+add();
+add();
+add();
+
+//子闭包内容
+var f2 = function(){      //这个声明内容被实际赋值给add
+    counter ++;
+    //return counter++;   //有人说返回的是counter++，实际不用return结果依旧成立，送已不是表达式被赋值
+}
+</pre><p><b>counter始终存在</b>：var add表明add是一个<b>全局变量</b>，不会被无缘无故销毁，add()在执行的时候就是f2()在执行。这导致f2也被存在内存中，从而其依赖的父函数及其变量无法被销毁。每次运行都会更新counter的值。</p><p><b>f2可以获得父级变量</b>：子函数f2的变量counter是在父函数中被定义的（只执行过一次），在内部变量找不到就会向上级作用域寻找，这个查找的过程就叫作用域链（如果上级找不到，就会继续往更上级对象的作用域查找）。就像原文说的，支持嵌套，并且支持访问上一层的函数变量。</p><p>f2被赋给add，在访问自己及其上级的作用域，就是在外部调用内部变量的过程。</p><div class="comt-meta wrapper"><span class="comt-author"><a target="_blank" href="javascript:;">elize</a><div class="tooltip tooltip1"><p><i class="fa fa-user" aria-hidden="true"></i>&nbsp;&nbsp;&nbsp;elize</p><p><i class="fa fa-envelope" aria-hidden="true"></i>&nbsp;&nbsp;239***0360@qq.com</p></div></span>3年前 (2020-04-12)</div></div></li><!-- #comment-## -->
+<li class="comment even thread-even depth-1" id="comment-55117"><span class="comt-f">#0</span><div class="comt-avatar wrapper"><i style="font-size:36px;" class="fa fa-user-circle" aria-hidden="true"></i><div class="tooltip"><p><i class="fa fa-user" aria-hidden="true"></i>&nbsp;&nbsp;&nbsp;欲望黑洞</p><p><i class="fa fa-envelope" aria-hidden="true"></i>&nbsp;&nbsp;125***6614@qq.com</p></div><div id="runoobvote-id-55117" data-commid = "55117" class="upvotejs"><a class="upvote"></a> <span class="count">38</span></div></div><div class="comt-main" id="div-comment-55117"><p>在 ES6 增加了 let 关键字后，感觉闭包可以用下面的方式实现：</p>
+
+<pre>{
+    let counter=0;
+    function fun(){
+        document.getElementById("demo").innerHTML=(counter+=1);
+    }
+}</pre><p>
+这样在代码块之外的函数不能调用 counter，同时 fun() 也能只调用一次 counter=0。</p><div class="comt-meta wrapper"><span class="comt-author"><a target="_blank" href="javascript:;">欲望黑洞</a><div class="tooltip tooltip1"><p><i class="fa fa-user" aria-hidden="true"></i>&nbsp;&nbsp;&nbsp;欲望黑洞</p><p><i class="fa fa-envelope" aria-hidden="true"></i>&nbsp;&nbsp;125***6614@qq.com</p></div></span>3年前 (2020-07-08)</div></div></li><!-- #comment-## -->
+	</ol>
+	<div class="pagenav">
+			</div>
+</div>
+<div id="respond" class="no_webshot"> 
+		<div class="comment-signarea" style="display:none; padding: 20px 20px;"> 
+	<h3 class="text-muted" id="share_code" style="color: #799961;"><i class="fa fa-pencil-square-o" aria-hidden="true"></i> 点我分享笔记</h3>
+	<!--
+	<p style="font-size:14px;">笔记需要是本篇文章的内容扩展！</p><br>
+	<p style="font-size:12px;"><a href="//www.runoob.com/tougao" target="_blank">文章投稿，可点击这里</a></p>
+	<p style="font-size:14px;"><a href="/w3cnote/runoob-user-test-intro.html#invite" target="_blank">注册邀请码获取方式</a></p>
+		<h3 class="text-muted"><i class="fa fa-info-circle" aria-hidden="true"></i> 分享笔记前必须<a href="javascript:;" class="runoob-pop">登录</a>！</h3>
+		<p><a href="/w3cnote/runoob-user-test-intro.html#invite" target="_blank">注册邀请码获取方式</a></p>-->
+	</div>
+		
+	<form action="/wp-content/themes/runoob/option/addnote.php" method="post" id="commentform" style="display:none;">
+		<div class="comt">
+			<div class="comt-title">
+				<i style="font-size:36px;" class="fa fa-user-circle" aria-hidden="true"></i>				<p><a id="cancel-comment-reply-link" href="javascript:;">取消</a></p>
+			</div>
+			<div class="comt-box">
+			<div id="mded"></div>
+			
+				<div class="comt-ctrl">
+					<div class="comt-tips"><input type='hidden' name='comment_post_ID' value='10072' id='comment_post_ID' />
+<input type='hidden' name='comment_parent' id='comment_parent' value='0' />
+</div>
+					<button type="submit" name="submit" id="submit" tabindex="5"><i class="fa fa-pencil" aria-hidden="true"></i> 分享笔记</button>
+				</div>
+			</div>
+		
+				
+					<div class="comt-comterinfo"> 
+						<ul id="comment-author-info">
+							<li class="form-inline"><label class="hide" for="author">昵称</label><input class="ipt" type="text" name="author" id="author" value="" tabindex="2" placeholder="昵称"><span class="text-muted">昵称 (必填)</span></li>
+							<li class="form-inline"><label class="hide" for="email">邮箱</label><input class="ipt" type="text" name="email" id="email" value="" tabindex="3" placeholder="邮箱"><span class="text-muted">邮箱 (必填)</span></li>
+							<li class="form-inline"><label class="hide" for="url">引用地址</label><input class="ipt" type="text" name="url" id="url" value="" tabindex="4" placeholder="引用地址"><span class="text-muted">引用地址</span></li>
+						</ul>
+					</div>
+				
+			
+		</div>
+
+	</form>
+	</div>
+<script type="text/javascript">
+$(function() {
+	//初始化编辑器
+	
+	var editor = new Simditor({
+	  textarea: $('#mded'),
+	  placeholder: '写笔记...',
+	  upload:false,
+	 // upload: {url:'/api/comment_upload_file.php',params: null,fileKey: 'upload_file',connectionCount: 1,leaveConfirm: '文件正在上传，您确定离开?'},
+	  defaultImage: 'https://www.runoob.com/images/logo.png',
+	  codeLanguages: '',
+	  autosave: 'editor-content',
+	  toolbar: [  'bold','code','ul','ol','image' ]
+	});
+	editor.on('selectionchanged', function() {
+		$(".code-popover").hide();
+	});
+
+	// 提交数据
+	$("#share_code").click(function() {
+		$(".comment-signarea").hide();
+		$("#commentform").show();
+		
+	});
+	$("#user_add_note").click(function() {
+		$(".comment-signarea").hide();
+		$("#commentform").show();
+		$('html, body').animate({
+       	    scrollTop: $("#respond").offset().top
+    	}, 200);
+	});
+
+	// 提交笔记
+	var commentform=$('#commentform');
+	commentform.prepend('<div id="comment-status" style="display:none;" ></div>');
+	var statusdiv=$('#comment-status');
+	
+	commentform.submit(function(e){
+		e.preventDefault();
+		var noteContent = editor.getValue();
+		// console.log(noteContent);
+		noteContent = noteContent.replace(/<pre><code>/g,"<pre>");
+		noteContent = noteContent.replace(/<\/code><\/pre>/g,"</pre>");
+		
+		// 系列化表单数据
+		var comment_parent = 0;
+		var is_user_logged_in = $("#is_user_logged_in").val();
+		var comment_post_ID =  10072;
+		var _wp_unfiltered_html_comment = $("#_wp_unfiltered_html_comment").val();
+		var comment = noteContent;
+		var author = $("#author").val();
+		var url = $("#url").val();
+		var email = $("#email").val();
+		if(isBlank(author) && is_user_logged_in==0) {
+			statusdiv.html('<p  class="ajax-error">请输入昵称！</p>').show();
+		} else if(isBlank(email)  && is_user_logged_in==0) {
+			statusdiv.html('<p  class="ajax-error">请输入邮箱！</p>').show();
+		} else {
+			// var formdata=commentform.serialize() + "&comment=" + noteContent ;
+			// 添加状态信息
+			statusdiv.html('<p>Processing...</p>').show();
+			// 获取表单提交地址
+			var formurl=commentform.attr('action');
+			
+			// 异步提交
+			$.ajax({
+					type: 'post',
+					url: formurl,
+					dataType:'json',
+					data: {"comment_parent":comment_parent,"comment_post_ID":comment_post_ID, "_wp_unfiltered_html_comment":_wp_unfiltered_html_comment,"comment":comment,"url":url, "email":email,"author":author},
+					error: function(XMLHttpRequest, textStatus, errorThrown){
+					statusdiv.html('<p class="ajax-error" >数据不完整或表单提交太快了！</p>').show();
+				},
+				success: function(data, textStatus){
+					if(data.errorno=="0") {
+						$("#submit").prop('disabled', true);
+						statusdiv.html('<p class="ajax-success" >笔记已提交审核，感谢分享笔记！</p>').show();
+						alert('笔记已提交审核，感谢分享笔记！');
+					}else{
+						statusdiv.html('<p class="ajax-error" >'+data.msg+'</p>').show();
+					}
+					commentform.find('textarea[name=comment]').val('');
+				}
+			});
+			setTimeout(function(){
+		        $("#submit").prop('disabled', false);
+		    }, 10*1000);
+		}
+		return false;
+
+	});
+	$(".comt-author").click(function() {
+		href = $(this).children("a").attr("href");
+		if(href.indexOf("/note/")!=-1) {
+			var win = window.open(href, '_blank');
+  			win.focus();
+		}
+	});
+	$(".comt-meta span").hover(function(){
+		$(this).children(".tooltip").css({ "opacity": 1, "pointer-events": "auto"});
+	},function(){
+		$(this).children(".tooltip").removeAttr("style");
+	});
+	/*
+	$(".wrapper i").hover(function(){
+		$(this).siblings(".tooltip").css({ "opacity": 1, "pointer-events": "auto"});
+	},function(){
+		$(this).siblings(".tooltip").css({ "opacity": 0, "pointer-events": "auto"});
+	});
+	*/
+	//Upvote.create('runoobvote-id', {callback: vote_callback});
+	var ajaxurl = 'https://www.runoob.com/wp-admin/admin-ajax.php';
+	var callback = function(data) {
+		//console.log($('#runoobvote-id').upvote('upvoted'));
+		//console.log($('#runoobvote-id').upvote('downvoted'));
+		//console.log(data);
+		_vote_action = data.action;
+		id_arr = data.id.split('-');
+		um_id= id_arr[2];
+		//console.log(um_id);
+		
+		var re = /^[1-9]+/;
+		if (re.test(um_id)) { 
+			var ajax_data = {
+				_vote_action: _vote_action,
+				action: "pinglun_zan",
+				um_id: um_id,
+				um_action: "ding"
+			};
+			//console.log(ajax_data);
+			$.post(ajaxurl,ajax_data,function(status){
+				//if(status.vote_num>999) {
+				//	_voteHtml = '<span style="display: block; text-align: center;font-size: 20px; color: #6a737c; margin: 8px 0;">'+kFormatter(status.vote_num) +'</span>';
+				//	$("#runoobvote-id-" + um_id + " .count").hide().after(_voteHtml);
+				//}
+				
+			});
+		}
+	};
+	if($('#comments').length && $('.upvotejs').length){
+		$('.upvotejs').upvote({id: 10072, callback: callback});
+	
+		$.post(ajaxurl,{"action":"pinglun_zan","postid":10072},function(data){  
+			$(data).each(function(key,value) {
+				$("#runoobvote-id-" + value.commid + " .upvote").addClass(value.upvotejs_class);
+				$("#runoobvote-id-" + value.commid + " .downvote").addClass(value.downvote_class);
+				$("#runoobvote-id-" + value.commid + " .count").text(value.upvote_count);
+			})
+		},'json');
+		
+	}
+	
+	
+});
+function isBlank(str) {
+    return (!str || /^\s*$/.test(str));
+}
+function kFormatter(num) {
+	// return num;
+    return Math.abs(num) > 999 ? Math.sign(num)*((Math.abs(num)/1000).toFixed(1)) + 'k' : Math.sign(num)*Math.abs(num)
+}
+
+</script>
+
+<link rel="stylesheet" href="/wp-content/themes/runoob/assets/css/qa.css?1.44">
+<link rel="stylesheet" type="text/css" href="https://cdn.staticfile.org/simditor/2.3.6/styles/simditor.min.css" />
+<script type="text/javascript" src="https://static.runoob.com/assets/simditor/2.3.6/scripts/module.js"></script>
+<script type="text/javascript" src="//static.runoob.com/assets/simditor/2.3.6/scripts/hotkeys.js"></script>
+<script type="text/javascript" src="//static.runoob.com/assets/simditor/2.3.6/scripts/uploader.js"></script>
+<script type="text/javascript" src="https://cdn.staticfile.org/simditor/2.3.6/lib/simditor.min.js"></script>
+<script type="text/javascript" src="https://static.runoob.com/assets/simditor/2.3.6/scripts/simditor-autosave.js"></script>
+		<div class="sidebar-box ">
+				
+
+<style>	
+.responsive_ad1 { display:none; }
+@media(min-width: 800px) { .responsive_ad1 {  display:block;margin:0 auto;} }
+</style>
+<div id="ad-336280" >
+
+<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-5751451760833794"
+     crossorigin="anonymous"></script>
+<!-- 移动版 自动调整 -->
+<ins class="adsbygoogle"
+     style="display:block"
+     data-ad-client="ca-pub-5751451760833794"
+     data-ad-slot="1691338467"
+     data-ad-format="auto"
+     data-full-width-responsive="true"></ins>
+<script>
+     (adsbygoogle = window.adsbygoogle || []).push({});
+</script>
+		</div>
+				</div>
+		
+	</div>
+</div>
+	
+
+<!-- 右边栏 -->
+<div class="fivecol last right-column">
+
+<style>
+.sidebar-tree .double-li {
+    width:300px;
+}
+.sidebar-tree .double-li li {
+    width: 44%;
+    line-height: 1.5em;
+    border-bottom: 1px solid #ccc;
+    float: left;
+    display: inline;
+}
+</style>
+
+    
+        <div class="sidebar-box re-box re-box-large">
+        <div class="sidebar-box recommend-here" style="margin: 0 auto;">
+            <a href="javascript:void(0);" style="font-size: 16px; color:#64854c;font-weight:bold;"> <i class="fa fa-list" aria-hidden="true"></i> 分类导航</a>
+        </div>
+    <div class="sidebar-box sidebar-cate">
+        
+        <div class="sidebar-tree" >
+            <ul><li style="margin: 0;"><a href="javascript:void(0);" class="tit"> HTML / CSS</a><ul class="double-li"><li><a title="HTML 教程" href="//www.runoob.com/html/html-tutorial.html">HTML 教程</a></li><li><a title="HTML5 教程" href="//www.runoob.com/html/html5-intro.html">HTML5 教程</a></li><li><a title="CSS 教程" href="//www.runoob.com/css/css-tutorial.html">CSS 教程</a></li><li><a title="CSS3 教程" href="//www.runoob.com/css3/css3-tutorial.html">CSS3 教程</a></li><li><a title="Bootstrap3 教程" href="//www.runoob.com/bootstrap/bootstrap-tutorial.html">Bootstrap3 教程</a></li><li><a title="Bootstrap4 教程" href="//www.runoob.com/bootstrap4/bootstrap4-tutorial.html">Bootstrap4 教程</a></li><li><a title="Bootstrap5 教程" href="//www.runoob.com/bootstrap5/bootstrap5-tutorial.html">Bootstrap5 教程</a></li><li><a title="Font Awesome 教程" href="//www.runoob.com/font-awesome/fontawesome-tutorial.html">Font Awesome 教程</a></li><li><a title="Foundation 教程" href="//www.runoob.com/foundation/foundation-tutorial.html">Foundation 教程</a></li></ul></li><li style="margin: 0;"><a href="javascript:void(0);" class="tit"> JavaScript</a><ul class="double-li"><li><a title="JavaScript 教程" href="//www.runoob.com/js/js-tutorial.html">JavaScript 教程</a></li><li><a title="HTML DOM 教程" href="//www.runoob.com/htmldom/htmldom-tutorial.html">HTML DOM 教程</a></li><li><a title="jQuery 教程" href="//www.runoob.com/jquery/jquery-tutorial.html">jQuery 教程</a></li><li><a title="AngularJS 教程" href="//www.runoob.com/angularjs/angularjs-tutorial.html">AngularJS 教程</a></li><li><a title="AngularJS2 教程" href="//www.runoob.com/angularjs2/angularjs2-tutorial.html">AngularJS2 教程</a></li><li><a title="Vue.js 教程" href="//www.runoob.com/vue2/vue-tutorial.html">Vue.js 教程</a></li><li><a title="Vue3 教程" href="//www.runoob.com/vue3/vue3-tutorial.html">Vue3 教程</a></li><li><a title="React 教程" href="//www.runoob.com/react/react-tutorial.html">React 教程</a></li><li><a title="TypeScript 教程" href="//www.runoob.com/typescript/ts-tutorial.html">TypeScript 教程</a></li><li><a title="jQuery UI 教程" href="//www.runoob.com/jqueryui/jqueryui-tutorial.html">jQuery UI 教程</a></li><li><a title="jQuery EasyUI 教程" href="//www.runoob.com/jeasyui/jqueryeasyui-tutorial.html">jQuery EasyUI 教程</a></li><li><a title="Node.js 教程" href="//www.runoob.com/nodejs/nodejs-tutorial.html">Node.js 教程</a></li><li><a title="AJAX 教程" href="//www.runoob.com/ajax/ajax-tutorial.html">AJAX 教程</a></li><li><a title="JSON 教程" href="//www.runoob.com/json/json-tutorial.html">JSON 教程</a></li><li><a title="Echarts 教程" href="//www.runoob.com/echarts/echarts-tutorial.html">Echarts 教程</a></li><li><a title="Chart.js 教程" href="//www.runoob.com/chartjs/chartjs-tutorial.html">Chart.js 教程</a></li><li><a title="Highcharts 教程" href="//www.runoob.com/highcharts/highcharts-tutorial.html">Highcharts 教程</a></li><li><a title="Google 地图 教程" href="//www.runoob.com/googleapi/google-maps-basic.html">Google 地图 教程</a></li></ul></li><li style="margin: 0;"><a href="javascript:void(0);" class="tit"> 服务端</a><ul class="double-li"><li><a title="Python 教程" href="//www.runoob.com/python3/python3-tutorial.html">Python 教程</a></li><li><a title="Python2.x 教程" href="//www.runoob.com/python/python-tutorial.html">Python2.x 教程</a></li><li><a title="Linux 教程" href="//www.runoob.com/linux/linux-tutorial.html">Linux 教程</a></li><li><a title="Docker 教程" href="//www.runoob.com/docker/docker-tutorial.html">Docker 教程</a></li><li><a title="Ruby 教程" href="//www.runoob.com/ruby/ruby-tutorial.html">Ruby 教程</a></li><li><a title="Java 教程" href="//www.runoob.com/java/java-tutorial.html">Java 教程</a></li><li><a title="C 教程" href="//www.runoob.com/c/c-tutorial.html">C 教程</a></li><li><a title="C++ 教程" href="//www.runoob.com/cplusplus/cpp-tutorial.html">C++ 教程</a></li><li><a title="Perl 教程" href="//www.runoob.com/perl/perl-tutorial.html">Perl 教程</a></li><li><a title="Servlet 教程" href="//www.runoob.com/servlet/servlet-tutorial.html">Servlet 教程</a></li><li><a title="JSP 教程" href="//www.runoob.com/jsp/jsp-tutorial.html">JSP 教程</a></li><li><a title="Lua 教程" href="//www.runoob.com/lua/lua-tutorial.html">Lua 教程</a></li><li><a title="Rust 教程" href="//www.runoob.com/rust/rust-tutorial.html">Rust 教程</a></li><li><a title="Scala 教程" href="//www.runoob.com/scala/scala-tutorial.html">Scala 教程</a></li><li><a title="Go 教程" href="//www.runoob.com/go/go-tutorial.html">Go 教程</a></li><li><a title="PHP 教程" href="//www.runoob.com/php/php-tutorial.html">PHP 教程</a></li><li><a title="数据结构与算法" href="//www.runoob.com/data-structures/data-structures-tutorial.html">数据结构与算法</a></li><li><a title="Django 教程" href="//www.runoob.com/django/django-tutorial.html">Django 教程</a></li><li><a title="Zookeeper 教程" href="//www.runoob.com/w3cnote/zookeeper-tutorial.html">Zookeeper 教程</a></li><li><a title="设计模式" href="//www.runoob.com/design-pattern/design-pattern-tutorial.html">设计模式</a></li><li><a title="正则表达式" href="//www.runoob.com/regexp/regexp-tutorial.html">正则表达式</a></li><li><a title="Maven 教程" href="//www.runoob.com/maven/maven-tutorial.html">Maven 教程</a></li><li><a title="Verilog 教程" href="//www.runoob.com/w3cnote/verilog-tutorial.html">Verilog 教程</a></li><li><a title="ASP 教程" href="//www.runoob.com/asp/asp-tutorial.html">ASP 教程</a></li><li><a title="AppML 教程" href="//www.runoob.com/appml/appml-tutorial.html">AppML 教程</a></li><li><a title="VBScript 教程" href="//www.runoob.com/vbscript/vbscript-tutorial.html">VBScript 教程</a></li></ul></li><li style="margin: 0;"><a href="javascript:void(0);" class="tit"> 数据库</a><ul class="double-li"><li><a title="SQL 教程" href="//www.runoob.com/sql/sql-tutorial.html">SQL 教程</a></li><li><a title="MySQL 教程" href="//www.runoob.com/mysql/mysql-tutorial.html">MySQL 教程</a></li><li><a title="PostgreSQL 教程" href="//www.runoob.com/postgresql/postgresql-tutorial.html">PostgreSQL 教程</a></li><li><a title="SQLite 教程" href="//www.runoob.com/sqlite/sqlite-tutorial.html">SQLite 教程</a></li><li><a title="MongoDB 教程" href="//www.runoob.com/mongodb/mongodb-tutorial.html">MongoDB 教程</a></li><li><a title="Redis 教程" href="//www.runoob.com/redis/redis-tutorial.html">Redis 教程</a></li><li><a title="Memcached 教程" href="//www.runoob.com/Memcached/Memcached-tutorial.html">Memcached 教程</a></li></ul></li><li style="margin: 0;"><a href="javascript:void(0);" class="tit"> 数据分析</a><ul class="double-li"><li><a title="Python 教程" href="//www.runoob.com/python3/python3-tutorial.html">Python 教程</a></li><li><a title="NumPy 教程" href="//www.runoob.com/numpy/numpy-tutorial.html">NumPy 教程</a></li><li><a title="Pandas 教程" href="//www.runoob.com/pandas/pandas-tutorial.html">Pandas 教程</a></li><li><a title="Matplotlib 教程" href="//www.runoob.com/matplotlib/matplotlib-tutorial.html">Matplotlib 教程</a></li><li><a title="Scipy 教程" href="//www.runoob.com/scipy/scipy-tutorial.html">Scipy 教程</a></li><li><a title="R 教程" href="//www.runoob.com/r/r-tutorial.html">R 教程</a></li><li><a title="Julia 教程" href="//www.runoob.com/julia/julia-tutorial.html">Julia 教程</a></li></ul></li><li style="margin: 0;"><a href="javascript:void(0);" class="tit"> 移动端</a><ul class="double-li"><li><a title="Android 教程" href="//www.runoob.com/w3cnote/android-tutorial-intro.html">Android 教程</a></li><li><a title="Swift 教程" href="//www.runoob.com/swift/swift-tutorial.html">Swift 教程</a></li><li><a title="jQuery Mobile 教程" href="//www.runoob.com/jquerymobile/jquerymobile-tutorial.html">jQuery Mobile 教程</a></li><li><a title="ionic 教程" href="//www.runoob.com/ionic/ionic-tutorial.html">ionic 教程</a></li><li><a title="Kotlin 教程" href="//www.runoob.com/kotlin/kotlin-tutorial.html">Kotlin 教程</a></li></ul></li><li style="margin: 0;"><a href="javascript:void(0);" class="tit"> XML 教程</a><ul class="double-li"><li><a title="XML 教程" href="//www.runoob.com/xml/xml-tutorial.html">XML 教程</a></li><li><a title="DTD 教程" href="//www.runoob.com/dtd/dtd-tutorial.html">DTD 教程</a></li><li><a title="XML DOM 教程" href="//www.runoob.com/dom/dom-tutorial.html">XML DOM 教程</a></li><li><a title="XSLT 教程" href="//www.runoob.com/xsl/xsl-tutorial.html">XSLT 教程</a></li><li><a title="XPath 教程" href="//www.runoob.com/xpath/xpath-tutorial.html">XPath 教程</a></li><li><a title="XQuery 教程" href="//www.runoob.com/xquery/xquery-tutorial.html">XQuery 教程</a></li><li><a title="XLink 教程" href="//www.runoob.com/xlink/xlink-tutorial.html">XLink 教程</a></li><li><a title="XPointer 教程" href="//www.runoob.com/xlink/xlink-tutorial.html">XPointer 教程</a></li><li><a title="XML Schema 教程" href="//www.runoob.com/schema/schema-tutorial.html">XML Schema 教程</a></li><li><a title="XSL-FO 教程" href="//www.runoob.com/xslfo/xslfo-tutorial.html">XSL-FO 教程</a></li><li><a title="SVG 教程" href="//www.runoob.com/svg/svg-tutorial.html">SVG 教程</a></li></ul></li><li style="margin: 0;"><a href="javascript:void(0);" class="tit"> ASP.NET</a><ul class="double-li"><li><a title="ASP.NET 教程" href="//www.runoob.com/aspnet/aspnet-tutorial.html">ASP.NET 教程</a></li><li><a title="C# 教程" href="//www.runoob.com/csharp/csharp-tutorial.html">C# 教程</a></li><li><a title="Web Pages 教程" href="//www.runoob.com/aspnet/webpages-intro.html">Web Pages 教程</a></li><li><a title="Razor 教程" href="//www.runoob.com/aspnet/razor-intro.html">Razor 教程</a></li><li><a title="MVC 教程" href="//www.runoob.com/aspnet/mvc-intro.html">MVC 教程</a></li><li><a title="Web Forms 教程" href="//www.runoob.com/aspnet/aspnet-intro.html">Web Forms 教程</a></li></ul></li><li style="margin: 0;"><a href="javascript:void(0);" class="tit"> Web Service</a><ul class="double-li"><li><a title="Web Service 教程" href="//www.runoob.com/webservices/webservices-tutorial.html">Web Service 教程</a></li><li><a title="WSDL 教程" href="//www.runoob.com/wsdl/wsdl-tutorial.html">WSDL 教程</a></li><li><a title="SOAP 教程" href="//www.runoob.com/soap/soap-tutorial.html">SOAP 教程</a></li><li><a title="RSS 教程" href="//www.runoob.com/rss/rss-tutorial.html">RSS 教程</a></li><li><a title="RDF 教程" href="//www.runoob.com/rdf/rdf-tutorial.html">RDF 教程</a></li></ul></li><li style="margin: 0;"><a href="javascript:void(0);" class="tit"> 开发工具</a><ul class="double-li"><li><a title="Eclipse 教程" href="//www.runoob.com/eclipse/eclipse-tutorial.html">Eclipse 教程</a></li><li><a title="Git 教程" href="//www.runoob.com/git/git-tutorial.html">Git 教程</a></li><li><a title="Svn 教程" href="//www.runoob.com/svn/svn-tutorial.html">Svn 教程</a></li><li><a title="Markdown 教程" href="//www.runoob.com/markdown/md-tutorial.html">Markdown 教程</a></li></ul></li><li style="margin: 0;"><a href="javascript:void(0);" class="tit"> 网站建设</a><ul class="double-li"><li><a title="HTTP 教程" href="//www.runoob.com/http/http-tutorial.html">HTTP 教程</a></li><li><a title="网站建设指南" href="//www.runoob.com/web/web-buildingprimer.html">网站建设指南</a></li><li><a title="浏览器信息" href="//www.runoob.com/browsers/browser-information.html">浏览器信息</a></li><li><a title="网站主机教程" href="//www.runoob.com/hosting/hosting-tutorial.html">网站主机教程</a></li><li><a title="TCP/IP 教程" href="//www.runoob.com/tcpip/tcpip-tutorial.html">TCP/IP 教程</a></li><li><a title="W3C 教程" href="//www.runoob.com/w3c/w3c-tutorial.html">W3C 教程</a></li><li><a title="网站品质" href="//www.runoob.com/quality/quality-tutorial.html">网站品质</a></li></ul></li></ul>            </div>
+    
+    </div>
+    </div>
+    <br>
+    
+    <div class="sidebar-box re-box re-box-large">
+        <div class="sidebar-box recommend-here">
+            <a href="javascript:void(0);">Advertisement</a>
+        </div>
+        <div class="re-600160" id="sidebar-right-re">
+                <script async src="//pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script>
+        <!-- 侧栏1 -->
+        <ins class="adsbygoogle"
+             style="display:inline-block;width:160px;height:600px"
+             data-ad-client="ca-pub-5751451760833794"
+             data-ad-slot="4106274865"></ins>
+        <script>
+        (adsbygoogle = window.adsbygoogle || []).push({});
+        </script>
+                </div>
+    </div>
+</div></div>
+
+</div>
+
+<script>
+var aid = 10072;
+function coll() {
+	$.post( '/wp-content/themes/runoob/option/user/userinfo.php', {aid:aid, action:"collarticle", opt:'add'},function( data ) {
+		if(data.error==0) {
+			$("#content").find("h1:first").find("a").attr("href","javascript:void(0);");
+			$("#content").find("h1:first").find("img").attr("src","http://www.runoob.com/wp-content/themes/runoob/assets/img/coll2.png").css({width:32+"px",height:32+"px"});
+		}
+		alert(data.msg);
+	},'json');
+}
+</script>
+
+
+<!-- 反馈对话框开始 -->
+<script src="/wp-content/themes/runoob/assets/feedback/stable/2.0/feedback.js?1.0"></script>
+<link rel="stylesheet" href="/wp-content/themes/runoob/assets/feedback/stable/2.0/feedback.css?1.0" />
+<script type="text/javascript">
+$.feedback({
+    ajaxURL: '/feedback/runoob_feedback.php',
+	html2canvasURL: '/wp-content/themes/runoob/assets/feedback/stable/2.0/html2canvas.js',
+	onClose: function () {
+         window.location.reload();
+    }
+});
+</script>
+<!-- 反馈对话框结束 -->
+<button class="feedback-btn feedback-btn-gray">反馈/建议</button>
+<!-- 底部 -->
+<div id="footer" class="mar-t50">
+   <div class="runoob-block">
+    <div class="runoob cf">
+     <dl>
+      <dt>
+       在线实例
+      </dt>
+      <dd>
+       &middot;<a target="_blank" href="/html/html-examples.html">HTML 实例</a>
+      </dd>
+      <dd>
+       &middot;<a target="_blank" href="/css/css-examples.html">CSS 实例</a>
+      </dd>
+      <dd>
+       &middot;<a target="_blank" href="/js/js-examples.html">JavaScript 实例</a>
+      </dd>
+      <dd>
+       &middot;<a target="_blank" href="/ajx/ajax-examples.html">Ajax 实例</a>
+      </dd>
+       <dd>
+       &middot;<a target="_blank" href="/jquery/jquery-examples.html">jQuery 实例</a>
+      </dd>
+      <dd>
+       &middot;<a target="_blank" href="/xml/xml-examples.html">XML 实例</a>
+      </dd>
+      <dd>
+       &middot;<a target="_blank" href="/java/java-examples.html">Java 实例</a>
+      </dd>
+     
+     </dl>
+     <dl>
+      <dt>
+      字符集&工具
+      </dt>
+      <dd>
+       &middot; <a target="_blank" href="/charsets/html-charsets.html">HTML 字符集设置</a>
+      </dd>
+      <dd>
+       &middot; <a target="_blank" href="/tags/html-ascii.html">HTML ASCII 字符集</a>
+      </dd>
+     <dd>
+       &middot; <a target="_blank" href="https://c.runoob.com/front-end/6939/">JS 混淆/加密</a>
+      </dd> 
+      <dd>
+       &middot; <a target="_blank" href="https://c.runoob.com/front-end/6232/">PNG/JPEG 图片压缩</a>
+      </dd>
+      <dd>
+       &middot; <a target="_blank" href="/tags/html-colorpicker.html">HTML 拾色器</a>
+      </dd>
+      <dd>
+       &middot; <a target="_blank" href="//c.runoob.com/front-end/53">JSON 格式化工具</a>
+      </dd>
+      <dd>
+       &middot; <a target="_blank" href="//c.runoob.com/front-end/6680/">随机数生成器</a>
+      </dd>
+     </dl>
+     <dl>
+      <dt>
+       最新更新
+      </dt>
+                   <dd>
+       &middot;
+      <a href="http://www.runoob.com/python3/python-ai-draw.html" title="Python AI 绘画">Python AI 绘画</a>
+      </dd>
+              <dd>
+       &middot;
+      <a href="http://www.runoob.com/w3cnote/cursor-editor.html" title="神辅助 Cursor 编辑器，加入 GPT-4 让编码更轻松！">神辅助 Cursor ...</a>
+      </dd>
+              <dd>
+       &middot;
+      <a href="http://www.runoob.com/jsref/jsref-flatmap-array.html" title="JavaScript flatMap()  方法">JavaScript flat...</a>
+      </dd>
+              <dd>
+       &middot;
+      <a href="http://www.runoob.com/jsref/jsref-flat-array.html" title="JavaScript flat() 方法">JavaScript flat...</a>
+      </dd>
+              <dd>
+       &middot;
+      <a href="http://www.runoob.com/jsref/jsref-at-array.html" title="JavaScript at() 方法">JavaScript at()...</a>
+      </dd>
+              <dd>
+       &middot;
+      <a href="http://www.runoob.com/jsref/jsref-of-array.html" title="JavaScript of() 方法">JavaScript of()...</a>
+      </dd>
+              <dd>
+       &middot;
+      <a href="http://www.runoob.com/pandas/pandas-functions.html" title="Pandas 常用函数">Pandas 常用函数</a>
+      </dd>
+             </dl>
+     <dl>
+      <dt>
+       站点信息
+      </dt>
+      <dd>
+       &middot;
+       <a target="_blank" href="mailto:admin@runoob.com" rel="external nofollow">意见反馈</a>
+       </dd>
+      <dd>
+       &middot;
+      <a target="_blank" href="/disclaimer">免责声明</a>
+       </dd>
+      <dd>
+       &middot;
+       <a target="_blank" href="/aboutus">关于我们</a>
+       </dd>
+      <dd>
+       &middot;
+      <a target="_blank" href="/archives">文章归档</a>
+      </dd>
+    
+     </dl>
+    
+     <div class="search-share">
+      <div class="app-download">
+        <div>
+         <strong>关注微信</strong>
+        </div>
+      </div>
+      <div class="share">
+      <img width="128" height="128" src="/wp-content/themes/runoob/assets/images/qrcode.png" />
+       </div>
+     </div>
+     
+    </div>
+   </div>
+   <div class="w-1000 copyright">
+     Copyright &copy; 2013-2023    <strong><a href="//www.runoob.com/" target="_blank">菜鸟教程</a></strong>&nbsp;
+    <strong><a href="//www.runoob.com/" target="_blank">runoob.com</a></strong> All Rights Reserved. 备案号：<a target="_blank" rel="nofollow" href="https://beian.miit.gov.cn/">闽ICP备15012807号-1</a>
+   </div>
+  </div>
+  <div class="fixed-btn">
+    <a class="go-top" href="javascript:void(0)" title="返回顶部"> <i class="fa fa-angle-up"></i></a>
+    <a class="qrcode"  href="javascript:void(0)" title="关注我们"><i class="fa fa-qrcode"></i></a>
+    <a class="writer" style="display:none" href="javascript:void(0)"   title="标记/收藏"><i class="fa fa-star" aria-hidden="true"></i></a>
+    <!-- qrcode modal -->
+    <div id="bottom-qrcode" class="modal panel-modal hide fade in">
+      <h4>微信关注</h4>
+      <div class="panel-body"><img alt="微信关注" width="128" height="128" src="/wp-content/themes/runoob/assets/images/qrcode.png"></div> 
+    </div>
+  </div>
+
+ <div style="display:none;">
+<script async src="https://www.googletagmanager.com/gtag/js?id=UA-84264393-2"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+
+  gtag('config', 'UA-84264393-2');
+</script>
+<script>
+var _hmt = _hmt || [];
+(function() {
+  var hm = document.createElement("script");
+  hm.src = "https://hm.baidu.com/hm.js?3eec0b7da6548cf07db3bc477ea905ee";
+  var s = document.getElementsByTagName("script")[0]; 
+  s.parentNode.insertBefore(hm, s);
+})();
+</script>
+
+</div>
+<script>
+window.jsui={
+    www: 'https://www.runoob.com',
+    uri: 'https://www.runoob.com/wp-content/themes/runoob'
+};
+</script>
+
+<script src="https://static.runoob.com/assets/libs/hl/run_prettify.js"></script>
+<script src="/wp-content/themes/runoob/assets/js/main.min.js?v=1.156"></script>
+
+</body>
+</html>

@@ -1,0 +1,1471 @@
+<!Doctype html>
+<html>
+<head>
+	<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+	<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+	<title>适配器模式 | 菜鸟教程</title>
+
+  <meta name='robots' content='max-image-preview:large' />
+<link rel='stylesheet' id='classic-theme-styles-css' href='http://www.runoob.com/wp-includes/css/classic-themes.min.css?ver=6.2' type='text/css' media='all' />
+<link rel="canonical" href="http://www.runoob.com/design-pattern/adapter-pattern.html" />
+<meta name="keywords" content="适配器模式">
+<meta name="description" content="适配器模式  适配器模式（Adapter Pattern）是作为两个不兼容的接口之间的桥梁。这种类型的设计模式属于结构型模式，它结合了两个独立接口的功能。 这种模式涉及到一个单一的类，该类负责加入独立的或不兼容的接口功能。举个真实的例子，读卡器是作为内存卡和笔记本之间的适配器。您将内存卡插入读卡器，再将读卡器插入笔记本，这样就可以通过笔记本来读取内存卡。 我们通过下面的实例来演示适配器模式的使用。其中，音频播放器设备只能播放 mp3 文..">
+		
+	<link rel="shortcut icon" href="https://static.runoob.com/images/favicon.ico">
+	<link rel="stylesheet" href="/wp-content/themes/runoob/style.css?v=1.170" type="text/css" media="all" />	
+	<link rel="stylesheet" href="https://cdn.staticfile.org/font-awesome/4.7.0/css/font-awesome.min.css" media="all" />	
+  <!--[if gte IE 9]><!-->
+  <script src="https://cdn.staticfile.org/jquery/2.0.3/jquery.min.js"></script>
+  <!--<![endif]-->
+  <!--[if lt IE 9]>
+     <script src="https://cdn.staticfile.org/jquery/1.9.1/jquery.min.js"></script>
+     <script src="https://cdn.staticfile.org/html5shiv/r29/html5.min.js"></script>
+  <![endif]-->
+  <link rel="apple-touch-icon" href="https://static.runoob.com/images/icon/mobile-icon.png"/>
+  <meta name="apple-mobile-web-app-title" content="菜鸟教程">
+</head>
+<body>
+
+<!--  头部 -->
+<div class="container logo-search">
+
+  <div class="col search row-search-mobile">
+    <form action="index.php">
+      <input class="placeholder" placeholder="搜索……" name="s" autocomplete="off">
+      
+    </form>
+  </div>
+
+  <div class="row">
+    <div class="col logo">
+      <h1><a href="/">菜鸟教程 -- 学的不仅是技术，更是梦想！</a></h1>
+    </div>
+        <div class="col right-list"> 
+    <button class="btn btn-responsive-nav btn-inverse" data-toggle="collapse" data-target=".nav-main-collapse" id="pull" style=""> <i class="fa fa-navicon"></i> </button>
+    </div>
+        
+    <div class="col search search-desktop last">
+      <div class="search-input" >
+      <form action="//www.runoob.com/" target="_blank">
+        <input class="placeholder" id="s" name="s" placeholder="搜索……"  autocomplete="off" style="height: 44px;">
+      </form>
+      
+      </div>
+    </div>
+  </div>
+</div>
+
+
+
+<!-- 导航栏 -->
+<!-- 导航栏 -->
+<div class="container navigation">
+	<div class="row">
+		<div class="col nav">
+			<ul class="pc-nav" id="runoob-detail-nav">
+				<li><a href="//www.runoob.com/">首页</a></li>
+				<li><a href="/html/html-tutorial.html">HTML</a></li>
+				<li><a href="/css/css-tutorial.html">CSS</a></li>
+				<li><a href="/js/js-tutorial.html">JavaScript</a></li>
+				<li><a href="javascript:void(0);" data-id="vue">Vue</a></li>
+				<li><a href="javascript:void(0);" data-id="bootstrap">Bootstrap</a></li>
+				<li><a href="/nodejs/nodejs-tutorial.html">NodeJS</a></li>
+				<li><a href="/python3/python3-tutorial.html">Python3</a></li>
+				<li><a href="/python/python-tutorial.html">Python2</a></li>
+				<li><a href="/java/java-tutorial.html">Java</a></li>
+				<li><a href="/cprogramming/c-tutorial.html">C</a></li>
+				<li><a href="/cplusplus/cpp-tutorial.html">C++</a></li>
+				<li><a href="/csharp/csharp-tutorial.html">C#</a></li>
+				<li><a href="/go/go-tutorial.html">Go</a></li>
+				<li><a href="/sql/sql-tutorial.html">SQL</a></li>
+				<li><a href="/linux/linux-tutorial.html">Linux</a></li>
+				<li><a href="/jquery/jquery-tutorial.html">jQuery</a></li>
+				<li><a href="/browser-history">本地书签</a></li>
+				<!--
+			
+				<li><a href="/w3cnote/knowledge-start.html" style="font-weight: bold;" onclick="_hmt.push(['_trackEvent', '星球', 'click', 'start'])" title="我的圈子">我的圈子</a></li>				
+				<li><a href="javascript:;" class="runoob-pop">登录</a></li>
+				-->
+      		</ul>
+			<ul class="mobile-nav">
+				<li><a href="//www.runoob.com/">首页</a></li>
+				<li><a href="/html/html-tutorial.html">HTML</a></li>
+				<li><a href="/css/css-tutorial.html">CSS</a></li>
+				<li><a href="/js/js-tutorial.html">JS</a></li>
+				<li><a href="/browser-history">本地书签</a></li>
+				<li><a href="javascript:void(0)" class="search-reveal">Search</a> </li>
+			</ul>
+			
+		</div>
+	</div>
+</div>
+
+<div class="container sub-navigation sub-navigation-articles" style="display:none">
+	<div class="row">
+		<div class="col nav-sub">
+		<ul id="python">
+			<li class="cat-item"><a href="/python3/python3-tutorial.html">Python3 教程 <i class="fa fa-external-link" aria-hidden="true"></i></a></li>
+			<li class="cat-item"><a href="/python/python-tutorial.html">Python2 教程 <i class="fa fa-external-link" aria-hidden="true"></i></a></li>
+		</ul>
+		<ul id="vue">
+			<li class="cat-item"><a href="/vue3/vue3-tutorial.html">Vue3 教程 <i class="fa fa-external-link" aria-hidden="true"></i></a></li>
+			<li class="cat-item"><a href="/vue/vue-tutorial.html">vue2 教程 <i class="fa fa-external-link" aria-hidden="true"></i></a></li>
+		</ul>
+
+		<ul id="bootstrap">
+			<li class="cat-item"><a href="/bootstrap/bootstrap-tutorial.html">Bootstrap3 教程 <i class="fa fa-external-link" aria-hidden="true"></i></a></li>
+			<li class="cat-item"><a href="/bootstrap4/bootstrap4-tutorial.html">Bootstrap4 教程 <i class="fa fa-external-link" aria-hidden="true"></i></a></li>
+			<li class="cat-item"><a href="/bootstrap5/bootstrap5-tutorial.html">Bootstrap5 教程 <i class="fa fa-external-link" aria-hidden="true"></i></a></li>
+			<li class="cat-item"><a href="/bootstrap/bootstrap-v2-tutorial.html">Bootstrap2 教程 <i class="fa fa-external-link" aria-hidden="true"></i></a></li>
+		</ul>
+		</div>
+	</div>
+</div><!--  内容  -->
+<div class="container main">
+	<!-- 中间 -->
+	<div class="row">
+	
+<div class="runoob-col-md2">
+<div class="left-column">
+	<div class="tab" style="overflow: hidden;text-overflow: ellipsis;white-space: nowrap;">
+	<i class="fa fa-list" aria-hidden="true"></i> 
+	<span>设计模式</span>
+	<a data-cate="145" href="javascript:void(0);" title="夜间模式"  id="moon"><i class="fa fa-moon-o" aria-hidden="true" style="line-height: 28px;font-size: 1.2em;margin: 2px 4px 0;"></i></a>
+	<a data-cate="145" style="display:none;" href="javascript:void(0);" title="日间模式"  id="sun" ><i class="fa fa-sun-o" aria-hidden="true" style="line-height: 28px;font-size: 1.2em;margin: 2px 4px 0;line-height: 28px;
+}"></i></a>
+
+	</div>
+	<div class="sidebar-box gallery-list">
+		<div class="design" id="leftcolumn">
+						<a target="_top" title="设计模式"  href="/design-pattern/design-pattern-tutorial.html" >
+			设计模式			</a>
+						<a target="_top" title="设计模式简介"  href="/design-pattern/design-pattern-intro.html" >
+			设计模式简介			</a>
+						<a target="_top" title="工厂模式"  href="/design-pattern/factory-pattern.html" >
+			工厂模式			</a>
+						<a target="_top" title="抽象工厂模式"  href="/design-pattern/abstract-factory-pattern.html" >
+			抽象工厂模式			</a>
+						<a target="_top" title="单例模式"  href="/design-pattern/singleton-pattern.html" >
+			单例模式			</a>
+						<a target="_top" title="建造者模式"  href="/design-pattern/builder-pattern.html" >
+			建造者模式			</a>
+						<a target="_top" title="原型模式"  href="/design-pattern/prototype-pattern.html" >
+			原型模式			</a>
+						<a target="_top" title="适配器模式"  href="/design-pattern/adapter-pattern.html" >
+			适配器模式			</a>
+						<a target="_top" title="桥接模式"  href="/design-pattern/bridge-pattern.html" >
+			桥接模式			</a>
+						<a target="_top" title="过滤器模式"  href="/design-pattern/filter-pattern.html" >
+			过滤器模式			</a>
+						<a target="_top" title="组合模式"  href="/design-pattern/composite-pattern.html" >
+			组合模式			</a>
+						<a target="_top" title="装饰器模式"  href="/design-pattern/decorator-pattern.html" >
+			装饰器模式			</a>
+						<a target="_top" title="外观模式"  href="/design-pattern/facade-pattern.html" >
+			外观模式			</a>
+						<a target="_top" title="享元模式"  href="/design-pattern/flyweight-pattern.html" >
+			享元模式			</a>
+						<a target="_top" title="代理模式"  href="/design-pattern/proxy-pattern.html" >
+			代理模式			</a>
+						<a target="_top" title="责任链模式"  href="/design-pattern/chain-of-responsibility-pattern.html" >
+			责任链模式			</a>
+						<a target="_top" title="命令模式"  href="/design-pattern/command-pattern.html" >
+			命令模式			</a>
+						<a target="_top" title="解释器模式"  href="/design-pattern/interpreter-pattern.html" >
+			解释器模式			</a>
+						<a target="_top" title="迭代器模式"  href="/design-pattern/iterator-pattern.html" >
+			迭代器模式			</a>
+						<a target="_top" title="中介者模式"  href="/design-pattern/mediator-pattern.html" >
+			中介者模式			</a>
+						<a target="_top" title="备忘录模式"  href="/design-pattern/memento-pattern.html" >
+			备忘录模式			</a>
+						<a target="_top" title="观察者模式"  href="/design-pattern/observer-pattern.html" >
+			观察者模式			</a>
+						<a target="_top" title="状态模式"  href="/design-pattern/state-pattern.html" >
+			状态模式			</a>
+						<a target="_top" title="空对象模式"  href="/design-pattern/null-object-pattern.html" >
+			空对象模式			</a>
+						<a target="_top" title="策略模式"  href="/design-pattern/strategy-pattern.html" >
+			策略模式			</a>
+						<a target="_top" title="模板模式"  href="/design-pattern/template-pattern.html" >
+			模板模式			</a>
+						<a target="_top" title="访问者模式"  href="/design-pattern/visitor-pattern.html" >
+			访问者模式			</a>
+						<a target="_top" title="MVC 模式"  href="/design-pattern/mvc-pattern.html" >
+			MVC 模式			</a>
+						<a target="_top" title="业务代表模式"  href="/design-pattern/business-delegate-pattern.html" >
+			业务代表模式			</a>
+						<a target="_top" title="组合实体模式"  href="/design-pattern/composite-entity-pattern.html" >
+			组合实体模式			</a>
+						<a target="_top" title="数据访问对象模式"  href="/design-pattern/data-access-object-pattern.html" >
+			数据访问对象模式			</a>
+						<a target="_top" title="前端控制器模式"  href="/design-pattern/front-controller-pattern.html" >
+			前端控制器模式			</a>
+						<a target="_top" title="拦截过滤器模式"  href="/design-pattern/intercepting-filter-pattern.html" >
+			拦截过滤器模式			</a>
+						<a target="_top" title="服务定位器模式"  href="/design-pattern/service-locator-pattern.html" >
+			服务定位器模式			</a>
+						<a target="_top" title="传输对象模式"  href="/design-pattern/transfer-object-pattern.html" >
+			传输对象模式			</a>
+			<br><h2 class="left">设计模式<span class="left_h2">其他</span></h2>			<a target="_top" title="设计模式资源"  href="/design-pattern/design-pattern-resources.html" >
+			设计模式资源			</a>
+				
+		</div>
+	</div>	
+</div>
+</div>	<div class="col middle-column">
+		
+	
+	<div class="article">
+		
+		<div class="previous-next-links">
+			<div class="previous-design-link"><i style="font-size:16px;" class="fa fa-arrow-left" aria-hidden="true"></i> <a href="http://www.runoob.com/design-pattern/prototype-pattern.html" rel="prev"> 原型模式</a> </div>
+			<div class="next-design-link"><a href="http://www.runoob.com/design-pattern/bridge-pattern.html" rel="next"> 桥接模式</a> <i style="font-size:16px;" class="fa fa-arrow-right" aria-hidden="true"></i></div>
+		</div>
+<div class="article-heading-ad" style="display: block;">
+<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-5751451760833794"
+     crossorigin="anonymous"></script>
+<!-- 728*90 固定 -->
+<ins class="adsbygoogle"
+     style="display:inline-block;width:728px;height:90px"
+     data-ad-client="ca-pub-5751451760833794"
+     data-ad-slot="2147566827"></ins>
+<script>
+     (adsbygoogle = window.adsbygoogle || []).push({});
+</script>
+		</div>
+		<div class="article-body">
+		
+			<div class="article-intro" id="content">
+			
+			<h1>适配器模式</h1>
+
+<p>适配器模式（Adapter Pattern）是作为两个不兼容的接口之间的桥梁。这种类型的设计模式属于结构型模式，它结合了两个独立接口的功能。</p>
+<p>这种模式涉及到一个单一的类，该类负责加入独立的或不兼容的接口功能。举个真实的例子，读卡器是作为内存卡和笔记本之间的适配器。您将内存卡插入读卡器，再将读卡器插入笔记本，这样就可以通过笔记本来读取内存卡。</p>
+<p>我们通过下面的实例来演示适配器模式的使用。其中，音频播放器设备只能播放 mp3 文件，通过使用一个更高级的音频播放器来播放 vlc 和 mp4 文件。</p>
+
+<h2 class="tutheader">介绍</h2>
+<p><b>意图：</b>将一个类的接口转换成客户希望的另外一个接口。适配器模式使得原本由于接口不兼容而不能一起工作的那些类可以一起工作。</p>
+<p><b>主要解决：</b>主要解决在软件系统中，常常要将一些"现存的对象"放到新的环境中，而新环境要求的接口是现对象不能满足的。</p>
+<p><b>何时使用：</b>
+1、系统需要使用现有的类，而此类的接口不符合系统的需要。
+2、想要建立一个可以重复使用的类，用于与一些彼此之间没有太大关联的一些类，包括一些可能在将来引进的类一起工作，这些源类不一定有一致的接口。
+3、通过接口转换，将一个类插入另一个类系中。（比如老虎和飞禽，现在多了一个飞虎，在不增加实体的需求下，增加一个适配器，在里面包容一个虎对象，实现飞的接口。）
+</p>
+<p><b>如何解决：</b>继承或依赖（推荐）。</p>
+<p><b>关键代码：</b>适配器继承或依赖已有的对象，实现想要的目标接口。</p>
+<p><b>应用实例：</b>
+1、美国电器 110V，中国 220V，就要有一个适配器将 110V 转化为 220V。
+2、JAVA JDK 1.1 提供了 Enumeration 接口，而在 1.2 中提供了 Iterator 接口，想要使用 1.2 的 JDK，则要将以前系统的 Enumeration 接口转化为 Iterator 接口，这时就需要适配器模式。
+3、在 LINUX 上运行 WINDOWS 程序。
+4、JAVA 中的 jdbc。
+</p>
+<p><b>优点：</b>
+1、可以让任何两个没有关联的类一起运行。
+2、提高了类的复用。
+3、增加了类的透明度。
+4、灵活性好。
+</p>
+<p><b>缺点：</b>
+1、过多地使用适配器，会让系统非常零乱，不易整体进行把握。比如，明明看到调用的是 A 接口，其实内部被适配成了 B 接口的实现，一个系统如果太多出现这种情况，无异于一场灾难。因此如果不是很有必要，可以不使用适配器，而是直接对系统进行重构。
+2.由于 JAVA 至多继承一个类，所以至多只能适配一个适配者类，而且目标类必须是抽象类。
+</p>
+<p><b>使用场景：</b>有动机地修改一个正常运行的系统的接口，这时应该考虑使用适配器模式。</p>
+<p><b>注意事项：</b>适配器不是在详细设计时添加的，而是解决正在服役的项目的问题。</p>
+
+<h2 class="tutheader">实现</h2>
+<p>我们有一个 <i>MediaPlayer</i> 接口和一个实现了 <i>MediaPlayer</i> 接口的实体类 <i>AudioPlayer</i>。默认情况下，<i>AudioPlayer</i> 可以播放 mp3 格式的音频文件。</p>
+<p>我们还有另一个接口 <i>AdvancedMediaPlayer</i> 和实现了 <i>AdvancedMediaPlayer</i> 接口的实体类。该类可以播放 vlc 和 mp4 格式的文件。</p>
+<p>我们想要让 <i>AudioPlayer</i> 播放其他格式的音频文件。为了实现这个功能，我们需要创建一个实现了 <i>MediaPlayer</i> 接口的适配器类 <i>MediaAdapter</i>，并使用 <i>AdvancedMediaPlayer</i> 对象来播放所需的格式。</p>
+<p><i>AudioPlayer</i> 使用适配器类 <i>MediaAdapter</i> 传递所需的音频类型，不需要知道能播放所需格式音频的实际类。<i>AdapterPatternDemo</i> 类使用 <i>AudioPlayer</i> 类来播放各种格式。</p>
+<img decoding="async" src="https://www.runoob.com/wp-content/uploads/2014/08/20210223-adapter.png" alt="适配器模式的 UML 图" />
+<h3>步骤 1</h3> 
+<p>为媒体播放器和更高级的媒体播放器创建接口。</p>
+
+<div class="example"> 
+<h2 class="example">MediaPlayer.java</h2> 
+<div class="example_code">
+<div class="hl-main"><span class="hl-reserved">public</span><span class="hl-code"> </span><span class="hl-reserved">interface</span><span class="hl-code"> </span><span class="hl-identifier">MediaPlayer</span><span class="hl-code"> </span><span class="hl-brackets">{</span><span class="hl-code">
+   </span><span class="hl-reserved">public</span><span class="hl-code"> </span><span class="hl-types">void</span><span class="hl-code"> </span><span class="hl-identifier">play</span><span class="hl-brackets">(</span><span class="hl-identifier">String</span><span class="hl-code"> </span><span class="hl-identifier">audioType</span><span class="hl-code">, </span><span class="hl-identifier">String</span><span class="hl-code"> </span><span class="hl-identifier">fileName</span><span class="hl-brackets">)</span><span class="hl-code">;
+</span><span class="hl-brackets">}</span></div>
+</div></div>
+
+<div class="example"> 
+<h2 class="example">AdvancedMediaPlayer.java</h2> 
+<div class="example_code">
+<div class="hl-main"><span class="hl-reserved">public</span><span class="hl-code"> </span><span class="hl-reserved">interface</span><span class="hl-code"> </span><span class="hl-identifier">AdvancedMediaPlayer</span><span class="hl-code"> </span><span class="hl-brackets">{</span><span class="hl-code"> 
+   </span><span class="hl-reserved">public</span><span class="hl-code"> </span><span class="hl-types">void</span><span class="hl-code"> </span><span class="hl-identifier">playVlc</span><span class="hl-brackets">(</span><span class="hl-identifier">String</span><span class="hl-code"> </span><span class="hl-identifier">fileName</span><span class="hl-brackets">)</span><span class="hl-code">;
+   </span><span class="hl-reserved">public</span><span class="hl-code"> </span><span class="hl-types">void</span><span class="hl-code"> </span><span class="hl-identifier">playMp4</span><span class="hl-brackets">(</span><span class="hl-identifier">String</span><span class="hl-code"> </span><span class="hl-identifier">fileName</span><span class="hl-brackets">)</span><span class="hl-code">;
+</span><span class="hl-brackets">}</span></div>
+</div></div>
+<h3>步骤 2</h3>
+<p>创建实现了 <i>AdvancedMediaPlayer</i> 接口的实体类。</p>
+
+<div class="example"> 
+<h2 class="example">VlcPlayer.java</h2> 
+<div class="example_code">
+<div class="hl-main"><span class="hl-reserved">public</span><span class="hl-code"> </span><span class="hl-reserved">class</span><span class="hl-code"> </span><span class="hl-identifier">VlcPlayer</span><span class="hl-code"> </span><span class="hl-reserved">implements</span><span class="hl-code"> </span><span class="hl-identifier">AdvancedMediaPlayer</span><span class="hl-brackets">{</span><span class="hl-code">
+   @</span><span class="hl-identifier">Override</span><span class="hl-code">
+   </span><span class="hl-reserved">public</span><span class="hl-code"> </span><span class="hl-types">void</span><span class="hl-code"> </span><span class="hl-identifier">playVlc</span><span class="hl-brackets">(</span><span class="hl-identifier">String</span><span class="hl-code"> </span><span class="hl-identifier">fileName</span><span class="hl-brackets">)</span><span class="hl-code"> </span><span class="hl-brackets">{</span><span class="hl-code">
+      </span><span class="hl-identifier">System</span><span class="hl-code">.</span><span class="hl-identifier">out</span><span class="hl-code">.</span><span class="hl-identifier">println</span><span class="hl-brackets">(</span><span class="hl-quotes">&quot;</span><span class="hl-string">Playing vlc file. Name: </span><span class="hl-quotes">&quot;</span><span class="hl-code">+ </span><span class="hl-identifier">fileName</span><span class="hl-brackets">)</span><span class="hl-code">;      
+   </span><span class="hl-brackets">}</span><span class="hl-code">
+ 
+   @</span><span class="hl-identifier">Override</span><span class="hl-code">
+   </span><span class="hl-reserved">public</span><span class="hl-code"> </span><span class="hl-types">void</span><span class="hl-code"> </span><span class="hl-identifier">playMp4</span><span class="hl-brackets">(</span><span class="hl-identifier">String</span><span class="hl-code"> </span><span class="hl-identifier">fileName</span><span class="hl-brackets">)</span><span class="hl-code"> </span><span class="hl-brackets">{</span><span class="hl-code">
+      </span><span class="hl-comment">//</span><span class="hl-comment">什么也不做</span><span class="hl-comment"></span><span class="hl-code">
+   </span><span class="hl-brackets">}</span><span class="hl-code">
+</span><span class="hl-brackets">}</span></div>
+</div></div>
+
+<div class="example"> 
+<h2 class="example">Mp4Player.java</h2> 
+<div class="example_code">
+<div class="hl-main"><span class="hl-reserved">public</span><span class="hl-code"> </span><span class="hl-reserved">class</span><span class="hl-code"> </span><span class="hl-identifier">Mp4Player</span><span class="hl-code"> </span><span class="hl-reserved">implements</span><span class="hl-code"> </span><span class="hl-identifier">AdvancedMediaPlayer</span><span class="hl-brackets">{</span><span class="hl-code">
+ 
+   @</span><span class="hl-identifier">Override</span><span class="hl-code">
+   </span><span class="hl-reserved">public</span><span class="hl-code"> </span><span class="hl-types">void</span><span class="hl-code"> </span><span class="hl-identifier">playVlc</span><span class="hl-brackets">(</span><span class="hl-identifier">String</span><span class="hl-code"> </span><span class="hl-identifier">fileName</span><span class="hl-brackets">)</span><span class="hl-code"> </span><span class="hl-brackets">{</span><span class="hl-code">
+      </span><span class="hl-comment">//</span><span class="hl-comment">什么也不做</span><span class="hl-comment"></span><span class="hl-code">
+   </span><span class="hl-brackets">}</span><span class="hl-code">
+ 
+   @</span><span class="hl-identifier">Override</span><span class="hl-code">
+   </span><span class="hl-reserved">public</span><span class="hl-code"> </span><span class="hl-types">void</span><span class="hl-code"> </span><span class="hl-identifier">playMp4</span><span class="hl-brackets">(</span><span class="hl-identifier">String</span><span class="hl-code"> </span><span class="hl-identifier">fileName</span><span class="hl-brackets">)</span><span class="hl-code"> </span><span class="hl-brackets">{</span><span class="hl-code">
+      </span><span class="hl-identifier">System</span><span class="hl-code">.</span><span class="hl-identifier">out</span><span class="hl-code">.</span><span class="hl-identifier">println</span><span class="hl-brackets">(</span><span class="hl-quotes">&quot;</span><span class="hl-string">Playing mp4 file. Name: </span><span class="hl-quotes">&quot;</span><span class="hl-code">+ </span><span class="hl-identifier">fileName</span><span class="hl-brackets">)</span><span class="hl-code">;      
+   </span><span class="hl-brackets">}</span><span class="hl-code">
+</span><span class="hl-brackets">}</span></div>
+</div></div>
+<h3>步骤 3</h3>
+<p>创建实现了 <i>MediaPlayer</i> 接口的适配器类。</p>
+
+<div class="example"> 
+<h2 class="example">MediaAdapter.java</h2> 
+<div class="example_code">
+<div class="hl-main"><span class="hl-reserved">public</span><span class="hl-code"> </span><span class="hl-reserved">class</span><span class="hl-code"> </span><span class="hl-identifier">MediaAdapter</span><span class="hl-code"> </span><span class="hl-reserved">implements</span><span class="hl-code"> </span><span class="hl-identifier">MediaPlayer</span><span class="hl-code"> </span><span class="hl-brackets">{</span><span class="hl-code">
+ 
+   </span><span class="hl-identifier">AdvancedMediaPlayer</span><span class="hl-code"> </span><span class="hl-identifier">advancedMusicPlayer</span><span class="hl-code">;
+ 
+   </span><span class="hl-reserved">public</span><span class="hl-code"> </span><span class="hl-identifier">MediaAdapter</span><span class="hl-brackets">(</span><span class="hl-identifier">String</span><span class="hl-code"> </span><span class="hl-identifier">audioType</span><span class="hl-brackets">)</span><span class="hl-brackets">{</span><span class="hl-code">
+      </span><span class="hl-reserved">if</span><span class="hl-brackets">(</span><span class="hl-identifier">audioType</span><span class="hl-code">.</span><span class="hl-identifier">equalsIgnoreCase</span><span class="hl-brackets">(</span><span class="hl-quotes">&quot;</span><span class="hl-string">vlc</span><span class="hl-quotes">&quot;</span><span class="hl-brackets">)</span><span class="hl-code"> </span><span class="hl-brackets">)</span><span class="hl-brackets">{</span><span class="hl-code">
+         </span><span class="hl-identifier">advancedMusicPlayer</span><span class="hl-code"> = </span><span class="hl-reserved">new</span><span class="hl-code"> </span><span class="hl-identifier">VlcPlayer</span><span class="hl-brackets">(</span><span class="hl-brackets">)</span><span class="hl-code">;       
+      </span><span class="hl-brackets">}</span><span class="hl-code"> </span><span class="hl-reserved">else</span><span class="hl-code"> </span><span class="hl-reserved">if</span><span class="hl-code"> </span><span class="hl-brackets">(</span><span class="hl-identifier">audioType</span><span class="hl-code">.</span><span class="hl-identifier">equalsIgnoreCase</span><span class="hl-brackets">(</span><span class="hl-quotes">&quot;</span><span class="hl-string">mp4</span><span class="hl-quotes">&quot;</span><span class="hl-brackets">)</span><span class="hl-brackets">)</span><span class="hl-brackets">{</span><span class="hl-code">
+         </span><span class="hl-identifier">advancedMusicPlayer</span><span class="hl-code"> = </span><span class="hl-reserved">new</span><span class="hl-code"> </span><span class="hl-identifier">Mp4Player</span><span class="hl-brackets">(</span><span class="hl-brackets">)</span><span class="hl-code">;
+      </span><span class="hl-brackets">}</span><span class="hl-code">  
+   </span><span class="hl-brackets">}</span><span class="hl-code">
+ 
+   @</span><span class="hl-identifier">Override</span><span class="hl-code">
+   </span><span class="hl-reserved">public</span><span class="hl-code"> </span><span class="hl-types">void</span><span class="hl-code"> </span><span class="hl-identifier">play</span><span class="hl-brackets">(</span><span class="hl-identifier">String</span><span class="hl-code"> </span><span class="hl-identifier">audioType</span><span class="hl-code">, </span><span class="hl-identifier">String</span><span class="hl-code"> </span><span class="hl-identifier">fileName</span><span class="hl-brackets">)</span><span class="hl-code"> </span><span class="hl-brackets">{</span><span class="hl-code">
+      </span><span class="hl-reserved">if</span><span class="hl-brackets">(</span><span class="hl-identifier">audioType</span><span class="hl-code">.</span><span class="hl-identifier">equalsIgnoreCase</span><span class="hl-brackets">(</span><span class="hl-quotes">&quot;</span><span class="hl-string">vlc</span><span class="hl-quotes">&quot;</span><span class="hl-brackets">)</span><span class="hl-brackets">)</span><span class="hl-brackets">{</span><span class="hl-code">
+         </span><span class="hl-identifier">advancedMusicPlayer</span><span class="hl-code">.</span><span class="hl-identifier">playVlc</span><span class="hl-brackets">(</span><span class="hl-identifier">fileName</span><span class="hl-brackets">)</span><span class="hl-code">;
+      </span><span class="hl-brackets">}</span><span class="hl-reserved">else</span><span class="hl-code"> </span><span class="hl-reserved">if</span><span class="hl-brackets">(</span><span class="hl-identifier">audioType</span><span class="hl-code">.</span><span class="hl-identifier">equalsIgnoreCase</span><span class="hl-brackets">(</span><span class="hl-quotes">&quot;</span><span class="hl-string">mp4</span><span class="hl-quotes">&quot;</span><span class="hl-brackets">)</span><span class="hl-brackets">)</span><span class="hl-brackets">{</span><span class="hl-code">
+         </span><span class="hl-identifier">advancedMusicPlayer</span><span class="hl-code">.</span><span class="hl-identifier">playMp4</span><span class="hl-brackets">(</span><span class="hl-identifier">fileName</span><span class="hl-brackets">)</span><span class="hl-code">;
+      </span><span class="hl-brackets">}</span><span class="hl-code">
+   </span><span class="hl-brackets">}</span><span class="hl-code">
+</span><span class="hl-brackets">}</span></div>
+</div></div>
+<h3>步骤 4</h3>
+<p>创建实现了 <i>MediaPlayer</i> 接口的实体类。</p>
+
+<div class="example"> 
+<h2 class="example">AudioPlayer.java</h2> 
+<div class="example_code">
+<div class="hl-main"><span class="hl-reserved">public</span><span class="hl-code"> </span><span class="hl-reserved">class</span><span class="hl-code"> </span><span class="hl-identifier">AudioPlayer</span><span class="hl-code"> </span><span class="hl-reserved">implements</span><span class="hl-code"> </span><span class="hl-identifier">MediaPlayer</span><span class="hl-code"> </span><span class="hl-brackets">{</span><span class="hl-code">
+   </span><span class="hl-identifier">MediaAdapter</span><span class="hl-code"> </span><span class="hl-identifier">mediaAdapter</span><span class="hl-code">; 
+ 
+   @</span><span class="hl-identifier">Override</span><span class="hl-code">
+   </span><span class="hl-reserved">public</span><span class="hl-code"> </span><span class="hl-types">void</span><span class="hl-code"> </span><span class="hl-identifier">play</span><span class="hl-brackets">(</span><span class="hl-identifier">String</span><span class="hl-code"> </span><span class="hl-identifier">audioType</span><span class="hl-code">, </span><span class="hl-identifier">String</span><span class="hl-code"> </span><span class="hl-identifier">fileName</span><span class="hl-brackets">)</span><span class="hl-code"> </span><span class="hl-brackets">{</span><span class="hl-code">    
+ 
+      </span><span class="hl-comment">//</span><span class="hl-comment">播放 mp3 音乐文件的内置支持</span><span class="hl-comment"></span><span class="hl-code">
+      </span><span class="hl-reserved">if</span><span class="hl-brackets">(</span><span class="hl-identifier">audioType</span><span class="hl-code">.</span><span class="hl-identifier">equalsIgnoreCase</span><span class="hl-brackets">(</span><span class="hl-quotes">&quot;</span><span class="hl-string">mp3</span><span class="hl-quotes">&quot;</span><span class="hl-brackets">)</span><span class="hl-brackets">)</span><span class="hl-brackets">{</span><span class="hl-code">
+         </span><span class="hl-identifier">System</span><span class="hl-code">.</span><span class="hl-identifier">out</span><span class="hl-code">.</span><span class="hl-identifier">println</span><span class="hl-brackets">(</span><span class="hl-quotes">&quot;</span><span class="hl-string">Playing mp3 file. Name: </span><span class="hl-quotes">&quot;</span><span class="hl-code">+ </span><span class="hl-identifier">fileName</span><span class="hl-brackets">)</span><span class="hl-code">;         
+      </span><span class="hl-brackets">}</span><span class="hl-code"> 
+      </span><span class="hl-comment">//</span><span class="hl-comment">mediaAdapter 提供了播放其他文件格式的支持</span><span class="hl-comment"></span><span class="hl-code">
+      </span><span class="hl-reserved">else</span><span class="hl-code"> </span><span class="hl-reserved">if</span><span class="hl-brackets">(</span><span class="hl-identifier">audioType</span><span class="hl-code">.</span><span class="hl-identifier">equalsIgnoreCase</span><span class="hl-brackets">(</span><span class="hl-quotes">&quot;</span><span class="hl-string">vlc</span><span class="hl-quotes">&quot;</span><span class="hl-brackets">)</span><span class="hl-code"> 
+         || </span><span class="hl-identifier">audioType</span><span class="hl-code">.</span><span class="hl-identifier">equalsIgnoreCase</span><span class="hl-brackets">(</span><span class="hl-quotes">&quot;</span><span class="hl-string">mp4</span><span class="hl-quotes">&quot;</span><span class="hl-brackets">)</span><span class="hl-brackets">)</span><span class="hl-brackets">{</span><span class="hl-code">
+         </span><span class="hl-identifier">mediaAdapter</span><span class="hl-code"> = </span><span class="hl-reserved">new</span><span class="hl-code"> </span><span class="hl-identifier">MediaAdapter</span><span class="hl-brackets">(</span><span class="hl-identifier">audioType</span><span class="hl-brackets">)</span><span class="hl-code">;
+         </span><span class="hl-identifier">mediaAdapter</span><span class="hl-code">.</span><span class="hl-identifier">play</span><span class="hl-brackets">(</span><span class="hl-identifier">audioType</span><span class="hl-code">, </span><span class="hl-identifier">fileName</span><span class="hl-brackets">)</span><span class="hl-code">;
+      </span><span class="hl-brackets">}</span><span class="hl-code">
+      </span><span class="hl-reserved">else</span><span class="hl-brackets">{</span><span class="hl-code">
+         </span><span class="hl-identifier">System</span><span class="hl-code">.</span><span class="hl-identifier">out</span><span class="hl-code">.</span><span class="hl-identifier">println</span><span class="hl-brackets">(</span><span class="hl-quotes">&quot;</span><span class="hl-string">Invalid media. </span><span class="hl-quotes">&quot;</span><span class="hl-code">+
+            </span><span class="hl-identifier">audioType</span><span class="hl-code"> + </span><span class="hl-quotes">&quot;</span><span class="hl-string"> format not supported</span><span class="hl-quotes">&quot;</span><span class="hl-brackets">)</span><span class="hl-code">;
+      </span><span class="hl-brackets">}</span><span class="hl-code">
+   </span><span class="hl-brackets">}</span><span class="hl-code">   
+</span><span class="hl-brackets">}</span></div>
+</div></div>
+<h3>步骤 5</h3>
+<p>使用 AudioPlayer 来播放不同类型的音频格式。</p>
+
+<div class="example"> 
+<h2 class="example">AdapterPatternDemo.java</h2> 
+<div class="example_code">
+<div class="hl-main"><span class="hl-reserved">public</span><span class="hl-code"> </span><span class="hl-reserved">class</span><span class="hl-code"> </span><span class="hl-identifier">AdapterPatternDemo</span><span class="hl-code"> </span><span class="hl-brackets">{</span><span class="hl-code">
+   </span><span class="hl-reserved">public</span><span class="hl-code"> </span><span class="hl-types">static</span><span class="hl-code"> </span><span class="hl-types">void</span><span class="hl-code"> </span><span class="hl-identifier">main</span><span class="hl-brackets">(</span><span class="hl-identifier">String</span><span class="hl-brackets">[</span><span class="hl-brackets">]</span><span class="hl-code"> </span><span class="hl-identifier">args</span><span class="hl-brackets">)</span><span class="hl-code"> </span><span class="hl-brackets">{</span><span class="hl-code">
+      </span><span class="hl-identifier">AudioPlayer</span><span class="hl-code"> </span><span class="hl-identifier">audioPlayer</span><span class="hl-code"> = </span><span class="hl-reserved">new</span><span class="hl-code"> </span><span class="hl-identifier">AudioPlayer</span><span class="hl-brackets">(</span><span class="hl-brackets">)</span><span class="hl-code">;
+ 
+      </span><span class="hl-identifier">audioPlayer</span><span class="hl-code">.</span><span class="hl-identifier">play</span><span class="hl-brackets">(</span><span class="hl-quotes">&quot;</span><span class="hl-string">mp3</span><span class="hl-quotes">&quot;</span><span class="hl-code">, </span><span class="hl-quotes">&quot;</span><span class="hl-string">beyond the horizon.mp3</span><span class="hl-quotes">&quot;</span><span class="hl-brackets">)</span><span class="hl-code">;
+      </span><span class="hl-identifier">audioPlayer</span><span class="hl-code">.</span><span class="hl-identifier">play</span><span class="hl-brackets">(</span><span class="hl-quotes">&quot;</span><span class="hl-string">mp4</span><span class="hl-quotes">&quot;</span><span class="hl-code">, </span><span class="hl-quotes">&quot;</span><span class="hl-string">alone.mp4</span><span class="hl-quotes">&quot;</span><span class="hl-brackets">)</span><span class="hl-code">;
+      </span><span class="hl-identifier">audioPlayer</span><span class="hl-code">.</span><span class="hl-identifier">play</span><span class="hl-brackets">(</span><span class="hl-quotes">&quot;</span><span class="hl-string">vlc</span><span class="hl-quotes">&quot;</span><span class="hl-code">, </span><span class="hl-quotes">&quot;</span><span class="hl-string">far far away.vlc</span><span class="hl-quotes">&quot;</span><span class="hl-brackets">)</span><span class="hl-code">;
+      </span><span class="hl-identifier">audioPlayer</span><span class="hl-code">.</span><span class="hl-identifier">play</span><span class="hl-brackets">(</span><span class="hl-quotes">&quot;</span><span class="hl-string">avi</span><span class="hl-quotes">&quot;</span><span class="hl-code">, </span><span class="hl-quotes">&quot;</span><span class="hl-string">mind me.avi</span><span class="hl-quotes">&quot;</span><span class="hl-brackets">)</span><span class="hl-code">;
+   </span><span class="hl-brackets">}</span><span class="hl-code">
+</span><span class="hl-brackets">}</span></div>
+</div></div>
+<h3>步骤 6</h3>
+<p>执行程序，输出结果：</p>
+<pre class="result">
+Playing mp3 file. Name: beyond the horizon.mp3
+Playing mp4 file. Name: alone.mp4
+Playing vlc file. Name: far far away.vlc
+Invalid media. avi format not supported
+</pre>			<!-- 其他扩展 -->
+						
+			</div>
+			
+		</div>
+		
+		<div class="previous-next-links">
+			<div class="previous-design-link"><i style="font-size:16px;" class="fa fa-arrow-left" aria-hidden="true"></i> <a href="http://www.runoob.com/design-pattern/prototype-pattern.html" rel="prev"> 原型模式</a> </div>
+			<div class="next-design-link"><a href="http://www.runoob.com/design-pattern/bridge-pattern.html" rel="next"> 桥接模式</a> <i style="font-size:16px;" class="fa fa-arrow-right" aria-hidden="true"></i></div>
+		</div>
+		<!-- 笔记列表 -->
+		<style>
+.wrapper {
+  /*text-transform: uppercase; */
+  background: #ececec;
+  color: #555;
+  cursor: help;
+  font-family: "Gill Sans", Impact, sans-serif;
+  font-size: 20px;
+  position: relative;
+  text-align: center;
+  width: 200px;
+  -webkit-transform: translateZ(0); /* webkit flicker fix */
+  -webkit-font-smoothing: antialiased; /* webkit text rendering fix */
+}
+
+.wrapper .tooltip {
+  white-space: nowrap;
+  font-size: 14px;
+  text-align: left;
+  background: #96b97d;
+  bottom: 100%;
+  color: #fff;
+  display: block;
+  left: -25px;
+  margin-bottom: 15px;
+  opacity: 0;
+  padding: 14px;
+  pointer-events: none;
+  position: absolute;
+  
+  -webkit-transform: translateY(10px);
+     -moz-transform: translateY(10px);
+      -ms-transform: translateY(10px);
+       -o-transform: translateY(10px);
+          transform: translateY(10px);
+  -webkit-transition: all .25s ease-out;
+     -moz-transition: all .25s ease-out;
+      -ms-transition: all .25s ease-out;
+       -o-transition: all .25s ease-out;
+          transition: all .25s ease-out;
+  -webkit-box-shadow: 2px 2px 6px rgba(0, 0, 0, 0.28);
+     -moz-box-shadow: 2px 2px 6px rgba(0, 0, 0, 0.28);
+      -ms-box-shadow: 2px 2px 6px rgba(0, 0, 0, 0.28);
+       -o-box-shadow: 2px 2px 6px rgba(0, 0, 0, 0.28);
+          box-shadow: 2px 2px 6px rgba(0, 0, 0, 0.28);
+}
+.tooltip a {
+	color:#fff;
+}
+/* This bridges the gap so you can mouse into the tooltip without it disappearing */
+.wrapper .tooltip:before {
+  bottom: -20px;
+  content: " ";
+  display: block;
+  height: 20px;
+  left: 0;
+  position: absolute;
+  width: 100%;
+}  
+
+/* CSS Triangles - see Trevor's post */
+.wrapper .tooltip:after {
+  border-left: solid transparent 10px;
+  border-right: solid transparent 10px;
+  border-top: solid #96b97d 10px;
+  bottom: -10px;
+  content: " ";
+  height: 0;
+  left: 20%;
+  margin-left: -13px;
+  position: absolute;
+  width: 0;
+}
+.wrapper .tooltip1 {
+	margin-left: 50px;
+	padding-top: 0px;
+}
+/*
+.wrapper:hover .tooltip {
+  opacity: 1;
+  pointer-events: auto;
+  -webkit-transform: translateY(0px);
+     -moz-transform: translateY(0px);
+      -ms-transform: translateY(0px);
+       -o-transform: translateY(0px);
+          transform: translateY(0px);
+}
+*/
+/* IE can just show/hide with no transition */
+.lte8 .wrapper .tooltip {
+  display: none;
+}
+
+.lte8 .wrapper:hover .tooltip {
+  display: block;
+}
+
+</style>
+
+<link rel="stylesheet" href="https://static.runoob.com/assets/upvotejs/dist/upvotejs/upvotejs.css">
+<script src="https://static.runoob.com/assets/upvotejs/dist/upvotejs/upvotejs.vanilla.js"></script>
+<script src="https://static.runoob.com/assets/upvotejs/dist/upvotejs/upvotejs.jquery.js"></script>
+<div class="title" id="comments">
+	<h2 class="">
+    <div class="altblock">
+				<i style="font-size:28px;margin-top: 8px;" class="fa fa-plus-square" aria-hidden="true"></i>
+		    </div>
+    <span class="mw-headline" id="qa_headline">5  篇笔记</span>
+	<span class="mw-headline" id="user_add_note" style="float:right;line-height: 62px;padding-right: 14px;"><i class="fa fa-pencil-square-o" aria-hidden="true"></i>  写笔记</span>
+    </h2>
+</div>
+
+<div id="postcomments"  style="display:none;" >
+	<ol class="commentlist">
+		<li class="comment even thread-even depth-1" id="comment-42319"><span class="comt-f">#0</span><div class="comt-avatar wrapper"><i style="font-size:36px;" class="fa fa-user-circle" aria-hidden="true"></i><div class="tooltip"><p><i class="fa fa-user" aria-hidden="true"></i>&nbsp;&nbsp;&nbsp;comi</p><p><i class="fa fa-envelope" aria-hidden="true"></i>&nbsp;&nbsp;153***856@qq.com</p></div><div id="runoobvote-id-42319" data-commid = "42319" class="upvotejs"><a class="upvote"></a> <span class="count">128</span></div></div><div class="comt-main" id="div-comment-42319"><p>分享一个例子：笔记本通过读卡去读取TF卡；</p>
+
+<p><strong>一、先模拟计算机读取SD卡：</strong></p>
+
+<p>1、先创建一个SD卡的接口：</p>
+
+<pre>public interface SDCard {
+    //读取SD卡方法
+    String readSD();
+    //写入SD卡功能
+    int writeSD(String msg);
+}</pre>
+<p>2、创建SD卡接口的实现类，模拟SD卡的功能：</p>
+
+<pre>public class SDCardImpl implements SDCard {
+    @Override    
+    public String readSD() {
+        String msg = "sdcard read a msg :hello word SD";
+        return msg;  
+    }
+    @Override  
+    public int writeSD(String msg) {      
+        System.out.println("sd card write msg : " + msg);    
+        return 1;   
+    }
+}</pre>
+<p>3、创建计算机接口，计算机提供读取SD卡方法：</p>
+
+<pre>public interface Computer {    
+    String readSD(SDCard sdCard);
+}</pre>
+<p>4、创建一个计算机实例，实现计算机接口，并实现其读取SD卡方法：</p>
+
+<pre>public class ThinkpadComputer implements Computer {
+    @Override    
+    public String readSD(SDCard sdCard) {        
+        if(sdCard == null)throw new NullPointerException("sd card null");        
+        return sdCard.readSD();    
+    }
+}</pre>
+<p>5、这时候就可以模拟计算机读取SD卡功能：</p>
+
+<pre>public class ComputerReadDemo {    
+    public static void main(String[] args) {        
+        Computer computer = new ThinkpadComputer();        
+        SDCard sdCard = new SDCardImpl();       
+        System.out.println(computer.readSD(sdCard));    
+    }
+}</pre>
+<p><strong>二、接下来在不改变计算机读取SD卡接口的情况下，通过适配器模式读取TF卡：</strong></p>
+
+<p>1、创建TF卡接口：</p>
+
+<pre>public interface TFCard {    
+    String readTF();    
+    int writeTF(String msg);
+}</pre>
+<p>2、创建TF卡实例：</p>
+
+<pre>public class TFCardImpl implements TFCard {    
+    @Override    
+    public String readTF() {        
+        String msg ="tf card reade msg : hello word tf card";        
+        return msg;    
+    }    
+    @Override    
+    public int writeTF(String msg) {        
+        System.out.println("tf card write a msg : " + msg);        
+        return 1;    
+    }
+}</pre>
+<p>3、创建SD适配TF （也可以说是SD兼容TF，相当于读卡器）：</p>
+
+<p>实现SDCard接口，并将要适配的对象作为适配器的属性引入。</p>
+
+<pre>public class SDAdapterTF implements SDCard {    
+    private TFCard tfCard;    
+    public SDAdapterTF(TFCard tfCard) {        
+        this.tfCard = tfCard;    
+    }    
+    @Override    
+    public String readSD() {        
+        System.out.println("adapter read tf card ");        
+        return tfCard.readTF();    
+    }    
+    @Override    
+    public int writeSD(String msg) {        
+        System.out.println("adapter write tf card");        
+        return tfCard.writeTF(msg);    
+    }
+}</pre>
+<p>4、通过上面的例子测试计算机通过SD读卡器读取TF卡：</p>
+
+<pre>public class ComputerReadDemo {    
+    public static void main(String[] args) {        
+        Computer computer = new ThinkpadComputer();        
+        SDCard sdCard = new SDCardImpl();        
+        System.out.println(computer.readSD(sdCard));        
+        System.out.println("====================================");        
+        TFCard tfCard = new TFCardImpl();        
+        SDCard tfCardAdapterSD = new SDAdapterTF(tfCard);        
+        System.out.println(computer.readSD(tfCardAdapterSD));    
+    }
+}</pre>
+<p>输出：</p>
+
+<pre>sdcard read a msg :hello word SD
+====================================
+adapter read tf card 
+tf card reade msg : hello word tf card</pre>
+
+<p>在这种模式下，计算机并不需要知道具体是什么卡，只需要负责操作接口即可，具体操作的什么类，由适配器决定。</p><div class="comt-meta wrapper"><span class="comt-author"><a target="_blank" href="javascript:;">comi</a><div class="tooltip tooltip1"><p><i class="fa fa-user" aria-hidden="true"></i>&nbsp;&nbsp;&nbsp;comi</p><p><i class="fa fa-envelope" aria-hidden="true"></i>&nbsp;&nbsp;153***856@qq.com</p></div></span>4年前 (2019-04-29)</div></div></li><!-- #comment-## -->
+<li class="comment odd alt thread-odd thread-alt depth-1" id="comment-49182"><span class="comt-f">#0</span><div class="comt-avatar wrapper"><i style="font-size:36px;" class="fa fa-user-circle" aria-hidden="true"></i><div class="tooltip"><p><i class="fa fa-user" aria-hidden="true"></i>&nbsp;&nbsp;&nbsp;Lonnie</p><p><i class="fa fa-envelope" aria-hidden="true"></i>&nbsp;&nbsp;354***093@qq.com</p></div><div id="runoobvote-id-49182" data-commid = "49182" class="upvotejs"><a class="upvote"></a> <span class="count">3</span></div></div><div class="comt-main" id="div-comment-49182"><p>Swift 实现:</p>
+
+
+<pre>struct VlcPlayer: AdvancedMediaPlayer {
+    func playVlc(fileName: String) {
+        print("Play vlc file. Name:" + fileName)
+    }
+
+    func playMP4(fileName: String) {
+    }
+}
+
+struct MP4Player: AdvancedMediaPlayer {
+    func playVlc(fileName: String) {
+    }
+
+    func playMP4(fileName: String) {
+        print("Play mp4 file. Name:" + fileName)
+    }
+}
+
+struct MediaAdapter: MediaPlayer {
+    let advancedMusicPlayer: AdvancedMediaPlayer
+
+    init(audioType: AudioType) {
+        if audioType == .mp4 {
+            advancedMusicPlayer = MP4Player()
+        } else {
+            advancedMusicPlayer = VlcPlayer()
+        }
+    }
+
+    func play(_ type: AudioType, fileName: String) {
+        if type == .mp4 {
+            advancedMusicPlayer.playMP4(fileName: fileName)
+        } else {
+            advancedMusicPlayer.playVlc(fileName: fileName)
+        }
+    }
+}
+
+class AudioPlayer: MediaPlayer {
+    var mediaAdapter: MediaAdapter?
+    func play(_ type: AudioType, fileName: String) {
+        if type == .mp3 {
+            print("Play mp3 file. Name:", fileName)
+        } else  {
+            mediaAdapter = MediaAdapter(audioType: type)
+            mediaAdapter?.play(type, fileName: fileName)
+        }
+    }
+
+    func play(_ type: String, fileName: String) {
+        if let type = AudioType(rawValue: type) {
+            play(type, fileName: fileName)
+        } else {
+            print("Invalid media.\(fileName) not supported.")
+        }
+    }
+}
+
+let audioPlayer = AudioPlayer()
+audioPlayer.play("mp3", fileName: "beyond the horizon.mp3")
+audioPlayer.play("mp4", fileName: "alone.mp4")
+audioPlayer.play("vlc", fileName: "far far away.vlc")
+audioPlayer.play("flac", fileName: "mind me.avi")</pre><div class="comt-meta wrapper"><span class="comt-author"><a target="_blank" href="javascript:;">Lonnie</a><div class="tooltip tooltip1"><p><i class="fa fa-user" aria-hidden="true"></i>&nbsp;&nbsp;&nbsp;Lonnie</p><p><i class="fa fa-envelope" aria-hidden="true"></i>&nbsp;&nbsp;354***093@qq.com</p></div></span>3年前 (2019-12-11)</div></div></li><!-- #comment-## -->
+<li class="comment even thread-even depth-1" id="comment-51104"><span class="comt-f">#0</span><div class="comt-avatar wrapper"><i style="font-size:36px;" class="fa fa-user-circle" aria-hidden="true"></i><div class="tooltip"><p><i class="fa fa-user" aria-hidden="true"></i>&nbsp;&nbsp;&nbsp;Siskin.xu</p><p><i class="fa fa-envelope" aria-hidden="true"></i>&nbsp;&nbsp;sis***@sohu.com</p></div><div id="runoobvote-id-51104" data-commid = "51104" class="upvotejs"><a class="upvote"></a> <span class="count">3</span></div></div><div class="comt-main" id="div-comment-51104"><p>Python 方式：</p>
+<pre>#Adapter Pattern with Python Code
+from abc import abstractmethod,ABCMeta
+
+# 为媒体播放器和更高级的媒体播放器创建接口
+class MediaPlayer(metaclass=ABCMeta):
+    @abstractmethod
+    def play(self, strAudioType, strFilename):
+        pass
+class AdvancedMediaPlayer(metaclass=ABCMeta):
+    @abstractmethod
+    def playVlc(self,strFilename):
+        pass
+    @abstractmethod
+    def playMp4(self,strFilename):
+        pass
+
+# 实现AdvancedMediaPlayer接口的实体类
+class VlcPlayer(AdvancedMediaPlayer):
+    def playVlc(self,strFilename):
+        print("Playing vlc file. Name: "+strFilename)
+    def playMp4(self,strFilename):
+        pass
+class Mp4Player(AdvancedMediaPlayer):
+    def playVlc(self,strFilename):
+        pass
+    def playMp4(self,strFilename):
+        print("Playing MP4 file. Name: " + strFilename)
+
+# 实现MediaPlayer的MediaAdapter实体类
+class MediaAdapter(MediaPlayer):
+    advancedMusicPlayer = None
+
+    def __init__(self,strAudioType):
+        strAudioType = str.lower(strAudioType)
+        if strAudioType == "vlc" :
+            self.advancedMusicPlayer = VlcPlayer()
+        elif strAudioType == "mp4" :
+            self.advancedMusicPlayer = Mp4Player()
+    def play(self,strAudioType,strFilename):
+        if strAudioType == "vlc" :
+            self.advancedMusicPlayer.playVlc(strFilename)
+        elif strAudioType == "mp4" :
+            self.advancedMusicPlayer.playMp4(strFilename)
+
+# 实现MediaPlayer的AudiPlayer实体类
+class AudioPlayer(MediaPlayer):
+    mediaAdapter = None
+    def play(self,strAudioType,strFilename):
+        strAudioType = str.lower(strAudioType)
+        # 播放MP3音乐文件
+        if strAudioType == "mp3" :
+            print("Playing mp3 file. Name: "+ strFilename)
+        elif (strAudioType == "vlc") or (strAudioType == "mp4") :
+            self.mediaAdapter = MediaAdapter(strAudioType)
+            self.mediaAdapter.play(strAudioType,strFilename)
+        else :
+            print("Invalid media. "+ strAudioType + " format not supported.")
+
+# 调用输出
+if __name__ == '__main__':
+    audioPlayer = AudioPlayer()
+
+    audioPlayer.play("mp3","beyond the horizon.mp3")
+    audioPlayer.play("mp4","alone.mp4")
+    audioPlayer.play("vlc", "far far away.vlc")
+    audioPlayer.play("avi", "mind me.avi")</pre><div class="comt-meta wrapper"><span class="comt-author"><a target="_blank" href="javascript:;">Siskin.xu</a><div class="tooltip tooltip1"><p><i class="fa fa-user" aria-hidden="true"></i>&nbsp;&nbsp;&nbsp;Siskin.xu</p><p><i class="fa fa-envelope" aria-hidden="true"></i>&nbsp;&nbsp;sis***@sohu.com</p></div></span>3年前 (2020-03-01)</div></div></li><!-- #comment-## -->
+<li class="comment odd alt thread-odd thread-alt depth-1" id="comment-53599"><span class="comt-f">#0</span><div class="comt-avatar wrapper"><i style="font-size:36px;" class="fa fa-user-circle" aria-hidden="true"></i><div class="tooltip"><p><i class="fa fa-user" aria-hidden="true"></i>&nbsp;&nbsp;&nbsp;泡水鱼干</p><p><i class="fa fa-envelope" aria-hidden="true"></i>&nbsp;&nbsp;626***755@qq.com</p></div><div id="runoobvote-id-53599" data-commid = "53599" class="upvotejs"><a class="upvote"></a> <span class="count">4</span></div></div><div class="comt-main" id="div-comment-53599"><p>PHP 实现:</p>
+
+<pre>interface MediaPlayer
+{
+    public function play(string $audioType, string $fileName);
+}
+
+interface AdvancedMediaPlayer
+{
+    public function playVlc(string $fileName);
+
+    public function playMp4(string $fileName);
+}
+
+// 接口实体类
+class VlcPlayer implements AdvancedMediaPlayer
+{
+
+    public function playVlc(string $fileName)
+    {
+        echo "Playing vlc file. Name: " . $fileName.PHP_EOL;
+    }
+
+    public function playMp4(string $fileName)
+    {
+        // TODO: Implement playMp4() method.
+    }
+}
+
+// 接口实体类
+class Mp4Player implements AdvancedMediaPlayer
+{
+
+    public function playVlc(string $fileName)
+    {
+        // TODO: Implement playVlc() method.
+    }
+
+    public function playMp4(string $fileName)
+    {
+        echo "Playing mp4 file. Name: " . $fileName.PHP_EOL;
+    }
+}
+
+// 适配器类
+class MediaAdapter implements MediaPlayer
+{
+    private $_advancedMediaPlayer;
+
+    public function __construct(string $audioType)
+    {
+        if ($audioType == "vlc") {
+            $this-&gt;_advancedMediaPlayer = new VlcPlayer();
+        } else if ($audioType == "mp4") {
+            $this-&gt;_advancedMediaPlayer = new Mp4Player();
+        }
+    }
+
+    public function play(string $audioType, string $fileName)
+    {
+        // TODO: Implement play() method.
+        if ($audioType == 'vlc') {
+            $this-&gt;_advancedMediaPlayer-&gt;playVlc($fileName);
+        } elseif ($audioType == 'mp4') {
+            $this-&gt;_advancedMediaPlayer-&gt;playMp4($fileName);
+        }
+    }
+}
+
+
+class AudioPlayer implements MediaPlayer
+{
+    private $_mediaAdaper;
+
+    public function play(string $audioType, string $fileName)
+    {
+        // TODO: Implement play() method.
+        if ($audioType == 'mp3') {
+            echo "Playing mp3 file. name: " . $fileName.PHP_EOL;
+        } elseif ($audioType == 'vlc' || $audioType == 'mp4') {
+            $this-&gt;_mediaAdaper = new MediaAdapter($audioType);
+            $this-&gt;_mediaAdaper-&gt;play($audioType, $fileName);
+        } else {
+            echo "Invalid media. audioType: " . $audioType . " format not supported".PHP_EOL;
+        }
+
+    }
+}
+
+class Demo
+{
+    public static function main()
+    {
+        $audioPlayer = new AudioPlayer();
+        $audioPlayer-&gt;play('mp3', 'beyond the horizon.mp3');
+        $audioPlayer-&gt;play("mp4", "alone.mp4");
+        $audioPlayer-&gt;play("vlc", "far far away.vlc");
+        $audioPlayer-&gt;play("avi", "mind me.avi");
+
+    }
+}
+
+Demo::main();</pre><div class="comt-meta wrapper"><span class="comt-author"><a target="_blank" href="javascript:;">泡水鱼干</a><div class="tooltip tooltip1"><p><i class="fa fa-user" aria-hidden="true"></i>&nbsp;&nbsp;&nbsp;泡水鱼干</p><p><i class="fa fa-envelope" aria-hidden="true"></i>&nbsp;&nbsp;626***755@qq.com</p></div></span>3年前 (2020-05-13)</div></div></li><!-- #comment-## -->
+<li class="comment even thread-even depth-1" id="comment-70254"><span class="comt-f">#0</span><div class="comt-avatar wrapper"><i style="font-size:36px;" class="fa fa-user-circle" aria-hidden="true"></i><div class="tooltip"><p><i class="fa fa-user" aria-hidden="true"></i>&nbsp;&nbsp;&nbsp;lz</p><p><i class="fa fa-envelope" aria-hidden="true"></i>&nbsp;&nbsp;luz***1226@126.com</p></div><div id="runoobvote-id-70254" data-commid = "70254" class="upvotejs"><a class="upvote"></a> <span class="count">3</span></div></div><div class="comt-main" id="div-comment-70254"><p>把 @<span class="marked">comi</span> 的例子用 C++ 实现了一遍:</p>
+
+<pre>// @brief SD卡接口类
+class SD
+{
+public:
+    virtual string read() = 0;
+    virtual void write(const string&amp;) = 0;
+};
+// @brief SD卡实例
+class SDCard : public SD
+{
+private:
+    string storage; // SD卡的存储空间
+public:
+    SDCard() {}
+    string read() { return storage; }
+    void write(const string&amp; s) { storage = s; }
+
+};
+// @brief 计算机接口,只能读写SD卡
+class Computer
+{
+public:
+    virtual void insertSD(const shared_ptr&lt;SD&gt; &amp;) = 0;
+    virtual string readSD() = 0;
+    virtual void writeSD(const string&amp;) = 0;
+};
+// @brief 具体计算机
+class HuaWeiComputer : public Computer
+{
+private:
+    shared_ptr&lt;SD&gt; sd_slot; // SD卡插槽
+public:
+    HuaWeiComputer() {}
+    void insertSD(const shared_ptr&lt;SD&gt;&amp; sd) { sd_slot = sd; }
+    string readSD() { if (sd_slot != nullptr) { return sd_slot-&gt;read(); } else { return (string)"[no sd card]"; } }
+    void writeSD(const string&amp; s) { if (sd_slot != nullptr) { sd_slot-&gt;write(s); } }
+};
+// @brief TF卡接口类
+class TF
+{
+public:
+    virtual string read() = 0;
+    virtual void write(const string&amp;) = 0;
+};
+// @brief TF卡实例
+class TFCard : public TF
+{
+private:
+    string storage; // TF卡的存储空间
+public:
+    TFCard() {}
+    string read() { return storage; }
+    void write(const string&amp; s) { storage = s; }
+};
+// @brief TF转SD卡适配器
+class SDAdapterTF : public SD
+{
+private:
+    shared_ptr&lt;TF&gt; tf_slot; // TF卡插槽
+public:
+    void insertTF(const shared_ptr&lt;TF&gt;&amp; tf) { tf_slot = tf; }
+    string read() { if (tf_slot != nullptr) { return tf_slot-&gt;read(); } else { return (string)"[no tf card]"; } }
+    void write(const string&amp; s) { if (tf_slot != nullptr) { tf_slot-&gt;write(s); } }
+};
+
+// main 中执行
+void demo()
+{
+    // 计算机读写SD卡demo
+    shared_ptr&lt;SD&gt; sd(new SDCard());// 新建SD卡
+    shared_ptr&lt;Computer&gt; pc(new HuaWeiComputer());// 新建电脑
+    cout &lt;&lt; "[1] " &lt;&lt; pc-&gt;readSD() &lt;&lt; endl; // 控制台输出：[1] [no sd card]
+    pc-&gt;insertSD(sd);// TF卡插入电脑
+    pc-&gt;writeSD("写入SD卡一些东西");
+    cout &lt;&lt; "[2] " &lt;&lt; pc-&gt;readSD() &lt;&lt; endl;  // 控制台输出：[2] 写入SD卡一些东西
+    // 计算机通过适配器读写TF卡demo
+    shared_ptr&lt;TF&gt; tf(new TFCard());
+    shared_ptr&lt;SDAdapterTF&gt; adaptr(new SDAdapterTF()); // 新建一个适配器
+    pc-&gt;insertSD((shared_ptr&lt;SD&gt;)adaptr);// 适配器插入电脑
+    cout &lt;&lt; "[3] " &lt;&lt; pc-&gt;readSD() &lt;&lt; endl; // 控制台输出：[3] [no tf card]
+    adaptr-&gt;insertTF(tf);// TF卡插入适配器
+    pc-&gt;writeSD("写入TF卡一些东西");
+    cout &lt;&lt; "[4] " &lt;&lt; pc-&gt;readSD() &lt;&lt; endl; // 控制台输出：[4] 写入TF卡一些东西
+}</pre><div class="comt-meta wrapper"><span class="comt-author"><a target="_blank" href="javascript:;">lz</a><div class="tooltip tooltip1"><p><i class="fa fa-user" aria-hidden="true"></i>&nbsp;&nbsp;&nbsp;lz</p><p><i class="fa fa-envelope" aria-hidden="true"></i>&nbsp;&nbsp;luz***1226@126.com</p></div></span>1年前 (2022-02-11)</div></div></li><!-- #comment-## -->
+	</ol>
+	<div class="pagenav">
+			</div>
+</div>
+<div id="respond" class="no_webshot"> 
+		<div class="comment-signarea" style="display:none; padding: 20px 20px;"> 
+	<h3 class="text-muted" id="share_code" style="color: #799961;"><i class="fa fa-pencil-square-o" aria-hidden="true"></i> 点我分享笔记</h3>
+	<!--
+	<p style="font-size:14px;">笔记需要是本篇文章的内容扩展！</p><br>
+	<p style="font-size:12px;"><a href="//www.runoob.com/tougao" target="_blank">文章投稿，可点击这里</a></p>
+	<p style="font-size:14px;"><a href="/w3cnote/runoob-user-test-intro.html#invite" target="_blank">注册邀请码获取方式</a></p>
+		<h3 class="text-muted"><i class="fa fa-info-circle" aria-hidden="true"></i> 分享笔记前必须<a href="javascript:;" class="runoob-pop">登录</a>！</h3>
+		<p><a href="/w3cnote/runoob-user-test-intro.html#invite" target="_blank">注册邀请码获取方式</a></p>-->
+	</div>
+		
+	<form action="/wp-content/themes/runoob/option/addnote.php" method="post" id="commentform" style="display:none;">
+		<div class="comt">
+			<div class="comt-title">
+				<i style="font-size:36px;" class="fa fa-user-circle" aria-hidden="true"></i>				<p><a id="cancel-comment-reply-link" href="javascript:;">取消</a></p>
+			</div>
+			<div class="comt-box">
+			<div id="mded"></div>
+			
+				<div class="comt-ctrl">
+					<div class="comt-tips"><input type='hidden' name='comment_post_ID' value='8909' id='comment_post_ID' />
+<input type='hidden' name='comment_parent' id='comment_parent' value='0' />
+</div>
+					<button type="submit" name="submit" id="submit" tabindex="5"><i class="fa fa-pencil" aria-hidden="true"></i> 分享笔记</button>
+				</div>
+			</div>
+		
+				
+					<div class="comt-comterinfo"> 
+						<ul id="comment-author-info">
+							<li class="form-inline"><label class="hide" for="author">昵称</label><input class="ipt" type="text" name="author" id="author" value="" tabindex="2" placeholder="昵称"><span class="text-muted">昵称 (必填)</span></li>
+							<li class="form-inline"><label class="hide" for="email">邮箱</label><input class="ipt" type="text" name="email" id="email" value="" tabindex="3" placeholder="邮箱"><span class="text-muted">邮箱 (必填)</span></li>
+							<li class="form-inline"><label class="hide" for="url">引用地址</label><input class="ipt" type="text" name="url" id="url" value="" tabindex="4" placeholder="引用地址"><span class="text-muted">引用地址</span></li>
+						</ul>
+					</div>
+				
+			
+		</div>
+
+	</form>
+	</div>
+<script type="text/javascript">
+$(function() {
+	//初始化编辑器
+	
+	var editor = new Simditor({
+	  textarea: $('#mded'),
+	  placeholder: '写笔记...',
+	  upload:false,
+	 // upload: {url:'/api/comment_upload_file.php',params: null,fileKey: 'upload_file',connectionCount: 1,leaveConfirm: '文件正在上传，您确定离开?'},
+	  defaultImage: 'https://www.runoob.com/images/logo.png',
+	  codeLanguages: '',
+	  autosave: 'editor-content',
+	  toolbar: [  'bold','code','ul','ol','image' ]
+	});
+	editor.on('selectionchanged', function() {
+		$(".code-popover").hide();
+	});
+
+	// 提交数据
+	$("#share_code").click(function() {
+		$(".comment-signarea").hide();
+		$("#commentform").show();
+		
+	});
+	$("#user_add_note").click(function() {
+		$(".comment-signarea").hide();
+		$("#commentform").show();
+		$('html, body').animate({
+       	    scrollTop: $("#respond").offset().top
+    	}, 200);
+	});
+
+	// 提交笔记
+	var commentform=$('#commentform');
+	commentform.prepend('<div id="comment-status" style="display:none;" ></div>');
+	var statusdiv=$('#comment-status');
+	
+	commentform.submit(function(e){
+		e.preventDefault();
+		var noteContent = editor.getValue();
+		// console.log(noteContent);
+		noteContent = noteContent.replace(/<pre><code>/g,"<pre>");
+		noteContent = noteContent.replace(/<\/code><\/pre>/g,"</pre>");
+		
+		// 系列化表单数据
+		var comment_parent = 0;
+		var is_user_logged_in = $("#is_user_logged_in").val();
+		var comment_post_ID =  8909;
+		var _wp_unfiltered_html_comment = $("#_wp_unfiltered_html_comment").val();
+		var comment = noteContent;
+		var author = $("#author").val();
+		var url = $("#url").val();
+		var email = $("#email").val();
+		if(isBlank(author) && is_user_logged_in==0) {
+			statusdiv.html('<p  class="ajax-error">请输入昵称！</p>').show();
+		} else if(isBlank(email)  && is_user_logged_in==0) {
+			statusdiv.html('<p  class="ajax-error">请输入邮箱！</p>').show();
+		} else {
+			// var formdata=commentform.serialize() + "&comment=" + noteContent ;
+			// 添加状态信息
+			statusdiv.html('<p>Processing...</p>').show();
+			// 获取表单提交地址
+			var formurl=commentform.attr('action');
+			
+			// 异步提交
+			$.ajax({
+					type: 'post',
+					url: formurl,
+					dataType:'json',
+					data: {"comment_parent":comment_parent,"comment_post_ID":comment_post_ID, "_wp_unfiltered_html_comment":_wp_unfiltered_html_comment,"comment":comment,"url":url, "email":email,"author":author},
+					error: function(XMLHttpRequest, textStatus, errorThrown){
+					statusdiv.html('<p class="ajax-error" >数据不完整或表单提交太快了！</p>').show();
+				},
+				success: function(data, textStatus){
+					if(data.errorno=="0") {
+						$("#submit").prop('disabled', true);
+						statusdiv.html('<p class="ajax-success" >笔记已提交审核，感谢分享笔记！</p>').show();
+						alert('笔记已提交审核，感谢分享笔记！');
+					}else{
+						statusdiv.html('<p class="ajax-error" >'+data.msg+'</p>').show();
+					}
+					commentform.find('textarea[name=comment]').val('');
+				}
+			});
+			setTimeout(function(){
+		        $("#submit").prop('disabled', false);
+		    }, 10*1000);
+		}
+		return false;
+
+	});
+	$(".comt-author").click(function() {
+		href = $(this).children("a").attr("href");
+		if(href.indexOf("/note/")!=-1) {
+			var win = window.open(href, '_blank');
+  			win.focus();
+		}
+	});
+	$(".comt-meta span").hover(function(){
+		$(this).children(".tooltip").css({ "opacity": 1, "pointer-events": "auto"});
+	},function(){
+		$(this).children(".tooltip").removeAttr("style");
+	});
+	/*
+	$(".wrapper i").hover(function(){
+		$(this).siblings(".tooltip").css({ "opacity": 1, "pointer-events": "auto"});
+	},function(){
+		$(this).siblings(".tooltip").css({ "opacity": 0, "pointer-events": "auto"});
+	});
+	*/
+	//Upvote.create('runoobvote-id', {callback: vote_callback});
+	var ajaxurl = 'https://www.runoob.com/wp-admin/admin-ajax.php';
+	var callback = function(data) {
+		//console.log($('#runoobvote-id').upvote('upvoted'));
+		//console.log($('#runoobvote-id').upvote('downvoted'));
+		//console.log(data);
+		_vote_action = data.action;
+		id_arr = data.id.split('-');
+		um_id= id_arr[2];
+		//console.log(um_id);
+		
+		var re = /^[1-9]+/;
+		if (re.test(um_id)) { 
+			var ajax_data = {
+				_vote_action: _vote_action,
+				action: "pinglun_zan",
+				um_id: um_id,
+				um_action: "ding"
+			};
+			//console.log(ajax_data);
+			$.post(ajaxurl,ajax_data,function(status){
+				//if(status.vote_num>999) {
+				//	_voteHtml = '<span style="display: block; text-align: center;font-size: 20px; color: #6a737c; margin: 8px 0;">'+kFormatter(status.vote_num) +'</span>';
+				//	$("#runoobvote-id-" + um_id + " .count").hide().after(_voteHtml);
+				//}
+				
+			});
+		}
+	};
+	if($('#comments').length && $('.upvotejs').length){
+		$('.upvotejs').upvote({id: 8909, callback: callback});
+	
+		$.post(ajaxurl,{"action":"pinglun_zan","postid":8909},function(data){  
+			$(data).each(function(key,value) {
+				$("#runoobvote-id-" + value.commid + " .upvote").addClass(value.upvotejs_class);
+				$("#runoobvote-id-" + value.commid + " .downvote").addClass(value.downvote_class);
+				$("#runoobvote-id-" + value.commid + " .count").text(value.upvote_count);
+			})
+		},'json');
+		
+	}
+	
+	
+});
+function isBlank(str) {
+    return (!str || /^\s*$/.test(str));
+}
+function kFormatter(num) {
+	// return num;
+    return Math.abs(num) > 999 ? Math.sign(num)*((Math.abs(num)/1000).toFixed(1)) + 'k' : Math.sign(num)*Math.abs(num)
+}
+
+</script>
+
+<link rel="stylesheet" href="/wp-content/themes/runoob/assets/css/qa.css?1.44">
+<link rel="stylesheet" type="text/css" href="https://cdn.staticfile.org/simditor/2.3.6/styles/simditor.min.css" />
+<script type="text/javascript" src="https://static.runoob.com/assets/simditor/2.3.6/scripts/module.js"></script>
+<script type="text/javascript" src="//static.runoob.com/assets/simditor/2.3.6/scripts/hotkeys.js"></script>
+<script type="text/javascript" src="//static.runoob.com/assets/simditor/2.3.6/scripts/uploader.js"></script>
+<script type="text/javascript" src="https://cdn.staticfile.org/simditor/2.3.6/lib/simditor.min.js"></script>
+<script type="text/javascript" src="https://static.runoob.com/assets/simditor/2.3.6/scripts/simditor-autosave.js"></script>
+		<div class="sidebar-box ">
+				
+
+<style>	
+.responsive_ad1 { display:none; }
+@media(min-width: 800px) { .responsive_ad1 {  display:block;margin:0 auto;} }
+</style>
+<div id="ad-336280" >
+
+<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-5751451760833794"
+     crossorigin="anonymous"></script>
+<!-- 移动版 自动调整 -->
+<ins class="adsbygoogle"
+     style="display:block"
+     data-ad-client="ca-pub-5751451760833794"
+     data-ad-slot="1691338467"
+     data-ad-format="auto"
+     data-full-width-responsive="true"></ins>
+<script>
+     (adsbygoogle = window.adsbygoogle || []).push({});
+</script>
+		</div>
+				</div>
+		
+	</div>
+</div>
+	
+
+<!-- 右边栏 -->
+<div class="fivecol last right-column">
+
+<style>
+.sidebar-tree .double-li {
+    width:300px;
+}
+.sidebar-tree .double-li li {
+    width: 44%;
+    line-height: 1.5em;
+    border-bottom: 1px solid #ccc;
+    float: left;
+    display: inline;
+}
+</style>
+
+    
+        <div class="sidebar-box re-box re-box-large">
+        <div class="sidebar-box recommend-here" style="margin: 0 auto;">
+            <a href="javascript:void(0);" style="font-size: 16px; color:#64854c;font-weight:bold;"> <i class="fa fa-list" aria-hidden="true"></i> 分类导航</a>
+        </div>
+    <div class="sidebar-box sidebar-cate">
+        
+        <div class="sidebar-tree" >
+            <ul><li style="margin: 0;"><a href="javascript:void(0);" class="tit"> HTML / CSS</a><ul class="double-li"><li><a title="HTML 教程" href="//www.runoob.com/html/html-tutorial.html">HTML 教程</a></li><li><a title="HTML5 教程" href="//www.runoob.com/html/html5-intro.html">HTML5 教程</a></li><li><a title="CSS 教程" href="//www.runoob.com/css/css-tutorial.html">CSS 教程</a></li><li><a title="CSS3 教程" href="//www.runoob.com/css3/css3-tutorial.html">CSS3 教程</a></li><li><a title="Bootstrap3 教程" href="//www.runoob.com/bootstrap/bootstrap-tutorial.html">Bootstrap3 教程</a></li><li><a title="Bootstrap4 教程" href="//www.runoob.com/bootstrap4/bootstrap4-tutorial.html">Bootstrap4 教程</a></li><li><a title="Bootstrap5 教程" href="//www.runoob.com/bootstrap5/bootstrap5-tutorial.html">Bootstrap5 教程</a></li><li><a title="Font Awesome 教程" href="//www.runoob.com/font-awesome/fontawesome-tutorial.html">Font Awesome 教程</a></li><li><a title="Foundation 教程" href="//www.runoob.com/foundation/foundation-tutorial.html">Foundation 教程</a></li></ul></li><li style="margin: 0;"><a href="javascript:void(0);" class="tit"> JavaScript</a><ul class="double-li"><li><a title="JavaScript 教程" href="//www.runoob.com/js/js-tutorial.html">JavaScript 教程</a></li><li><a title="HTML DOM 教程" href="//www.runoob.com/htmldom/htmldom-tutorial.html">HTML DOM 教程</a></li><li><a title="jQuery 教程" href="//www.runoob.com/jquery/jquery-tutorial.html">jQuery 教程</a></li><li><a title="AngularJS 教程" href="//www.runoob.com/angularjs/angularjs-tutorial.html">AngularJS 教程</a></li><li><a title="AngularJS2 教程" href="//www.runoob.com/angularjs2/angularjs2-tutorial.html">AngularJS2 教程</a></li><li><a title="Vue.js 教程" href="//www.runoob.com/vue2/vue-tutorial.html">Vue.js 教程</a></li><li><a title="Vue3 教程" href="//www.runoob.com/vue3/vue3-tutorial.html">Vue3 教程</a></li><li><a title="React 教程" href="//www.runoob.com/react/react-tutorial.html">React 教程</a></li><li><a title="TypeScript 教程" href="//www.runoob.com/typescript/ts-tutorial.html">TypeScript 教程</a></li><li><a title="jQuery UI 教程" href="//www.runoob.com/jqueryui/jqueryui-tutorial.html">jQuery UI 教程</a></li><li><a title="jQuery EasyUI 教程" href="//www.runoob.com/jeasyui/jqueryeasyui-tutorial.html">jQuery EasyUI 教程</a></li><li><a title="Node.js 教程" href="//www.runoob.com/nodejs/nodejs-tutorial.html">Node.js 教程</a></li><li><a title="AJAX 教程" href="//www.runoob.com/ajax/ajax-tutorial.html">AJAX 教程</a></li><li><a title="JSON 教程" href="//www.runoob.com/json/json-tutorial.html">JSON 教程</a></li><li><a title="Echarts 教程" href="//www.runoob.com/echarts/echarts-tutorial.html">Echarts 教程</a></li><li><a title="Chart.js 教程" href="//www.runoob.com/chartjs/chartjs-tutorial.html">Chart.js 教程</a></li><li><a title="Highcharts 教程" href="//www.runoob.com/highcharts/highcharts-tutorial.html">Highcharts 教程</a></li><li><a title="Google 地图 教程" href="//www.runoob.com/googleapi/google-maps-basic.html">Google 地图 教程</a></li></ul></li><li style="margin: 0;"><a href="javascript:void(0);" class="tit"> 服务端</a><ul class="double-li"><li><a title="Python 教程" href="//www.runoob.com/python3/python3-tutorial.html">Python 教程</a></li><li><a title="Python2.x 教程" href="//www.runoob.com/python/python-tutorial.html">Python2.x 教程</a></li><li><a title="Linux 教程" href="//www.runoob.com/linux/linux-tutorial.html">Linux 教程</a></li><li><a title="Docker 教程" href="//www.runoob.com/docker/docker-tutorial.html">Docker 教程</a></li><li><a title="Ruby 教程" href="//www.runoob.com/ruby/ruby-tutorial.html">Ruby 教程</a></li><li><a title="Java 教程" href="//www.runoob.com/java/java-tutorial.html">Java 教程</a></li><li><a title="C 教程" href="//www.runoob.com/c/c-tutorial.html">C 教程</a></li><li><a title="C++ 教程" href="//www.runoob.com/cplusplus/cpp-tutorial.html">C++ 教程</a></li><li><a title="Perl 教程" href="//www.runoob.com/perl/perl-tutorial.html">Perl 教程</a></li><li><a title="Servlet 教程" href="//www.runoob.com/servlet/servlet-tutorial.html">Servlet 教程</a></li><li><a title="JSP 教程" href="//www.runoob.com/jsp/jsp-tutorial.html">JSP 教程</a></li><li><a title="Lua 教程" href="//www.runoob.com/lua/lua-tutorial.html">Lua 教程</a></li><li><a title="Rust 教程" href="//www.runoob.com/rust/rust-tutorial.html">Rust 教程</a></li><li><a title="Scala 教程" href="//www.runoob.com/scala/scala-tutorial.html">Scala 教程</a></li><li><a title="Go 教程" href="//www.runoob.com/go/go-tutorial.html">Go 教程</a></li><li><a title="PHP 教程" href="//www.runoob.com/php/php-tutorial.html">PHP 教程</a></li><li><a title="数据结构与算法" href="//www.runoob.com/data-structures/data-structures-tutorial.html">数据结构与算法</a></li><li><a title="Django 教程" href="//www.runoob.com/django/django-tutorial.html">Django 教程</a></li><li><a title="Zookeeper 教程" href="//www.runoob.com/w3cnote/zookeeper-tutorial.html">Zookeeper 教程</a></li><li><a title="设计模式" href="//www.runoob.com/design-pattern/design-pattern-tutorial.html">设计模式</a></li><li><a title="正则表达式" href="//www.runoob.com/regexp/regexp-tutorial.html">正则表达式</a></li><li><a title="Maven 教程" href="//www.runoob.com/maven/maven-tutorial.html">Maven 教程</a></li><li><a title="Verilog 教程" href="//www.runoob.com/w3cnote/verilog-tutorial.html">Verilog 教程</a></li><li><a title="ASP 教程" href="//www.runoob.com/asp/asp-tutorial.html">ASP 教程</a></li><li><a title="AppML 教程" href="//www.runoob.com/appml/appml-tutorial.html">AppML 教程</a></li><li><a title="VBScript 教程" href="//www.runoob.com/vbscript/vbscript-tutorial.html">VBScript 教程</a></li></ul></li><li style="margin: 0;"><a href="javascript:void(0);" class="tit"> 数据库</a><ul class="double-li"><li><a title="SQL 教程" href="//www.runoob.com/sql/sql-tutorial.html">SQL 教程</a></li><li><a title="MySQL 教程" href="//www.runoob.com/mysql/mysql-tutorial.html">MySQL 教程</a></li><li><a title="PostgreSQL 教程" href="//www.runoob.com/postgresql/postgresql-tutorial.html">PostgreSQL 教程</a></li><li><a title="SQLite 教程" href="//www.runoob.com/sqlite/sqlite-tutorial.html">SQLite 教程</a></li><li><a title="MongoDB 教程" href="//www.runoob.com/mongodb/mongodb-tutorial.html">MongoDB 教程</a></li><li><a title="Redis 教程" href="//www.runoob.com/redis/redis-tutorial.html">Redis 教程</a></li><li><a title="Memcached 教程" href="//www.runoob.com/Memcached/Memcached-tutorial.html">Memcached 教程</a></li></ul></li><li style="margin: 0;"><a href="javascript:void(0);" class="tit"> 数据分析</a><ul class="double-li"><li><a title="Python 教程" href="//www.runoob.com/python3/python3-tutorial.html">Python 教程</a></li><li><a title="NumPy 教程" href="//www.runoob.com/numpy/numpy-tutorial.html">NumPy 教程</a></li><li><a title="Pandas 教程" href="//www.runoob.com/pandas/pandas-tutorial.html">Pandas 教程</a></li><li><a title="Matplotlib 教程" href="//www.runoob.com/matplotlib/matplotlib-tutorial.html">Matplotlib 教程</a></li><li><a title="Scipy 教程" href="//www.runoob.com/scipy/scipy-tutorial.html">Scipy 教程</a></li><li><a title="R 教程" href="//www.runoob.com/r/r-tutorial.html">R 教程</a></li><li><a title="Julia 教程" href="//www.runoob.com/julia/julia-tutorial.html">Julia 教程</a></li></ul></li><li style="margin: 0;"><a href="javascript:void(0);" class="tit"> 移动端</a><ul class="double-li"><li><a title="Android 教程" href="//www.runoob.com/w3cnote/android-tutorial-intro.html">Android 教程</a></li><li><a title="Swift 教程" href="//www.runoob.com/swift/swift-tutorial.html">Swift 教程</a></li><li><a title="jQuery Mobile 教程" href="//www.runoob.com/jquerymobile/jquerymobile-tutorial.html">jQuery Mobile 教程</a></li><li><a title="ionic 教程" href="//www.runoob.com/ionic/ionic-tutorial.html">ionic 教程</a></li><li><a title="Kotlin 教程" href="//www.runoob.com/kotlin/kotlin-tutorial.html">Kotlin 教程</a></li></ul></li><li style="margin: 0;"><a href="javascript:void(0);" class="tit"> XML 教程</a><ul class="double-li"><li><a title="XML 教程" href="//www.runoob.com/xml/xml-tutorial.html">XML 教程</a></li><li><a title="DTD 教程" href="//www.runoob.com/dtd/dtd-tutorial.html">DTD 教程</a></li><li><a title="XML DOM 教程" href="//www.runoob.com/dom/dom-tutorial.html">XML DOM 教程</a></li><li><a title="XSLT 教程" href="//www.runoob.com/xsl/xsl-tutorial.html">XSLT 教程</a></li><li><a title="XPath 教程" href="//www.runoob.com/xpath/xpath-tutorial.html">XPath 教程</a></li><li><a title="XQuery 教程" href="//www.runoob.com/xquery/xquery-tutorial.html">XQuery 教程</a></li><li><a title="XLink 教程" href="//www.runoob.com/xlink/xlink-tutorial.html">XLink 教程</a></li><li><a title="XPointer 教程" href="//www.runoob.com/xlink/xlink-tutorial.html">XPointer 教程</a></li><li><a title="XML Schema 教程" href="//www.runoob.com/schema/schema-tutorial.html">XML Schema 教程</a></li><li><a title="XSL-FO 教程" href="//www.runoob.com/xslfo/xslfo-tutorial.html">XSL-FO 教程</a></li><li><a title="SVG 教程" href="//www.runoob.com/svg/svg-tutorial.html">SVG 教程</a></li></ul></li><li style="margin: 0;"><a href="javascript:void(0);" class="tit"> ASP.NET</a><ul class="double-li"><li><a title="ASP.NET 教程" href="//www.runoob.com/aspnet/aspnet-tutorial.html">ASP.NET 教程</a></li><li><a title="C# 教程" href="//www.runoob.com/csharp/csharp-tutorial.html">C# 教程</a></li><li><a title="Web Pages 教程" href="//www.runoob.com/aspnet/webpages-intro.html">Web Pages 教程</a></li><li><a title="Razor 教程" href="//www.runoob.com/aspnet/razor-intro.html">Razor 教程</a></li><li><a title="MVC 教程" href="//www.runoob.com/aspnet/mvc-intro.html">MVC 教程</a></li><li><a title="Web Forms 教程" href="//www.runoob.com/aspnet/aspnet-intro.html">Web Forms 教程</a></li></ul></li><li style="margin: 0;"><a href="javascript:void(0);" class="tit"> Web Service</a><ul class="double-li"><li><a title="Web Service 教程" href="//www.runoob.com/webservices/webservices-tutorial.html">Web Service 教程</a></li><li><a title="WSDL 教程" href="//www.runoob.com/wsdl/wsdl-tutorial.html">WSDL 教程</a></li><li><a title="SOAP 教程" href="//www.runoob.com/soap/soap-tutorial.html">SOAP 教程</a></li><li><a title="RSS 教程" href="//www.runoob.com/rss/rss-tutorial.html">RSS 教程</a></li><li><a title="RDF 教程" href="//www.runoob.com/rdf/rdf-tutorial.html">RDF 教程</a></li></ul></li><li style="margin: 0;"><a href="javascript:void(0);" class="tit"> 开发工具</a><ul class="double-li"><li><a title="Eclipse 教程" href="//www.runoob.com/eclipse/eclipse-tutorial.html">Eclipse 教程</a></li><li><a title="Git 教程" href="//www.runoob.com/git/git-tutorial.html">Git 教程</a></li><li><a title="Svn 教程" href="//www.runoob.com/svn/svn-tutorial.html">Svn 教程</a></li><li><a title="Markdown 教程" href="//www.runoob.com/markdown/md-tutorial.html">Markdown 教程</a></li></ul></li><li style="margin: 0;"><a href="javascript:void(0);" class="tit"> 网站建设</a><ul class="double-li"><li><a title="HTTP 教程" href="//www.runoob.com/http/http-tutorial.html">HTTP 教程</a></li><li><a title="网站建设指南" href="//www.runoob.com/web/web-buildingprimer.html">网站建设指南</a></li><li><a title="浏览器信息" href="//www.runoob.com/browsers/browser-information.html">浏览器信息</a></li><li><a title="网站主机教程" href="//www.runoob.com/hosting/hosting-tutorial.html">网站主机教程</a></li><li><a title="TCP/IP 教程" href="//www.runoob.com/tcpip/tcpip-tutorial.html">TCP/IP 教程</a></li><li><a title="W3C 教程" href="//www.runoob.com/w3c/w3c-tutorial.html">W3C 教程</a></li><li><a title="网站品质" href="//www.runoob.com/quality/quality-tutorial.html">网站品质</a></li></ul></li></ul>            </div>
+    
+    </div>
+    </div>
+    <br>
+    
+    <div class="sidebar-box re-box re-box-large">
+        <div class="sidebar-box recommend-here">
+            <a href="javascript:void(0);">Advertisement</a>
+        </div>
+        <div class="re-600160" id="sidebar-right-re">
+                <script async src="//pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script>
+        <!-- 侧栏1 -->
+        <ins class="adsbygoogle"
+             style="display:inline-block;width:160px;height:600px"
+             data-ad-client="ca-pub-5751451760833794"
+             data-ad-slot="4106274865"></ins>
+        <script>
+        (adsbygoogle = window.adsbygoogle || []).push({});
+        </script>
+                </div>
+    </div>
+</div></div>
+
+</div>
+
+<script>
+var aid = 8909;
+function coll() {
+	$.post( '/wp-content/themes/runoob/option/user/userinfo.php', {aid:aid, action:"collarticle", opt:'add'},function( data ) {
+		if(data.error==0) {
+			$("#content").find("h1:first").find("a").attr("href","javascript:void(0);");
+			$("#content").find("h1:first").find("img").attr("src","http://www.runoob.com/wp-content/themes/runoob/assets/img/coll2.png").css({width:32+"px",height:32+"px"});
+		}
+		alert(data.msg);
+	},'json');
+}
+</script>
+
+
+<!-- 反馈对话框开始 -->
+<script src="/wp-content/themes/runoob/assets/feedback/stable/2.0/feedback.js?1.0"></script>
+<link rel="stylesheet" href="/wp-content/themes/runoob/assets/feedback/stable/2.0/feedback.css?1.0" />
+<script type="text/javascript">
+$.feedback({
+    ajaxURL: '/feedback/runoob_feedback.php',
+	html2canvasURL: '/wp-content/themes/runoob/assets/feedback/stable/2.0/html2canvas.js',
+	onClose: function () {
+         window.location.reload();
+    }
+});
+</script>
+<!-- 反馈对话框结束 -->
+<button class="feedback-btn feedback-btn-gray">反馈/建议</button>
+<!-- 底部 -->
+<div id="footer" class="mar-t50">
+   <div class="runoob-block">
+    <div class="runoob cf">
+     <dl>
+      <dt>
+       在线实例
+      </dt>
+      <dd>
+       &middot;<a target="_blank" href="/html/html-examples.html">HTML 实例</a>
+      </dd>
+      <dd>
+       &middot;<a target="_blank" href="/css/css-examples.html">CSS 实例</a>
+      </dd>
+      <dd>
+       &middot;<a target="_blank" href="/js/js-examples.html">JavaScript 实例</a>
+      </dd>
+      <dd>
+       &middot;<a target="_blank" href="/ajx/ajax-examples.html">Ajax 实例</a>
+      </dd>
+       <dd>
+       &middot;<a target="_blank" href="/jquery/jquery-examples.html">jQuery 实例</a>
+      </dd>
+      <dd>
+       &middot;<a target="_blank" href="/xml/xml-examples.html">XML 实例</a>
+      </dd>
+      <dd>
+       &middot;<a target="_blank" href="/java/java-examples.html">Java 实例</a>
+      </dd>
+     
+     </dl>
+     <dl>
+      <dt>
+      字符集&工具
+      </dt>
+      <dd>
+       &middot; <a target="_blank" href="/charsets/html-charsets.html">HTML 字符集设置</a>
+      </dd>
+      <dd>
+       &middot; <a target="_blank" href="/tags/html-ascii.html">HTML ASCII 字符集</a>
+      </dd>
+     <dd>
+       &middot; <a target="_blank" href="https://c.runoob.com/front-end/6939/">JS 混淆/加密</a>
+      </dd> 
+      <dd>
+       &middot; <a target="_blank" href="https://c.runoob.com/front-end/6232/">PNG/JPEG 图片压缩</a>
+      </dd>
+      <dd>
+       &middot; <a target="_blank" href="/tags/html-colorpicker.html">HTML 拾色器</a>
+      </dd>
+      <dd>
+       &middot; <a target="_blank" href="//c.runoob.com/front-end/53">JSON 格式化工具</a>
+      </dd>
+      <dd>
+       &middot; <a target="_blank" href="//c.runoob.com/front-end/6680/">随机数生成器</a>
+      </dd>
+     </dl>
+     <dl>
+      <dt>
+       最新更新
+      </dt>
+                   <dd>
+       &middot;
+      <a href="http://www.runoob.com/python3/python-ai-draw.html" title="Python AI 绘画">Python AI 绘画</a>
+      </dd>
+              <dd>
+       &middot;
+      <a href="http://www.runoob.com/w3cnote/cursor-editor.html" title="神辅助 Cursor 编辑器，加入 GPT-4 让编码更轻松！">神辅助 Cursor ...</a>
+      </dd>
+              <dd>
+       &middot;
+      <a href="http://www.runoob.com/jsref/jsref-flatmap-array.html" title="JavaScript flatMap()  方法">JavaScript flat...</a>
+      </dd>
+              <dd>
+       &middot;
+      <a href="http://www.runoob.com/jsref/jsref-flat-array.html" title="JavaScript flat() 方法">JavaScript flat...</a>
+      </dd>
+              <dd>
+       &middot;
+      <a href="http://www.runoob.com/jsref/jsref-at-array.html" title="JavaScript at() 方法">JavaScript at()...</a>
+      </dd>
+              <dd>
+       &middot;
+      <a href="http://www.runoob.com/jsref/jsref-of-array.html" title="JavaScript of() 方法">JavaScript of()...</a>
+      </dd>
+              <dd>
+       &middot;
+      <a href="http://www.runoob.com/pandas/pandas-functions.html" title="Pandas 常用函数">Pandas 常用函数</a>
+      </dd>
+             </dl>
+     <dl>
+      <dt>
+       站点信息
+      </dt>
+      <dd>
+       &middot;
+       <a target="_blank" href="mailto:admin@runoob.com" rel="external nofollow">意见反馈</a>
+       </dd>
+      <dd>
+       &middot;
+      <a target="_blank" href="/disclaimer">免责声明</a>
+       </dd>
+      <dd>
+       &middot;
+       <a target="_blank" href="/aboutus">关于我们</a>
+       </dd>
+      <dd>
+       &middot;
+      <a target="_blank" href="/archives">文章归档</a>
+      </dd>
+    
+     </dl>
+    
+     <div class="search-share">
+      <div class="app-download">
+        <div>
+         <strong>关注微信</strong>
+        </div>
+      </div>
+      <div class="share">
+      <img width="128" height="128" src="/wp-content/themes/runoob/assets/images/qrcode.png" />
+       </div>
+     </div>
+     
+    </div>
+   </div>
+   <div class="w-1000 copyright">
+     Copyright &copy; 2013-2023    <strong><a href="//www.runoob.com/" target="_blank">菜鸟教程</a></strong>&nbsp;
+    <strong><a href="//www.runoob.com/" target="_blank">runoob.com</a></strong> All Rights Reserved. 备案号：<a target="_blank" rel="nofollow" href="https://beian.miit.gov.cn/">闽ICP备15012807号-1</a>
+   </div>
+  </div>
+  <div class="fixed-btn">
+    <a class="go-top" href="javascript:void(0)" title="返回顶部"> <i class="fa fa-angle-up"></i></a>
+    <a class="qrcode"  href="javascript:void(0)" title="关注我们"><i class="fa fa-qrcode"></i></a>
+    <a class="writer" style="display:none" href="javascript:void(0)"   title="标记/收藏"><i class="fa fa-star" aria-hidden="true"></i></a>
+    <!-- qrcode modal -->
+    <div id="bottom-qrcode" class="modal panel-modal hide fade in">
+      <h4>微信关注</h4>
+      <div class="panel-body"><img alt="微信关注" width="128" height="128" src="/wp-content/themes/runoob/assets/images/qrcode.png"></div> 
+    </div>
+  </div>
+
+ <div style="display:none;">
+<script async src="https://www.googletagmanager.com/gtag/js?id=UA-84264393-2"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+
+  gtag('config', 'UA-84264393-2');
+</script>
+<script>
+var _hmt = _hmt || [];
+(function() {
+  var hm = document.createElement("script");
+  hm.src = "https://hm.baidu.com/hm.js?3eec0b7da6548cf07db3bc477ea905ee";
+  var s = document.getElementsByTagName("script")[0]; 
+  s.parentNode.insertBefore(hm, s);
+})();
+</script>
+
+</div>
+<script>
+window.jsui={
+    www: 'https://www.runoob.com',
+    uri: 'https://www.runoob.com/wp-content/themes/runoob'
+};
+</script>
+
+<script src="https://static.runoob.com/assets/libs/hl/run_prettify.js"></script>
+<script src="/wp-content/themes/runoob/assets/js/main.min.js?v=1.156"></script>
+
+</body>
+</html>
