@@ -22,9 +22,9 @@ def SaveHtml(url, data):
         f.write(data)
 
 
-def GetContent(url):
-    path = url.replace(HOME_PAGE, 'html')
-    if os.path.exists(path) and os.path.getsize(path): # read from cache
+def GetContent(url, cache=True, save=True):
+    path = re.sub(r'^https?://[^/]*?/', 'html/', url)
+    if cache and os.path.exists(path) and os.path.getsize(path): # read from cache
         with open(path, 'rb') as f:
             return f.read()
     else:
@@ -32,7 +32,12 @@ def GetContent(url):
         if 'gzip' == req.info().get('Content-Encoding'):
             f = io.StringIO.StringIO(req.read())
             req = gzip.GzipFile(fileobj=f)
-        return req.read()
+        data = req.read()
+        if save:
+            os.makedirs(os.path.dirname(path), exist_ok=True)
+            with open(path, 'wb') as f:
+                f.write(data)
+        return data
 
 
 def GetSubTutorial(title, url):
