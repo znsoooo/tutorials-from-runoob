@@ -3,23 +3,13 @@ import os
 import re
 import glob
 import gzip
+import urllib.parse
 import urllib.request
-
-from lxml import etree
 
 WWW       = 'www.runoob.com'
 HOME_PAGE = 'http://' + WWW
 
 errors = []
-
-
-def SaveHtml(url, data):
-    path = url.replace(HOME_PAGE, 'html')
-    folder = os.path.dirname(path)
-    if folder:
-        os.makedirs(folder, exist_ok=True)
-    with open(path, 'wb') as f:
-        f.write(data)
 
 
 def GetContent(url, cache=True, save=True):
@@ -40,33 +30,23 @@ def GetContent(url, cache=True, save=True):
         return data
 
 
-def GetSubTutorial(title, url):
-    print('- ' + url)
-    data = GetContent(url)
-    html = etree.HTML(data)
-    urls = html.xpath('/html/body/div[4]/div/div/div/div[2]/div/a/@href')
-    base = os.path.dirname(url) + '/'
-    for url2 in urls:
-        url2 = HOME_PAGE + url2 if '/' in url2 else base + url2
-        print('| - ' + url2)
+def WalkHtmls(url):
+    urls = [url]
+    history = []
+    while urls:
+        url = urls.pop(0)
+        print(f'Done: {len(history)}, Todo: {len(urls)}, Err: {len(errors)}, Url: {url}')
         try:
-            data2 = GetContent(url2)
-            SaveHtml(url2, data2)
-        except Exception:
-            errors.append(url2)
-
-
-def GetTutorial():
-    url = HOME_PAGE + '/index.html'
-    data = GetContent(url)
-    SaveHtml(url, data)
-    html = etree.HTML(data)
-    theme = html.xpath('/html/body/div[4]/div/div[2]/div/a')
-    for a in theme:
-        title = a.xpath('./h4/text()')[0].strip()
-        title = re.sub('/', '-', title)
-        url = 'http:' + a.xpath('./@href')[0].strip()
-        GetSubTutorial(title, url)
+            data = GetContent(url)
+            history.append(url)
+        except Exception: # urllib.error.HTTPError:
+            errors.append(url)
+            continue
+        for suburl in re.findall(b'''href=['"]([^'"]*?\.html)['"]''', data):
+            suburl = urllib.parse.urljoin(url, suburl.decode())
+            suburl = re.sub(r'^https?', 'http', suburl)
+            if suburl.startswith(HOME_PAGE) and suburl not in urls + history + errors:
+                urls.append(suburl)
 
 
 def WashHtmls():
@@ -91,7 +71,7 @@ def WashHtmls():
 
 
 if __name__ == '__main__':
-    GetTutorial()
+    WalkHtmls(HOME_PAGE + '/index.html')
     WashHtmls()
     print('errors:')
     print('\n'.join(errors))
