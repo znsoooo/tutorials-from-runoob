@@ -16,18 +16,19 @@ def GetContent(url, cache=True, save=True):
     path = re.sub(r'^https?://[^/]*?/', 'html/', url)
     if cache and os.path.exists(path) and os.path.getsize(path): # read from cache
         with open(path, 'rb') as f:
-            return f.read()
+            data = f.read()
     else:
         req = urllib.request.urlopen(url)
-        if 'gzip' == req.info().get('Content-Encoding'):
-            f = io.StringIO.StringIO(req.read())
-            req = gzip.GzipFile(fileobj=f)
         data = req.read()
+        url = req.geturl() # get real url
         if save:
+            path = re.sub(r'^https?://[^/]*?/', 'html/', url)
+            if path.endswith('/'):
+                path += 'index.html'
             os.makedirs(os.path.dirname(path), exist_ok=True)
             with open(path, 'wb') as f:
                 f.write(data)
-        return data
+    return url, data
 
 
 def WalkHtmls(url):
@@ -37,9 +38,11 @@ def WalkHtmls(url):
         url = urls.pop(0)
         print(f'Done: {len(history)}, Todo: {len(urls)}, Err: {len(errors)}, Url: {url}')
         try:
-            data = GetContent(url)
+            realurl, data = GetContent(url)
             history.append(url)
-        except Exception: # urllib.error.HTTPError:
+            url = realurl # for `urljoin` get correct suburl
+        except Exception as e: # urllib.error.HTTPError:
+            print('Error:', e)
             errors.append(url)
             continue
         for suburl in re.findall(b'''href=['"]([^'"]*?\.html)['"]''', data):
