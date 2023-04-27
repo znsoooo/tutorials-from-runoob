@@ -57,14 +57,17 @@ def WashHtmls():
         with open(file, 'rb') as f:
             text = f.read()
 
-        # replace `PATH/NAME.css?PARMS` to `/0/NAME.css?PARMS`
+        # replace 'PATH/NAME.css?PARMS' to '/0/NAME.css?PARMS'
         text = re.sub(rb'''(href=['"])[^'"]*?([^'"/]*?\.css)\b''', rb'\1/0/\2', text)
 
-        # replace homepage to `/`
+        # replace 'PATH/NAME.js?PARMS' to ''
+        text = re.sub(rb'''(?<=src=['"])[^'"]*?\.js(?:\?[^'"]*?)?(?=['"])''', b'', text)
+
+        # replace homepage to '/'
         # e.g. 'http://homepage/', 'https://homepage/', '//homepage/', 'homepage/'
         text = re.sub(rf'''(?<=href=['"])[^'"]*?{re.escape(WWW)}/'''.encode(), b'/', text)
 
-        # replace `/` to relative path
+        # replace '/' to relative path
         level = file.count('\\') - 1
         rel = '../' * level or './'
         text = re.sub(rb'''(?<=href=['"])/''', rel.encode(), text)
