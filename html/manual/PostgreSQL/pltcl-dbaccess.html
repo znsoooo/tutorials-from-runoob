@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><title>43.5. 从 PL/Tcl 访问数据库</title><link rel="stylesheet" type="text/css" href="stylesheet.css" /><link rev="made" href="pgsql-docs@postgresql.org" /><meta name="generator" content="DocBook XSL Stylesheets V1.79.1" /><link rel="prev" href="pltcl-global.html" title="43.4. PL/Tcl 中的全局数据" /><link rel="next" href="pltcl-trigger.html" title="43.6. PL/Tcl 中的触发器过程" /></head><body><div xmlns="http://www.w3.org/TR/xhtml1/transitional" class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="5" align="center">43.5. 从 PL/Tcl 访问数据库</th></tr><tr><td width="10%" align="left"><a accesskey="p" href="pltcl-global.html" title="43.4. PL/Tcl 中的全局数据">上一页</a> </td><td width="10%" align="left"><a accesskey="u" href="pltcl.html" title="第 43 章 PL/Tcl - Tcl 过程语言">上一级</a></td><th width="60%" align="center">第 43 章 PL/Tcl - Tcl 过程语言</th><td width="10%" align="right"><a accesskey="h" href="index.html" title="PostgreSQL 10.1 手册">起始页</a></td><td width="10%" align="right"> <a accesskey="n" href="pltcl-trigger.html" title="43.6. PL/Tcl 中的触发器过程">下一页</a></td></tr></table><hr></hr></div><div class="sect1" id="PLTCL-DBACCESS"><div class="titlepage"><div><div><h2 class="title" style="clear: both">43.5. 从 PL/Tcl 访问数据库</h2></div></div></div><p>     下面的命令可以用来从 PL/Tcl 函数体中访问数据库：
+
+    </p><div class="variablelist"><dl class="variablelist"><dt><span class="term"><code class="literal"><code class="function">spi_exec</code> ?<span class="optional">-count <em class="replaceable"><code>n</code></em></span>? ?<span class="optional">-array <em class="replaceable"><code>name</code></em></span>? <em class="replaceable"><code>command</code></em> ?<span class="optional"><em class="replaceable"><code>loop-body</code></em></span>?</code></span></dt><dd><p>        执行一个以字符串给出的 SQL 命令。命令中错误将会导致错误发生。否则，<code class="function">spi_exec</code>的返回值是被命令处理的行数（选择、插入、更新或者删除），如果命令是一条功能性语句则返回零。此外，如果命令是一条<code class="command">SELECT</code>语句，被选中的列的值会被放在上文所述的 Tcl 变量中。
+       </p><p>        可选的<code class="literal">-count</code>值告诉<code class="function">spi_exec</code>命令中要处理的最大行数。这种效果类似于用游标建立一个查询然后使用<code class="literal">FETCH <em class="replaceable"><code>n</code></em></code>。
+       </p><p>        如果命令是一条<code class="command">SELECT</code>语句，结果列的值会被放在以列名命名的 Tcl 变量中。
+		如果给出<code class="literal">-array</code>选项，那么列值将被存储到指定的关联数组的元素中，
+		列名将用作数组索引。此外，结果中的当前行号（从零开始计数）将存储到名为
+		<span class="quote">“<span class="quote"><code class="literal">.tupno</code></span>”</span>的数组元素中，除非该名称用作结果中的列名。
+       </p><p>        如果命令是一条<code class="command">SELECT</code>语句并且没有给出<em class="replaceable"><code>loop-body</code></em>脚本，
+		则只有结果的第一行被存储在 Tcl 变量或数组元素中。如果结果中有剩余的行，
+		它们会被忽略。如果查询不返回行则不存储任何东西（这种情况可以通过<code class="function">spi_exec</code>的结果检测到）。例如：
+</p><pre class="programlisting">spi_exec "SELECT count(*) AS cnt FROM pg_proc"</pre><p>
+
+        将把 Tcl 变量<code class="literal">$cnt</code>设置为<code class="structname">pg_proc</code>系统目录中的行数。
+       </p><p>        如果给出了可选的<em class="replaceable"><code>loop-body</code></em>参数，它会是一个 Tcl 脚本，对查询结果中的每一行都要执行这个脚本（如果给出的查询不是<code class="command">SELECT</code>则忽略<em class="replaceable"><code>loop-body</code></em>）。在每次迭代前当前行的列值会被存储在 Tcl 变量或数组元素中。例如：
+
+</p><pre class="programlisting">spi_exec -array C "SELECT * FROM pg_class" {
+    elog DEBUG "have table $C(relname)"
+}</pre><p>
+
+        会对<code class="literal">pg_class</code>的每一行打印一段日志消息。这种特性工作起来类似于其他的 Tcl 循环结构。特别是<code class="literal">continue</code>和<code class="literal">break</code>的动作方式与在循环体中的通常方式相同。
+       </p><p>        如果一个查询结果的一列为空，为它准备的目标变量不会被建立，而是会被<span class="quote">“<span class="quote">unset</span>”</span>。
+       </p></dd><dt><span class="term"><code class="function">spi_prepare</code> <em class="replaceable"><code>query</code></em> <em class="replaceable"><code>typelist</code></em></span></dt><dd><p>        为后面的执行准备并且保存一个查询计划。保存下来的计划将在当前会话的生命期内保持存在。
+        <a id="idp37495392" class="indexterm"></a>
+       </p><p>        查询可以使用参数，也就是占位符。在计划真正被执行时将会为占位符提供值。在查询字符串中，可以用符号<code class="literal">$1</code> ... <code class="literal">$<em class="replaceable"><code>n</code></em></code>引用参数。如果查询使用了参数，参数类型的名称必须以一个 Tcl 列表的形式给出（如果不使用参数，可以为<em class="replaceable"><code>typelist</code></em>写一个空列表）。
+       </p><p>        从<code class="function">spi_prepare</code>返回的值是一个查询 ID，在后续的<code class="function">spi_execp</code>调用中需要用到这个 ID。例子可见<code class="function">spi_execp</code>。
+       </p></dd><dt><span class="term"><code class="literal"><code class="function">spi_execp</code> ?<span class="optional">-count <em class="replaceable"><code>n</code></em></span>? ?<span class="optional">-array <em class="replaceable"><code>name</code></em></span>? ?<span class="optional">-nulls <em class="replaceable"><code>string</code></em></span>? <em class="replaceable"><code>queryid</code></em> ?<span class="optional"><em class="replaceable"><code>value-list</code></em></span>? ?<span class="optional"><em class="replaceable"><code>loop-body</code></em></span>?</code></span></dt><dd><p>        执行一个之前用<code class="function">spi_prepare</code>准备的查询。<em class="replaceable"><code>queryid</code></em>是<code class="function">spi_prepare</code>返回的 ID。如果查询引用参数，则必须提供一个<em class="replaceable"><code>value-list</code></em>。这是一个参数实际值的 Tcl 列表。这个列表必须和之前传给<code class="function">spi_prepare</code>的参数类型列表具有相同的长度。如果查询没有参数则可省略<em class="replaceable"><code>value-list</code></em>。
+       </p><p>        <code class="literal">-nulls</code>的值可选，它是一个空格和<code class="literal">'n'</code>字符构成的串，它告诉<code class="function">spi_execp</code>哪些参数是空值。如果给出这个值，它必须正好和<em class="replaceable"><code>value-list</code></em>长度相等。如果没有给出这个值，所有的参数值都是空。
+       </p><p>        除了指定查询及其参数的方法，<code class="function">spi_execp</code>和<code class="function">spi_exec</code>很像。<code class="literal">-count</code>、<code class="literal">-array</code>以及<em class="replaceable"><code>loop-body</code></em>选项是相同的，并且结果值也一样。
+       </p><p>        这里是一个使用预备计划的 PL/Tcl 函数的例子：
+
+</p><pre class="programlisting">CREATE FUNCTION t1_count(integer, integer) RETURNS integer AS $$
+    if {![ info exists GD(plan) ]} {
+        # 第一次调用时准备保存的计划
+        set GD(plan) [ spi_prepare \
+                "SELECT count(*) AS cnt FROM t1 WHERE num &gt;= \$1 AND num &lt;= \$2" \
+                [ list int4 int4 ] ]
+    }
+    spi_execp -count 1 $GD(plan) [ list $1 $2 ]
+    return $cnt
+$$ LANGUAGE pltcl;</pre><p>
+
+        我们需要在给<code class="function">spi_prepare</code>的查询字符串里放上反斜线来确保<code class="literal">$<em class="replaceable"><code>n</code></em></code>标记会被原样传递给<code class="function">spi_prepare</code>，并且不会被 Tcl 变量替换。
+
+       </p></dd><dt><span class="term">       <code class="function">spi_lastoid</code>
+       <a id="idp37523872" class="indexterm"></a>
+      </span></dt><dd><p>        返回最后一次<code class="function">spi_exec</code>或者<code class="function">spi_execp</code>插入的行的 OID（如果该命令是一个单行<code class="command">INSERT</code>且被修改表包含 OID。否则将会得到零）。
+       </p></dd><dt><span class="term"><code class="function">subtransaction</code> <em class="replaceable"><code>command</code></em></span></dt><dd><p>        包含在<em class="replaceable"><code>command</code></em>中的Tcl脚本在SQL子事务中执行。
+		如果脚本返回错误，那么在将错误返回给周围的Tcl代码之前，
+		整个子事务将被回滚。有关更多详细信息和示例，请参见
+		<a class="xref" href="pltcl-subtransactions.html" title="43.9. PL/Tcl中的显式子事务">第 43.9 节</a>。
+       </p></dd><dt><span class="term"><code class="function">quote</code> <em class="replaceable"><code>string</code></em></span></dt><dd><p>        在给定的字符串中双写所有单引号和反斜线字符。这可以被用来引用字符串，以便它们能被安全地插入到传给<code class="function">spi_exec</code>或者<code class="function">spi_prepare</code>的 SQL 命令字符串中。例如，考虑这样的 SQL 命令字符串：
+
+</p><pre class="programlisting">"SELECT '$val' AS ret"</pre><p>
+
+        这里的 Tcl 变量<code class="literal">val</code>实际上包含<code class="literal">doesn't</code>。这将会导致最终的命令串：
+
+</p><pre class="programlisting">SELECT 'doesn't' AS ret</pre><p>
+
+        这种命令串会导致<code class="function">spi_exec</code>或<code class="function">spi_prepare</code>期间的解析错误。要正确地工作，提交的命令应该包含：
+
+</p><pre class="programlisting">SELECT 'doesn''t' AS ret</pre><p>
+
+        在 PL/Tcl 中可以这样做：
+
+</p><pre class="programlisting">"SELECT '[ quote $val ]' AS ret"</pre><p>
+
+        <code class="function">spi_execp</code>的一个好处是你不必这样引用参数值，因为参数值不会被作为 SQL 命令串的一部分被解析。
+       </p></dd><dt><span class="term">       <code class="function">elog</code> <em class="replaceable"><code>level</code></em> <em class="replaceable"><code>msg</code></em>
+       <a id="idp37542896" class="indexterm"></a>
+      </span></dt><dd><p>        发出一段日志或者错误消息。可能的级别是<code class="literal">DEBUG</code>、<code class="literal">LOG</code>、<code class="literal">INFO</code>、<code class="literal">NOTICE</code>、<code class="literal">WARNING</code>、<code class="literal">ERROR</code>以及<code class="literal">FATAL</code>。<code class="literal">ERROR</code>产生一个错误情况。如果周围的 Tcl 代码没有捕捉它，错误会传播到调用查询，导致当前事务或者子事务被中止。这实际上与 Tcl 的<code class="literal">error</code>命令相同。<code class="literal">FATAL</code>中止事务并且导致当前会话关闭（可能在 PL/Tcl 函数中没有很好的理由来使用这种错误级别，但是为了完整性还是提供了这种级别）。其他级别只产生不同优先级的消息。一个特定级别的消息是被报告给客户端、写入到服务器日志或者两者都做，是由配置变量<a class="xref" href="runtime-config-logging.html#GUC-LOG-MIN-MESSAGES">log_min_messages</a>和<a class="xref" href="runtime-config-logging.html#GUC-CLIENT-MIN-MESSAGES">client_min_messages</a>所控制。详见<a class="xref" href="runtime-config.html" title="第 19 章 服务器配置">第 19 章</a>和<a class="xref" href="pltcl-error-handling.html" title="43.8. PL/Tcl 中的错误处理">第 43.8 节</a>。
+       </p></dd></dl></div><p>
+    </p></div><div class="navfooter"><hr /><table width="100%" summary="Navigation footer"><tr><td width="40%" align="left"><a accesskey="p" href="pltcl-global.html">上一页</a> </td><td width="20%" align="center"><a accesskey="u" href="pltcl.html">上一级</a></td><td width="40%" align="right"> <a accesskey="n" href="pltcl-trigger.html">下一页</a></td></tr><tr><td width="40%" align="left" valign="top">43.4. PL/Tcl 中的全局数据 </td><td width="20%" align="center"><a accesskey="h" href="index.html">起始页</a></td><td width="40%" align="right" valign="top"> 43.6. PL/Tcl 中的触发器过程</td></tr></table></div></body></html>

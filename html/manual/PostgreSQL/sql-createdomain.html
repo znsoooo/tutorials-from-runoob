@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><title>CREATE DOMAIN</title><link rel="stylesheet" type="text/css" href="stylesheet.css" /><link rev="made" href="pgsql-docs@postgresql.org" /><meta name="generator" content="DocBook XSL Stylesheets V1.79.1" /><link rel="prev" href="sql-createdatabase.html" title="CREATE DATABASE" /><link rel="next" href="sql-createeventtrigger.html" title="CREATE EVENT TRIGGER" /></head><body><div xmlns="http://www.w3.org/TR/xhtml1/transitional" class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="5" align="center">CREATE DOMAIN</th></tr><tr><td width="10%" align="left"><a accesskey="p" href="sql-createdatabase.html" title="CREATE DATABASE">上一页</a> </td><td width="10%" align="left"><a accesskey="u" href="sql-commands.html" title="SQL 命令">上一级</a></td><th width="60%" align="center">SQL 命令</th><td width="10%" align="right"><a accesskey="h" href="index.html" title="PostgreSQL 10.1 手册">起始页</a></td><td width="10%" align="right"> <a accesskey="n" href="sql-createeventtrigger.html" title="CREATE EVENT TRIGGER">下一页</a></td></tr></table><hr></hr></div><div class="refentry" id="SQL-CREATEDOMAIN"><div class="titlepage"></div><a id="idp42922464" class="indexterm"></a><div class="refnamediv"><h2><span class="refentrytitle">CREATE DOMAIN</span></h2><p>CREATE DOMAIN — 定义一个新的域</p></div><div class="refsynopsisdiv"><h2>大纲</h2><pre class="synopsis">CREATE DOMAIN <em class="replaceable"><code>name</code></em> [ AS ] <em class="replaceable"><code>data_type</code></em>
+    [ COLLATE <em class="replaceable"><code>collation</code></em> ]
+    [ DEFAULT <em class="replaceable"><code>expression</code></em> ]
+    [ <em class="replaceable"><code>constraint</code></em> [ ... ] ]
+
+<span class="phrase">其中 <em class="replaceable"><code>constraint</code></em> 是：</span>
+
+[ CONSTRAINT <em class="replaceable"><code>constraint_name</code></em> ]
+{ NOT NULL | NULL | CHECK (<em class="replaceable"><code>expression</code></em>) }</pre></div><div class="refsect1" id="idp42931520"><h2>描述</h2><p>   <code class="command">CREATE DOMAIN</code>创建一个新的域。域
+   本质上是一种带有可选约束（在允许的值集合上的限制）的数据类型。
+   定义一个域的用户将成为它的拥有者。
+  </p><p>   如果给定一个模式名（例如<code class="literal">CREATE DOMAIN
+   myschema.mydomain ...</code>），那么域将被创建在该指定的模式中。
+   否则它会被创建在当前模式中。域的名称在其模式中的类型和域之间
+   必须保持唯一。
+  </p><p>   域主要被用于把字段上的常用约束抽象到一个单一的位置以便维护。例如，
+   几个表可能都包含电子邮件地址列，而且都要求相同的 CHECK 约束来验证
+   地址的语法。可以为此定义一个域，而不是在每个表上都单独设置一个约束。
+  </p><p>   要创建一个域，你必须在其底层类型上拥有<code class="literal">USAGE</code>特权。
+  </p></div><div class="refsect1" id="idp42936320"><h2>参数</h2><div class="variablelist"><dl class="variablelist"><dt><span class="term"><em class="replaceable"><code>name</code></em></span></dt><dd><p>        要被创建的域的名称（可以被模式限定）。
+       </p></dd><dt><span class="term"><em class="replaceable"><code>data_type</code></em></span></dt><dd><p>        域的底层数据类型。可以包括数组指示符。
+       </p></dd><dt><span class="term"><em class="replaceable"><code>collation</code></em></span></dt><dd><p>        用于该域的可选的排序规则。如果没有指定排序规则，将使用底层
+        数据类型的默认排序规则。如果指定了<code class="literal">COLLATE</code>，
+        底层类型必须是可排序的。
+       </p></dd><dt><span class="term"><code class="literal">DEFAULT <em class="replaceable"><code>expression</code></em></code></span></dt><dd><p>        <code class="literal">DEFAULT</code>子句为该域数据类型的列指定一个默认值。
+        该值是任何没有变量的表达式（但不允许子查询）。默认值表达式
+        的数据类型必须匹配域的数据类型。如果没有指定默认值，那么
+        默认值就是空值。
+       </p><p>        默认值表达式将被用在任何没有指定列值的插入操作中。如果为一个
+        特定列定义了默认值，它会覆盖与域相关的默认值。继而，域默认值
+        会覆盖任何与底层数据类型相关的默认值。
+       </p></dd><dt><span class="term"><code class="literal">CONSTRAINT <em class="replaceable"><code>constraint_name</code></em></code></span></dt><dd><p>        一个约束的名称（可选）。如果没有指定，系统会生成一个名称。
+       </p></dd><dt><span class="term"><code class="literal">NOT NULL</code></span></dt><dd><p>        这个域的值通常不能为空值（但是看看下面的注释）。
+       </p></dd><dt><span class="term"><code class="literal">NULL</code></span></dt><dd><p>        这个域的值允许为空值。这是默认值。
+       </p><p>        这个子句只是为了与非标准 SQL 数据库相兼容而设计。在新的
+        应用中不鼓励使用它。
+       </p></dd><dt><span class="term"><code class="literal">CHECK (<em class="replaceable"><code>expression</code></em>)</code></span></dt><dd><p><code class="literal">CHECK</code>子句指定该域的值必须满足的完整性
+     约束或者测试。每一个约束必须是一个产生布尔结果的表达式。
+     它应该使用关键词<code class="literal">VALUE</code>来引用要被测试的值。计算为
+      TRUE 或者 UNKNOWN 的表达式成功。如果该表达式产生一个 FALSE 
+      结果，会报告一个错误并且该值不允许被转换成该域类型。
+     </p><p>      当前，<code class="literal">CHECK</code>表达式不能包含子查询，也不能
+      引用除<code class="literal">VALUE</code>之外的其他变量。
+     </p><p>      当一个域有多个<code class="literal">CHECK</code>约束，将按照其名字的
+      字母顺序测试它们（版本 9.5 之前的<span class="productname">PostgreSQL</span>
+      不遵循任何用于<code class="literal">CHECK</code>约束的特定触发顺序）。
+     </p></dd></dl></div></div><div class="refsect1" id="idp42958128"><h2>注解</h2><p>   在把一个值转换成域类型时会检查域约束（特别是<code class="literal">NOT NULL</code>）。
+   即使有一个这样的约束，有可能一个名义上属于该域类型的列也会被读成空值。
+   例如，如果在一次外连接查询中，属于该域的列出现在外连接的空值端。下面
+   是一个更精细的例子：
+</p><pre class="programlisting">INSERT INTO tab (domcol) VALUES ((SELECT domcol FROM tab WHERE false));</pre><p>
+   空的标量子-SELECT 将产生一个空值，它被认为是该域类型的值，因此不会
+   在其上应用任何进一步的约束检查，并且插入将会成功。
+  </p><p>   要避免这类问题很难，因为 SQL 的一般假设是空值也是每一种数据类型的合法值。
+   因此，最好的方法是设计一个允许空值的域约束，然后根据需要在该域类型的列上
+   应用列的<code class="literal">NOT NULL</code>约束。
+  </p></div><div class="refsect1" id="idp42962512"><h2>示例</h2><p>   这个例子创建<code class="type">us_postal_code</code>数据类型并且把它用在
+   一个表定义中。一个正则表达式测试被用来验证值是否看起来像一个
+   合法的 US 邮政编码：
+
+</p><pre class="programlisting">CREATE DOMAIN us_postal_code AS TEXT
+CHECK(
+   VALUE ~ '^\d{5}$'
+OR VALUE ~ '^\d{5}-\d{4}$'
+);
+
+CREATE TABLE us_snail_addy (
+  address_id SERIAL PRIMARY KEY,
+  street1 TEXT NOT NULL,
+  street2 TEXT,
+  street3 TEXT,
+  city TEXT NOT NULL,
+  postal us_postal_code NOT NULL
+);</pre></div><div class="refsect1" id="SQL-CREATEDOMAIN-COMPATIBILITY"><h2>兼容性</h2><p>   命令<code class="command">CREATE DOMAIN</code>符合 SQL 标准。
+  </p></div><div class="refsect1" id="SQL-CREATEDOMAIN-SEE-ALSO"><h2>另见</h2><span class="simplelist"><a class="xref" href="sql-alterdomain.html" title="ALTER DOMAIN"><span class="refentrytitle">ALTER DOMAIN</span></a>, <a class="xref" href="sql-dropdomain.html" title="DROP DOMAIN"><span class="refentrytitle">DROP DOMAIN</span></a></span></div></div><div class="navfooter"><hr /><table width="100%" summary="Navigation footer"><tr><td width="40%" align="left"><a accesskey="p" href="sql-createdatabase.html">上一页</a> </td><td width="20%" align="center"><a accesskey="u" href="sql-commands.html">上一级</a></td><td width="40%" align="right"> <a accesskey="n" href="sql-createeventtrigger.html">下一页</a></td></tr><tr><td width="40%" align="left" valign="top">CREATE DATABASE </td><td width="20%" align="center"><a accesskey="h" href="index.html">起始页</a></td><td width="40%" align="right" valign="top"> CREATE EVENT TRIGGER</td></tr></table></div></body></html>

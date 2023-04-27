@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><title>E.245. 版本 8.0.8</title><link rel="stylesheet" type="text/css" href="stylesheet.css" /><link rev="made" href="pgsql-docs@postgresql.org" /><meta name="generator" content="DocBook XSL Stylesheets V1.79.1" /><link rel="prev" href="release-8-0-9.html" title="E.244. 版本 8.0.9" /><link rel="next" href="release-8-0-7.html" title="E.246. 版本 8.0.7" /></head><body><div xmlns="http://www.w3.org/TR/xhtml1/transitional" class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="5" align="center">E.245. 版本 8.0.8</th></tr><tr><td width="10%" align="left"><a accesskey="p" href="release-8-0-9.html" title="E.244. 版本 8.0.9">上一页</a> </td><td width="10%" align="left"><a accesskey="u" href="release.html" title="附录 E. 版本说明">上一级</a></td><th width="60%" align="center">附录 E. 版本说明</th><td width="10%" align="right"><a accesskey="h" href="index.html" title="PostgreSQL 10.1 手册">起始页</a></td><td width="10%" align="right"> <a accesskey="n" href="release-8-0-7.html" title="E.246. 版本 8.0.7">下一页</a></td></tr></table><hr></hr></div><div class="sect1" id="RELEASE-8-0-8"><div class="titlepage"><div><div><h2 class="title" style="clear: both">E.245. 版本 8.0.8</h2></div></div></div><div class="toc"><dl class="toc"><dt><span class="sect2"><a href="release-8-0-8.html#idp81965968">E.245.1. 迁移到版本 8.0.8</a></span></dt><dt><span class="sect2"><a href="release-8-0-8.html#idp81970336">E.245.2. 修改列表</a></span></dt></dl></div><p><strong>发布日期：. </strong>2006-05-23</p><p>这个版本包含各种自8.0.7以来的修复，包括对极其严重安全问题的修复。
+关于8.0主版本的新特性信息，请参阅<a class="xref" href="release-8-0.html" title="E.253. 版本 8.0.0">第 E.253 节</a>。</p><div class="sect2" id="idp81965968"><div class="titlepage"><div><div><h3 class="title">E.245.1. 迁移到版本 8.0.8</h3></div></div></div><p>运行8.0.X的用户不需要转储/恢复。不过，如果你是从一个早于8.0.6的版本升级而来，
+那么请参阅<a class="xref" href="release-8-0-6.html" title="E.247. 版本 8.0.6">第 E.247 节</a>。</p><p>针对CVE-2006-2313中描述的SQL注入攻击的完全安全和CVE-2006-2314
+可能需要在应用代码中改变。如果你有应用嵌入了不可信的字符串到SQL命令中，
+那么你应该尽快检查他们，以确保他们使用的是推荐的转义技术。
+在大多数情况下，应用应该使用库或驱动（如<span class="application">libpq</span>的
+<code class="function">PQescapeStringConn()</code>）提供的子程序执行字符串转义，
+而不是依赖于<span class="foreignphrase"><em class="foreignphrase">ad hoc</em></span>代码执行转义。</p></div><div class="sect2" id="idp81970336"><div class="titlepage"><div><div><h3 class="title">E.245.2. 修改列表</h3></div></div></div><div class="itemizedlist"><ul class="itemizedlist" style="list-style-type: disc; "><li class="listitem"><p>更改服务器以拒绝在所有情况下无效编码的多字节字符 (Tatsuo, Tom)</p><p><span class="productname">PostgreSQL</span>已经朝这个方向发展了一段时间了，
+检查现在一致的应用到所有编码和所有文本输入，并且现在总是错误而不仅仅是警告。
+这个修改防御了CVE-2006-2313中描述的类型的SQL注入攻击。</p></li><li class="listitem"><p>拒绝在字符串文本中不安全的使用<code class="literal">\'</code></p><p>作为服务器端防御CVE-2006-2314中描述的类型的SQL注入攻击，
+服务器现在只接受<code class="literal">''</code>不接受<code class="literal">\'</code>
+作为SQL字符串文本中ASCII单引号的表示。缺省的，仅当<code class="varname">client_encoding</code>
+设置为仅客户端的编码时(SJIS, BIG5, GBK, GB18030, 或 UHC)，
+拒绝<code class="literal">\'</code>，这是SQL注入有可能会发生的情况。
+一个新的配置参数<code class="varname">backslash_quote</code>可以用来在需要时调整这个行为。
+请注意，针对CVE-2006-2314的完全安全可能需要客户端侧的改变；
+<code class="varname">backslash_quote</code>的目的部分是为了让不安全的客户端是不安全的显而易见。</p></li><li class="listitem"><p>修改<span class="application">libpq</span>的字符串转义例程，
+意识到编码注意事项和<code class="varname">standard_conforming_strings</code></p><p>这修复了使用<span class="application">libpq</span>的应用在CVE-2006-2313和CVE-2006-2314
+中描述的安全问题，并且也预防了转换到SQL标准字符串文字语法的计划。
+使用多个并发的<span class="productname">PostgreSQL</span>连接的应用应该迁移到
+<code class="function">PQescapeStringConn()</code>和<code class="function">PQescapeByteaConn()</code>，
+以确保在每个数据库连接中使用的设置正确的做了转义。
+<span class="quote">“<span class="quote">手动</span>”</span>做字符串转义的应用应该被修改为依赖库例程。</p></li><li class="listitem"><p>修复一些不正确的编码转换函数</p><p><code class="function">win1251_to_iso</code>, <code class="function">alt_to_iso</code>,
+<code class="function">euc_tw_to_big5</code>, <code class="function">euc_tw_to_mic</code>,
+<code class="function">mic_to_euc_tw</code>都中断了改变范围。</p></li><li class="listitem"><p>清理字符串中仅剩的<code class="literal">\'</code>的使用 (Bruce, Jan)</p></li><li class="listitem"><p>修复导致OR'd索引扫描有时丢失它们应该返回的行的bug</p></li><li class="listitem"><p>修复btree索引已经被截断时的WAL重放</p></li><li class="listitem"><p>为包含<code class="literal">|</code>的模式修复<code class="literal">SIMILAR TO</code> (Tom)</p></li><li class="listitem"><p>修复<code class="command">SELECT INTO</code>和<code class="command">CREATE TABLE AS</code>，
+以在缺省表空间中创建表，而不是在基本目录中 (Kris Jurka)</p></li><li class="listitem"><p>修复服务器，以正确的使用自定义的DH SSL参数 (Michael Fuhr)</p></li><li class="listitem"><p>字符Intel Macs中的Bonjour (Ashley Clark)</p></li><li class="listitem"><p>修复各种小的内存泄露</p></li><li class="listitem"><p>修复在一些Win32系统上的口令提示问题 (Robert Kinberg)</p></li></ul></div></div></div><div class="navfooter"><hr /><table width="100%" summary="Navigation footer"><tr><td width="40%" align="left"><a accesskey="p" href="release-8-0-9.html">上一页</a> </td><td width="20%" align="center"><a accesskey="u" href="release.html">上一级</a></td><td width="40%" align="right"> <a accesskey="n" href="release-8-0-7.html">下一页</a></td></tr><tr><td width="40%" align="left" valign="top">E.244. 版本 8.0.9 </td><td width="20%" align="center"><a accesskey="h" href="index.html">起始页</a></td><td width="40%" align="right" valign="top"> E.246. 版本 8.0.7</td></tr></table></div></body></html>

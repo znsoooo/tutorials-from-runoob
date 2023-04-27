@@ -1,0 +1,187 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><title>CREATE VIEW</title><link rel="stylesheet" type="text/css" href="stylesheet.css" /><link rev="made" href="pgsql-docs@postgresql.org" /><meta name="generator" content="DocBook XSL Stylesheets V1.79.1" /><link rel="prev" href="sql-createusermapping.html" title="CREATE USER MAPPING" /><link rel="next" href="sql-deallocate.html" title="DEALLOCATE" /></head><body><div xmlns="http://www.w3.org/TR/xhtml1/transitional" class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="5" align="center">CREATE VIEW</th></tr><tr><td width="10%" align="left"><a accesskey="p" href="sql-createusermapping.html" title="CREATE USER MAPPING">上一页</a> </td><td width="10%" align="left"><a accesskey="u" href="sql-commands.html" title="SQL 命令">上一级</a></td><th width="60%" align="center">SQL 命令</th><td width="10%" align="right"><a accesskey="h" href="index.html" title="PostgreSQL 10.1 手册">起始页</a></td><td width="10%" align="right"> <a accesskey="n" href="sql-deallocate.html" title="DEALLOCATE">下一页</a></td></tr></table><hr></hr></div><div class="refentry" id="SQL-CREATEVIEW"><div class="titlepage"></div><a id="idp45823040" class="indexterm"></a><div class="refnamediv"><h2><span class="refentrytitle">CREATE VIEW</span></h2><p>CREATE VIEW — 定义一个新视图</p></div><div class="refsynopsisdiv"><h2>大纲</h2><pre class="synopsis">CREATE [ OR REPLACE ] [ TEMP | TEMPORARY ] [ RECURSIVE ] VIEW <em class="replaceable"><code>name</code></em> [ ( <em class="replaceable"><code>column_name</code></em> [, ...] ) ]
+    [ WITH ( <em class="replaceable"><code>view_option_name</code></em> [= <em class="replaceable"><code>view_option_value</code></em>] [, ... ] ) ]
+    AS <em class="replaceable"><code>query</code></em>
+    [ WITH [ CASCADED | LOCAL ] CHECK OPTION ]</pre></div><div class="refsect1" id="idp45830144"><h2>描述</h2><p>   <code class="command">CREATE VIEW</code>定义一个查询的视图。该视图不会被
+   物理上物质化。相反，在每一次有查询引用该视图时，视图的查询都会被运行。
+  </p><p>   <code class="command">CREATE OR REPLACE VIEW</code>与之相似，但是如果
+   已经存在一个同名视图，该视图会被替换。新查询必须产生和现有试图查询相同
+   的列（也就是相同的列序、相同的列名、相同的数据类型），但是它可以在列表
+   的末尾加上额外的列。产生输出列的计算可以完全不同。
+  </p><p>   如果给定了一个模式名（例如<code class="literal">CREATE VIEW
+   myschema.myview ...</code>），那么该视图会被创建在指定的模式中。否则，它会
+   被创建在当前模式中。临时视图存在于一个特殊模式中，因此创建临时视图时不能
+   给定一个模式名。视图的名称不能与同一模式中任何其他视图、表、序列、索引或
+   外部表同名。
+  </p></div><div class="refsect1" id="idp45835008"><h2>参数</h2><div class="variablelist"><dl class="variablelist"><dt><span class="term"><code class="literal">TEMPORARY</code> or <code class="literal">TEMP</code></span></dt><dd><p>      如果被指定，视图被创建为一个临时视图。在当前会话结束时会自动
+      删掉临时视图。当临时视图存在时，具有相同名称的已有永久视图对
+      当前会话不可见，除非用模式限定的名称引用它们。
+     </p><p>      如果视图引用的任何表是临时的，视图将被创建为临时视图（不管有
+      没有指定<code class="literal">TEMPORARY</code>）。
+     </p></dd><dt><span class="term"><code class="literal">RECURSIVE</code></span></dt><dd><p>      创建一个递归视图。语法
+</p><pre class="synopsis">CREATE RECURSIVE VIEW [ <em class="replaceable"><code>schema</code></em> . ] <em class="replaceable"><code>view_name</code></em> (<em class="replaceable"><code>column_names</code></em>) AS SELECT <em class="replaceable"><code>...</code></em>;</pre><p>
+      等效于
+</p><pre class="synopsis">CREATE VIEW [ <em class="replaceable"><code>schema</code></em> . ] <em class="replaceable"><code>view_name</code></em> AS WITH RECURSIVE <em class="replaceable"><code>view_name</code></em> (<em class="replaceable"><code>column_names</code></em>) AS (SELECT <em class="replaceable"><code>...</code></em>) SELECT <em class="replaceable"><code>column_names</code></em> FROM <em class="replaceable"><code>view_name</code></em>;</pre><p>
+      对于一个递归视图必须指定一个视图列名列表。
+     </p></dd><dt><span class="term"><em class="replaceable"><code>name</code></em></span></dt><dd><p>      要创建的视图的名字（可以是模式限定的）。
+     </p></dd><dt><span class="term"><em class="replaceable"><code>column_name</code></em></span></dt><dd><p>      要用于视图列的名称列表，可选。如果没有给出，列名会根据查询
+      推导。
+     </p></dd><dt><span class="term"><code class="literal">WITH ( <em class="replaceable"><code>view_option_name</code></em> [= <em class="replaceable"><code>view_option_value</code></em>] [, ... ] )</code></span></dt><dd><p>      这个子句为视图指定一些可选的参数，支持下列参数：
+
+      </p><div class="variablelist"><dl class="variablelist"><dt><span class="term"><code class="literal">check_option</code> (<code class="type">string</code>)</span></dt><dd><p>          这个参数可以是<code class="literal">local</code>或者<code class="literal">cascaded</code>，并且它
+          等效于指定
+          <code class="literal">WITH [ CASCADED | LOCAL ] CHECK OPTION</code>（见下文）。
+          可以使用<a class="xref" href="sql-alterview.html" title="ALTER VIEW"><span class="refentrytitle">ALTER VIEW</span></a>在一个现有视图上修改这个选项。
+         </p></dd><dt><span class="term"><code class="literal">security_barrier</code> (<code class="type">boolean</code>)</span></dt><dd><p>          如果希望视图提供行级安全性，应该使用这个参数。详见
+          <a class="xref" href="rules-privileges.html" title="40.5. 规则和权限">第 40.5 节</a>。
+         </p></dd></dl></div><p>
+     </p></dd><dt><span class="term"><em class="replaceable"><code>query</code></em></span></dt><dd><p>      提供视图的行和列的一个<a class="xref" href="sql-select.html" title="SELECT"><span class="refentrytitle">SELECT</span></a>或者
+      <a class="xref" href="sql-values.html" title="VALUES"><span class="refentrytitle">VALUES</span></a>命令。
+     </p></dd><dt><span class="term"><code class="literal">WITH [ CASCADED | LOCAL ] CHECK OPTION</code></span></dt><dd><p>      <a id="idp45864032" class="indexterm"></a>
+      <a id="idp45865232" class="indexterm"></a>
+      这个选项控制自动可更新视图的行为。这个选项被指定时，将检查该视图上的
+      <code class="command">INSERT</code>和<code class="command">UPDATE</code>命令以确保新行满足
+      视图的定义条件（也就是，将检查新行来确保通过视图能看到它们）。如果新行
+      不满足条件，更新将被拒绝。如果没有指定<code class="literal">CHECK OPTION</code>，
+      会允许该视图上的<code class="command">INSERT</code>和<code class="command">UPDATE</code>命令
+      创建通过该视图不可见的行。支持下列检查选项：
+
+      </p><div class="variablelist"><dl class="variablelist"><dt><span class="term"><code class="literal">LOCAL</code></span></dt><dd><p>          只根据直接定义在该视图本身的条件检查新行。任何定义在底层基视图上的
+          条件都不会被检查（除非它们也指定了<code class="literal">CHECK OPTION</code>）。
+         </p></dd><dt><span class="term"><code class="literal">CASCADED</code></span></dt><dd><p>          会根据该视图和所有底层基视图上的条件检查新行。如果
+          <code class="literal">CHECK OPTION</code>被指定，并且没有指定
+          <code class="literal">LOCAL</code>和<code class="literal">CASCADED</code>，则会假定为
+          <code class="literal">CASCADED</code>。
+         </p></dd></dl></div><p>
+     </p><p>      <code class="literal">CHECK OPTION</code>不应该和<code class="literal">RECURSIVE</code>视图一起使用。
+     </p><p>      注意，只有在自动可更新的、没有<code class="literal">INSTEAD OF</code>触发器或者
+      <code class="literal">INSTEAD</code>规则的视图上才支持<code class="literal">CHECK OPTION</code>。
+      如果一个自动可更新的视图被定义在一个具有<code class="literal">INSTEAD OF</code>
+      触发器的基视图之上，那么<code class="literal">LOCAL CHECK OPTION</code>可以被
+      用来检查该自动可更新的视图之上的条件，但具有<code class="literal">INSTEAD OF</code>
+      触发器的基视图上的条件不会被检查（一个级联检查选项将不会级联到一个
+      触发器可更新的视图，并且任何直接定义在一个触发器可更新视图上的检查
+      选项将被忽略）。如果该视图或者任何基础关系具有导致
+      <code class="command">INSERT</code>或<code class="command">UPDATE</code>命令被重写的
+      <code class="literal">INSTEAD</code>规则，那么在被重写的查询中将忽略所有检查选项，
+      包括任何来自于定义在带有<code class="literal">INSTEAD</code>规则的关系之上的自动
+      可更新视图的检查。
+     </p></dd></dl></div></div><div class="refsect1" id="idp45887648"><h2>注解</h2><p>    使用<a class="xref" href="sql-dropview.html" title="DROP VIEW"><span class="refentrytitle">DROP VIEW</span></a>语句删除视图。
+   </p><p>    要小心视图列的名称和类型将会按照你想要的方式指定。例如：
+</p><pre class="programlisting">CREATE VIEW vista AS SELECT 'Hello World';</pre><p>
+    是错误的形式，因为列名默认为<code class="literal">?column?</code>；此外，
+	列数据类型默认为<code class="type">text</code>，这可能不是您想要的。
+	视图结果中字符串文字的更好风格类似于：
+</p><pre class="programlisting">CREATE VIEW vista AS SELECT text 'Hello World' AS hello;</pre><p>
+   </p><p>    对视图中引用的表的访问由视图拥有者的权限决定。在某些情况下，这可以
+    被用来提供安全但是受限的底层表访问。不过，并非所有视图都对篡改是安
+    全的，详见<a class="xref" href="rules-privileges.html" title="40.5. 规则和权限">第 40.5 节</a>。在视图中调用的函数会被
+    同样对待，就好像是直接在使用该视图的查询中调用它们一样。因此，一个
+    视图的用户必须具有调用视图所使用的全部函数的权限。
+   </p><p>    当<code class="command">CREATE OR REPLACE VIEW</code>被用在一个现有视图上时，
+    只有该视图的定义 SELECT 规则被改变。其他包括拥有关系、权限和非
+    SELECT 规则在内的视图属性不会被更改。要替换视图，你必须拥有它（包括
+    作为拥有角色的一个成员）。
+   </p><div class="refsect2" id="SQL-CREATEVIEW-UPDATABLE-VIEWS"><h3>可更新视图</h3><a id="idp45896576" class="indexterm"></a><p>    简单视图是自动可更新的：系统将允许在这类视图上以在常规表上相同的方式
+    使用<code class="command">INSERT</code>、<code class="command">UPDATE</code>以及
+    <code class="command">DELETE</code>语句。如果一个视图满足以下条件，它就是自动
+    可更新的：
+
+    </p><div class="itemizedlist"><ul class="itemizedlist" style="list-style-type: disc; "><li class="listitem"><p>       在该视图的<code class="literal">FROM</code>列表中刚好只有一项，并且它必须是一个
+       表或者另一个可更新视图。
+      </p></li><li class="listitem"><p>       视图定义的顶层不能包含<code class="literal">WITH</code>、<code class="literal">DISTINCT</code>、
+       <code class="literal">GROUP BY</code>、<code class="literal">HAVING</code>、
+       <code class="literal">LIMIT</code>或者<code class="literal">OFFSET</code>子句。
+      </p></li><li class="listitem"><p>       视图定义的顶层不能包含集合操作（<code class="literal">UNION</code>、
+       <code class="literal">INTERSECT</code>或者<code class="literal">EXCEPT</code>）。
+      </p></li><li class="listitem"><p>       视图的选择列表不能包含任何聚集、窗口函数或者集合返回函数。
+      </p></li></ul></div><p>
+   </p><p>    一个自动可更新的视图可以混合可更新列以及不可更新列。如果一个列是对底层
+    基本关系中一个可更新列的简单引用，则它是可更新的。否则该列是只读的，并
+    且在一个<code class="command">INSERT</code>或者<code class="command">UPDATE</code>语句尝试对
+    它赋值时会报出一个错误。
+   </p><p>    如果视图是自动可更新的，系统将把视图上的任何<code class="command">INSERT</code>、
+    <code class="command">UPDATE</code>或者<code class="command">DELETE</code>语句转换成在底层基本关系上的对应语句。
+    带有<code class="literal">ON CONFLICT UPDATE</code>子句的<code class="command">INSERT</code>语句已经被完全支持。
+   </p><p>    如果一个自动可更新视图包含一个<code class="literal">WHERE</code>条件，
+    该条件会限制基本关系的哪些行可以被该视图上的<code class="command">UPDATE</code>以及
+    <code class="command">DELETE</code>语句修改。不过，一个允许被<code class="command">UPDATE</code>
+    修改的行可能让该行不再满足<code class="literal">WHERE</code>条件，
+    并且因此也不再能从视图中可见。类似地，一个<code class="command">INSERT</code>
+    命令可能插入不满足<code class="literal">WHERE</code>条件的基本关系行，
+    并且因此从视图中也看不到这些行（<code class="literal">ON CONFLICT UPDATE</code>
+    可能会类似地影响无法通过该视图见到的现有行）。
+    <code class="literal">CHECK OPTION</code>可以被用来阻止<code class="command">INSERT</code>和
+    <code class="command">UPDATE</code>命令创建这类从视图中无法看到的行。
+   </p><p>    如果一个自动可更新视图被标记了<code class="literal">security_barrier</code>属性，那么
+    所有该属性的<code class="literal">WHERE</code>条件（以及任何使用标记为
+    <code class="literal">LEAKPROOF</code>的操作符的条件）将在该视图使用者的任何条件
+    之前计算。详见<a class="xref" href="rules-privileges.html" title="40.5. 规则和权限">第 40.5 节</a>。注意正因为这样，不会
+    被最终返回的行（因为它们不会通过用户的<code class="literal">WHERE</code>条件）可能
+    仍会结束被锁定的状态。可以用<code class="command">EXPLAIN</code>来查看
+    哪些条件被应用在关系层面（并且因此不锁定行）以及哪些不会被应用在关系
+    层面。
+   </p><p>    一个更加复杂的不满足所有这些条件的视图默认是只读的：系统将不允许在
+    该视图上的插入、更新或者删除。可以通过在该视图上创建一个
+    <code class="literal">INSTEAD OF</code>触发器来获得可更新视图的效果，该触发器必须
+    把该视图上的尝试的插入等转换成其他表上合适的动作。更多信息请见<a class="xref" href="sql-createtrigger.html" title="CREATE TRIGGER"><span class="refentrytitle">CREATE TRIGGER</span></a>。另一种可能性是创建规则（见
+    <a class="xref" href="sql-createrule.html" title="CREATE RULE"><span class="refentrytitle">CREATE RULE</span></a>），不过实际中触发器更容易理解和正确使用。
+   </p><p>    注意在视图上执行插入、更新或删除的用户必须具有该视图上相应的插入、
+    更新或删除特权。此外，视图的拥有者必须拥有底层基本关系上的相关特权，
+    但是执行更新的用户并不需要底层基本关系上的任何权限（见
+    <a class="xref" href="rules-privileges.html" title="40.5. 规则和权限">第 40.5 节</a>）。
+   </p></div></div><div class="refsect1" id="idp45934704"><h2>示例</h2><p>   创建一个由所有喜剧电影组成的视图：
+
+</p><pre class="programlisting">CREATE VIEW comedies AS
+    SELECT *
+    FROM films
+    WHERE kind = 'Comedy';</pre><p>
+   创建的视图包含创建时<code class="literal">film</code>表中的列。尽管<code class="literal">*</code>
+   被用来创建该视图，后来被加入到该表中的列不会成为该视图的组成部分。
+  </p><p>   创建带有<code class="literal">LOCAL CHECK OPTION</code>的视图：
+
+</p><pre class="programlisting">CREATE VIEW universal_comedies AS
+    SELECT *
+    FROM comedies
+    WHERE classification = 'U'
+    WITH LOCAL CHECK OPTION;</pre><p>
+   这将创建一个基于<code class="literal">comedies</code>视图的视图，只显示
+   <code class="literal">kind = 'Comedy'</code>和<code class="literal">classification = 'U'</code>的电影。
+   如果新行没有<code class="literal">classification = 'U'</code>，在该视图中的任何
+   <code class="command">INSERT</code>或<code class="command">UPDATE</code>尝试将被拒绝，
+   但是电影的<code class="literal">kind</code>将不会被检查。
+  </p><p>   用<code class="literal">CASCADED CHECK OPTION</code>创建一个视图：
+
+</p><pre class="programlisting">CREATE VIEW pg_comedies AS
+    SELECT *
+    FROM comedies
+    WHERE classification = 'PG'
+    WITH CASCADED CHECK OPTION;</pre><p>
+   这将创建一个检查新行的<code class="literal">kind</code>和<code class="literal">classification</code>
+   的视图。
+  </p><p>   创建一个由可更新列和不可更新列混合而成的视图：
+
+</p><pre class="programlisting">CREATE VIEW comedies AS
+    SELECT f.*,
+           country_code_to_name(f.country_code) AS country,
+           (SELECT avg(r.rating)
+            FROM user_ratings r
+            WHERE r.film_id = f.id) AS avg_rating
+    FROM films f
+    WHERE f.kind = 'Comedy';</pre><p>
+   这个视图将支持<code class="command">INSERT</code>、<code class="command">UPDATE</code>
+   以及<code class="command">DELETE</code>。所有来自于<code class="literal">films</code>表的列都
+   将是可更新的，而计算列<code class="literal">country</code>和<code class="literal">avg_rating</code>
+   将是只读的。
+  </p><p>   创建一个由数字 1 到 100 组成的递归视图：
+</p><pre class="programlisting">CREATE RECURSIVE VIEW public.nums_1_100 (n) AS
+    VALUES (1)
+UNION ALL
+    SELECT n+1 FROM nums_1_100 WHERE n &lt; 100;</pre><p>
+   请注意，虽然递归视图的名称在此<code class="command">CREATE</code>中进行了模式限定，
+   但其内部自引用不是模式限定的。这是因为隐式创建的CTE的名称不能被模式限定。
+  </p></div><div class="refsect1" id="idp45956384"><h2>兼容性</h2><p>   <code class="command">CREATE OR REPLACE VIEW</code>是一种
+   <span class="productname">PostgreSQL</span>的语言扩展。临时
+   视图的概念也是这样。<code class="literal">WITH ( ... )</code>子句也是一种扩展。
+  </p></div><div class="refsect1" id="idp45959280"><h2>另见</h2><span class="simplelist"><a class="xref" href="sql-alterview.html" title="ALTER VIEW"><span class="refentrytitle">ALTER VIEW</span></a>, <a class="xref" href="sql-dropview.html" title="DROP VIEW"><span class="refentrytitle">DROP VIEW</span></a>, <a class="xref" href="sql-creatematerializedview.html" title="CREATE MATERIALIZED VIEW"><span class="refentrytitle">CREATE MATERIALIZED VIEW</span></a></span></div></div><div class="navfooter"><hr /><table width="100%" summary="Navigation footer"><tr><td width="40%" align="left"><a accesskey="p" href="sql-createusermapping.html">上一页</a> </td><td width="20%" align="center"><a accesskey="u" href="sql-commands.html">上一级</a></td><td width="40%" align="right"> <a accesskey="n" href="sql-deallocate.html">下一页</a></td></tr><tr><td width="40%" align="left" valign="top">CREATE USER MAPPING </td><td width="20%" align="center"><a accesskey="h" href="index.html">起始页</a></td><td width="40%" align="right" valign="top"> DEALLOCATE</td></tr></table></div></body></html>

@@ -1,0 +1,118 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><title>pg_basebackup</title><link rel="stylesheet" type="text/css" href="stylesheet.css" /><link rev="made" href="pgsql-docs@postgresql.org" /><meta name="generator" content="DocBook XSL Stylesheets V1.79.1" /><link rel="prev" href="app-ecpg.html" title="ecpg" /><link rel="next" href="pgbench.html" title="pgbench" /></head><body><div xmlns="http://www.w3.org/TR/xhtml1/transitional" class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="5" align="center">pg_basebackup</th></tr><tr><td width="10%" align="left"><a accesskey="p" href="app-ecpg.html" title="ecpg">上一页</a> </td><td width="10%" align="left"><a accesskey="u" href="reference-client.html" title="PostgreSQL 客户端应用">上一级</a></td><th width="60%" align="center">PostgreSQL 客户端应用</th><td width="10%" align="right"><a accesskey="h" href="index.html" title="PostgreSQL 10.1 手册">起始页</a></td><td width="10%" align="right"> <a accesskey="n" href="pgbench.html" title="pgbench">下一页</a></td></tr></table><hr></hr></div><div class="refentry" id="APP-PGBASEBACKUP"><div class="titlepage"></div><a id="idp50362352" class="indexterm"></a><div class="refnamediv"><h2><span class="refentrytitle">pg_basebackup</span></h2><p>pg_basebackup — 获得一个<span class="productname">PostgreSQL</span>集簇的一个基础备份</p></div><div class="refsynopsisdiv"><h2>大纲</h2><div class="cmdsynopsis"><p id="idp50365920"><code class="command">pg_basebackup</code> [<em class="replaceable"><code>option</code></em>...]</p></div></div><div class="refsect1" id="idp50367776"><h2>   描述
+  </h2><p>   <span class="application">pg_basebackup</span>被用于获得一个正在运行的<span class="productname">PostgreSQL</span>数据库集簇的基础备份。获得这些备份不会影响连接到该数据库的其他客户端，并且可以被用于时间点恢复（见<a class="xref" href="continuous-archiving.html" title="25.3. 连续归档和时间点恢复（PITR）">第 25.3 节</a>）以及用作一个日志传送或流复制后备服务器的开始点（见<a class="xref" href="warm-standby.html" title="26.2. 日志传送后备服务器">第 26.2 节</a>）。
+  </p><p>   <span class="application">pg_basebackup</span>建立数据库集簇文件的一份二进制副本，同时保证系统进入和退出备份模式。备份总是从整个数据库集簇获得，不可能备份单个数据库或数据库对象。关于个体数据库备份，必须使用一个像<a class="xref" href="app-pgdump.html" title="pg_dump"><span class="refentrytitle">pg_dump</span></a>的工具。
+  </p><p>   备份通过一个常规<span class="productname">PostgreSQL</span>连接制作，并且使用复制协议。该连接必须由一个超级用户或者一个具有<code class="literal">REPLICATION</code>权限（<a class="xref" href="role-attributes.html" title="21.2. 角色属性">第 21.2 节</a>）的用户建立，并且<code class="filename">pg_hba.conf</code>必须显式地允许该复制连接。
+   该服务器还必须被配置，使<a class="xref" href="runtime-config-replication.html#GUC-MAX-WAL-SENDERS">max_wal_senders</a>
+   设置得足够高以留出至少一个会话用于备份，一个用于WAL流（如果使用）。
+  </p><p>   在同一时间可以有多个<code class="command">pg_basebackup</code>运行，但是从性能的角度来说最好只做一个备份并且复制结果。
+  </p><p>   <span class="application">pg_basebackup</span>不仅能从主控机也能从后备机创建一个基础备份。要从后备机获得一个备份，设置后备机让它能接受复制连接（也就是，设置<code class="varname">max_wal_senders</code>和<a class="xref" href="runtime-config-replication.html#GUC-HOT-STANDBY">hot_standby</a>，并且配置<a class="link" href="auth-pg-hba-conf.html" title="20.1. pg_hba.conf文件">基于主机的认证</a>）。你将也需要在主控机上启用<a class="xref" href="runtime-config-wal.html#GUC-FULL-PAGE-WRITES">full_page_writes</a>。
+  </p><p>   注意在来自后备机的在线备份中有一些限制：
+
+   </p><div class="itemizedlist"><ul class="itemizedlist" style="list-style-type: disc; "><li class="listitem"><p>      不会在被备份的数据库集簇中创建备份历史文件。
+     </p></li><li class="listitem"><p>      如果正在使用<code class="literal">-X none</code>，不保证备份所需的所有 WAL 文件在备份结束时被归档。
+     </p></li><li class="listitem"><p>      如果在在线备份期间后备机被提升为主控机，备份会失败。
+     </p></li><li class="listitem"><p>      备份所需的所有 WAL 记录必须包含足够的全页写，这要求你在主控机上启用<code class="varname">full_page_writes</code>并且不使用一个类似<span class="application">pg_compresslog</span>的工具以<code class="varname">archive_command</code>从 WAL 文件中移除全页写。
+     </p></li></ul></div><p>
+  </p></div><div class="refsect1" id="idp50387728"><h2>选项</h2><p>    下列命令行选项控制输出的位置和格式。
+
+    </p><div class="variablelist"><dl class="variablelist"><dt><span class="term"><code class="option">-D <em class="replaceable"><code>directory</code></em></code><br /></span><span class="term"><code class="option">--pgdata=<em class="replaceable"><code>directory</code></em></code></span></dt><dd><p>        将输出写到哪个目录。如果必要，<span class="application">pg_basebackup</span>将创建该目录及任何父目录。该目录可能已经存在，但是如果该目录已经存在并且非空就是一个错误。
+       </p><p>        当备份处于 tar 模式中并且目录被指定为<code class="literal">-</code>（破折号）时，tar 文件将被写到<code class="literal">stdout</code>。
+       </p><p>        这个选项是必需的。
+       </p></dd><dt><span class="term"><code class="option">-F <em class="replaceable"><code>format</code></em></code><br /></span><span class="term"><code class="option">--format=<em class="replaceable"><code>format</code></em></code></span></dt><dd><p>        为输出选择格式。<em class="replaceable"><code>format</code></em>可以是下列之一：
+
+        </p><div class="variablelist"><dl class="variablelist"><dt><span class="term"><code class="literal">p</code><br /></span><span class="term"><code class="literal">plain</code></span></dt><dd><p>            把输出写成平面文件，使用和当前数据目录和表空间相同的布局。当集簇没有额外表空间时，整个数据库将被放在目标目录中。如果集簇包含额外的表空间，主数据目录将被放置在目标目录中，但是所有其他表空间将被放在它们位于服务器上的相同的绝对路径中。
+           </p><p>            这是默认格式。
+           </p></dd><dt><span class="term"><code class="literal">t</code><br /></span><span class="term"><code class="literal">tar</code></span></dt><dd><p>            将输出写成目标目录中的 tar 文件。主数据目录将被写入到一个名为<code class="filename">base.tar</code>的文件中，并且其他表空间将被以其 OID 命名。
+            </p><p>            如果值<code class="literal">-</code>（破折号）被指定为目标目录，tar 内容将被写到标准输出，适合于管道输出到其他程序，例如<span class="productname">gzip</span>。
+			只有当集簇没有额外表空间并且没有使用WAL流时这才是可能的。
+           </p></dd></dl></div></dd><dt><span class="term"><code class="option">-r <em class="replaceable"><code>rate</code></em></code><br /></span><span class="term"><code class="option">--max-rate=<em class="replaceable"><code>rate</code></em></code></span></dt><dd><p>        从该服务器传输数据的最大传输率。值的单位是千字节每秒。加上一个后缀<code class="literal">M</code>表示兆字节每秒。也接受后缀<code class="literal">k</code>，但是没有效果。合法的值在 32 千字节每秒到 1024 兆字节每秒之间。
+       </p><p>        其目标是限制在运行服务器上的<span class="application">pg_basebackup</span>产生的影响。
+       </p><p>        这个选项总是会影响数据目录的传输。如果收集方法是<code class="literal">fetch</code>时，只有 WAL 文件受到影响。
+       </p></dd><dt><span class="term"><code class="option">-R</code><br /></span><span class="term"><code class="option">--write-recovery-conf</code></span></dt><dd><p>        在输出目录中（或者当使用 tar 格式时再基础归档文件中）写一个最小的<code class="filename">recovery.conf</code>来简化设置一个后备服务器。<code class="filename">recovery.conf</code>文件将记录连接设置（如果有）以及<span class="application">pg_basebackup</span>所使用的复制槽，这样流复制后面就会使用相同的设置。
+       </p></dd><dt><span class="term"><code class="option">-S <em class="replaceable"><code>slotname</code></em></code><br /></span><span class="term"><code class="option">--slot=<em class="replaceable"><code>slotname</code></em></code></span></dt><dd><p>        这个选项只能和<code class="literal">-X stream</code>一起使用。它导致 WAL 流使用指定的复制槽。如果该基础备份意图用作一个使用复制槽的流复制后备服务器，它应该使用<code class="filename">recovery.conf</code>中相同的复制槽名称。那样就可以确保服务器不会移除基础备份结束和流复制开始之前任何必要的 WAL 数据。
+       </p><p>        如果未指定此选项并且服务器支持临时复制插槽（版本10及更高版本），
+		则自动使用临时复制插槽进行WAL流式传输。
+       </p></dd><dt><span class="term"><code class="option">--no-slot</code></span></dt><dd><p>        此选项可防止在备份过程中创建临时复制插槽，即使它受服务器支持。
+       </p><p>        如果在使用日志流时未使用选项<code class="option">-S</code>给出插槽名称，
+		则会默认创建临时复制插槽。
+       </p><p>        此选项的主要目的是在服务器没有空闲复制插槽时允许进行基本备份。
+		使用复制插槽几乎总是首选，因为它可以防止备份期间服务器删除所需的WAL。
+       </p></dd><dt><span class="term"><code class="option">-T <em class="replaceable"><code>olddir</code></em>=<em class="replaceable"><code>newdir</code></em></code><br /></span><span class="term"><code class="option">--tablespace-mapping=<em class="replaceable"><code>olddir</code></em>=<em class="replaceable"><code>newdir</code></em></code></span></dt><dd><p>        在备份期间将目录<em class="replaceable"><code>olddir</code></em>中的表空间重定位到<em class="replaceable"><code>newdir</code></em>中。为使之有效，<em class="replaceable"><code>olddir</code></em>必须正好匹配表空间所在的路径（但如果备份中没有包含<em class="replaceable"><code>olddir</code></em>中的表空间也不是错误）。<em class="replaceable"><code>olddir</code></em>和<em class="replaceable"><code>newdir</code></em>必须是绝对路径。如果一个路径凑巧包含了一个<code class="literal">=</code>符号，可用反斜线对它转义。对于多个表空间可以多次使用这个选项。例子见下文。
+       </p><p>        如果以这种方法重定位一个表空间，主数据目录中的符号链接会被更新成指向新位置。因此新数据目录已经可以被一个所有表空间位于更新后位置的新服务器实例使用。
+        </p></dd><dt><span class="term"><code class="option">--waldir=<em class="replaceable"><code>waldir</code></em></code></span></dt><dd><p>        指定用于预写日志目录的位置。<em class="replaceable"><code>waldir</code></em>必须是绝对路径。只有当备份是平面文件模式时才能指定预写日志目录。
+       </p></dd><dt><span class="term"><code class="option">-X <em class="replaceable"><code>method</code></em></code><br /></span><span class="term"><code class="option">--wal-method=<em class="replaceable"><code>method</code></em></code></span></dt><dd><p>        在备份中包括所需的预写日志文件（WAL 文件）。这将包括所有在备份期间产生的预写日志。
+		除非指定了方法<code class="literal">none</code>，可以在抽取出的目录中直接启动一个 postmaster，而不需要参考日志归档，因此使得这是一个完全独立的备份。
+       </p><p>        我们支持下列收集预写日志的方法：
+
+        </p><div class="variablelist"><dl class="variablelist"><dt><span class="term"><code class="literal">n</code><br /></span><span class="term"><code class="literal">none</code></span></dt><dd><p>            不要在备份中包含预写日志。
+           </p></dd><dt><span class="term"><code class="literal">f</code><br /></span><span class="term"><code class="literal">fetch</code></span></dt><dd><p>            在备份末尾收集预写日志文件。因此，有必要把<a class="xref" href="runtime-config-replication.html#GUC-WAL-KEEP-SEGMENTS">wal_keep_segments</a>参数设置得足够高，这样在备份末尾之前日志不会被移除。如果在要传输日志时它已经被轮转，备份将失败并且是不可用的。
+           </p><p>            预写日志文件将写入<code class="filename">base.tar</code>文件。
+           </p></dd><dt><span class="term"><code class="literal">s</code><br /></span><span class="term"><code class="literal">stream</code></span></dt><dd><p>            在备份被创建时流传送预写日志。这将开启一个到服务器的第二连接并且在运行备份时并行开始流传输预写日志。
+			因此，它将使用最多两个由<a class="xref" href="runtime-config-replication.html#GUC-MAX-WAL-SENDERS">max_wal_senders</a>参数配置的连接。
+			只要客户端能保持接收预写日志，使用这种模式不需要在主控机上保存额外的预写日志。
+           </p><p>            预写日志文件被写入一个名为<code class="filename">pg_wal.tar</code>的单独文件
+			（如果服务器版本早于10，该文件的名称为<code class="filename">pg_xlog.tar</code>）。
+           </p><p>            该值是默认值。
+           </p></dd></dl></div><p>
+       </p></dd><dt><span class="term"><code class="option">-z</code><br /></span><span class="term"><code class="option">--gzip</code></span></dt><dd><p>        启用对 tar 文件输出的 gzip 压缩，使用默认的压缩级别。只有使用 tar 格式时压缩才可用，
+		并且后缀<code class="filename">.gz</code>将自动添加到所有tar文件名。
+       </p></dd><dt><span class="term"><code class="option">-Z <em class="replaceable"><code>level</code></em></code><br /></span><span class="term"><code class="option">--compress=<em class="replaceable"><code>level</code></em></code></span></dt><dd><p>        启用对 tar 文件输出的 gzip 压缩，并且制定压缩机别（0 到 9，0 是不压缩，9 是最佳压缩）。只有使用 tar 格式时压缩才可用，
+		并且后缀<code class="filename">.gz</code>将自动添加到所有tar文件名。
+       </p></dd></dl></div><p>
+   </p><p>    下列命令行选项控制备份的生成和程序的运行。
+
+    </p><div class="variablelist"><dl class="variablelist"><dt><span class="term"><code class="option">-c <em class="replaceable"><code>fast|spread</code></em></code><br /></span><span class="term"><code class="option">--checkpoint=<em class="replaceable"><code>fast|spread</code></em></code></span></dt><dd><p>        将检查点模式设置为 fast （立即）或 spread（默认）（见<a class="xref" href="continuous-archiving.html#BACKUP-LOWLEVEL-BASE-BACKUP" title="25.3.3. 使用低级API制作一个基础备份">第 25.3.3 节</a>）。
+       </p></dd><dt><span class="term"><code class="option">-l <em class="replaceable"><code>label</code></em></code><br /></span><span class="term"><code class="option">--label=<em class="replaceable"><code>label</code></em></code></span></dt><dd><p>        为备份设置标签。如果没有指定，将使用一个默认值<span class="quote">“<span class="quote"><code class="literal">pg_basebackup base backup</code></span>”</span>。
+       </p></dd><dt><span class="term"><code class="option">-n</code><br /></span><span class="term"><code class="option">--no-clean</code></span></dt><dd><p>        默认情况下，当<code class="command">pg_basebackup</code>中止并出现错误时，
+		它会在发现它无法完成作业（例如，数据目录和预写日志目录）
+		之前删除它可能创建的所有目录。该选项禁止整理，因此对于调试非常有用。
+       </p><p>        请注意，表空间目录不会以任何方式清理。
+       </p></dd><dt><span class="term"><code class="option">-P</code><br /></span><span class="term"><code class="option">--progress</code></span></dt><dd><p>        启用进度报告。启用这个选项将在备份期间发表一个大致的进度报告。由于数据库可能在备份期间改变，这仅仅是一种近似并且可能不会刚好在<code class="literal">100%</code>结束。特别地，当 WAL 日志被包括在备份中时，总数据量无法预先估计，并且在这种情况中估计的目标尺寸会在它经过不带 WAL 的总估计后增加。
+       </p><p>        当这个选项被启用时，备份开始时会列举整个数据库的尺寸，并且接着回头开始发送实际的内容。这可能使备份需要多花一点点时间，并且它在发送第一个数据之前花费的时间更长。
+       </p></dd><dt><span class="term"><code class="option">-N</code><br /></span><span class="term"><code class="option">--no-sync</code></span></dt><dd><p>        默认情况下，<code class="command">pg_basebackup</code>将等待所有文件安全写入磁盘。
+		这个选项会导致<code class="command">pg_basebackup</code>无需等待而返回，这更快，
+		但意味着后续的操作系统崩溃可能会导致基础备份损坏。通常，
+		此选项对测试非常有用，但在创建生产安装时不应使用此选项。
+       </p></dd><dt><span class="term"><code class="option">-v</code><br /></span><span class="term"><code class="option">--verbose</code></span></dt><dd><p>        启用冗长模式。将在启动和关闭期间输出一些额外步骤，并且如果进度报告也被启用，还会显示当前正在被处理的确切文件名。
+       </p></dd></dl></div><p>
+   </p><p>    下列命令行选项控制数据库连接参数。
+
+    </p><div class="variablelist"><dl class="variablelist"><dt><span class="term"><code class="option">-d <em class="replaceable"><code>connstr</code></em></code><br /></span><span class="term"><code class="option">--dbname=<em class="replaceable"><code>connstr</code></em></code></span></dt><dd><p>        以一个连接字符串的形式指定用于连接到服务器的参数。详见<a class="xref" href="libpq-connect.html#LIBPQ-CONNSTRING" title="33.1.1. 连接字符串">第 33.1.1 节</a>。
+       </p><p>        为了和其他客户端应用一致，该选项被称为<code class="literal">--dbname</code>。但是因为<span class="application">pg_basebackup</span>并不连接到集簇中的任何特定数据库，连接字符串中的数据库名将被忽略。
+       </p></dd><dt><span class="term"><code class="option">-h <em class="replaceable"><code>host</code></em></code><br /></span><span class="term"><code class="option">--host=<em class="replaceable"><code>host</code></em></code></span></dt><dd><p>        指定运行服务器的机器的主机名。如果该值以一个斜线开始，它被用作 Unix 域套接字的目录。默认值取自<code class="envar">PGHOST</code>环境变量（如果设置），否则会尝试一个 Unix 域套接字连接。
+       </p></dd><dt><span class="term"><code class="option">-p <em class="replaceable"><code>port</code></em></code><br /></span><span class="term"><code class="option">--port=<em class="replaceable"><code>port</code></em></code></span></dt><dd><p>        指定服务器正在监听连接的 TCP 端口或本地 Unix 域套接字文件扩展。默认用<code class="envar">PGPORT</code>环境变量中的值（如果设置），或者一个编译在程序中的默认值。
+       </p></dd><dt><span class="term"><code class="option">-s <em class="replaceable"><code>interval</code></em></code><br /></span><span class="term"><code class="option">--status-interval=<em class="replaceable"><code>interval</code></em></code></span></dt><dd><p>        指定发送回服务器的状态包之间的秒数。这允许我们更容易地监控服务器的进度。一个零值完全禁用这种周期性的状态更新，不过当服务器需要时还是会有一个更新会被发送来避免超时导致的断开连接。默认值是 10 秒。
+       </p></dd><dt><span class="term"><code class="option">-U <em class="replaceable"><code>username</code></em></code><br /></span><span class="term"><code class="option">--username=<em class="replaceable"><code>username</code></em></code></span></dt><dd><p>        要作为哪个用户连接。
+       </p></dd><dt><span class="term"><code class="option">-w</code><br /></span><span class="term"><code class="option">--no-password</code></span></dt><dd><p>        从不发出一个口令提示。如果服务器要求口令认证并且没有其他方式提供口令（例如一个<code class="filename">.pgpass</code>文件），那儿连接尝试将失败。这个选项对于批处理任务和脚本有用，因为在其中没有一个用户来输入口令。
+       </p></dd><dt><span class="term"><code class="option">-W</code><br /></span><span class="term"><code class="option">--password</code></span></dt><dd><p>        强制<span class="application">pg_basebackup</span>在连接到一个数据库之前提示要求一个口令。
+       </p><p>        这个选项不是必不可少的，因为如果服务器要求口令认证，<span class="application">pg_basebackup</span>将自动提示要求一个口令。但是，<span class="application">pg_basebackup</span>将浪费一次连接尝试来发现服务器想要一个口令。在某些情况下值得用<code class="option">-W</code>来避免额外的连接尝试。
+       </p></dd></dl></div><p>
+   </p><p>    其他选项也可用：
+
+    </p><div class="variablelist"><dl class="variablelist"><dt><span class="term"><code class="option">-V</code><br /></span><span class="term"><code class="option">--version</code></span></dt><dd><p>       打印<span class="application">pg_basebackup</span>版本并退出。
+       </p></dd><dt><span class="term"><code class="option">-?</code><br /></span><span class="term"><code class="option">--help</code></span></dt><dd><p>       显示有关<span class="application">pg_basebackup</span>命令行参数的帮助并退出。
+       </p></dd></dl></div><p>
+   </p></div><div class="refsect1" id="idp50502624"><h2>环境</h2><p>   和大部分其他<span class="productname">PostgreSQL</span>工具相似，这个工具也使用<span class="application">libpq</span>（见<a class="xref" href="libpq-envars.html" title="33.14. 环境变量">第 33.14 节</a>）支持的环境变量。
+  </p></div><div class="refsect1" id="idp50505536"><h2>注解</h2><p>   在备份开始时，需要在获取备份的服务器上写入一个检查点。特别是如果未使用选项
+   <code class="literal">--checkpoint=fast</code>，则可能需要一些时间，在这段时间内，
+   <span class="application">pg_basebackup</span>将显示为空闲状态。
+  </p><p>   备份将包括数据目录和表空间中的所有文件，
+   包括配置文件以及第三方放置在该目录中的任何附加文件，除了由PostgreSQL管理的某些临时文件。
+   但是只复制常规文件和目录，除了保留用于表空间的符号链接。
+   指向PostgreSQL已知的某些目录的符号链接被复制为空目录。
+   其他符号链接和特殊的设备文件会被跳过（细节见<a class="xref" href="protocol-replication.html" title="52.4. 流复制协议">第 52.4 节</a>）。
+  </p><p>   表空间默认将以普通格式备份到与它们在服务器上相同的路径中，除非使用了<code class="literal">--tablespace-mapping</code>选项。如果没有这个选项并且表空间正在使用，在同一台服务器上进行普通格式的基础备份将无法工作，因为备份必须要写入到与原始表空间相同的目录位置。
+  </p><p>   在使用 tar 格式模式时，用户应负责在启动 PostgreSQL 服务器前解压每一个 tar 文件。如果有额外的表空间，用于它们的 tar 文件需要被解压到正确的位置。在这种情况下，服务器将根据包含在<code class="filename">base.tar</code>文件中的<code class="filename">tablespace_map</code>文件的内容为那些表空间创建符号链接。
+  </p><p>   <span class="application">pg_basebackup</span>可以和具有相同或较低主版本的服务器一起工作，最低是 9.1。但是，WAL 流模式（<code class="literal">-X 流</code>）只能和版本为 9.3 及以上版本的服务器一起工作。当前版本的 tar 格式模式（<code class="literal">--format=tar</code>）只能用于版本 9.5 及以上的服务器。
+  </p></div><div class="refsect1" id="idp50515776"><h2>例子</h2><p>   要创建服务器<code class="literal">mydbserver</code>的一个基础备份并将它存储在本地目录<code class="filename">/usr/local/pgsql/data</code>中：
+</p><pre class="screen"><code class="prompt">$</code> <strong class="userinput"><code>pg_basebackup -h mydbserver -D /usr/local/pgsql/data</code></strong></pre><p>
+  </p><p>   要创建本地服务器的一个备份，为其中每一个表空间产生一个压缩过的 tar 文件，并且将它存储在目录<code class="filename">backup</code>中，在运行期间显示一个进度报告：
+</p><pre class="screen"><code class="prompt">$</code> <strong class="userinput"><code>pg_basebackup -D backup -Ft -z -P</code></strong></pre><p>
+  </p><p>   要创建一个单一表空间本地数据库的备份并且使用<span class="productname">bzip2</span>压缩它：
+</p><pre class="screen"><code class="prompt">$</code> <strong class="userinput"><code>pg_basebackup -D - -Ft -X fetch | bzip2 &gt; backup.tar.bz2</code></strong></pre><p>
+   （如果在该数据库中有多个表空间，这个命令将失败）。
+  </p><p>   要创建一个本地数据库的备份，其中<code class="filename">/opt/ts</code>中的表空间被重定位到<code class="filename">./backup/ts</code>：
+</p><pre class="screen"><code class="prompt">$</code> <strong class="userinput"><code>pg_basebackup -D backup/data -T /opt/ts=$(pwd)/backup/ts</code></strong></pre><p>
+  </p></div><div class="refsect1" id="idp50529552"><h2>参见</h2><span class="simplelist"><a class="xref" href="app-pgdump.html" title="pg_dump"><span class="refentrytitle">pg_dump</span></a></span></div></div><div class="navfooter"><hr /><table width="100%" summary="Navigation footer"><tr><td width="40%" align="left"><a accesskey="p" href="app-ecpg.html">上一页</a> </td><td width="20%" align="center"><a accesskey="u" href="reference-client.html">上一级</a></td><td width="40%" align="right"> <a accesskey="n" href="pgbench.html">下一页</a></td></tr><tr><td width="40%" align="left" valign="top"><span class="application">ecpg</span> </td><td width="20%" align="center"><a accesskey="h" href="index.html">起始页</a></td><td width="40%" align="right" valign="top"> <span class="application">pgbench</span></td></tr></table></div></body></html>

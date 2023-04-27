@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><title>E.22. 版本 9.4.14</title><link rel="stylesheet" type="text/css" href="stylesheet.css" /><link rev="made" href="pgsql-docs@postgresql.org" /><meta name="generator" content="DocBook XSL Stylesheets V1.79.1" /><link rel="prev" href="release-9-4-15.html" title="E.21. 版本 9.4.15" /><link rel="next" href="release-9-4-13.html" title="E.23. 版本 9.4.13" /></head><body><div xmlns="http://www.w3.org/TR/xhtml1/transitional" class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="5" align="center">E.22. 版本 9.4.14</th></tr><tr><td width="10%" align="left"><a accesskey="p" href="release-9-4-15.html" title="E.21. 版本 9.4.15">上一页</a> </td><td width="10%" align="left"><a accesskey="u" href="release.html" title="附录 E. 版本说明">上一级</a></td><th width="60%" align="center">附录 E. 版本说明</th><td width="10%" align="right"><a accesskey="h" href="index.html" title="PostgreSQL 10.1 手册">起始页</a></td><td width="10%" align="right"> <a accesskey="n" href="release-9-4-13.html" title="E.23. 版本 9.4.13">下一页</a></td></tr></table><hr></hr></div><div class="sect1" id="RELEASE-9-4-14"><div class="titlepage"><div><div><h2 class="title" style="clear: both">E.22. 版本 9.4.14</h2></div></div></div><div class="toc"><dl class="toc"><dt><span class="sect2"><a href="release-9-4-14.html#idp66661680">E.22.1. 迁移到版本 9.4.14</a></span></dt><dt><span class="sect2"><a href="release-9-4-14.html#idp66663568">E.22.2. 修改列表</a></span></dt></dl></div><p><strong>发布日期: </strong>2017-08-31</p><p>   此版本包含9.4.13中的少量修复程序。
+   有关9.4主要版本中的新功能的信息，请查看
+   <a class="xref" href="release-9-4.html" title="E.36. 版本 9.4">第 E.36 节</a>。
+  </p><div class="sect2" id="idp66661680"><div class="titlepage"><div><div><h3 class="title">E.22.1. 迁移到版本 9.4.14</h3></div></div></div><p>    运行9.4.X的用户不需要转储/恢复。
+   </p><p>    但是，如果您从早于9.4.13的版本进行升级，
+	请查看<a class="xref" href="release-9-4-13.html" title="E.23. 版本 9.4.13">第 E.23 节</a>。
+   </p></div><div class="sect2" id="idp66663568"><div class="titlepage"><div><div><h3 class="title">E.22.2. 修改列表</h3></div></div></div><div class="itemizedlist"><ul class="itemizedlist" style="list-style-type: disc; "><li class="listitem"><p>      修复walsender进程响应关闭信号的失败
+      (Marco Nenciarini)
+     </p><p>      错过的标志更新导致walsenders在连接了备用服务器的情况下继续运行，
+	  阻止主服务器关闭，除非使用立即关闭模式。
+     </p></li><li class="listitem"><p>      在<code class="structname">information_schema</code>.<code class="structname">table_privileges</code>
+      视图中显示外部表 (Peter Eisentraut)
+     </p><p>      所有其他相关的<code class="structname">information_schema</code>视图都包含外部表，
+	  但是这个视图忽略了它们。
+     </p><p>      由于这个视图定义是由<span class="application">initdb</span>安装的，
+	  所以升级不会解决问题。如果您需要在现有安装中修复此问题，
+	  则可以作为超级用户在<span class="application">psql</span>中执行此操作：
+</p><pre class="programlisting">SET search_path TO information_schema;
+CREATE OR REPLACE VIEW table_privileges AS
+    SELECT CAST(u_grantor.rolname AS sql_identifier) AS grantor,
+           CAST(grantee.rolname AS sql_identifier) AS grantee,
+           CAST(current_database() AS sql_identifier) AS table_catalog,
+           CAST(nc.nspname AS sql_identifier) AS table_schema,
+           CAST(c.relname AS sql_identifier) AS table_name,
+           CAST(c.prtype AS character_data) AS privilege_type,
+           CAST(
+             CASE WHEN
+                  -- object owner always has grant options
+                  pg_has_role(grantee.oid, c.relowner, 'USAGE')
+                  OR c.grantable
+                  THEN 'YES' ELSE 'NO' END AS yes_or_no) AS is_grantable,
+           CAST(CASE WHEN c.prtype = 'SELECT' THEN 'YES' ELSE 'NO' END AS yes_or_no) AS with_hierarchy
+
+    FROM (
+            SELECT oid, relname, relnamespace, relkind, relowner, (aclexplode(coalesce(relacl, acldefault('r', relowner)))).* FROM pg_class
+         ) AS c (oid, relname, relnamespace, relkind, relowner, grantor, grantee, prtype, grantable),
+         pg_namespace nc,
+         pg_authid u_grantor,
+         (
+           SELECT oid, rolname FROM pg_authid
+           UNION ALL
+           SELECT 0::oid, 'PUBLIC'
+         ) AS grantee (oid, rolname)
+
+    WHERE c.relnamespace = nc.oid
+          AND c.relkind IN ('r', 'v', 'f')
+          AND c.grantee = grantee.oid
+          AND c.grantor = u_grantor.oid
+          AND c.prtype IN ('INSERT', 'SELECT', 'UPDATE', 'DELETE', 'TRUNCATE', 'REFERENCES', 'TRIGGER')
+          AND (pg_has_role(u_grantor.oid, 'USAGE')
+               OR pg_has_role(grantee.oid, 'USAGE')
+               OR grantee.rolname = 'PUBLIC');</pre><p>
+      这必须在每个要修复的数据库中重复，包括<code class="literal">template0</code>。
+     </p></li><li class="listitem"><p>      清除在尝试执行失败事务的<code class="command">ROLLBACK</code>时发生的致命退出
+	  （例如，由于收到<span class="systemitem">SIGTERM</span>） (Tom Lane)
+     </p><p>      这种情况可能导致断言失败。在生产构建中，退出仍然会发生，
+	  但它会记录一条有关<span class="quote">“<span class="quote">cannot drop active portal</span>”</span>的意外消息。
+     </p></li><li class="listitem"><p>      删除可能在致命退出期间触发的断言 (Tom Lane)
+     </p></li><li class="listitem"><p>      根据要搜索的复合类型或域类型正确识别范围类型或域类型的列 (Tom Lane)
+     </p><p>      如果在数据库中存储了该类型的任何存储值，那么更改组合类型或域类型的定义的某些
+	  <code class="command">ALTER</code>命令应该失败，因为它们缺少更新或检查此类值所需的基础结构。
+	  以前，这些检查可能会遗漏包含在范围类型或子域内的相关值，可能会导致数据库变得不一致。
+     </p></li><li class="listitem"><p>      在使用并行模式并使用列表文件选择要恢复的项目子集时，
+	  修复<span class="application">pg_restore</span>中的崩溃
+      (Fabrízio de Royes Mello)
+     </p></li><li class="listitem"><p>      将<span class="application">ecpg</span>的解析器更改为允许<code class="literal">RETURNING</code>子句，
+	  而不附加C变量 (Michael Meskes)
+     </p><p>      这允许<span class="application">ecpg</span>程序包含内部使用<code class="literal">RETURNING</code>
+	  的SQL构造（例如，在CTE内部），而不是使用它来定义要返回给客户端的值。
+     </p></li><li class="listitem"><p>      在Windows上改进PL/Perl编译器标志的选择 (Tom Lane)
+     </p><p>      此修复可避免由于对<code class="type">time_t</code>值的宽度假设不一致而导致PL/Perl的可能崩溃。
+	  扩展开发人员可能会看到的一个副作用是，在<span class="productname">PostgreSQL</span> Windows
+	  版本中不再全局定义<code class="literal">_USE_32BIT_TIME_T</code>。这不会引起问题，
+	  因为在<span class="productname">PostgreSQL</span> API定义中不使用<code class="type">time_t</code>类型。
+     </p></li></ul></div></div></div><div class="navfooter"><hr /><table width="100%" summary="Navigation footer"><tr><td width="40%" align="left"><a accesskey="p" href="release-9-4-15.html">上一页</a> </td><td width="20%" align="center"><a accesskey="u" href="release.html">上一级</a></td><td width="40%" align="right"> <a accesskey="n" href="release-9-4-13.html">下一页</a></td></tr><tr><td width="40%" align="left" valign="top">E.21. 版本 9.4.15 </td><td width="20%" align="center"><a accesskey="h" href="index.html">起始页</a></td><td width="40%" align="right" valign="top"> E.23. 版本 9.4.13</td></tr></table></div></body></html>

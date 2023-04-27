@@ -1,0 +1,317 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><title>26.5. 热备</title><link rel="stylesheet" type="text/css" href="stylesheet.css" /><link rev="made" href="pgsql-docs@postgresql.org" /><meta name="generator" content="DocBook XSL Stylesheets V1.79.1" /><link rel="prev" href="log-shipping-alternative.html" title="26.4. 日志传送的替代方法" /><link rel="next" href="recovery-config.html" title="第 27 章 恢复配置" /></head><body><div xmlns="http://www.w3.org/TR/xhtml1/transitional" class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="5" align="center">26.5. 热备</th></tr><tr><td width="10%" align="left"><a accesskey="p" href="log-shipping-alternative.html" title="26.4. 日志传送的替代方法">上一页</a> </td><td width="10%" align="left"><a accesskey="u" href="high-availability.html" title="第 26 章 高可用、负载均衡和复制">上一级</a></td><th width="60%" align="center">第 26 章 高可用、负载均衡和复制</th><td width="10%" align="right"><a accesskey="h" href="index.html" title="PostgreSQL 10.1 手册">起始页</a></td><td width="10%" align="right"> <a accesskey="n" href="recovery-config.html" title="第 27 章 恢复配置">下一页</a></td></tr></table><hr></hr></div><div class="sect1" id="HOT-STANDBY"><div class="titlepage"><div><div><h2 class="title" style="clear: both">26.5. 热备</h2></div></div></div><div class="toc"><dl class="toc"><dt><span class="sect2"><a href="hot-standby.html#HOT-STANDBY-USERS">26.5.1. 用户概览</a></span></dt><dt><span class="sect2"><a href="hot-standby.html#HOT-STANDBY-CONFLICT">26.5.2. 处理查询冲突</a></span></dt><dt><span class="sect2"><a href="hot-standby.html#HOT-STANDBY-ADMIN">26.5.3. 管理员概览</a></span></dt><dt><span class="sect2"><a href="hot-standby.html#HOT-STANDBY-PARAMETERS">26.5.4. 热备参数参考</a></span></dt><dt><span class="sect2"><a href="hot-standby.html#HOT-STANDBY-CAVEATS">26.5.5. 警告</a></span></dt></dl></div><a id="idp24981072" class="indexterm"></a><p>    术语热备用来描述服务器处于归档恢复或后备模式时连接到服务器并运行只读查询的能力。
+    这有助于复制目的以及以高精度恢复一个备份到一个期望的状态。
+    术语热备也指服务器从恢复转移到正常操作而用户能继续运行查询并且保持其连接打开的能力。
+   </p><p>    在热备模式中运行查询与正常查询操作相似，尽管如下所述存在一些用法和管理上的区别。
+   </p><div class="sect2" id="HOT-STANDBY-USERS"><div class="titlepage"><div><div><h3 class="title">26.5.1. 用户概览</h3></div></div></div><p>    当<a class="xref" href="runtime-config-replication.html#GUC-HOT-STANDBY">hot_standby</a>参数在一台后备服务器上被设置为真时，
+    一旦恢复将系统带到一个一致的状态它将开始接受连接。
+    所有这些连接都被限制为只读，甚至临时表都不能被写入。
+   </p><p>    后备服务器上的数据需要一些时间从主服务器到达后备服务器，
+    因此在主服务器和后备服务器之间将有一段可以度量的延迟。
+    近乎同时在主服务器和后备服务器上运行相同的查询可能因此而返回不同的结果。
+    我们说后备服务器上的数据与主服务器是<em class="firstterm">最终一致</em>的。
+    一旦一个事务的提交记录在后备服务器上被重放，
+    那个事务所作的修改将对后备服务器上所有新取得的快照可见。
+    快照可以在每个查询或每个事务的开始时取得，这取决于当前的事务隔离级别。
+    详见<a class="xref" href="transaction-iso.html" title="13.2. 事务隔离">第 13.2 节</a>。
+   </p><p>    在热备期间开始的事务可能发出下列命令：
+
+    </p><div class="itemizedlist"><ul class="itemizedlist" style="list-style-type: disc; "><li class="listitem"><p>       查询访问 - <code class="command">SELECT</code>、<code class="command">COPY TO</code>
+      </p></li><li class="listitem"><p>       游标命令 - <code class="command">DECLARE</code>、<code class="command">FETCH</code>、<code class="command">CLOSE</code>
+      </p></li><li class="listitem"><p>       参数 - <code class="command">SHOW</code>、<code class="command">SET</code>、<code class="command">RESET</code>
+      </p></li><li class="listitem"><p>      事务管理命令
+        </p><div class="itemizedlist"><ul class="itemizedlist" style="list-style-type: circle; "><li class="listitem"><p>           <code class="command">BEGIN</code>, <code class="command">END</code>, <code class="command">ABORT</code>, <code class="command">START TRANSACTION</code>
+          </p></li><li class="listitem"><p>           <code class="command">SAVEPOINT</code>, <code class="command">RELEASE</code>, <code class="command">ROLLBACK TO SAVEPOINT</code>
+          </p></li><li class="listitem"><p>           <code class="command">EXCEPTION</code>块或其他内部子事务
+          </p></li></ul></div><p>
+      </p></li><li class="listitem"><p>       <code class="command">LOCK TABLE</code>，不过只在下列模式之一中明确发出：
+       <code class="literal">ACCESS SHARE</code>、<code class="literal">ROW SHARE</code> 或 <code class="literal">ROW EXCLUSIVE</code>.
+      </p></li><li class="listitem"><p>       计划和资源 - <code class="command">PREPARE</code>、<code class="command">EXECUTE</code>、
+       <code class="command">DEALLOCATE</code>、<code class="command">DISCARD</code>
+      </p></li><li class="listitem"><p>       插件和扩展 - <code class="command">LOAD</code>
+      </p></li></ul></div><p>
+   </p><p>  在热备期间开始的事务将不会被分配一个事务 ID 并且不能被写入到系统的预写式日志。
+  因此，下列动作将产生错误消息：
+
+    </p><div class="itemizedlist"><ul class="itemizedlist" style="list-style-type: disc; "><li class="listitem"><p>       数据操纵语言（DML） - <code class="command">INSERT</code>、
+       <code class="command">UPDATE</code>、<code class="command">DELETE</code>、<code class="command">COPY FROM</code>、
+       <code class="command">TRUNCATE</code>。注意在恢复期间不允许导致触发器被执行的动作。
+       这个限制甚至被应用到临时表，因为不分配事务 ID 表行就不能被读或写，
+       而当前不可能在一个热备环境中分配事务 ID。
+      </p></li><li class="listitem"><p>       数据定义语言（DDL） - <code class="command">CREATE</code>、
+       <code class="command">DROP</code>、<code class="command">ALTER</code>、<code class="command">COMMENT</code>。
+       这个限制甚至被应用到临时表，因为执行这些操作会要求更新系统目录表。
+      </p></li><li class="listitem"><p>       <code class="command">SELECT ... FOR SHARE | UPDATE</code>，
+       因为不更新底层数据文件就无法取得行锁。
+      </p></li><li class="listitem"><p>       <code class="command">SELECT</code>语句上的能产生 DML 命令的规则。
+      </p></li><li class="listitem"><p>        显式请求一个高于<code class="literal">ROW EXCLUSIVE MODE</code>的模式的<code class="command">LOCK</code>。
+      </p></li><li class="listitem"><p>       默认短形式的<code class="command">LOCK</code>，因为它请求<code class="literal">ACCESS EXCLUSIVE MODE</code>。
+      </p></li><li class="listitem"><p>显式设置非只读状态的事务管理命令：
+        </p><div class="itemizedlist"><ul class="itemizedlist" style="list-style-type: circle; "><li class="listitem"><p>            <code class="command">BEGIN READ WRITE</code>,
+            <code class="command">START TRANSACTION READ WRITE</code>
+          </p></li><li class="listitem"><p>            <code class="command">SET TRANSACTION READ WRITE</code>,
+            <code class="command">SET SESSION CHARACTERISTICS AS TRANSACTION READ WRITE</code>
+          </p></li><li class="listitem"><p>           <code class="command">SET transaction_read_only = off</code>
+          </p></li></ul></div><p>
+      </p></li><li class="listitem"><p>       两阶段提交命令 - <code class="command">PREPARE TRANSACTION</code>、
+       <code class="command">COMMIT PREPARED</code>、<code class="command">ROLLBACK PREPARED</code>，
+       因为即使只读事务也需要在准备阶段（两阶段提交中的第一个阶段）写 WAL。
+      </p></li><li class="listitem"><p>       序列更新 - <code class="function">nextval()</code>、<code class="function">setval()</code>
+      </p></li><li class="listitem"><p>       <code class="command">LISTEN</code>, <code class="command">UNLISTEN</code>, <code class="command">NOTIFY</code>
+      </p></li></ul></div><p>
+   </p><p>    在正常操作中，<span class="quote">“<span class="quote">只读</span>”</span>事务被允许使用<code class="command">LISTEN</code>、
+    <code class="command">UNLISTEN</code>和<code class="command">NOTIFY</code>，
+    因此热备会话在比普通只读会话对操作的限制更紧一点的限制下操作。
+    这些限制中的某些可能会在一个未来的发行中被放松。
+   </p><p>    在热备期间，参数<code class="varname">transaction_read_only</code>总是为真并且不可以被改变。
+    但是只要不尝试修改数据库，热备期间的连接工作起来更像其他数据库连接。
+    如果发生故障转移或切换，该数据库将切换到正常处理模式。
+    当服务器改变模式时会话将保持连接。一旦热备结束，它将可以发起读写事务
+    （即使是一个在热备期间启动的会话）。
+   </p><p>    用户将可以通过发出<code class="command">SHOW transaction_read_only</code>
+    来了解他们的会话是不是只读的。此外，一组函数
+    （<a class="xref" href="functions-admin.html#FUNCTIONS-RECOVERY-INFO-TABLE" title="表 9.80. 恢复信息函数">表 9.80</a>）
+    允许用户访问关于后备服务器的信息。这些允许你编写关心数据库当前状态的程序。
+    这些可以被用来监控恢复的进度，或者允许你编写恢复数据库到特定状态的复杂程序。
+   </p></div><div class="sect2" id="HOT-STANDBY-CONFLICT"><div class="titlepage"><div><div><h3 class="title">26.5.2. 处理查询冲突</h3></div></div></div><p>    主服务器和后备服务器在多方面都松散地连接在一起。
+    主服务器上的动作将在后备服务器上产生效果。结果是在它们之间有潜在的负作用或冲突。
+    最容易理解的冲突是性能：如果在主服务器上发生一次大数据量的载入，
+    那么这将在后备服务器上产生一个相似的 WAL 记录流，
+    因而后备服务器查询可能要竞争系统资源（例如 I/O）。
+   </p><p>    随着热备发生的还可能有其他类型的冲突。对于可能需要被取消的查询和（某些情况中）
+    解决它们的已断开会话来说，这些冲突是<span class="emphasis"><em>硬冲突</em></span>。
+    用户可以用几种方式来处理这种冲突。冲突情况包括：
+
+      </p><div class="itemizedlist"><ul class="itemizedlist" style="list-style-type: disc; "><li class="listitem"><p>         在主服务器上取得了访问排他锁，包括显式<code class="command">LOCK</code>命令和多种
+         <acronym class="acronym">DDL</acronym>动作，与后备查询中的表访问冲突。
+        </p></li><li class="listitem"><p>         在主服务器上删除一个表空间与使用该表空间存储临时工作文件的后备查询冲突。
+        </p></li><li class="listitem"><p>         在主服务器上删除一个数据库与在后备服务器上连接到该数据库的会话冲突。
+        </p></li><li class="listitem"><p>         从 WAL 清除记录的应用与快照仍能<span class="quote">“<span class="quote">看见</span>”</span>任意要被移除的行的后备事务冲突。
+        </p></li><li class="listitem"><p>         从 WAL 清除记录的应用与在后备服务器上访问该目标页的查询冲突，不管要被移除的数据是否为可见。
+        </p></li></ul></div><p>
+   </p><p>    在主服务器上，这些情况仅仅会导致等待；并且用户可以选择取消这些冲突动作中间的一个。
+    但是，在后备服务器上则没有选择：已被 WAL 记录的动作已经在主服务器上发生，
+    那么后备服务器不能在应用它时失败。此外，允许 WAL 应用无限等待是非常不可取的，
+    因为后备服务器的状态将变得逐渐远远落后于主服务器的状态。因此，
+    提供了一种机制来强制性地取消与要被应用的 WAL 记录冲突的后备查询。
+   </p><p>    该问题情形的一个例子是主服务器上的一位管理员在一个表上运行<code class="command">DROP TABLE</code>，
+    而该表正在后备服务器上被查询。如果<code class="command">DROP TABLE</code>被应用在后备服务器上，
+    很明显该后备查询不能继续。如果这种情况在主服务器上发生，<code class="command">DROP TABLE</code>
+    将等待直到其他查询结束。但是当<code class="command">DROP TABLE</code>被运行在主服务器上，
+    主服务器没有关于运行在后备服务器上查询的信息，
+    因此它将不会等待任何这样的后备查询。
+    WAL 改变记录在后备查询还在运行时来到后备服务器上，导致一个冲突。
+    后备服务器必须要么延迟 WAL 记录的应用（还有它们之后的任何事情），
+    要么取消冲突查询这样<code class="command">DROP TABLE</code>可以被应用。
+   </p><p>    当一个冲突查询很短时，我们通常期望能延迟 WAL 应用一小会儿让它完成；
+    但是在 WAL 应用中的一段长的延迟通常是不受欢迎的。因此取消机制有参数，
+    <a class="xref" href="runtime-config-replication.html#GUC-MAX-STANDBY-ARCHIVE-DELAY">max_standby_archive_delay</a>和
+    <a class="xref" href="runtime-config-replication.html#GUC-MAX-STANDBY-STREAMING-DELAY">max_standby_streaming_delay</a>，
+    它们定义了在 WAL 应用中的最大允许延迟。
+    当应用任何新收到的 WAL 数据花费了超过相关延迟设置值时，冲突查询将被取消。
+    设立两个参数是为了对从一个归档读取 WAL 数据
+    （即来自一个基础备份的初始恢复或者<span class="quote">“<span class="quote">追赶</span>”</span>一个已经落后很远的后备服务器）
+    和通过流复制读取 WAL数据的两种情况指定不同的延迟值。
+   </p><p>    在一台后备服务器上这主要是为了该可用性而存在，最好把延迟参数设置得比较短，
+    这样服务器不会由于后备查询导致的延迟落后主服务器太远。但是，
+    如果该后备服务器是为了执行长时间运行的查询，则一个较高甚至无限的延迟值更好。
+    但是记住如果一个长时间运行的查询延迟了 WAL 记录的应用，
+    它可能导致后备服务器上的其他会话无法看到主服务器上最近的改变。
+   </p><p>    一旦<code class="varname">max_standby_archive_delay</code>或<code class="varname">max_standby_streaming_delay</code>
+    指定的延迟被超越，冲突查询将被取消。这通常仅导致一个取消错误，
+    尽管在重放一个<code class="command">DROP DATABASE</code>的情况下整个冲突会话都将被中断。
+    另外，如果冲突发生在一个被空闲事务持有的锁上，该冲突会话会被中断
+    （这种行为可能在未来被改变）。
+   </p><p>    被取消的查询可能会立即重试（当然是在开始一个新的事务后）。
+    因为查询取消依赖于 WAL 记录被重放的本质，如果一个被取消的查询被再次执行，
+    它可能会很好地成功完成。
+   </p><p>    记住延迟参数是从 WAL 数据被后备服务器收到后流逝的时间。因此，
+    留给后备服务器上任何一个查询的宽限期从不会超过延迟参数，
+    并且如果后备服务器已经由于等待之前的查询完成而落后或者因为过重的更新负载而无法跟上主服务器，
+    宽限期可能会更少。
+   </p><p>    在后备查询和 WAL 重放之间发生冲突的最常见原因是<span class="quote">“<span class="quote">过早清除</span>”</span>。正常地，
+    <span class="productname">PostgreSQL</span>允许在没有事务需要看到旧行版本时对它们进行清除，
+    这样可以保证根据 MVCC 规则的正确的数据可见性。不过，
+    这个规则只能被应用于执行在主控机上的事务。
+    因此有可能主控机上的清除会移除对一个后备服务器事务还可见的行版本。
+   </p><p>    有经验的用户应当注意行版本清除和行版本冻结都可能与后备查询冲突。
+    即便在一个没有被更新或被删除行的表上运行一次手工<code class="command">VACUUM FREEZE</code>
+    也可能导致冲突。
+   </p><p>    用户应当清楚，主服务器上被正常和重度更新的表将快速地导致后备服务器上长时间运行的查询被取消。
+    在这样的情况下，<code class="varname">max_standby_archive_delay</code>或
+    <code class="varname">max_standby_streaming_delay</code>的有限制值可以被视作
+    <code class="varname">statement_timeout</code>设置。
+   </p><p>    如果发现后备查询取消的数量不可接受，还是有补救的可能。第一种选项是设置参数
+    <code class="varname">hot_standby_feedback</code>，它阻止<code class="command">VACUUM</code>
+    移除最近死亡的元组并且因此不会产生清除冲突。如果你这样做，你应当
+    注意这将使主服务器上的死亡元组清除被延迟，
+    并且你仍然能够享受将执行分流到后备服务器的好处。如果后备服务器频繁地连接和
+    断开，你可能想要做些调整来处理无法提供<code class="varname">hot_standby_feedback</code>
+    反馈的时期。例如，考虑增加<code class="varname">max_standby_archive_delay</code>，这样
+    在断开连接的期间查询就不会快速地被 WAL 归档文件中的冲突取消。你也应该考虑
+    增加<code class="varname">max_standby_streaming_delay</code>来避免重新连接后新到达的流
+    WAL 项导致的快速取消。
+   </p><p>    另一个选项是增加主服务器上的<a class="xref" href="runtime-config-replication.html#GUC-VACUUM-DEFER-CLEANUP-AGE">vacuum_defer_cleanup_age</a>，
+    这样死亡行不会像平常那么快地被清理。
+    这将允许在后备服务器上的查询能在被取消前有更多时间执行，
+    并且不需要设置一个很高的<code class="varname">max_standby_streaming_delay</code>。但是，
+    这种方法很难保证任何指定的执行时间窗口，因为<code class="varname">vacuum_defer_cleanup_age</code>
+    是用主服务器上被执行的事务数来衡量的。
+   </p><p>    查询取消的数量和原因可以使用后备服务器上的<code class="structname">pg_stat_database_conflicts</code>
+    系统视图查看。<code class="structname">pg_stat_database</code>系统视图也包含汇总信息。
+   </p></div><div class="sect2" id="HOT-STANDBY-ADMIN"><div class="titlepage"><div><div><h3 class="title">26.5.3. 管理员概览</h3></div></div></div><p>如果<code class="varname">hot_standby</code>在<code class="filename">postgresql.conf</code>中为
+<code class="literal">on</code>（默认值）并且存在一个<code class="filename">recovery.conf</code>文件，
+服务器将运行在热备模式。但是，可能需要一些时间来允许热备连接，
+因为在服务器完成足够的恢复来为查询提供一个一致的状态之前，
+它将不会接受连接。在此期间，尝试连接的客户端将被一个错误消息拒绝。
+要确认服务器已经可连接，要么循环地从应用尝试连接，
+要么在服务器日志中查找这些消息：
+
+</p><pre class="programlisting">LOG:  entering standby mode
+
+... then some time later ...
+
+LOG:  consistent recovery state reached
+LOG:  database system is ready to accept read only connections</pre><p>
+
+    在主服务器上，一旦创建一个检查点，一致性信息就被记录下来。
+    当读取在特定时段（当在主服务器上<code class="varname">wal_level</code>没有被设置为
+    <code class="literal">hot_standby</code>或者<code class="literal">logical</code>的期间）产生的 WAL 时无法启用热备。
+    在同时存在这些条件时，到达一个一致状态也会被延迟：
+
+      </p><div class="itemizedlist"><ul class="itemizedlist" style="list-style-type: disc; "><li class="listitem"><p>         一个写事务有超过 64 个子事务
+        </p></li><li class="listitem"><p>         生存时间非常长的写事务
+        </p></li></ul></div><p>
+
+如果你正在运行基于文件的日志传送（“温备”），你可能需要等到下一个 WAL 文件到达，
+这可能和主服务器上的<code class="varname">archive_timeout</code>设置一样长。
+   </p><p>    如果后备服务器上某些参数在主服务器上已经被改变，它们的设置将需要重新配置。
+    对这些参数，在后备服务器上的值必须等于或者大于主服务器上的值。
+    如果这些参数没有被设置得足够高，后备服务器将拒绝开始。
+    较高的值被提供之后，服务器重新启动再次开始恢复。这些参数是：
+
+    </p><div class="itemizedlist"><ul class="itemizedlist" style="list-style-type: disc; "><li class="listitem"><p>         <code class="varname">max_connections</code>
+        </p></li><li class="listitem"><p>         <code class="varname">max_prepared_transactions</code>
+        </p></li><li class="listitem"><p>         <code class="varname">max_locks_per_transaction</code>
+        </p></li><li class="listitem"><p>         <code class="varname">max_worker_processes</code>
+        </p></li></ul></div><p>
+   </p><p>    管理员为<a class="xref" href="runtime-config-replication.html#GUC-MAX-STANDBY-ARCHIVE-DELAY">max_standby_archive_delay</a>和
+    <a class="xref" href="runtime-config-replication.html#GUC-MAX-STANDBY-STREAMING-DELAY">max_standby_streaming_delay</a>选择适当的设置很重要。
+    最好的选择取决于业务的优先级。例如如果服务器主要的任务是作为高可用服务器，
+    那么你将想要低延迟设置，甚至是零（尽管它是一个非常激进的设置）。
+    如果后备服务器的任务是作为一个用于决策支持查询的额外服务器，
+    那么将其最大延迟值设置为很多小时甚至 -1 （表示无限等待）可能都是可以接受的。
+   </p><p>    在主服务器上写出的事务状态 "hint bits" 是不被 WAL 记录的，
+    因此后备服务器上的数据将可能重新写出该提示。这样，即使所有用户都是只读的，
+    后备服务器仍将执行磁盘写操作；但数据值本身并没有发生改变。
+    用户将仍写出大的排序临时文件并且重新生成 relcache 信息文件，
+    这样在热备模式中数据库没有哪个部分是真正只读的。还要注意使用
+    <span class="application">dblink</span>模块写到远程数据库以及其他使用
+    PL 函数位于数据库之外的操作仍将可用，即使该事务是本地只读的。
+   </p><p>在恢复模式期间，下列类型的管理命令是不被接受的：
+      </p><div class="itemizedlist"><ul class="itemizedlist" style="list-style-type: disc; "><li class="listitem"><p>         数据定义语言（DDL） - 如<code class="command">CREATE INDEX</code>
+        </p></li><li class="listitem"><p>         特权和所有权 - <code class="command">GRANT</code>、<code class="command">REVOKE</code>、<code class="command">REASSIGN</code>
+        </p></li><li class="listitem"><p>         维护命令 - <code class="command">ANALYZE</code>、<code class="command">VACUUM</code>、<code class="command">CLUSTER</code>、<code class="command">REINDEX</code>
+        </p></li></ul></div><p>
+   </p><p>    注意这些命令中的某些实际上在主服务器上的“只读”模式事务期间是被允许的。
+   </p><p>    结果是，你无法创建只存在于后备服务器上的额外索引以及统计信息。
+    如果需要这些管理命令，它们应该在主服务器上被执行，
+    并且最后那些改变将被传播到后备服务器。
+   </p><p>    <code class="function">pg_cancel_backend()</code>和<code class="function">pg_terminate_backend()</code>
+    将在用户后端上工作，而不是执行恢复的 Startup 进程。
+    <code class="structname">pg_stat_activity</code>不会把恢复事务显示为活动。结果是在恢复期间
+    <code class="structname">pg_prepared_xacts</code>总是为空。
+    如果你希望解决不能确定的预备事务，查看主服务器上的
+    <code class="literal">pg_prepared_xacts</code>并且发出命令来解决那里的事务或在恢复结束后解决它们。
+   </p><p>    和平常一样，<code class="structname">pg_locks</code>将显示被后端持有的锁。
+    <code class="structname">pg_locks</code>也会显示一个由 Startup 进程管理的虚拟事务，
+    它拥有被恢复重放的事务所持有的所有<code class="literal">AccessExclusiveLocks</code>。
+    注意 Startup 进程不请求锁来做数据库更改，并且因此对于 Startup 进程除
+    <code class="literal">AccessExclusiveLocks</code>之外的锁不显示在
+    <code class="structname">pg_locks</code>中，它们仅被假定存在。
+   </p><p>    <span class="productname">Nagios</span>的插件<span class="productname">check_pgsql</span>将可以工作，
+    因为它检查的简单信息是存在的。<span class="productname">check_postgres</span>
+    监控脚本也将能工作，尽管某些被报告的值可能给出不同或者混乱的结果。
+    例如，上一次清理时间将不会被维护，因为在后备服务器上不会发生清理。
+    在主服务器上运行的清理仍会把它们的改变发送给后备服务器。
+   </p><p>    WAL 文件控制命令在恢复期间将不会工作，
+    如<code class="function">pg_start_backup</code>、<code class="function">pg_switch_wal</code>等。
+   </p><p>    可动态载入的模块可以工作，包括<code class="structname">pg_stat_statements</code>。
+   </p><p>    咨询锁在恢复期间工作正常，包括死锁检测。注意咨询锁从来都不会被 WAL 记录，
+    因此在主服务器或后备服务器上一个咨询锁不可能会与 WAL 重放发生冲突。
+    也不可能会在主服务器上获得一个咨询锁并且在后备服务器上开始一个相似的咨询锁。
+    咨询锁只与它们被取得的那个服务器相关。
+   </p><p>    基于触发器的复制系统（如<span class="productname">Slony</span>、<span class="productname">Londiste</span>
+    和<span class="productname">Bucardo</span>）将根本不会运行在后备服务器上，
+    然而只要改变不被发送到要被应用的后备服务器，它们将在主服务器上运行得很好。
+    WAL 重放不是基于触发器的，
+    因此你不能用后备服务器接替任何需要额外数据库写操作或依赖触发器使用的系统。
+   </p><p>    新的 OID 不能被分配，然而某些<acronym class="acronym">UUID</acronym>生成器仍然能工作，
+    只要它们不依赖于向数据库写新的状态。
+   </p><p>    当前，在只读事务期间不允许创建临时表，因此在某些情况中现有的脚本将不会正确运行。
+    这个限制可能会在稍后的发行中被放松。这既是一个 SQL 标准符合问题也是一个技术问题。
+   </p><p>    只有在表空间为空时<code class="command">DROP TABLESPACE</code>才能成功。
+    某些后备服务器用户可能正在通过他们的<code class="varname">temp_tablespaces</code>
+    参数使用该表空间。如果在该表空间中有临时文件，
+    所有活动查询将被取消来保证临时文件被移除，
+    这样该表空间可以被移除并且 WAL 重放可以继续。
+   </p><p>    在主服务器上运行<code class="command">DROP DATABASE</code>或
+    <code class="command">ALTER DATABASE ... SET TABLESPACE</code>将产生一个 WAL 项，
+    它将导致所有连接到后备服务器上那个数据库的用户被强制地断开连接。
+    这个动作会立即发生，不管<code class="varname">max_standby_streaming_delay</code>的设置是什么。
+    注意<code class="command">ALTER DATABASE ... RENAME</code>不会断开用户，
+    这在大部分情况中不会有提示，然而如果它依赖某种基于数据库名的方法，
+    在某些情况中会导致程序混乱。
+   </p><p>    在普通（非恢复）模式中，如果你为具有登录能力的角色发出<code class="command">DROP USER</code>
+    或<code class="command">DROP ROLE</code>，而该用户仍然连接着，则对已连接用户不会发生任何事情 - 
+    他们保持连接。但是用户不能重新连接。这种行为也适用于恢复，
+    因此在主服务器上的一次<code class="command">DROP USER</code>不会使后备服务器上的用户断开。
+   </p><p>    在恢复期间统计收集器是活动的。所有扫描、读、阻塞、
+    索引使用等将在后备服务器上被正常的记录。
+    被重放的动作将不会重复它们在主服务器上的效果，
+    因此重放一个插入将不会导致pg_stat_user_tables的 Inserts 列上的递增。
+    在恢复的开始 stats 文件会被删除，因此来自主服务器和后备服务器的 stats 将不同；
+    这被认为是一种特性而不是缺陷。
+   </p><p>    在恢复期间自动清理不是活动的。它将在恢复末尾正常启动。
+   </p><p>    后台写入器在恢复期间是活动的并且将执行重启点（与主服务器上的检查点相似）
+    以及正常的块清洁活动。这可以包括存储在后备服务器上的提示位信息的更新。
+    在恢复期间，<code class="command">CHECKPOINT</code>命令会被接受，
+    然而它会执行一个重启点而不是一个新的检查点。
+   </p></div><div class="sect2" id="HOT-STANDBY-PARAMETERS"><div class="titlepage"><div><div><h3 class="title">26.5.4. 热备参数参考</h3></div></div></div><p>    多个参数已经在<a class="xref" href="hot-standby.html#HOT-STANDBY-CONFLICT" title="26.5.2. 处理查询冲突">第 26.5.2 节</a>
+    和<a class="xref" href="hot-standby.html#HOT-STANDBY-ADMIN" title="26.5.3. 管理员概览">第 26.5.3 节</a>中提到过。
+   </p><p>    在主服务器上，可以使用参数<a class="xref" href="runtime-config-wal.html#GUC-WAL-LEVEL">wal_level</a>
+    和<a class="xref" href="runtime-config-replication.html#GUC-VACUUM-DEFER-CLEANUP-AGE">vacuum_defer_cleanup_age</a>。
+    在主服务器上设置<a class="xref" href="runtime-config-replication.html#GUC-MAX-STANDBY-ARCHIVE-DELAY">max_standby_archive_delay</a>
+    和<a class="xref" href="runtime-config-replication.html#GUC-MAX-STANDBY-STREAMING-DELAY">max_standby_streaming_delay</a>不会产生效果。
+   </p><p>    在主服务器上，可以使用参数<a class="xref" href="runtime-config-replication.html#GUC-HOT-STANDBY">hot_standby</a>、
+    <a class="xref" href="runtime-config-replication.html#GUC-MAX-STANDBY-ARCHIVE-DELAY">max_standby_archive_delay</a>和
+    <a class="xref" href="runtime-config-replication.html#GUC-MAX-STANDBY-STREAMING-DELAY">max_standby_streaming_delay</a>。
+    只要服务器保持在后备模式<a class="xref" href="runtime-config-replication.html#GUC-VACUUM-DEFER-CLEANUP-AGE">vacuum_defer_cleanup_age</a>
+    就没有效果，然而当后备服务器变成主服务器时它将变得相关。
+   </p></div><div class="sect2" id="HOT-STANDBY-CAVEATS"><div class="titlepage"><div><div><h3 class="title">26.5.5. 警告</h3></div></div></div><p>    热备有一些限制。这些限制很可能在未来的发行中被修复：
+
+  </p><div class="itemizedlist"><ul class="itemizedlist" style="list-style-type: disc; "><li class="listitem"><p>     在能够取得快照之前，需要正在运行的事务的完整知识。使用大量子事务
+     （目前指超过 64 个）的事务将延迟只读连接的启动，直到最长的运行着的写事务完成。
+     如果发生这种情况，说明消息将被发送到服务器日志。
+    </p></li><li class="listitem"><p>     主服务器上的每一个检查点将产生用于后备查询的可用启动点。
+     如果后备服务器在主控机处于关闭状态时被关闭，
+     就没有办法在主服务器启动之前重新进入热后备，
+     因此它在 WAL 日志中产生一个进一步启动点。
+     这种情况在它可能发生的大部分常见情况中不是一个问题。通常，
+     如果主服务器被关闭并且不再可用，
+     这可能是由于某种严重错误要求后备服务器被转变成为一个新的主服务器来操作。
+     并且在主服务器被故意关闭的情况下，
+     协调保证后备服务器平滑地过渡为新的主服务器也是一种标准过程。
+    </p></li><li class="listitem"><p>     在恢复尾声，由预备事务持有的<code class="literal">AccessExclusiveLocks</code>将要求两倍的正常锁表项。
+     如果你计划运行大量并发的通常要求<code class="literal">AccessExclusiveLocks</code>的预备事务，
+     或者你计划运行一个需要很多<code class="literal">AccessExclusiveLocks</code>的大型事务，
+     我们建议你为<code class="varname">max_locks_per_transaction</code>选择一个更大的值，
+     也许是主服务器上该参数值的两倍。如果你的<code class="varname">max_prepared_transactions</code>
+     设置为 0，你根本不需要考虑这个问题。
+    </p></li><li class="listitem"><p>     可序列化事务隔离级别目前在热备中不可用（详见<a class="xref" href="transaction-iso.html#XACT-SERIALIZABLE" title="13.2.3. 可序列化隔离级别">第 13.2.3 节</a>
+     和<a class="xref" href="applevel-consistency.html#SERIALIZABLE-CONSISTENCY" title="13.4.1. 用可序列化事务来强制一致性">第 13.4.1 节</a>）。
+     尝试在热备模式中将一个事务设置为可序列化隔离级别将产生一个错误。
+    </p></li></ul></div><p>
+
+   </p></div></div><div class="navfooter"><hr /><table width="100%" summary="Navigation footer"><tr><td width="40%" align="left"><a accesskey="p" href="log-shipping-alternative.html">上一页</a> </td><td width="20%" align="center"><a accesskey="u" href="high-availability.html">上一级</a></td><td width="40%" align="right"> <a accesskey="n" href="recovery-config.html">下一页</a></td></tr><tr><td width="40%" align="left" valign="top">26.4. 日志传送的替代方法 </td><td width="20%" align="center"><a accesskey="h" href="index.html">起始页</a></td><td width="40%" align="right" valign="top"> 第 27 章 恢复配置</td></tr></table></div></body></html>

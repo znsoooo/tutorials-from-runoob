@@ -1,0 +1,154 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><title>E.24. 版本 9.4.12</title><link rel="stylesheet" type="text/css" href="stylesheet.css" /><link rev="made" href="pgsql-docs@postgresql.org" /><meta name="generator" content="DocBook XSL Stylesheets V1.79.1" /><link rel="prev" href="release-9-4-13.html" title="E.23. 版本 9.4.13" /><link rel="next" href="release-9-4-11.html" title="E.25. 版本 9.4.11" /></head><body><div xmlns="http://www.w3.org/TR/xhtml1/transitional" class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="5" align="center">E.24. 版本 9.4.12</th></tr><tr><td width="10%" align="left"><a accesskey="p" href="release-9-4-13.html" title="E.23. 版本 9.4.13">上一页</a> </td><td width="10%" align="left"><a accesskey="u" href="release.html" title="附录 E. 版本说明">上一级</a></td><th width="60%" align="center">附录 E. 版本说明</th><td width="10%" align="right"><a accesskey="h" href="index.html" title="PostgreSQL 10.1 手册">起始页</a></td><td width="10%" align="right"> <a accesskey="n" href="release-9-4-11.html" title="E.25. 版本 9.4.11">下一页</a></td></tr></table><hr></hr></div><div class="sect1" id="RELEASE-9-4-12"><div class="titlepage"><div><div><h2 class="title" style="clear: both">E.24. 版本 9.4.12</h2></div></div></div><div class="toc"><dl class="toc"><dt><span class="sect2"><a href="release-9-4-12.html#idp66807168">E.24.1. 迁移到版本 9.4.12</a></span></dt><dt><span class="sect2"><a href="release-9-4-12.html#idp66810656">E.24.2. 修改列表</a></span></dt></dl></div><p><strong>发布日期: </strong>2017-05-11</p><p>   这个版本包含9.4.11的各种修补程序。
+   关于9.4主版本的新特性信息，请查看<a class="xref" href="release-9-4.html" title="E.36. 版本 9.4">第 E.36 节</a>。
+  </p><div class="sect2" id="idp66807168"><div class="titlepage"><div><div><h3 class="title">E.24.1. 迁移到版本 9.4.12</h3></div></div></div><p>    运行9.4.X的用户不需要转储/恢复。
+   </p><p>    但是，如果您使用使用用户密码进行身份验证的外部数据服务器，
+	请参阅下面的第一个更改日志条目。
+   </p><p> 	另外，如果您使用的是依赖<span class="quote">“<span class="quote">逻辑解码</span>”</span>的第三方复制工具，
+	请参阅下面的第四个更新日志条目。
+   </p><p>    另外，如果您从早于9.4.11的版本进行升级，
+    请查看<a class="xref" href="release-9-4-11.html" title="E.25. 版本 9.4.11">第 E.25 节</a>。
+   </p></div><div class="sect2" id="idp66810656"><div class="titlepage"><div><div><h3 class="title">E.24.2. 修改列表</h3></div></div></div><div class="itemizedlist"><ul class="itemizedlist" style="list-style-type: disc; "><li class="listitem"><p>      限制<code class="structname">pg_user_mappings</code>.<code class="structfield">umoptions</code>
+	  的可见性，以保护存储为用户映射选项的密码 (Michael Paquier, Feike Steenbergen)
+     </p><p>      之前的编码允许外部服务器对象的所有者或已授予服务器<code class="literal">USAGE</code>
+	  权限的任何人查看与该服务器关联的所有用户映射的选项。这可能包括其他用户的密码。
+	  调整视图定义以匹配<code class="structname">information_schema.user_mapping_options</code>
+	  的行为，即这些选项对被映射的用户，或者映射是针对<code class="literal">PUBLIC</code>
+	  和当前用户是服务器所有者，或者当前用户是超级用户是可见的。
+      (CVE-2017-7486)
+     </p><p>      就其本身而言，该修补程序将仅修复新initdb的数据库中的行为。
+	  如果您希望在现有数据库中应用此更改，
+	  请按照<a class="xref" href="release-9-4-13.html" title="E.23. 版本 9.4.13">第 E.23 节</a>中CVE-2017-7547
+	  更改日志条目中显示的更正过程进行操作。
+     </p></li><li class="listitem"><p>      防止泄密操作员暴露统计信息
+      (Peter Eisentraut)
+     </p><p>      规划器中的一些选择性估计函数将用户定义的运算符应用于从<code class="structname">pg_statistic</code>
+	  获取的值，例如最常见的值和直方图条目。在检查表权限之前会发生这种情况，
+	  因此恶意用户可以利用此行为为他没有权限阅读的表列获取这些值。
+	  要修复，如果操作员的实现函数没有经过认证，并且调用用户没有权限读取需要统计的表列，
+	  则回退到默认估计值。在大多数情况下，实际上至少会满足这些标准中的一个。
+      (CVE-2017-7484)
+     </p></li><li class="listitem"><p>      恢复<span class="application">libpq</span>对<code class="envar">PGREQUIRESSL</code>
+	  环境变量的识别 (Daniel Gustafsson)
+     </p><p>      这个环境变量的处理在<span class="productname">PostgreSQL</span> 9.3中被偶然删除了，
+	  但是它的文档依然存在。这会造成安全隐患，
+	  因为用户可能依赖环境变量来强制进行SSL加密连接，但这不再有保证。
+	  恢复变量的处理，但给它比<code class="envar">PGSSLMODE</code>更低的优先级，
+	  以避免破坏可以在9.3版之后代码中正常工作的配置。
+      (CVE-2017-7485)
+     </p></li><li class="listitem"><p>      在逻辑解码期间修复可能无效的初始快照
+      (Petr Jelinek, Andres Freund)
+     </p><p>      为逻辑解码复制插槽创建的初始快照可能不正确。
+	  这可能会导致使用逻辑解码的第三方工具复制不完整/不一致的初始数据。
+	  如果源服务器在插槽创建时处于忙碌状态，或者已经存在另一个逻辑插槽，
+	  则更有可能发生这种情况。
+     </p><p>	  如果您使用的是依赖于逻辑解码的复制工具，并且它应该在复制开始时复制非空数据集，
+	  建议在安装此更新后重新创建副本，或者根据源服务器验证其内容。
+     </p></li><li class="listitem"><p>      修复未记录索引的<span class="quote">“<span class="quote">init forks</span>”</span>可能的损坏
+      (Robert Haas, Michael Paquier)
+     </p><p>      这可能会导致崩溃并重新启动后，将未记录的索引设置为无效状态。
+	  这样的问题会持续下去，直到索引被删除和重建。
+     </p></li><li class="listitem"><p>      当备用服务器重放已准备好但未提交的两阶段事务时，
+	  修复<code class="structname">pg_subtrans</code>条目的不正确重构
+	  (Tom Lane)
+     </p><p>      在大多数情况下，这看起来没有可见的不良影响，但在极端情况下，
+	  它可能导致<code class="structname">pg_subtrans</code>中的循环引用，
+	  这可能会导致检查由两阶段事务修改的行的查询中的无限循环。
+     </p></li><li class="listitem"><p>      避免由于初始化字符串缓冲区失败，在<span class="application">walsender</span>
+	  中可能发生崩溃 (Stas Kelvich, Fujii Masao)
+     </p></li><li class="listitem"><p>      修复postmaster对后台工作进程的<code class="function">fork()</code>失败的处理 (Tom Lane)
+     </p><p>      在此之前，postmaster更新了部分状态，就好像过程已经成功启动一样，导致后来的混乱。
+     </p></li><li class="listitem"><p>      确保解析扩展脚本中的查询可以看到前一个DDL的结果 (Julien Rouhaud, Tom Lane)
+     </p><p>      由于缺少扩展脚本文件中的命令之间的缓存刷新步骤，
+	  非实用程序查询可能看不到前一个目录更改的效果，
+	  例如<code class="command">ALTER TABLE ... RENAME</code>。
+     </p></li><li class="listitem"><p>      当<code class="command">ALTER TABLE ... ALTER COLUMN TYPE</code>重建现有索引时，
+	  跳过表空间权限检查 (Noah Misch)
+     </p><p>      如果调用用户当前对包含索引的表空间没有<code class="literal">CREATE</code>权限，
+	  则该命令失败。这种行为似乎没有帮助，所以跳过检查，允许索引被重建。
+     </p></li><li class="listitem"><p>      当约束被标记为<code class="literal">NO INHERIT</code>时，
+	  修复<code class="command">ALTER TABLE ... VALIDATE CONSTRAINT</code>不会递归到子表
+      (Amit Langote)
+     </p><p>      当子表中不存在匹配约束时，此修补程序可防止不需要的
+	  <span class="quote">“<span class="quote">constraint does not exist</span>”</span>故障。
+     </p></li><li class="listitem"><p>      修复<code class="command">VACUUM</code>以正确计算由于页面引脚冲突而无法扫描的页面
+	  (Andrew Gierth)
+     </p><p>      这往往导致低估表中的元组数量。在最坏的情况下，一个小型的严重争用表，
+	  <code class="command">VACUUM</code>可能会错误地报告表中不包含元组，
+	  导致非常糟糕的计划选择。
+     </p></li><li class="listitem"><p>      确保散列连接中的批量元组传输循环可由查询取消请求中断 (Tom Lane, Thomas Munro)
+     </p></li><li class="listitem"><p>      修复<code class="type">interval</code>比较中的整数溢出问题 (Kyotaro
+      Horiguchi, Tom Lane)
+     </p><p>      <code class="type">interval</code>类型的比较运算符可能会在大于296000年的时间间隔内产生错误的答案。
+	  包含这些较大值的列索引应重新编制索引，因为它们可能已损坏。
+     </p></li><li class="listitem"><p>      修复<code class="function">cursor_to_xml()</code>以产生
+      <em class="replaceable"><code>tableforest</code></em> = false的有效输出
+      (Thomas Munro, Peter Eisentraut)
+     </p><p>      以前，它无法产生包含<code class="literal">&lt;table&gt;</code>元素。
+     </p></li><li class="listitem"><p>      修复<code class="function">float8_timestamptz()</code>
+      和<code class="function">make_interval()</code>中的舍入问题 (Tom Lane)
+     </p><p>      将浮点值转换为整数微秒时，这些函数被截断，而不是四舍五入;
+	  这可能会导致意想不到的结果。
+     </p></li><li class="listitem"><p>      提高<code class="structname">pg_timezone_names</code>视图的性能
+      (Tom Lane, David Rowley)
+     </p></li><li class="listitem"><p>      减少包含许多大块的上下文的内存管理开销 (Tom Lane)
+     </p></li><li class="listitem"><p>      修复来自<code class="function">lseek()</code>和<code class="function">close()</code>
+	  的极端错误的草率处理 (Tom Lane)
+     </p><p>      这些系统调用都不会在典型情况下失败，但如果他们失败了，
+	  <code class="filename">fd.c</code>可能会变得很混乱。
+     </p></li><li class="listitem"><p>      修复postmaster是否作为Windows服务运行的错误检查 (Michael Paquier)
+     </p><p>      这可能会导致尝试写入事件日志，而这是不可访问的，因此根本不会发生日志记录。
+     </p></li><li class="listitem"><p>      修复<span class="application">ecpg</span>以支持<code class="command">COMMIT PREPARED</code>
+      和<code class="command">ROLLBACK PREPARED</code> (Masahiko Sawada)
+     </p></li><li class="listitem"><p>      修正<span class="application">ecpg</span>中处理美元符号引用的字符串文字时出现的双免费错误
+	  (Michael Meskes)
+     </p></li><li class="listitem"><p>      在<span class="application">pg_dump</span>中，
+	  为某些类型的数据库对象的注释和安全标签修复了不正确的模式和所有者标记
+      (Giuseppe Broccolo, Tom Lane)
+     </p><p>      在简单的情况下，这不会造成不良影响；但是例如，
+	  模式选择性恢复可能会忽略它应该包含的注释，
+	  因为它们未被标记为属于其关联对象的模式。
+     </p></li><li class="listitem"><p>      当SQL对象名称包含换行符时，避免在<code class="literal">pg_restore -l</code>
+	  中发出无效的列表文件 (Tom Lane)
+     </p><p>      用空格替换换行符，这足以使输出对于<code class="literal">pg_restore -L</code>的目的有效。
+     </p></li><li class="listitem"><p>      修复<span class="application">pg_upgrade</span>以传输附加到<span class="quote">“<span class="quote">大对象</span>”</span> (blobs)
+	  的注释和安全标签 (Stephen Frost)
+     </p><p>      以前，blob被正确地转移到新的数据库，但是附加到它们的任何注释或安全标签都丢失了。
+     </p></li><li class="listitem"><p>      改善<code class="filename">contrib/adminpack</code>的<code class="function">pg_file_write()</code>
+      函数中的错误处理 (Noah Misch)
+     </p><p>      值得注意的是，它未能检测到由<code class="function">fclose()</code>报告的错误。
+     </p></li><li class="listitem"><p>      在<code class="filename">contrib/dblink</code>中，当建立一个新的未命名连接时，
+	  避免泄露之前的未命名连接 (Joe Conway)
+     </p></li><li class="listitem"><p>      修复<code class="filename">contrib/pg_trgm</code>从正则表达式中提取trigram (Tom Lane)
+     </p><p>      在某些情况下，它会产生一个无法匹配任何内容的损坏了的数据结构，
+	  从而导致使用trigram索引的GIN或GiST索引扫描程序找不到正则表达式的任何匹配项。
+     </p></li><li class="listitem"><p>      在<code class="filename">contrib/postgres_fdw</code>中，
+      向远程服务器发送查询取消请求
+      (Michael Paquier, Etsuro Fujita)
+     </p><p>      以前，本地查询取消请求不会导致已发送的远程查询提前终止。
+	  这是最初为9.6所做的工作的补丁。
+     </p></li><li class="listitem"><p>      支持OpenSSL 1.1.0 (Heikki Linnakangas, Andreas Karlsson, Tom Lane)
+     </p><p>      这是在较新的分支中完成的工作的补丁；
+	  因为许多平台采用了更新的OpenSSL版本，所以需要它。
+     </p></li><li class="listitem"><p>      支持MSVC版本中的Tcl 8.6 (Álvaro Herrera)
+     </p></li><li class="listitem"><p>      将我们的时区库副本与IANA发行版tzcode2017b同步
+      (Tom Lane)
+     </p><p>      这修正了2038年1月影响某些DST转换的错误。
+     </p></li><li class="listitem"><p>      更新时区数据文件至<span class="application">tzdata</span> release 2017b，用于智利、
+	  海地和蒙古的DST法律变更，以及厄瓜多尔、哈萨克斯坦、利比里亚和西班牙的历史更正。
+	  切换到南美洲、太平洋和印度洋以及一些亚洲和中东国家众多时区的数字缩写。
+     </p><p>      IANA时区数据库以前为所有时区提供了文本缩写，有时会提供当地人口中流通很少或没有流通的缩写。
+	  他们正在推翻该政策，赞成在真实世界中没有使用英文缩写的地区使用数字UTC偏移量。
+	  至少目前，<span class="productname">PostgreSQL</span>将继续接受这种删除的时间戳输入缩写。
+	  但是它们不会显示在<code class="structname">pg_timezone_names</code>视图中，也不会用于输出。
+     </p></li><li class="listitem"><p>      在MSVC版本中为POSIX风格的时区名称使用正确的夏时制规则 (David Rowley)
+     </p><p>      Microsoft MSVC构建脚本忽略在时区目录树中安装<code class="filename">posixrules</code>文件。
+	  这导致时区代码回落到其内置规则，即关于为POSIX样式的时区名称假设哪些DST行为。
+	  由于历史原因，这仍然对应于2007年之前美国使用的DST规则（即，
+	  在四月的第一个星期日和十月的上个星期天进行更改）。通过此修复，
+	  POSIX样式的区域名称将使用<code class="literal">US/Eastern</code>区域的当前和历史DST转换日期。
+	  如果你不想这样做，请删除<code class="filename">posixrules</code>文件，
+	  或将其替换为其他区域文件的副本（请参阅<a class="xref" href="datatype-datetime.html#DATATYPE-TIMEZONES" title="8.5.3.  时区">第 8.5.3 节</a>）。
+	  请注意，由于缓存，您可能需要重新启动服务器才能使这些更改生效。
+     </p></li></ul></div></div></div><div class="navfooter"><hr /><table width="100%" summary="Navigation footer"><tr><td width="40%" align="left"><a accesskey="p" href="release-9-4-13.html">上一页</a> </td><td width="20%" align="center"><a accesskey="u" href="release.html">上一级</a></td><td width="40%" align="right"> <a accesskey="n" href="release-9-4-11.html">下一页</a></td></tr><tr><td width="40%" align="left" valign="top">E.23. 版本 9.4.13 </td><td width="20%" align="center"><a accesskey="h" href="index.html">起始页</a></td><td width="40%" align="right" valign="top"> E.25. 版本 9.4.11</td></tr></table></div></body></html>

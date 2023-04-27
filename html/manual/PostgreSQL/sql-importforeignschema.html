@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><title>IMPORT FOREIGN SCHEMA</title><link rel="stylesheet" type="text/css" href="stylesheet.css" /><link rev="made" href="pgsql-docs@postgresql.org" /><meta name="generator" content="DocBook XSL Stylesheets V1.79.1" /><link rel="prev" href="sql-grant.html" title="GRANT" /><link rel="next" href="sql-insert.html" title="INSERT" /></head><body><div xmlns="http://www.w3.org/TR/xhtml1/transitional" class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="5" align="center">IMPORT FOREIGN SCHEMA</th></tr><tr><td width="10%" align="left"><a accesskey="p" href="sql-grant.html" title="GRANT">上一页</a> </td><td width="10%" align="left"><a accesskey="u" href="sql-commands.html" title="SQL 命令">上一级</a></td><th width="60%" align="center">SQL 命令</th><td width="10%" align="right"><a accesskey="h" href="index.html" title="PostgreSQL 10.1 手册">起始页</a></td><td width="10%" align="right"> <a accesskey="n" href="sql-insert.html" title="INSERT">下一页</a></td></tr></table><hr></hr></div><div class="refentry" id="SQL-IMPORTFOREIGNSCHEMA"><div class="titlepage"></div><a id="idp47512368" class="indexterm"></a><div class="refnamediv"><h2><span class="refentrytitle">IMPORT FOREIGN SCHEMA</span></h2><p>IMPORT FOREIGN SCHEMA — 从一个外部服务器导入表定义</p></div><div class="refsynopsisdiv"><h2>大纲</h2><pre class="synopsis">IMPORT FOREIGN SCHEMA <em class="replaceable"><code>remote_schema</code></em>
+    [ { LIMIT TO | EXCEPT } ( <em class="replaceable"><code>table_name</code></em> [, ...] ) ]
+    FROM SERVER <em class="replaceable"><code>server_name</code></em>
+    INTO <em class="replaceable"><code>local_schema</code></em>
+    [ OPTIONS ( <em class="replaceable"><code>option</code></em> '<em class="replaceable"><code>value</code></em>' [, ... ] ) ]</pre></div><div class="refsect1" id="SQL-IMPORTFOREIGNSCHEMA-DESCRIPTION"><h2>简介</h2><p>   <code class="command">IMPORT FOREIGN SCHEMA</code>创建表示存在于
+   外部服务器上的表的外部表。新外部表将由发出该命令的用户所拥有并且用
+   匹配远程表的正确的列定义和选项创建。
+  </p><p>   默认情况下，存在于外部服务器上一个特定模式中的所有表和视图都会被导入。
+   根据需要，表的列表可以被限制到一个指定的子集，或者可以排除特定的表。
+   新外部表都被创建在一个必须已经存在的目标模式中。
+  </p><p>   要使用<code class="command">IMPORT FOREIGN SCHEMA</code>，用户必
+   须具有外部服务器上的<code class="literal">USAGE</code>特权以及在目标模式上的
+   <code class="literal">CREATE</code>特权。
+  </p></div><div class="refsect1" id="idp47525520"><h2>参数</h2><div class="variablelist"><dl class="variablelist"><dt><span class="term"><em class="replaceable"><code>remote_schema</code></em></span></dt><dd><p>      要从哪个远程模式导入。一个远程模式的特定含义依赖于所使用的外部数据包装器。
+     </p></dd><dt><span class="term"><code class="literal">LIMIT TO ( <em class="replaceable"><code>table_name</code></em> [, ...] )</code></span></dt><dd><p>      只导入匹配给定表名之一的外部表。外部模式中其他的表将被忽略。
+     </p></dd><dt><span class="term"><code class="literal">EXCEPT ( <em class="replaceable"><code>table_name</code></em> [, ...] )</code></span></dt><dd><p>      把指定的外部表排除在导入之外。除了列在这里的表之外，外部模式
+      中存在的所有表都将被导入。
+     </p></dd><dt><span class="term"><em class="replaceable"><code>server_name</code></em></span></dt><dd><p>      要从哪个外部服务器导入。
+     </p></dd><dt><span class="term"><em class="replaceable"><code>local_schema</code></em></span></dt><dd><p>      被导入的外部表将创建在其中的模式。
+     </p></dd><dt><span class="term"><code class="literal">OPTIONS ( <em class="replaceable"><code>option</code></em> '<em class="replaceable"><code>value</code></em>' [, ...] )</code></span></dt><dd><p>      要在导入期间使用的选项。允许使用的选项名称和值与每一个外部数据包装器
+      有关。
+     </p></dd></dl></div></div><div class="refsect1" id="SQL-IMPORTFOREIGNSCHEMA-EXAMPLES"><h2>示例</h2><p>   从服务器<code class="structname">film_server</code>上的远程模式<code class="structname">foreign_films</code>
+   中导入表定义，把外部表创建在本地模式<code class="structname">films</code>中：
+
+</p><pre class="programlisting">IMPORT FOREIGN SCHEMA foreign_films
+    FROM SERVER film_server INTO films;</pre><p>
+   </p><p>   同上，但是只导入两个表<code class="structname">actors</code>和
+   <code class="literal">directors</code>（如果存在）：
+
+</p><pre class="programlisting">IMPORT FOREIGN SCHEMA foreign_films LIMIT TO (actors, directors)
+    FROM SERVER film_server INTO films;</pre></div><div class="refsect1" id="SQL-IMPORTFOREIGNSCHEMA-COMPATIBILITY"><h2>兼容性</h2><p>   <code class="command">IMPORT FOREIGN SCHEMA</code>命令符合
+   <acronym class="acronym">SQL</acronym>标准，不过<code class="literal">OPTIONS</code>
+   子句是一种<span class="productname">PostgreSQL</span>扩展。
+  </p></div><div class="refsect1" id="idp47546800"><h2>另见</h2><span class="simplelist"><a class="xref" href="sql-createforeigntable.html" title="CREATE FOREIGN TABLE"><span class="refentrytitle">CREATE FOREIGN TABLE</span></a>, <a class="xref" href="sql-createserver.html" title="CREATE SERVER"><span class="refentrytitle">CREATE SERVER</span></a></span></div></div><div class="navfooter"><hr /><table width="100%" summary="Navigation footer"><tr><td width="40%" align="left"><a accesskey="p" href="sql-grant.html">上一页</a> </td><td width="20%" align="center"><a accesskey="u" href="sql-commands.html">上一级</a></td><td width="40%" align="right"> <a accesskey="n" href="sql-insert.html">下一页</a></td></tr><tr><td width="40%" align="left" valign="top">GRANT </td><td width="20%" align="center"><a accesskey="h" href="index.html">起始页</a></td><td width="40%" align="right" valign="top"> INSERT</td></tr></table></div></body></html>

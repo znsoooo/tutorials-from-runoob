@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><title>B.3. 日期/时间配置文件</title><link rel="stylesheet" type="text/css" href="stylesheet.css" /><link rev="made" href="pgsql-docs@postgresql.org" /><meta name="generator" content="DocBook XSL Stylesheets V1.79.1" /><link rel="prev" href="datetime-keywords.html" title="B.2. 日期/时间关键词" /><link rel="next" href="datetime-units-history.html" title="B.4. 单位的历史" /></head><body><div xmlns="http://www.w3.org/TR/xhtml1/transitional" class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="5" align="center">B.3. 日期/时间配置文件</th></tr><tr><td width="10%" align="left"><a accesskey="p" href="datetime-keywords.html" title="B.2. 日期/时间关键词">上一页</a> </td><td width="10%" align="left"><a accesskey="u" href="datetime-appendix.html" title="附录 B. 日期/时间支持">上一级</a></td><th width="60%" align="center">附录 B. 日期/时间支持</th><td width="10%" align="right"><a accesskey="h" href="index.html" title="PostgreSQL 10.1 手册">起始页</a></td><td width="10%" align="right"> <a accesskey="n" href="datetime-units-history.html" title="B.4. 单位的历史">下一页</a></td></tr></table><hr></hr></div><div class="sect1" id="DATETIME-CONFIG-FILES"><div class="titlepage"><div><div><h2 class="title" style="clear: both">B.3. 日期/时间配置文件</h2></div></div></div><a id="idp61498928" class="indexterm"></a><p>    因为时区缩写并未被很好地标准化，<span class="productname">PostgreSQL</span>提供了一种方法来自定义服务器所接受的缩写集合。<a class="xref" href="runtime-config-client.html#GUC-TIMEZONE-ABBREVIATIONS">timezone_abbreviations</a>运行时参数决定活动的缩写集合。虽然这个参数可以被任何数据库用户修改，但它的可能值是受到数据库管理员的控制的 — 它们实际上是存储在安装目录的<code class="filename">.../share/timezonesets/</code>子目录中的一些配置文件。通过在那个目录中增加或修改文件，管理员可以为时区缩写设定本地策略。
+   </p><p>    <code class="varname">timezone_abbreviations</code>可以被设置为任何在<code class="filename">.../share/timezonesets/</code>中可以找到的文件名，前提该文件的名字完全是字母的（<code class="varname">timezone_abbreviations</code>中禁止非字母字符防止从预期目录的外面读取文件以及读取编辑器的备份文件和其他外部文件）。
+   </p><p>    一个时区缩写文件可以包含空行和以<code class="literal">#</code>开始的注释。非注释行必须具有下列格式之一：
+
+</p><pre class="synopsis"><em class="replaceable"><code>zone_abbreviation</code></em> <em class="replaceable"><code>offset</code></em>
+<em class="replaceable"><code>zone_abbreviation</code></em> <em class="replaceable"><code>offset</code></em> D
+<em class="replaceable"><code>zone_abbreviation</code></em> <em class="replaceable"><code>time_zone_name</code></em>
+@INCLUDE <em class="replaceable"><code>file_name</code></em>
+@OVERRIDE</pre><p>
+   </p><p>    一个<em class="replaceable"><code>zone_abbreviation</code></em>就是被定义的缩写。<em class="replaceable"><code>offset</code></em>是一个整数，它给出以秒计的到 UTC 的等效偏移量，为正表示东起格林威治，为负表示西起格林威治。例如， -18000 表示格林威治西边的五个小时，或者北美东海岸标准时间。<code class="literal">D</code>指示该区域名表示本地夏令时而非标准时间。另外，还可以给出一个<em class="replaceable"><code>time_zone_name</code></em>，在这种情况下会查阅该时区定义，并且会使用该时区中的缩写含义。这种替代方案只用于那些含义在历史上有变化的缩写，因为比起使用一个固定的整数值，查找该含义开销要大得多。
+   </p><p>    另外，还可以给出一个<em class="replaceable"><code>time_zone_name</code></em>，它引用 IANA 时区数据库中定义的时区名。这时会参考该时区的定义来判断在时区中是否有或者使用了该缩写。如果是，会使用适当的含义 — 也就是正在判断其值的时间戳中当前使用的含义，或者之前刚刚使用的含义（如果当时不是当前），或者最老的含义（如果只在那时之后用过）。这种行为对于处理其含义在历史上变化过的缩写是至关重要的。也允许按照缩写没有出现在其中的时区名来定义缩写，这样使用该缩写就等效于直接写出该时区名。
+   </p><div class="tip"><h3 class="title">提示</h3><p>     在定义其 UTC 偏移没有改变过的缩写时，使用简单的整数<em class="replaceable"><code>offset</code></em>更好，这样的缩写在处理时代价比那些需要查阅时区定义的缩写更低。
+    </p></div><p> <code class="literal">@INCLUDE</code>语法允许包括<code class="filename">.../share/timezonesets/</code>目录中
+    的其它文件。允许进行嵌套包括，但是嵌套深度有限制。
+   </p><p>    <code class="literal">@OVERRIDE</code>语法表示文件中后续项可以覆盖前面的项（典型的：从被包括的文件中
+    得到的项）。如果没有它，同一个时区缩写的相互冲突的定义会被认为是一种错误。
+   </p><p>    在一个未被修改的安装中，文件<code class="filename">Default</code>包含用于世界大部分地区的非冲突时区缩
+    写。附加文件<code class="filename">Australia</code>和<code class="filename">India</code>被提供给那些地区：这些文件
+    首先会包括<code class="literal">Default</code>文件，并且接着根据需要增加或修改缩写。
+   </p><p>    为了便于参考，标准安装也包含了<code class="filename">Africa.txt</code>、<code class="filename">America.txt</code>
+    等文件，它们包含了所有根据IANA 时区数据库中已知正在使用的时区缩写信息。 如果需要，这些文件中的时区名定义可以复制并粘贴到自定义的配置文件中。注意这些文件名
+    不能直接被<code class="varname">timezone_abbreviations</code>设置引用，因为它们的名称中嵌有句点。
+   </p><div class="note"><h3 class="title">注意</h3><p>     如果在读取时区缩写集时发生错误，将不会应用任何新值并且保留旧的集合。如果该错误是在数据库
+     启动时发生，那么启动将失败。
+    </p></div><div class="caution"><h3 class="title">小心</h3><p>     配置文件中定义的时区缩写将会覆盖<span class="productname">PostgreSQL</span>中内建的非
+     时区含义。例如<code class="filename">Australia</code>配置文件定义了<code class="literal">SAT</code>（南澳洲标准时
+     间）。当该文件为活动时，<code class="literal">SAT</code>将不会被识别为周六的缩写。
+    </p></div><div class="caution"><h3 class="title">小心</h3><p>     如果你修改<code class="filename">.../share/timezonesets/</code>中的文件， 那么你必须自己创建备份 — 因为通常的数据库转储不会包括这个目录。
+    </p></div></div><div class="navfooter"><hr /><table width="100%" summary="Navigation footer"><tr><td width="40%" align="left"><a accesskey="p" href="datetime-keywords.html">上一页</a> </td><td width="20%" align="center"><a accesskey="u" href="datetime-appendix.html">上一级</a></td><td width="40%" align="right"> <a accesskey="n" href="datetime-units-history.html">下一页</a></td></tr><tr><td width="40%" align="left" valign="top">B.2. 日期/时间关键词 </td><td width="20%" align="center"><a accesskey="h" href="index.html">起始页</a></td><td width="40%" align="right" valign="top"> B.4. 单位的历史</td></tr></table></div></body></html>

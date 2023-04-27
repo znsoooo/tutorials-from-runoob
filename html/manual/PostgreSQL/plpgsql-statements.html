@@ -1,0 +1,202 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><title>42.5. 基本语句</title><link rel="stylesheet" type="text/css" href="stylesheet.css" /><link rev="made" href="pgsql-docs@postgresql.org" /><meta name="generator" content="DocBook XSL Stylesheets V1.79.1" /><link rel="prev" href="plpgsql-expressions.html" title="42.4. 表达式" /><link rel="next" href="plpgsql-control-structures.html" title="42.6. 控制结构" /></head><body><div xmlns="http://www.w3.org/TR/xhtml1/transitional" class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="5" align="center">42.5. 基本语句</th></tr><tr><td width="10%" align="left"><a accesskey="p" href="plpgsql-expressions.html" title="42.4. 表达式">上一页</a> </td><td width="10%" align="left"><a accesskey="u" href="plpgsql.html" title="第 42 章 PL/pgSQL - SQL过程语言">上一级</a></td><th width="60%" align="center">第 42 章 <span xmlns="http://www.w3.org/1999/xhtml" class="application">PL/pgSQL</span> - <acronym xmlns="http://www.w3.org/1999/xhtml" class="acronym">SQL</acronym>过程语言</th><td width="10%" align="right"><a accesskey="h" href="index.html" title="PostgreSQL 10.1 手册">起始页</a></td><td width="10%" align="right"> <a accesskey="n" href="plpgsql-control-structures.html" title="42.6. 控制结构">下一页</a></td></tr></table><hr></hr></div><div class="sect1" id="PLPGSQL-STATEMENTS"><div class="titlepage"><div><div><h2 class="title" style="clear: both">42.5. 基本语句</h2></div></div></div><div class="toc"><dl class="toc"><dt><span class="sect2"><a href="plpgsql-statements.html#PLPGSQL-STATEMENTS-ASSIGNMENT">42.5.1. 赋值</a></span></dt><dt><span class="sect2"><a href="plpgsql-statements.html#PLPGSQL-STATEMENTS-SQL-NORESULT">42.5.2. 执行一个没有结果的命令</a></span></dt><dt><span class="sect2"><a href="plpgsql-statements.html#PLPGSQL-STATEMENTS-SQL-ONEROW">42.5.3. 执行一个有单一行结果的查询</a></span></dt><dt><span class="sect2"><a href="plpgsql-statements.html#PLPGSQL-STATEMENTS-EXECUTING-DYN">42.5.4. 执行动态命令</a></span></dt><dt><span class="sect2"><a href="plpgsql-statements.html#PLPGSQL-STATEMENTS-DIAGNOSTICS">42.5.5. 获得结果状态</a></span></dt><dt><span class="sect2"><a href="plpgsql-statements.html#PLPGSQL-STATEMENTS-NULL">42.5.6. 什么也不做</a></span></dt></dl></div><p>    在这一节和接下来的小节中，我们会描述<span class="application">PL/pgSQL</span>能明确理解的所有语句类型。任何不被识别为这些语句类型之一的被假定为是一个 SQL 命令，并且会被发送给主数据库引擎执行，具体如<a class="xref" href="plpgsql-statements.html#PLPGSQL-STATEMENTS-SQL-NORESULT" title="42.5.2. 执行一个没有结果的命令">第 42.5.2 节</a>和<a class="xref" href="plpgsql-statements.html#PLPGSQL-STATEMENTS-SQL-ONEROW" title="42.5.3. 执行一个有单一行结果的查询">第 42.5.3 节</a>中所述。
+   </p><div class="sect2" id="PLPGSQL-STATEMENTS-ASSIGNMENT"><div class="titlepage"><div><div><h3 class="title">42.5.1. 赋值</h3></div></div></div><p>     为一个<span class="application">PL/pgSQL</span>变量赋一个值可以被写为：
+</p><pre class="synopsis"><em class="replaceable"><code>variable</code></em> { := | = } <em class="replaceable"><code>expression</code></em>;</pre><p>
+     正如以前所解释的，这样一个语句中的表达式被以一个 SQL
+      <code class="command">SELECT</code>命令被发送到主数据库引擎的方式计算。
+      该表达式必须得到一个单一值（如果该变量是一个行或记录变量，
+      它可能是一个行值）。该目标变量可以是一个简单变量（
+      可以选择用一个块名限定）、一个行或记录变量的域或是一个简单
+      变量或域的数组元素。
+     等号（<code class="literal">=</code>）可以被用来代替 PL/SQL-兼容的
+      <code class="literal">:=</code>。
+    </p><p>     如果该表达式的结果数据类型不匹配变量的数据类型，该值将被强制为变量
+     的类型，就好像做了赋值造型一样（见<a class="xref" href="typeconv-query.html" title="10.4. 值存储">第 10.4 节</a>）。
+     如果没有用于所涉及到的数据类型的赋值造型可用，
+     <span class="application">PL/pgSQL</span>解释器将尝试以文本的方式转换结果值，也就
+     是在应用结果类型的输出函数之后再应用变量类型的输入函数。注意如果结果
+     值的字符串形式无法被输入函数所接受，这可能会导致由输入函数产生的运行
+     时错误。
+    </p><p>     例子：
+</p><pre class="programlisting">tax := subtotal * 0.06;
+my_record.user_id := 20;</pre><p>
+    </p></div><div class="sect2" id="PLPGSQL-STATEMENTS-SQL-NORESULT"><div class="titlepage"><div><div><h3 class="title">42.5.2. 执行一个没有结果的命令</h3></div></div></div><p>     对于任何不返回行的 SQL 命令（例如没有一个<code class="literal">RETURNING</code>子句的<code class="command">INSERT</code>），你可以通过把该命令直接写在一个 <span class="application">PL/pgSQL</span> 函数中执行它。
+    </p><p>     任何出现在该命令文本中的<span class="application">PL/pgSQL</span>变量名被当作一个参数，并且接着该变量的当前值被提供为运行时该参数的值。这与早前描述的对表达式的处理完全相似，详见<a class="xref" href="plpgsql-implementation.html#PLPGSQL-VAR-SUBST" title="42.10.1. 变量替换">第 42.10.1 节</a>。
+    </p><p>     当以这种方式执行一个 SQL 命令时，如<a class="xref" href="plpgsql-implementation.html#PLPGSQL-PLAN-CACHING" title="42.10.2. 计划缓存">第 42.10.2 节</a>中讨论的，<span class="application">PL/pgSQL</span>会为该命令缓存并重用执行计划。
+    </p><p>     有时候计算一个表达式或<code class="command">SELECT</code>查询但抛弃其结果是有用的，例如调用一个有副作用但是没有有用的结果值的函数。在<span class="application">PL/pgSQL</span>中要这样做，可使用<code class="command">PERFORM</code>语句：
+
+</p><pre class="synopsis">PERFORM <em class="replaceable"><code>query</code></em>;</pre><p>
+
+     这会执行<em class="replaceable"><code>query</code></em>并且丢弃掉结果。以写一个SQL <code class="command">SELECT</code>命令相同的方式写该<em class="replaceable"><code>query</code></em>，并且将初始的关键词<code class="command">SELECT</code>替换为<code class="command">PERFORM</code>。对于<code class="command">WITH</code>查询，使用<code class="command">PERFORM</code>并且接着把该查询放在圆括号中（在这种情况中，该查询只能返回一行）。<span class="application">PL/pgSQL</span>变量将被替换到该查询中，正像对不返回结果的命令所作的那样，并且计划被以相同的方式被缓存。还有，如果该查询产生至少一行，特殊变量<code class="literal">FOUND</code>会被设置为真，而如果它不产生行则设置为假（见<a class="xref" href="plpgsql-statements.html#PLPGSQL-STATEMENTS-DIAGNOSTICS" title="42.5.5. 获得结果状态">第 42.5.5 节</a>）。
+    </p><div class="note"><h3 class="title">注意</h3><p>      我们可能期望直接写<code class="command">SELECT</code>能实现这个结果，但是当前唯一被接受的方式是<code class="command">PERFORM</code>。一个能返回行的 SQL 命令（例如<code class="command">SELECT</code>）将被当成一个错误拒绝，除非它像下一节中讨论的有一个<code class="literal">INTO</code>子句。
+     </p></div><p>     一个例子：
+</p><pre class="programlisting">PERFORM create_mv('cs_session_page_requests_mv', my_query);</pre><p>
+    </p></div><div class="sect2" id="PLPGSQL-STATEMENTS-SQL-ONEROW"><div class="titlepage"><div><div><h3 class="title">42.5.3. 执行一个有单一行结果的查询</h3></div></div></div><a id="idp36217728" class="indexterm"></a><a id="idp36219168" class="indexterm"></a><p>     一个产生单一行（可能有多个列）的 SQL 命令的结果可以被赋值给一个记录变量、行类型变量或标量变量列表。这通过书写基础 SQL 命令并增加一个<code class="literal">INTO</code>子句来达成。例如：
+
+</p><pre class="synopsis">SELECT <em class="replaceable"><code>select_expressions</code></em> INTO [<span class="optional">STRICT</span>] <em class="replaceable"><code>target</code></em> FROM ...;
+INSERT ... RETURNING <em class="replaceable"><code>expressions</code></em> INTO [<span class="optional">STRICT</span>] <em class="replaceable"><code>target</code></em>;
+UPDATE ... RETURNING <em class="replaceable"><code>expressions</code></em> INTO [<span class="optional">STRICT</span>] <em class="replaceable"><code>target</code></em>;
+DELETE ... RETURNING <em class="replaceable"><code>expressions</code></em> INTO [<span class="optional">STRICT</span>] <em class="replaceable"><code>target</code></em>;</pre><p>
+
+     其中<em class="replaceable"><code>target</code></em>可以是一个记录变量、一个行变量或一个有逗号分隔的简单变量和记录/行域列表。<span class="application">PL/pgSQL</span>变量将被替换到该查询的剩余部分中，并且计划会被缓存，正如之前描述的对不返回行的命令所做的。这对<code class="command">SELECT</code>、带有<code class="literal">RETURNING</code>的<code class="command">INSERT</code>/<code class="command">UPDATE</code>/<code class="command">DELETE</code>以及返回行集结果的工具命令（例如<code class="command">EXPLAIN</code>）。除了<code class="literal">INTO</code>子句，SQL 命令和它在<span class="application">PL/pgSQL</span>之外的写法一样。
+    </p><div class="tip"><h3 class="title">提示</h3><p>     注意带<code class="literal">INTO</code>的<code class="command">SELECT</code>的这种解释和<span class="productname">PostgreSQL</span>常规的<code class="command">SELECT INTO</code>命令有很大的不同，后者的<code class="literal">INTO</code>目标是一个新创建的表。如果你想要在一个<span class="application">PL/pgSQL</span>函数中从一个<code class="command">SELECT</code>的结果创建一个表，请使用语法<code class="command">CREATE TABLE ... AS SELECT</code>。
+    </p></div><p>     如果一行或一个变量列表被用作目标，该查询的结果列必须完全匹配该结果的结构，包括数量和数据类型，否则会发生一个运行时错误。当一个记录变量是目标时，它会自动地把自身配置成查询结果列组成的行类型。
+    </p><p>     <code class="literal">INTO</code>子句几乎可以出现在 SQL 命令中的任何位置。通常它被写成刚好在<code class="command">SELECT</code>命令中的<em class="replaceable"><code>select_expressions</code></em>列表之前或之后，或者在其他命令类型的命令最后。我们推荐你遵循这种惯例，以防<span class="application">PL/pgSQL</span>的解析器在未来的版本中变得更严格。
+    </p><p>     如果<code class="literal">STRICT</code>没有在<code class="literal">INTO</code>子句中被指定，那么<em class="replaceable"><code>target</code></em>将被设置为该查询返回的第一个行，或者在该查询不返回行时设置为空（注意除非使用了<code class="literal">ORDER BY</code>，否则<span class="quote">“<span class="quote">第一行</span>”</span>的界定并不清楚）。第一行之后的任何结果行都会被抛弃。你可以检查特殊的<code class="literal">FOUND</code>变量（见<a class="xref" href="plpgsql-statements.html#PLPGSQL-STATEMENTS-DIAGNOSTICS" title="42.5.5. 获得结果状态">第 42.5.5 节</a>）来确定是否返回了一行：
+
+</p><pre class="programlisting">SELECT * INTO myrec FROM emp WHERE empname = myname;
+IF NOT FOUND THEN
+    RAISE EXCEPTION 'employee % not found', myname;
+END IF;</pre><p>
+
+     如果指定了<code class="literal">STRICT</code>选项，该查询必须刚好返回一行或者将会报告一个运行时错误，该错误可能是<code class="literal">NO_DATA_FOUND</code>（没有行）或<code class="literal">TOO_MANY_ROWS</code>（多于一行）。如果你希望捕捉该错误，可以使用一个异常块，例如：
+
+</p><pre class="programlisting">BEGIN
+    SELECT * INTO STRICT myrec FROM emp WHERE empname = myname;
+    EXCEPTION
+        WHEN NO_DATA_FOUND THEN
+            RAISE EXCEPTION 'employee % not found', myname;
+        WHEN TOO_MANY_ROWS THEN
+            RAISE EXCEPTION 'employee % not unique', myname;
+END;</pre><p>
+     成功执行一个带<code class="literal">STRICT</code>的命令总是会将<code class="literal">FOUND</code>置为真。
+    </p><p>     对于带有<code class="literal">RETURNING</code>的<code class="command">INSERT</code>/<code class="command">UPDATE</code>/<code class="command">DELETE</code>，即使没有指定<code class="literal">STRICT</code>，<span class="application">PL/pgSQL</span>也会针对多于一个返回行的情况报告一个错误。这是因为没有类似于<code class="literal">ORDER BY</code>的选项可以用来决定应该返回哪个被影响的行。
+    </p><p>     如果为该函数启用了If <code class="literal">print_strict_params</code>，那么当因为
+     <code class="literal">STRICT</code>的要求没有被满足而抛出一个错误时，该错误消息
+     的<code class="literal">DETAIL</code>将包括传递给该查询的参数信息。可以通过设置
+     <code class="varname">plpgsql.print_strict_params</code>为所有函数更改
+     <code class="literal">print_strict_params</code>设置，但是只有修改后被编译的函数
+     才会生效。也可以使用一个编译器选项来为一个函数启用它，例如：
+</p><pre class="programlisting">CREATE FUNCTION get_userid(username text) RETURNS int
+AS $$
+#print_strict_params on
+DECLARE
+userid int;
+BEGIN
+    SELECT users.userid INTO STRICT userid
+        FROM users WHERE users.username = get_userid.username;
+    RETURN userid;
+END
+$$ LANGUAGE plpgsql;</pre><p>
+     失败时，这个函数会产生一个这样的错误消息
+</p><pre class="programlisting">ERROR:  query returned no rows
+DETAIL:  parameters: $1 = 'nosuchuser'
+CONTEXT:  PL/pgSQL function get_userid(text) line 6 at SQL statement</pre><p>
+    </p><div class="note"><h3 class="title">注意</h3><p>      <code class="literal">STRICT</code>选项匹配 Oracle PL/SQL 的<code class="command">SELECT INTO</code>和相关语句的行为。
+     </p></div><p>     对于要处理来自于一个 SQL 查询的结果行的情况，请见<a class="xref" href="plpgsql-control-structures.html#PLPGSQL-RECORDS-ITERATING" title="42.6.4. 通过查询结果循环">第 42.6.4 节</a>。
+    </p></div><div class="sect2" id="PLPGSQL-STATEMENTS-EXECUTING-DYN"><div class="titlepage"><div><div><h3 class="title">42.5.4. 执行动态命令</h3></div></div></div><p>     很多时候你将想要在<span class="application">PL/pgSQL</span>函数中产生动态命令，也就是每次执行中会涉及到不同表或不同数据类型的命令。<span class="application">PL/pgSQL</span>通常对于命令所做的缓存计划尝试（如<a class="xref" href="plpgsql-implementation.html#PLPGSQL-PLAN-CACHING" title="42.10.2. 计划缓存">第 42.10.2 节</a>中讨论）在这种情境下无法工作。要处理这一类问题，需要提供<code class="command">EXECUTE</code>语句：
+
+</p><pre class="synopsis">EXECUTE <em class="replaceable"><code>command-string</code></em> [<span class="optional"> INTO [<span class="optional">STRICT</span>] <em class="replaceable"><code>target</code></em> </span>] [<span class="optional"> USING <em class="replaceable"><code>expression</code></em> [<span class="optional">, ... </span>] </span>];</pre><p>
+
+     其中<em class="replaceable"><code>command-string</code></em>是一个能得到一个包含要被执行命令字符串（类型<code class="type">text</code>）的表达式。可选的<em class="replaceable"><code>target</code></em>是一个记录变量、一个行变量或者一个逗号分隔的简单变量以及记录/行域的列表，该命令的结果将存储在其中。可选的<code class="literal">USING</code>表达式提供要被插入到该命令中的值。
+    </p><p>     在计算得到的命令字符串中，不会做<span class="application">PL/pgSQL</span>变量的替换。任何所需的变量值必须在命令字符串被构造时被插入其中，或者你可以使用下面描述的参数。
+    </p><p>     还有，对于通过<code class="command">EXECUTE</code>执行的命令不会有计划被缓存。该命令反而在每次运行时都会被做计划。因此，该命令字符串可以在执行不同表和列上动作的函数中被动态创建。
+    </p><p>     <code class="literal">INTO</code>子句指定一个返回行的 SQL 命令的结果应该被赋值到哪里。如果提供了一个行或变量列表，它必须完全匹配查询结果的结构（当使用一个记录变量时，它会自动把它自己配置为匹配结果结构）。如果返回多个行，只有第一个行会被赋值给<code class="literal">INTO</code>变量。如果没有返回行，NULL 会被赋值给<code class="literal">INTO</code>变量。如果没有指定<code class="literal">INTO</code>变量，该查询结果会被抛弃。
+    </p><p>     如果给出了<code class="literal">STRICT</code>选项，除非该查询刚好产生一行，否则将会报告一个错误。
+    </p><p>     命令字符串可以使用参数值，它们在命令中用<code class="literal">$1</code>、<code class="literal">$2</code>等引用。这些符号引用在<code class="literal">USING</code>子句中提供的值。这种方法常常更适合于把数据值作为文本插入到命令字符串中：它避免了将该值转换为文本以及转换回来的运行时负荷，并且它更不容易被 SQL 注入攻击，因为不需要引用或转义。一个例子是：
+</p><pre class="programlisting">EXECUTE 'SELECT count(*) FROM mytable WHERE inserted_by = $1 AND inserted &lt;= $2'
+   INTO c
+   USING checked_user, checked_date;</pre><p>
+    </p><p>     需要注意的是，参数符号只能用于数据值 — 如果想要使用动态决定的表名或列名，你必须将它们以文本形式插入到命令字符串中。例如，如果前面的那个查询需要在一个动态选择的表上执行，你可以这么做：
+</p><pre class="programlisting">EXECUTE 'SELECT count(*) FROM '
+    || quote_ident(tabname)
+    || ' WHERE inserted_by = $1 AND inserted &lt;= $2'
+   INTO c
+   USING checked_user, checked_date;</pre><p>
+     一种更干净的方法是为表名或者列名使用<code class="function">format()</code>的
+     <code class="literal">%I</code>规范（被新行分隔的字符串会被串接起来）：
+</p><pre class="programlisting">EXECUTE format('SELECT count(*) FROM %I '
+   'WHERE inserted_by = $1 AND inserted &lt;= $2', tabname)
+   INTO c
+   USING checked_user, checked_date;</pre><p>
+     另一个关于参数符号的限制是，它们只能在<code class="command">SELECT</code>、<code class="command">INSERT</code>、<code class="command">UPDATE</code>和<code class="command">DELETE</code>命令中工作。在另一种语句类型（通常被称为实用语句）中，即使值是数据值，你也必须将它们以文本形式插入。
+    </p><p>     在上面第一个例子中，带有一个简单的常量命令字符串和一些<code class="literal">USING</code>参数的<code class="command">EXECUTE</code>命令在功能上等效于直接用<span class="application">PL/pgSQL</span>写的命令，并且允许自动发生<span class="application">PL/pgSQL</span>变量替换。重要的不同之处在于，<code class="command">EXECUTE</code>会在每一次执行时根据当前的参数值重新规划该命令，而<span class="application">PL/pgSQL</span>则是创建一个通用计划并且将其缓存以便重用。在最佳计划强依赖于参数值的情况中，使用<code class="command">EXECUTE</code>来明确地保证不会选择一个通用计划是很有帮助的。
+    </p><p>     <code class="command">EXECUTE</code>目前不支持<code class="command">SELECT INTO</code>。但是可以执行一个纯的<code class="command">SELECT</code>命令并且指定<code class="literal">INTO</code>作为<code class="command">EXECUTE</code>本身的一部分。
+    </p><div class="note"><h3 class="title">注意</h3><p>     <span class="application">PL/pgSQL</span>中的<code class="command">EXECUTE</code>语句与<a class="xref" href="sql-execute.html" title="EXECUTE"><span class="refentrytitle">EXECUTE</span></a> <span class="productname">PostgreSQL</span>服务器支持的 SQL 语句无关。服务器的<code class="command">EXECUTE</code>语句不能直接在<span class="application">PL/pgSQL</span>函数中使用（并且也没有必要）。
+    </p></div><div class="example" id="PLPGSQL-QUOTE-LITERAL-EXAMPLE"><p class="title"><strong>例 42.1. 在动态查询中引用值</strong></p><div class="example-contents"><a id="idp36314256" class="indexterm"></a><a id="idp36315232" class="indexterm"></a><a id="idp36316208" class="indexterm"></a><a id="idp36317184" class="indexterm"></a><p>     在使用动态命令时经常不得不处理单引号的转义。我们推荐在函数体中使用美元符号引用来引用固定的文本（如果你有没有使用美元符界定的老代码，请参考<a class="xref" href="plpgsql-development-tips.html#PLPGSQL-QUOTE-TIPS" title="42.11.1. 处理引号">第 42.11.1 节</a>中的概述，这样在把上述代码转换成更合理的模式时会省力些）。
+    </p><p>     动态值需要被小心地处理，因为它们可能包含引号字符。一个使用
+     <code class="function">format()</code>的例子（这假设你用美元符号引用了函数
+     体，因此引号不需要被双写）：
+</p><pre class="programlisting">EXECUTE format('UPDATE tbl SET %I = $1 '
+   'WHERE key = $2', colname) USING newvalue, keyvalue;</pre><p>
+     还可以直接调用引用函数：
+</p><pre class="programlisting">EXECUTE 'UPDATE tbl SET '
+        || quote_ident(colname)
+        || ' = '
+        || quote_literal(newvalue)
+        || ' WHERE key = '
+        || quote_literal(keyvalue);</pre><p>
+    </p><p>     这个例子展示了<code class="function">quote_ident</code>和<code class="function">quote_literal</code>函数的使用（见<a class="xref" href="functions-string.html" title="9.4. 字符串函数和操作符">第 9.4 节</a>）。为了安全，在进行一个动态查询中的插入之前，包含列或表标识符的表达式应该通过<code class="function">quote_ident</code>被传递。如果表达式包含在被构造出的命令中应该是字符串的值时，它应该通过<code class="function">quote_literal</code>被传递。这些函数采取适当的步骤来分别返回被封闭在双引号或单引号中的文本，其中任何嵌入的特殊字符都会被正确地转义。
+    </p><p>     因为<code class="function">quote_literal</code>被标记为<code class="literal">STRICT</code>，当用一个空参数调用时，它总是会返回空。在上面的例子中，如果<code class="literal">newvalue</code>或<code class="literal">keyvalue</code>为空，整个动态查询字符串会变成空，导致从<code class="command">EXECUTE</code>得到一个错误。可以通过使用<code class="function">quote_nullable</code>函数来避免这种问题，它工作起来和<code class="function">quote_literal</code>相同，除了用空参数调用时会返回一个字符串<code class="literal">NULL</code>。例如：
+</p><pre class="programlisting">EXECUTE 'UPDATE tbl SET '
+        || quote_ident(colname)
+        || ' = '
+        || quote_nullable(newvalue)
+        || ' WHERE key = '
+        || quote_nullable(keyvalue);</pre><p>
+     如果正在处理的参数值可能为空，那么通常应该用<code class="function">quote_nullable</code>来代替<code class="function">quote_literal</code>。
+    </p><p>     通常，必须小心地确保查询中的空值不会递送意料之外的结果。例如如果<code class="literal">keyvalue</code>为空，下面的<code class="literal">WHERE</code>子句
+</p><pre class="programlisting">'WHERE key = ' || quote_nullable(keyvalue)</pre><p>
+     永远不会成功，因为在<code class="literal">=</code>操作符中使用空操作数得到的结果总是为空。如果想让空和一个普通键值一样工作，你应该将上面的命令重写成
+</p><pre class="programlisting">'WHERE key IS NOT DISTINCT FROM ' || quote_nullable(keyvalue)</pre><p>
+     （目前，<code class="literal">IS NOT DISTINCT FROM</code>的处理效率不如<code class="literal">=</code>，因此只有在非常必要时才这样做。关于空和<code class="literal">IS DISTINCT</code>的详细信息请见<a class="xref" href="functions-comparison.html" title="9.2. 比较操作符">第 9.2 节</a>）。
+    </p><p>     请注意美元符号引用只对引用固定文本有用。尝试写出下面这个例子是一个非常糟糕的主意：
+</p><pre class="programlisting">EXECUTE 'UPDATE tbl SET '
+        || quote_ident(colname)
+        || ' = $$'
+        || newvalue
+        || '$$ WHERE key = '
+        || quote_literal(keyvalue);</pre><p>
+     因为如果<code class="literal">newvalue</code>的内容碰巧含有<code class="literal">$$</code>，那么这段代码就会出问题。同样的缺点可能适用于你选择的任何其他美元符号引用定界符。因此，要想安全地引用事先不知道的文本，<span class="emphasis"><em>必须</em></span>恰当地使用<code class="function">quote_literal</code>、<code class="function">quote_nullable</code>或<code class="function">quote_ident</code>。
+    </p><p>     动态 SQL 语句也可以使用<code class="function">format</code>（见<a class="xref" href="functions-string.html" title="9.4. 字符串函数和操作符">第 9.4 节</a>）函数来安全地构造。例如：
+</p><pre class="programlisting">EXECUTE format('UPDATE tbl SET %I = %L '
+   'WHERE key = %L', colname, newvalue, keyvalue);</pre><p>
+     <code class="literal">%I</code>等效于<code class="function">quote_ident</code>并且
+     <code class="literal">%L</code>等效于<code class="function">quote_nullable</code>。
+     <code class="function">format</code>函数可以和
+     <code class="literal">USING</code>子句一起使用：
+</p><pre class="programlisting">EXECUTE format('UPDATE tbl SET %I = $1 WHERE key = $2', colname)
+   USING newvalue, keyvalue;</pre><p>
+     这种形式更好，因为变量被以它们天然的数据类型格式处理，而不是无
+     条件地把它们转换成文本并且通过<code class="literal">%L</code>引用它们。这也效率
+     更高。
+    </p></div></div><br class="example-break" /><p>     动态命令和<code class="command">EXECUTE</code>的一个更大的例子可以在<a class="xref" href="plpgsql-porting.html#PLPGSQL-PORTING-EX2" title="例 42.10. 从PL/SQL移植一个创建另一个函数的函数到PL/pgSQL">例 42.10</a>中找到，它会构建并且执行一个<code class="command">CREATE FUNCTION</code>命令来定义一个新的函数。
+    </p></div><div class="sect2" id="PLPGSQL-STATEMENTS-DIAGNOSTICS"><div class="titlepage"><div><div><h3 class="title">42.5.5. 获得结果状态</h3></div></div></div><p>     有好几种方法可以判断一条命令的效果。第一种方法是使用<code class="command">GET DIAGNOSTICS</code>命令，其形式如下：
+
+</p><pre class="synopsis">GET [<span class="optional"> CURRENT </span>] DIAGNOSTICS <em class="replaceable"><code>variable</code></em> { = | := } <em class="replaceable"><code>item</code></em> [<span class="optional"> , ... </span>];</pre><p>
+
+     这条命令允许检索系统状态指示符。<code class="literal">CURRENT</code>是一个噪声词（另见<a class="xref" href="plpgsql-control-structures.html#PLPGSQL-EXCEPTION-DIAGNOSTICS" title="42.6.6.1. 得到有关一个错误的信息">第 42.6.6.1 节</a>中的<code class="command">GET STACKED DIAGNOSTICS</code>）。每个<em class="replaceable"><code>item</code></em>是一个关键字， 它标识一个要被赋予给指定<em class="replaceable"><code>变量</code></em>的状态值（变量应具有正确的数据类型来接收状态值）。<a class="xref" href="plpgsql-statements.html#PLPGSQL-CURRENT-DIAGNOSTICS-VALUES" title="表 42.1. 可用的诊断项">表 42.1</a>中展示了当前可用的状态项。冒号等号（<code class="literal">:=</code>）可以被用来取代 SQL 标准的<code class="literal">=</code>符号。例如：
+</p><pre class="programlisting">GET DIAGNOSTICS integer_var = ROW_COUNT;</pre><p>
+    </p><div class="table" id="PLPGSQL-CURRENT-DIAGNOSTICS-VALUES"><p class="title"><strong>表 42.1. 可用的诊断项</strong></p><div class="table-contents"><table class="table" summary="可用的诊断项" border="1"><colgroup><col /><col /><col /></colgroup><thead><tr><th>名称</th><th>类型</th><th>描述</th></tr></thead><tbody><tr><td><code class="varname">ROW_COUNT</code></td><td><code class="type">bigint</code></td><td>最近的<acronym class="acronym">SQL</acronym>命令处理的行数</td></tr><tr><td><code class="varname">RESULT_OID</code></td><td><code class="type">oid</code></td><td>最近的<acronym class="acronym">SQL</acronym>命令插入的最后一行的 OID（只有在一条<code class="command">INSERT</code>命令插入到一个具有 OID 的表后才有用）</td></tr><tr><td><code class="literal">PG_CONTEXT</code></td><td><code class="type">text</code></td><td>描述当前调用栈的文本行（见<a class="xref" href="plpgsql-control-structures.html#PLPGSQL-CALL-STACK" title="42.6.7. 获得执行位置信息">第 42.6.7 节</a>）</td></tr></tbody></table></div></div><br class="table-break" /><p>     第二种判断命令效果的方法是检查一个名为<code class="literal">FOUND</code>的<code class="type">boolean</code>类型的特殊变量。在每一次<span class="application">PL/pgSQL</span>函数调用时，<code class="literal">FOUND</code>开始都为假。它的值会被下面的每一种类型的语句设置：
+
+         </p><div class="itemizedlist"><ul class="itemizedlist" style="list-style-type: disc; "><li class="listitem"><p>            如果一个<code class="command">SELECT INTO</code>语句赋值了一行，它将把<code class="literal">FOUND</code>设置为真，如果没有返回行则将之设置为假。
+           </p></li><li class="listitem"><p>            如果一个<code class="command">PERFORM</code>语句生成（并且抛弃）一行或多行，它将把<code class="literal">FOUND</code>设置为真，如果没有产生行则将之设置为假。
+           </p></li><li class="listitem"><p>            如果<code class="command">UPDATE</code>、<code class="command">INSERT</code>以及<code class="command">DELETE</code>语句影响了至少一行，它们会把<code class="literal">FOUND</code>设置为真，如果没有影响行则将之设置为假。
+           </p></li><li class="listitem"><p>            如果一个<code class="command">FETCH</code>语句返回了一行，它将把<code class="literal">FOUND</code>设置为真，如果没有返回行则将之设置为假。
+           </p></li><li class="listitem"><p>            如果一个<code class="command">MOVE</code>语句成功地重定位了游标，它将会把<code class="literal">FOUND</code>设置为真，否则设置为假。
+           </p></li><li class="listitem"><p>            如果一个<code class="command">FOR</code>或<code class="command">FOREACH</code>语句迭代了一次或多次，它将会把<code class="literal">FOUND</code>设置为真，否则设置为假。当循环退出时，<code class="literal">FOUND</code>用这种方式设置；在循环执行中，尽管<code class="literal">FOUND</code>可能被循环体中的其他语句的执行所改变，但它不会被循环语句修改。
+           </p></li><li class="listitem"><p>            如果查询返回至少一行，<code class="command">RETURN QUERY</code>和<code class="command">RETURN QUERY EXECUTE</code>语句会把<code class="literal">FOUND</code>设为真， 如果没有返回行则设置为假。
+           </p></li></ul></div><p>
+
+     其他的<span class="application">PL/pgSQL</span>语句不会改变<code class="literal">FOUND</code>的状态。尤其需要注意的一点是：<code class="command">EXECUTE</code>会修改<code class="command">GET DIAGNOSTICS</code>的输出，但不会修改<code class="literal">FOUND</code>的输出。
+    </p><p>     <code class="literal">FOUND</code>是每个<span class="application">PL/pgSQL</span>函数的局部变量；任何对它的修改只影响当前的函数。
+    </p></div><div class="sect2" id="PLPGSQL-STATEMENTS-NULL"><div class="titlepage"><div><div><h3 class="title">42.5.6. 什么也不做</h3></div></div></div><p>     有时一个什么也不做的占位语句也很有用。例如，它能够指示 if/then/else 链中故意留出的空分支。可以使用<code class="command">NULL</code>语句达到这个目的：
+
+</p><pre class="synopsis">NULL;</pre><p>
+    </p><p>     例如，下面的两段代码是等价的：
+</p><pre class="programlisting">BEGIN
+    y := x / 0;
+EXCEPTION
+    WHEN division_by_zero THEN
+        NULL;  -- 忽略错误
+END;</pre><p>
+
+</p><pre class="programlisting">BEGIN
+    y := x / 0;
+EXCEPTION
+    WHEN division_by_zero THEN  -- 忽略错误
+END;</pre><p>
+     究竟使用哪一种取决于各人的喜好。
+    </p><div class="note"><h3 class="title">注意</h3><p>      在 Oracle 的 PL/SQL 中，不允许出现空语句列表，并且因此在这种情况下<span class="emphasis"><em>必须</em></span>使用<code class="command">NULL</code>语句。而<span class="application">PL/pgSQL</span>允许你什么也不写。
+     </p></div></div></div><div class="navfooter"><hr /><table width="100%" summary="Navigation footer"><tr><td width="40%" align="left"><a accesskey="p" href="plpgsql-expressions.html">上一页</a> </td><td width="20%" align="center"><a accesskey="u" href="plpgsql.html">上一级</a></td><td width="40%" align="right"> <a accesskey="n" href="plpgsql-control-structures.html">下一页</a></td></tr><tr><td width="40%" align="left" valign="top">42.4. 表达式 </td><td width="20%" align="center"><a accesskey="h" href="index.html">起始页</a></td><td width="40%" align="right" valign="top"> 42.6. 控制结构</td></tr></table></div></body></html>

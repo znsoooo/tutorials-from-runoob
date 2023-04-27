@@ -1,0 +1,290 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><title>33.1. 数据库连接控制函数</title><link rel="stylesheet" type="text/css" href="stylesheet.css" /><link rev="made" href="pgsql-docs@postgresql.org" /><meta name="generator" content="DocBook XSL Stylesheets V1.79.1" /><link rel="prev" href="libpq.html" title="第 33 章 libpq - C 库" /><link rel="next" href="libpq-status.html" title="33.2. 连接状态函数" /></head><body><div xmlns="http://www.w3.org/TR/xhtml1/transitional" class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="5" align="center">33.1. 数据库连接控制函数</th></tr><tr><td width="10%" align="left"><a accesskey="p" href="libpq.html" title="第 33 章 libpq - C 库">上一页</a> </td><td width="10%" align="left"><a accesskey="u" href="libpq.html" title="第 33 章 libpq - C 库">上一级</a></td><th width="60%" align="center">第 33 章 <span xmlns="http://www.w3.org/1999/xhtml" class="application">libpq</span> - C 库</th><td width="10%" align="right"><a accesskey="h" href="index.html" title="PostgreSQL 10.1 手册">起始页</a></td><td width="10%" align="right"> <a accesskey="n" href="libpq-status.html" title="33.2. 连接状态函数">下一页</a></td></tr></table><hr></hr></div><div class="sect1" id="LIBPQ-CONNECT"><div class="titlepage"><div><div><h2 class="title" style="clear: both">33.1. 数据库连接控制函数</h2></div></div></div><div class="toc"><dl class="toc"><dt><span class="sect2"><a href="libpq-connect.html#LIBPQ-CONNSTRING">33.1.1. 连接字符串</a></span></dt><dt><span class="sect2"><a href="libpq-connect.html#LIBPQ-PARAMKEYWORDS">33.1.2. 参数关键词</a></span></dt></dl></div><p>   下列函数会建立到一个<span class="productname">PostgreSQL</span>后端服务器的连接。一个应用程序可以在一个时刻打开多个后端连接（原因之一就是为了访问多个数据库）。每个连接用一个<code class="structname">PGconn</code><a id="idp26846336" class="indexterm"></a>对象表示，它从函数<code class="function">PQconnectdb</code>、<code class="function">PQconnectdbParams</code>或<code class="function">PQsetdbLogin</code>得到。注意这些函数将总是返回一个非空的对象指针，除非正好没有内存来分配<code class="structname">PGconn</code>对象。在通过该连接对象发送查询之前，应该调用<code class="function">PQstatus</code>函数来检查返回值以确定是否得到了一个成功的连接。
+
+   </p><div class="warning"><h3 class="title">警告</h3><p>     在 Unix 上，复制一个拥有打开 libpq 连接的进程可能导致不可以预料的结果，因为父进程和子进程会共享相同的套接字和操作系统资源。出于这个原因，我们不推荐这样的用法，尽管从子进程执行一个<code class="function">exec</code>来载入新的可执行代码是安全的。
+    </p></div><p>
+
+   </p><div class="note"><h3 class="title">注意</h3><p>     在 Windows 上，如果一个单一数据库连接被反复地开启并且关闭，这是一种提升性能的方式。在内部，libpq 为开启和关闭分别调用<code class="function">WSAStartup()</code>和<code class="function">WSACleanup()</code>。<code class="function">WSAStartup()</code>会增加一个内部 Windows 库引用计数而<code class="function">WSACleanup()</code>则会减少之。当引用计数正好为一时，调用<code class="function">WSACleanup()</code>会释放所有资源并且所有 DLL 会被卸载。这是一种昂贵的操作。为了避免它，一个应用可以手动调用<code class="function">WSAStartup()</code>，这样当最后的数据库连接被关闭时资源不会被释放。
+    </p></div><p>
+
+   </p><div class="variablelist"><dl class="variablelist"><dt id="LIBPQ-PQCONNECTDBPARAMS"><span class="term"><code class="function">PQconnectdbParams</code><a id="idp26859360" class="indexterm"></a></span></dt><dd><p>       开启一个到数据库服务器的新连接。
+
+</p><pre class="synopsis">PGconn *PQconnectdbParams(const char * const *keywords,
+                          const char * const *values,
+                          int expand_dbname);</pre><p>
+      </p><p>       这个函数使用从两个以<code class="symbol">NULL</code>结尾的数组中取得的参数打开一个新的数据库连接。第一个数组<code class="literal">keywords</code>被定义为一个字符串数组，每一个元素是一个关键词。第二个数组<code class="literal">values</code>给出了每个关键词的值。和下面的<code class="function">PQsetdbLogin</code>不同，可以在不改变函数签名的情况下扩展参数集合，因此使用这个函数（或者与之相似的非阻塞的<code class="function">PQconnectStartParams</code>和<code class="function">PQconnectPoll</code>）对于新应用编程要更好。 
+      </p><p>       当前能被识别的参数关键词被列举在<a class="xref" href="libpq-connect.html#LIBPQ-PARAMKEYWORDS" title="33.1.2. 参数关键词">第 33.1.2 节</a>中。
+      </p><p>       其可能的格式详见<a class="xref" href="libpq-connect.html#LIBPQ-CONNSTRING" title="33.1.1. 连接字符串">第 33.1.1 节</a>。
+       当<code class="literal">expand_dbname</code>为非零时，<em class="parameter"><code>dbname</code></em>
+       关键词的值被允许识别为一个连接字符串。只有<em class="parameter"><code>dbname</code></em>
+       的第一次出现会按这种方式扩展，任何后续<em class="parameter"><code>dbname</code></em>值会被当
+       做一个普通数据库名处理。有关可能的连接字符串格式的详情可见
+       <a class="xref" href="libpq-connect.html#LIBPQ-CONNSTRING" title="33.1.1. 连接字符串">第 33.1.1 节</a>。
+      </p><p>       被传递的数组可以为空，这样就会使用所有默认参数。也可以只包含一个或几个参数设置。两个参数数组应该在长度上匹配。对于参数数组的处理将会停止于<code class="literal">keywords</code>数组中第一个非-<code class="symbol">NULL</code>元素。
+      </p><p>       如果任何一个参数是<code class="symbol">NULL</code>或者一个空字符串，
+       那么将会检查相应的环境变量（见<a class="xref" href="libpq-envars.html" title="33.14. 环境变量">第 33.14 节</a>）。
+       如果该环境变量也没有被设置，那么将使用指示的内建默认值。
+      </p><p>       通常，关键词的处理是从这些数组的头部开始并且以索引顺序进行。这样做的效果就是，当关键词有重复时，只会保留最后一个被处理的值。因此，通过小心地放置关键词<em class="parameter"><code>dbname</code></em>，可以决定什么会被一个<em class="parameter"><code>conninfo</code></em>字符串所重载，以及什么不会被重载。
+      </p></dd><dt id="LIBPQ-PQCONNECTDB"><span class="term"><code class="function">PQconnectdb</code><a id="idp26879072" class="indexterm"></a></span></dt><dd><p>       开启一个到数据库服务器的新连接。
+
+</p><pre class="synopsis">PGconn *PQconnectdb(const char *conninfo);</pre><p>
+      </p><p>       这个函数使用从字符串<code class="literal">conninfo</code>中得到的参数开启一个新的数据库连接。
+      </p><p>       被传递的字符串可以为空，这样将会使用所有的默认参数。也可以包含由空格分隔的一个或多个参数设置，还可以包含一个<acronym class="acronym">URI</acronym>。详见<a class="xref" href="libpq-connect.html#LIBPQ-CONNSTRING" title="33.1.1. 连接字符串">第 33.1.1 节</a>。
+     </p></dd><dt id="LIBPQ-PQSETDBLOGIN"><span class="term"><code class="function">PQsetdbLogin</code><a id="idp26885088" class="indexterm"></a></span></dt><dd><p>       开启一个到数据库服务器的新连接。
+</p><pre class="synopsis">PGconn *PQsetdbLogin(const char *pghost,
+                     const char *pgport,
+                     const char *pgoptions,
+                     const char *pgtty,
+                     const char *dbName,
+                     const char *login,
+                     const char *pwd);</pre><p>
+       </p><p>        这是<code class="function">PQconnectdb</code>的带有固定参数集合的前辈。它具有相同的功能，不过其中缺失的参数将总是采用默认值。对任意一个固定参数写<code class="symbol">NULL</code>或一个空字符串将会使它采用默认值。
+      </p><p>        如果<em class="parameter"><code>dbName</code></em>包含一个<code class="symbol">=</code>符号或者具有一个合法的连接<acronym class="acronym">URI</acronym>前缀，它会被当作一个<em class="parameter"><code>conninfo</code></em>字符串，就好像它已经被传递给了<code class="function">PQconnectdb</code>，并且剩余的参数则被应用为指定给<code class="function">PQconnectdbParams</code>。
+      </p></dd><dt id="LIBPQ-PQSETDB"><span class="term"><code class="function">PQsetdb</code><a id="idp26894304" class="indexterm"></a></span></dt><dd><p>   开启一个到数据库服务器的新连接。
+</p><pre class="synopsis">PGconn *PQsetdb(char *pghost,
+                char *pgport,
+                char *pgoptions,
+                char *pgtty,
+                char *dbName);</pre><p>
+     </p><p>      这是一个调用<code class="function">PQsetdbLogin</code>的宏，其中为<em class="parameter"><code>login</code></em>和<em class="parameter"><code>pwd</code></em>参数使用空指针。提供它是为了向后兼容非常老的程序。
+     </p></dd><dt id="LIBPQ-PQCONNECTSTARTPARAMS"><span class="term"><code class="function">PQconnectStartParams</code><a id="idp26900272" class="indexterm"></a><br /></span><span class="term"><code class="function">PQconnectStart</code><a id="idp26901648" class="indexterm"></a><br /></span><span class="term"><code class="function">PQconnectPoll</code><a id="idp26903024" class="indexterm"></a></span></dt><dd><p>       <a id="idp26904096" class="indexterm"></a>
+       以非阻塞的方式建立一个到数据库服务器的连接。
+
+</p><pre class="synopsis">PGconn *PQconnectStartParams(const char * const *keywords,
+                             const char * const *values,
+                             int expand_dbname);
+
+PGconn *PQconnectStart(const char *conninfo);
+
+PostgresPollingStatusType PQconnectPoll(PGconn *conn);</pre><p>
+      </p><p>       这三个函数被用来开启一个到数据库服务器的连接，这样你的应用的执行线程不会因为远程的I/O而被阻塞。这种方法的要点在于等待 I/O 完成可能在应用的主循环中发生，而不是在<code class="function">PQconnectdbParams</code>或<code class="function">PQconnectdb</code>中，并且因此应用能够把这种操作和其他动作并行处理。
+      </p><p>       在<code class="function">PQconnectStartParams</code>中，数据库连接使用从<code class="literal">keywords</code>和<code class="literal">values</code>数组中取得的参数创建，并且被<code class="literal">expand_dbname</code>控制，这和之前描述的<code class="function">PQconnectdbParams</code>相同。
+      </p><p>       在<code class="function">PQconnectStart</code>中，数据库连接使用从字符串<code class="literal">conninfo</code>中取得的参数创建，这和之前描述的<code class="function">PQconnectdb</code>相同。
+      </p><p>       只要满足一些限制，<code class="function">PQconnectStartParams</code>或<code class="function">PQconnectStart</code>或<code class="function">PQconnectPoll</code>都不会阻塞：
+       </p><div class="itemizedlist"><ul class="itemizedlist" style="list-style-type: disc; "><li class="listitem"><p>          <code class="literal">hostaddr</code>和<code class="literal">host</code>参数被合适地使用，以确保不会做名字或逆向名字查询。详见<a class="xref" href="libpq-connect.html#LIBPQ-PARAMKEYWORDS" title="33.1.2. 参数关键词">第 33.1.2 节</a>中这些参数的文档。
+         </p></li><li class="listitem"><p>          如果你调用<code class="function">PQtrace</code>，确保你追踪的该流对象不会阻塞。
+         </p></li><li class="listitem"><p>          如后文所述，你要确保在调用<code class="function">PQconnectPoll</code>之前，套接字处于合适的状态。
+         </p></li></ul></div><p>
+      </p><p>       注意：<code class="function">PQconnectStartParams</code>的使用和下文所示的<code class="function">PQconnectStart</code>类似。
+      </p><p>       要开始一个非阻塞的连接请求，可调用<code class="literal">conn = PQconnectStart("<em class="replaceable"><code>connection_info_string</code></em>")</code>。如果<code class="varname">conn</code>为空，那么<span class="application">libpq</span>无法分配一个新的<code class="structname">PGconn</code>结构。否则，一个合法的<code class="structname">PGconn</code>指针将被返回（尽管并不表示代表一个到数据库的合法连接）。在从<code class="function">PQconnectStart</code>返回时，调用<code class="literal">status = PQstatus(conn)</code>。如果<code class="varname">status</code>等于<code class="symbol">CONNECTION_BAD</code>，就说明<code class="function">PQconnectStart</code>已经失败。
+      </p><p>       如果<code class="function">PQconnectStart</code>成功，下一个阶段是轮询<span class="application">libpq</span>，这样它能够继续进行连接序列。使用<code class="function">PQsocket(conn)</code>来获得该数据库连接底层的套接字描述符。这样循环：如果<code class="function">PQconnectPoll(conn)</code>上一次返回<code class="symbol">PGRES_POLLING_READING</code>，等到该套接字准备好读取（按照<code class="function">select()</code>、<code class="function">poll()</code>或类似的系统函数所指示的）。则再次调用<code class="function">PQconnectPoll(conn)</code>。反之，如果<code class="function">PQconnectPoll(conn)</code>上一次返回<code class="symbol">PGRES_POLLING_WRITING</code>，等到该套接字准备好写入，则再次调用<code class="function">PQconnectPoll(conn)</code>。如果你还没有调用<code class="function">PQconnectPoll</code>，即刚好在对<code class="function">PQconnectStart</code>的调用之后，行为就像是它上次返回了<code class="symbol">PGRES_POLLING_WRITING</code>。持续这个循环直到<code class="function">PQconnectPoll(conn)</code>返回<code class="symbol">PGRES_POLLING_FAILED</code>指示连接过程已经失败，或者返回<code class="symbol">PGRES_POLLING_OK</code>指示连接已经被成功地建立。
+      </p><p>       在连接期间的任意时刻，该连接的状态可以通过调用<code class="function">PQstatus</code>来检查。如果这个调用返回<code class="symbol">CONNECTION_BAD</code>，那么连接过程已经失败。如果该调用返回<code class="function">CONNECTION_OK</code>，则该连接已经准备好。如前所述，这些状态同样都可以从<code class="function">PQconnectPoll</code>的返回值检测。在一个异步连接过程中（也只有在这个过程中）也可能出现其他状态。这些状态指示该连接过程的当前阶段，并且可能有助于为用户提供反馈。这些状态是：
+
+       </p><div class="variablelist"><dl class="variablelist"><dt id="LIBPQ-CONNECTION-STARTED"><span class="term"><code class="symbol">CONNECTION_STARTED</code></span></dt><dd><p>           等待连接被建立。
+          </p></dd><dt id="LIBPQ-CONNECTION-MADE"><span class="term"><code class="symbol">CONNECTION_MADE</code></span></dt><dd><p>           连接 OK，等待发送。
+          </p></dd><dt id="LIBPQ-CONNECTION-AWAITING-RESPONSE"><span class="term"><code class="symbol">CONNECTION_AWAITING_RESPONSE</code></span></dt><dd><p>           等待来自服务器的一个回应。
+          </p></dd><dt id="LIBPQ-CONNECTION-AUTH-OK"><span class="term"><code class="symbol">CONNECTION_AUTH_OK</code></span></dt><dd><p>           收到认证，等待后端启动结束。
+          </p></dd><dt id="LIBPQ-CONNECTION-SSL-STARTUP"><span class="term"><code class="symbol">CONNECTION_SSL_STARTUP</code></span></dt><dd><p>           协商 SSL 加密。
+          </p></dd><dt id="LIBPQ-CONNECTION-SETENV"><span class="term"><code class="symbol">CONNECTION_SETENV</code></span></dt><dd><p>           协商环境驱动的参数设置。
+          </p></dd><dt id="LIBPQ-CONNECTION-CHECK-WRITABLE"><span class="term"><code class="symbol">CONNECTION_CHECK_WRITABLE</code></span></dt><dd><p>           检查连接是否能够处理写入事务。
+          </p></dd><dt id="LIBPQ-CONNECTION-CONSUME"><span class="term"><code class="symbol">CONNECTION_CONSUME</code></span></dt><dd><p>           在连接上消费任何剩余的响应消息。
+          </p></dd></dl></div><p>
+
+       注意，尽管这些常数将被保留（为了维护兼容性），一个应用永远不应该依赖这些状态按照特定顺序出现，或者根本就不依赖它们，或者不依赖状态总是这些文档中所说的值。一个应用可能做些这样的事情：
+</p><pre class="programlisting">switch(PQstatus(conn))
+{
+        case CONNECTION_STARTED:
+            feedback = "Connecting...";
+            break;
+
+        case CONNECTION_MADE:
+            feedback = "Connected to server...";
+            break;
+.
+.
+.
+        default:
+            feedback = "Connecting...";
+}</pre><p>
+      </p><p>       在使用<code class="function">PQconnectPoll</code>时，连接参数<code class="literal">connect_timeout</code>会被忽略：判断是否超时是应用的责任。否则，<code class="function">PQconnectStart</code>后面跟着后面跟着<code class="function">PQconnectPoll</code>循环等效于<code class="function">PQconnectdb</code>。
+      </p><p>       注意如果<code class="function">PQconnectStart</code>返回一个非空的指针，你必须在用完它之后调用<code class="function">PQfinish</code>来处理那些结构和任何相关的内存块。即使连接尝试失败或被放弃时也必须完成这些工作。
+      </p></dd><dt id="LIBPQ-PQCONNDEFAULTS"><span class="term"><code class="function">PQconndefaults</code><a id="idp26966912" class="indexterm"></a></span></dt><dd><p>       返回默认连接选项。
+</p><pre class="synopsis">PQconninfoOption *PQconndefaults(void);
+
+typedef struct
+{
+    char   *keyword;   /* 该选项的关键词 */
+    char   *envvar;    /* 依赖的环境变量名 */
+    char   *compiled;  /* 依赖的内建默认值 */
+    char   *val;       /* 选项的当前值，或者 NULL */
+    char   *label;     /* 连接对话框中域的标签 */
+    char   *dispchar;  /* 指示如何在一个连接对话框中显示这个域。值是：
+                          ""        显示输入的值
+                          "*"       口令域 - 隐藏值
+                          "D"       调试选项 - 默认不显示 */
+    int     dispsize;  /* 用于对话框的以字符计的域尺寸 */
+} PQconninfoOption;</pre><p>
+      </p><p>       返回一个连接选项数组。这可以用来确定用于连接服务器的所有可能的<code class="function">PQconnectdb</code>选项和它们的当前缺省值。返回值指向一个<code class="structname">PQconninfoOption</code>结构的数组，该数组以一个包含空<code class="structfield">keyword</code>指针的条目结束。如果无法分配内存，则返回该空指针。注意当前缺省值（<code class="structfield">val</code>域）将依赖于环境变量和其他上下文。一个缺失或者无效的服务文件将会被无声地忽略掉。调用者必须把连接选项当作只读对待。
+      </p><p>       在处理完选项数组后，把它交给<code class="function">PQconninfoFree</code>释放。如果没有这么做， 每次调用<code class="function">PQconndefaults</code>都会导致一小部分内存泄漏。
+      </p></dd><dt id="LIBPQ-PQCONNINFO"><span class="term"><code class="function">PQconninfo</code><a id="idp26975392" class="indexterm"></a></span></dt><dd><p>       返回被一个活动连接使用的连接选项。
+</p><pre class="synopsis">PQconninfoOption *PQconninfo(PGconn *conn);</pre><p>
+      </p><p>       返回一个连接选项数组。这可以用来确定用于连接服务器的所有可能的<code class="function">PQconnectdb</code>选项和它们的当前缺省值。返回值指向一个<code class="structname">PQconninfoOption</code>结构的数组，该数组以一个包含空<code class="structfield">keyword</code>指针的条目结束。上述所有对于<code class="function">PQconndefaults</code>的注解也适用于<code class="function">PQconninfo</code>的结果。
+      </p></dd><dt id="LIBPQ-PQCONNINFOPARSE"><span class="term"><code class="function">PQconninfoParse</code><a id="idp26982256" class="indexterm"></a></span></dt><dd><p>       返回从提供的连接字符串中解析到的连接选项。
+
+</p><pre class="synopsis">PQconninfoOption *PQconninfoParse(const char *conninfo, char **errmsg);</pre><p>
+      </p><p>       解析一个连接字符串并且将结果选项作为一个数组返回，或者在连接字符串有问题时返回<code class="symbol">NULL</code>。这个函数可以用来抽取所提供的连接字符串中的<code class="function">PQconnectdb</code>选项。返回值指向一个<code class="structname">PQconninfoOption</code>结构的数组，该数组以一个包含空<code class="structfield">keyword</code>指针的条目结束。
+      </p><p>       所有合法选项将出现在结果数组中，但是任何在连接字符串中没有出现的选项的<code class="literal">PQconninfoOption</code>的<code class="literal">val</code>会被设置为<code class="literal">NULL</code>，默认值不会被插入。
+      </p><p>       如果<code class="literal">errmsg</code>不是<code class="symbol">NULL</code>，那么成功时<code class="literal">*errmsg</code>会被设置为<code class="symbol">NULL</code>， 否则设置为被<code class="function">malloc</code>过的错误字符串以说明该问题（也可以将<code class="literal">*errmsg</code>设置为<code class="symbol">NULL</code>并且函数返回<code class="symbol">NULL</code>，这表示一种内存耗尽的情况）。
+      </p><p>       在处理完选项数组后，把它交给<code class="function">PQconninfoFree</code>释放。如果没有这么做， 每次调用<code class="function">PQconninfoParse</code>都会导致一小部分内存泄漏。反过来，如果发生一个错误并且<code class="literal">errmsg</code>不是<code class="symbol">NULL</code>，确保使用<code class="function">PQfreemem</code>释放错误字符串。
+      </p></dd><dt id="LIBPQ-PQFINISH"><span class="term"><code class="function">PQfinish</code><a id="idp26999648" class="indexterm"></a></span></dt><dd><p>       关闭与服务器的连接。同时释放<code class="structname">PGconn</code>对象使用的内存。
+</p><pre class="synopsis">void PQfinish(PGconn *conn);</pre><p>
+      </p><p>       注意，即使与服务器的连接尝试失败（由<code class="function">PQstatus</code>指示），应用也应当调用<code class="function">PQfinish</code>来释放<code class="structname">PGconn</code>对象使用的内存。不能在调用<code class="function">PQfinish</code>之后再使用<code class="structname">PGconn</code>指针。
+      </p></dd><dt id="LIBPQ-PQRESET"><span class="term"><code class="function">PQreset</code><a id="idp27006720" class="indexterm"></a></span></dt><dd><p>       重置与服务器的通讯通道。
+</p><pre class="synopsis">void PQreset(PGconn *conn);</pre><p>
+      </p><p>       此函数将关闭与服务器的连接，并且使用所有之前使用过的参数尝试重新建立与同一个服务器的连接。这可能有助于在工作连接丢失后的错误恢复。
+      </p></dd><dt id="LIBPQ-PQRESETSTART"><span class="term"><code class="function">PQresetStart</code><a id="idp27010480" class="indexterm"></a><br /></span><span class="term"><code class="function">PQresetPoll</code><a id="idp27011856" class="indexterm"></a></span></dt><dd><p>       以非阻塞方式重置与服务器的通讯通道。
+
+</p><pre class="synopsis">int PQresetStart(PGconn *conn);
+
+PostgresPollingStatusType PQresetPoll(PGconn *conn);</pre><p>
+      </p><p>       这些函数将关闭与服务器的连接，并且使用所有之前使用过的参数尝试重新建立与同一个服务器的连接。这可能有助于在工作连接丢失后的错误恢复。它们和上面的<code class="function">PQreset</code>的不同在于它们工作在非阻塞方式。这些函数受到<code class="function">PQconnectStartParams</code>、<code class="function">PQconnectStart</code>和<code class="function">PQconnectPoll</code>相同的限制。
+      </p><p>       要发起一次连接重置，调用<code class="function">PQresetStart</code>。如果它返回 0，那么重置失败。如果返回 1，用与使用<code class="function">PQresetPoll</code>建立连接的相同方法使用<code class="function">PQconnectPoll</code>重置连接。
+      </p></dd><dt id="LIBPQ-PQPINGPARAMS"><span class="term"><code class="function">PQpingParams</code><a id="idp27021312" class="indexterm"></a></span></dt><dd><p>       <code class="function">PQpingParams</code>报告服务器的状态。它接受与<code class="function">PQconnectdbParams</code>相同的连接参数。获得服务器状态不需要提供正确的用户名、口令或数据库名。不过，如果提供了不正确的值，服务器将记录一次失败的连接尝试。
+
+</p><pre class="synopsis">PGPing PQpingParams(const char * const *keywords,
+                    const char * const *values,
+                    int expand_dbname);</pre><p>
+
+       该函数返回下列值之一：
+
+       </p><div class="variablelist"><dl class="variablelist"><dt id="LIBPQ-PQPINGPARAMS-PQPING-OK"><span class="term"><code class="literal">PQPING_OK</code></span></dt><dd><p>           服务器正在运行，并且看起来可以接受连接。
+          </p></dd><dt id="LIBPQ-PQPINGPARAMS-PQPING-REJECT"><span class="term"><code class="literal">PQPING_REJECT</code></span></dt><dd><p>           服务器正在运行，但是处于一种不允许连接的状态（启动、关闭或崩溃恢复）。
+          </p></dd><dt id="LIBPQ-PQPINGPARAMS-PQPING-NO-RESPONSE"><span class="term"><code class="literal">PQPING_NO_RESPONSE</code></span></dt><dd><p>           无法联系到服务器。这可能表示服务器没有运行，或者给定的连接参数中有些错误（例如，错误的端口号），或者有一个网络连接问题（例如，一个防火墙阻断了连接请求）。
+          </p></dd><dt id="LIBPQ-PQPINGPARAMS-PQPING-NO-ATTEMPT"><span class="term"><code class="literal">PQPING_NO_ATTEMPT</code></span></dt><dd><p>           没有尝试联系服务器，因为提供的参数显然不正确，或者有一些客户端问题（例如，内存用完）。
+          </p></dd></dl></div><p>
+
+      </p></dd><dt id="LIBPQ-PQPING"><span class="term"><code class="function">PQping</code><a id="idp27034400" class="indexterm"></a></span></dt><dd><p>       <code class="function">PQping</code>报告服务器的状态。它接受与<code class="function">PQconnectdb</code>相同的连接参数。获得服务器状态不需要提供正确的用户名、口令或数据库名。不过，如果提供了不正确的值，服务器将记录一次失败的连接尝试。
+
+</p><pre class="synopsis">PGPing PQping(const char *conninfo);</pre><p>
+      </p><p>       返回值和<code class="function">PQpingParams</code>相同。
+      </p></dd></dl></div><p>
+  </p><div class="sect2" id="LIBPQ-CONNSTRING"><div class="titlepage"><div><div><h3 class="title">33.1.1. 连接字符串</h3></div></div></div><a id="idp27039744" class="indexterm"></a><a id="idp27041216" class="indexterm"></a><p>    几个<span class="application">libpq</span>函数会解析一个用户指定的字符串来获得连接参数。这些字符串有两种被接受的格式：纯<code class="literal">关键词 = 值</code>字符串以及URI。
+	URI通常遵循
+    <a class="ulink" href="https://tools.ietf.org/html/rfc3986" target="_top">RFC
+    3986</a>，除了允许多主机连接字符串，如下面进一步的描述。
+   </p><div class="sect3" id="idp27045312"><div class="titlepage"><div><div><h4 class="title">33.1.1.1. 关键词/值连接字符串</h4></div></div></div><p>    在第一种格式中，每一个参数设置的形式都是<code class="literal">关键词 = 值</code>。等号周围的空白是可选的。要写一个空值或一个包含空白的值，将它用单引号包围，例如<code class="literal">关键词 = 'a value'</code>。值里面的单引号和反斜线必须用一个反斜线转义，即<code class="literal">\'</code>和<code class="literal">\\</code>。
+   </p><p>    例子：
+</p><pre class="programlisting">host=localhost port=5432 dbname=mydb connect_timeout=10</pre><p>
+   </p><p>    能被识别的参数关键词在<a class="xref" href="libpq-connect.html#LIBPQ-PARAMKEYWORDS" title="33.1.2. 参数关键词">第 33.1.2 节</a>中列出。
+   </p></div><div class="sect3" id="idp27051184"><div class="titlepage"><div><div><h4 class="title">33.1.1.2. 连接 URI</h4></div></div></div><p>   一个连接<acronym class="acronym">URI</acronym>的一般形式是：
+</p><pre class="synopsis">postgresql://[user[:password]@][netloc][:port][,...][/dbname][?param1=value1&amp;...]</pre><p>
+   </p><p>    <acronym class="acronym">URI</acronym>模式标志符可以是<code class="literal">postgresql://</code>或<code class="literal">postgres://</code>。每一个<acronym class="acronym">URI</acronym>部分都是可选的。下列例子展示了合法的<acronym class="acronym">URI</acronym>语法：
+</p><pre class="programlisting">postgresql://
+postgresql://localhost
+postgresql://localhost:5433
+postgresql://localhost/mydb
+postgresql://user@localhost
+postgresql://user:secret@localhost
+postgresql://other@localhost/otherdb?connect_timeout=10&amp;application_name=myapp
+postgresql://host1:123,host2:456/somedb?target_session_attrs=any&amp;application_name=myapp</pre><p>
+    <acronym class="acronym">URI</acronym>的层次部分的组件可以作为参数给出。例如：
+</p><pre class="programlisting">postgresql:///mydb?host=localhost&amp;port=5433</pre><p>
+   </p><p>    在任意<acronym class="acronym">URI</acronym>部分中可以使用百分号编码来包括有特殊含义的符号，
+	例如使用<code class="literal">%3D</code>替换<code class="literal">=</code>。
+    .
+   </p><p>    任何不对应<a class="xref" href="libpq-connect.html#LIBPQ-PARAMKEYWORDS" title="33.1.2. 参数关键词">第 33.1.2 节</a>中列出的关键词的连接参数将被忽略并且关于它们的警告消息会被发送到<code class="filename">stderr</code>。
+   </p><p>    为了提高和 JDBC 连接<acronym class="acronym">URI</acronym>的兼容性，参数<code class="literal">ssl=true</code>的实例会被翻译成<code class="literal">sslmode=require</code>。
+   </p><p>    主机部分可能是主机名或一个 IP 地址。要指定一个 IPv6 主机地址，将它封闭在方括号中：
+</p><pre class="synopsis">postgresql://[2001:db8::1234]/database</pre><p>
+   </p><p>    主机组件会被按照参数<a class="xref" href="libpq-connect.html#LIBPQ-CONNECT-HOST">host</a>对应的描述来解释。特别地，如果主机部分是空或开始于一个斜线，将使用一个 Unix 域套接字连接，否则将启动一个 TCP/IP 连接。不过要注意，斜线是 URI 层次部分中的一个保留字符。因此，要指定一个非标准的 Unix 域套接字目录，要么忽略 URI 中的主机说明并且指定该主机为一个参数，要么在 URI 的主机部分用百分号编码路径：
+</p><pre class="programlisting">postgresql:///dbname?host=/var/lib/postgresql
+postgresql://%2Fvar%2Flib%2Fpostgresql/dbname</pre><p>
+   </p><p>    可以在一个URI中指定多个主机组件，每个主机组件都有一个可选的端口组件。
+	一个格式为<code class="literal">postgresql://host1:port1,host2:port2,host3:port3/</code>
+	的URI相当于一个连接字符串，格式为<code class="literal">host=host1,host2,host3 port=port1,port2,port3</code>。
+	每个主机将依次尝试，直到连接成功建立。
+   </p></div><div class="sect3" id="LIBPQ-MULTIPLE-HOSTS"><div class="titlepage"><div><div><h4 class="title">33.1.1.3. 指定多个主机</h4></div></div></div><p>       可以指定多个要连接的主机，以便按给定顺序尝试它们。在关键字/值格式中，
+	   <code class="literal">host</code>、<code class="literal">hostaddr</code>和<code class="literal">port</code>选项接受逗号分隔的值列表。
+	   在每个选项中必须给出相同数量的元素，例如，第一个<code class="literal">hostaddr</code>
+	   对应于第一个主机名称，第二个<code class="literal">hostaddr</code>对应于第二个主机名称，等等。
+	   作为例外，如果只指定了一个<code class="literal">port</code>，它将应用于所有主机。
+     </p><p>       在连接URI格式中，您可以在URI的<code class="literal">host</code>组件中列出多个由逗号分隔的
+	   <code class="literal">host:port</code>对。无论哪种格式，单个主机名也可以转换为多个网络地址。
+	   这种情况的一个常见示例是同时拥有IPv4和IPv6地址的主机。	   
+     </p><p>       当指定多个主机时，或者将单个主机名转换为多个地址时，
+	   将按顺序尝试所有主机和地址，直到成功为止。如果没有主机可以到达，
+	   则连接失败。如果连接成功建立，但验证失败，则不尝试列表中剩余的主机。
+     </p><p>       如果使用密码文件，则可以为不同的主机设置不同的密码。
+	   所有其他连接选项对于每个主机都是相同的，
+	   因此不可能例如为不同的主机指定不同的用户名。
+     </p></div></div><div class="sect2" id="LIBPQ-PARAMKEYWORDS"><div class="titlepage"><div><div><h3 class="title">33.1.2. 参数关键词</h3></div></div></div><p>    当前被识别的参数关键词是：
+
+    </p><div class="variablelist"><dl class="variablelist"><dt id="LIBPQ-CONNECT-HOST"><span class="term"><code class="literal">host</code></span></dt><dd><p>        要连接的主机名。<a id="idp27083552" class="indexterm"></a>如果主机名以一个斜线开始，则表示一个 Unix 域通信而不是 TCP/IP 通信，其值是存储套接字文件的目录名。
+		如果指定了多个主机名，则将以给出的顺序依次尝试每个主机名。
+		当<code class="literal">host</code>没有指定时的默认行为是连接到一个<code class="filename">/tmp</code>（或者<span class="productname">PostgreSQL</span>编译时指定的任何套接字目录）中的 Unix 域套接字<a id="idp27086864" class="indexterm"></a>。在没有 Unix 域套接字的机器上，默认是连接到<code class="literal">localhost</code>。
+       </p><p>        还接受以逗号分隔的主机名列表，在这种情况下，列表中的每个主机名均按顺序尝试。
+		有关详细信息，请参见<a class="xref" href="libpq-connect.html#LIBPQ-MULTIPLE-HOSTS" title="33.1.1.3. 指定多个主机">第 33.1.1.3 节</a> 。
+       </p></dd><dt id="LIBPQ-CONNECT-HOSTADDR"><span class="term"><code class="literal">hostaddr</code></span></dt><dd><p>        要连接的主机的数字 IP 地址。它应该是标准的 IPv4 地址格式，例如<code class="literal">172.28.40.9</code>。如果你的机器支持 IPv6，你也可以使用那些地址。当为这个参数指定一个非空字符串时，总是会使用 TCP/IP 通信。
+       </p><p>        使用<code class="literal">hostaddr</code>代替<code class="literal">host</code>允许应用能避免一次主机名查找，这对于具有时间约束的应用可能非常重要。不过，GSSAPI 或 SSPI 认证方法以及<code class="literal">verify-full</code> SSL 证书验证还是要求一个主机名。使用的是下列规则：
+        </p><div class="itemizedlist"><ul class="itemizedlist" style="list-style-type: disc; "><li class="listitem"><p>           如果<code class="literal">host</code>被指定且没有<code class="literal">hostaddr</code>，将发生一次主机名查找。
+          </p></li><li class="listitem"><p>           如果<code class="literal">hostaddr</code>被指定且没有<code class="literal">host</code>，<code class="literal">hostaddr</code>的值给出了服务器的网络地址。如果认证方法要求一个主机名则连接尝试将会失败。
+          </p></li><li class="listitem"><p>           如果<code class="literal">host</code>和<code class="literal">hostaddr</code>都被指定，<code class="literal">hostaddr</code>的值给出服务器的网络地址。<code class="literal">host</code>的值将被忽略，除非认证方法要求它，在那种情况下它将被用作主机名。
+          </p></li></ul></div><p>
+        注意如果<code class="literal">host</code>不是网络地址<code class="literal">hostaddr</code>上的服务器名，认证很可能会失败。还有，注意<code class="literal">host</code>而不是<code class="literal">hostaddr</code>被用来标识口令文件中的连接（见<a class="xref" href="libpq-pgpass.html" title="33.15. 口令文件">第 33.15 节</a>）。
+       </p><p>        还接受以逗号分隔的<code class="literal">hostaddrs</code>列表，在这种情况下，
+		列表中的每个主机名均按顺序尝试。有关详细信息，
+		请参见<a class="xref" href="libpq-connect.html#LIBPQ-MULTIPLE-HOSTS" title="33.1.1.3. 指定多个主机">第 33.1.1.3 节</a>。
+       </p><p>        如果没有一个主机名或主机地址，<span class="application">libpq</span>将尝试使用一个本地 Unix 域套接字连接，或者在没有 Unix 域套接字的机器上尝试连接到<code class="literal">localhost</code>。
+       </p></dd><dt id="LIBPQ-CONNECT-PORT"><span class="term"><code class="literal">port</code></span></dt><dd><p>        在服务器主机上要连接的端口号，或者用于 Unix 域连接的套接字文件名扩展<a id="idp27113504" class="indexterm"></a>。
+		如果在<code class="literal">host</code>或<code class="literal">hostaddr</code>参数中给出了多个主机名，
+		那么这个参数可以指定等长的端口列表，或者它可以指定单个端口号用于所有主机。
+       </p></dd><dt id="LIBPQ-CONNECT-DBNAME"><span class="term"><code class="literal">dbname</code></span></dt><dd><p>       数据库名。默认和用户名相同。在一般的环境下，会为扩展格式检查该值，详见<a class="xref" href="libpq-connect.html#LIBPQ-CONNSTRING" title="33.1.1. 连接字符串">第 33.1.1 节</a>。
+      </p></dd><dt id="LIBPQ-CONNECT-USER"><span class="term"><code class="literal">user</code></span></dt><dd><p>       <span class="productname">PostgreSQL</span> 要作为哪个用户连接。默认与运行着该应用的用户的操作系统名相同。
+      </p></dd><dt id="LIBPQ-CONNECT-PASSWORD"><span class="term"><code class="literal">password</code></span></dt><dd><p>       服务器要求口令认证时要使用的口令。
+      </p></dd><dt id="LIBPQ-CONNECT-PASSFILE"><span class="term"><code class="literal">passfile</code></span></dt><dd><p>       声明要用于存储口令的文件的名称(参阅<a class="xref" href="libpq-pgpass.html" title="33.15. 口令文件">第 33.15 节</a>)。
+       默认是<code class="filename">~/.pgpass</code>，或者微软Windows上是
+       <code class="filename">%APPDATA%\postgresql\pgpass.conf</code>。
+       (如果此文件不存在，则不报告错误。)
+      </p></dd><dt id="LIBPQ-CONNECT-CONNECT-TIMEOUT"><span class="term"><code class="literal">connect_timeout</code></span></dt><dd><p>       连接超时时间，以秒计（写成一个十进制整数字符串）。0 或未指定表示无限等待。
+	   我们不推荐使用低于 2 秒的超时时间。
+	   此超时单独适用于每个连接尝试。例如，如果指定了两台主机并且
+	   <code class="literal">connect_timeout</code>为5，如果没有主机在5秒内建立连接，
+	   则每台主机都将超时，因此等待连接所花费的总时间可能高达10秒。	   
+      </p></dd><dt id="LIBPQ-CONNECT-CLIENT-ENCODING"><span class="term"><code class="literal">client_encoding</code></span></dt><dd><p>       为连接设置<code class="varname">client_encoding</code>配置参数。除了被相应服务器选项所接受的值，你还能使用<code class="literal">auto</code>从客户端的当前区域（Unix 系统上的<code class="envar">LC_CTYPE</code>环境变量）决定正确的编码。
+      </p></dd><dt id="LIBPQ-CONNECT-OPTIONS"><span class="term"><code class="literal">options</code></span></dt><dd><p>        声明在连接开始时发送给服务器的命令行选项。例如，设置这个参数为
+        <code class="literal">-c geqo=off</code>会把会话的<code class="varname">geqo</code>参数值设置为
+        <code class="literal">off</code>。此字符串中的空格被视为分隔命令行参数，
+        除非使用反斜杠(<code class="literal">\</code>)进行转义；写<code class="literal">\\</code>
+        来表示文字反斜杠。可用选项的详细讨论请参考
+        <a class="xref" href="runtime-config.html" title="第 19 章 服务器配置">第 19 章</a>。
+       </p></dd><dt id="LIBPQ-CONNECT-APPLICATION-NAME"><span class="term"><code class="literal">application_name</code></span></dt><dd><p>        为<a class="xref" href="runtime-config-logging.html#GUC-APPLICATION-NAME">application_name</a>配置参数指定一个值。
+       </p></dd><dt id="LIBPQ-CONNECT-FALLBACK-APPLICATION-NAME"><span class="term"><code class="literal">fallback_application_name</code></span></dt><dd><p>        为<a class="xref" href="runtime-config-logging.html#GUC-APPLICATION-NAME">application_name</a>配置参数指定一个后补值。如果通过一个连接参数或<code class="envar">PGAPPNAME</code>环境变量没有为<code class="literal">application_name</code>给定一个值，将使用这个值。在希望设置一个默认应用名但不希望它被用户覆盖的一般工具程序中指定一个后补值很有用。
+       </p></dd><dt id="LIBPQ-KEEPALIVES"><span class="term"><code class="literal">keepalives</code></span></dt><dd><p>        控制是否使用客户端的 TCP 保持存活机制。默认值是 1，表示打开。但是如果不想要保持存活机制，你可以改成 0 表示关闭。对于通过一个 Unix 域套接字建立的连接会忽略这个参数。
+       </p></dd><dt id="LIBPQ-KEEPALIVES-IDLE"><span class="term"><code class="literal">keepalives_idle</code></span></dt><dd><p>        控制非活动多少秒之后 TCP 应该向服务器发送一个存活消息。零值表示使用系统默认值。对于一个通过 Unix 域套接字建立的连接将忽略这个参数，如果保持存活机制被禁用也将忽略这个参数。它只被<code class="symbol">TCP_KEEPIDLE</code>或等效的套接字选项可用的系统以及 Windows支持，在其他系统上，它没有效果。
+       </p></dd><dt id="LIBPQ-KEEPALIVES-INTERVAL"><span class="term"><code class="literal">keepalives_interval</code></span></dt><dd><p>        控制一个 TCP 存活消息没有被服务器认可多少秒之后应该被重传。零值表示使用系统默认值。对于一个通过 Unix 域套接字建立的连接将忽略这个参数，如果保持存活机制被禁用也将忽略这个参数。它只被<code class="symbol">TCP_KEEPINTVL</code>或等效的套接字选项可用的系统以及 Windows支持，在其他系统上，它没有效果。
+       </p></dd><dt id="LIBPQ-KEEPALIVES-COUNT"><span class="term"><code class="literal">keepalives_count</code></span></dt><dd><p>        控制该客户端到服务器的连接被认为死亡之前可以丢失的 TCP 保活消息数量。零值表示使用系统默认值。对于一个通过 Unix 域套接字建立的连接将忽略这个参数，如果保持存活机制被禁用也将忽略这个参数。它只被<code class="symbol">TCP_KEEPCNT</code>或等效的套接字选项可用的系统以及 Windows支持，在其他系统上，它没有效果。
+       </p></dd><dt id="LIBPQ-CONNECT-TTY"><span class="term"><code class="literal">tty</code></span></dt><dd><p>       被忽略（之前，这指定向哪里发送服务器调试输出）。
+      </p></dd><dt id="LIBPQ-CONNECT-SSLMODE"><span class="term"><code class="literal">sslmode</code></span></dt><dd><p>        这个选项决定一个<acronym class="acronym">SSL</acronym> TCP/IP连接是否将与服务器协商，或者决定以何种优先级协商。有六种模式：
+
+        </p><div class="variablelist"><dl class="variablelist"><dt><span class="term"><code class="literal">disable</code></span></dt><dd><p>            只尝试非<acronym class="acronym">SSL</acronym>连接
+           </p></dd><dt><span class="term"><code class="literal">allow</code></span></dt><dd><p>            首先尝试非<acronym class="acronym">SSL</acronym>连接，如果失败再尝试<acronym class="acronym">SSL</acronym>连接
+           </p></dd><dt><span class="term"><code class="literal">prefer</code>（默认）</span></dt><dd><p>            首先尝试<acronym class="acronym">SSL</acronym>连接，如果失败再尝试非<acronym class="acronym">SSL</acronym>连接
+           </p></dd><dt><span class="term"><code class="literal">require</code></span></dt><dd><p>            只尝试<acronym class="acronym">SSL</acronym>连接。如果存在一个根 CA 文件，以<code class="literal">verify-ca</code>被指定的相同方式验证该证书
+           </p></dd><dt><span class="term"><code class="literal">verify-ca</code></span></dt><dd><p>            只尝试<acronym class="acronym">SSL</acronym>连接，并且验证服务器证书是由一个可信的证书机构颁发的（<acronym class="acronym">CA</acronym>）
+           </p></dd><dt><span class="term"><code class="literal">verify-full</code></span></dt><dd><p>            只尝试<acronym class="acronym">SSL</acronym>连接，验证服务器证书是由一个可信的
+            <acronym class="acronym">CA</acronym>颁发并且请求的服务器主机名匹配证书中的主机名
+           </p></dd></dl></div><p>
+
+        这些选项如何工作的详细描述见<a class="xref" href="libpq-ssl.html" title="33.18. SSL 支持">第 33.18 节</a>。
+       </p><p>        对于 Unix 域套接字通信，<code class="literal">sslmode</code>会被忽略。如果<span class="productname">PostgreSQL</span>被编译为不带 SSL 支持，使用选项<code class="literal">require</code>、<code class="literal">verify-ca</code>或<code class="literal">verify-full</code>将导致错误，而选项<code class="literal">allow</code>和<code class="literal">prefer</code>将会被接受但是<span class="application">libpq</span>将不会真正尝试<acronym class="acronym">SSL</acronym>连接。<a id="idp27184880" class="indexterm"></a>
+       </p></dd><dt id="LIBPQ-CONNECT-REQUIRESSL"><span class="term"><code class="literal">requiressl</code></span></dt><dd><p>        为了支持<code class="literal">sslmode</code>模式，这个选项已被废弃。
+       </p><p>        如果设置为 1，则要求一个到服务器的<acronym class="acronym">SSL</acronym>连接（这等效于<code class="literal">sslmode</code> <code class="literal">require</code>）。如果服务器不接受<acronym class="acronym">SSL</acronym>连接，<span class="application">libpq</span>则将拒绝连接。如果设置为 0（默认），<span class="application">libpq</span>将与该服务器协商连接类型（等效于<code class="literal">sslmode</code> <code class="literal">prefer</code>）。只有<span class="productname">PostgreSQL</span>被编译为带有 SSL 支持，这个选项才可用。
+       </p></dd><dt id="LIBPQ-CONNECT-SSLCOMPRESSION"><span class="term"><code class="literal">sslcompression</code></span></dt><dd><p>        如果设置为 1（默认），SSL 连接之上传送的数据将被压缩。如果设置为 0，压缩将被禁用（这要求<span class="productname">OpenSSL</span> 1.0.0 或更高）。如果建立的是一个没有 SSL 的连接，这个参数会被忽略。如果使用的<span class="productname">OpenSSL</span>版本不支持该参数，它也会被忽略。
+       </p><p>        压缩会占用 CUP 时间，但是当瓶颈为网络时可以提高吞吐量。如果 CPU 性能是限制因素，禁用压缩能够改进响应时间和吞吐量。
+       </p></dd><dt id="LIBPQ-CONNECT-SSLCERT"><span class="term"><code class="literal">sslcert</code></span></dt><dd><p>        这个参数指定客户端 SSL 证书的文件名，它替换默认的<code class="filename">~/.postgresql/postgresql.crt</code>。如果没有建立 SSL 连接，这个参数会被忽略。
+       </p></dd><dt id="LIBPQ-CONNECT-SSLKEY"><span class="term"><code class="literal">sslkey</code></span></dt><dd><p>        这个参数指定用于客户端证书的密钥位置。它能指定一个会被用来替代默认的<code class="filename">~/.postgresql/postgresql.key</code>的文件名，或者它能够指定一个从外部<span class="quote">“<span class="quote">引擎</span>”</span>（引擎是<span class="productname">OpenSSL</span>的可载入模块）得到的密钥。一个外部引擎说明应该由一个冒号分隔的引擎名称以及一个引擎相关的关键标识符组成。如果没有建立 SSL 连接，这个参数会被忽略。
+       </p></dd><dt id="LIBPQ-CONNECT-SSLROOTCERT"><span class="term"><code class="literal">sslrootcert</code></span></dt><dd><p>        这个参数指定一个包含 SSL 证书机构（<acronym class="acronym">CA</acronym>）证书的文件名称。如果该文件存在，服务器的证书将被验证是由这些机构之一签发。默认值是<code class="filename">~/.postgresql/root.crt</code>。
+       </p></dd><dt id="LIBPQ-CONNECT-SSLCRL"><span class="term"><code class="literal">sslcrl</code></span></dt><dd><p>        这个参数指定 SSL 证书撤销列表（CRL）的文件名。列在这个文件中的证书如果存在，在尝试认证该服务器证书时会被拒绝。默认值是<code class="filename">~/.postgresql/root.crl</code>。
+       </p></dd><dt id="LIBPQ-CONNECT-REQUIREPEER"><span class="term"><code class="literal">requirepeer</code></span></dt><dd><p>        这个参数指定服务器的操作系统用户，例如<code class="literal">requirepeer=postgres</code>。当建立一个 Unix 域套接字连接时，如果设置了这个参数，客户端在连接开始时检查服务器进程是否运行在指定的用户名之下。如果发现不是，该连接会被一个错误中断。这个参数能被用来提供与 TCP/IP 连接上 SSL 证书相似的服务器认证（注意，如果 Unix 域套接字在<code class="filename">/tmp</code>或另一个公共可写的位置，任何用户能启动一个在那里监听的服务器。使用这个参数来保证你连接的是一个由可信用户运行的服务器）。这个选项只在实现了<code class="literal">peer</code>认证方法的平台上受支持，见<a class="xref" href="auth-methods.html#AUTH-PEER" title="20.3.6. Peer 认证">第 20.3.6 节</a>。
+       </p></dd><dt id="LIBPQ-CONNECT-KRBSRVNAME"><span class="term"><code class="literal">krbsrvname</code></span></dt><dd><p>        当用 GSSAPI 认证时，要使用的 Kerberos 服务名。为了让 Kerberos 认证成功，这必须匹配在服务器配置中指定的服务名（另见<a class="xref" href="auth-methods.html#GSSAPI-AUTH" title="20.3.3. GSSAPI 认证">第 20.3.3 节</a>）。
+       </p></dd><dt id="LIBPQ-CONNECT-GSSLIB"><span class="term"><code class="literal">gsslib</code></span></dt><dd><p>        用于 GSSAPI 认证的 GSS 库。只用在 Windows 上。设置为<code class="literal">gssapi</code>可强制 libpq 用 GSSAPI 库来代替默认的 SSPI 进行认证。
+       </p></dd><dt id="LIBPQ-CONNECT-SERVICE"><span class="term"><code class="literal">service</code></span></dt><dd><p>        用于附加参数的服务名。它指定保持附加连接参数的<code class="filename">pg_service.conf</code>中的一个服务名。这允许应用只指定一个服务名，这样连接参数能被集中维护。见<a class="xref" href="libpq-pgservice.html" title="33.16. 连接服务文件">第 33.16 节</a>。
+       </p></dd><dt id="LIBPQ-CONNECT-TARGET-SESSION-ATTRS"><span class="term"><code class="literal">target_session_attrs</code></span></dt><dd><p>        如果这个参数设置为<code class="literal">read-write</code>，
+		则只有默认接受读写事务的连接才被认为是可接受的。查询
+		<code class="literal">SHOW transaction_read_only</code>将在任何成功连接上发送；
+		如果它返回<code class="literal">on</code>，则将关闭连接。如果在连接字符串中指定了多个主机，
+		则将尝试任何剩余的服务器，就像连接尝试失败了一样。该参数的默认值<code class="literal">any</code>，
+		将所有连接看做是可接受的。
+      </p></dd></dl></div><p>
+   </p></div></div><div class="navfooter"><hr /><table width="100%" summary="Navigation footer"><tr><td width="40%" align="left"><a accesskey="p" href="libpq.html">上一页</a> </td><td width="20%" align="center"><a accesskey="u" href="libpq.html">上一级</a></td><td width="40%" align="right"> <a accesskey="n" href="libpq-status.html">下一页</a></td></tr><tr><td width="40%" align="left" valign="top">第 33 章 <span class="application">libpq</span> - C 库 </td><td width="20%" align="center"><a accesskey="h" href="index.html">起始页</a></td><td width="40%" align="right" valign="top"> 33.2. 连接状态函数</td></tr></table></div></body></html>

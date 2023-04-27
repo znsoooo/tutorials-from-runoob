@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><title>ALTER DEFAULT PRIVILEGES</title><link rel="stylesheet" type="text/css" href="stylesheet.css" /><link rev="made" href="pgsql-docs@postgresql.org" /><meta name="generator" content="DocBook XSL Stylesheets V1.79.1" /><link rel="prev" href="sql-alterdatabase.html" title="ALTER DATABASE" /><link rel="next" href="sql-alterdomain.html" title="ALTER DOMAIN" /></head><body><div xmlns="http://www.w3.org/TR/xhtml1/transitional" class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="5" align="center">ALTER DEFAULT PRIVILEGES</th></tr><tr><td width="10%" align="left"><a accesskey="p" href="sql-alterdatabase.html" title="ALTER DATABASE">上一页</a> </td><td width="10%" align="left"><a accesskey="u" href="sql-commands.html" title="SQL 命令">上一级</a></td><th width="60%" align="center">SQL 命令</th><td width="10%" align="right"><a accesskey="h" href="index.html" title="PostgreSQL 10.1 手册">起始页</a></td><td width="10%" align="right"> <a accesskey="n" href="sql-alterdomain.html" title="ALTER DOMAIN">下一页</a></td></tr></table><hr></hr></div><div class="refentry" id="SQL-ALTERDEFAULTPRIVILEGES"><div class="titlepage"></div><a id="idp39772544" class="indexterm"></a><div class="refnamediv"><h2><span class="refentrytitle">ALTER DEFAULT PRIVILEGES</span></h2><p>ALTER DEFAULT PRIVILEGES — 定义默认访问特权</p></div><div class="refsynopsisdiv"><h2>大纲</h2><pre class="synopsis">ALTER DEFAULT PRIVILEGES
+    [ FOR { ROLE | USER } <em class="replaceable"><code>target_role</code></em> [, ...] ]
+    [ IN SCHEMA <em class="replaceable"><code>schema_name</code></em> [, ...] ]
+    <em class="replaceable"><code>abbreviated_grant_or_revoke</code></em>
+
+<span class="phrase">其中<em class="replaceable"><code>abbreviated_grant_or_revoke</code></em>是下列之一：</span>
+
+GRANT { { SELECT | INSERT | UPDATE | DELETE | TRUNCATE | REFERENCES | TRIGGER }
+    [, ...] | ALL [ PRIVILEGES ] }
+    ON TABLES
+    TO { [ GROUP ] <em class="replaceable"><code>role_name</code></em> | PUBLIC } [, ...] [ WITH GRANT OPTION ]
+
+GRANT { { USAGE | SELECT | UPDATE }
+    [, ...] | ALL [ PRIVILEGES ] }
+    ON SEQUENCES
+    TO { [ GROUP ] <em class="replaceable"><code>role_name</code></em> | PUBLIC } [, ...] [ WITH GRANT OPTION ]
+
+GRANT { EXECUTE | ALL [ PRIVILEGES ] }
+    ON FUNCTIONS
+    TO { [ GROUP ] <em class="replaceable"><code>role_name</code></em> | PUBLIC } [, ...] [ WITH GRANT OPTION ]
+
+GRANT { USAGE | ALL [ PRIVILEGES ] }
+    ON TYPES
+    TO { [ GROUP ] <em class="replaceable"><code>role_name</code></em> | PUBLIC } [, ...] [ WITH GRANT OPTION ]
+
+GRANT { USAGE | CREATE | ALL [ PRIVILEGES ] }
+    ON SCHEMAS
+    TO { [ GROUP ] <em class="replaceable"><code>role_name</code></em> | PUBLIC } [, ...] [ WITH GRANT OPTION ]
+
+REVOKE [ GRANT OPTION FOR ]
+    { { SELECT | INSERT | UPDATE | DELETE | TRUNCATE | REFERENCES | TRIGGER }
+    [, ...] | ALL [ PRIVILEGES ] }
+    ON TABLES
+    FROM { [ GROUP ] <em class="replaceable"><code>role_name</code></em> | PUBLIC } [, ...]
+    [ CASCADE | RESTRICT ]
+
+REVOKE [ GRANT OPTION FOR ]
+    { { USAGE | SELECT | UPDATE }
+    [, ...] | ALL [ PRIVILEGES ] }
+    ON SEQUENCES
+    FROM { [ GROUP ] <em class="replaceable"><code>role_name</code></em> | PUBLIC } [, ...]
+    [ CASCADE | RESTRICT ]
+
+REVOKE [ GRANT OPTION FOR ]
+    { EXECUTE | ALL [ PRIVILEGES ] }
+    ON FUNCTIONS
+    FROM { [ GROUP ] <em class="replaceable"><code>role_name</code></em> | PUBLIC } [, ...]
+    [ CASCADE | RESTRICT ]
+
+REVOKE [ GRANT OPTION FOR ]
+    { USAGE | ALL [ PRIVILEGES ] }
+    ON TYPES
+    FROM { [ GROUP ] <em class="replaceable"><code>role_name</code></em> | PUBLIC } [, ...]
+    [ CASCADE | RESTRICT ]
+
+REVOKE [ GRANT OPTION FOR ]
+    { USAGE | CREATE | ALL [ PRIVILEGES ] }
+    ON SCHEMAS
+    FROM { [ GROUP ] <em class="replaceable"><code>role_name</code></em> | PUBLIC } [, ...]
+    [ CASCADE | RESTRICT ]</pre></div><div class="refsect1" id="SQL-ALTERDEFAULTPRIVILEGES-DESCRIPTION"><h2>描述</h2><p>   <code class="command">ALTER DEFAULT PRIVILEGES</code>允许你设置将被应用于未来要创建的对象的特权（它不会影响分配给已经存在的对象的特权）。当前，只能修改用于模式、表（包括视图和外部表）、序列、函数和类型（包括域）的特权。
+  </p><p>   你只能改变你自己或者你属于其中的角色所创建的对象的默认特权。这些特权可以对全局范围设置（即对当前数据库中创建的所有对象），或者只对在指定模式中创建的对象设置。被指定的针对模式的默认特权会被增加到用于特定数据类型的全局默认特权中。
+  </p><p>   如<a class="xref" href="sql-grant.html" title="GRANT"><span class="refentrytitle">GRANT</span></a>中所述，用于任何对象类型的默认特权通常会把所有可授予的权限授予给对象拥有者，并且也可能授予一些特权给<code class="literal">PUBLIC</code>。不过，这种行为可以通过使用<code class="command">ALTER DEFAULT PRIVILEGES</code>修改全局默认特权来改变。
+  </p><div class="refsect2" id="idp39793152"><h3>参数</h3><div class="variablelist"><dl class="variablelist"><dt><span class="term"><em class="replaceable"><code>target_role</code></em></span></dt><dd><p>      一个现有角色的名称，当前角色是它的一个成员。如果<code class="literal">FOR ROLE</code>被忽略，将假定为当前角色。
+     </p></dd><dt><span class="term"><em class="replaceable"><code>schema_name</code></em></span></dt><dd><p>      一个现有模式的名称。如果被指定，以后在那个模式中创建的对象的默认特权会被修改。如果<code class="literal">IN SCHEMA</code>被忽略，全局默认特权会被修改。
+	  在使用<code class="literal">ON SCHEMAS</code>时，不能使用<code class="literal">IN SCHEMA</code>，
+	  因为模式不能嵌套。
+     </p></dd><dt><span class="term"><em class="replaceable"><code>role_name</code></em></span></dt><dd><p>      要为其授予或者收回特权的一个现有角色的名称。这个参数以及所有<em class="replaceable"><code>abbreviated_grant_or_revoke</code></em>中的其他参数会按照<a class="xref" href="sql-grant.html" title="GRANT"><span class="refentrytitle">GRANT</span></a>或者<a class="xref" href="sql-revoke.html" title="REVOKE"><span class="refentrytitle">REVOKE</span></a>中描述的方式运作，不过这里是为一整类的对象而不是特别指定的对象设置权限。
+     </p></dd></dl></div></div></div><div class="refsect1" id="SQL-ALTERDEFAULTPRIVILEGES-NOTES"><h2>注解</h2><p>   使用<a class="xref" href="app-psql.html" title="psql"><span class="refentrytitle"><span class="application">psql</span></span></a>的<code class="command">\ddp</code>命令可以获得关于默认特权的现有分配信息。特权值的含义和<a class="xref" href="sql-grant.html" title="GRANT"><span class="refentrytitle">GRANT</span></a>下为<code class="command">\dp</code>命令描述的相同。
+  </p><p>   如果你希望删除一个默认特权被修改的角色，有必要撤销其默认特权上的改变或者使用<code class="command">DROP OWNED BY</code>来为该角色去除默认特权项。
+  </p></div><div class="refsect1" id="SQL-ALTERDEFAULTPRIVILEGES-EXAMPLES"><h2>例子</h2><p>   为你后续在模式<code class="literal">myschema</code>中创建的所有表（和视图）授予 SELECT 特权，并且也允许角色<code class="literal">webuser</code>向它们之中 INSERT 数据：
+
+</p><pre class="programlisting">ALTER DEFAULT PRIVILEGES IN SCHEMA myschema GRANT SELECT ON TABLES TO PUBLIC;
+ALTER DEFAULT PRIVILEGES IN SCHEMA myschema GRANT INSERT ON TABLES TO webuser;</pre><p>
+  </p><p>   撤销上面的动作，因此后续创建的表不会有任何不寻常的权限：
+
+</p><pre class="programlisting">ALTER DEFAULT PRIVILEGES IN SCHEMA myschema REVOKE SELECT ON TABLES FROM PUBLIC;
+ALTER DEFAULT PRIVILEGES IN SCHEMA myschema REVOKE INSERT ON TABLES FROM webuser;</pre><p>
+  </p><p>   为后续由角色<code class="literal">admin</code>创建的所有函数移除通常在函数上会授予的公共 EXECUTE 权限：
+
+</p><pre class="programlisting">ALTER DEFAULT PRIVILEGES FOR ROLE admin REVOKE EXECUTE ON FUNCTIONS FROM PUBLIC;</pre></div><div class="refsect1" id="idp39814160"><h2>兼容性</h2><p>   在 SQL 标准中没有<code class="command">ALTER DEFAULT PRIVILEGES</code>语句。
+  </p></div><div class="refsect1" id="idp39815632"><h2>参见</h2><span class="simplelist"><a class="xref" href="sql-grant.html" title="GRANT"><span class="refentrytitle">GRANT</span></a>, <a class="xref" href="sql-revoke.html" title="REVOKE"><span class="refentrytitle">REVOKE</span></a></span></div></div><div class="navfooter"><hr /><table width="100%" summary="Navigation footer"><tr><td width="40%" align="left"><a accesskey="p" href="sql-alterdatabase.html">上一页</a> </td><td width="20%" align="center"><a accesskey="u" href="sql-commands.html">上一级</a></td><td width="40%" align="right"> <a accesskey="n" href="sql-alterdomain.html">下一页</a></td></tr><tr><td width="40%" align="left" valign="top">ALTER DATABASE </td><td width="20%" align="center"><a accesskey="h" href="index.html">起始页</a></td><td width="40%" align="right" valign="top"> ALTER DOMAIN</td></tr></table></div></body></html>

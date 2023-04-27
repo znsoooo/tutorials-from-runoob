@@ -1,0 +1,619 @@
+<!Doctype html>
+<html>
+<head>
+	<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+	<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+	<title>3.3 Verilog 建立时间和保持时间 | 菜鸟教程</title>
+
+  <meta name='robots' content='max-image-preview:large' />
+<link rel='stylesheet' id='classic-theme-styles-css' href='http://www.runoob.com/wp-includes/css/classic-themes.min.css?ver=6.2' type='text/css' media='all' />
+<link rel="canonical" href="http://www.runoob.com/w3cnote/verilog2-setup-hold-time.html" />
+<meta name="keywords" content="3.3 Verilog 建立时间和保持时间">
+<meta name="description" content="关键词： 建立时间， 保持时间 对于数字系统而言，建立时间（setup time）和保持时间（hold time）是数字电路时序的基础。数字电路系统的稳定性，基本取决于时序是否满足建立时间和保持时间。所以，这里用一整节的篇幅，来详细的说明建立时间和保持时间的概念。  基本概念 建立时间就是时钟触发事件来临之前，数据需要保持稳定的最小时间，以便数据能够被时钟正确的采样。 保持时间就是时钟触发事件来临之后，数据需要保持稳定的最小时间，以便数..">
+		
+	<link rel="shortcut icon" href="https://static.runoob.com/images/favicon.ico">
+	<link rel="stylesheet" href="/wp-content/themes/runoob/style.css?v=1.170" type="text/css" media="all" />	
+	<link rel="stylesheet" href="https://cdn.staticfile.org/font-awesome/4.7.0/css/font-awesome.min.css" media="all" />	
+  <!--[if gte IE 9]><!-->
+  <script src="https://cdn.staticfile.org/jquery/2.0.3/jquery.min.js"></script>
+  <!--<![endif]-->
+  <!--[if lt IE 9]>
+     <script src="https://cdn.staticfile.org/jquery/1.9.1/jquery.min.js"></script>
+     <script src="https://cdn.staticfile.org/html5shiv/r29/html5.min.js"></script>
+  <![endif]-->
+  <link rel="apple-touch-icon" href="https://static.runoob.com/images/icon/mobile-icon.png"/>
+  <meta name="apple-mobile-web-app-title" content="菜鸟教程">
+</head>
+<body>
+
+<!--  头部 -->
+<div class="container logo-search">
+
+  <div class="col search row-search-mobile">
+    <form action="index.php">
+      <input class="placeholder" placeholder="搜索……" name="s" autocomplete="off">
+      
+    </form>
+  </div>
+
+  <div class="row">
+    <div class="col logo">
+      <h1><a href="/">菜鸟教程 -- 学的不仅是技术，更是梦想！</a></h1>
+    </div>
+        <div class="col right-list"> 
+    <button class="btn btn-responsive-nav btn-inverse" data-toggle="collapse" data-target=".nav-main-collapse" id="pull" style=""> <i class="fa fa-navicon"></i> </button>
+    </div>
+        
+    <div class="col search search-desktop last">
+      <div class="search-input" >
+      <form action="//www.runoob.com/" target="_blank">
+        <input class="placeholder" id="s" name="s" placeholder="搜索……"  autocomplete="off" style="height: 44px;">
+      </form>
+      
+      </div>
+    </div>
+  </div>
+</div>
+
+
+
+<!-- 导航栏 -->
+<div class="container navigation">
+    <div class="row">
+        <div class="col nav">
+            
+
+                        <ul class="pc-nav" id="note-nav">
+                <li><a href="//www.runoob.com/">首页</a></li>
+                <li><a href="/w3cnote">笔记首页</a></li>
+                <li><a href="/w3cnote/android-tutorial-intro.html" title="Android 基础入门教程">Android</a></li>
+                <li><a href="/w3cnote/es6-tutorial.html" title="ES6 教程">ES6 教程</a></li>
+                <li><a href="/w3cnote/ten-sorting-algorithm.html" title="排序算法">排序算法</a></li>
+                <li><a href="/w3cnote/hadoop-tutorial.html" title="Hadoop 教程">Hadoop</a></li>
+                <li><a href="/w3cnote/zookeeper-tutorial.html" title="Zookeeper 教程">Zookeeper</a></li>
+                <li><a href="/w3cnote/verilog-tutorial.html" title="Verilog 教程">Verilog</a></li>
+                <li><a href="/w3cnote_genre/code" title="编程技术">编程技术</a></li> 
+                <li><a href="/w3cnote_genre/coderlife" title="程序员人生">程序员人生</a></li>
+                
+                <!--<li><a href="javascript:;" class="runoob-pop">登录</a></li>
+                
+                
+                        <li>
+                <a style="font-weight:bold;" href="https://www.runoob.com/linux/linux-tutorial.html#yunserver" target="_blank" onclick="_hmt.push(['_trackEvent', 'aliyun', 'click', 'aliyun'])" title="kkb">云服务器</a>
+                </li>
+                <li><a href="http://gk.link/a/104mQ" target="_blank" style="font-weight: bold;"onclick="_hmt.push(['_trackEvent', '极客时间', 'click', 'jike'])" title="我的圈子">极客时间</a></li>
+            
+                
+                <li><a target="_blank" href="/shoppinglist" rel="nofollow">知识店铺</a></li> 
+        -->
+            </ul>
+                        
+              
+            <ul class="mobile-nav">
+                <li><a href="/w3cnote">首页</a></li>
+                <li><a href="/w3cnote_genre/android" target="_blank" title="Android 基础入门教程">Android</a></li>
+                <li><a href="/w3cnote/es6-tutorial.html" target="_blank" title="ES6 教程">ES6</a></li>
+                <li><a href="/w3cnote_genre/joke" target="_blank" title="程序员笑话">逗乐</a></li>
+                
+                <a href="javascript:void(0)" class="search-reveal">Search</a> 
+            </ul>
+            
+        </div>
+    </div>
+</div>
+
+
+<!--  内容  -->
+<div class="container main">
+	<div class="row">
+
+		<!--  Android 基础入门教程 start  -->
+	<div class="col left-column" style="display:none;">
+		<div class="tab">Verilog 高级教程</div>
+		<div class="sidebar-box gallery-list">
+			<div class="design" id="leftcolumn">  
+			</div> 
+		</div> 
+	</div>
+	<!--  Android 基础入门教程 end  -->
+		<div class="col middle-column big-middle-column">
+	 			<div class="article">
+			<div class="article-heading">
+				<h2>3.3 Verilog 建立时间和保持时间</h2>				<h3><em>分类</em> <a href="/w3cnote_genre/verilog2" title="Verilog 教程高级篇" >Verilog 教程高级篇</a> </h3>
+			</div>
+			<div class="article-body note-body">
+				<div class="article-intro">
+					<h3>关键词： 建立时间， 保持时间</h3><p>
+对于数字系统而言，建立时间（setup time）和保持时间（hold time）是数字电路时序的基础。数字电路系统的稳定性，基本取决于时序是否满足建立时间和保持时间。所以，这里用一整节的篇幅，来详细的说明建立时间和保持时间的概念。</p><hr>
+<h2>
+基本概念</h2><p>
+建立时间就是时钟触发事件来临之前，数据需要保持稳定的最小时间，以便数据能够被时钟正确的采样。</p>
+<p>保持时间就是时钟触发事件来临之后，数据需要保持稳定的最小时间，以便数据能够被电路准确的传输。</p><p>
+可以通俗的理解为：时钟到来之前，数据需要提前准备好；时钟到来之后，数据还要稳定一段时间。建立时间和保持时间组成了数据稳定的窗口，如下图所示。</p>
+<p><img decoding="async" src="https://www.runoob.com/wp-content/uploads/2021/05/v-set-hold-time-1.png"></p>
+<p><a href="https://www.runoob.com/w3cnote/verilog2-gate-delay.html" rel="noopener" target="_blank">《1.3 门延迟》</a>中已经介绍过一种简单的 D 触发器。下面再看一种典型的上升沿 D 触发器，来说明建立时间和保持时间的由来。</p>
+<p><img decoding="async" src="https://www.runoob.com/wp-content/uploads/2021/05/v-set-hold-time-2.png"></p>
+<p>G1~G4 与非门是维持阻塞电路，G5~G6 组成 RS 触发器。</p><p>
+时钟直接作用在 G2/G3 门上，时钟为低时 G2/G3 通道关闭，为高时通道打开，进行数据的采样传输。</p><p>
+但数据传输到 G2/G3 门之前，会经过 G4/G1 与非门，将引入时间延迟。引入建立时间的概念，就是为了补偿数据在 G4/G1 门上的延迟。即时钟到来之前，G2/G3 端的输入数据需要准备好，以便数据能够被正确的采样。</p><p>
+数据被时钟采样完毕后，传输到 RS 触发器进行锁存之前，也需要经过 G2/G3 门，也会引入延迟。保持时间就是为了补偿数据在 G2/G3 门上的延迟。即时钟到来之后，要保证数据能够正确的传输到 G6/G5 与非门输入端。</p><p>
+如果数据在传输中不满足建立时间或保持时间，则会处于亚稳态，导致传输出错。</p>
+<hr>
+<h2>约束条件</h2>
+<h3>建立时间约束条件</h3><p>
+下图是一个典型的触发器到触发器之间的数据传输示意图。其中 "Comb" 代表组合逻辑延迟，"Clock Skew" 表示时钟偏移，数据均在时钟上升沿触发。</p>
+<p><img decoding="async" src="https://www.runoob.com/wp-content/uploads/2021/05/v-set-hold-time-3.png"></p>
+<p>时钟到来之前，数据需要提前准备好，才能被时钟正确采样，要求数据路径 （data path） 比时钟路径 （clock path）更快，即数据到达时间（data arrival time）小于数据要求时间（data required time）。则建立时间需要满足的表达式为：</p>
+<pre>Tcq + Tcomb + Tsu &lt;= Tclk + Tskew （1）</pre>
+<p>各个时间参数说明如下：</p>
+<ul><li>
+Tcq: 寄存器 clock 端到 Q 端的延迟；</li><li>
+Tcomb： data path 中的组合逻辑延迟；</li><li>
+Tsu: 建立时间；</li><li>
+Tclk: 时钟周期；</li><li>
+Tskew: 时钟偏移。</li></ul><p>
+对上式进行变换，则理论上电路能够承载的最小时钟周期和最快时钟频率分别为：</p>
+<pre>最小时钟周期 = Tcq + Tcomb + Tsu - Tskew
+最快时钟频率 = 1 / (Tcq + Tcomb + Tsu - Tskew)  </pre>
+<h3>保持时间约束条件</h3><p>
+时钟到来之后，数据还要稳定一段时间，这就要求前一级的数据延迟（data delay time）不要大于触发器的保持时间，以免数据被冲刷掉。则保持时间需要满足的表达式为：</p>
+<pre>Tcq + Tcomb &gt;= Thd + Tskew (2)</pre>
+<p>各个时间参数说明如下：</p><ul><li>
+Tcq: 寄存器 clock 端到 Q 端的延迟；</li><li>
+Tcomb： data path 中的组合逻辑延迟；</li><li>
+Thd: 保持时间；</li><li>
+Tskew: 时钟偏移。</li></ul>
+<p>
+由式 (1) (2) 可以推导出时钟偏移、组合逻辑延迟及时钟周期的约束。</p><p>
+建议大家只需要记住这 2 个最基本的约束条件表达式，需要求取其他参数约束时，再进行推导，以免各种推导造成记忆混乱。</p>
+<h3>建立时间与保持时间时序图</h3><p>
+一个关于建立时间和保持时间的复杂时序图如下所示。</p><p>
+其中，绿色部分表示建立时间的裕量（margin），蓝色部分表示保持时间的裕量。时间裕量，其实就是电路在满足时序约束的条件下，不等式 (1) 或 (2) 两边时间的差值。</p>
+<pre>建立时间裕量为：（时钟路径时间）-（数据路径时间）
+保持时间裕量为：（数据延迟时间） - （保持时间 + 时钟偏移）</pre>
+<p>该图只是便于理解建立时间和保持时间约束条件的推导。如果这里会造成记忆混乱，建议不要深究（^_^）。</p>
+<p><img decoding="async" src="https://www.runoob.com/wp-content/uploads/2021/05/v-set-hold-time-4.png"></p><hr>
+<h2>
+计算举例</h2><p>
+为更好的理解建立时间和保持时间的概念，也为面试或工作提供方便，这里列举一些典型的建立时间和保持时间的试题，以供参考。</p>
+<p>
+例1：</p><p>
+考虑线网延迟，某电路各种延迟值（单位：ns）如下，时钟周期为 15ns，请判断该电路的建立时间和保持时间是否存在 violation ？</p>
+<p><img decoding="async" src="https://www.runoob.com/wp-content/uploads/2021/05/v-set-hold-time-5.png"></p>
+<p><strong>解：</strong></p><p>
+这里涉及了延迟值的最大值和最小值。</p>
+<p>因为要求时序约束恒成立，所以式 (1) (2) 的变形为：</p>
+<pre>max (data path time) &lt;= min (clock path time)
+min (data delay time) &gt;= max (Thd + Tskew)</pre>
+<p>建立时间检查：</p><pre>
+max (data path time) = 2 + 11 + 2 + 9 + 2 + 2 = 28ns
+min (clock path time) = 15 + 2 + 5 + 2 = 24ns</pre>
+<p>因此建立时间存在 violation。</p>
+<p>保持时间检查：</p>
+<pre>min (data delay time) = 1 + 9 + 1 + 6 + 1 = 18ns
+max (Thd + Tskew) = 3 + 3 + 9 + 2 = 17ns</pre><p>
+因此保持时间不存在 violation，裕量（margin）为 1ns。</p><p>
+此例不能生硬的去照搬建立时间和保持时间的表达式，而要从数据路径、时间路径、数据延迟等概念去建立约束条件。所以，各种时序约束条件还要根据实际电路去分析。</p>
+<p>
+例2：</p><p>
+一道知名公司的面试题：时钟周期为 T, 第一级触发器 D1 建立时间最大值为 T1max，最小值为 T1min。组合逻辑最大延迟为 T2max, 最小值为 T2min。问：第二级触发器 D2 的建立时间和保持时间应该满足什么条件？</p>
+<p>
+<strong>解：</strong></p><p>
+第二级的建立时间和保持时间和第一级触发器没有直接关系，所以这里的 T1max 和 T1min 是迷惑项。</p><p>
+例题中也没有给出时钟到 Q 端的延迟和时钟偏移，这里也不用考虑。</p><p>
+结合例 1 的指示，所以 D2 建立时间 Tsu 和保持时间 Thd 应该满足：</p>
+<pre>T2max + Tsu &lt;= T
+T2min &gt;= Thold</pre>
+<p>即</p><pre>
+Tsu &lt;= T - T2max
+Thold &lt;= T2min</pre><p>
+此例中很多延迟类型没有考虑。建立时序约束条件时，还需要根据已知条件懂得取舍。</p>
+
+<p>例3：</p><p>
+一种简单的分频电路如下所示。该触发器建立时间为 3ns, 保持时间为 3ns， 逻辑延迟为 6ns，两个反相器延迟为 1ns，连线延迟为0。则该电路的最高工作频率是多少？</p>
+<p><img decoding="async" src="https://www.runoob.com/wp-content/uploads/2021/05/v-set-hold-time-6.png"></p>
+<p><strong>解：</strong></p><p>
+这里的逻辑延迟要理解为时钟端到 Q 端的延迟，一定要注意不是电路中的组合逻辑延迟。</p><p>
+因为触发器 Q 端和 D 端连接，可以理解为两个触发器直接进行传输，所以 data path 没有组合逻辑延迟，只有一个反相器延迟。</p><p>
+因为只有一个钟，所以也没有时钟偏移，clock path 的反相器延迟也是迷惑项。</p>
+<p>所以，时序约束条件为：</p>
+<pre>Tcq + Tbuf + Tsu &lt;= Tclk</pre>
+<p>可得该电路最高工作频率为：</p><pre>1 / (6ns + 1ns + 3ns) = 100Mhz。</pre><p>
+此例是一个触发器自身到自身的反馈，一定要分析好数据路径和时钟路径，下面再看一道此类型的扩展例题。</p>
+
+<p>例4：</p><ul><li>
+（1）以下电路固有的建立时间和保持时间？</li><li>
+（2）该电路最高的工作频率？</li></ul>
+<p><img decoding="async" src="https://www.runoob.com/wp-content/uploads/2021/05/v-set-hold-time-7.png"></p>
+<p><strong>解：</strong></p><p>
+该电路数据路径和时钟路径上均有延迟，为达到与触发器相同建立时间和保持时间的条件约束，则触发器 D 端和时钟端 CK，以及等效的数据端 Data 和时钟端 Clock 时序图如下（我已经很努力在往简洁的方向上画了~_~）：</p>
+<p><img decoding="async" src="https://www.runoob.com/wp-content/uploads/2021/05/v-set-hold-time-8.png"></p>
+<p>(1) 由图可知：</p>
+<p>该电路固有的建立时间为：<strong>2.1 + 2 - 1.2 = 2.9ns</strong></p>
+<p>固有的保持时间为：<strong>1.2 + 1.5 - 2.1 = 0.6ns</strong></p>
+<p>由此可知，数据路径的延迟会增加电路固有的建立时间，但是会减少电路固有的保持时间。而时钟偏移会减少电路固有的建立时间，增加电路固有的保持时间。</p><p>
+偷偷告诉你，求取电路固有的建立时间和保持时间，其实就是求取时间裕量的过程。</p><p>
+(2) 此电路仍然是自身到自身的反馈电路。所以没有时钟偏移，也无需考虑 T1= 0.9ns 的延迟。所以最高工作频率为：<strong> 1 / (1.8 + 1.2 + 2)ns = 200MHz</strong></p>				</div>
+			</div>
+			<div class="previous-next-links">
+			<div class="previous-design-link">← <a href="http://www.runoob.com/w3cnote/verilog2-specify.html" rel="prev"> 3.2 Verilog specify 块语句</a> </div>
+			<div class="next-design-link"><a href="http://www.runoob.com/w3cnote/verilog2-timing-check.html" rel="next"> 3.4 Verilog 时序检查</a> →</div>
+			</div>
+						<div class="article-heading-ad" id="w3cnote-ad728">
+			<script async src="//pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script>
+			<!-- 移动版 自动调整 -->
+			<ins class="adsbygoogle"
+			     style="display:inline-block;min-width:300px;max-width:970px;width:100%;height:90px"
+			     data-ad-client="ca-pub-5751451760833794"
+			     data-ad-slot="1691338467"
+			     data-ad-format="horizontal"></ins>
+			<script>
+			(adsbygoogle = window.adsbygoogle || []).push({});
+			</script>
+			</div>
+			<style>
+@media screen and (max-width: 768px) {
+	#w3cnote-ad728 {
+		display: none;
+	}
+}
+p.note-author {
+    border-bottom: 1px solid #ddd;
+    font-size: 18px;
+    font-weight: bold;
+    color: #78a15a;
+    padding-bottom: 2px;
+    margin-bottom: 4px;
+}
+</style>
+<script>
+var aid = 23692;
+</script>
+	</div>
+		
+	</div>
+	<div class="listcol last right-column">
+
+	<script type="text/javascript">
+jQuery(document).ready(function ($){
+	var total = $(".membership li").length;
+	var left_list = '';
+	href = window.location.href;
+	
+	$(".membership li").each(function(index, value){
+
+		left_list += $(this).html();
+
+		cur_href = $(this).find("a").attr("href");
+		cur_obj = $(this);
+		
+		if(href.match(cur_href) != null) {
+			if(index==0) {
+				$(".previous-design-link").hide();
+			}
+			if(index==(total-1)) {
+				$(".next-design-link").hide();
+			}
+			prev_href = cur_obj.prev("li").find("a").attr("href");
+			prev_title = cur_obj.prev("li").find("a").attr("title");
+
+			next_href = cur_obj.next("li").find("a").attr("href");
+			next_title = cur_obj.next("li").find("a").attr("title");
+			if(prev_title) {
+				$(".previous-design-link a").attr("href", prev_href);
+				$(".previous-design-link a").attr("title", prev_title);
+				$(".previous-design-link a").text(prev_title);
+			} else {
+				$(".previous-design-link").html("");
+			}
+
+			if(next_title) {
+				$(".next-design-link a").attr("href", next_href);
+				$(".next-design-link a").attr("title", next_title);
+				$(".next-design-link a").text(next_title);
+			} else {
+				$(".next-design-link").html("");
+			}
+		}
+	});
+
+	$("#leftcolumn").html(left_list);
+});
+	</script>
+	<div class="sidebar-box cate-list">
+	<div class="sidebar-box recommend-here list-link">
+	<a href="javascript:void(0);">Verilog 高级教程</a>	</div>
+	
+	<ul class="membership">
+		
+	<li><a target="_top" data-id="23639" title="0.1 数字逻辑设计" href="http://www.runoob.com/w3cnote/verilog2-tutorial.html" >0.1 数字逻辑设计</a></li>
+	
+		
+	<li><a target="_top" data-id="23641" title="0.2 Verilog 编码风格" href="http://www.runoob.com/w3cnote/verilog2-codestyle.html" >0.2 Verilog 编码风格</a></li>
+	
+		
+	<li><a target="_top" data-id="23644" title="0.3 Verilog 代码规范" href="http://www.runoob.com/w3cnote/verilog2-codeguide.html" >0.3 Verilog 代码规范</a></li>
+	
+		
+	<li><a target="_top" data-id="23645" title="1.1 Verilog 门的类型" href="http://www.runoob.com/w3cnote/verilog2-gate.html" >1.1 Verilog 门的类型</a></li>
+	
+		
+	<li><a target="_top" data-id="23648" title="1.2 Verilog 开关级建模" href="http://www.runoob.com/w3cnote/verilog2-level-modeling.html" >1.2 Verilog 开关级建模</a></li>
+	
+		
+	<li><a target="_top" data-id="23656" title="1.3 Verilog 门延迟" href="http://www.runoob.com/w3cnote/verilog2-gate-delay.html" >1.3 Verilog 门延迟</a></li>
+	
+		
+	<li><a target="_top" data-id="23673" title="2.1 Verilog UDP 基础知识" href="http://www.runoob.com/w3cnote/verilog2-udp.html" >2.1 Verilog UDP 基础知识</a></li>
+	
+		
+	<li><a target="_top" data-id="23674" title="2.2 Verilog 组合逻辑 UDP" href="http://www.runoob.com/w3cnote/verilog2-udp-logic.html" >2.2 Verilog 组合逻辑 UDP</a></li>
+	
+		
+	<li><a target="_top" data-id="23677" title="2.3 Verilog 时序逻辑 UDP" href="http://www.runoob.com/w3cnote/verilog2-udp-timing.html" >2.3 Verilog 时序逻辑 UDP</a></li>
+	
+		
+	<li><a target="_top" data-id="23685" title="3.1 Verilog 延迟模型" href="http://www.runoob.com/w3cnote/verilog2-delay-type.html" >3.1 Verilog 延迟模型</a></li>
+	
+		
+	<li><a target="_top" data-id="23690" title="3.2 Verilog specify 块语句" href="http://www.runoob.com/w3cnote/verilog2-specify.html" >3.2 Verilog specify 块语句</a></li>
+	
+		<li>
+	3.3 Verilog 建立时间和保持时间	</li>
+	
+		
+	<li><a target="_top" data-id="23701" title="3.4 Verilog 时序检查" href="http://www.runoob.com/w3cnote/verilog2-timing-check.html" >3.4 Verilog 时序检查</a></li>
+	
+		
+	<li><a target="_top" data-id="23708" title="3.5 Verilog 延迟反标注" href="http://www.runoob.com/w3cnote/verilog2-sdf.html" >3.5 Verilog 延迟反标注</a></li>
+	
+		
+	<li><a target="_top" data-id="23714" title="4.1 Verilog 同步与异步" href="http://www.runoob.com/w3cnote/verilog-sync.html" >4.1 Verilog 同步与异步</a></li>
+	
+		
+	<li><a target="_top" data-id="23725" title="4.2 Verilog 跨时钟域传输：慢到快" href="http://www.runoob.com/w3cnote/verilog2-slow2fast.html" >4.2 Verilog 跨时钟域传输：慢到快</a></li>
+	
+		
+	<li><a target="_top" data-id="23729" title="4.3 Verilog 跨时钟域传输：快到慢" href="http://www.runoob.com/w3cnote/verilog2-fast2slow.html" >4.3 Verilog 跨时钟域传输：快到慢</a></li>
+	
+		
+	<li><a target="_top" data-id="23731" title="4.4 Verilog FIFO 设计" href="http://www.runoob.com/w3cnote/verilog2-fifo.html" >4.4 Verilog FIFO 设计</a></li>
+	
+		
+	<li><a target="_top" data-id="23739" title="5.1 Verilog 复位简介" href="http://www.runoob.com/w3cnote/verilog2-reset.html" >5.1 Verilog 复位简介</a></li>
+	
+		
+	<li><a target="_top" data-id="23743" title="5.2 Verilog 时钟简介" href="http://www.runoob.com/w3cnote/verilog2-clock.html" >5.2 Verilog 时钟简介</a></li>
+	
+		
+	<li><a target="_top" data-id="23757" title="5.3 Verilog 时钟分频" href="http://www.runoob.com/w3cnote/verilog2-clock-division.html" >5.3 Verilog 时钟分频</a></li>
+	
+		
+	<li><a target="_top" data-id="23768" title="5.4 Verilog 时钟切换" href="http://www.runoob.com/w3cnote/verilog2-clock-switch.html" >5.4 Verilog 时钟切换</a></li>
+	
+		
+	<li><a target="_top" data-id="23779" title="6.1 Verilog 低功耗简介" href="http://www.runoob.com/w3cnote/verilog2-low-power.html" >6.1 Verilog 低功耗简介</a></li>
+	
+		
+	<li><a target="_top" data-id="23788" title="6.2 Verilog 系统级低功耗设计" href="http://www.runoob.com/w3cnote/verilog2-lower-power-design.html" >6.2 Verilog 系统级低功耗设计</a></li>
+	
+		
+	<li><a target="_top" data-id="23792" title="6.3 Verilog  RTL 级低功耗设计（上）" href="http://www.runoob.com/w3cnote/verilog2-rtl-low-power-design-1.html" >6.3 Verilog  RTL 级低功耗设计（上）</a></li>
+	
+		
+	<li><a target="_top" data-id="23796" title="6.4 Verilog RTL 级低功耗设计（下）" href="http://www.runoob.com/w3cnote/verilog2-rtl-low-power-design-2.html" >6.4 Verilog RTL 级低功耗设计（下）</a></li>
+	
+		
+	<li><a target="_top" data-id="23806" title="7.1 Verilog 显示任务" href="http://www.runoob.com/w3cnote/verilog2-display.html" >7.1 Verilog 显示任务</a></li>
+	
+		
+	<li><a target="_top" data-id="23813" title="7.2 Verilog 文件操作" href="http://www.runoob.com/w3cnote/verilog2-file.html" >7.2 Verilog 文件操作</a></li>
+	
+		
+	<li><a target="_top" data-id="23825" title="7.3 Verilog 随机数及概率分布" href="http://www.runoob.com/w3cnote/verilog2-random.html" >7.3 Verilog 随机数及概率分布</a></li>
+	
+		
+	<li><a target="_top" data-id="23847" title="7.4 Verilog 实数整数转换" href="http://www.runoob.com/w3cnote/verilog2-real2int.html" >7.4 Verilog 实数整数转换</a></li>
+	
+		
+	<li><a target="_top" data-id="23851" title="7.5 Verilog 其他系统任务" href="http://www.runoob.com/w3cnote/verilog2-other-task.html" >7.5 Verilog 其他系统任务</a></li>
+	
+		
+	<li><a target="_top" data-id="23862" title="8.1 Verilog  PLI 简介" href="http://www.runoob.com/w3cnote/verilog2-pli-intro.html" >8.1 Verilog  PLI 简介</a></li>
+	
+		
+	<li><a target="_top" data-id="23865" title="8.2 Verilog TF 子程序" href="http://www.runoob.com/w3cnote/verilog2-tf.html" >8.2 Verilog TF 子程序</a></li>
+	
+		
+	<li><a target="_top" data-id="23869" title="8.3 Verilog TF 子程序列表" href="http://www.runoob.com/w3cnote/verilog2-tf-sub.html" >8.3 Verilog TF 子程序列表</a></li>
+	
+		
+	<li><a target="_top" data-id="23870" title="8.4 Verilog ACC 子程序" href="http://www.runoob.com/w3cnote/verilog2-acc.html" >8.4 Verilog ACC 子程序</a></li>
+	
+		
+	<li><a target="_top" data-id="23872" title="8.5 Verilog ACC 子程序列表" href="http://www.runoob.com/w3cnote/verilog2-acc-sub.html" >8.5 Verilog ACC 子程序列表</a></li>
+	
+		
+	<li><a target="_top" data-id="23876" title="9.1 Verilog 逻辑综合" href="http://www.runoob.com/w3cnote/verilog2-logic-sumarry.html" >9.1 Verilog 逻辑综合</a></li>
+	
+		
+	<li><a target="_top" data-id="23882" title="9.2 Verilog 可综合性设计" href="http://www.runoob.com/w3cnote/verilog2-integrated-design.html" >9.2 Verilog 可综合性设计</a></li>
+	
+	</ul></div>	</div>
+</div>
+
+
+<!-- 底部 -->
+<div id="footer" class="mar-t50">
+   <div class="runoob-block">
+    <div class="runoob cf">
+     <dl>
+      <dt>
+       在线实例
+      </dt>
+      <dd>
+       &middot;<a target="_blank" href="/html/html-examples.html">HTML 实例</a>
+      </dd>
+      <dd>
+       &middot;<a target="_blank" href="/css/css-examples.html">CSS 实例</a>
+      </dd>
+      <dd>
+       &middot;<a target="_blank" href="/js/js-examples.html">JavaScript 实例</a>
+      </dd>
+      <dd>
+       &middot;<a target="_blank" href="/ajx/ajax-examples.html">Ajax 实例</a>
+      </dd>
+       <dd>
+       &middot;<a target="_blank" href="/jquery/jquery-examples.html">jQuery 实例</a>
+      </dd>
+      <dd>
+       &middot;<a target="_blank" href="/xml/xml-examples.html">XML 实例</a>
+      </dd>
+      <dd>
+       &middot;<a target="_blank" href="/java/java-examples.html">Java 实例</a>
+      </dd>
+     
+     </dl>
+     <dl>
+      <dt>
+      字符集&工具
+      </dt>
+      <dd>
+       &middot; <a target="_blank" href="/charsets/html-charsets.html">HTML 字符集设置</a>
+      </dd>
+      <dd>
+       &middot; <a target="_blank" href="/tags/html-ascii.html">HTML ASCII 字符集</a>
+      </dd>
+     <dd>
+       &middot; <a target="_blank" href="https://c.runoob.com/front-end/6939/">JS 混淆/加密</a>
+      </dd> 
+      <dd>
+       &middot; <a target="_blank" href="https://c.runoob.com/front-end/6232/">PNG/JPEG 图片压缩</a>
+      </dd>
+      <dd>
+       &middot; <a target="_blank" href="/tags/html-colorpicker.html">HTML 拾色器</a>
+      </dd>
+      <dd>
+       &middot; <a target="_blank" href="//c.runoob.com/front-end/53">JSON 格式化工具</a>
+      </dd>
+      <dd>
+       &middot; <a target="_blank" href="//c.runoob.com/front-end/6680/">随机数生成器</a>
+      </dd>
+     </dl>
+     <dl>
+      <dt>
+       最新更新
+      </dt>
+                   <dd>
+       &middot;
+      <a href="http://www.runoob.com/matplotlib/matplotlib-imread.html" title="Matplotlib imread() 方法">Matplotlib imre...</a>
+      </dd>
+              <dd>
+       &middot;
+      <a href="http://www.runoob.com/matplotlib/matplotlib-imsave.html" title="Matplotlib imsave() 方法">Matplotlib imsa...</a>
+      </dd>
+              <dd>
+       &middot;
+      <a href="http://www.runoob.com/matplotlib/matplotlib-imshow.html" title="Matplotlib imshow() 方法">Matplotlib imsh...</a>
+      </dd>
+              <dd>
+       &middot;
+      <a href="http://www.runoob.com/matplotlib/matplotlib-hist.html" title="Matplotlib 直方图">Matplotlib 直方图</a>
+      </dd>
+              <dd>
+       &middot;
+      <a href="http://www.runoob.com/python3/python-func-object.html" title="Python object() 函数">Python object()...</a>
+      </dd>
+              <dd>
+       &middot;
+      <a href="http://www.runoob.com/python3/python-ai-draw.html" title="Python AI 绘画">Python AI 绘画</a>
+      </dd>
+              <dd>
+       &middot;
+      <a href="http://www.runoob.com/w3cnote/cursor-editor.html" title="神辅助 Cursor 编辑器，加入 GPT-4 让编码更轻松！">神辅助 Cursor ...</a>
+      </dd>
+             </dl>
+     <dl>
+      <dt>
+       站点信息
+      </dt>
+      <dd>
+       &middot;
+       <a target="_blank" href="mailto:admin@runoob.com" rel="external nofollow">意见反馈</a>
+       </dd>
+      <dd>
+       &middot;
+      <a target="_blank" href="/disclaimer">免责声明</a>
+       </dd>
+      <dd>
+       &middot;
+       <a target="_blank" href="/aboutus">关于我们</a>
+       </dd>
+      <dd>
+       &middot;
+      <a target="_blank" href="/archives">文章归档</a>
+      </dd>
+    
+     </dl>
+    
+     <div class="search-share">
+      <div class="app-download">
+        <div>
+         <strong>关注微信</strong>
+        </div>
+      </div>
+      <div class="share">
+      <img width="128" height="128" src="/wp-content/themes/runoob/assets/images/qrcode.png" />
+       </div>
+     </div>
+     
+    </div>
+   </div>
+   <div class="w-1000 copyright">
+     Copyright &copy; 2013-2023    <strong><a href="//www.runoob.com/" target="_blank">菜鸟教程</a></strong>&nbsp;
+    <strong><a href="//www.runoob.com/" target="_blank">runoob.com</a></strong> All Rights Reserved. 备案号：<a target="_blank" rel="nofollow" href="https://beian.miit.gov.cn/">闽ICP备15012807号-1</a>
+   </div>
+  </div>
+  <div class="fixed-btn">
+    <a class="go-top" href="javascript:void(0)" title="返回顶部"> <i class="fa fa-angle-up"></i></a>
+    <a class="qrcode"  href="javascript:void(0)" title="关注我们"><i class="fa fa-qrcode"></i></a>
+    <a class="writer" style="display:none" href="javascript:void(0)"   title="标记/收藏"><i class="fa fa-star" aria-hidden="true"></i></a>
+    <!-- qrcode modal -->
+    <div id="bottom-qrcode" class="modal panel-modal hide fade in">
+      <h4>微信关注</h4>
+      <div class="panel-body"><img alt="微信关注" width="128" height="128" src="/wp-content/themes/runoob/assets/images/qrcode.png"></div> 
+    </div>
+  </div>
+
+ <div style="display:none;">
+<script async src="https://www.googletagmanager.com/gtag/js?id=UA-84264393-2"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+
+  gtag('config', 'UA-84264393-2');
+</script>
+<script>
+var _hmt = _hmt || [];
+(function() {
+  var hm = document.createElement("script");
+  hm.src = "https://hm.baidu.com/hm.js?3eec0b7da6548cf07db3bc477ea905ee";
+  var s = document.getElementsByTagName("script")[0]; 
+  s.parentNode.insertBefore(hm, s);
+})();
+</script>
+
+</div>
+<script>
+window.jsui={
+    www: 'https://www.runoob.com',
+    uri: 'https://www.runoob.com/wp-content/themes/runoob'
+};
+</script>
+
+<script src="https://static.runoob.com/assets/libs/hl/run_prettify.js"></script>
+<script src="/wp-content/themes/runoob/assets/js/main.min.js?v=1.156"></script>
+
+</body>
+</html>

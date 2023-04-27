@@ -1,0 +1,131 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><title>E.92. 版本 9.1.15</title><link rel="stylesheet" type="text/css" href="stylesheet.css" /><link rev="made" href="pgsql-docs@postgresql.org" /><meta name="generator" content="DocBook XSL Stylesheets V1.79.1" /><link rel="prev" href="release-9-1-16.html" title="E.91. 版本 9.1.16" /><link rel="next" href="release-9-1-14.html" title="E.93. 版本 9.1.14" /></head><body><div xmlns="http://www.w3.org/TR/xhtml1/transitional" class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="5" align="center">E.92. 版本 9.1.15</th></tr><tr><td width="10%" align="left"><a accesskey="p" href="release-9-1-16.html" title="E.91. 版本 9.1.16">上一页</a> </td><td width="10%" align="left"><a accesskey="u" href="release.html" title="附录 E. 版本说明">上一级</a></td><th width="60%" align="center">附录 E. 版本说明</th><td width="10%" align="right"><a accesskey="h" href="index.html" title="PostgreSQL 10.1 手册">起始页</a></td><td width="10%" align="right"> <a accesskey="n" href="release-9-1-14.html" title="E.93. 版本 9.1.14">下一页</a></td></tr></table><hr></hr></div><div class="sect1" id="RELEASE-9-1-15"><div class="titlepage"><div><div><h2 class="title" style="clear: both">E.92. 版本 9.1.15</h2></div></div></div><div class="toc"><dl class="toc"><dt><span class="sect2"><a href="release-9-1-15.html#idp72748352">E.92.1. 迁移到版本 9.1.15</a></span></dt><dt><span class="sect2"><a href="release-9-1-15.html#idp72750112">E.92.2. 修改列表</a></span></dt></dl></div><p><strong>发布日期：. </strong>2015-02-05</p><p>这个版本包含各种自9.1.14以来的修复。关于9.1主版本的新特性信息，
+请查看<a class="xref" href="release-9-1.html" title="E.107. 版本9.1">第 E.107 节</a>。</p><div class="sect2" id="idp72748352"><div class="titlepage"><div><div><h3 class="title">E.92.1. 迁移到版本 9.1.15</h3></div></div></div><p>运行9.1.X的用户不需要转储/恢复。</p><p>不过，如果你是从一个早于9.1.14的版本升级而来，请查看<a class="xref" href="release-9-1-14.html" title="E.93. 版本 9.1.14">第 E.93 节</a>。</p></div><div class="sect2" id="idp72750112"><div class="titlepage"><div><div><h3 class="title">E.92.2. 修改列表</h3></div></div></div><div class="itemizedlist"><ul class="itemizedlist" style="list-style-type: disc; "><li class="listitem"><p>修复<code class="function">to_char()</code>中的缓冲区溢出 (Bruce Momjian)</p><p>当<code class="function">to_char()</code>处理大量数字的数值格式模板调用时，
+<span class="productname">PostgreSQL</span>将读完缓冲区。当处理精致的时间戳格式模板时，
+<span class="productname">PostgreSQL</span>将写完缓冲区。任何一种情况都会使服务器崩溃。
+我们还未排除攻击导致权限提升的可能性，尽管看起来是不可能的。
+      (CVE-2015-0241)</p></li><li class="listitem"><p>修复替代<code class="function">*printf()</code>函数中的缓冲区溢出 (Tom Lane)</p><p><span class="productname">PostgreSQL</span>包括<code class="function">printf</code>和相关函数的一个替代实现。
+在用要求的精度（大于500）格式化浮点数（转换说明符<code class="literal">e</code>、
+<code class="literal">E</code>、<code class="literal">f</code>、<code class="literal">F</code>、<code class="literal">g</code>或<code class="literal">G</code>）时，
+这个代码会耗尽堆栈缓冲区。这会使服务器崩溃，
+并且我们还未排除攻击导致权限提升的可能性。
+数据库用户可以通过<code class="function">to_char()</code> SQL函数触发这样的缓冲区溢出。
+虽然这是唯一受到影响的内核<span class="productname">PostgreSQL</span>功能，
+但是使用printf族函数的扩展模块也有可能会有风险。</p><p>这个问题主要影响Windows上的<span class="productname">PostgreSQL</span>。
+在其他现在平台上，<span class="productname">PostgreSQL</span>在适当时使用这些函数的系统实现。
+      (CVE-2015-0242)</p></li><li class="listitem"><p>修复<code class="filename">contrib/pgcrypto</code>中的缓冲区溢出
+      (Marko Tiikkaja, Noah Misch)</p><p><code class="filename">pgcrypto</code>模块中内存大小追踪的错误允许堆栈缓冲器溢出，
+并且错误的依赖于未初始化内存的内容。缓冲区溢出情况会使服务器崩溃，
+并且我们还未排除攻击导致权限提升的可能性。 (CVE-2015-0243)</p></li><li class="listitem"><p>修复错误后丢失前端/后端协议同步的可能 (Heikki Linnakangas)</p><p>如果在服务器正在读取客户端的协议信息时发生了任一错误，
+那么它会丢失同步并且错误的尝试解释部分消息数据为新的协议消息。
+攻击者可以通过这种方式，在命令参数中提交精心制作的二进制数据成功注入他自己的SQL命令。
+声明超时和查询取消是最有可能触发这种情况的错误来源。
+特别容易受到攻击的是使用超时和提交任意用户制作的数据作为二进制查询参数的应用。
+禁用声明超时将减少，但是不能消除，被利用的风险。
+感谢Emil Lenngren报告这个问题。 (CVE-2015-0244)</p></li><li class="listitem"><p>修复通过约束违反错误消息泄露信息 (Stephen Frost)</p><p>一些服务器错误消息显示了违反约束（比如唯一约束）的字段值。
+如果用户没有在表的所有字段上<code class="literal">SELECT</code>的权限，
+这意味着会暴露用户不应该看到的值。调整代码，
+仅在显示的值来自SQL命令或用户可以查看时显示该值。 (CVE-2014-8161)</p></li><li class="listitem"><p>锁定Windows上回归测试的临时安装 (Noah Misch)</p><p>使用SSPI认证，仅允许来自加载了该测试套件的OS用户的连接。
+这在Windows上关闭了以前在其他平台上关闭的隐患，
+也就是其他用户也可以连接到测试主机。 (CVE-2014-0067)</p></li><li class="listitem"><p>避免使用<code class="command">ALTER DATABASE SET TABLESPACE</code>移动一个数据库到一个新的表空间，
+然后稍后将其移回它原来的表空间时，可能的数据损坏 (Tom Lane)</p></li><li class="listitem"><p>避免事务中的<code class="command">ANALYZE</code>回滚时损坏表 (Andres Freund, Tom Lane, Michael Paquier)</p><p>如果失败的事务早已从表中删除了最后的索引、规则或触发器，
+那么该表将停留在一个损坏的状态，没有设置相关的<code class="structname">pg_class</code>
+标记，尽管它们应该设置。</p></li><li class="listitem"><p>确保在<code class="command">CREATE DATABASE</code>或<code class="command">ALTER DATABASE SET
+      TABLESPACE</code>期间正确的拷贝了非日志表 (Pavan Deolasee, Andres Freund)</p></li><li class="listitem"><p>修复<code class="command">DROP</code>的依赖搜索，正确的处理在表前递归的访问表字段的情况
+      (Petr Jelinek, Tom Lane)</p><p>只知道在一个扩展同时创建了一个数据类型和使用该数据类型的表时会出现这种情况。
+错误的代码会拒绝<code class="command">DROP EXTENSION</code>，除非声明了<code class="literal">CASCADE</code>，
+而这不是必须的。</p></li><li class="listitem"><p>修复EvalPlanQual处理中使用早已释放的内存的问题 (Tom Lane)</p><p>在<code class="literal">READ COMMITTED</code>模式下，由于这个错误，
+锁定或更新最近更新的行的查询会崩溃。</p></li><li class="listitem"><p>修复在子表上使用部分索引时<code class="command">SELECT FOR UPDATE</code>的规划 (Kyotaro Horiguchi)</p><p>在<code class="literal">READ COMMITTED</code>模式下，<code class="command">SELECT FOR UPDATE</code>
+在重新检查一个最近更新的行，看其是否仍然满足查询的<code class="literal">WHERE</code>
+条件时，也必须重新检查部分索引的<code class="literal">WHERE</code>条件。
+如果该索引属于一个集成子表，则忽略了这个需求，
+所以有可能不正确的返回不再满足查询条件的行。</p></li><li class="listitem"><p>修复<code class="command">SELECT FOR UPDATE</code>可能返回同一个行两次，
+漏掉返回其他行的极端情况 (Tom Lane)</p><p>在<code class="literal">READ COMMITTED</code>模式下，<code class="command">SELECT FOR UPDATE</code>
+扫描一个继承树，会错误的返回一个来自之前子表的行，
+而不是它应该返回的来自后来的子表的行。</p></li><li class="listitem"><p>在<code class="literal">FOREIGN KEY</code>声明的参考字段列表中拒绝重复的字段名 (David Rowley)</p><p>这个限制是SQL标准的。以前我们并不明确拒绝这种情况，
+但是后来代码会由于奇怪的锁定错误而失败。</p></li><li class="listitem"><p>修复提升<code class="type">numeric</code>值到一个大的整数幂中的错误 (Tom Lane)</p><p>以前的代码得到一个错误的结果，或者在意识到结果会溢出之前消耗大量的时间和内存。</p></li><li class="listitem"><p>在<code class="function">numeric_recv()</code>中，截断任何将要根据值的<code class="literal">dscale</code>
+字段隐藏的小数位 (Tom Lane)</p><p><code class="type">numeric</code>值的显示精度（<code class="literal">dscale</code>）永远都不应该小于非零小数位的数量；
+但是很显然，至少有一个客户端应用这样传输二进制<code class="type">numeric</code>值。
+这导致奇怪的行为，因为额外的数位也会计入数学运算，即使它们没有显示出来。
+最小风险的修复看起来是在接收时就截断这样的<span class="quote">“<span class="quote">隐藏</span>”</span>位，
+这样数值就确实是它打印出来的样子了。</p></li><li class="listitem"><p>拒绝超出范围的数字时区声明 (Tom Lane)</p><p>接受超过+/- 168小时（一周）的简单数字时区声明，
+但是会导致某些操作空指针解引用崩溃。没有这样大的UTC偏移用例，
+所以拒绝它们。</p></li><li class="listitem"><p>修复<code class="type">tsquery</code> <code class="literal">@&gt;</code> <code class="type">tsquery</code>运算符中的错误 
+(Heikki Linnakangas)</p><p>如果两个不同的条目有相同的CRC，则认为它们匹配。另外，
+如果第二个操作数的项比第一个操作数多，将假设它不包含在第一个中；
+这是错误的，因为它可能包含重复的项。</p></li><li class="listitem"><p>改善ispell字典对坏的词缀文件的防御 (Tom Lane)</p></li><li class="listitem"><p>在同义词辞典中允许多于64K的短语 (David Boutin)</p><p>以前的编码在超级大的字典上会崩溃，所以认为这是一个可后向修复的bug，
+而不是一个未来的添加。</p></li><li class="listitem"><p>修复<code class="function">xpath()</code>中的命名空间处理 (Ali Akbar)</p><p>以前，<code class="function">xpath()</code>调用获得的<code class="type">xml</code>值没有命名空间声明，
+如果该命名空间声明附属于输入<code class="type">xml</code>值的原始元素，
+而不是要返回的特定元素。当单独考虑时，传递原始的声明，这样结果就是正确的了。</p></li><li class="listitem"><p>修复嵌套的附加关系的规划器问题，比如<code class="literal">UNION ALL</code>
+子查询中的继承的表 (Tom Lane)</p></li><li class="listitem"><p>当GiST索引元组不适合一个页面时未能清理，而不是进入无限递归 (Andrew Gierth)</p></li><li class="listitem"><p>免除拥有每表<code class="varname">cost_limit</code>和/或来自自动清理的全局成本平衡规则
+<code class="varname">cost_delay</code>设置的表 (Álvaro Herrera)</p><p>以前的行为基本上忽略了这些每表的设置，这不是故意的。现在，
+一个拥有这样设置的表将使用这些设置清理，与其他自动清理进程无关。
+这会比以前加重总I/O负载，所以应该再三检查这样的设置。</p></li><li class="listitem"><p>避免自动清理名义上关闭时，大批量的自动清理 (Tom Lane)</p><p>即使是自动清理名义上关闭时，我们仍然加载自动清理进程清理有XID概括风险的表。
+不过，这样的工作进程会继续清理目标数据库中的所有表，如果它们符合自动清理的通常阈值。
+这在最好情况下是个意外；在最坏情况下它延迟了概括威胁的响应。修复它，
+这样如果关闭了自动清理，进程<span class="emphasis"><em>只</em></span>执行反概括清理。</p></li><li class="listitem"><p>在崩溃恢复期间，确保非日志关系写做空并且在恢复完成之前同步到磁盘
+      (Abhijit Menon-Sen, Andres Freund)</p><p>这阻止了非日志关系可能由于数据库崩溃恢复包含垃圾数据的情况。</p></li><li class="listitem"><p>修复热备查询和重放全页图片之间的竞态条件 (Heikki Linnakangas)</p><p>这个错误会导致在热备中执行查询时的瞬态错误。</p></li><li class="listitem"><p>修复恢复逻辑不适当的忽略了<code class="literal">COMMIT/ABORT PREPARED</code>
+的WAL记录的几个情况 (Heikki Linnakangas)</p><p>最值得注意的疏忽是<code class="varname">recovery_target_xid</code>
+不能用来在两阶段提交时停止。</p></li><li class="listitem"><p>避免为时间线历史文件创建不必要的<code class="filename">.ready</code>标记文件 (Fujii Masao)</p></li><li class="listitem"><p>修复使用了空预备语句并且<code class="varname">log_statement</code>设置是<code class="literal">mod</code>
+或<code class="literal">ddl</code>时，可能的空指针解引用 (Fujii Masao)</p></li><li class="listitem"><p>修改<span class="quote">“<span class="quote">pgstat wait timeout</span>”</span>警告消息为LOG级别，
+并修改它使其更容易理解 (Tom Lane)</p><p>原先以为该消息是基本上不会发生的情况，但是它在我们较慢的成员上经常发生，
+令人讨厌。将其降为LOG级别，并且在措辞上多花了一些精力：
+它现在读为<span class="quote">“<span class="quote">using stale statistics instead of
+      current ones because stats collector is not responding</span>”</span>。</p></li><li class="listitem"><p>修复SPARC自旋锁实现，确保CPU运行在非TSO相干模式时的正确性，
+就像一些非Solaris内核那样 (Andres Freund)</p></li><li class="listitem"><p>如果macOS的<code class="function">setlocale()</code>在主服务器内部启动了一个不想要的额外线程，
+则发出警告 (Noah Misch)</p></li><li class="listitem"><p>修复<code class="function">PQconnectdbParams()</code>中重复的<code class="literal">dbname</code>
+参数的处理 (Alex Shulgin)</p><p>如果出现的第一个<code class="literal">dbname</code>包含要扩展的连接字符串或URI，
+则意外的行为会跟着发生。</p></li><li class="listitem"><p>在意外的套接字EOF时，确保<span class="application">libpq</span>报告合适的错误消息 (Marko Tiikkaja, Tom Lane)</p><p>根据内核行为，在服务器意外的关闭了套接字时，
+<span class="application">libpq</span>可能返回一个空的错误字符串，而不是什么有用的信息。</p></li><li class="listitem"><p>在<code class="function">PQreset()</code>期间清理任何老的错误消息 (Heikki Linnakangas)</p><p>如果重复的调用<code class="function">PQreset()</code>，并且连接不能重复建立，
+则来自失败连接尝试的错误消息会在<code class="structname">PGconn</code>
+的错误字符串中不断的积累。</p></li><li class="listitem"><p>在解析<span class="application">libpq</span>中的连接选项时，正确的处理内存溢出条件
+(Alex Shulgin, Heikki Linnakangas)</p></li><li class="listitem"><p>修复<span class="application">ecpg</span>的<code class="function">ParseDateTime()</code>
+版本中的数组溢出 (Michael Paquier)</p></li><li class="listitem"><p>在<span class="application">initdb</span>中，如果指定了口令文件，但是该文件为空时，
+给出一个更加明确的错误消息 (Mats Erik Andersson)</p></li><li class="listitem"><p>修复<span class="application">psql</span>的<code class="command">\s</code>命令，使其与libedit很好的合作，
+并且添加了分页支持 (Stepan Rutz, Tom Lane)</p><p>在使用libedit而不是readline时，<code class="command">\s</code>以一种颇为不可读的编码格式打印命令历史，
+并且在最近的libedit版本上，可能会完全失败。通过我们自己打印历史，
+而不是让库做这件事来修复它。一个好的副作用是在合适时可以使用分页了。</p><p>这个补丁也修复了一个错误，该错误导致新行编码在用libedit保存命令历史时，
+不一致的应用。使用这个补丁，可以干净的读取较老的<span class="application">psql</span>
+版本写的多行历史项，但是反之不行，依赖于包含的确定libedit版本。</p></li><li class="listitem"><p>改善<span class="application">psql</span>的特殊变量解析的一致性 (Tom Lane)</p><p>允许<code class="literal">ECHO_HIDDEN</code>和<code class="literal">ON_ERROR_ROLLBACK</code>的
+<code class="literal">on</code>和<code class="literal">off</code>的不同拼写（比如<code class="literal">1</code>/<code class="literal">0</code>）。
+为<code class="literal">COMP_KEYWORD_CASE</code>、<code class="literal">ECHO</code>、<code class="literal">ECHO_HIDDEN</code>、
+<code class="literal">HISTCONTROL</code>、<code class="literal">ON_ERROR_ROLLBACK</code>和<code class="literal">VERBOSITY</code>
+的不可识别的值报告一个警告。所有这些变量的所有值的识别都是大小写不敏感的；
+以前是大小写敏感和大小写不敏感混合的。</p></li><li class="listitem"><p>修复<span class="application">psql</span>的扩展模式显示，在使用<code class="literal">border</code> = 3
+和<code class="literal">linestyle</code> = <code class="literal">ascii</code>或<code class="literal">unicode</code>
+时，一致的工作 (Stephen Frost)</p></li><li class="listitem"><p>改善数据库在相同的两个对象间包含多依赖路径的多个实例时，
+<span class="application">pg_dump</span>的性能 (Tom Lane)</p></li><li class="listitem"><p>修复并发恢复仅模式的转储期间可能的死锁 (Robert Haas, Tom Lane)</p></li><li class="listitem"><p>修复零字段复合类型上<code class="literal">pg_dump --binary-upgrade</code>中的内核转储 (Rushabh Lathia)</p></li><li class="listitem"><p>阻止提升备用服务器时，<code class="literal">pg_basebackup -x/-X</code>
+创建的WAL文件被再次归档 (Andres Freund)</p></li><li class="listitem"><p>修复<code class="filename">contrib/citext</code>从未打包的脚本中升级 (Tom Lane)</p></li><li class="listitem"><p>修复<code class="filename">contrib/pageinspect</code>的<code class="function">get_raw_page()</code>
+中的块编号检查 (Tom Lane)</p><p>不正确的检查逻辑会阻止访问非主要关系分支中的一些页面。</p></li><li class="listitem"><p>修复<code class="filename">contrib/pgcrypto</code>的<code class="function">pgp_sym_decrypt()</code>，
+在消息长度为6，小于2的幂时不会失败 (Marko Tiikkaja)</p></li><li class="listitem"><p>修复<code class="filename">contrib/pg_test_fsync</code>中的文件描述符泄露 (Jeff Janes)</p><p>这会导致未能删除Windows上的临时文件。</p></li><li class="listitem"><p>安全的处理<code class="filename">contrib/tablefunc</code>的<code class="function">connectby()</code>
+中意外的查询结果，尤其是NULL (Michael Paquier)</p><p>以前如果<code class="function">connectby()</code>遇到NULL键值是会崩溃的。
+现在它打印该行但是不深入递归。</p></li><li class="listitem"><p>避免<code class="filename">contrib/xml2</code>的<code class="function">xslt_process()</code>
+中可能的崩溃 (Mark Simonetti)</p><p><span class="application">libxslt</span>看起来对资源释放的顺序有一个未记录的依赖；
+重新排序我们的调用以避免崩溃。</p></li><li class="listitem"><p>让一些<code class="filename">contrib</code> I/O函数有正确的易变属性 (Tom Lane)</p><p>以前过于保守的标记在正常使用中是不重要的，但是会导致优化问题，
+或者拒绝有效的索引表达式定义。因为后果不严重，
+我们只是在该扩展模块的脚本中调整了该函数的定义，而没有改变版本号。</p></li><li class="listitem"><p>清理了许多来自Coverity静态代码分析器的警告
+(Andres Freund, Tatsuo Ishii, Marko Kreen, Tom Lane, Michael Paquier)</p><p>这些修改主要是美化用的，但是修复了一些情况下的极端情况错误，
+比如，内存溢出故障之后的崩溃而不是一个适当的错误报告。
+没有一个人认为这代表安全问题。</p></li><li class="listitem"><p>在建立时检测不兼容的OpenLDAP版本 (Noah Misch)</p><p>有OpenLDAP版本2.4.24到2.4.31（首尾包含），<span class="productname">PostgreSQL</span>
+后端在退出时崩溃。在基于编译时OpenLDAP版本号<span class="application">configure</span>
+期间，提出一个警告，并在<code class="filename">contrib/dblink</code>的回归测试中测试崩溃情况。</p></li><li class="listitem"><p>在非MSVC Windows建立中，确保<code class="filename">libpq.dll</code>是带有执行权限安装的 (Noah Misch)</p></li><li class="listitem"><p>让<span class="application">pg_regress</span>在成功退出时删除任何它创建的临时安装 (Tom Lane)</p><p>结果是在<code class="literal">make check-world</code>期间磁盘空间的使用大量的减少，
+因为该序列包含好几个临时安装的创建。</p></li><li class="listitem"><p>支持时区缩写不时的修改UTC偏移 (Tom Lane)</p><p>以前，<span class="productname">PostgreSQL</span>假设UTC偏移与时区缩写关联（比如<code class="literal">EST</code>），
+在特定区域的使用中是永远不变的。不过这个假设在现实世界中是失败的，
+所以引入了时区缩写代表不时变化的UTC偏移的能力。
+更新时区缩写定义文件，在1970年以来已经改变了UTC偏移的时区缩写环境中使用该特性
+（根据IANA时区数据库）。在这样的时区中，<span class="productname">PostgreSQL</span>
+现在将根据给定的日期关联正确的UTC偏移到缩写。</p></li><li class="listitem"><p>更新时区缩写列表 (Tom Lane)</p><p>添加CST (China Standard Time)到我们的列表。删除ADT到<span class="quote">“<span class="quote">Arabia Daylight Time</span>”</span>
+的引用，它在2007年就废弃了；因此，声明与<span class="quote">“<span class="quote">Atlantic Daylight Time</span>”</span>
+冲突看起来没什么帮助。为CKT (Cook Islands)、FJT和FJST (Fiji)
+修复完全不正确的GMT偏移；我们甚至没有它们适当的日期变更线。</p></li><li class="listitem"><p>更新时区数据文件到<span class="application">tzdata</span>版本2015a。</p><p>IANA时区数据库为所有澳大利亚时区采取了
+<code class="literal">A<em class="replaceable"><code>x</code></em>ST</code>/<code class="literal">A<em class="replaceable"><code>x</code></em>DT</code>
+格式的缩写，反映了他们认为现在澳大利亚的多数实现。
+这些名字与其他地方的使用并不冲突（除了ACST表示Acre Summer Time，
+它在1994年就已经停用了）。因此，接受这些名字到我们的<span class="quote">“<span class="quote">Default</span>”</span>
+时区缩写集。<span class="quote">“<span class="quote">Australia</span>”</span>缩写集现在仅包含CST、EAST、EST、SAST、SAT和WST，
+认为所有这些大都是历史用法。请注意，SAST在<span class="quote">“<span class="quote">Default</span>”</span>
+缩写集中也已经被修改为South Africa Standard Time。</p><p>另外，添加时区缩写SRET (Asia/Srednekolymsk)和XJT(Asia/Urumqi)，
+并为西萨摩亚使用WSST/WSDT。还有，DST规律在智利、墨西哥、土耳其 &amp; 
+凯科斯群岛和斐济发生了改变。Papua New Guinea的一部分有一个新的时区
+Pacific/Bougainville。还更正了一些历史（1970以前）的时区数据。</p></li></ul></div></div></div><div class="navfooter"><hr /><table width="100%" summary="Navigation footer"><tr><td width="40%" align="left"><a accesskey="p" href="release-9-1-16.html">上一页</a> </td><td width="20%" align="center"><a accesskey="u" href="release.html">上一级</a></td><td width="40%" align="right"> <a accesskey="n" href="release-9-1-14.html">下一页</a></td></tr><tr><td width="40%" align="left" valign="top">E.91. 版本 9.1.16 </td><td width="20%" align="center"><a accesskey="h" href="index.html">起始页</a></td><td width="40%" align="right" valign="top"> E.93. 版本 9.1.14</td></tr></table></div></body></html>

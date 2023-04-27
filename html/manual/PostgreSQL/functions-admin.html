@@ -1,0 +1,437 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><title>9.26. 系统管理函数</title><link rel="stylesheet" type="text/css" href="stylesheet.css" /><link rev="made" href="pgsql-docs@postgresql.org" /><meta name="generator" content="DocBook XSL Stylesheets V1.79.1" /><link rel="prev" href="functions-info.html" title="9.25. 系统信息函数" /><link rel="next" href="functions-trigger.html" title="9.27. 触发器函数" /></head><body><div xmlns="http://www.w3.org/TR/xhtml1/transitional" class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="5" align="center">9.26. 系统管理函数</th></tr><tr><td width="10%" align="left"><a accesskey="p" href="functions-info.html" title="9.25. 系统信息函数">上一页</a> </td><td width="10%" align="left"><a accesskey="u" href="functions.html" title="第 9 章 函数和操作符">上一级</a></td><th width="60%" align="center">第 9 章 函数和操作符</th><td width="10%" align="right"><a accesskey="h" href="index.html" title="PostgreSQL 10.1 手册">起始页</a></td><td width="10%" align="right"> <a accesskey="n" href="functions-trigger.html" title="9.27. 触发器函数">下一页</a></td></tr></table><hr></hr></div><div class="sect1" id="FUNCTIONS-ADMIN"><div class="titlepage"><div><div><h2 class="title" style="clear: both">9.26. 系统管理函数</h2></div></div></div><div class="toc"><dl class="toc"><dt><span class="sect2"><a href="functions-admin.html#FUNCTIONS-ADMIN-SET">9.26.1. 配置设定函数</a></span></dt><dt><span class="sect2"><a href="functions-admin.html#FUNCTIONS-ADMIN-SIGNAL">9.26.2. 服务器信号函数</a></span></dt><dt><span class="sect2"><a href="functions-admin.html#FUNCTIONS-ADMIN-BACKUP">9.26.3. 备份控制函数</a></span></dt><dt><span class="sect2"><a href="functions-admin.html#FUNCTIONS-RECOVERY-CONTROL">9.26.4. 恢复控制函数</a></span></dt><dt><span class="sect2"><a href="functions-admin.html#FUNCTIONS-SNAPSHOT-SYNCHRONIZATION">9.26.5. 快照同步函数</a></span></dt><dt><span class="sect2"><a href="functions-admin.html#FUNCTIONS-REPLICATION">9.26.6. Replication Functions</a></span></dt><dt><span class="sect2"><a href="functions-admin.html#FUNCTIONS-ADMIN-DBOBJECT">9.26.7. 数据库对象管理函数</a></span></dt><dt><span class="sect2"><a href="functions-admin.html#FUNCTIONS-ADMIN-INDEX">9.26.8. 索引维护函数</a></span></dt><dt><span class="sect2"><a href="functions-admin.html#FUNCTIONS-ADMIN-GENFILE">9.26.9. 通用文件访问函数</a></span></dt><dt><span class="sect2"><a href="functions-admin.html#FUNCTIONS-ADVISORY-LOCKS">9.26.10. 咨询锁函数</a></span></dt></dl></div><p>    这一节描述的函数被用来控制和监视一个<span class="productname">PostgreSQL</span>安装。
+   </p><div class="sect2" id="FUNCTIONS-ADMIN-SET"><div class="titlepage"><div><div><h3 class="title">9.26.1. 配置设定函数</h3></div></div></div><p>    <a class="xref" href="functions-admin.html#FUNCTIONS-ADMIN-SET-TABLE" title="表 9.77. 配置设定函数">表 9.77</a>展示了那些可以用于查询以及修改运行时配置参数的函数。
+   </p><div class="table" id="FUNCTIONS-ADMIN-SET-TABLE"><p class="title"><strong>表 9.77. 配置设定函数</strong></p><div class="table-contents"><table class="table" summary="配置设定函数" border="1"><colgroup><col /><col /><col /></colgroup><thead><tr><th>名称</th><th>返回类型</th><th>描述</th></tr></thead><tbody><tr><td>        <a id="idp15514608" class="indexterm"></a>
+        <code class="literal"><code class="function">current_setting(<em class="parameter"><code>setting_name</code></em> [, <em class="parameter"><code>missing_ok</code></em> ])</code></code>
+       </td><td><code class="type">text</code></td><td>获得设置的当前值</td></tr><tr><td>        <a id="idp15518976" class="indexterm"></a>
+        <code class="literal"><code class="function">set_config(<em class="parameter"><code>setting_name</code></em>,
+                             <em class="parameter"><code>new_value</code></em>,
+                             <em class="parameter"><code>is_local</code></em>)</code></code>
+       </td><td><code class="type">text</code></td><td>设置一个参数并返回新值</td></tr></tbody></table></div></div><br class="table-break" /><a id="idp15523760" class="indexterm"></a><a id="idp15524416" class="indexterm"></a><a id="idp15525104" class="indexterm"></a><p>    <code class="function">current_setting</code>得到<em class="parameter"><code>setting_name</code></em>设置的当前值。它对应于<acronym class="acronym">SQL</acronym>命令<code class="command">SHOW</code>。一个例子：
+</p><pre class="programlisting">SELECT current_setting('datestyle');
+
+ current_setting
+-----------------
+ ISO, MDY
+(1 row)</pre><p>
+如果没有名为<em class="parameter"><code>setting_name</code></em>的设置，
+<code class="function">current_setting</code>会抛出错误，除非提供
+<em class="parameter"><code>missing_ok</code></em>并且其值为<code class="literal">true</code>。 
+   </p><p>    <code class="function">set_config</code>将参数<em class="parameter"><code>setting_name</code></em>设置为<em class="parameter"><code>new_value</code></em>。如果 <em class="parameter"><code>is_local</code></em>设置为<code class="literal">true</code>，那么新值将只应用于当前事务。 如果你希望新值应用于当前会话，那么应该使用<code class="literal">false</code>。 它等效于 SQL 命令 <code class="command">SET</code>。例如：
+</p><pre class="programlisting">SELECT set_config('log_statement_stats', 'off', false);
+
+ set_config
+------------
+ off
+(1 row)</pre><p>
+   </p></div><div class="sect2" id="FUNCTIONS-ADMIN-SIGNAL"><div class="titlepage"><div><div><h3 class="title">9.26.2. 服务器信号函数</h3></div></div></div><a id="idp15540192" class="indexterm"></a><a id="idp15540880" class="indexterm"></a><a id="idp15541568" class="indexterm"></a><a id="idp15542256" class="indexterm"></a><a id="idp15542944" class="indexterm"></a><p>    在<a class="xref" href="functions-admin.html#FUNCTIONS-ADMIN-SIGNAL-TABLE" title="表 9.78. 服务器信号函数">表 9.78</a>中展示的函数向其它服务器进程发送控制信号。
+	这些函数的使用通常限制为超级用户，
+	但是可以使用<code class="command">GRANT</code>将访问权限授予其他用户，并注明例外情况。
+   </p><div class="table" id="FUNCTIONS-ADMIN-SIGNAL-TABLE"><p class="title"><strong>表 9.78. 服务器信号函数</strong></p><div class="table-contents"><table class="table" summary="服务器信号函数" border="1"><colgroup><col /><col /><col /></colgroup><thead><tr><th>名称</th><th>返回类型</th><th>描述</th></tr></thead><tbody><tr><td>        <code class="literal"><code class="function">pg_cancel_backend(<em class="parameter"><code>pid</code></em> <code class="type">int</code>)</code></code>
+        </td><td><code class="type">boolean</code></td><td>取消一个后端的当前查询。
+        如果调用角色是其后端正在被取消的角色的成员，
+        然而只有超级用户可以取消超级用户的后端。这也是允许的。
+        </td></tr><tr><td>        <code class="literal"><code class="function">pg_reload_conf()</code></code>
+        </td><td><code class="type">boolean</code></td><td>导致服务器进程重载它们的配置文件</td></tr><tr><td>        <code class="literal"><code class="function">pg_rotate_logfile()</code></code>
+        </td><td><code class="type">boolean</code></td><td>切换服务器的日志文件</td></tr><tr><td>        <code class="literal"><code class="function">pg_terminate_backend(<em class="parameter"><code>pid</code></em> <code class="type">int</code>)</code></code>
+        </td><td><code class="type">boolean</code></td><td>中止一个后端。
+        如果调用角色是其后端被终止的角色成员，
+        然而只有超级用户可以终止超级用户的后端。这也是允许的。
+       </td></tr></tbody></table></div></div><br class="table-break" /><p>    这些函数中的每一个都在成功时返回<code class="literal">true</code>，并且在失败时返回<code class="literal">false</code>。
+   </p><p>    <code class="function">pg_cancel_backend</code>和<code class="function">pg_terminate_backend</code>向由进程 ID 标识的后端进程发送信号（分别是<span class="systemitem">SIGINT</span>或<span class="systemitem">SIGTERM</span>）。一个活动后端的进程 ID可以从<code class="structname">pg_stat_activity</code>视图的<code class="structfield">pid</code>列中找到，或者通过在服务器上列出<code class="command">postgres</code>进程（在 Unix 上使用<span class="application">ps</span>或者在<span class="productname">Windows</span>上使用<span class="application">任务管理器</span>）得到。一个活动后端的角色可以在<code class="structname">pg_stat_activity</code>视图的<code class="structfield">usename</code>列中找到。
+   </p><p>    <code class="function">pg_reload_conf</code>给服务器发送一个<span class="systemitem">SIGHUP</span>信号， 导致所有服务器进程重载配置文件。
+   </p><p>    <code class="function">pg_rotate_logfile</code>给日志文件管理器发送信号，告诉它立即切换到一个新的输出文件。这个函数只有在内建日志收集器运行时才能工作，因为否则就不存在日志文件管理器子进程。
+    subprocess.
+   </p></div><div class="sect2" id="FUNCTIONS-ADMIN-BACKUP"><div class="titlepage"><div><div><h3 class="title">9.26.3. 备份控制函数</h3></div></div></div><a id="idp15573648" class="indexterm"></a><a id="idp15574336" class="indexterm"></a><a id="idp15575024" class="indexterm"></a><a id="idp15575728" class="indexterm"></a><a id="idp15576432" class="indexterm"></a><a id="idp15577120" class="indexterm"></a><a id="idp15577808" class="indexterm"></a><a id="idp15578496" class="indexterm"></a><a id="idp15579184" class="indexterm"></a><a id="idp15579872" class="indexterm"></a><a id="idp15580560" class="indexterm"></a><a id="idp15581248" class="indexterm"></a><a id="idp15581936" class="indexterm"></a><p>    <a class="xref" href="functions-admin.html#FUNCTIONS-ADMIN-BACKUP-TABLE" title="表 9.79. 备份控制函数">表 9.79</a>中展示的函数可以辅助制作在线备份。这些函数不能在恢复期间执行（<code class="function">pg_is_in_backup</code>、<code class="function">pg_backup_start_time</code>和<code class="function">pg_wal_lsn_diff</code>除外）。
+   </p><div class="table" id="FUNCTIONS-ADMIN-BACKUP-TABLE"><p class="title"><strong>表 9.79. 备份控制函数</strong></p><div class="table-contents"><table class="table" summary="备份控制函数" border="1"><colgroup><col /><col /><col /></colgroup><thead><tr><th>名称</th><th>返回类型</th><th>描述</th></tr></thead><tbody><tr><td>        <code class="literal"><code class="function">pg_create_restore_point(<em class="parameter"><code>name</code></em> <code class="type">text</code>)</code></code>
+        </td><td><code class="type">pg_lsn</code></td><td>为执行恢复创建一个命名点（只限于超级用户）</td></tr><tr><td>        <code class="literal"><code class="function">pg_current_wal_flush_lsn()</code></code>
+        </td><td><code class="type">pg_lsn</code></td><td>得到当前的预写式日志刷写位置</td></tr><tr><td>        <code class="literal"><code class="function">pg_current_wal_insert_lsn()</code></code>
+        </td><td><code class="type">pg_lsn</code></td><td>获得当前预写式日志插入位置</td></tr><tr><td>        <code class="literal"><code class="function">pg_current_wal_lsn()</code></code>
+        </td><td><code class="type">pg_lsn</code></td><td>获得当前预写式日志写入位置</td></tr><tr><td>        <code class="literal"><code class="function">pg_start_backup(<em class="parameter"><code>label</code></em> <code class="type">text</code> [<span class="optional">, <em class="parameter"><code>fast</code></em> <code class="type">boolean</code> [<span class="optional">, <em class="parameter"><code>exclusive</code></em> <code class="type">boolean</code> </span>]</span>])</code></code>
+        </td><td><code class="type">pg_lsn</code></td><td>准备执行在线备份（只限于超级用户或者复制角色）</td></tr><tr><td>        <code class="literal"><code class="function">pg_stop_backup()</code></code>
+        </td><td><code class="type">pg_lsn</code></td><td>完成执行排他的在线备份（默认只限于超级用户或者复制角色，
+       但是可以授予其他用户 EXECUTE 特权来执行该函数）</td></tr><tr><td>        <code class="literal"><code class="function">pg_stop_backup(<em class="parameter"><code>exclusive</code></em> <code class="type">boolean</code> [<span class="optional">, <em class="parameter"><code>wait_for_archive</code></em> <code class="type">boolean</code> </span>])</code></code>
+        </td><td><code class="type">setof record</code></td><td>结束执行排他或者非排他的在线备份 （默认只限于超级用户，
+       但是可以授予其他用户 EXECUTE 特权来执行该函数）</td></tr><tr><td>        <code class="literal"><code class="function">pg_is_in_backup()</code></code>
+        </td><td><code class="type">bool</code></td><td>如果一个在线排他备份仍在进行中则为真。</td></tr><tr><td>        <code class="literal"><code class="function">pg_backup_start_time()</code></code>
+        </td><td><code class="type">timestamp with time zone</code></td><td>获得一个进行中的在线排他备份的开始时间。</td></tr><tr><td>        <code class="literal"><code class="function">pg_switch_wal()</code></code>
+        </td><td><code class="type">pg_lsn</code></td><td>强制切换到一个新的预写式日志文件（只限于超级用户）</td></tr><tr><td>        <code class="literal"><code class="function">pg_walfile_name(<em class="parameter"><code>lsn</code></em> <code class="type">pg_lsn</code>)</code></code>
+        </td><td><code class="type">text</code></td><td>转换预写式日志位置为文件名</td></tr><tr><td>        <code class="literal"><code class="function">pg_walfile_name_offset(<em class="parameter"><code>lsn</code></em> <code class="type">pg_lsn</code>)</code></code>
+        </td><td><code class="type">text</code>, <code class="type">integer</code></td><td>转换预写式日志位置为文件名以及文件内的十进制字节偏移</td></tr><tr><td>        <code class="literal"><code class="function">pg_wal_lsn_diff(<em class="parameter"><code>lsn</code></em> <code class="type">pg_lsn</code>, <em class="parameter"><code>lsn</code></em> <code class="type">pg_lsn</code>)</code></code>
+       </td><td><code class="type">numeric</code></td><td>计算两个预写式日志位置间的差别</td></tr></tbody></table></div></div><br class="table-break" /><p>    <code class="function">pg_start_backup</code>接受一个参数，
+    这个参数可以是备份的任意用户定义的标签
+    （通常这是备份转储文件将被存储的名字）。
+    该函数写入一个备份标签文件（<code class="filename">backup_label</code>），
+    如果在<code class="filename">pg_tblspc/</code>目录中有任何链接，
+    表空间映射文件(<code class="filename">tablespace_map</code>)到数据库集群的数据目录中，
+    执行一个检查点，然后以文本方式返回备份的起始预写式日志位置。
+    用户可以忽略这个结果值，但是为了可能需要的场合我们还是提供该值。
+  
+</p><pre class="programlisting">postgres=# select pg_start_backup('label_goes_here');
+ pg_start_backup
+-----------------
+ 0/D4445B8
+(1 row)</pre><p>
+    第二个参数是可选的，其类型为<code class="type">boolean</code>。如果为<code class="literal">true</code>，它指定尽快执行<code class="function">pg_start_backup</code>。这会强制一个立即执行的检查点，它会导致 I/O 操作的峰值，拖慢任何并发执行的查询。
+   </p><p>    在一次排他备份中，<code class="function">pg_stop_backup</code>会移除标签文件以及
+    <code class="function">pg_start_backup</code>创建的<code class="filename">tablespace_map</code>文件（如果存在）。
+    在一次非排他备份中，<code class="filename">backup_label</code>和<code class="filename">tablespace_map</code>
+    的内容会包含在该函数返回的结果中，并且应该被写入到该备份的文件中
+    （这些内容不在数据目录中）。
+	有一个可选的类型为<code class="type">boolean</code>的第二个参数。如果为假，则在完成备份后，
+	<code class="function">pg_stop_backup</code>将立即返回，而无需等待WAL归档。
+	此行为仅适用于独立监视WAL归档的备份软件。否则，需要使备份一致的WAL可能会丢失，
+	并使备份无用。当此参数设置为真时，<code class="function">pg_stop_backup</code>
+	将在启用归档时等待WAL归档；在备用服务器上，这意味着它只会在
+	<code class="varname">archive_mode = always</code>时等待。如果主服务器上的写操作很少，
+	那么在主服务器上运行<code class="function">pg_switch_wal</code>以触发即时段切换可能很有用。
+   </p><p>    在主服务器上执行时，该函数还会在预写日志归档区域中创建备份历史记录文件。
+	该历史文件包含为<code class="function">pg_start_backup</code>提供的标签、
+	备份的开始和结束预写日志位置以及备份的开始和结束时间。
+	返回值是备份的结束预写日志位置（也可以忽略）。在记录结束位置后，
+	当前预写日志插入点将自动前进到下一个预写日志文件，
+	以便可以立即归档结束预写日志文件以完成备份。
+   </p><p>    <code class="function">pg_switch_wal</code>移动到下一个预写日志文件，允许当前文件被归档（假定你正在使用连续归档）。返回值是在刚完成的预写日志文件中结束预写日志位置 + 1。如果从上一次预写日志切换依赖没有预写日志活动，<code class="function">pg_switch_wal</code>不会做任何事情并且返回当前正在使用的预写日志文件的开始位置。
+   </p><p>    <code class="function">pg_create_restore_point</code>创建一个命名预写日志记录，它可以被用作恢复目标，并且返回相应的预写日志位置。这个给定的名字可以用于<a class="xref" href="recovery-target-settings.html#RECOVERY-TARGET-NAME">recovery_target_name</a>来指定恢复要进行到的点。避免使用同一个名称创建多个恢复点，因为恢复会停止在第一个匹配名称的恢复目标。
+   </p><p>    <code class="function">pg_current_wal_lsn</code>使用上述函数使用的相同格式显示当前预写日志写入位置。相似地，<code class="function">pg_current_wal_insert_lsn</code>显示当前预写日志插入位置，
+	<code class="function">pg_current_wal_flush_lsn</code>显示当前预写日志刷新位置。插入位置是在任何实例中预写日志的<span class="quote">“<span class="quote">逻辑</span>”</span>终点，而写入位置表示那些已经确实被从服务器的内部缓存写出的东西的重点。写出位置是哪些可以从服务器外部检查的东西的重点，并且通常是你所需要的，如果你对归档部分完成的预写日志文件感兴趣。插入和刷新位置主要是为服务器调试目的创造的。这些都是只读操作并且不需要超级用户权限。
+   </p><p>    你可以使用<code class="function">pg_walfile_name_offset</code>从任何上述函数的结果中抽取相应的预写日志文件名称以及字节偏移。例如：
+</p><pre class="programlisting">postgres=# SELECT * FROM pg_walfile_name_offset(pg_stop_backup());
+        file_name         | file_offset 
+--------------------------+-------------
+ 00000001000000000000000D |     4039624
+(1 row)</pre><p>
+    相似地，<code class="function">pg_walfile_name</code>只抽取预写日志文件名。当给定的预写日志位置正好在一个预写日志文件的边界，这些函数都返回之前的预写日志文件的名称。这对管理预写日志归档行为通常是所希望的行为，因为前一个文件是当前需要被归档的最后一个文件。
+   </p><p>    <code class="function">pg_wal_lsn_diff</code>以字节数计算两个预写日志位置之间的差别。它可以和<code class="structname">pg_stat_replication</code>或<a class="xref" href="functions-admin.html#FUNCTIONS-ADMIN-BACKUP-TABLE" title="表 9.79. 备份控制函数">表 9.79</a>中其他的函数一起使用来获得复制延迟。
+   </p><p>    关于正确使用这些函数的细节，请见<a class="xref" href="continuous-archiving.html" title="25.3. 连续归档和时间点恢复（PITR）">第 25.3 节</a>。
+   </p></div><div class="sect2" id="FUNCTIONS-RECOVERY-CONTROL"><div class="titlepage"><div><div><h3 class="title">9.26.4. 恢复控制函数</h3></div></div></div><a id="idp15662160" class="indexterm"></a><a id="idp15662848" class="indexterm"></a><a id="idp15663536" class="indexterm"></a><a id="idp15664224" class="indexterm"></a><p>    <a class="xref" href="functions-admin.html#FUNCTIONS-RECOVERY-INFO-TABLE" title="表 9.80. 恢复信息函数">表 9.80</a>中展示的函数提供有关后备机当前状态的信息。这些函数可以在恢复或普通运行过程中被执行。
+   </p><div class="table" id="FUNCTIONS-RECOVERY-INFO-TABLE"><p class="title"><strong>表 9.80. 恢复信息函数</strong></p><div class="table-contents"><table class="table" summary="恢复信息函数" border="1"><colgroup><col /><col /><col /></colgroup><thead><tr><th>名称</th><th>返回类型</th><th>描述</th></tr></thead><tbody><tr><td>        <code class="literal"><code class="function">pg_is_in_recovery()</code></code>
+        </td><td><code class="type">bool</code></td><td>如果恢复仍在进行中，为真。
+       </td></tr><tr><td>        <code class="literal"><code class="function">pg_last_wal_receive_lsn()</code></code>
+        </td><td><code class="type">pg_lsn</code></td><td>获得最后一个收到并由流复制同步到磁盘的预写日志位置。当流复制在进行中时，这将单调增加。如果恢复已经完成，这将保持静止在恢复过程中收到并同步到磁盘的最后一个 WAL 记录。如果流复制被禁用，或者还没有被启动，该函数返回 NULL。
+       </td></tr><tr><td>        <code class="literal"><code class="function">pg_last_wal_replay_lsn()</code></code>
+        </td><td><code class="type">pg_lsn</code></td><td>获得恢复过程中被重放的最后一个预写日志位置。当流复制在进行中时，这将单调增加。如果恢复已经完成，这将保持静止在恢复过程中被应用的最后一个 WAL 记录。如果服务器被正常启动而没有恢复，该函数返回 NULL。
+       </td></tr><tr><td>        <code class="literal"><code class="function">pg_last_xact_replay_timestamp()</code></code>
+        </td><td><code class="type">timestamp with time zone</code></td><td>获得恢复过程中被重放的最后一个事务的时间戳。这是在主机上产生的事务的提交或中止 WAL 记录的时间。如果在恢复过程中没有事务被重放，这个函数返回 NULL。否则，如果恢复仍在进行这将单调增加。如果恢复已经完成，则这个值会保持静止在恢复过程中最后一个被应用的事务。如果服务器被正常启动而没有恢复，该函数返回 NULL。
+       </td></tr></tbody></table></div></div><br class="table-break" /><a id="idp15679184" class="indexterm"></a><a id="idp15679872" class="indexterm"></a><a id="idp15680560" class="indexterm"></a><p>    <a class="xref" href="functions-admin.html#FUNCTIONS-RECOVERY-CONTROL-TABLE" title="表 9.81. 恢复控制函数">表 9.81</a>中展示的函数空值恢复的进程。这些函数只能在恢复过程中被执行。
+   </p><div class="table" id="FUNCTIONS-RECOVERY-CONTROL-TABLE"><p class="title"><strong>表 9.81. 恢复控制函数</strong></p><div class="table-contents"><table class="table" summary="恢复控制函数" border="1"><colgroup><col /><col /><col /></colgroup><thead><tr><th>名称</th><th>返回类型</th><th>描述</th></tr></thead><tbody><tr><td>        <code class="literal"><code class="function">pg_is_wal_replay_paused()</code></code>
+        </td><td><code class="type">bool</code></td><td>如果恢复被暂停，为真。
+       </td></tr><tr><td>        <code class="literal"><code class="function">pg_wal_replay_pause()</code></code>
+        </td><td><code class="type">void</code></td><td>立即暂停恢复（仅限于超级用户）。
+       </td></tr><tr><td>        <code class="literal"><code class="function">pg_wal_replay_resume()</code></code>
+        </td><td><code class="type">void</code></td><td>如果恢复被暂停，重启之（仅限于超级用户）。
+       </td></tr></tbody></table></div></div><br class="table-break" /><p>    在恢复被暂停时，不会有进一步的数据库改变被应用。如果在热备模式，所有新的查询将看到数据库的同一个一致快照，并且在恢复被继续之前不会有更多查询冲突会产生。
+   </p><p>    如果流复制被禁用，暂停状态可以无限制地继续而不出问题。在流复制进行时，WAL 记录将继续被接收，最后将会填满可用的磁盘空间，取决于暂停的持续时间、WAL 的产生率和可用的磁盘空间。
+   </p></div><div class="sect2" id="FUNCTIONS-SNAPSHOT-SYNCHRONIZATION"><div class="titlepage"><div><div><h3 class="title">9.26.5. 快照同步函数</h3></div></div></div><a id="idp15694160" class="indexterm"></a><p>    <span class="productname">PostgreSQL</span>允许数据库会话同步它们的快照。一个<em class="firstterm">快照</em>决定对于正在使用该快照的事务哪些数据是可见的。当两个或者更多个会话需要看到数据库中的相同内容时，就需要同步快照。如果两个会话独立开始其事务，就总是有可能有某个第三事务在两个<code class="command">START TRANSACTION</code>命令的执行之间提交，这样其中一个会话就可以看到该事务的效果而另一个则看不到。
+   </p><p>    为了解决这个问题，<span class="productname">PostgreSQL</span>允许一个事务<em class="firstterm">导出</em>它正在使用的快照。只要导出的事务仍然保持打开，其他事务可以<em class="firstterm">导入</em>它的快照，并且因此可以保证它们可以看到和第一个事务看到的完全一样的数据库视图。但是注意这些事务中的任何一个对数据库所作的更改对其他事务仍然保持不可见，和未提交事务所作的修改一样。因此这些事务是针对以前存在的数据同步，而对由它们自己所作的更改则采取正常的动作。
+   </p><p>    如<a class="xref" href="functions-admin.html#FUNCTIONS-SNAPSHOT-SYNCHRONIZATION-TABLE" title="表 9.82. 快照同步函数">表 9.82</a>中所示，快照通过<code class="function">pg_export_snapshot</code>函数导出，并且通过<a class="xref" href="sql-set-transaction.html" title="SET TRANSACTION"><span class="refentrytitle">SET TRANSACTION</span></a>命令导入。
+   </p><div class="table" id="FUNCTIONS-SNAPSHOT-SYNCHRONIZATION-TABLE"><p class="title"><strong>表 9.82. 快照同步函数</strong></p><div class="table-contents"><table class="table" summary="快照同步函数" border="1"><colgroup><col /><col /><col /></colgroup><thead><tr><th>名称</th><th>返回类型</th><th>描述</th></tr></thead><tbody><tr><td>        <code class="literal"><code class="function">pg_export_snapshot()</code></code>
+       </td><td><code class="type">text</code></td><td>保存当前快照并返回它的标识符</td></tr></tbody></table></div></div><br class="table-break" /><p>    函数<code class="function">pg_export_snapshot</code>保存当前的快照并且返回一个<code class="type">text</code>串标识该快照。该字符串必须被传递（到数据库外）给希望导入快照的客户端。直到导出快照的事务的末尾，快照都可以被导入。如果需要，一个事务可以导出多于一个快照。注意这样做只在 <code class="literal">READ COMMITTED</code>事务中有用，因为在<code class="literal">REPEATABLE READ</code>和更高隔离级别中，事务在它们的生命期中都使用同一个快照。一旦一个事务已经导出了任何快照，它不能使用<a class="xref" href="sql-prepare-transaction.html" title="PREPARE TRANSACTION"><span class="refentrytitle">PREPARE TRANSACTION</span></a>。
+   </p><p>    关于如何使用一个已导出快照的细节请见<a class="xref" href="sql-set-transaction.html" title="SET TRANSACTION"><span class="refentrytitle">SET TRANSACTION</span></a>.
+   </p></div><div class="sect2" id="FUNCTIONS-REPLICATION"><div class="titlepage"><div><div><h3 class="title">9.26.6. Replication Functions</h3></div></div></div><p>    <a class="xref" href="functions-admin.html#FUNCTIONS-REPLICATION-TABLE" title="表 9.83. 复制SQL函数">表 9.83</a>中显示的函数为了控制和交互复制功能。
+    参阅<a class="xref" href="warm-standby.html#STREAMING-REPLICATION" title="26.2.5. 流复制">第 26.2.5 节</a>，
+    <a class="xref" href="warm-standby.html#STREAMING-REPLICATION-SLOTS" title="26.2.6. 复制槽">第 26.2.6 节</a>以及
+    <a class="xref" href="replication-origins.html" title="第 49 章 复制进度追踪">第 49 章</a>获取基本功能信息。这些函数的使用受制于超级用户。
+   </p><p>    在复制协议中有许多这些函数的相等命令；
+    参阅<a class="xref" href="protocol-replication.html" title="52.4. 流复制协议">第 52.4 节</a>。
+   </p><p>    <a class="xref" href="functions-admin.html#FUNCTIONS-SNAPSHOT-SYNCHRONIZATION" title="9.26.5. 快照同步函数">第 9.26.5 节</a>，
+    <a class="xref" href="functions-admin.html#FUNCTIONS-RECOVERY-CONTROL" title="9.26.4. 恢复控制函数">第 9.26.4 节</a>以及
+    <a class="xref" href="functions-admin.html#FUNCTIONS-ADMIN-BACKUP" title="9.26.3. 备份控制函数">第 9.26.3 节</a>中的函数也是与复制有关的。
+   </p><div class="table" id="FUNCTIONS-REPLICATION-TABLE"><p class="title"><strong>表 9.83. 复制<acronym class="acronym">SQL</acronym>函数</strong></p><div class="table-contents"><table class="table" summary="复制SQL函数" border="1"><colgroup><col /><col /><col /></colgroup><thead><tr><th>函数</th><th>返回类型</th><th>描述</th></tr></thead><tbody><tr><td>        <a id="idp15724560" class="indexterm"></a>
+        <code class="literal"><code class="function">pg_create_physical_replication_slot(<em class="parameter"><code>slot_name</code></em> <code class="type">name</code> [<span class="optional">, <em class="parameter"><code>immediately_reserve</code></em> <code class="type">boolean</code>, <em class="parameter"><code>temporary</code></em> <code class="type">boolean</code></span>])</code></code>
+       </td><td>        (<em class="parameter"><code>slot_name</code></em> <code class="type">name</code>, <em class="parameter"><code>lsn</code></em> <code class="type">pg_lsn</code>)
+       </td><td>        创建一个名为<em class="parameter"><code>slot_name</code></em>的新物理复制槽。
+        只有用流复制协议才能从一个物理槽流式传送变化 - 见
+        <a class="xref" href="protocol-replication.html" title="52.4. 流复制协议">第 52.4 节</a>。
+		可选的第三个参数<em class="parameter"><code>temporary</code></em>设置为true时，
+		该参数指定该插槽不应永久存储到磁盘，仅供当前会话使用。
+		临时插槽在发生任何错误时也会被释放。
+		该函数对应于复制协议命令
+        <code class="literal">CREATE_REPLICATION_SLOT ... PHYSICAL</code>。
+       </td></tr><tr><td>        <a id="idp15736368" class="indexterm"></a>
+        <code class="literal"><code class="function">pg_drop_replication_slot(<em class="parameter"><code>slot_name</code></em> <code class="type">name</code>)</code></code>
+       </td><td>        <code class="type">void</code>
+       </td><td>        丢弃名为<em class="parameter"><code>slot_name</code></em>的物理或逻辑复制槽。
+        和复制协议命令<code class="literal">DROP_REPLICATION_SLOT</code>相同。
+		对于逻辑插槽，必须在连接到创建插槽的同一数据库时调用。
+       </td></tr><tr><td>        <a id="idp15742352" class="indexterm"></a>
+        <code class="literal"><code class="function">pg_create_logical_replication_slot(<em class="parameter"><code>slot_name</code></em> <code class="type">name</code>, <em class="parameter"><code>plugin</code></em> <code class="type">name</code> [<span class="optional">, <em class="parameter"><code>temporary</code></em> <code class="type">boolean</code></span>])</code></code>
+       </td><td>        (<em class="parameter"><code>slot_name</code></em> <code class="type">name</code>, <em class="parameter"><code>lsn</code></em> <code class="type">pg_lsn</code>)
+       </td><td>        使用输出插件<em class="parameter"><code>plugin</code></em>创建一个名为
+        <em class="parameter"><code>slot_name</code></em>的新逻辑（解码）复制槽。
+		可选的第三个参数<em class="parameter"><code>temporary</code></em>设置为true时，
+		该参数指定该插槽不应永久存储到磁盘，仅供当前会话使用。
+		临时插槽在发生任何错误时也会被释放。
+        对这个函数的调用与复制协议命令
+        <code class="literal">CREATE_REPLICATION_SLOT ... LOGICAL</code>具有相同的效果。
+       </td></tr><tr><td>        <a id="idp15754240" class="indexterm"></a>
+        <code class="literal"><code class="function">pg_logical_slot_get_changes(<em class="parameter"><code>slot_name</code></em> <code class="type">name</code>, <em class="parameter"><code>upto_lsn</code></em> <code class="type">pg_lsn</code>, <em class="parameter"><code>upto_nchanges</code></em> <code class="type">int</code>, VARIADIC <em class="parameter"><code>options</code></em> <code class="type">text[]</code>)</code></code>
+       </td><td>        (<em class="parameter"><code>lsn</code></em> <code class="type">pg_lsn</code>, <em class="parameter"><code>xid</code></em> <code class="type">xid</code>, <em class="parameter"><code>data</code></em> <code class="type">text</code>)
+       </td><td>        返回槽<em class="parameter"><code>slot_name</code></em>中的改变，从上一次已经被消费的点开始返回。
+        如果<em class="parameter"><code>upto_lsn</code></em>和<em class="parameter"><code>upto_nchanges</code></em>为 NULL，逻辑解码将一
+        直继续到 WAL 的末尾。如果<em class="parameter"><code>upto_lsn</code></em>为非 NULL，解码将只包括那些在指
+        定 LSN 之前提交的事务。如果<em class="parameter"><code>upto_nchanges</code></em>为非 NULL，
+        解码将在其产生的行数超过指定值后停止。不过要注意，
+        被返回的实际行数可能更大，因为对这个限制的检查只会在增加了解码每个新的提交事务产生
+        的行之后进行。
+       </td></tr><tr><td>        <a id="idp15768880" class="indexterm"></a>
+        <code class="literal"><code class="function">pg_logical_slot_peek_changes(<em class="parameter"><code>slot_name</code></em> <code class="type">name</code>, <em class="parameter"><code>upto_lsn</code></em> <code class="type">pg_lsn</code>, <em class="parameter"><code>upto_nchanges</code></em> <code class="type">int</code>, VARIADIC <em class="parameter"><code>options</code></em> <code class="type">text[]</code>)</code></code>
+       </td><td>        (<em class="parameter"><code>lsn</code></em> <code class="type">pg_lsn</code>, <em class="parameter"><code>xid</code></em> <code class="type">xid</code>, <em class="parameter"><code>data</code></em> <code class="type">text</code>)
+       </td><td>        行为就像<code class="function">pg_logical_slot_get_changes()</code>函数，
+        不过改变不会被消费， 即在未来的调用中还会返回这些改变。
+       </td></tr><tr><td>        <a id="idp15780304" class="indexterm"></a>
+        <code class="literal"><code class="function">pg_logical_slot_get_binary_changes(<em class="parameter"><code>slot_name</code></em> <code class="type">name</code>, <em class="parameter"><code>upto_lsn</code></em> <code class="type">pg_lsn</code>, <em class="parameter"><code>upto_nchanges</code></em> <code class="type">int</code>, VARIADIC <em class="parameter"><code>options</code></em> <code class="type">text[]</code>)</code></code>
+       </td><td>        (<em class="parameter"><code>lsn</code></em> <code class="type">pg_lsn</code>, <em class="parameter"><code>xid</code></em> <code class="type">xid</code>, <em class="parameter"><code>data</code></em> <code class="type">bytea</code>)
+       </td><td>        行为就像<code class="function">pg_logical_slot_get_changes()</code>函数，
+        不过改变会以<code class="type">bytea</code>返回。
+       </td></tr><tr><td>        <a id="idp15792096" class="indexterm"></a>
+        <code class="literal"><code class="function">pg_logical_slot_peek_binary_changes(<em class="parameter"><code>slot_name</code></em> <code class="type">name</code>, <em class="parameter"><code>upto_lsn</code></em> <code class="type">pg_lsn</code>, <em class="parameter"><code>upto_nchanges</code></em> <code class="type">int</code>, VARIADIC <em class="parameter"><code>options</code></em> <code class="type">text[]</code>)</code></code>
+       </td><td>        (<em class="parameter"><code>lsn</code></em> <code class="type">pg_lsn</code>, <em class="parameter"><code>xid</code></em> <code class="type">xid</code>, <em class="parameter"><code>data</code></em> <code class="type">bytea</code>)
+       </td><td>        行为就像<code class="function">pg_logical_slot_get_changes()</code>函数，
+        不过改变会以<code class="type">bytea</code>返回并且这些改变不会被消费，
+        即在未来的调用中还会返回这些改变。
+       </td></tr><tr><td id="PG-REPLICATION-ORIGIN-CREATE">        <a id="idp15804480" class="indexterm"></a>
+        <code class="literal"><code class="function">pg_replication_origin_create(<em class="parameter"><code>node_name</code></em> <code class="type">text</code>)</code></code>
+       </td><td>        <code class="type">oid</code>
+       </td><td>        创建具有给定外部名称的复制源，并返回分配给它的内部标识。
+       </td></tr><tr><td id="PG-REPLICATION-ORIGIN-DROP">        <a id="idp15809536" class="indexterm"></a>
+        <code class="literal"><code class="function">pg_replication_origin_drop(<em class="parameter"><code>node_name</code></em> <code class="type">text</code>)</code></code>
+       </td><td>        <code class="type">void</code>
+       </td><td>        删除之前创建的复制源，包含任何相关的回放进程。
+       </td></tr><tr><td>        <a id="idp15814032" class="indexterm"></a>
+        <code class="literal"><code class="function">pg_replication_origin_oid(<em class="parameter"><code>node_name</code></em> <code class="type">text</code>)</code></code>
+       </td><td>        <code class="type">oid</code>
+       </td><td>        通过名称查找复制源并返回内部标识。
+        如果没有发现相应的复制源，则抛出一个错误。
+       </td></tr><tr><td id="PG-REPLICATION-ORIGIN-SESSION-SETUP">        <a id="idp15819200" class="indexterm"></a>
+        <code class="literal"><code class="function">pg_replication_origin_session_setup(<em class="parameter"><code>node_name</code></em> <code class="type">text</code>)</code></code>
+       </td><td>        <code class="type">void</code>
+       </td><td>        标记当前会话从给定源开始回放，允许跟踪重播进度。如果没有配置之前的源，
+        使用<code class="function">pg_replication_origin_session_reset</code>恢复。
+       </td></tr><tr><td>        <a id="idp15824512" class="indexterm"></a>
+        <code class="literal"><code class="function">pg_replication_origin_session_reset()</code></code>
+       </td><td>        <code class="type">void</code>
+       </td><td>        取消<code class="function">pg_replication_origin_session_setup()</code>的影响。
+       </td></tr><tr><td>        <a id="idp15828544" class="indexterm"></a>
+        <code class="literal"><code class="function">pg_replication_origin_session_is_setup()</code></code>
+       </td><td>        <code class="type">bool</code>
+       </td><td>        在当前会话中已经配置复制源吗？
+       </td></tr><tr><td id="PG-REPLICATION-ORIGIN-SESSION-PROGRESS">        <a id="idp15832512" class="indexterm"></a>
+        <code class="literal"><code class="function">pg_replication_origin_session_progress(<em class="parameter"><code>flush</code></em> <code class="type">bool</code>)</code></code>
+       </td><td>        <code class="type">pg_lsn</code>
+       </td><td>        返回当前会话中配置的复制源的重播位置。
+        参数<em class="parameter"><code>flush</code></em>决定是否相应的本地事务将被刷新到磁盘或者不刷新。
+       </td></tr><tr><td id="PG-REPLICATION-ORIGIN-XACT-SETUP">        <a id="idp15838336" class="indexterm"></a>
+        <code class="literal"><code class="function">pg_replication_origin_xact_setup(<em class="parameter"><code>origin_lsn</code></em> <code class="type">pg_lsn</code>, <em class="parameter"><code>origin_timestamp</code></em> <code class="type">timestamptz</code>)</code></code>
+       </td><td>        <code class="type">void</code>
+       </td><td>        标记当前事务为回放给定<acronym class="acronym">LSN</acronym>和时间戳点提交的事务。
+        当使用<code class="function">pg_replication_origin_session_setup()</code>配置
+        复制源时，调用它。
+       </td></tr><tr><td id="PG-REPLICATION-ORIGIN-XACT-RESET">        <a id="idp15845568" class="indexterm"></a>
+        <code class="literal"><code class="function">pg_replication_origin_xact_reset()</code></code>
+       </td><td>        <code class="type">void</code>
+       </td><td>        取消<code class="function">pg_replication_origin_xact_setup()</code>的影响。
+       </td></tr><tr><td id="PG-REPLICATION-ORIGIN-ADVANCE">        <a id="idp15850064" class="indexterm"></a>
+        <code class="literal">pg_replication_origin_advance<code class="function">(<em class="parameter"><code>node_name</code></em> <code class="type">text</code>, <em class="parameter"><code>lsn</code></em> <code class="type">pg_lsn</code>)</code></code>
+       </td><td>        <code class="type">void</code>
+       </td><td>        为给定节点到给定位置设置复制进度。
+        这主要是用于设置配置更改后的初始位置或新位置。
+        要知道这个函数使用不当会导致不一致的复制数据。
+       </td></tr><tr><td id="PG-REPLICATION-ORIGIN-PROGRESS">        <a id="idp15856592" class="indexterm"></a>
+        <code class="literal"><code class="function">pg_replication_origin_progress(<em class="parameter"><code>node_name</code></em> <code class="type">text</code>, <em class="parameter"><code>flush</code></em> <code class="type">bool</code>)</code></code>
+       </td><td>        <code class="type">pg_lsn</code>
+       </td><td>        返回给定复制源的重放位置。
+        参数<em class="parameter"><code>flush</code></em>确定是
+        否相应的本地事务将被保证刷新到磁盘或不刷新。
+       </td></tr><tr><td id="PG-LOGICAL-EMIT-MESSAGE-TEXT">        <a id="idp15863456" class="indexterm"></a>
+        <code class="literal"><code class="function">pg_logical_emit_message(<em class="parameter"><code>transactional</code></em> <code class="type">bool</code>, <em class="parameter"><code>prefix</code></em> <code class="type">text</code>, <em class="parameter"><code>content</code></em> <code class="type">text</code>)</code></code>
+       </td><td>        <code class="type">pg_lsn</code>
+       </td><td>        发出文本形式的逻辑解码消息。这可以被用来通过 WAL 向逻辑解码插件传递一般消息。
+        参数<em class="parameter"><code>transactional</code></em>
+        指定该消息是否应该是当前事务的一部分或者当逻辑解码读到该记录时该消息
+        是否应该被立刻写入并且解码。<em class="parameter"><code>prefix</code></em>
+        是逻辑解码插件用来识别它们感兴趣的消息的文本前缀。
+        <em class="parameter"><code>content</code></em>是消息的文本。 
+       </td></tr><tr><td id="PG-LOGICAL-EMIT-MESSAGE-BYTEA">        <code class="literal"><code class="function">pg_logical_emit_message(<em class="parameter"><code>transactional</code></em> <code class="type">bool</code>, <em class="parameter"><code>prefix</code></em> <code class="type">text</code>, <em class="parameter"><code>content</code></em> <code class="type">bytea</code>)</code></code>
+       </td><td>        <code class="type">pg_lsn</code>
+       </td><td>        发出二进制逻辑解码消息。这可以被用来通过WAL向逻辑解码插件传递一般消息。
+        参数<em class="parameter"><code>transactional</code></em>
+        指定该消息是否应该是当前事务的一部分或者当逻辑解码读到该记录时该消息
+        是否应该被立刻写入并且解码。<em class="parameter"><code>prefix</code></em>
+        是逻辑解码插件用来识别它们感兴趣的消息的文本前缀。
+        <em class="parameter"><code>content</code></em>是消息的二进制文本。
+       </td></tr></tbody></table></div></div><br class="table-break" /></div><div class="sect2" id="FUNCTIONS-ADMIN-DBOBJECT"><div class="titlepage"><div><div><h3 class="title">9.26.7. 数据库对象管理函数</h3></div></div></div><p>    <a class="xref" href="functions-admin.html#FUNCTIONS-ADMIN-DBSIZE" title="表 9.84. 数据库对象尺寸函数">表 9.84</a>中展示的函数计算数据库对象使用的磁盘空间。
+   </p><a id="idp15883632" class="indexterm"></a><a id="idp15884288" class="indexterm"></a><a id="idp15884976" class="indexterm"></a><a id="idp15885664" class="indexterm"></a><a id="idp15886352" class="indexterm"></a><a id="idp15887040" class="indexterm"></a><a id="idp15887728" class="indexterm"></a><a id="idp15888416" class="indexterm"></a><a id="idp15889104" class="indexterm"></a><div class="table" id="FUNCTIONS-ADMIN-DBSIZE"><p class="title"><strong>表 9.84. 数据库对象尺寸函数</strong></p><div class="table-contents"><table class="table" summary="数据库对象尺寸函数" border="1"><colgroup><col /><col /><col /></colgroup><thead><tr><th>名称</th><th>返回类型</th><th>描述</th></tr></thead><tbody><tr><td><code class="literal"><code class="function">pg_column_size(<code class="type">any</code>)</code></code></td><td><code class="type">int</code></td><td>存储一个特定值（可能压缩过）所需的字节数</td></tr><tr><td>        <code class="literal"><code class="function">pg_database_size(<code class="type">oid</code>)</code></code>
+        </td><td><code class="type">bigint</code></td><td>指定 OID 的数据库使用的磁盘空间</td></tr><tr><td>        <code class="literal"><code class="function">pg_database_size(<code class="type">name</code>)</code></code>
+        </td><td><code class="type">bigint</code></td><td>指定名称的数据库使用的磁盘空间</td></tr><tr><td>        <code class="literal"><code class="function">pg_indexes_size(<code class="type">regclass</code>)</code></code>
+        </td><td><code class="type">bigint</code></td><td>        附加到指定表的索引所占的总磁盘空间
+       </td></tr><tr><td>        <code class="literal"><code class="function">pg_relation_size(<em class="parameter"><code>relation</code></em> <code class="type">regclass</code>, <em class="parameter"><code>fork</code></em> <code class="type">text</code>)</code></code>
+        </td><td><code class="type">bigint</code></td><td>        指定表或索引的指定分叉（<code class="literal">'main'</code>、<code class="literal">'fsm'</code>、<code class="literal">'vm'</code>或<code class="literal">'init'</code>）使用的磁盘空间
+       </td></tr><tr><td>        <code class="literal"><code class="function">pg_relation_size(<em class="parameter"><code>relation</code></em> <code class="type">regclass</code>)</code></code>
+        </td><td><code class="type">bigint</code></td><td>        <code class="literal">pg_relation_size(..., 'main')</code>的简写
+       </td></tr><tr><td>        <code class="literal"><code class="function">pg_size_bytes(<code class="type">text</code>)</code></code>
+        </td><td><code class="type">bigint</code></td><td>         把人类可读格式的带有单位的尺寸转换成字节数 
+       </td></tr><tr><td>        <code class="literal"><code class="function">pg_size_pretty(<code class="type">bigint</code>)</code></code>
+        </td><td><code class="type">text</code></td><td>         将表示成一个 64位整数的字节尺寸转换为带尺寸单位的人类可读格式
+       </td></tr><tr><td>        <code class="literal"><code class="function">pg_size_pretty(<code class="type">numeric</code>)</code></code>
+        </td><td><code class="type">text</code></td><td>         将表示成一个数字值的字节尺寸转换为带尺寸单位的人类可读格式
+       </td></tr><tr><td>        <code class="literal"><code class="function">pg_table_size(<code class="type">regclass</code>)</code></code>
+        </td><td><code class="type">bigint</code></td><td>        被指定表使用的磁盘空间，排除索引（但包括 TOAST、空闲空间映射和可见性映射）
+       </td></tr><tr><td>        <code class="literal"><code class="function">pg_tablespace_size(<code class="type">oid</code>)</code></code>
+        </td><td><code class="type">bigint</code></td><td>指定 OID 的表空间使用的磁盘空间</td></tr><tr><td>        <code class="literal"><code class="function">pg_tablespace_size(<code class="type">name</code>)</code></code>
+        </td><td><code class="type">bigint</code></td><td>指定名称的表空间使用的磁盘空间</td></tr><tr><td>        <code class="literal"><code class="function">pg_total_relation_size(<code class="type">regclass</code>)</code></code>
+        </td><td><code class="type">bigint</code></td><td>        指定表所用的总磁盘空间，包括所有的索引和<acronym class="acronym">TOAST</acronym>数据
+       </td></tr></tbody></table></div></div><br class="table-break" /><p>    <code class="function">pg_column_size</code>显示用于存储任意独立数据值的空间。
+   </p><p>    <code class="function">pg_total_relation_size</code>接受一个表或 TOAST 表的 OID 或名称，并返回该表所使用的总磁盘空间，包括所有相关的索引。这个函数等价于<code class="function">pg_table_size</code> <code class="literal">+</code> <code class="function">pg_indexes_size</code>。
+   </p><p>    <code class="function">pg_table_size</code>接受一个表的 OID 或名称，并返回该表所需的磁盘空间，但是排除索引（TOAST 空间、空闲空间映射和可见性映射包含在内）
+   </p><p>    <code class="function">pg_indexes_size</code>接受一个表的 OID 或名称，并返回附加到该表的所有索引所使用的全部磁盘空间。
+   </p><p>    <code class="function">pg_database_size</code>和<code class="function">pg_tablespace_size</code>
+    接受一个数据库或表空间的 OID 或名称，并且返回它们所使用的全部磁盘空间。
+    要使用<code class="function">pg_database_size</code>，你必须具有在指定数据库上的
+    <code class="literal">CONNECT</code>权限（默认会被授予），或者是<code class="literal">pg_read_all_stats</code>角色的一个成员。要使用<code class="function">pg_tablespace_size</code>，
+    你必须具有指定表空间上的<code class="literal">CREATE</code>权限，或者是<code class="literal">pg_read_all_stats</code>角色的一个成员，除非它是当前数据库的默认表空间。
+   </p><p>    <code class="function">pg_relation_size</code>接受一个表、索引或 TOAST 表的 OID 或者名称，
+    并且返回那个关系的一个分叉所占的磁盘空间的字节尺寸（注意对于大部分目的，
+    使用更高层的函数<code class="function">pg_total_relation_size</code>或者<code class="function">pg_table_size</code>
+    会更方便，它们会合计所有分叉的尺寸）。 如果只得到一个参数，
+    它会返回该关系的主数据分叉的尺寸。提供第二个参数可以指定要检查哪个分叉：
+    </p><div class="itemizedlist"><ul class="itemizedlist compact" style="list-style-type: disc; "><li class="listitem"><p>       <code class="literal">'main'</code>返回该关系主数据分叉的尺寸。 
+      </p></li><li class="listitem"><p>       <code class="literal">'fsm'</code>返回与该关系相关的空闲空间映射
+       （见<a class="xref" href="storage-fsm.html" title="66.3. 空闲空间映射">第 66.3 节</a>）的尺寸。 
+      </p></li><li class="listitem"><p>       <code class="literal">'vm'</code>返回与该关系相关的可见性映射
+       （见<a class="xref" href="storage-vm.html" title="66.4. 可见性映射">第 66.4 节</a>）的尺寸。 
+      </p></li><li class="listitem"><p>       <code class="literal">'init'</code>返回与该关系相关的初始化分叉（如果有）的尺寸。
+      </p></li></ul></div><p>
+   </p><p>    <code class="function">pg_size_pretty</code>可以用于把其它函数之一的结果格式化成一种人类易读的格式，可以根据情况使用 KB、MB、GB 或者 TB。
+   </p><p>
+    <code class="function">pg_size_bytes</code>可以被用来从人类可读格式的字符串得到其中所表示的字节数。
+    其输入可能带有的单位包括字节、kB、MB、GB 或者 TB，
+    并且对输入进行解析时是区分大小写的。如果没有指定单位，会假定单位为字节。
+   </p><div class="note"><h3 class="title">注意</h3><p>     函数<code class="function">pg_size_pretty</code>和<code class="function">pg_size_bytes</code>所使用的单位
+     kB、MB、GB 和 TB 是用 2 的幂而不是 10 的幂来定义，因此 1kB 是 1024 字节，
+     1MB 是1024<sup>2</sup> = 1048576字节，以此类推
+    </p></div><p>    上述操作表和索引的函数接受一个<code class="type">regclass</code>参数，它是该表或索引在
+    <code class="structname">pg_class</code>系统目录中的 OID。你不必手工去查找该 OID，因为
+    <code class="type">regclass</code>数据类型的输入转换器会为你代劳。只写包围在单引号内的表名，
+    这样它看起来像一个文字常量。为了与普通<acronym class="acronym">SQL</acronym>名称的处理相兼容，
+    该字符串将被转换为小写形式，除非其中在表名周围包含双引号。
+   </p><p>    如果一个 OID 不表示一个已有的对象并且被作为参数传递给了上述函数，
+    将会返回 NULL。 
+   </p><p>    <a class="xref" href="functions-admin.html#FUNCTIONS-ADMIN-DBLOCATION" title="表 9.85. 数据库对象定位函数">表 9.85</a>
+    中展示的函数帮助标识数据库对象相关的磁盘文件。 
+   </p><a id="idp15965088" class="indexterm"></a><a id="idp15965776" class="indexterm"></a><a id="idp15966464" class="indexterm"></a><div class="table" id="FUNCTIONS-ADMIN-DBLOCATION"><p class="title"><strong>表 9.85. 数据库对象定位函数</strong></p><div class="table-contents"><table class="table" summary="数据库对象定位函数" border="1"><colgroup><col /><col /><col /></colgroup><thead><tr><th>名称</th><th>返回类型</th><th>描述</th></tr></thead><tbody><tr><td>        <code class="literal"><code class="function">pg_relation_filenode(<em class="parameter"><code>relation</code></em> <code class="type">regclass</code>)</code></code>
+        </td><td><code class="type">oid</code></td><td>        指定关系的文件结点号
+       </td></tr><tr><td>        <code class="literal"><code class="function">pg_relation_filepath(<em class="parameter"><code>relation</code></em> <code class="type">regclass</code>)</code></code>
+        </td><td><code class="type">text</code></td><td>        指定关系的文件路径名
+       </td></tr><tr><td>        <code class="literal"><code class="function">pg_filenode_relation(<em class="parameter"><code>tablespace</code></em> <code class="type">oid</code>, <em class="parameter"><code>filenode</code></em> <code class="type">oid</code>)</code></code>
+        </td><td><code class="type">regclass</code></td><td>        查找与给定的表空间和文件节点相关的关系
+       </td></tr></tbody></table></div></div><br class="table-break" /><p>    <code class="function">pg_relation_filenode</code>接受一个表、索引、序列或 TOAST 表的 OID 或名称，返回当前分配给它的<span class="quote">“<span class="quote">filenode</span>”</span>号。文件结点是关系的文件名的基本组件（详见<a class="xref" href="storage-file-layout.html" title="66.1. 数据库文件布局">第 66.1 节</a>）。对于大多数表结果和<code class="structname">pg_class</code>.<code class="structfield">relfilenode</code>相同，但是对于某些系统目录<code class="structfield">relfilenode</code>为零，并且必须使用此函数获取正确的值。 如果传递一个没有存储的关系（如视图），此函数将返回 NULL。
+   </p><p>    <code class="function">pg_relation_filepath</code>与<code class="function">pg_relation_filenode</code>类似，但是它返回关系的整个文件路径名（相对于数据库集簇的数据目录<code class="varname">PGDATA</code>）。
+   </p><p>    <code class="function">pg_filenode_relation</code>是<code class="function">pg_relation_filenode</code>的反向函数。给定一个<span class="quote">“<span class="quote">tablespace</span>”</span> OID 以及一个 <span class="quote">“<span class="quote">filenode</span>”</span>，它会返回相关关系的 OID。对于一个在数据库的默认表空间中的表，该表空间可以指定为 0。
+   </p><p>    <a class="xref" href="functions-admin.html#FUNCTIONS-ADMIN-COLLATION" title="表 9.86. 排序规则管理函数">表 9.86</a>列出了用于管理排序规则的函数。
+   </p><div class="table" id="FUNCTIONS-ADMIN-COLLATION"><p class="title"><strong>表 9.86. 排序规则管理函数</strong></p><div class="table-contents"><table class="table" summary="排序规则管理函数" border="1"><colgroup><col /><col /><col /></colgroup><thead><tr><th>名称</th><th>返回类型</th><th>描述</th></tr></thead><tbody><tr><td>        <a id="idp15993536" class="indexterm"></a>
+        <code class="literal"><code class="function">pg_collation_actual_version(<code class="type">oid</code>)</code></code>
+       </td><td><code class="type">text</code></td><td>返回操作系统的排序规则的实际版本</td></tr><tr><td>        <a id="idp15996976" class="indexterm"></a>
+        <code class="literal"><code class="function">pg_import_system_collations(<em class="parameter"><code>schema</code></em> <code class="type">regnamespace</code>)</code></code>
+       </td><td><code class="type">integer</code></td><td>导入操作系统排序规则</td></tr></tbody></table></div></div><br class="table-break" /><p>    <code class="function">pg_collation_actual_version</code>
+	返回当前安装在操作系统中的排序规则对象的实际版本。
+	如果这与<code class="literal">pg_collation.collversion</code>中的值不同，
+	则可能需要重建依赖于排序规则的对象。另见<a class="xref" href="sql-altercollation.html" title="ALTER COLLATION"><span class="refentrytitle">ALTER COLLATION</span></a>。
+   </p><p>    <code class="function">pg_import_system_collations</code>基于它在操作系统中找到的所有语言环境，
+	将排序规则添加到系统目录<code class="literal">pg_collation</code>。
+	这是<code class="command">initdb</code>使用的内容；有关更多详细信息，
+	请参阅<a class="xref" href="collation.html#COLLATION-MANAGING" title="23.2.2. 管理排序规则">第 23.2.2 节</a>。
+	如果稍后将其他语言环境安装到操作系统中，
+	则可以再次运行此函数以添加新语言环境的排序规则。匹配<code class="literal">pg_collation</code>
+	中现有条目的语言环境将被跳过。（但是，
+	基于不再存在于操作系统中的语言环境的排序规则对象不会被此函数删除。）
+	<em class="parameter"><code>schema</code></em>参数通常是<code class="literal">pg_catalog</code>，
+	但这不是必需的；排序规则也可以安装到其他模式中。该函数返回它创建的新排序规则对象的数量。
+   </p></div><div class="sect2" id="FUNCTIONS-ADMIN-INDEX"><div class="titlepage"><div><div><h3 class="title">9.26.8. 索引维护函数</h3></div></div></div><a id="idp16010416" class="indexterm"></a><a id="idp16011120" class="indexterm"></a><a id="idp16011808" class="indexterm"></a><a id="idp16012496" class="indexterm"></a><p>    <a class="xref" href="functions-admin.html#FUNCTIONS-ADMIN-INDEX-TABLE" title="表 9.87. Index Maintenance Functions">表 9.87</a>显示可用于索引维护功能的函数。
+   </p><div class="table" id="FUNCTIONS-ADMIN-INDEX-TABLE"><p class="title"><strong>表 9.87. Index Maintenance Functions</strong></p><div class="table-contents"><table class="table" summary="Index Maintenance Functions" border="1"><colgroup><col /><col /><col /></colgroup><thead><tr><th>名称</th><th>返回类型</th><th>描述</th></tr></thead><tbody><tr><td>        <code class="literal"><code class="function">brin_summarize_new_values(<em class="parameter"><code>index_oid</code></em> <code class="type">regclass</code>)</code></code>
+       </td><td><code class="type">integer</code></td><td>总结尚未汇总的页面范围</td></tr><tr><td>        <code class="literal"><code class="function">brin_summarize_range(<em class="parameter"><code>index</code></em> <code class="type">regclass</code>, <em class="parameter"><code>blockNumber</code></em> <code class="type">bigint</code>)</code></code>
+       </td><td><code class="type">integer</code></td><td>总结涵盖给定块的页面范围（如果尚未总结的话）</td></tr><tr><td>        <code class="literal"><code class="function">brin_desummarize_range(<em class="parameter"><code>index</code></em> <code class="type">regclass</code>, <em class="parameter"><code>blockNumber</code></em> <code class="type">bigint</code>)</code></code>
+       </td><td><code class="type">integer</code></td><td>如果已经总结了，则反总结涵盖给定块的页面范围</td></tr><tr><td>        <code class="literal"><code class="function">gin_clean_pending_list(<em class="parameter"><code>index</code></em> <code class="type">regclass</code>)</code></code>
+       </td><td><code class="type">bigint</code></td><td>把 GIN 待处理列表项移动到主索引结构中</td></tr></tbody></table></div></div><br class="table-break" /><p>    <code class="function">brin_summarize_new_values</code>接收BRIN索引OID作为参数，
+    并检查索引以查找基表中的页范围，它不是目前所总结的索引；
+    对于任何这样的范围，它通过扫描表页创建一个新的汇总索引元组。
+    它返回插入索引的新页范围汇总的数量。
+	<code class="function">brin_summarize_range</code>完成相同的操作，只是它只总结覆盖给定块编号的范围。
+   </p><p>    <code class="function">gin_clean_pending_list</code>接受一个 GIN 索引的 OID 或者名字，
+    并且通过把指定索引的待处理列表中的项批量移动到主 GIN 
+    数据结构来清理该索引的待处理列表。它会返回从待处理列表中移除的页数。
+    注意如果其参数是一个禁用<code class="literal">fastupdate</code>选项构建的 GIN 索引，
+    那么不会做清理并且返回值为 0，因为该索引根本没有待处理列表。
+    有关待处理列表和<code class="literal">fastupdate</code>选项的细节请见
+    <a class="xref" href="gin-implementation.html#GIN-FAST-UPDATE" title="64.4.1. GIN 快速更新技术">第 64.4.1 节</a>和<a class="xref" href="gin-tips.html" title="64.5. GIN 提示和技巧">第 64.5 节</a>。 
+   </p></div><div class="sect2" id="FUNCTIONS-ADMIN-GENFILE"><div class="titlepage"><div><div><h3 class="title">9.26.9. 通用文件访问函数</h3></div></div></div><p>    <a class="xref" href="functions-admin.html#FUNCTIONS-ADMIN-GENFILE-TABLE" title="表 9.88. 通用文件访问函数">表 9.88</a>中展示的函数提供了对数据库服务器所在机器上的文件的本地访问。 只有那些在数据库集簇目录和<code class="varname">log_directory</code>目录中的文件可以访问。使用相对路径访问集簇目录里面的文件，以及匹配 <code class="varname">log_directory</code>配置设置的路径访问日志文件。除非另有说明，否则只有超级用户才能使用这些函数。
+   </p><div class="table" id="FUNCTIONS-ADMIN-GENFILE-TABLE"><p class="title"><strong>表 9.88. 通用文件访问函数</strong></p><div class="table-contents"><table class="table" summary="通用文件访问函数" border="1"><colgroup><col /><col /><col /></colgroup><thead><tr><th>名称</th><th>返回类型</th><th>描述</th></tr></thead><tbody><tr><td>        <code class="literal"><code class="function">pg_ls_dir(<em class="parameter"><code>dirname</code></em> <code class="type">text</code> [, <em class="parameter"><code>missing_ok</code></em> <code class="type">boolean</code>, <em class="parameter"><code>include_dot_dirs</code></em> <code class="type">boolean</code>])</code></code>
+       </td><td><code class="type">setof text</code></td><td>        列出目录内容。
+       </td></tr><tr><td>        <code class="literal"><code class="function">pg_ls_logdir()</code></code>
+       </td><td><code class="type">setof record</code></td><td>        列出日志目录中文件的名称、大小和最后修改时间。
+		访问权限授予<code class="literal">pg_monitor</code>角色的成员，并且可以授予其他非超级用户角色。
+       </td></tr><tr><td>        <code class="literal"><code class="function">pg_ls_waldir()</code></code>
+       </td><td><code class="type">setof record</code></td><td>        列出WAL目录中文件的名称、大小和最后修改时间。
+		访问权限授予<code class="literal">pg_monitor</code>角色的成员，并且可以授予其他非超级用户角色。
+       </td></tr><tr><td>        <code class="literal"><code class="function">pg_read_file(<em class="parameter"><code>filename</code></em> <code class="type">text</code> [, <em class="parameter"><code>offset</code></em> <code class="type">bigint</code>, <em class="parameter"><code>length</code></em> <code class="type">bigint</code> [, <em class="parameter"><code>missing_ok</code></em> <code class="type">boolean</code>] ])</code></code>
+       </td><td><code class="type">text</code></td><td>        返回文本文件的内容。
+       </td></tr><tr><td>        <code class="literal"><code class="function">pg_read_binary_file(<em class="parameter"><code>filename</code></em> <code class="type">text</code> [, <em class="parameter"><code>offset</code></em> <code class="type">bigint</code>, <em class="parameter"><code>length</code></em> <code class="type">bigint</code> [, <em class="parameter"><code>missing_ok</code></em> <code class="type">boolean</code>] ])</code></code>
+       </td><td><code class="type">bytea</code></td><td>        返回一个文件的内容。
+       </td></tr><tr><td>        <code class="literal"><code class="function">pg_stat_file(<em class="parameter"><code>filename</code></em> <code class="type">text</code>[, <em class="parameter"><code>missing_ok</code></em> <code class="type">boolean</code>])</code></code>
+       </td><td><code class="type">record</code></td><td>        返回文件信息。
+       </td></tr></tbody></table></div></div><br class="table-break" /><p>    其中一些函数接受可选的<em class="parameter"><code>missing_ok</code></em>参数，
+    当文件或目录不存在时，指定操作。
+    如果<code class="literal">true</code>，那么函数返回NULL
+    除了<code class="function">pg_ls_dir</code>，将返回空结果集）。如果<code class="literal">false</code>，则抛出错误。默认为<code class="literal">false</code>。
+   </p><a id="idp16078512" class="indexterm"></a><p>    <code class="function">pg_ls_dir</code>返回所有指定目录中的文件名称（目录以及其它指定文件）。
+    <em class="parameter"><code>include_dot_dirs</code></em>显示<span class="quote">“<span class="quote">.</span>”</span>和<span class="quote">“<span class="quote">..</span>”</span>是否包含在结果集中。
+    缺省排除它们(<code class="literal">false</code>)，
+    但是当<em class="parameter"><code>missing_ok</code></em>是<code class="literal">true</code>时，
+    包含它们从非存在目录中区分空目录是非常有用的。
+   </p><a id="idp16084112" class="indexterm"></a><p>    <code class="function">pg_ls_logdir</code>返回日志目录中每个文件的名称、大小和最后修改时间（mtime）。
+	默认情况下，只有超级用户和<code class="literal">pg_monitor</code>角色的成员才能使用此函数。
+	可以使用<code class="command">GRANT</code>授予其他用户访问权限。
+   </p><a id="idp16087376" class="indexterm"></a><p>    <code class="function">pg_ls_waldir</code>返回预写日志(WAL)目录中每个文件的名称、大小和最后修改时间（mtime）。
+	默认情况下，只有超级用户和<code class="literal">pg_monitor</code>角色的成员才能使用此函数。
+	可以使用<code class="command">GRANT</code>授予其他用户访问权限。
+   </p><a id="idp16090656" class="indexterm"></a><p>    <code class="function">pg_read_file</code>返回一个文本文件的一部分，从给定的<em class="parameter"><code>offset</code></em>开始，返回最多<em class="parameter"><code>length</code></em>字节（如果先到达文件末尾则会稍短）。如果<em class="parameter"><code>offset</code></em>为负，它相对于文件的末尾。如果<em class="parameter"><code>offset</code></em>和<em class="parameter"><code>length</code></em>被忽略，整个文件都被返回。从文件中读的字节被使用服务器编码解释成一个字符串；如果它们在编码中不合法则抛出一个错误。
+   </p><a id="idp16096192" class="indexterm"></a><p>    <code class="function">pg_read_binary_file</code>与<code class="function">pg_read_file</code>相似，除了前者的结果是一个<code class="type">bytea</code>值；相应地，不会执行编码检查。通过与<code class="function">convert_from</code>函数结合，这个函数可以用来读取一个指定编码的文件：
+</p><pre class="programlisting">SELECT convert_from(pg_read_binary_file('file_in_utf8.txt'), 'UTF8');</pre><p>
+   </p><a id="idp16100592" class="indexterm"></a><p>    <code class="function">pg_stat_file</code>返回一个记录，其中包含文件尺寸、最后访问时间戳、最后修改时间戳、最后文件状态改变时间戳（只支持 Unix 平台）、文件创建时间戳（只支持 Windows）和一个<code class="type">boolean</code>指示它是否为目录。通常的用法包括：
+</p><pre class="programlisting">SELECT * FROM pg_stat_file('filename');
+SELECT (pg_stat_file('filename')).modification;</pre><p>
+   </p></div><div class="sect2" id="FUNCTIONS-ADVISORY-LOCKS"><div class="titlepage"><div><div><h3 class="title">9.26.10. 咨询锁函数</h3></div></div></div><p>    <a class="xref" href="functions-admin.html#FUNCTIONS-ADVISORY-LOCKS-TABLE" title="表 9.89. 咨询锁函数">表 9.89</a>中展示的函数管理咨询锁。有关正确使用这些函数的细节请参考<a class="xref" href="explicit-locking.html#ADVISORY-LOCKS" title="13.3.5. 咨询锁">第 13.3.5 节</a>。
+   </p><div class="table" id="FUNCTIONS-ADVISORY-LOCKS-TABLE"><p class="title"><strong>表 9.89. 咨询锁函数</strong></p><div class="table-contents"><table class="table" summary="咨询锁函数" border="1"><colgroup><col /><col /><col /></colgroup><thead><tr><th>名称</th><th>返回类型</th><th>描述</th></tr></thead><tbody><tr><td>        <code class="literal"><code class="function">pg_advisory_lock(<em class="parameter"><code>key</code></em> <code class="type">bigint</code>)</code></code>
+       </td><td><code class="type">void</code></td><td>获得排他会话级别咨询锁</td></tr><tr><td>        <code class="literal"><code class="function">pg_advisory_lock(<em class="parameter"><code>key1</code></em> <code class="type">int</code>, <em class="parameter"><code>key2</code></em> <code class="type">int</code>)</code></code>
+       </td><td><code class="type">void</code></td><td>获得排他会话级别咨询锁</td></tr><tr><td>        <code class="literal"><code class="function">pg_advisory_lock_shared(<em class="parameter"><code>key</code></em> <code class="type">bigint</code>)</code></code>
+       </td><td><code class="type">void</code></td><td>获得共享会话级别咨询锁</td></tr><tr><td>        <code class="literal"><code class="function">pg_advisory_lock_shared(<em class="parameter"><code>key1</code></em> <code class="type">int</code>, <em class="parameter"><code>key2</code></em> <code class="type">int</code>)</code></code>
+       </td><td><code class="type">void</code></td><td>获得共享会话级别咨询锁</td></tr><tr><td>        <code class="literal"><code class="function">pg_advisory_unlock(<em class="parameter"><code>key</code></em> <code class="type">bigint</code>)</code></code>
+       </td><td><code class="type">boolean</code></td><td>释放一个排他会话级别咨询锁</td></tr><tr><td>        <code class="literal"><code class="function">pg_advisory_unlock(<em class="parameter"><code>key1</code></em> <code class="type">int</code>, <em class="parameter"><code>key2</code></em> <code class="type">int</code>)</code></code>
+       </td><td><code class="type">boolean</code></td><td>释放一个排他会话级别咨询锁</td></tr><tr><td>        <code class="literal"><code class="function">pg_advisory_unlock_all()</code></code>
+       </td><td><code class="type">void</code></td><td>释放当前会话持有的所有会话级别咨询锁</td></tr><tr><td>        <code class="literal"><code class="function">pg_advisory_unlock_shared(<em class="parameter"><code>key</code></em> <code class="type">bigint</code>)</code></code>
+       </td><td><code class="type">boolean</code></td><td>释放一个共享会话级别咨询锁</td></tr><tr><td>        <code class="literal"><code class="function">pg_advisory_unlock_shared(<em class="parameter"><code>key1</code></em> <code class="type">int</code>, <em class="parameter"><code>key2</code></em> <code class="type">int</code>)</code></code>
+       </td><td><code class="type">boolean</code></td><td>释放一个共享会话级别咨询锁</td></tr><tr><td>        <code class="literal"><code class="function">pg_advisory_xact_lock(<em class="parameter"><code>key</code></em> <code class="type">bigint</code>)</code></code>
+       </td><td><code class="type">void</code></td><td>获得排他事务级别咨询锁</td></tr><tr><td>        <code class="literal"><code class="function">pg_advisory_xact_lock(<em class="parameter"><code>key1</code></em> <code class="type">int</code>, <em class="parameter"><code>key2</code></em> <code class="type">int</code>)</code></code>
+       </td><td><code class="type">void</code></td><td>获得排他事务级别咨询锁</td></tr><tr><td>        <code class="literal"><code class="function">pg_advisory_xact_lock_shared(<em class="parameter"><code>key</code></em> <code class="type">bigint</code>)</code></code>
+       </td><td><code class="type">void</code></td><td>获得共享事务级别咨询锁</td></tr><tr><td>        <code class="literal"><code class="function">pg_advisory_xact_lock_shared(<em class="parameter"><code>key1</code></em> <code class="type">int</code>, <em class="parameter"><code>key2</code></em> <code class="type">int</code>)</code></code>
+       </td><td><code class="type">void</code></td><td>获得共享事务级别咨询锁</td></tr><tr><td>        <code class="literal"><code class="function">pg_try_advisory_lock(<em class="parameter"><code>key</code></em> <code class="type">bigint</code>)</code></code>
+       </td><td><code class="type">boolean</code></td><td>如果可能，获得排他会话级别咨询锁</td></tr><tr><td>        <code class="literal"><code class="function">pg_try_advisory_lock(<em class="parameter"><code>key1</code></em> <code class="type">int</code>, <em class="parameter"><code>key2</code></em> <code class="type">int</code>)</code></code>
+       </td><td><code class="type">boolean</code></td><td>如果可能，获得排他会话级别咨询锁</td></tr><tr><td>        <code class="literal"><code class="function">pg_try_advisory_lock_shared(<em class="parameter"><code>key</code></em> <code class="type">bigint</code>)</code></code>
+       </td><td><code class="type">boolean</code></td><td>如果可能，获得共享会话级别咨询锁</td></tr><tr><td>        <code class="literal"><code class="function">pg_try_advisory_lock_shared(<em class="parameter"><code>key1</code></em> <code class="type">int</code>, <em class="parameter"><code>key2</code></em> <code class="type">int</code>)</code></code>
+       </td><td><code class="type">boolean</code></td><td>如果可能，获得共享会话级别咨询锁</td></tr><tr><td>        <code class="literal"><code class="function">pg_try_advisory_xact_lock(<em class="parameter"><code>key</code></em> <code class="type">bigint</code>)</code></code>
+       </td><td><code class="type">boolean</code></td><td>如果可能，获得排他事务级别咨询锁</td></tr><tr><td>        <code class="literal"><code class="function">pg_try_advisory_xact_lock(<em class="parameter"><code>key1</code></em> <code class="type">int</code>, <em class="parameter"><code>key2</code></em> <code class="type">int</code>)</code></code>
+       </td><td><code class="type">boolean</code></td><td>如果可能，获得排他事务级别咨询锁</td></tr><tr><td>        <code class="literal"><code class="function">pg_try_advisory_xact_lock_shared(<em class="parameter"><code>key</code></em> <code class="type">bigint</code>)</code></code>
+       </td><td><code class="type">boolean</code></td><td>如果可能，获得共享事务级别咨询锁</td></tr><tr><td>        <code class="literal"><code class="function">pg_try_advisory_xact_lock_shared(<em class="parameter"><code>key1</code></em> <code class="type">int</code>, <em class="parameter"><code>key2</code></em> <code class="type">int</code>)</code></code>
+       </td><td><code class="type">boolean</code></td><td>如果可能，获得共享事务级别咨询锁</td></tr></tbody></table></div></div><br class="table-break" /><a id="idp16187632" class="indexterm"></a><p>    <code class="function">pg_advisory_lock</code>锁住一个应用定义的资源，可以使用一个单一64位键值或两个32位键值标识（注意这些两个键空间不重叠）。如果另一个会话已经在同一个资源标识符上持有了一个锁，这个函数将等待直到该资源变成可用。该锁是排他的。多个锁请求会入栈，因此如果同一个资源被锁住三次，则它必须被解锁三次来被释放给其他会话使用。
+   </p><a id="idp16190144" class="indexterm"></a><p>    <code class="function">pg_advisory_lock_shared</code>的工作和<code class="function">pg_advisory_lock</code>相同，不过该锁可以与其他请求共享锁的会话共享。只有想要排他的锁请求会被排除。
+   </p><a id="idp16192624" class="indexterm"></a><p>    <code class="function">pg_try_advisory_lock</code>与<code class="function">pg_advisory_lock</code>相似，不过该函数将不会等待锁变为可用。它要么立刻获得锁并返回<code class="literal">true</code>，要么不能立即获得锁并返回<code class="literal">false</code>。
+   </p><a id="idp16196544" class="indexterm"></a><p>    <code class="function">pg_try_advisory_lock_shared</code>的工作和<code class="function">pg_try_advisory_lock</code>相同，不过它尝试获得一个共享锁而不是一个排他锁。
+   </p><a id="idp16199024" class="indexterm"></a><p>    <code class="function">pg_advisory_unlock</code>将会释放之前获得的排他会话级别咨询锁。如果锁被成功释放，它返回<code class="literal">true</code>。如果锁没有被持有，它将返回<code class="literal">false</code>并且额外由服务器报告一个 SQL 警告。
+   </p><a id="idp16202272" class="indexterm"></a><p>    <code class="function">pg_advisory_unlock_shared</code>的工作和<code class="function">pg_advisory_unlock</code>相同，除了它释放一个共享的会话级别咨询锁。
+   </p><a id="idp16204736" class="indexterm"></a><p>    <code class="function">pg_advisory_unlock_all</code>将释放当前会话所持有的所有会话级别咨询锁（这个函数隐式地在会话末尾被调用，即使客户端已经不雅地断开）。
+   </p><a id="idp16206544" class="indexterm"></a><p>    <code class="function">pg_advisory_xact_lock</code>的工作和<code class="function">pg_advisory_lock</code>相同，不过锁是在当前事务的末尾被自动释放的并且不能被显式释放。
+   </p><a id="idp16209008" class="indexterm"></a><p>    <code class="function">pg_advisory_xact_lock_shared</code>的工作和<code class="function">pg_advisory_lock_shared</code>相同，除了锁是在当前事务的末尾自动被释放的并且不能被显式释放。
+   </p><a id="idp16211504" class="indexterm"></a><p>    <code class="function">pg_try_advisory_xact_lock</code>的工作和<code class="function">pg_try_advisory_lock</code>相同，不过锁（若果获得）是在当前事务的末尾被自动释放的并且不能被显式释放。
+   </p><a id="idp16214016" class="indexterm"></a><p>    <code class="function">pg_try_advisory_xact_lock_shared</code>的工作和<code class="function">pg_try_advisory_lock_shared</code>相同，不过锁（若果获得）是在当前事务的末尾被自动释放的并且不能被显式释放。
+   </p></div></div><div class="navfooter"><hr /><table width="100%" summary="Navigation footer"><tr><td width="40%" align="left"><a accesskey="p" href="functions-info.html">上一页</a> </td><td width="20%" align="center"><a accesskey="u" href="functions.html">上一级</a></td><td width="40%" align="right"> <a accesskey="n" href="functions-trigger.html">下一页</a></td></tr><tr><td width="40%" align="left" valign="top">9.25. 系统信息函数 </td><td width="20%" align="center"><a accesskey="h" href="index.html">起始页</a></td><td width="40%" align="right" valign="top"> 9.27. 触发器函数</td></tr></table></div></body></html>

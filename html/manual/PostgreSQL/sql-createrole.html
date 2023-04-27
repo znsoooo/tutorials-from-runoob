@@ -1,0 +1,84 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><title>CREATE ROLE</title><link rel="stylesheet" type="text/css" href="stylesheet.css" /><link rev="made" href="pgsql-docs@postgresql.org" /><meta name="generator" content="DocBook XSL Stylesheets V1.79.1" /><link rel="prev" href="sql-createpublication.html" title="CREATE PUBLICATION" /><link rel="next" href="sql-createrule.html" title="CREATE RULE" /></head><body><div xmlns="http://www.w3.org/TR/xhtml1/transitional" class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="5" align="center">CREATE ROLE</th></tr><tr><td width="10%" align="left"><a accesskey="p" href="sql-createpublication.html" title="CREATE PUBLICATION">上一页</a> </td><td width="10%" align="left"><a accesskey="u" href="sql-commands.html" title="SQL 命令">上一级</a></td><th width="60%" align="center">SQL 命令</th><td width="10%" align="right"><a accesskey="h" href="index.html" title="PostgreSQL 10.1 手册">起始页</a></td><td width="10%" align="right"> <a accesskey="n" href="sql-createrule.html" title="CREATE RULE">下一页</a></td></tr></table><hr></hr></div><div class="refentry" id="SQL-CREATEROLE"><div class="titlepage"></div><a id="idp44057248" class="indexterm"></a><div class="refnamediv"><h2><span class="refentrytitle">CREATE ROLE</span></h2><p>CREATE ROLE — 定义一个新的数据库角色</p></div><div class="refsynopsisdiv"><h2>大纲</h2><pre class="synopsis">CREATE ROLE <em class="replaceable"><code>name</code></em> [ [ WITH ] <em class="replaceable"><code>option</code></em> [ ... ] ]
+
+<span class="phrase">where <em class="replaceable"><code>option</code></em>可以是：</span>
+
+      SUPERUSER | NOSUPERUSER
+    | CREATEDB | NOCREATEDB
+    | CREATEROLE | NOCREATEROLE
+    | INHERIT | NOINHERIT
+    | LOGIN | NOLOGIN
+    | REPLICATION | NOREPLICATION
+    | BYPASSRLS | NOBYPASSRLS
+    | CONNECTION LIMIT <em class="replaceable"><code>connlimit</code></em>
+    | [ ENCRYPTED ] PASSWORD '<em class="replaceable"><code>password</code></em>'
+    | VALID UNTIL '<em class="replaceable"><code>timestamp</code></em>'
+    | IN ROLE <em class="replaceable"><code>role_name</code></em> [, ...]
+    | IN GROUP <em class="replaceable"><code>role_name</code></em> [, ...]
+    | ROLE <em class="replaceable"><code>role_name</code></em> [, ...]
+    | ADMIN <em class="replaceable"><code>role_name</code></em> [, ...]
+    | USER <em class="replaceable"><code>role_name</code></em> [, ...]
+    | SYSID <em class="replaceable"><code>uid</code></em></pre></div><div class="refsect1" id="idp44069808"><h2>描述</h2><p>   <code class="command">CREATE ROLE</code>向<span class="productname">PostgreSQL</span>数据库集簇增加一个新的角色。一个角色是一个实体，它可以拥有数据库对象并且拥有数据库特权。根据一个角色如何被使用，它可以被考虑成一个<span class="quote">“<span class="quote">用户</span>”</span>、一个<span class="quote">“<span class="quote">组</span>”</span>或者两者。有关管理用户和认证的信息可以参考<a class="xref" href="user-manag.html" title="第 21 章 数据库角色">第 21 章</a>和<a class="xref" href="client-authentication.html" title="第 20 章 客户端认证">第 20 章</a>。要使用这个命令，你必须具有<code class="literal">CREATEROLE</code>特权或者成为一个数据库超级用户。
+  </p><p>   注意角色是定义在数据库集簇层面上的，并且因此在集簇中的所有数据库中都可用。
+  </p></div><div class="refsect1" id="idp44075680"><h2>参数</h2><div class="variablelist"><dl class="variablelist"><dt><span class="term"><em class="replaceable"><code>name</code></em></span></dt><dd><p>        新角色的名称。
+       </p></dd><dt><span class="term"><code class="literal">SUPERUSER</code><br /></span><span class="term"><code class="literal">NOSUPERUSER</code></span></dt><dd><p>        这些子句决定新角色是否是一个<span class="quote">“<span class="quote">超级用户</span>”</span>，它可以越过数据库内的所有访问限制。超级用户状态很危险并且只应该在确实需要时才用。要创建一个新超级用户，你必须自己是一个超级用户。如果没有指定，默认值是<code class="literal">NOSUPERUSER</code>。
+       </p></dd><dt><span class="term"><code class="literal">CREATEDB</code><br /></span><span class="term"><code class="literal">NOCREATEDB</code></span></dt><dd><p>        这些子句定义一个角色创建数据库的能力。如果指定了<code class="literal">CREATEDB</code>，被定义的角色将被允许创建新的数据库。指定<code class="literal">NOCREATEDB</code>将否定一个角色创建数据库的能力。如果没有指定，默认值是<code class="literal">NOCREATEDB</code>。
+       </p></dd><dt><span class="term"><code class="literal">CREATEROLE</code><br /></span><span class="term"><code class="literal">NOCREATEROLE</code></span></dt><dd><p>        这些子句决定一个角色是否被允许创建新的角色（也就是执行<code class="command">CREATE ROLE</code>）。一个带有<code class="literal">CREATEROLE</code>特权的角色也能修改和删除其他角色。如果没有指定，默认值是<code class="literal">NOCREATEROLE</code>。
+       </p></dd><dt><span class="term"><code class="literal">INHERIT</code><br /></span><span class="term"><code class="literal">NOINHERIT</code></span></dt><dd><p>        如果新的角色是其他角色的成员，这些子句决定新角色是否从那些角色中<span class="quote">“<span class="quote">继承</span>”</span>特权，把新角色作为成员的角色称为新角色的父角色。一个带有<code class="literal">INHERIT</code>属性的角色能够自动使用已经被授予给其直接或间接父角色的任何数据库特权。如果没有<code class="literal">INHERIT</code>，在另一个角色中的成员关系只会把<code class="command">SET ROLE</code>的能力授予给那个其他角色，只有在这样做后那个其他角色的特权才可用。如果没有指定，默认值是<code class="literal">INHERIT</code>。
+       </p></dd><dt><span class="term"><code class="literal">LOGIN</code><br /></span><span class="term"><code class="literal">NOLOGIN</code></span></dt><dd><p>        这些子句决定一个角色是否被允许登录，也就是在客户端连接期间该角色是否能被给定为初始会话认证名称。一个具有<code class="literal">LOGIN</code>属性的角色可以被考虑为一个用户。没有这个属性的角色对于管理数据库特权很有用，但是却不是用户这个词的通常意义。如果没有指定，默认值是<code class="literal">NOLOGIN</code>，不过当<code class="command">CREATE ROLE</code>被通过<a class="xref" href="sql-createuser.html" title="CREATE USER"><span class="refentrytitle">CREATE USER</span></a>调用时默认值会是<code class="literal">LOGIN</code>。
+       </p></dd><dt><span class="term"><code class="literal">REPLICATION</code><br /></span><span class="term"><code class="literal">NOREPLICATION</code></span></dt><dd><p>        这些子句确定角色是否是复制角色。角色必须具有此属性（或成为超级用户）
+		才能以复制模式（物理或逻辑复制）连接到服务器，和能够创建或删除复制插槽。
+		一个具有<code class="literal">REPLICATION</code>属性的角色是一个具有非常高特权的角色，
+		并且只应被用于确实需要复制的角色上。如果没有指定，默认值是
+		<code class="literal">NOREPLICATION</code>。
+       </p></dd><dt><span class="term"><code class="literal">BYPASSRLS</code><br /></span><span class="term"><code class="literal">NOBYPASSRLS</code></span></dt><dd><p>        这些子句决定是否一个角色可以绕过每一条行级安全性（RLS）策略。
+        默认是<code class="literal">NOBYPASSRLS</code>。注意 pg_dump 将默认
+        把<code class="literal">row_security</code>设置为<code class="literal">OFF</code>，
+        以确保一个表的所有内容被转储出来。如果运行 pg_dump 的用户不
+        具有适当的权限，将会返回一个错误。超级用户和被转储表的拥有者
+        总是可以绕过 RLS。
+       </p></dd><dt><span class="term"><code class="literal">CONNECTION LIMIT</code> <em class="replaceable"><code>connlimit</code></em></span></dt><dd><p>        如果角色能登录，这指定该角色能建立多少并发连接。-1（默认值）表示无限制。
+		请注意，只有正常连接才会计入此限制。预备事务和后台工作连接都不计入此限制。
+       </p></dd><dt><span class="term">[ <code class="literal">ENCRYPTED</code> ] <code class="literal">PASSWORD</code> <em class="replaceable"><code>password</code></em></span></dt><dd><p>        设置角色的口令（口令只对具有<code class="literal">LOGIN</code>属性的角色有用，但是不管怎样你还是可以为没有该属性的角色定义一个口令）。如果你没有计划使用口令认证，你可以忽略这个选项。如果没有指定口令，口令将被设置为空并且该用户的口令认证总是会失败。也可以用<code class="literal">PASSWORD NULL</code>显式地写出一个空口令。
+       </p><div class="note"><h3 class="title">注意</h3><p>           指定一个空字符串也会将密码设置为null，但在<span class="productname">PostgreSQL</span>
+		   版本10之前不是这种情况。在早期版本中，可以使用或不使用空字符串，
+		   具体取决于认证方法和确切的版本，并且libpq在任何情况下都会拒绝使用它。
+		   为避免歧义，应避免指定空字符串。
+         </p></div><p>        密码始终以加密方式存储在系统目录中。<code class="literal">ENCRYPTED</code>关键字不起作用，
+		但为了向后兼容而被接受。加密方法由配置参数<a class="xref" href="runtime-config-connection.html#GUC-PASSWORD-ENCRYPTION">password_encryption</a>
+		确定。如果提供的密码字符串已经以MD5加密或SCRAM加密的格式存在，
+		则不管<code class="varname">password_encryption</code>如何，它都按原样存储
+		（由于系统无法解密指定的加密密码字符串，因此需要以不同的格式对其进行加密）。
+		这允许在转储/恢复期间重新加载加密的密码。
+       </p></dd><dt><span class="term"><code class="literal">VALID UNTIL</code> '<em class="replaceable"><code>timestamp</code></em>'</span></dt><dd><p>        <code class="literal">VALID UNTIL</code>机制设置一个日期和时间，在该时间点之后角色的口令将会失效。如果这个子句被忽略，那么口令将总是有效。
+       </p></dd><dt><span class="term"><code class="literal">IN ROLE</code> <em class="replaceable"><code>role_name</code></em></span></dt><dd><p>        <code class="literal">IN ROLE</code>子句列出一个或多个现有的角色，新角色将被立即作为新成员加入到这些角色中（注意没有选项可以把新角色作为一个管理员加入，需要用一个单独的<code class="command">GRANT</code>命令来完成）。
+       </p></dd><dt><span class="term"><code class="literal">IN GROUP</code> <em class="replaceable"><code>role_name</code></em></span></dt><dd><p><code class="literal">IN GROUP</code>是<code class="literal">IN ROLE</code>的一种已废弃的拼写方式。
+       </p></dd><dt><span class="term"><code class="literal">ROLE</code> <em class="replaceable"><code>role_name</code></em></span></dt><dd><p>        <code class="literal">ROLE</code>子句列出一个或者多个现有角色，它们会被自动作为成员加入到新角色中（这实际上新角色变成了一个<span class="quote">“<span class="quote">组</span>”</span>）。
+       </p></dd><dt><span class="term"><code class="literal">ADMIN</code> <em class="replaceable"><code>role_name</code></em></span></dt><dd><p>        <code class="literal">ADMIN</code>子句与<code class="literal">ROLE</code>相似，但是被提及的角色被使用<code class="literal">WITH ADMIN OPTION</code>加入到新角色中，让它们能够把这个角色中的成员关系授予给其他人。
+       </p></dd><dt><span class="term"><code class="literal">USER</code> <em class="replaceable"><code>role_name</code></em></span></dt><dd><p>        <code class="literal">USER</code>子句是<code class="literal">ROLE</code>子句的一个已废弃的拼写方式。
+       </p></dd><dt><span class="term"><code class="literal">SYSID</code> <em class="replaceable"><code>uid</code></em></span></dt><dd><p>        <code class="literal">SYSID</code>子句会被忽略，但是会为了向后兼容，还是会接受它。
+       </p></dd></dl></div></div><div class="refsect1" id="idp44144144"><h2>注解</h2><p>   使用<a class="xref" href="sql-alterrole.html" title="ALTER ROLE"><span class="refentrytitle">ALTER ROLE</span></a>来更改一个角色的属性，以及使用<a class="xref" href="sql-droprole.html" title="DROP ROLE"><span class="refentrytitle">DROP ROLE</span></a>来移除一个角色。所有用<code class="command">CREATE ROLE</code>指定的属性可以被后来的<code class="command">ALTER ROLE</code>命令所修改。
+  </p><p>   增加和移除组角色成员的最佳方式是使用<a class="xref" href="sql-grant.html" title="GRANT"><span class="refentrytitle">GRANT</span></a>和<a class="xref" href="sql-revoke.html" title="REVOKE"><span class="refentrytitle">REVOKE</span></a>。
+  </p><p>   <code class="literal">VALID UNTIL</code>子句只为一个口令而不是为一个角色<span class="foreignphrase"><em class="foreignphrase">本身</em></span>定义了一个过期时间。特别地，当使用一个非基于口令认证的方法登录时，过期时间是不会被强制的。
+  </p><p>   <code class="literal">INHERIT</code>属性管理可授予特权（也就是对数据库对象和角色成员关系的访问特权）的继承性。它并不适用于由<code class="command">CREATE ROLE</code>和<code class="command">ALTER ROLE</code>设置的特殊角色属性。例如，作为具有<code class="literal">CREATEDB</code>特权的角色的一个成员，并不会立刻授予创建数据库的角色，即便<code class="literal">INHERIT</code>被设置也是如此，在创建一个数据库之前必须通过<a class="xref" href="sql-set-role.html" title="SET ROLE"><span class="refentrytitle">SET ROLE</span></a>成为该角色。
+  </p><p>   <code class="literal">INHERIT</code>属性是用于向后兼容原因的默认值：在早前的<span class="productname">PostgreSQL</span>发布中，用户总是能够访问其所属组的所有特权。不过，<code class="literal">NOINHERIT</code>更加接近于 SQL 标准中指定的语义。
+  </p><p>   要小心<code class="literal">CREATEROLE</code>特权。对于一个<code class="literal">CREATEROLE</code>角色的特权没有继承的概念。那意味着即使一个角色没有特定的特权但被允许创建其他角色，它可以轻易地创建与自身特权不同的另一个角色（除了创建具有超级用户特权的角色）。例如，如果角色<span class="quote">“<span class="quote">user</span>”</span>具有<code class="literal">CREATEROLE</code>特权但是没有<code class="literal">CREATEDB</code>特权，但是它能够创建一个带有<code class="literal">CREATEDB</code>特权的新角色。因此，可以把具有<code class="literal">CREATEROLE</code>特权的角色看成是准超级用户角色。
+  </p><p>   <span class="productname">PostgreSQL</span>包括一个程序<a class="xref" href="app-createuser.html" title="createuser"><span class="refentrytitle"><span class="application">createuser</span></span></a>，它具有和<code class="command">CREATE ROLE</code>相同的功能（事实上，它会调用这个命令），但是它可以从命令 shell 中运行。
+  </p><p>   <code class="literal">CONNECTION LIMIT</code>只被近似地强制，如果两个新会话在几乎相同时间被开始，而此时该角色只剩下刚好一个连接<span class="quote">“<span class="quote">槽</span>”</span>，两者可能都将失败。还有，该限制从不对超级用户强制。
+  </p><p>   用这个命令指定一个非加密口令时必须加以注意。该命令将被以明文的形式传输到服务器，并且它也可能被记录在客户端命令历史或者服务器日志中。不过，命令<a class="xref" href="app-createuser.html" title="createuser"><span class="refentrytitle"><span class="application">createuser</span></span></a>会传输加密的口令。还有，<a class="xref" href="app-psql.html" title="psql"><span class="refentrytitle"><span class="application">psql</span></span></a>包含一个命令<code class="command">\password</code>，它可以被用来安全地改变该口令。
+  </p></div><div class="refsect1" id="idp44170640"><h2>例子</h2><p>   创建一个能登录但是没有口令的角色：
+</p><pre class="programlisting">CREATE ROLE jonathan LOGIN;</pre><p>
+  </p><p>   创建一个有口令的角色：
+</p><pre class="programlisting">CREATE USER davide WITH PASSWORD 'jw8s0F4';</pre><p>
+   （<code class="command">CREATE USER</code>和<code class="command">CREATE ROLE</code>完全相同，除了它带有<code class="literal">LOGIN</code>）。
+  </p><p>   创建一个角色，它的口令有效期截止到 2004 年底。在进入 2005 年第一秒时，该口令会失效。
+
+</p><pre class="programlisting">CREATE ROLE miriam WITH LOGIN PASSWORD 'jw8s0F4' VALID UNTIL '2005-01-01';</pre><p>
+  </p><p>   创建一个能够创建数据库并且管理角色的角色：
+</p><pre class="programlisting">CREATE ROLE admin WITH CREATEDB CREATEROLE;</pre></div><div class="refsect1" id="idp44177696"><h2>兼容性</h2><p>   SQL 标准中有<code class="command">CREATE ROLE</code>语句，但是标准只要求语法
+</p><pre class="synopsis">CREATE ROLE <em class="replaceable"><code>name</code></em> [ WITH ADMIN <em class="replaceable"><code>role_name</code></em> ]</pre><p>
+   多个初始管理员以及<code class="command">CREATE ROLE</code>的所有其他选项都是<span class="productname">PostgreSQL</span>扩展。
+   </p><p>   SQL 标准定义了用户和角色的概念，但是它把它们看成是可区分的概念并且将定义用户的所有命令留给每一种数据库实现来指定。在<span class="productname">PostgreSQL</span>中，我们已经选择把用户和角色统一成一种单一实体类型。因此角色比起标准中拥有更多可选的属性。
+  </p><p>   SQL 标准指定的行为可以通过给用户<code class="literal">NOINHERIT</code>属性来得到最大的金丝，而角色会被给予<code class="literal">INHERIT</code>属性。
+  </p></div><div class="refsect1" id="idp44186096"><h2>参见</h2><span class="simplelist"><a class="xref" href="sql-set-role.html" title="SET ROLE"><span class="refentrytitle">SET ROLE</span></a>, <a class="xref" href="sql-alterrole.html" title="ALTER ROLE"><span class="refentrytitle">ALTER ROLE</span></a>, <a class="xref" href="sql-droprole.html" title="DROP ROLE"><span class="refentrytitle">DROP ROLE</span></a>, <a class="xref" href="sql-grant.html" title="GRANT"><span class="refentrytitle">GRANT</span></a>, <a class="xref" href="sql-revoke.html" title="REVOKE"><span class="refentrytitle">REVOKE</span></a>, <a class="xref" href="app-createuser.html" title="createuser"><span class="refentrytitle"><span class="application">createuser</span></span></a></span></div></div><div class="navfooter"><hr /><table width="100%" summary="Navigation footer"><tr><td width="40%" align="left"><a accesskey="p" href="sql-createpublication.html">上一页</a> </td><td width="20%" align="center"><a accesskey="u" href="sql-commands.html">上一级</a></td><td width="40%" align="right"> <a accesskey="n" href="sql-createrule.html">下一页</a></td></tr><tr><td width="40%" align="left" valign="top">CREATE PUBLICATION </td><td width="20%" align="center"><a accesskey="h" href="index.html">起始页</a></td><td width="40%" align="right" valign="top"> CREATE RULE</td></tr></table></div></body></html>

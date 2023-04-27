@@ -1,0 +1,98 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><title>F.35. seg</title><link rel="stylesheet" type="text/css" href="stylesheet.css" /><link rev="made" href="pgsql-docs@postgresql.org" /><meta name="generator" content="DocBook XSL Stylesheets V1.79.1" /><link rel="prev" href="postgres-fdw.html" title="F.34. postgres_fdw" /><link rel="next" href="sepgsql.html" title="F.36. sepgsql" /></head><body><div xmlns="http://www.w3.org/TR/xhtml1/transitional" class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="5" align="center">F.35. seg</th></tr><tr><td width="10%" align="left"><a accesskey="p" href="postgres-fdw.html" title="F.34. postgres_fdw">上一页</a> </td><td width="10%" align="left"><a accesskey="u" href="contrib.html" title="附录 F. 额外提供的模块">上一级</a></td><th width="60%" align="center">附录 F. 额外提供的模块</th><td width="10%" align="right"><a accesskey="h" href="index.html" title="PostgreSQL 10.1 手册">起始页</a></td><td width="10%" align="right"> <a accesskey="n" href="sepgsql.html" title="F.36. sepgsql">下一页</a></td></tr></table><hr></hr></div><div class="sect1" id="SEG"><div class="titlepage"><div><div><h2 class="title" style="clear: both">F.35. seg</h2></div></div></div><div class="toc"><dl class="toc"><dt><span class="sect2"><a href="seg.html#idp87563632">F.35.1. 原理</a></span></dt><dt><span class="sect2"><a href="seg.html#idp87569520">F.35.2. 语法</a></span></dt><dt><span class="sect2"><a href="seg.html#idp87616832">F.35.3. 精度</a></span></dt><dt><span class="sect2"><a href="seg.html#idp87618880">F.35.4. 用法</a></span></dt><dt><span class="sect2"><a href="seg.html#idp87642672">F.35.5. 注解</a></span></dt><dt><span class="sect2"><a href="seg.html#idp87647888">F.35.6. 开发人员</a></span></dt></dl></div><a id="idp87561328" class="indexterm"></a><p>  这个模块为表示线段或者浮点区间实现了一种数据类型<code class="type">seg</code>。
+  <code class="type">seg</code>可以表示区间端点中的不确定性，这使得它对表达实验室测量特别有用。
+ </p><div class="sect2" id="idp87563632"><div class="titlepage"><div><div><h3 class="title">F.35.1. 原理</h3></div></div></div><p>   度量的几何结构通常比一个数字连续区中的一个点更复杂。
+   一个度量通常是具有一些模糊限制的连续区的一个分段。
+   由于不确定性和随机性，也因为被度量的值可能天然地就是
+   一个指示某种情况的区间（例如一种蛋白质的稳态的温度范围），
+   度量呈现为区间的形式。
+  </p><p>   只用常识，我们就知道将这类数据存储为区间比存储为数字对更加方便。
+   实际上，这样做在大部分应用中也更有效。
+  </p><p>   还是根据常识，限度的模糊性意味着使用传统的数字数据类型会导致信息丢失。
+   试想：你的仪器读到 6.50，并且你把这个读数输入到数据库。在你取出它时会
+   得到什么？看看：
+
+</p><pre class="screen">test=&gt; select 6.50 :: float8 as "pH";
+ pH
+---
+6.5
+(1 row)</pre><p>
+
+   在度量世界里，6.50 和 6.5 并不相同。有时候它们可能很不同。实验者们通常会
+   写下（并且发表）他们信任的数字。6.50 实际上是一个模糊的区间，它被包含于
+   一个更大的而且更模糊的区间 6.5 中，它们的中心点（可能）是它们唯一共享的
+   公共特征。我们绝对不希望这类不同的数据项表现得相同。
+  </p><p>   结论？一种能够记录具有任意可变精度的区间的限度的特殊数据类型是很好的。
+   这种意义下，每一个数据元素都记录其自身的精度。
+  </p><p>   来看看这个：
+
+</p><pre class="screen">test=&gt; select '6.25 .. 6.50'::seg as "pH";
+          pH
+------------
+6.25 .. 6.50
+(1 row)</pre><p>
+  </p></div><div class="sect2" id="idp87569520"><div class="titlepage"><div><div><h3 class="title">F.35.2. 语法</h3></div></div></div><p>   一个区间的外部表达由通过范围操作符（<code class="literal">..</code>或者<code class="literal">...</code>）连接的一个或者两个浮点数构成。
+   或者，它也可以被指定为一个中心点加上或者减去一个偏差值。
+   也能够存储可选的确定性指示符（<code class="literal">&lt;</code>、
+   <code class="literal">&gt;</code>或者<code class="literal">~</code>）。不过，所有内建操作符会忽略确定性指示符。
+   <a class="xref" href="seg.html#SEG-REPR-TABLE" title="表 F.27. seg外部表达">表 F.27</a>给出了所有允许的表达形式，<a class="xref" href="seg.html#SEG-INPUT-EXAMPLES" title="表 F.28. 合法seg输入的例子">表 F.28</a>展示了一些例子。
+  </p><p>   在<a class="xref" href="seg.html#SEG-REPR-TABLE" title="表 F.27. seg外部表达">表 F.27</a>中，<em class="replaceable"><code>x</code></em>、<em class="replaceable"><code>y</code></em>和<em class="replaceable"><code>delta</code></em>表示浮点数。
+   <em class="replaceable"><code>x</code></em>和<em class="replaceable"><code>y</code></em>可以前置一个确定性指示符，但是<em class="replaceable"><code>delta</code></em>不行。
+  </p><div class="table" id="SEG-REPR-TABLE"><p class="title"><strong>表 F.27. <code class="type">seg</code>外部表达</strong></p><div class="table-contents"><table class="table" summary="seg外部表达" border="1"><colgroup><col /><col /></colgroup><tbody><tr><td><code class="literal"><em class="replaceable"><code>x</code></em></code></td><td>单一值（零长度区间）
+      </td></tr><tr><td><code class="literal"><em class="replaceable"><code>x</code></em> .. <em class="replaceable"><code>y</code></em></code></td><td>从<em class="replaceable"><code>x</code></em>到<em class="replaceable"><code>y</code></em>的区间
+      </td></tr><tr><td><code class="literal"><em class="replaceable"><code>x</code></em> (+-) <em class="replaceable"><code>delta</code></em></code></td><td>从<em class="replaceable"><code>x</code></em> - <em class="replaceable"><code>delta</code></em>到
+      <em class="replaceable"><code>x</code></em> + <em class="replaceable"><code>delta</code></em>的区间
+      </td></tr><tr><td><code class="literal"><em class="replaceable"><code>x</code></em> ..</code></td><td>下界为<em class="replaceable"><code>x</code></em>的开区间
+      </td></tr><tr><td><code class="literal">.. <em class="replaceable"><code>x</code></em></code></td><td>上界为<em class="replaceable"><code>x</code></em>的开区间
+      </td></tr></tbody></table></div></div><br class="table-break" /><div class="table" id="SEG-INPUT-EXAMPLES"><p class="title"><strong>表 F.28. 合法<code class="type">seg</code>输入的例子</strong></p><div class="table-contents"><table class="table" summary="合法seg输入的例子" border="1"><colgroup><col /><col /></colgroup><tbody><tr><td><code class="literal">5.0</code></td><td>       创建一个零长度的段（一个点）
+      </td></tr><tr><td><code class="literal">~5.0</code></td><td>       创建一个零长度的段并且在数据中记录<code class="literal">~</code>。
+       <code class="literal">~</code>会被<code class="type">seg</code>操作忽略，但是会被保留为一个注释。
+      </td></tr><tr><td><code class="literal">&lt;5.0</code></td><td>       在 5.0 创建一个点。<code class="literal">&lt;</code>会被忽略，但是被保留为一个注释。
+      </td></tr><tr><td><code class="literal">&gt;5.0</code></td><td>       在 5.0 创建一个点。<code class="literal">&gt;</code>会被忽略，但是被保留为一个注释。
+      </td></tr><tr><td><code class="literal">5(+-)0.3</code></td><td>        创建一个区间<code class="literal">4.7 .. 5.3</code>。注意<code class="literal">(+-)</code>标记不会被保留。
+      </td></tr><tr><td><code class="literal">50 .. </code></td><td>大于或等于 50 的所有东西</td></tr><tr><td><code class="literal">.. 0</code></td><td>小于或等于 0 的所有东西</td></tr><tr><td><code class="literal">1.5e-2 .. 2E-2 </code></td><td>创建一个区间<code class="literal">0.015 .. 0.02</code></td></tr><tr><td><code class="literal">1 ... 2</code></td><td>       与<code class="literal">1...2</code>、<code class="literal">1 .. 2</code>或者<code class="literal">1..2</code>相同
+       （范围操作符周围的空格会被忽略）
+      </td></tr></tbody></table></div></div><br class="table-break" /><p>   由于<code class="literal">...</code>被广泛地用在数据源中，它被允许作为<code class="literal">..</code>的一种替代。
+   不幸地是，这会带来解析歧义：分不清<code class="literal">0...23</code>的上界是<code class="literal">23</code>或者<code class="literal">0.23</code>。
+   通过要求<code class="type">seg</code>输入中所有数字的小数点前至少有一位可以解决这个问题。
+  </p><p>   作为一种完整性检查，<code class="type">seg</code>会拒绝下界大于上界的区间，例如<code class="literal">5 .. 2</code>。
+  </p></div><div class="sect2" id="idp87616832"><div class="titlepage"><div><div><h3 class="title">F.35.3. 精度</h3></div></div></div><p>   <code class="type">seg</code>值在内部被存储为一对 32 位浮点数。这意味着具有超过 7 个有效位的数字会被截断。
+  </p><p>   具有 7 个或者更少有效位的数字会保留它们的原有精度。即，如果你的查询返回 0.00，
+   你可以确信拖尾的零不是人工造成的，它们反映了原始数据的精度。前导零的数量不影响精度：
+   值 0.0067 被认为只有 2 个有效位。
+  </p></div><div class="sect2" id="idp87618880"><div class="titlepage"><div><div><h3 class="title">F.35.4. 用法</h3></div></div></div><p>   <code class="filename">seg</code>模块包括了用于<code class="type">seg</code>值的一个 GiST 索引操作符类。
+   该 GiST 操作符类所支持的操作符在<a class="xref" href="seg.html#SEG-GIST-OPERATORS" title="表 F.29. Seg GiST 操作符">表 F.29</a>中展示。
+  </p><div class="table" id="SEG-GIST-OPERATORS"><p class="title"><strong>表 F.29. Seg GiST 操作符</strong></p><div class="table-contents"><table class="table" summary="Seg GiST 操作符" border="1"><colgroup><col /><col /></colgroup><thead><tr><th>操作符</th><th>描述</th></tr></thead><tbody><tr><td><code class="literal">[a, b] &lt;&lt; [c, d]</code></td><td>[a, b] 完全位于 [c, d] 左边。即如果b &lt; c 则 [a,
+       b] &lt;&lt; [c, d] 为真，否则为假。</td></tr><tr><td><code class="literal">[a, b] &gt;&gt; [c, d]</code></td><td>[a, b] 完全位于 [c, d] 右边。即如果b &gt; c 则 [a,
+       b] &gt;&gt; [c, d] 为真，否则为假。</td></tr><tr><td><code class="literal">[a, b] &amp;&lt; [c, d]</code></td><td>重叠或者是在左边 — 这最好读作
+       <span class="quote">“<span class="quote">不超过右边</span>”</span>。当 b &lt;= d 时为真。</td></tr><tr><td><code class="literal">[a, b] &amp;&gt; [c, d]</code></td><td>重叠或者是在右边 — 这最好读作
+       <span class="quote">“<span class="quote">不超过左边</span>”</span>。当 a &gt;= c 时为真。</td></tr><tr><td><code class="literal">[a, b] = [c, d]</code></td><td>相等 — 段 [a, b] 和 [c, d] 是一样的，也就是 a = c 并且 b = d。</td></tr><tr><td><code class="literal">[a, b] &amp;&amp; [c, d]</code></td><td>段 [a, b] 和 [c, d] 重叠。</td></tr><tr><td><code class="literal">[a, b] @&gt; [c, d]</code></td><td>段 [a, b] 包含段 [c, d]，也就是
+       a &lt;= c 并且 b &gt;= d。</td></tr><tr><td><code class="literal">[a, b] &lt;@ [c, d]</code></td><td>段 [a, b] 被包含在 [c, d] 中，也就是
+       &gt;= c 并且 b &lt;= d。</td></tr></tbody></table></div></div><br class="table-break" /><p>   （在 PostgreSQL 8.2 之前，包含操作符 <code class="literal">@&gt;</code> 和 <code class="literal">&lt;@</code> 分别被
+   称为<code class="literal">@</code> 和 <code class="literal">~</code>。这些名称仍然可用，但是已被废弃并且最终会消失。
+   注意旧的名称与核心几何数据类型之前遵循的习惯相反！）
+  </p><p>   也提供了标准的 B-树操作符，例如
+
+  </p><div class="informaltable"><table class="informaltable" border="1"><colgroup><col /><col /></colgroup><thead><tr><th>操作符</th><th>描述</th></tr></thead><tbody><tr><td><code class="literal">[a, b] &lt; [c, d]</code></td><td>小于</td></tr><tr><td><code class="literal">[a, b] &gt; [c, d]</code></td><td>大于</td></tr></tbody></table></div><p>
+
+   这些操作符对除了排序之外的任何实际目的都没有什么意义。
+   这些操作符首先比较 a 和 c，并且如果它们相等则比较 b 和 d。
+   在大部分情况下这会得到相当好的排序，如果你想对这种类型使用 ORDER BY，
+   这会很有用。
+  </p></div><div class="sect2" id="idp87642672"><div class="titlepage"><div><div><h3 class="title">F.35.5. 注解</h3></div></div></div><p>   使用的例子，请见回归测试<code class="filename">sql/seg.sql</code>。
+  </p><p>   将<code class="literal">(+-)</code>转换成常规范围的机制在确定边界的有效位数时并不完全准确。
+   例如，如果结果区间包括一个 10 的幂时，它会加上一个额外的位：
+
+</p><pre class="screen">postgres=&gt; select '10(+-)1'::seg as seg;
+      seg
+---------
+9.0 .. 11             -- should be: 9 .. 11</pre><p>
+  </p><p>   一个 R-树索引的性能很大程度上依赖于输入值的初始顺序。
+   将输入表以<code class="type">seg</code>列进行排序将会非常有帮助，
+   例子可见脚本<code class="filename">sort-segments.pl</code>。
+  </p></div><div class="sect2" id="idp87647888"><div class="titlepage"><div><div><h3 class="title">F.35.6. 开发人员</h3></div></div></div><p>   原始作者： Gene Selkov, Jr. <code class="email">&lt;<a class="email" href="mailto:selkovjr@mcs.anl.gov">selkovjr@mcs.anl.gov</a>&gt;</code>，
+   阿尔贡国家实验室数学和计算机科学部。
+  </p><p>   我要感谢 Joe Hellerstein 教授
+   （<a class="ulink" href="http://db.cs.berkeley.edu/jmh/" target="_top">http://db.cs.berkeley.edu/jmh/</a>）解释了 GiST（<a class="ulink" href="http://gist.cs.berkeley.edu/" target="_top">http://gist.cs.berkeley.edu/</a>）。
+   我也要向现在和过去的所有 Postgres 开发者致敬，让我能创造自己的世界并且不受打扰地生活在其中。我也要感谢阿尔贡实验室以及美国能源部多年来对我数据库研究的支持。  </p></div></div><div class="navfooter"><hr /><table width="100%" summary="Navigation footer"><tr><td width="40%" align="left"><a accesskey="p" href="postgres-fdw.html">上一页</a> </td><td width="20%" align="center"><a accesskey="u" href="contrib.html">上一级</a></td><td width="40%" align="right"> <a accesskey="n" href="sepgsql.html">下一页</a></td></tr><tr><td width="40%" align="left" valign="top">F.34. postgres_fdw </td><td width="20%" align="center"><a accesskey="h" href="index.html">起始页</a></td><td width="40%" align="right" valign="top"> F.36. sepgsql</td></tr></table></div></body></html>

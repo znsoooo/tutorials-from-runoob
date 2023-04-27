@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><title>SET CONSTRAINTS</title><link rel="stylesheet" type="text/css" href="stylesheet.css" /><link rev="made" href="pgsql-docs@postgresql.org" /><meta name="generator" content="DocBook XSL Stylesheets V1.79.1" /><link rel="prev" href="sql-set.html" title="SET" /><link rel="next" href="sql-set-role.html" title="SET ROLE" /></head><body><div xmlns="http://www.w3.org/TR/xhtml1/transitional" class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="5" align="center">SET CONSTRAINTS</th></tr><tr><td width="10%" align="left"><a accesskey="p" href="sql-set.html" title="SET">上一页</a> </td><td width="10%" align="left"><a accesskey="u" href="sql-commands.html" title="SQL 命令">上一级</a></td><th width="60%" align="center">SQL 命令</th><td width="10%" align="right"><a accesskey="h" href="index.html" title="PostgreSQL 10.1 手册">起始页</a></td><td width="10%" align="right"> <a accesskey="n" href="sql-set-role.html" title="SET ROLE">下一页</a></td></tr></table><hr></hr></div><div class="refentry" id="SQL-SET-CONSTRAINTS"><div class="titlepage"></div><a id="idp49341376" class="indexterm"></a><div class="refnamediv"><h2><span class="refentrytitle">SET CONSTRAINTS</span></h2><p>SET CONSTRAINTS — 为当前事务设置约束检查时机</p></div><div class="refsynopsisdiv"><h2>大纲</h2><pre class="synopsis">SET CONSTRAINTS { ALL | <em class="replaceable"><code>name</code></em> [, ...] } { DEFERRED | IMMEDIATE }</pre></div><div class="refsect1" id="idp49345552"><h2>描述</h2><p>   <code class="command">SET CONSTRAINTS</code>设置当前事务内约束检查
+   的行为。<code class="literal">IMMEDIATE</code>约束在每个语句结束时被检查。
+   <code class="literal">DEFERRED</code>约束直到事务提交时才被检查。每个约束都有
+   自己的<code class="literal">IMMEDIATE</code>或<code class="literal">DEFERRED</code>模式。
+  </p><p>   在创建时，一个约束会被给定三种特性之一：
+   <code class="literal">DEFERRABLE INITIALLY DEFERRED</code>、
+   <code class="literal">DEFERRABLE INITIALLY IMMEDIATE</code>或者
+   <code class="literal">NOT DEFERRABLE</code>。第三类总是
+   <code class="literal">IMMEDIATE</code>并且不会受到
+   <code class="command">SET CONSTRAINTS</code>命令的影响。前两类在每个
+   事务开始时都处于指定的模式，但是它们的行为可以在一个事务内用
+   <code class="command">SET CONSTRAINTS</code>更改。
+  </p><p>   带有一个约束名称列表的<code class="command">SET CONSTRAINTS</code>
+   只更改那些约束（都必须是可延迟的）的模式。每一个约束名称都可以是
+   模式限定的。如果没有指定模式名称，则当前的模式搜索路径将被用来寻找
+   第一个匹配的名称。<code class="command">SET CONSTRAINTS ALL</code>
+   更改所有可延迟约束的模式。
+  </p><p>   当<code class="command">SET CONSTRAINTS</code>把一个约束的模式从
+   <code class="literal">DEFERRED</code>改成<code class="literal">IMMEDIATE</code>时，
+   新模式会有追溯效果：任何还没有解决的数据修改（本来会在事务结束时
+   被检查）会转而在<code class="command">SET CONSTRAINTS</code>命令
+   的执行期间被检查。如果任何这种约束被违背，
+   <code class="command">SET CONSTRAINTS</code>将会失败（并且不会改
+   变该约束模式）。这样，<code class="command">SET
+   CONSTRAINTS</code>可以被用来在一个事务中的特定点强制进
+   行约束检查。
+  </p><p>   当前，只有<code class="literal">UNIQUE</code>、<code class="literal">PRIMARY KEY</code>、
+   <code class="literal">REFERENCES</code>（外键）以及<code class="literal">EXCLUDE</code>
+   约束受到这个设置的影响。
+   <code class="literal">NOT NULL</code>以及<code class="literal">CHECK</code>约束总是在一行
+   被插入或修改时立即检查（<span class="emphasis"><em>不是</em></span>在语句结束时）。
+   没有被声明为<code class="literal">DEFERRABLE</code>的唯一和排除约束也会被
+   立刻检查。
+  </p><p>   被声明为<span class="quote">“<span class="quote">约束触发器</span>”</span>的触发器的引发也受到这个设置
+   的控制 — 它们会在相关约束被检查的同时被引发。
+  </p></div><div class="refsect1" id="idp49051840"><h2>注解</h2><p>   因为<span class="productname">PostgreSQL</span>并不要求约束名称在模式内
+   唯一（但是在表内要求唯一），可能有多于一个约束匹配指定的约束名称。在这种
+   情况下<code class="command">SET CONSTRAINTS</code>将会在所有的匹配上操作。
+   对于一个非模式限定的名称，一旦在搜索路径中的某个模式中发现一个或者多个匹
+   配，路径中后面的模式将不会被搜索。
+  </p><p>   这个命令只修改当前事务内约束的行为。在事务块外部发出这个命令会产生一个
+   警告并且也不会有任何效果。
+  </p></div><div class="refsect1" id="idp49372144"><h2>兼容性</h2><p>   这个命令符合 SQL 标准中定义的行为，但有一点限制：在
+   <span class="productname">PostgreSQL</span>中，它不会应用在
+   <code class="literal">NOT NULL</code>和<code class="literal">CHECK</code>约束上。还有，
+   <span class="productname">PostgreSQL</span>会立刻检查非可延迟的
+   唯一约束，而不是按照标准建议的在语句结束时检查。
+  </p></div></div><div class="navfooter"><hr /><table width="100%" summary="Navigation footer"><tr><td width="40%" align="left"><a accesskey="p" href="sql-set.html">上一页</a> </td><td width="20%" align="center"><a accesskey="u" href="sql-commands.html">上一级</a></td><td width="40%" align="right"> <a accesskey="n" href="sql-set-role.html">下一页</a></td></tr><tr><td width="40%" align="left" valign="top">SET </td><td width="20%" align="center"><a accesskey="h" href="index.html">起始页</a></td><td width="40%" align="right" valign="top"> SET ROLE</td></tr></table></div></body></html>

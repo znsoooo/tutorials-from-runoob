@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><title>F.20. isn</title><link rel="stylesheet" type="text/css" href="stylesheet.css" /><link rev="made" href="pgsql-docs@postgresql.org" /><meta name="generator" content="DocBook XSL Stylesheets V1.79.1" /><link rel="prev" href="intarray.html" title="F.19. intarray" /><link rel="next" href="lo.html" title="F.21. lo" /></head><body><div xmlns="http://www.w3.org/TR/xhtml1/transitional" class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="5" align="center">F.20. isn</th></tr><tr><td width="10%" align="left"><a accesskey="p" href="intarray.html" title="F.19. intarray">上一页</a> </td><td width="10%" align="left"><a accesskey="u" href="contrib.html" title="附录 F. 额外提供的模块">上一级</a></td><th width="60%" align="center">附录 F. 额外提供的模块</th><td width="10%" align="right"><a accesskey="h" href="index.html" title="PostgreSQL 10.1 手册">起始页</a></td><td width="10%" align="right"> <a accesskey="n" href="lo.html" title="F.21. lo">下一页</a></td></tr></table><hr></hr></div><div class="sect1" id="ISN"><div class="titlepage"><div><div><h2 class="title" style="clear: both">F.20. isn</h2></div></div></div><div class="toc"><dl class="toc"><dt><span class="sect2"><a href="isn.html#idp86131632">F.20.1. 数据类型</a></span></dt><dt><span class="sect2"><a href="isn.html#idp86153504">F.20.2. 造型</a></span></dt><dt><span class="sect2"><a href="isn.html#idp86160496">F.20.3. 函数和操作符</a></span></dt><dt><span class="sect2"><a href="isn.html#idp86181968">F.20.4. 例子</a></span></dt><dt><span class="sect2"><a href="isn.html#idp86184736">F.20.5. 参考文献</a></span></dt><dt><span class="sect2"><a href="isn.html#idp86192592">F.20.6. 作者</a></span></dt></dl></div><a id="idp86128464" class="indexterm"></a><p>  <code class="filename">isn</code>模块为下列国际产品编号标准提供数据类型：EAN13、UPC、ISBN（图书）、ISMN（音乐）以及 ISSN（期刊）。在输入时会按照一个硬编码的前缀列表对输入进行验证，这个前缀的列表也被用来在输出时连接号码。因为新的前缀总是不时地出现，这个前缀列表可能会过时。这个模块的一个未来版本有希望得到一个来自于一个或多个表的前缀列表，这样用户可以根据需要来方便地更新前缀列表。不过，在当前该列表只能通过修改源代码并且重新编译来更新。另外一种方案是，在这个模块的未来版本中可能会直接移除掉前缀验证和连接支持。
+ </p><div class="sect2" id="idp86131632"><div class="titlepage"><div><div><h3 class="title">F.20.1. 数据类型</h3></div></div></div><p>   <a class="xref" href="isn.html#ISN-DATATYPES" title="表 F.12. isn 数据类型">表 F.12</a>展示了<code class="filename">isn</code>模块提供的数据类型。
+  </p><div class="table" id="ISN-DATATYPES"><p class="title"><strong>表 F.12. <code class="filename">isn</code> 数据类型</strong></p><div class="table-contents"><table class="table" summary="isn 数据类型" border="1"><colgroup><col /><col /></colgroup><thead><tr><th>数据类型</th><th>描述</th></tr></thead><tbody><tr><td><code class="type">EAN13</code></td><td>       欧洲文章号，总是以 EAN13 格式显示
+      </td></tr><tr><td><code class="type">ISBN13</code></td><td>       国际标准图书号，以新的 EAN13 格式显示
+      </td></tr><tr><td><code class="type">ISMN13</code></td><td>       国际标准音乐号，以新的 EAN13 格式显示
+      </td></tr><tr><td><code class="type">ISSN13</code></td><td>       国际标准期刊号，以新的 EAN13 格式显示
+      </td></tr><tr><td><code class="type">ISBN</code></td><td>       国际标准图书号，以旧的短格式显示
+      </td></tr><tr><td><code class="type">ISMN</code></td><td>       国际标准音乐号，以旧的短格式显示
+      </td></tr><tr><td><code class="type">ISSN</code></td><td>       国际标准期刊号，以旧的短格式显示
+      </td></tr><tr><td><code class="type">UPC</code></td><td>       通用产品代码
+      </td></tr></tbody></table></div></div><br class="table-break" /><p>   一些注记：
+  </p><div class="orderedlist"><ol class="orderedlist" type="1"><li class="listitem"><p>ISBN13、ISMN13、ISSN13 号码都是 EAN13 号码。</p></li><li class="listitem"><p>EAN13 号码不总是 ISBN13、ISMN13 或 ISSN13（有些是）。</p></li><li class="listitem"><p>一些 ISBN13 号码能够作为 ISBN 显示。</p></li><li class="listitem"><p>一些 ISMN13 号码能够作为 ISMN 显示。</p></li><li class="listitem"><p>一些 ISSN13 号码能够作为 ISSN 显示。</p></li><li class="listitem"><p>UPC 号码是 EAN13 号码的一个子集（它们基本上是去掉了第一个<code class="literal">0</code>位的 EAN13）。</p></li><li class="listitem"><p>所有 UPC、ISBN、ISMN 以及 ISSN 号码可以被表示为 EAN13 号码。</p></li></ol></div><p>   在内部，所有这些类型使用同一种表达（一个 64 位整数）并且所有内部表达是可以互换的。多种类型被提供来控制显示格式化并且对假定为表示一种特定类型号码的输入进行更严格的合法性检查。
+  </p><p>   在可能时，<code class="type">ISBN</code>、<code class="type">ISMN</code>和<code class="type">ISSN</code>类型将显示号码的短版本（ISxN 10），并且在无法适应短版本时显示号码的 ISxN 13 格式。<code class="type">EAN13</code>、<code class="type">ISBN13</code>、<code class="type">ISMN13</code>和<code class="type">ISSN13</code>类型总是显示长版本的 ISxN（EAN13）。
+  </p></div><div class="sect2" id="idp86153504"><div class="titlepage"><div><div><h3 class="title">F.20.2. 造型</h3></div></div></div><p>   <code class="filename">isn</code>模块提供了下列类型之间的造型：
+  </p><div class="itemizedlist"><ul class="itemizedlist" style="list-style-type: disc; "><li class="listitem"><p>     ISBN13 &lt;=&gt; EAN13
+    </p></li><li class="listitem"><p>     ISMN13 &lt;=&gt; EAN13
+    </p></li><li class="listitem"><p>     ISSN13 &lt;=&gt; EAN13
+    </p></li><li class="listitem"><p>     ISBN &lt;=&gt; EAN13
+    </p></li><li class="listitem"><p>     ISMN &lt;=&gt; EAN13
+    </p></li><li class="listitem"><p>     ISSN &lt;=&gt; EAN13
+    </p></li><li class="listitem"><p>     UPC  &lt;=&gt; EAN13
+    </p></li><li class="listitem"><p>     ISBN &lt;=&gt; ISBN13
+    </p></li><li class="listitem"><p>     ISMN &lt;=&gt; ISMN13
+    </p></li><li class="listitem"><p>     ISSN &lt;=&gt; ISSN13
+    </p></li></ul></div><p>   当从<code class="type">EAN13</code>造型为另一种类型时， 会有对该值是否在另一种类型的域中的运行时检查，如果不在则抛出一个错误。其他的造型则是简单地重新贴个标签，因而总是会成功。
+  </p></div><div class="sect2" id="idp86160496"><div class="titlepage"><div><div><h3 class="title">F.20.3. 函数和操作符</h3></div></div></div><p>   <code class="filename">isn</code>模块提供了标准的比较操作符，外加对所有这些数据类型的 B 树和哈希索引支持。此外还有一些特殊的函数，它们展示在<a class="xref" href="isn.html#ISN-FUNCTIONS" title="表 F.13. isn 函数">表 F.13</a>中。在这个表中，<code class="type">isn</code>意味着该模块的数据类型中的任何一种。
+  </p><div class="table" id="ISN-FUNCTIONS"><p class="title"><strong>表 F.13. <code class="filename">isn</code> 函数</strong></p><div class="table-contents"><table class="table" summary="isn 函数" border="1"><colgroup><col /><col /><col /></colgroup><thead><tr><th>函数</th><th>返回</th><th>描述</th></tr></thead><tbody><tr><td><code class="function">isn_weak(boolean)</code><a id="idp86167136" class="indexterm"></a></td><td><code class="type">boolean</code></td><td>设置弱输入模式（返回新设置）</td></tr><tr><td><code class="function">isn_weak()</code></td><td><code class="type">boolean</code></td><td>得到弱模式的当前状态</td></tr><tr><td><code class="function">make_valid(isn)</code><a id="idp86170912" class="indexterm"></a></td><td><code class="type">isn</code></td><td>验证一个非法号码（清除非法标志）</td></tr><tr><td><code class="function">is_valid(isn)</code><a id="idp86173120" class="indexterm"></a></td><td><code class="type">boolean</code></td><td>检查非法标志的存在</td></tr></tbody></table></div></div><br class="table-break" /><p>   <em class="firstterm">弱</em>模式被用来允许插入非法数据到一个表中。非法意味着校验位错误，而不是有丢失号码。
+  </p><p>   为什么你会想要使用弱模式？你可能有一个巨大的 ISBN 号码集合并且出于某种奇怪的原因其中具有错误的校验位（可能这些号码是从印刷稿中扫描并且 OCR 而来，也可能是手工输入的......谁知道呢）。不管怎样，重点是你可能希望清理这些混乱，但是你仍然想要能够把这些号码放在你的数据库中并且可能会使用一个外部工具在数据库中定位非法号码，这样你能够更容易地验证信息。因此你可能会想要在表中选择所有非法的号码。
+  </p><p>   当你使用弱模式在一个表中插入非法号码时，被插入的号码将会被加上修正过的校验位，但是它的最后将会有一个感叹号（<code class="literal">!</code>），例如<code class="literal">0-11-000322-5!</code>。这种非法标志符可以用<code class="function">is_valid</code>函数检查并且可以用<code class="function">make_valid</code>函数清除。
+  </p><p>   即使不在弱模式中，你也能通过在号码某位追加<code class="literal">!</code>字符来强制非法号码的插入。
+  </p><p>   另一个特殊特性是在输入过程中，你可以写一个<code class="literal">?</code>代替校验位，然后正确的校验位将被自动插入。
+  </p></div><div class="sect2" id="idp86181968"><div class="titlepage"><div><div><h3 class="title">F.20.4. 例子</h3></div></div></div><pre class="programlisting">--直接使用类型：
+SELECT isbn('978-0-393-04002-9');
+SELECT isbn13('0901690546');
+SELECT issn('1436-4522');
+
+--转换类型：
+-- 注意只有在号码处于另一种类型的合法值之中时，才能从 EAN13 转换成另一种类型
+-- 因此下面的用法将不会工作： select isbn(ean13('0220356483481'));
+-- 但是下面的可以：
+SELECT upc(ean13('0220356483481'));
+SELECT ean13(upc('220356483481'));
+
+--创建一个表，它有一个单一列来保存 ISBN 号码：
+CREATE TABLE test (id isbn);
+INSERT INTO test VALUES('9780393040029');
+
+--自动计算校验位（观察 '?'）：
+INSERT INTO test VALUES('220500896?');
+INSERT INTO test VALUES('978055215372?');
+
+SELECT issn('3251231?');
+SELECT ismn('979047213542?');
+
+--使用弱模式：
+SELECT isn_weak(true);
+INSERT INTO test VALUES('978-0-11-000533-4');
+INSERT INTO test VALUES('9780141219307');
+INSERT INTO test VALUES('2-205-00876-X');
+SELECT isn_weak(false);
+
+SELECT id FROM test WHERE NOT is_valid(id);
+UPDATE test SET id = make_valid(id) WHERE id = '2-205-00876-X!';
+
+SELECT * FROM test;
+
+SELECT isbn13(id) FROM test;</pre></div><div class="sect2" id="idp86184736"><div class="titlepage"><div><div><h3 class="title">F.20.5. 参考文献</h3></div></div></div><p>   实现这个模块的信息可以从下列网站收集到：
+   </p><div class="itemizedlist"><ul class="itemizedlist" style="list-style-type: disc; "><li class="listitem"><p><a class="ulink" href="http://www.isbn-international.org/" target="_top">http://www.isbn-international.org/</a></p></li><li class="listitem"><p><a class="ulink" href="http://www.issn.org/" target="_top">http://www.issn.org/</a></p></li><li class="listitem"><p><a class="ulink" href="http://www.ismn-international.org/" target="_top">http://www.ismn-international.org/</a></p></li><li class="listitem"><p><a class="ulink" href="http://www.wikipedia.org/" target="_top">http://www.wikipedia.org/</a></p></li></ul></div><p>
+
+   用于连接的前缀：
+   </p><div class="itemizedlist"><ul class="itemizedlist" style="list-style-type: disc; "><li class="listitem"><p><a class="ulink" href="http://www.gs1.org/productssolutions/idkeys/support/prefix_list.html" target="_top">http://www.gs1.org/productssolutions/idkeys/support/prefix_list.html</a></p></li><li class="listitem"><p><a class="ulink" href="http://en.wikipedia.org/wiki/List_of_ISBN_identifier_groups" target="_top">http://en.wikipedia.org/wiki/List_of_ISBN_identifier_groups</a></p></li><li class="listitem"><p><a class="ulink" href="https://www.isbn-international.org/content/isbn-users-manual" target="_top">https://www.isbn-international.org/content/isbn-users-manual</a></p></li><li class="listitem"><p><a class="ulink" href="http://en.wikipedia.org/wiki/International_Standard_Music_Number" target="_top">http://en.wikipedia.org/wiki/International_Standard_Music_Number</a></p></li><li class="listitem"><p><a class="ulink" href="http://www.ismn-international.org/ranges.html" target="_top">http://www.ismn-international.org/ranges.html</a></p></li></ul></div><p>
+
+   创建算法时已经注意严谨地使用 ISBN、ISMN、ISSN 官方用户手册中的推荐算法进行了验证。
+  </p></div><div class="sect2" id="idp86192592"><div class="titlepage"><div><div><h3 class="title">F.20.6. 作者</h3></div></div></div><p>   Germán Méndez Bravo (Kronuz), 2004 - 2006
+  </p><p>   这个模块受到了 Garrett A. Wollman 的<code class="filename">isbn_issn</code>代码的启发。
+  </p></div></div><div class="navfooter"><hr /><table width="100%" summary="Navigation footer"><tr><td width="40%" align="left"><a accesskey="p" href="intarray.html">上一页</a> </td><td width="20%" align="center"><a accesskey="u" href="contrib.html">上一级</a></td><td width="40%" align="right"> <a accesskey="n" href="lo.html">下一页</a></td></tr><tr><td width="40%" align="left" valign="top">F.19. intarray </td><td width="20%" align="center"><a accesskey="h" href="index.html">起始页</a></td><td width="40%" align="right" valign="top"> F.21. lo</td></tr></table></div></body></html>

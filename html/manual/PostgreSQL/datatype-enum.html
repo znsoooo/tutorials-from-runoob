@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><title>8.7. 枚举类型</title><link rel="stylesheet" type="text/css" href="stylesheet.css" /><link rev="made" href="pgsql-docs@postgresql.org" /><meta name="generator" content="DocBook XSL Stylesheets V1.79.1" /><link rel="prev" href="datatype-boolean.html" title="8.6. 布尔类型" /><link rel="next" href="datatype-geometric.html" title="8.8. 几何类型" /></head><body><div xmlns="http://www.w3.org/TR/xhtml1/transitional" class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="5" align="center">8.7. 枚举类型</th></tr><tr><td width="10%" align="left"><a accesskey="p" href="datatype-boolean.html" title="8.6. 布尔类型">上一页</a> </td><td width="10%" align="left"><a accesskey="u" href="datatype.html" title="第 8 章 数据类型">上一级</a></td><th width="60%" align="center">第 8 章 数据类型</th><td width="10%" align="right"><a accesskey="h" href="index.html" title="PostgreSQL 10.1 手册">起始页</a></td><td width="10%" align="right"> <a accesskey="n" href="datatype-geometric.html" title="8.8. 几何类型">下一页</a></td></tr></table><hr></hr></div><div class="sect1" id="DATATYPE-ENUM"><div class="titlepage"><div><div><h2 class="title" style="clear: both">8.7. 枚举类型</h2></div></div></div><div class="toc"><dl class="toc"><dt><span class="sect2"><a href="datatype-enum.html#idp8463584">8.7.1. 枚举类型的声明</a></span></dt><dt><span class="sect2"><a href="datatype-enum.html#idp8466912">8.7.2. 排序</a></span></dt><dt><span class="sect2"><a href="datatype-enum.html#idp8469408">8.7.3. 类型安全性</a></span></dt><dt><span class="sect2"><a href="datatype-enum.html#idp8473008">8.7.4. 实现细节</a></span></dt></dl></div><a id="idp8459936" class="indexterm"></a><a id="idp8461424" class="indexterm"></a><p>    枚举（enum）类型是由一个静态、值的有序集合构成的数据类型。它们等效于很多编程语言所支持的<code class="type">enum</code>类型。枚举类型的一个例子可以是一周中的日期，或者一个数据的状态值集合。
+   </p><div class="sect2" id="idp8463584"><div class="titlepage"><div><div><h3 class="title">8.7.1. 枚举类型的声明</h3></div></div></div><p>     枚举类型可以使用<a class="xref" href="sql-createtype.html" title="CREATE TYPE"><span class="refentrytitle">CREATE TYPE</span></a>命令创建，例如：
+
+</p><pre class="programlisting">CREATE TYPE mood AS ENUM ('sad', 'ok', 'happy');</pre><p>
+
+     一旦被创建，枚举类型可以像很多其他类型一样在表和函数定义中使用：
+</p><pre class="programlisting">CREATE TYPE mood AS ENUM ('sad', 'ok', 'happy');
+CREATE TABLE person (
+    name text,
+    current_mood mood
+);
+INSERT INTO person VALUES ('Moe', 'happy');
+SELECT * FROM person WHERE current_mood = 'happy';
+ name | current_mood
+------+--------------
+ Moe  | happy
+(1 row)</pre><p>
+    </p></div><div class="sect2" id="idp8466912"><div class="titlepage"><div><div><h3 class="title">8.7.2. 排序</h3></div></div></div><p>      一个枚举类型的值的排序是该类型被创建时所列出的值的顺序。枚举类型的所有标准的比较操作符以及相关聚集函数都被支持。例如：
+
+</p><pre class="programlisting">INSERT INTO person VALUES ('Larry', 'sad');
+INSERT INTO person VALUES ('Curly', 'ok');
+SELECT * FROM person WHERE current_mood &gt; 'sad';
+ name  | current_mood
+-------+--------------
+ Moe   | happy
+ Curly | ok
+(2 rows)
+
+SELECT * FROM person WHERE current_mood &gt; 'sad' ORDER BY current_mood;
+ name  | current_mood
+-------+--------------
+ Curly | ok
+ Moe   | happy
+(2 rows)
+
+SELECT name
+FROM person
+WHERE current_mood = (SELECT MIN(current_mood) FROM person);
+ name
+-------
+ Larry
+(1 row)</pre><p>
+     </p></div><div class="sect2" id="idp8469408"><div class="titlepage"><div><div><h3 class="title">8.7.3. 类型安全性</h3></div></div></div><p>     每一种枚举数据类型都是独立的并且不能和其他枚举类型相比较。看这样一个例子：
+
+</p><pre class="programlisting">CREATE TYPE happiness AS ENUM ('happy', 'very happy', 'ecstatic');
+CREATE TABLE holidays (
+    num_weeks integer,
+    happiness happiness
+);
+INSERT INTO holidays(num_weeks,happiness) VALUES (4, 'happy');
+INSERT INTO holidays(num_weeks,happiness) VALUES (6, 'very happy');
+INSERT INTO holidays(num_weeks,happiness) VALUES (8, 'ecstatic');
+INSERT INTO holidays(num_weeks,happiness) VALUES (2, 'sad');
+ERROR:  invalid input value for enum happiness: "sad"
+SELECT person.name, holidays.num_weeks FROM person, holidays
+  WHERE person.current_mood = holidays.happiness;
+ERROR:  operator does not exist: mood = happiness</pre><p>
+    </p><p>     如果你确实需要做这样的事情，你可以写一个自定义的操作符或者在查询中加上显式造型：
+
+</p><pre class="programlisting">SELECT person.name, holidays.num_weeks FROM person, holidays
+  WHERE person.current_mood::text = holidays.happiness::text;
+ name | num_weeks
+------+-----------
+ Moe  |         4
+(1 row)
+</pre><p>
+    </p></div><div class="sect2" id="idp8473008"><div class="titlepage"><div><div><h3 class="title">8.7.4. 实现细节</h3></div></div></div><p>     一个枚举值在磁盘上占据4个字节。一个枚举值的文本标签的长度受限于<code class="symbol">NAMEDATALEN</code>设置，该设置被编译在<span class="productname">PostgreSQL</span>中，在标准编译下它表示最多63字节。
+    </p><p>     枚举标签是大小写敏感的，因此<code class="type">'happy'</code>是不同于<code class="type">'HAPPY'</code>的。标签内的空白也是有效的。
+    </p><p>     从内部枚举值到文本标签的翻译被保存在系统目录<a class="link" href="catalog-pg-enum.html" title="51.20. pg_enum"><code class="structname">pg_enum</code></a>中。可以直接查询该目录。
+    </p></div></div><div class="navfooter"><hr /><table width="100%" summary="Navigation footer"><tr><td width="40%" align="left"><a accesskey="p" href="datatype-boolean.html">上一页</a> </td><td width="20%" align="center"><a accesskey="u" href="datatype.html">上一级</a></td><td width="40%" align="right"> <a accesskey="n" href="datatype-geometric.html">下一页</a></td></tr><tr><td width="40%" align="left" valign="top">8.6. 布尔类型 </td><td width="20%" align="center"><a accesskey="h" href="index.html">起始页</a></td><td width="40%" align="right" valign="top"> 8.8. 几何类型</td></tr></table></div></body></html>

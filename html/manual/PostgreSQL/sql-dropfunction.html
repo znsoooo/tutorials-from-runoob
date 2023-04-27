@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><title>DROP FUNCTION</title><link rel="stylesheet" type="text/css" href="stylesheet.css" /><link rev="made" href="pgsql-docs@postgresql.org" /><meta name="generator" content="DocBook XSL Stylesheets V1.79.1" /><link rel="prev" href="sql-dropforeigntable.html" title="DROP FOREIGN TABLE" /><link rel="next" href="sql-dropgroup.html" title="DROP GROUP" /></head><body><div xmlns="http://www.w3.org/TR/xhtml1/transitional" class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="5" align="center">DROP FUNCTION</th></tr><tr><td width="10%" align="left"><a accesskey="p" href="sql-dropforeigntable.html" title="DROP FOREIGN TABLE">上一页</a> </td><td width="10%" align="left"><a accesskey="u" href="sql-commands.html" title="SQL 命令">上一级</a></td><th width="60%" align="center">SQL 命令</th><td width="10%" align="right"><a accesskey="h" href="index.html" title="PostgreSQL 10.1 手册">起始页</a></td><td width="10%" align="right"> <a accesskey="n" href="sql-dropgroup.html" title="DROP GROUP">下一页</a></td></tr></table><hr></hr></div><div class="refentry" id="SQL-DROPFUNCTION"><div class="titlepage"></div><a id="idp46436208" class="indexterm"></a><div class="refnamediv"><h2><span class="refentrytitle">DROP FUNCTION</span></h2><p>DROP FUNCTION — 移除一个函数</p></div><div class="refsynopsisdiv"><h2>大纲</h2><pre class="synopsis">DROP FUNCTION [ IF EXISTS ] <em class="replaceable"><code>name</code></em> [ ( [ [ <em class="replaceable"><code>argmode</code></em> ] [ <em class="replaceable"><code>argname</code></em> ] <em class="replaceable"><code>argtype</code></em> [, ...] ] ) ] [, ...]
+    [ CASCADE | RESTRICT ]</pre></div><div class="refsect1" id="idp46442512"><h2>描述</h2><p>   <code class="command">DROP FUNCTION</code>移除一个已有函数
+   的定义。要执行这个命令用户必须是该函数的拥有者。该函数的参数
+   类型必须被指定，因为多个不同的函数可能会具有相同的函数名和不
+   同的参数列表。
+  </p></div><div class="refsect1" id="idp46444128"><h2>参数</h2><div class="variablelist"><dl class="variablelist"><dt><span class="term"><code class="literal">IF EXISTS</code></span></dt><dd><p>      如果该函数不存在则不要抛出一个错误，而是发出一个提示。
+     </p></dd><dt><span class="term"><em class="replaceable"><code>name</code></em></span></dt><dd><p>      一个现有函数的名称（可以是模式限定的）。
+	  如果未指定参数列表，则该名称在其模式中必须是唯一的。
+     </p></dd><dt><span class="term"><em class="replaceable"><code>argmode</code></em></span></dt><dd><p>      一个参数的模式：<code class="literal">IN</code>、<code class="literal">OUT</code>、
+      <code class="literal">INOUT</code>或者<code class="literal">VARIADIC</code>。如果被忽略，
+      则默认为<code class="literal">IN</code>。注意
+      <code class="command">DROP FUNCTION</code>并不真正关心
+      <code class="literal">OUT</code>参数，因为决定函数的身份时只需要输入参数。
+      因此列出<code class="literal">IN</code>、<code class="literal">INOUT</code>和
+      <code class="literal">VARIADIC</code>参数足以。
+     </p></dd><dt><span class="term"><em class="replaceable"><code>argname</code></em></span></dt><dd><p>      一个参数的名称。注意
+      <code class="command">DROP FUNCTION</code>并不真正关心
+      参数名称，因为决定函数的身份时只需要参数的数据类型。
+     </p></dd><dt><span class="term"><em class="replaceable"><code>argtype</code></em></span></dt><dd><p>      如果函数有参数，这是函数参数的数据类型（可以是模式限定的）。
+     </p></dd><dt><span class="term"><code class="literal">CASCADE</code></span></dt><dd><p>      自动删除依赖于该函数的对象（例如操作符和触发器），然后删除所有
+      依赖于那些对象的对象（见<a class="xref" href="ddl-depend.html" title="5.13. 依赖跟踪">第 5.13 节</a>）。
+     </p></dd><dt><span class="term"><code class="literal">RESTRICT</code></span></dt><dd><p>      如果有任何对象依赖于该函数，则拒绝删除它。这是默认值。
+     </p></dd></dl></div></div><div class="refsect1" id="SQL-DROPFUNCTION-EXAMPLES"><h2>示例</h2><p>   这个命令移除平方根函数：
+
+</p><pre class="programlisting">DROP FUNCTION sqrt(integer);</pre><p>   在一个命令中删除多个函数：
+</p><pre class="programlisting">DROP FUNCTION sqrt(integer), sqrt(bigint);</pre><p>   如果函数名称在其模式中是唯一的，则可以在不带参数列表的情况下引用它：
+</p><pre class="programlisting">DROP FUNCTION update_employee_salaries;</pre><p>
+   请注意，这与
+</p><pre class="programlisting">DROP FUNCTION update_employee_salaries();</pre><p>
+   不同，后者引用一个零个参数的函数，而第一个变体才可以引用具有任意数量参数的函数，
+   包括零，只要该名称是唯一的。
+  </p></div><div class="refsect1" id="SQL-DROPFUNCTION-COMPATIBILITY"><h2>兼容性</h2><p>   该命令符合SQL标准，使用这些<span class="productname">PostgreSQL</span>扩展：
+   </p><div class="itemizedlist"><ul class="itemizedlist" style="list-style-type: disc; "><li class="listitem"><p>该标准只允许每个命令删除一个函数。</p></li><li class="listitem"><p><code class="literal">IF EXISTS</code>选项</p></li><li class="listitem"><p>能够指定参数模式和名称</p></li></ul></div><p>
+  </p></div><div class="refsect1" id="idp46472304"><h2>另见</h2><span class="simplelist"><a class="xref" href="sql-createfunction.html" title="CREATE FUNCTION"><span class="refentrytitle">CREATE FUNCTION</span></a>, <a class="xref" href="sql-alterfunction.html" title="ALTER FUNCTION"><span class="refentrytitle">ALTER FUNCTION</span></a></span></div></div><div class="navfooter"><hr /><table width="100%" summary="Navigation footer"><tr><td width="40%" align="left"><a accesskey="p" href="sql-dropforeigntable.html">上一页</a> </td><td width="20%" align="center"><a accesskey="u" href="sql-commands.html">上一级</a></td><td width="40%" align="right"> <a accesskey="n" href="sql-dropgroup.html">下一页</a></td></tr><tr><td width="40%" align="left" valign="top">DROP FOREIGN TABLE </td><td width="20%" align="center"><a accesskey="h" href="index.html">起始页</a></td><td width="40%" align="right" valign="top"> DROP GROUP</td></tr></table></div></body></html>

@@ -1,0 +1,120 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><title>CREATE SEQUENCE</title><link rel="stylesheet" type="text/css" href="stylesheet.css" /><link rev="made" href="pgsql-docs@postgresql.org" /><meta name="generator" content="DocBook XSL Stylesheets V1.79.1" /><link rel="prev" href="sql-createschema.html" title="CREATE SCHEMA" /><link rel="next" href="sql-createserver.html" title="CREATE SERVER" /></head><body><div xmlns="http://www.w3.org/TR/xhtml1/transitional" class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="5" align="center">CREATE SEQUENCE</th></tr><tr><td width="10%" align="left"><a accesskey="p" href="sql-createschema.html" title="CREATE SCHEMA">上一页</a> </td><td width="10%" align="left"><a accesskey="u" href="sql-commands.html" title="SQL 命令">上一级</a></td><th width="60%" align="center">SQL 命令</th><td width="10%" align="right"><a accesskey="h" href="index.html" title="PostgreSQL 10.1 手册">起始页</a></td><td width="10%" align="right"> <a accesskey="n" href="sql-createserver.html" title="CREATE SERVER">下一页</a></td></tr></table><hr></hr></div><div class="refentry" id="SQL-CREATESEQUENCE"><div class="titlepage"></div><a id="idp44339456" class="indexterm"></a><div class="refnamediv"><h2><span class="refentrytitle">CREATE SEQUENCE</span></h2><p>CREATE SEQUENCE — 定义一个新的序列发生器</p></div><div class="refsynopsisdiv"><h2>大纲</h2><pre class="synopsis">CREATE [ TEMPORARY | TEMP ] SEQUENCE [ IF NOT EXISTS ] <em class="replaceable"><code>name</code></em> [ INCREMENT [ BY ] <em class="replaceable"><code>increment</code></em> ]
+    [ MINVALUE <em class="replaceable"><code>minvalue</code></em> | NO MINVALUE ] [ MAXVALUE <em class="replaceable"><code>maxvalue</code></em> | NO MAXVALUE ]
+    [ START [ WITH ] <em class="replaceable"><code>start</code></em> ] [ CACHE <em class="replaceable"><code>cache</code></em> ] [ [ NO ] CYCLE ]
+    [ OWNED BY { <em class="replaceable"><code>table_name</code></em>.<em class="replaceable"><code>column_name</code></em> | NONE } ]</pre></div><div class="refsect1" id="idp44348688"><h2>描述</h2><p>   <code class="command">CREATE SEQUENCE</code>创建一个新的序列数
+   发生器。这涉及到用名称<em class="replaceable"><code>name</code></em>创建并且初始化
+   一个新的特殊的单行表。该发生器将由发出该命令的用户所拥有。
+  </p><p>   如果给出一个模式名称，则该序列将将被创建在指定的模式中。否则它会被
+   创建在当前模式中。临时序列存在于一个特殊的模式中，因此在创建临时序列
+   时不能给出模式名。序列名称必须与同一模式中任何其他序列、表、索引、
+   视图或者外部表的名称不同。
+  </p><p>   在序列被创建后，可以使用函数
+   <code class="function">nextval</code>、
+   <code class="function">currval</code>以及
+   <code class="function">setval</code>来操作该序列。这些函数在
+   <a class="xref" href="functions-sequence.html" title="9.16. 序列操作函数">第 9.16 节</a>中有介绍。
+  </p><p>   尽管无法直接更新一个序列，可以使用这样的查询：
+
+</p><pre class="programlisting">SELECT * FROM <em class="replaceable"><code>name</code></em>;</pre><p>
+
+   来检查一个序列的参数以及当前状态。特别地，序列的
+   <code class="literal">last_value</code>域显示被任意会话最后一次取得的值（当然，
+   在被打印时该值可能已经过时了，因为可能有其他会话正在执行
+   <code class="function">nextval</code>调用）。
+  </p></div><div class="refsect1" id="idp44358336"><h2>参数</h2><div class="variablelist"><dl class="variablelist"><dt><span class="term"><code class="literal">TEMPORARY</code> or <code class="literal">TEMP</code></span></dt><dd><p>      如果被指定，只会为这个会话创建序列对象，并且在会话退出时自动
+      删除它。当临时序列存在时，已有的同名永久序列（在这个会话中）
+      会变得不可见，不过可以用模式限定的名称来引用同名永久序列。
+     </p></dd><dt><span class="term"><code class="literal">IF NOT EXISTS</code></span></dt><dd><p>      如果已经存在一个同名的关系时不要抛出错误。这种情况下会发出一个
+      提示。注意这不保证现有的关系与即将创建的序列相似 -- 它甚至可能
+      都不是一个序列。
+     </p></dd><dt><span class="term"><em class="replaceable"><code>name</code></em></span></dt><dd><p>      要创建的序列的名称（可以是模式限定的）。
+     </p></dd><dt><span class="term"><em class="replaceable"><code>data_type</code></em></span></dt><dd><p>      可选的子句<code class="literal">AS <em class="replaceable"><code>data_type</code></em></code>
+      制定序列的数据类型。有效类型是
+      <code class="literal">smallint</code>、<code class="literal">integer</code>、
+      和<code class="literal">bigint</code>。默认是<code class="literal">bigint</code>。
+      数据类型决定了序列的默认最小和最大值。
+     </p></dd><dt><span class="term"><em class="replaceable"><code>increment</code></em></span></dt><dd><p>      可选的子句<code class="literal">INCREMENT BY <em class="replaceable"><code>increment</code></em></code>指定为了
+      创建新值会把哪个值加到当前序列值上。一个正值将会创造一个上升
+      序列，负值会创造一个下降序列。默认值是 1。
+     </p></dd><dt><span class="term"><em class="replaceable"><code>minvalue</code></em><br /></span><span class="term"><code class="literal">NO MINVALUE</code></span></dt><dd><p>      可选的子句<code class="literal">MINVALUE <em class="replaceable"><code>minvalue</code></em></code>决定一个序列
+      能产生的最小值。如果没有提供这个子句或者指定了
+      <code class="option">NO MINVALUE</code>，那么会使用默认值。
+	  升序序列的默认值为1。降序序列的默认值为数据类型的最小值。
+     </p></dd><dt><span class="term"><em class="replaceable"><code>maxvalue</code></em><br /></span><span class="term"><code class="literal">NO MAXVALUE</code></span></dt><dd><p>      可选的子句<code class="literal">MAXVALUE <em class="replaceable"><code>maxvalue</code></em></code>决定该序列
+      的最大值。如果没有提供这个子句或者指定了
+      <code class="option">NO MAXVALUE</code>，那么将会使用默认值。
+	  升序序列的默认值是数据类型的最大值。降序序列的默认值是-1。
+     </p></dd><dt><span class="term"><em class="replaceable"><code>start</code></em></span></dt><dd><p>      可选的子句<code class="literal">START WITH <em class="replaceable"><code>start</code></em> </code>允许序列从任何
+      地方开始。对于上升序列和下降序列来说，默认的开始值分别是
+      <em class="replaceable"><code>minvalue</code></em>和
+      <em class="replaceable"><code>maxvalue</code></em>。
+     </p></dd><dt><span class="term"><em class="replaceable"><code>cache</code></em></span></dt><dd><p>      可选的子句<code class="literal">CACHE <em class="replaceable"><code>cache</code></em></code>指定要预分配多少
+      个序列数并且把它们放在内存中以便快速访问。最小值为 1 （一次只生成
+      一个值，即没有缓存），默认值也是 1。
+     </p></dd><dt><span class="term"><code class="literal">CYCLE</code><br /></span><span class="term"><code class="literal">NO CYCLE</code></span></dt><dd><p>      对于上升序列和下降序列，<code class="literal">CYCLE</code>选项允许序列
+      在分别达到<em class="replaceable"><code>maxvalue</code></em>和<em class="replaceable"><code>minvalue</code></em>时回卷。如果达到
+      该限制，下一个产生的数字将分别是<em class="replaceable"><code>minvalue</code></em>和<em class="replaceable"><code>maxvalue</code></em>。
+     </p><p>      如果指定了<code class="literal">NO CYCLE</code>，当序列到达其最大值
+      后任何<code class="function">nextval</code>调用将返回一个错误。如果
+      <code class="literal">CYCLE</code>和<code class="literal">NO CYCLE</code>都没有
+      被指定，则默认为<code class="literal">NO CYCLE</code>。
+     </p></dd><dt><span class="term"><code class="literal">OWNED BY</code> <em class="replaceable"><code>table_name</code></em>.<em class="replaceable"><code>column_name</code></em><br /></span><span class="term"><code class="literal">OWNED BY NONE</code></span></dt><dd><p>      <code class="literal">OWNED BY</code>选项导致序列被与一个特定的表列关联
+      在一起，这样如果该列（或者整个表）被删除，该序列也将被自动删除。
+      指定的表必须和序列具有相同的拥有者并且在同一个模式中。默认选项
+      <code class="literal">OWNED BY NONE</code>指定该序列不与某个列关联。
+     </p></dd></dl></div></div><div class="refsect1" id="idp44402064"><h2>注解</h2><p>   使用<code class="command">DROP SEQUENCE</code>移除一个序列。
+  </p><p>   序列是基于<code class="type">bigint</code>算法的，因此范围是不能超过一个八字节
+   整数的范围（-9223372036854775808 到 9223372036854775807）。
+  </p><p>   由于<code class="function">nextval</code>和<code class="function">setval</code>调用绝不会回滚，
+   如果需要序数的<span class="quote">“<span class="quote">无间隙</span>”</span>分配，则不能使用序列对象。可以
+   通过在一个只包含一个计数器的表上使用排他锁来构建无间隙的分配，
+   但是这种方案比序列对象开销更大，特别是当有很多事务并发请求序数
+   时。
+  </p><p>   如果对一个将由多个会话并发使用的序列对象使用了大于 1 的<em class="replaceable"><code>cache</code></em>设置，可能会得到意想不到的结果。
+   每个会话会在访问该序列对象时分配并且缓存后续的序列值，并且相应地增加
+   该序列对象的<code class="literal">last_value</code>。然后，在该会话中下一次
+   <code class="function">nextval</code>会做
+   <em class="replaceable"><code>cache</code></em>-1，并且简单地
+   返回预分配的值而不修改序列对象。因此，任何已分配但没有在会话中使用的
+   数字将会在该会话结束时丢失，导致该序列中的<span class="quote">“<span class="quote">空洞</span>”</span>。
+  </p><p>   进一步，尽管多个会话能分配到不同的序列值，这些值可能会在所有会话都被
+   考虑时生成出来。例如，
+   <em class="replaceable"><code>cache</code></em>的设置为 10，会话
+   A 可能储存值 1..10 并且返回<code class="function">nextval</code>=1，然后会话 
+   B 可能储存值 11..20 并且在 A 生成<code class="literal">nextval</code>=2 之前返回
+   <code class="function">nextval</code>=11。因此，如果
+   <em class="replaceable"><code>cache</code></em>设置为 1，可以
+   安全地假设<code class="function">nextval</code>值被顺序地生成。如果<em class="replaceable"><code>cache</code></em>设置大于 1，就只能假定
+   <code class="function">nextval</code>值都是可区分的，但不能保证它们被完全地顺序生成。
+   还有，<code class="literal">last_value</code>将反映服务于任意会话的最后一个值，不管它
+   是否已经被<code class="function">nextval</code>返回过。
+  </p><p>   另一个考虑是，在这样一个序列上执行的<code class="function">setval</code>将不会通知
+   其他会话，直到它们用尽了任何已缓存的预分配值。
+  </p></div><div class="refsect1" id="idp44420480"><h2>示例</h2><p>   创建一个称作<code class="literal">serial</code>的上升序列，从 101 开始：
+</p><pre class="programlisting">CREATE SEQUENCE serial START 101;</pre><p>
+  </p><p>   从这个序列中选取下一个数字：
+</p><pre class="programlisting">SELECT nextval('serial');
+
+ nextval
+---------
+     101</pre><p>
+  </p><p>   再从这个序列中选取下一个数字：
+</p><pre class="programlisting">SELECT nextval('serial');
+
+ nextval
+---------
+     102</pre><p>
+  </p><p>   在一个<code class="command">INSERT</code>命令中使用这个序列：
+</p><pre class="programlisting">INSERT INTO distributors VALUES (nextval('serial'), 'nothing');</pre><p>
+  </p><p>   在一次<code class="command">COPY FROM</code>后更新新列值：
+</p><pre class="programlisting">BEGIN;
+COPY distributors FROM 'input_file';
+SELECT setval('serial', max(id)) FROM distributors;
+END;</pre></div><div class="refsect1" id="idp44428272"><h2>兼容性</h2><p>   <code class="command">CREATE SEQUENCE</code>符合<acronym class="acronym">SQL</acronym>
+   标准，不过下列除外：
+   </p><div class="itemizedlist"><ul class="itemizedlist" style="list-style-type: disc; "><li class="listitem"><p>      使用<code class="function">nextval()</code>而不是标准的<code class="command">NEXT VALUE FOR</code>
+      表达式获取下一个值。
+     </p></li><li class="listitem"><p>      <code class="literal">OWNED BY</code>子句是一种<span class="productname">PostgreSQL</span>扩展。
+     </p></li></ul></div></div><div class="refsect1" id="idp44434032"><h2>另见</h2><span class="simplelist"><a class="xref" href="sql-altersequence.html" title="ALTER SEQUENCE"><span class="refentrytitle">ALTER SEQUENCE</span></a>, <a class="xref" href="sql-dropsequence.html" title="DROP SEQUENCE"><span class="refentrytitle">DROP SEQUENCE</span></a></span></div></div><div class="navfooter"><hr /><table width="100%" summary="Navigation footer"><tr><td width="40%" align="left"><a accesskey="p" href="sql-createschema.html">上一页</a> </td><td width="20%" align="center"><a accesskey="u" href="sql-commands.html">上一级</a></td><td width="40%" align="right"> <a accesskey="n" href="sql-createserver.html">下一页</a></td></tr><tr><td width="40%" align="left" valign="top">CREATE SCHEMA </td><td width="20%" align="center"><a accesskey="h" href="index.html">起始页</a></td><td width="40%" align="right" valign="top"> CREATE SERVER</td></tr></table></div></body></html>

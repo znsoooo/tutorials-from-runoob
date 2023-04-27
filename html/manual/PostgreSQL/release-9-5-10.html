@@ -1,0 +1,132 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><title>E.10. 版本 9.5.10</title><link rel="stylesheet" type="text/css" href="stylesheet.css" /><link rev="made" href="pgsql-docs@postgresql.org" /><meta name="generator" content="DocBook XSL Stylesheets V1.79.1" /><link rel="prev" href="release-9-6.html" title="E.9. 版本 9.6" /><link rel="next" href="release-9-5-9.html" title="E.11. 版本 9.5.9" /></head><body><div xmlns="http://www.w3.org/TR/xhtml1/transitional" class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="5" align="center">E.10. 版本  9.5.10</th></tr><tr><td width="10%" align="left"><a accesskey="p" href="release-9-6.html" title="E.9. 版本 9.6">上一页</a> </td><td width="10%" align="left"><a accesskey="u" href="release.html" title="附录 E. 版本说明">上一级</a></td><th width="60%" align="center">附录 E. 版本说明</th><td width="10%" align="right"><a accesskey="h" href="index.html" title="PostgreSQL 10.1 手册">起始页</a></td><td width="10%" align="right"> <a accesskey="n" href="release-9-5-9.html" title="E.11. 版本 9.5.9">下一页</a></td></tr></table><hr></hr></div><div class="sect1" id="RELEASE-9-5-10"><div class="titlepage"><div><div><h2 class="title" style="clear: both">E.10. 版本  9.5.10</h2></div></div></div><div class="toc"><dl class="toc"><dt><span class="sect2"><a href="release-9-5-10.html#idp65246320">E.10.1. 迁移到版本 9.5.10</a></span></dt><dt><span class="sect2"><a href="release-9-5-10.html#idp65248752">E.10.2. 修改列表</a></span></dt></dl></div><p><strong>发布日期: </strong>2017-11-09</p><p>   这个版本包含来自9.5.9的各种修补程序。关于9.5主版本的新特性信息，
+   请查阅<a class="xref" href="release-9-5.html" title="E.20. 版本 9.5">第 E.20 节</a>。
+  </p><div class="sect2" id="idp65246320"><div class="titlepage"><div><div><h3 class="title">E.10.1. 迁移到版本 9.5.10</h3></div></div></div><p>    运行 9.5.X 的用户不需要转储/恢复。
+   </p><p>    不过，如果您使用BRIN索引，请参阅下面的第四条修改记录。
+   </p><p>    另外，如果您是从9.5.8之前的版本升级，请查阅<a class="xref" href="release-9-5-8.html" title="E.12. 版本 9.5.8">第 E.12 节</a>。
+   </p></div><div class="sect2" id="idp65248752"><div class="titlepage"><div><div><h3 class="title">E.10.2. 修改列表</h3></div></div></div><div class="itemizedlist"><ul class="itemizedlist" style="list-style-type: disc; "><li class="listitem"><p>      确保<code class="literal">INSERT ... ON CONFLICT DO UPDATE</code>
+      在所有情况下都检查表权限和RLS策略 (Dean Rasheed)
+     </p><p>      <code class="literal">INSERT ... ON CONFLICT DO UPDATE</code>的更新路径需要
+	  在仲裁索引上的列有<code class="literal">SELECT</code>权限，
+	  但是它没有在通过约束名指出仲裁器的情况下检查此项权限。
+	  另外，对于启用了行级安全性的表，它无法根据表的<code class="literal">SELECT</code>
+	  策略检查更新的行（不管仲裁索引是如何指定的）。
+      (CVE-2017-15099)
+     </p></li><li class="listitem"><p>      修复由于<code class="function">json{b}_populate_recordset()</code>
+	  中的行类型错误匹配引起的崩溃问题
+      (Michael Paquier, Tom Lane)
+     </p><p>      这些函数使用在<code class="literal">FROM ... AS</code>子句中指定的结果行类型，
+	  而不检查它是否与提供的元组值的实际行类型相匹配。如果没有，那通常会导致崩溃，
+	  尽管服务器内存内容的披露似乎也是可能的。
+      (CVE-2017-15098)
+     </p></li><li class="listitem"><p>      在打开<code class="literal">$PGLOG</code>之前，
+	  修复示例服务器启动脚本成为<code class="literal">$PGUSER</code> (Noah Misch)
+     </p><p>      以前，postmaster日志文件是以root用户身份运行时打开的。因此，
+	  数据库所有者可以通过将<code class="literal">$PGLOG</code>
+	  作为其他文件的符号链接来挂载针对另一个系统用户的攻击，
+	  然后通过追加日志消息将其损坏。
+     </p><p>      默认情况下，这些脚本不安装在任何地方。已经使用它们的用户需要手动重新复制它们，
+	  或者对其修改后的版本应用相同的更改。如果现有的<code class="literal">$PGLOG</code>
+	  文件是root拥有的，那么在使用更正的脚本重新启动服务器之前，需要将其删除或重命名。
+      (CVE-2017-12172)
+     </p></li><li class="listitem"><p>      修复BRIN索引汇总以正确处理并发表扩展 (Álvaro Herrera)
+     </p><p>      以前，竞争条件允许从索引中省略一些表行。
+	  可能有必要重新索引现有的BRIN索引以恢复过去发生的这个问题。
+     </p></li><li class="listitem"><p>      修复BRIN索引并发更新期间可能发生的故障
+      (Tom Lane)
+     </p><p>      这些竞争条件可能会导致像<span class="quote">“<span class="quote">invalid index
+      offnum</span>”</span>或<span class="quote">“<span class="quote">inconsistent range map</span>”</span>这样的错误。
+     </p></li><li class="listitem"><p>
+
+      修复从SPI使用函数调用逻辑解码时崩溃，特别是用PL语言编写的任何函数
+      (Tom Lane)
+     </p></li><li class="listitem"><p>      修复<code class="function">json_build_array()</code>、
+      <code class="function">json_build_object()</code>和它们的<code class="type">jsonb</code>
+      等效函数以正确的处理显式的<code class="literal">VARIADIC</code>参数
+      (Michael Paquier)
+     </p></li><li class="listitem"><p>      正确拒绝尝试将无限浮点值转换为<code class="type">numeric</code>类型
+	  (Tom Lane, KaiGai Kohei)
+     </p><p>      以前的行为是依赖于平台的。
+     </p></li><li class="listitem"><p>      修复列已经添加到视图末尾时极端情况下的崩溃 (Tom Lane)
+     </p></li><li class="listitem"><p>      当视图或规则包含<code class="structname">FieldSelect</code>
+	  或<code class="structname">FieldStore</code>表达式节点时记录适当的依赖关系
+	  (Tom Lane)
+     </p><p>      缺少这些依赖关系可能允许<code class="command">DROP</code>列或数据类型在应该失败时通过，
+	  从而导致稍后使用视图或规则时得到错误。此修补程序不会保护现有视图/规则，
+	  只保护未来创建的那些。
+     </p></li><li class="listitem"><p>      正确检测范围数据类型的可散列性 (Tom Lane)
+     </p><p>      规划器错误地认为任何范围类型都可以散列用于散列连接或散列聚合，
+	  但实际上它必须检查范围的子类型是否具有散列支持。这不会影响任何内置的范围类型，
+	  因为它们无论如何都是可散列的。
+     </p></li><li class="listitem"><p>
+      在确定关系独立性时，正确忽略<code class="structname">RelabelType</code>
+	  表达式节点 (David Rowley)
+     </p><p>
+
+
+      这允许在子查询具有<code class="type">varchar</code>类型的结果列时进行预期的优化。
+     </p></li><li class="listitem"><p>      修复由于XID环绕引起的<code class="command">NOTIFY</code>消息的低概率丢失 (Marko Tiikkaja, Tom Lane)
+     </p><p>      如果一个会话没有执行任何查询，而仅仅是听取了通知，对于超过20亿次事务，
+	  它开始错过来自并发提交事务的一些通知。
+     </p></li><li class="listitem"><p>
+
+
+      当DSM内存请求超出<span class="systemitem">tmpfs</span>中可用的空间时，
+	  避免在Linux上发生<span class="systemitem">SIGBUS</span>崩溃
+      (Thomas Munro)
+     </p></li><li class="listitem"><p>      防止处理嵌套触发器时出现低概率崩溃
+      (Tom Lane)
+     </p></li><li class="listitem"><p>      当事务隔离级别是<code class="literal">REPEATABLE READ</code>或更高时，
+	  允许<code class="command">COPY</code>的<code class="literal">FREEZE</code>选项工作
+	  (Noah Misch)
+     </p><p>      这种情况被前面的错误修复无意中破坏了。
+     </p></li><li class="listitem"><p>      在<code class="command">COPY</code>或<code class="function">lo_export()</code>
+	  中创建文件失败时正确恢复umask设置
+	  (Peter Eisentraut)
+     </p></li><li class="listitem"><p>
+
+
+
+      在<code class="command">ANALYZE</code>中为重复的列名提供更好的错误消息
+	  (Nathan Bossart)
+     </p></li><li class="listitem"><p>
+
+
+      修复在非换行符终止的<code class="filename">pg_hba.conf</code>
+	  文件中最后一行的错误解析
+      (Tom Lane)
+     </p></li><li class="listitem"><p>      修复<span class="application">pg_basebackup</span>
+	  的表空间路径匹配以在比较之前对两个路径进行规范化 (Michael Paquier)
+     </p><p>      这在Windows上特别有用。
+     </p></li><li class="listitem"><p>      修复<span class="application">libpq</span>不要求用户的主目录存在 (Tom Lane)
+     </p><p>      在v10中，尝试读取<code class="filename">~/.pgpass</code>时未能找到主目录被视为硬错误，
+	  但应该只是导致找不到该文件。当读取<code class="filename">~/.pg_service.conf</code>时，
+	  v10和以前的版本分支都犯了同样的错误，但这并不明显，因为除非指定了服务名称，
+	  否则不会找到该文件。
+     </p></li><li class="listitem"><p>      修复<span class="application">libpq</span>来防止<code class="structname">PGresult</code>
+	  的行数中的整数溢出 (Michael Paquier)
+     </p></li><li class="listitem"><p>      修复<span class="application">ecpg</span>
+	  用指针或数组变量处理超出范围的游标声明 (Michael Meskes)
+     </p></li><li class="listitem"><p>      在ecpglib中，根据是否设置了<code class="varname">standard_conforming_strings</code>，
+	  正确处理字符串文字中的反斜杠
+      (Tsunakawa Takayuki)
+     </p></li><li class="listitem"><p>
+
+      按照预期，使ecpglib的Informix兼容性模式忽略整数输入字符串中的小数位数
+	  (Gao Zengqi, Michael Meskes)
+     </p></li><li class="listitem"><p>      修复缺少的临时安装先决条件，用于类似<code class="literal">check</code>的Make目标
+	  (Noah Misch)
+     </p><p>      一些非默认的测试程序，像<code class="literal">make check</code>一样工作，
+	  无法确保临时安装是最新的。
+     </p></li><li class="listitem"><p>      将我们的时区库副本与IANA发行版tzcode2017c同步
+      (Tom Lane)
+     </p><p>      这解决了各种问题；唯一可能是用户可见的是，
+	  如果时区数据目录中没有<code class="filename">posixrules</code>文件，
+	  则POSIX样式的区域名称的默认DST规则现在与当前的美国法律相符，
+	  而不是与十几年前的相符。
+     </p></li><li class="listitem"><p>      将时区数据文件更新为<span class="application">tzdata</span>版本2017c，
+	  用于斐济、纳米比亚、北塞浦路斯、苏丹、汤加和土耳其 &amp; 凯科斯群岛的DST法律变更，
+	  加上阿拉斯加、阿皮亚、缅甸、加尔各答、底特律、爱尔兰、
+	  纳米比亚和帕果帕果的历史更正。
+     </p></li></ul></div></div></div><div class="navfooter"><hr /><table width="100%" summary="Navigation footer"><tr><td width="40%" align="left"><a accesskey="p" href="release-9-6.html">上一页</a> </td><td width="20%" align="center"><a accesskey="u" href="release.html">上一级</a></td><td width="40%" align="right"> <a accesskey="n" href="release-9-5-9.html">下一页</a></td></tr><tr><td width="40%" align="left" valign="top">E.9. 版本 9.6 </td><td width="20%" align="center"><a accesskey="h" href="index.html">起始页</a></td><td width="40%" align="right" valign="top"> E.11. 版本 9.5.9</td></tr></table></div></body></html>

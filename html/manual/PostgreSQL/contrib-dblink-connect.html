@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><title>dblink_connect</title><link rel="stylesheet" type="text/css" href="stylesheet.css" /><link rev="made" href="pgsql-docs@postgresql.org" /><meta name="generator" content="DocBook XSL Stylesheets V1.79.1" /><link rel="prev" href="dblink.html" title="F.11. dblink" /><link rel="next" href="contrib-dblink-connect-u.html" title="dblink_connect_u" /></head><body><div xmlns="http://www.w3.org/TR/xhtml1/transitional" class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="5" align="center">dblink_connect</th></tr><tr><td width="10%" align="left"><a accesskey="p" href="dblink.html" title="F.11. dblink">上一页</a> </td><td width="10%" align="left"><a accesskey="u" href="dblink.html" title="F.11. dblink">上一级</a></td><th width="60%" align="center">F.11. dblink</th><td width="10%" align="right"><a accesskey="h" href="index.html" title="PostgreSQL 10.1 手册">起始页</a></td><td width="10%" align="right"> <a accesskey="n" href="contrib-dblink-connect-u.html" title="dblink_connect_u">下一页</a></td></tr></table><hr></hr></div><div class="refentry" id="CONTRIB-DBLINK-CONNECT"><div class="titlepage"></div><a id="idp85265856" class="indexterm"></a><div class="refnamediv"><h2><span class="refentrytitle">dblink_connect</span></h2><p>dblink_connect — 打开一个到远程数据库的持久连接</p></div><div class="refsynopsisdiv"><h2>大纲</h2><pre class="synopsis">dblink_connect(text connstr) 返回 text
+dblink_connect(text connname, text connstr) 返回 text</pre></div><div class="refsect1" id="idp85268784"><h2>描述</h2><p>    <code class="function">dblink_connect()</code>建立一个到远程<span class="productname">PostgreSQL</span>数据库的连接。要联系的服务器和数据库通过一个标准的<span class="application">libpq</span>连接串来标识。可以选择将一个名字赋予给该连接。多个命名的连接可以被一次打开，但是一次只允许一个未命名连接。连接将会持续直到被关闭或者数据库会话结束。
+   </p><p>    连接串也可以是一个现存外部服务器的名字。在使用外部服务器时，我们推荐使用外部数据包装器<code class="literal">dblink_fdw</code>。见下面的例子，以及<a class="xref" href="sql-createserver.html" title="CREATE SERVER"><span class="refentrytitle">CREATE SERVER</span></a>和<a class="xref" href="sql-createusermapping.html" title="CREATE USER MAPPING"><span class="refentrytitle">CREATE USER MAPPING</span></a>。
+   </p></div><div class="refsect1" id="idp85274512"><h2>参数</h2><div class="variablelist"><dl class="variablelist"><dt><span class="term"><em class="parameter"><code>connname</code></em></span></dt><dd><p>       要用于这个连接的名字。如果被忽略，将打开一个未命名连接并且替换掉任何现有的未命名连接。
+      </p></dd><dt><span class="term"><em class="parameter"><code>connstr</code></em></span></dt><dd><p><span class="application">libpq</span>-风格的连接信息串，例如
+       <code class="literal">hostaddr=127.0.0.1 port=5432 dbname=mydb user=postgres
+       password=mypasswd</code>。详见<a class="xref" href="libpq-connect.html#LIBPQ-CONNSTRING" title="33.1.1. 连接字符串">第 33.1.1 节</a>。此外，还可以是一个外部服务器的名字。
+      </p></dd></dl></div></div><div class="refsect1" id="idp85279952"><h2>返回值</h2><p>    返回状态，它总是<code class="literal">OK</code>（因为任何错误会导致该函数抛出一个错误而不是返回）。
+   </p></div><div class="refsect1" id="idp85281424"><h2>注解</h2><p>    只有超级用户能够使用<code class="function">dblink_connect</code>来创建无口令认证连接。如果非超级用户需要这种能力，使用<code class="function">dblink_connect_u</code>。
+   </p><p>    选择包含等号的连接名是不明智的，因为这会产生与在其他<code class="filename">dblink</code>函数中的连接信息串混淆的风险。
+   </p></div><div class="refsect1" id="idp85284864"><h2>例子</h2><pre class="screen">SELECT dblink_connect('dbname=postgres');
+ dblink_connect
+----------------
+ OK
+(1 row)
+
+SELECT dblink_connect('myconn', 'dbname=postgres');
+ dblink_connect
+----------------
+ OK
+(1 row)
+
+-- FOREIGN DATA WRAPPER functionality
+-- Note: local connection must require password authentication for this to work properly
+--       Otherwise, you will receive the following error from dblink_connect():
+--       ----------------------------------------------------------------------
+--       ERROR:  password is required
+--       DETAIL:  Non-superuser cannot connect if the server does not request a password.
+--       HINT:  Target server's authentication method must be changed.
+
+CREATE SERVER fdtest FOREIGN DATA WRAPPER dblink_fdw OPTIONS (hostaddr '127.0.0.1', dbname 'contrib_regression');
+
+CREATE USER regress_dblink_user WITH PASSWORD 'secret';
+CREATE USER MAPPING FOR regress_dblink_user SERVER fdtest OPTIONS (user 'regress_dblink_user', password 'secret');
+GRANT USAGE ON FOREIGN SERVER fdtest TO regress_dblink_user;
+GRANT SELECT ON TABLE foo TO regress_dblink_user;
+
+\set ORIGINAL_USER :USER
+\c - regress_dblink_user
+SELECT dblink_connect('myconn', 'fdtest');
+ dblink_connect 
+----------------
+ OK
+(1 row)
+
+SELECT * FROM dblink('myconn','SELECT * FROM foo') AS t(a int, b text, c text[]);
+ a  | b |       c
+----+---+---------------
+  0 | a | {a0,b0,c0}
+  1 | b | {a1,b1,c1}
+  2 | c | {a2,b2,c2}
+  3 | d | {a3,b3,c3}
+  4 | e | {a4,b4,c4}
+  5 | f | {a5,b5,c5}
+  6 | g | {a6,b6,c6}
+  7 | h | {a7,b7,c7}
+  8 | i | {a8,b8,c8}
+  9 | j | {a9,b9,c9}
+ 10 | k | {a10,b10,c10}
+(11 rows)
+
+\c - :ORIGINAL_USER
+REVOKE USAGE ON FOREIGN SERVER fdtest FROM regress_dblink_user;
+REVOKE SELECT ON TABLE foo FROM regress_dblink_user;
+DROP USER MAPPING FOR regress_dblink_user SERVER fdtest;
+DROP USER regress_dblink_user;
+DROP SERVER fdtest;</pre></div></div><div class="navfooter"><hr /><table width="100%" summary="Navigation footer"><tr><td width="40%" align="left"><a accesskey="p" href="dblink.html">上一页</a> </td><td width="20%" align="center"><a accesskey="u" href="dblink.html">上一级</a></td><td width="40%" align="right"> <a accesskey="n" href="contrib-dblink-connect-u.html">下一页</a></td></tr><tr><td width="40%" align="left" valign="top">F.11. dblink </td><td width="20%" align="center"><a accesskey="h" href="index.html">起始页</a></td><td width="40%" align="right" valign="top"> dblink_connect_u</td></tr></table></div></body></html>

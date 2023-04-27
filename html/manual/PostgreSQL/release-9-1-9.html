@@ -1,0 +1,84 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><title>E.98. 版本9.1.9</title><link rel="stylesheet" type="text/css" href="stylesheet.css" /><link rev="made" href="pgsql-docs@postgresql.org" /><meta name="generator" content="DocBook XSL Stylesheets V1.79.1" /><link rel="prev" href="release-9-1-10.html" title="E.97. 版本9.1.10" /><link rel="next" href="release-9-1-8.html" title="E.99. 版本9.1.8" /></head><body><div xmlns="http://www.w3.org/TR/xhtml1/transitional" class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="5" align="center">E.98. 版本9.1.9</th></tr><tr><td width="10%" align="left"><a accesskey="p" href="release-9-1-10.html" title="E.97. 版本9.1.10">上一页</a> </td><td width="10%" align="left"><a accesskey="u" href="release.html" title="附录 E. 版本说明">上一级</a></td><th width="60%" align="center">附录 E. 版本说明</th><td width="10%" align="right"><a accesskey="h" href="index.html" title="PostgreSQL 10.1 手册">起始页</a></td><td width="10%" align="right"> <a accesskey="n" href="release-9-1-8.html" title="E.99. 版本9.1.8">下一页</a></td></tr></table><hr></hr></div><div class="sect1" id="RELEASE-9-1-9"><div class="titlepage"><div><div><h2 class="title" style="clear: both">E.98. 版本9.1.9</h2></div></div></div><div class="toc"><dl class="toc"><dt><span class="sect2"><a href="release-9-1-9.html#idp73163680">E.98.1. 迁移到版本9.1.9</a></span></dt><dt><span class="sect2"><a href="release-9-1-9.html#idp73167040">E.98.2. 变化</a></span></dt></dl></div><p><strong>发布日期：. </strong>2013-04-04</p><p> 该版本包含了9.1.8的各种修复。
+ 关于9.1主要版本的新功能信息，
+ 请参阅<a class="xref" href="release-9-1.html" title="E.107. 版本9.1">第 E.107 节</a>。</p><div class="sect2" id="idp73163680"><div class="titlepage"><div><div><h3 class="title">E.98.1. 迁移到版本9.1.9</h3></div></div></div><p>    为了运行9.1.X不需要转储/恢复。</p><p>   然而，该发布修正了GiST索引管理的一些错误。
+   在安装这个更新之后，<code class="command">REINDEX</code>
+   任何GiST索引满足一个或更多个下面描述的条件是明智的。</p><p>   同时，如果你正从9.1.6更早版本中更新，参阅<a class="xref" href="release-9-1-6.html" title="E.101. 版本9.1.6">第 E.101 节</a>。</p></div><div class="sect2" id="idp73167040"><div class="titlepage"><div><div><h3 class="title">E.98.2. 变化</h3></div></div></div><div class="itemizedlist"><ul class="itemizedlist" style="list-style-type: disc; "><li class="listitem"><p>   修复服务器命令行开关安全解析(Mitsumasa Kondo, Kyotaro Horiguchi)</p><p>   包含以<span class="quote">“<span class="quote"><code class="literal">-</code></span>”</span>开头的数据库名字的连接请求可以用来损坏或者破坏
+   服务器的数据目录文件，即使最终拒绝该请求。(CVE-2013-1899)</p></li><li class="listitem"><p>  在每个postmaster子进程中重置OpenSSL随机状态(Marko Kreen)</p><p>   通过<code class="filename">contrib/pgcrypto</code>函数产生的随机数
+ 可能对于另外一个猜测的数据库用户相对容易，
+ 避免这种情况。
+ 当postmaster使用<code class="varname">ssl</code> = <code class="literal">on</code>被配置时，
+ 该风险是非常显著的，
+ 但是大多数连接不能使用SSL加密。(CVE-2013-1900)</p></li><li class="listitem"><p>   使用REPLICATION权限检查测试当前用户不是认证用户(Noah Misch)</p><p>   一个未经授权的数据库用户可以利用
+   这个错误调用<code class="function">pg_start_backup()</code>
+   或者<code class="function">pg_stop_backup()</code>,
+   因此可能干扰常规备份的创建。(CVE-2013-1901)</p></li><li class="listitem"><p>    当不适合这样执行时，
+不使用<span class="quote">“<span class="quote">fuzzy</span>”</span>几何比较修复GiST索引。
+(Alexander Korotkov)</p><p>    核心几何类型使用<span class="quote">“<span class="quote">fuzzy</span>”</span>等式执行比较，
+但是<code class="function">gist_box_same</code>必须执行
+精确比较，
+否则GiST索引使用它可能变得不一致。
+安装这个更新之后，
+用户应该在<code class="type">box</code>，<code class="type">polygon</code>，
+<code class="type">circle</code>或者<code class="type">point</code>列上
+<code class="command">REINDEX</code>任何GiST索引，
+因为所有这些使用<code class="function">gist_box_same</code>。</p></li><li class="listitem"><p>    修复不正确的范围并集以及
+为了可变宽度数据类型使用
+<code class="filename">contrib/btree_gist</code>的GiST索引中惩罚逻辑，
+ 也就是<code class="type">text</code>, <code class="type">bytea</code>， 
+ <code class="type">bit</code>和<code class="type">numeric</code>列(Tom Lane)</p><p>   这些错误可能导致不一致索引，
+   其中一些出现的关键字不会被搜索发现，
+   并且在无用的索引膨胀中，
+在安装此更新后建议用户<code class="command">REINDEX</code>这种索引。</p></li><li class="listitem"><p>修复为多列索引在GiST页中分离代码的错误(Tom Lane)</p><p>    这些错误可能导致不一致索引，
+其中一些出现的关键字不会被搜索发现，
+并且在索引中是不必要的无效的搜索。
+在安装此更新后建议用户
+<code class="command">REINDEX</code>多列GiST索引。</p></li><li class="listitem"><p>  修复<code class="function">gist_point_consistent</code>处理
+  模糊一致性(Alexander Korotkov)</p><p>  在<code class="type">point</code>列GiST索引上的索引扫描可能有时
+  产生不同于顺序扫描的结果，
+因为<code class="function">gist_point_consistent</code>
+不同意底层操作编码关于是否精确或者模糊的执行比较。</p></li><li class="listitem"><p>  在WAL重放中修复缓冲区泄露(Heikki Linnakangas)</p><p>    在回放期间这个缺陷可能产生<span class="quote">“<span class="quote">不正确
+的本地针数</span>”</span>错误，使得恢复不可能。</p></li><li class="listitem"><p>    修复<code class="command">DELETE RETURNING</code>中的紊乱情况(Tom Lane)</p><p>   在这样的情况下，<code class="command">DELETE RETURNING</code>试图
+   从当前进程不再有任何针的
+共享缓冲区中抓取数据。
+如果一些其他进程同时改变缓冲区，
+这将导致垃圾<code class="literal">RETURNING</code>输出，
+甚至崩溃。</p></li><li class="listitem"><p>   修复规则表达式编译中的无限循环风险(Tom Lane, Don Porter)</p></li><li class="listitem"><p>    修复规则表达式编译中潜在的空指针引用(Tom Lane)</p></li><li class="listitem"><p>    合适的地方修复<code class="function">to_char()</code>只
+使用ASCII大小写折叠规则(Tom Lane)</p><p>      这种修复一些区域独立化的模板模式的不当行为，但是
+  在Turkish区域中胡乱操作<span class="quote">“<span class="quote"><code class="literal">I</code></span>”</span>和
+      <span class="quote">“<span class="quote"><code class="literal">i</code></span>”</span>。</p></li><li class="listitem"><p>    修复时间戳<code class="literal">1999-12-31 24:00:00</code>不必要的拒绝(Tom Lane)</p></li><li class="listitem"><p>   当一个事务执行<code class="command">UNLISTEN</code>
+   然后<code class="command">LISTEN</code>时，修复逻辑错误(Tom Lane)</p><p>   该会话根本不监听通知事件，尽管它确实在这种情况下应该监听。</p></li><li class="listitem"><p>   在列被添加到依赖于其他视图的
+   视图中之后修复可能的规划器崩溃(Tom Lane)</p></li><li class="listitem"><p>   删除无效的<span class="quote">“<span class="quote">picksplit不支持
+   的二次分裂</span>”</span>日志消息(Josh Hansen, Tom Lane)</p><p>    该消息似乎被添加到从未写入的期望代码中，
+并且可能从来不是，因为二次分裂的GiST的缺省处理
+实际上相当好。
+所以停止打扰关于它的最终用户。</p></li><li class="listitem"><p>  修复发送会话的
+  最后几个事务提交/终止计数到统计收集器的可能错误(Tom Lane)</p></li><li class="listitem"><p>   消除在PL/Perl中的<code class="function">spi_prepare()</code>
+   函数的内存泄露(Alex Hunsaker, Tom Lane)</p></li><li class="listitem"><p>    修复<span class="application">pg_dumpall</span>以处理正确包含<span class="quote">“<span class="quote"><code class="literal">=</code></span>”</span>的
+ 数据库名字(Heikki Linnakangas)</p></li><li class="listitem"><p>   当给定一个不正确的连接字符串时，
+   避免<span class="application">pg_dump</span>中崩溃(Heikki Linnakangas)</p></li><li class="listitem"><p>    忽略<span class="application">pg_dump</span>和<span class="application">pg_upgrade</span>中
+的无效索引(Michael Paquier, Bruce Momjian)</p><p>     备份无效索引可能导致恢复时间的问题，
+比如如果索引创建失败的原因是它试图强制
+不满足表的数据的唯一性条件。同时，如果索引创建实际上仍然在进行中，
+认为它是一个不受约束的DDL变化似乎是合理的，其中<span class="application">pg_dump</span>
+不期望备份。<span class="application">pg_upgrade</span>现在也跳过无效索引而非失败。</p></li><li class="listitem"><p>   在<span class="application">pg_basebackup</span>中，当备份表空间时，
+   仅仅包含当前服务器版本的子目录
+(Heikki Linnakangas)</p></li><li class="listitem"><p>  在<span class="application">pg_basebackup</span>和
+      <span class="application">pg_receivexlog</span>中添加服务器版本检查，
+  因此它们与不工作的版本联合失败(Heikki Linnakangas)</p></li><li class="listitem"><p>   修复<code class="filename">contrib/pg_trgm</code>的<code class="function">similarity()</code>
+   函数为少于三个的字符串返回零(Tom Lane)</p><p>  先前它返回<code class="literal">NaN</code>由于内部除以零。</p></li><li class="listitem"><p>   为了Chile, Haiti, Morocco, Paraguay和一些Russian区域中DST变化规律更
+ 新时间区域数据文件到<span class="application">tzdata</span>发布2013b。
+     同时为更多地方修正历史区域数据。</p><p>  同时，为俄罗斯和其他地方的最近变化更新时区缩写文件：
+  <code class="literal">CHOT</code>, <code class="literal">GET</code>,
+      <code class="literal">IRKT</code>, <code class="literal">KGT</code>, 
+  <code class="literal">KRAT</code>, <code class="literal">MAGT</code>,
+      <code class="literal">MAWT</code>, <code class="literal">MSK</code>, 
+  <code class="literal">NOVT</code>, <code class="literal">OMST</code>,
+      <code class="literal">TKT</code>, <code class="literal">VLAT</code>, 
+  <code class="literal">WST</code>, <code class="literal">YAKT</code>,
+      <code class="literal">YEKT</code>现在遵从他们当前的含义，
+  以及
+      <code class="literal">VOLT</code> (Europe/Volgograd)和
+  <code class="literal">MIST</code>(Antarctica/Macquarie)
+  被添加到缺省缩写列表中。</p></li></ul></div></div></div><div class="navfooter"><hr /><table width="100%" summary="Navigation footer"><tr><td width="40%" align="left"><a accesskey="p" href="release-9-1-10.html">上一页</a> </td><td width="20%" align="center"><a accesskey="u" href="release.html">上一级</a></td><td width="40%" align="right"> <a accesskey="n" href="release-9-1-8.html">下一页</a></td></tr><tr><td width="40%" align="left" valign="top">E.97. 版本9.1.10 </td><td width="20%" align="center"><a accesskey="h" href="index.html">起始页</a></td><td width="40%" align="right" valign="top"> E.99. 版本9.1.8</td></tr></table></div></body></html>

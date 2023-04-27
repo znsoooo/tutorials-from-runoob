@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><title>E.141. 版本8.4.13</title><link rel="stylesheet" type="text/css" href="stylesheet.css" /><link rev="made" href="pgsql-docs@postgresql.org" /><meta name="generator" content="DocBook XSL Stylesheets V1.79.1" /><link rel="prev" href="release-8-4-14.html" title="E.140. 版本8.4.14" /><link rel="next" href="release-8-4-12.html" title="E.142. 版本8.4.12" /></head><body><div xmlns="http://www.w3.org/TR/xhtml1/transitional" class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="5" align="center">E.141. 版本8.4.13</th></tr><tr><td width="10%" align="left"><a accesskey="p" href="release-8-4-14.html" title="E.140. 版本8.4.14">上一页</a> </td><td width="10%" align="left"><a accesskey="u" href="release.html" title="附录 E. 版本说明">上一级</a></td><th width="60%" align="center">附录 E. 版本说明</th><td width="10%" align="right"><a accesskey="h" href="index.html" title="PostgreSQL 10.1 手册">起始页</a></td><td width="10%" align="right"> <a accesskey="n" href="release-8-4-12.html" title="E.142. 版本8.4.12">下一页</a></td></tr></table><hr></hr></div><div class="sect1" id="RELEASE-8-4-13"><div class="titlepage"><div><div><h2 class="title" style="clear: both">E.141. 版本8.4.13</h2></div></div></div><div class="toc"><dl class="toc"><dt><span class="sect2"><a href="release-8-4-13.html#idp76573120">E.141.1. 迁移到版本8.4.13</a></span></dt><dt><span class="sect2"><a href="release-8-4-13.html#idp76574944">E.141.2. 修改列表</a></span></dt></dl></div><p><strong>发布日期：. </strong>2012-08-17</p><p>   该发布包含来自8.4.12各种修复。
+   关于8.4主要发布的新功能的信息，
+   参阅<a class="xref" href="release-8-4.html" title="E.154. 版本8.4">第 E.154 节</a>。</p><div class="sect2" id="idp76573120"><div class="titlepage"><div><div><h3 class="title">E.141.1. 迁移到版本8.4.13</h3></div></div></div><p>    运行8.4.X不需要备份/恢复。</p><p>   然而，如果你从8.4.10更早版本更新，参阅<a class="xref" href="release-8-4-10.html" title="E.144. 版本8.4.10">第 E.144 节</a>。</p></div><div class="sect2" id="idp76574944"><div class="titlepage"><div><div><h3 class="title">E.141.2. 修改列表</h3></div></div></div><div class="itemizedlist"><ul class="itemizedlist" style="list-style-type: disc; "><li class="listitem"><p>   通过XML实体引用避免访问外部文件/URL(Noah Misch, Tom Lane)</p><p>    <code class="function">xml_parse()</code>可以尝试读取外部文件夹或者URL作为需要解决DTD
+   以及XML值中的实体引用，从而允许未授权数据库用户尝试读取与数据库服务器权限的数据。
+   当外部数据还没直接返回给用户时，如果数据没有解析为有效XML，那么它的一部分可能会暴露
+   在错误消息中；并且无论如何检查文件是否存在的能力可能对攻击者有用。</p></li><li class="listitem"><p>   阻止通过<code class="filename">contrib/xml2</code>的
+<code class="function">xslt_process()</code>访问外部文件夹/URL(Peter Eisentraut)</p><p>    <span class="application">libxslt</span>提供通过样式表命令读写文件夹和URL的能力，
+ 从而允许未授权数据库用户以读写带有数据库服务器权限的数据。
+ 禁止通过<span class="application">libxslt</span>的安全选项的正确使用。(CVE-2012-3488)</p><p>   同时，删除<code class="function">xslt_process()</code>的能力从外部文件夹/URL中读取文件和样式表。
+   当这是已证明<span class="quote">“<span class="quote">特性</span>”</span>时，那么它被长期视为坏主意。
+   为了CVE-2012-3489修复打破该能力，而不是付出努力尝试修复它，
+   我们只是打算简单地删除它。</p></li><li class="listitem"><p>   防止btree索引页过早回收利用(Noah Misch)</p><p>   当我们允许只读事务略过已分配XID时，
+   当只读事务仍然运行到它时，
+   那么我们介绍已删除btree页可以被重新利用的可能性。
+   这会导致不正确索引搜索结果。
+   在该字段产生错误的可能性很低，因为时间要求，
+   但尽管如此它应该被修复。</p></li><li class="listitem"><p>   修复带有新创造或者重新设置序列的碰撞安全漏洞(Tom Lane)</p><p>    如果在新创造或者重新设置序列上执行<code class="command">ALTER SEQUENCE</code>，
+    然后在它上精确执行一个<code class="function">nextval()</code>调用，
+然后服务器崩溃了，WAL回放可以恢复序列到似乎没有执行<code class="function">nextval()</code>的状态下，
+然而允许通过下一个<code class="function">nextval()</code>调用再次返回第一个序列值。
+特别是这可以表现为<code class="type">serial</code>列，因为串行列的序列的创建包含
+<code class="command">ALTER SEQUENCE OWNED BY</code>步骤。</p></li><li class="listitem"><p>    在<code class="function">pg_start_backup()</code>之后确保
+   <code class="filename">backup_label</code>文件是fsync (Dave Kerr)</p></li><li class="listitem"><p>    后面补丁9.1改进以压缩fsync请求队列(Robert Haas)</p><p>    在检查点期间提高了性能。
+9.1变化已看到似乎安全的足够字段测试到后面补丁中。
+</p></li><li class="listitem"><p>   仅仅允许autovacuum通过直接的封锁进程被自动取消(Tom Lane)</p><p>    原代码可能允许某些情况下的不一致操作；
+    特别是，在少于<code class="literal">deadlock_timeout</code>宽限期后可以取消autovacuum。</p></li><li class="listitem"><p>    改善autovacuum取消记录(Robert Haas)</p></li><li class="listitem"><p>   修复日志收集器以致于在服务器启动后
+   第一个日志循环期间运行<code class="literal">log_truncate_on_rotation</code> (Tom Lane)</p></li><li class="listitem"><p>    修复<code class="literal">WITH</code>附属于嵌套设置操作
+   (<code class="literal">UNION</code>/<code class="literal">INTERSECT</code>/<code class="literal">EXCEPT</code>)(Tom Lane)</p></li><li class="listitem"><p>    确保参照子查询的整行不包含任何额外的
+  <code class="literal">GROUP BY</code>或者<code class="literal">ORDER BY</code>列(Tom Lane)</p></li><li class="listitem"><p>     在<code class="command">CREATE TABLE</code>期间<code class="literal">CHECK</code>约束和索引定义中不
+   允许拷贝整行引用(Tom Lane)</p><p>     这种情况可以产生带有
+      <code class="literal">LIKE</code>或者<code class="literal">INHERITS</code>的<code class="command">CREATE TABLE</code>。
+  复制整列变量被错误地标记带有不是一个新的原来表的行类型。  
+为<code class="literal">LIKE</code>拒绝理由似乎是合理的，
+因为行类型可能后面会分散。
+为<code class="literal">INHERITS</code>我们理论上应该接受它，
+伴随对父表的行类型的隐含
+胁迫；但比起后端补丁似乎是安全的需要更多的工作。 </p></li><li class="listitem"><p>     修复<code class="literal">ARRAY(SELECT ...)</code>子查询中的内存泄露
+(Heikki Linnakangas, Tom Lane)</p></li><li class="listitem"><p>    从正则表达式修复常见前缀提取(Tom Lane)</p><p>    该代码被量化的括号子表达式搞糊涂了，比如<code class="literal">^(foo)?bar</code>。
+这将导致这种模式不正确的搜索索引优化。</p></li><li class="listitem"><p>   修复<code class="type">interval</code>常量中带有解析符号
+   <em class="replaceable"><code>hh</code></em><code class="literal">:</code><em class="replaceable"><code>mm</code></em>和
+   <em class="replaceable"><code>hh</code></em><code class="literal">:</code><em class="replaceable"><code>mm</code></em><code class="literal">:</code><em class="replaceable"><code>ss</code></em>字段错误(Amit Kapila, Tom Lane)</p></li><li class="listitem"><p>     正确报告<code class="filename">contrib/xml2</code>的<code class="function">xslt_process()</code>中错误(Tom Lane)</p></li><li class="listitem"><p>    为了Morocco和Tokelau中DST变化规律更新时区数据文件到<span class="application">tzdata</span>发布2012e</p></li></ul></div></div></div><div class="navfooter"><hr /><table width="100%" summary="Navigation footer"><tr><td width="40%" align="left"><a accesskey="p" href="release-8-4-14.html">上一页</a> </td><td width="20%" align="center"><a accesskey="u" href="release.html">上一级</a></td><td width="40%" align="right"> <a accesskey="n" href="release-8-4-12.html">下一页</a></td></tr><tr><td width="40%" align="left" valign="top">E.140. 版本8.4.14 </td><td width="20%" align="center"><a accesskey="h" href="index.html">起始页</a></td><td width="40%" align="right" valign="top"> E.142. 版本8.4.12</td></tr></table></div></body></html>

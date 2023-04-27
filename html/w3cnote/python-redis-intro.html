@@ -1,0 +1,1828 @@
+<!Doctype html>
+<html>
+<head>
+	<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+	<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+	<title>Python redis 使用介绍 | 菜鸟教程</title>
+
+  <meta name='robots' content='max-image-preview:large' />
+<link rel='stylesheet' id='classic-theme-styles-css' href='http://www.runoob.com/wp-includes/css/classic-themes.min.css?ver=6.2' type='text/css' media='all' />
+<link rel="canonical" href="http://www.runoob.com/w3cnote/python-redis-intro.html" />
+<meta name="keywords" content="Python redis 使用介绍">
+<meta name="description" content="本章节我们将为大家介绍 Python 如何操作 redis，redis 是一个 Key-Value 数据库，Value 支持 string(字符串)，list(列表)，set(集合)，zset(有序集合)，hash(哈希类型)等类型。 关于 redis 的更多内容可以参考我们的 redis 教程，注意在学习本章节之前你要确保你的 redis 服务已经安装。  redis 启动界面如下： 启动 redis [mycode4 type=&#..">
+		
+	<link rel="shortcut icon" href="https://static.runoob.com/images/favicon.ico">
+	<link rel="stylesheet" href="/wp-content/themes/runoob/style.css?v=1.170" type="text/css" media="all" />	
+	<link rel="stylesheet" href="https://cdn.staticfile.org/font-awesome/4.7.0/css/font-awesome.min.css" media="all" />	
+  <!--[if gte IE 9]><!-->
+  <script src="https://cdn.staticfile.org/jquery/2.0.3/jquery.min.js"></script>
+  <!--<![endif]-->
+  <!--[if lt IE 9]>
+     <script src="https://cdn.staticfile.org/jquery/1.9.1/jquery.min.js"></script>
+     <script src="https://cdn.staticfile.org/html5shiv/r29/html5.min.js"></script>
+  <![endif]-->
+  <link rel="apple-touch-icon" href="https://static.runoob.com/images/icon/mobile-icon.png"/>
+  <meta name="apple-mobile-web-app-title" content="菜鸟教程">
+</head>
+<body>
+
+<!--  头部 -->
+<div class="container logo-search">
+
+  <div class="col search row-search-mobile">
+    <form action="index.php">
+      <input class="placeholder" placeholder="搜索……" name="s" autocomplete="off">
+      
+    </form>
+  </div>
+
+  <div class="row">
+    <div class="col logo">
+      <h1><a href="/">菜鸟教程 -- 学的不仅是技术，更是梦想！</a></h1>
+    </div>
+        <div class="col right-list"> 
+    <button class="btn btn-responsive-nav btn-inverse" data-toggle="collapse" data-target=".nav-main-collapse" id="pull" style=""> <i class="fa fa-navicon"></i> </button>
+    </div>
+        
+    <div class="col search search-desktop last">
+      <div class="search-input" >
+      <form action="//www.runoob.com/" target="_blank">
+        <input class="placeholder" id="s" name="s" placeholder="搜索……"  autocomplete="off" style="height: 44px;">
+      </form>
+      
+      </div>
+    </div>
+  </div>
+</div>
+
+
+
+<!-- 导航栏 -->
+<div class="container navigation">
+    <div class="row">
+        <div class="col nav">
+            
+
+                        <ul class="pc-nav" id="note-nav">
+                <li><a href="//www.runoob.com/">首页</a></li>
+                <li><a href="/w3cnote">笔记首页</a></li>
+                <li><a href="/w3cnote/android-tutorial-intro.html" title="Android 基础入门教程">Android</a></li>
+                <li><a href="/w3cnote/es6-tutorial.html" title="ES6 教程">ES6 教程</a></li>
+                <li><a href="/w3cnote/ten-sorting-algorithm.html" title="排序算法">排序算法</a></li>
+                <li><a href="/w3cnote/hadoop-tutorial.html" title="Hadoop 教程">Hadoop</a></li>
+                <li><a href="/w3cnote/zookeeper-tutorial.html" title="Zookeeper 教程">Zookeeper</a></li>
+                <li><a href="/w3cnote/verilog-tutorial.html" title="Verilog 教程">Verilog</a></li>
+                <li><a href="/w3cnote_genre/code" title="编程技术">编程技术</a></li> 
+                <li><a href="/w3cnote_genre/coderlife" title="程序员人生">程序员人生</a></li>
+                
+                <!--<li><a href="javascript:;" class="runoob-pop">登录</a></li>
+                
+                
+                        <li>
+                <a style="font-weight:bold;" href="https://www.runoob.com/linux/linux-tutorial.html#yunserver" target="_blank" onclick="_hmt.push(['_trackEvent', 'aliyun', 'click', 'aliyun'])" title="kkb">云服务器</a>
+                </li>
+                <li><a href="http://gk.link/a/104mQ" target="_blank" style="font-weight: bold;"onclick="_hmt.push(['_trackEvent', '极客时间', 'click', 'jike'])" title="我的圈子">极客时间</a></li>
+            
+                
+                <li><a target="_blank" href="/shoppinglist" rel="nofollow">知识店铺</a></li> 
+        -->
+            </ul>
+                        
+              
+            <ul class="mobile-nav">
+                <li><a href="/w3cnote">首页</a></li>
+                <li><a href="/w3cnote_genre/android" target="_blank" title="Android 基础入门教程">Android</a></li>
+                <li><a href="/w3cnote/es6-tutorial.html" target="_blank" title="ES6 教程">ES6</a></li>
+                <li><a href="/w3cnote_genre/joke" target="_blank" title="程序员笑话">逗乐</a></li>
+                
+                <a href="javascript:void(0)" class="search-reveal">Search</a> 
+            </ul>
+            
+        </div>
+    </div>
+</div>
+
+
+<!--  内容  -->
+<div class="container main">
+	<div class="row">
+
+		<div class="col middle-column big-middle-column">
+	 			<div class="article">
+			<div class="article-heading">
+				<h2>Python redis 使用介绍</h2>				<h3><em>分类</em> <a href="/w3cnote_genre/code" title="编程技术" >编程技术</a> </h3>
+			</div>
+			<div class="article-body note-body">
+				<div class="article-intro">
+					<p>本章节我们将为大家介绍 Python 如何操作 redis，redis 是一个 Key-Value 数据库，Value 支持 string(字符串)，list(列表)，set(集合)，zset(有序集合)，hash(哈希类型)等类型。</p>
+<p>关于 redis 的更多内容可以参考我们的 <a href="https://www.runoob.com/redis/redis-tutorial.html" rel="noopener noreferrer" target="_blank">redis 教程</a>，注意在学习本章节之前你要确保你的 redis 服务已经安装。</p>
+
+<p>redis 启动界面如下：</p>
+<div class="example"><h2 class="example">启动 redis</h2> <div class="example_code">
+$ .<span style="color: #000000; font-weight: bold;">/</span>redis-server<br />
+<span style="color: #000000;">75858</span>:C <span style="color: #000000;">25</span> Oct <span style="color: #000000;">11</span>:<span style="color: #000000;">43</span>:<span style="color: #000000;">34.329</span> <span style="color: #666666; font-style: italic;"># Warning: no config file specified, using the default config. In order to specify a config file use ./redis-server /path/to/redis.conf</span><br />
+<span style="color: #000000;">75858</span>:M <span style="color: #000000;">25</span> Oct <span style="color: #000000;">11</span>:<span style="color: #000000;">43</span>:<span style="color: #000000;">34.331</span> <span style="color: #000000; font-weight: bold;">*</span> Increased maximum number of open files to <span style="color: #000000;">10032</span> <span style="color: #7a0874; font-weight: bold;">&#40;</span>it was originally <span style="color: #000000; font-weight: bold;">set</span> to <span style="color: #000000;">256</span><span style="color: #7a0874; font-weight: bold;">&#41;</span>.<br />
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; _._ &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;<br />
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;_.-<span style="color: #000000; font-weight: bold;">``</span>__ <span style="color: #a10;">''</span>-._ &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; <br />
+&nbsp; &nbsp; &nbsp; _.-<span style="color: #000000; font-weight: bold;">``</span> &nbsp; &nbsp;<span style="color: #000000; font-weight: bold;">`</span>. &nbsp;<span style="color: #000000; font-weight: bold;">`</span>_. &nbsp;<span style="color: #a10;">''</span>-._ &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; Redis 3.0.3 <span style="color: #7a0874; font-weight: bold;">&#40;</span>255fcb1a<span style="color: #000000; font-weight: bold;">/</span><span style="color: #000000;">0</span><span style="color: #7a0874; font-weight: bold;">&#41;</span> <span style="color: #000000;">64</span> bit<br />
+&nbsp; .-<span style="color: #000000; font-weight: bold;">``</span> .-<span style="color: #000000; font-weight: bold;">```</span>. &nbsp;<span style="color: #000000; font-weight: bold;">```</span>\<span style="color: #000000; font-weight: bold;">/</span> &nbsp; &nbsp;_.,_ <span style="color: #a10;">''</span>-._ &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; <br />
+&nbsp;<span style="color: #7a0874; font-weight: bold;">&#40;</span> &nbsp; &nbsp;<span style="color: #a10;">' &nbsp; &nbsp; &nbsp;, &nbsp; &nbsp; &nbsp; .-` &nbsp;| `, &nbsp; &nbsp;) &nbsp; &nbsp; Running in standalone mode<br />
+&nbsp;|`-._`-...-` __...-.``-._|'</span><span style="color: #000000; font-weight: bold;">`</span> _.-<span style="color: #a10;">'| &nbsp; &nbsp; Port: 6379<br />
+&nbsp;| &nbsp; &nbsp;`-._ &nbsp; `._ &nbsp; &nbsp;/ &nbsp; &nbsp; _.-'</span> &nbsp; &nbsp;<span style="color: #000000; font-weight: bold;">|</span> &nbsp; &nbsp; PID: <span style="color: #000000;">75858</span><br />
+&nbsp; <span style="color: #000000; font-weight: bold;">`</span>-._ &nbsp; &nbsp;<span style="color: #000000; font-weight: bold;">`</span>-._ &nbsp;<span style="color: #000000; font-weight: bold;">`</span>-.<span style="color: #000000; font-weight: bold;">/</span> &nbsp;_.-<span style="color: #a10;">' &nbsp; &nbsp;_.-'</span> &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; <br />
+&nbsp;<span style="color: #000000; font-weight: bold;">|`</span>-._<span style="color: #000000; font-weight: bold;">`</span>-._ &nbsp; &nbsp;<span style="color: #000000; font-weight: bold;">`</span>-.__.-<span style="color: #a10;">' &nbsp; &nbsp;_.-'</span>_.-<span style="color: #a10;">'| &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;<br />
+&nbsp;| &nbsp; &nbsp;`-._`-._ &nbsp; &nbsp; &nbsp; &nbsp;_.-'</span>_.-<span style="color: #a10;">' &nbsp; &nbsp;| &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; http://redis.io &nbsp; &nbsp; &nbsp; &nbsp;<br />
+&nbsp; `-._ &nbsp; &nbsp;`-._`-.__.-'</span>_.-<span style="color: #a10;">' &nbsp; &nbsp;_.-'</span> &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; <br />
+&nbsp;<span style="color: #000000; font-weight: bold;">|`</span>-._<span style="color: #000000; font-weight: bold;">`</span>-._ &nbsp; &nbsp;<span style="color: #000000; font-weight: bold;">`</span>-.__.-<span style="color: #a10;">' &nbsp; &nbsp;_.-'</span>_.-<span style="color: #a10;">'| &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;<br />
+&nbsp;| &nbsp; &nbsp;`-._`-._ &nbsp; &nbsp; &nbsp; &nbsp;_.-'</span>_.-<span style="color: #a10;">' &nbsp; &nbsp;| &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;<br />
+&nbsp; `-._ &nbsp; &nbsp;`-._`-.__.-'</span>_.-<span style="color: #a10;">' &nbsp; &nbsp;_.-'</span> &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; <br />
+&nbsp; &nbsp; &nbsp; <span style="color: #000000; font-weight: bold;">`</span>-._ &nbsp; &nbsp;<span style="color: #000000; font-weight: bold;">`</span>-.__.-<span style="color: #a10;">' &nbsp; &nbsp;_.-'</span> &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; <br />
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; <span style="color: #000000; font-weight: bold;">`</span>-._ &nbsp; &nbsp; &nbsp; &nbsp;_.-<span style="color: #a10;">' &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; <br />
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; `-.__.-'</span> &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; <br />
+<br />
+<span style="color: #000000;">75858</span>:M <span style="color: #000000;">25</span> Oct <span style="color: #000000;">11</span>:<span style="color: #000000;">43</span>:<span style="color: #000000;">34.337</span> <span style="color: #666666; font-style: italic;"># Server started, Redis version 3.0.3</span><br />
+<span style="color: #000000;">75858</span>:M <span style="color: #000000;">25</span> Oct <span style="color: #000000;">11</span>:<span style="color: #000000;">43</span>:<span style="color: #000000;">34.339</span> <span style="color: #000000; font-weight: bold;">*</span> DB loaded from disk: <span style="color: #000000;">0.002</span> seconds<br />
+<span style="color: #000000;">75858</span>:M <span style="color: #000000;">25</span> Oct <span style="color: #000000;">11</span>:<span style="color: #000000;">43</span>:<span style="color: #000000;">34.339</span> <span style="color: #000000; font-weight: bold;">*</span> The server is now ready to accept connections on port <span style="color: #000000;">6379</span><br />
+</div></div>
+
+<p>可以看到默认端口号为 <span class="marked">6379</span>。</p>
+
+<hr>
+<h2>安装 redis 模块</h2>
+<p>Python 要使用 redis，需要先安装 redis 模块：</p>
+
+
+<pre>sudo pip3 install redis
+或
+sudo easy_install redis
+或
+sudo python setup.py install</pre>
+
+<p>源码地址：<a href="https://github.com/WoLpH/redis-py" rel="noopener noreferrer" target="_blank">https://github.com/WoLpH/redis-py</a></p>
+
+<p>测试是否安装成功：</p>
+
+<pre>&gt;&gt;&gt; import redis
+&gt;&gt;&gt; r = redis.StrictRedis(host='localhost', port=6379, db=0)
+&gt;&gt;&gt; r.set('foo', 'bar')
+True
+&gt;&gt;&gt; r.get('foo')
+'bar'</pre>
+
+<p>
+redis 提供两个类 Redis 和 StrictRedis, StrictRedis 用于实现大部分官方的命令，Redis 是 StrictRedis 的子类，用于向后兼用旧版本。</p>
+<p>redis 取出的结果默认是字节，我们可以设定 <span class="marked">decode_responses=True</span> 改成字符串。</p>
+<div class="example"><h2 class="example">实例</h2> <div class="example_code">
+<span style="color: Green;font-weight:bold;">import</span> redis &nbsp; <span style="color: #a50"># 导入redis 模块</span><br />
+<br />
+r <span style="color: Gray;">=</span> redis.<span style="color: #05a;">Redis</span><span style="color: Olive;">&#40;</span>host<span style="color: Gray;">=</span><span style="color: #a11;">'localhost'</span><span style="color: Gray;">,</span> port<span style="color: Gray;">=</span><span style="color: Maroon;">6379</span><span style="color: Gray;">,</span> decode_responses<span style="color: Gray;">=</span><span style="color: Teal;">True</span><span style="color: Olive;">&#41;</span> &nbsp; <br />
+r.<span style="color: Teal;">set</span><span style="color: Olive;">&#40;</span><span style="color: #a11;">'name'</span><span style="color: Gray;">,</span> <span style="color: #a11;">'runoob'</span><span style="color: Olive;">&#41;</span> &nbsp;<span style="color: #a50"># 设置 name 对应的值</span><br />
+<span style="color: Green;font-weight:bold;">print</span><span style="color: Olive;">&#40;</span>r<span style="color: Olive;">&#91;</span><span style="color: #a11;">'name'</span><span style="color: Olive;">&#93;</span><span style="color: Olive;">&#41;</span><br />
+<span style="color: Green;font-weight:bold;">print</span><span style="color: Olive;">&#40;</span>r.<span style="color: #05a;">get</span><span style="color: Olive;">&#40;</span><span style="color: #a11;">'name'</span><span style="color: Olive;">&#41;</span><span style="color: Olive;">&#41;</span> &nbsp;<span style="color: #a50"># 取出键 name 对应的值</span><br />
+<span style="color: Green;font-weight:bold;">print</span><span style="color: Olive;">&#40;</span><span style="color: Teal;">type</span><span style="color: Olive;">&#40;</span>r.<span style="color: #05a;">get</span><span style="color: Olive;">&#40;</span><span style="color: #a11;">'name'</span><span style="color: Olive;">&#41;</span><span style="color: Olive;">&#41;</span><span style="color: Olive;">&#41;</span> &nbsp;<span style="color: #a50"># 查看类型</span><br />
+</div></div>
+
+<p>输出结果为：</p>
+<pre>runoob
+runoob
+&lt;class 'str'&gt;</pre>
+
+
+<hr>
+<h2>连接池</h2>
+
+<p>redis-py 使用 connection pool 来管理对一个 redis server 的所有连接，避免每次建立、释放连接的开销。</p>
+<p>默认，每个Redis实例都会维护一个自己的连接池。可以直接建立一个连接池，然后作为参数 Redis，这样就可以实现多个 Redis 实例共享一个连接池。</p>
+
+<div class="example"><h2 class="example">实例</h2> <div class="example_code">
+<span style="color: Green;font-weight:bold;">import</span> redis &nbsp; &nbsp;<span style="color: #a50"># 导入redis 模块</span><br />
+<br />
+pool <span style="color: Gray;">=</span> redis.<span style="color: #05a;">ConnectionPool</span><span style="color: Olive;">&#40;</span>host<span style="color: Gray;">=</span><span style="color: #a11;">'localhost'</span><span style="color: Gray;">,</span> port<span style="color: Gray;">=</span><span style="color: Maroon;">6379</span><span style="color: Gray;">,</span> decode_responses<span style="color: Gray;">=</span><span style="color: Teal;">True</span><span style="color: Olive;">&#41;</span><br />
+r <span style="color: Gray;">=</span> redis.<span style="color: #05a;">Redis</span><span style="color: Olive;">&#40;</span>host<span style="color: Gray;">=</span><span style="color: #a11;">'localhost'</span><span style="color: Gray;">,</span> port<span style="color: Gray;">=</span><span style="color: Maroon;">6379</span><span style="color: Gray;">,</span> decode_responses<span style="color: Gray;">=</span><span style="color: Teal;">True</span><span style="color: Olive;">&#41;</span> &nbsp; <br />
+r.<span style="color: Teal;">set</span><span style="color: Olive;">&#40;</span><span style="color: #a11;">'name'</span><span style="color: Gray;">,</span> <span style="color: #a11;">'runoob'</span><span style="color: Olive;">&#41;</span> &nbsp;<span style="color: #a50"># 设置 name 对应的值</span><br />
+<span style="color: Green;font-weight:bold;">print</span><span style="color: Olive;">&#40;</span>r.<span style="color: #05a;">get</span><span style="color: Olive;">&#40;</span><span style="color: #a11;">'name'</span><span style="color: Olive;">&#41;</span><span style="color: Olive;">&#41;</span> &nbsp;<span style="color: #a50"># 取出键 name 对应的值</span><br />
+</div></div>
+
+<hr>
+<h2>
+redis 基本命令 String</h2>
+<p>set(name, value, ex=None, px=None, nx=False, xx=False)</p>
+
+<p>在 Redis 中设置值，默认，不存在则创建，存在则修改。</p>
+<p>参数：</p>
+<ul><li>
+ex - 过期时间（秒）</li><li>
+px - 过期时间（毫秒）</li><li>
+nx - 如果设置为True，则只有name不存在时，当前set操作才执行</li><li>
+xx - 如果设置为True，则只有name存在时，当前set操作才执行</li></ul>
+
+<p>1.ex - 过期时间（秒） 这里过期时间是3秒，3秒后p，键food的值就变成None</p>
+
+<div class="example"><h2 class="example">实例</h2> <div class="example_code">
+<span style="color: Green;font-weight:bold;">import</span> redis<br />
+<br />
+pool <span style="color: Gray;">=</span> redis.<span style="color: #05a;">ConnectionPool</span><span style="color: Olive;">&#40;</span>host<span style="color: Gray;">=</span><span style="color: #a11;">'localhost'</span><span style="color: Gray;">,</span> port<span style="color: Gray;">=</span><span style="color: Maroon;">6379</span><span style="color: Gray;">,</span> decode_responses<span style="color: Gray;">=</span><span style="color: Teal;">True</span><span style="color: Olive;">&#41;</span><br />
+r <span style="color: Gray;">=</span> redis.<span style="color: #05a;">Redis</span><span style="color: Olive;">&#40;</span>connection_pool<span style="color: Gray;">=</span>pool<span style="color: Olive;">&#41;</span><br />
+r.<span style="color: Teal;">set</span><span style="color: Olive;">&#40;</span><span style="color: #a11;">'food'</span><span style="color: Gray;">,</span> <span style="color: #a11;">'mutton'</span><span style="color: Gray;">,</span> ex<span style="color: Gray;">=</span><span style="color: Maroon;">3</span><span style="color: Olive;">&#41;</span> &nbsp; &nbsp;<span style="color: #a50"># key是&quot;food&quot; value是&quot;mutton&quot; 将键值对存入redis缓存</span><br />
+<span style="color: Green;font-weight:bold;">print</span><span style="color: Olive;">&#40;</span>r.<span style="color: #05a;">get</span><span style="color: Olive;">&#40;</span><span style="color: #a11;">'food'</span><span style="color: Olive;">&#41;</span><span style="color: Olive;">&#41;</span> &nbsp;<span style="color: #a50"># mutton 取出键food对应的值</span><br />
+</div></div>
+<p>2.px - 过期时间（豪秒） 这里过期时间是3豪秒，3毫秒后，键foo的值就变成None</p>
+
+<div class="example"><h2 class="example">实例</h2> <div class="example_code">
+<span style="color: Green;font-weight:bold;">import</span> redis<br />
+<br />
+pool <span style="color: Gray;">=</span> redis.<span style="color: #05a;">ConnectionPool</span><span style="color: Olive;">&#40;</span>host<span style="color: Gray;">=</span><span style="color: #a11;">'localhost'</span><span style="color: Gray;">,</span> port<span style="color: Gray;">=</span><span style="color: Maroon;">6379</span><span style="color: Gray;">,</span> decode_responses<span style="color: Gray;">=</span><span style="color: Teal;">True</span><span style="color: Olive;">&#41;</span><br />
+r <span style="color: Gray;">=</span> redis.<span style="color: #05a;">Redis</span><span style="color: Olive;">&#40;</span>connection_pool<span style="color: Gray;">=</span>pool<span style="color: Olive;">&#41;</span><br />
+r.<span style="color: Teal;">set</span><span style="color: Olive;">&#40;</span><span style="color: #a11;">'food'</span><span style="color: Gray;">,</span> <span style="color: #a11;">'beef'</span><span style="color: Gray;">,</span> px<span style="color: Gray;">=</span><span style="color: Maroon;">3</span><span style="color: Olive;">&#41;</span><br />
+<span style="color: Green;font-weight:bold;">print</span><span style="color: Olive;">&#40;</span>r.<span style="color: #05a;">get</span><span style="color: Olive;">&#40;</span><span style="color: #a11;">'food'</span><span style="color: Olive;">&#41;</span><span style="color: Olive;">&#41;</span><br />
+</div></div>
+<p>3.nx - 如果设置为True，则只有name不存在时，当前set操作才执行 （新建）</p>
+
+<div class="example"><h2 class="example">实例</h2> <div class="example_code">
+<span style="color: Green;font-weight:bold;">import</span> redis<br />
+<br />
+pool <span style="color: Gray;">=</span> redis.<span style="color: #05a;">ConnectionPool</span><span style="color: Olive;">&#40;</span>host<span style="color: Gray;">=</span><span style="color: #a11;">'localhost'</span><span style="color: Gray;">,</span> port<span style="color: Gray;">=</span><span style="color: Maroon;">6379</span><span style="color: Gray;">,</span> decode_responses<span style="color: Gray;">=</span><span style="color: Teal;">True</span><span style="color: Olive;">&#41;</span><br />
+r <span style="color: Gray;">=</span> redis.<span style="color: #05a;">Redis</span><span style="color: Olive;">&#40;</span>connection_pool<span style="color: Gray;">=</span>pool<span style="color: Olive;">&#41;</span><br />
+<span style="color: Green;font-weight:bold;">print</span><span style="color: Olive;">&#40;</span>r.<span style="color: Teal;">set</span><span style="color: Olive;">&#40;</span><span style="color: #a11;">'fruit'</span><span style="color: Gray;">,</span> <span style="color: #a11;">'watermelon'</span><span style="color: Gray;">,</span> nx<span style="color: Gray;">=</span><span style="color: Teal;">True</span><span style="color: Olive;">&#41;</span><span style="color: Olive;">&#41;</span> &nbsp; &nbsp;<span style="color: #a50"># True--不存在</span><br />
+<span style="color: #a50"># 如果键fruit不存在，那么输出是True；如果键fruit已经存在，输出是None</span><br />
+</div></div>
+<p>4.xx - 如果设置为True，则只有name存在时，当前set操作才执行 （修改）</p>
+
+<div class="example"><h2 class="example">实例</h2> <div class="example_code">
+<span style="color: Green;font-weight:bold;">print</span><span style="color: Olive;">&#40;</span><span style="color: Olive;">&#40;</span>r.<span style="color: Teal;">set</span><span style="color: Olive;">&#40;</span><span style="color: #a11;">'fruit'</span><span style="color: Gray;">,</span> <span style="color: #a11;">'watermelon'</span><span style="color: Gray;">,</span> xx<span style="color: Gray;">=</span><span style="color: Teal;">True</span><span style="color: Olive;">&#41;</span><span style="color: Olive;">&#41;</span><span style="color: Olive;">&#41;</span> &nbsp; <span style="color: #a50"># True--已经存在</span><br />
+<span style="color: #a50"># 如果键fruit已经存在，那么输出是True；如果键fruit不存在，输出是None</span><br />
+</div></div>
+<p>5.<span class="marked">setnx(name, value)</span></p>
+<p>设置值，只有name不存在时，执行设置操作（添加）</p>
+
+<pre>print(r.setnx('fruit1', 'banana'))  # fruit1不存在，输出为True</pre>
+<p>6.<span class="marked">setex(name, time, value)</span></p>
+<p>设置值</p>
+<p>参数：</p>
+<p>time - 过期时间（数字秒 或 timedelta对象）</p>
+
+<div class="example"><h2 class="example">实例</h2> <div class="example_code">
+<span style="color: Green;font-weight:bold;">import</span> redis<br />
+<span style="color: Green;font-weight:bold;">import</span> <span style="color: #05a;">time</span><br />
+<br />
+pool <span style="color: Gray;">=</span> redis.<span style="color: #05a;">ConnectionPool</span><span style="color: Olive;">&#40;</span>host<span style="color: Gray;">=</span><span style="color: #a11;">'localhost'</span><span style="color: Gray;">,</span> port<span style="color: Gray;">=</span><span style="color: Maroon;">6379</span><span style="color: Gray;">,</span> decode_responses<span style="color: Gray;">=</span><span style="color: Teal;">True</span><span style="color: Olive;">&#41;</span><br />
+r <span style="color: Gray;">=</span> redis.<span style="color: #05a;">Redis</span><span style="color: Olive;">&#40;</span>connection_pool<span style="color: Gray;">=</span>pool<span style="color: Olive;">&#41;</span><br />
+r.<span style="color: #05a;">setex</span><span style="color: Olive;">&#40;</span><span style="color: #a11;">&quot;fruit2&quot;</span><span style="color: Gray;">,</span> <span style="color: Maroon;">5</span><span style="color: Gray;">,</span> <span style="color: #a11;">&quot;orange&quot;</span><span style="color: Olive;">&#41;</span><br />
+<span style="color: #05a;">time</span>.<span style="color: #05a;">sleep</span><span style="color: Olive;">&#40;</span><span style="color: Maroon;">5</span><span style="color: Olive;">&#41;</span><br />
+<span style="color: Green;font-weight:bold;">print</span><span style="color: Olive;">&#40;</span>r.<span style="color: #05a;">get</span><span style="color: Olive;">&#40;</span><span style="color: #a11;">'fruit2'</span><span style="color: Olive;">&#41;</span><span style="color: Olive;">&#41;</span> &nbsp;<span style="color: #a50"># 5秒后，取值就从orange变成None</span><br />
+</div></div>
+<p>7.<span class="marked">psetex(name, time_ms, value)</span></p>
+<p>设置值</p>
+<p>参数：</p>
+<p>time_ms - 过期时间（数字毫秒 或 timedelta对象）</p>
+
+<div class="example"><h2 class="example">实例</h2> <div class="example_code">
+r.<span style="color: #05a;">psetex</span><span style="color: Olive;">&#40;</span><span style="color: #a11;">&quot;fruit3&quot;</span><span style="color: Gray;">,</span> <span style="color: Maroon;">5000</span><span style="color: Gray;">,</span> <span style="color: #a11;">&quot;apple&quot;</span><span style="color: Olive;">&#41;</span><br />
+<span style="color: #05a;">time</span>.<span style="color: #05a;">sleep</span><span style="color: Olive;">&#40;</span><span style="color: Maroon;">5</span><span style="color: Olive;">&#41;</span><br />
+<span style="color: Green;font-weight:bold;">print</span><span style="color: Olive;">&#40;</span>r.<span style="color: #05a;">get</span><span style="color: Olive;">&#40;</span><span style="color: #a11;">'fruit3'</span><span style="color: Olive;">&#41;</span><span style="color: Olive;">&#41;</span> &nbsp;<span style="color: #a50"># 5000毫秒后，取值就从apple变成None</span><br />
+</div></div>
+<p>8.<span class="marked">mset(*args, **kwargs)</span></p>
+<p>批量设置值</p>
+<p>如：</p>
+
+<div class="example"><h2 class="example">实例</h2> <div class="example_code">
+r.<span style="color: #05a;">mget</span><span style="color: Olive;">&#40;</span><span style="color: Olive;">&#123;</span><span style="color: #a11;">'k1'</span>: <span style="color: #a11;">'v1'</span><span style="color: Gray;">,</span> <span style="color: #a11;">'k2'</span>: <span style="color: #a11;">'v2'</span><span style="color: Olive;">&#125;</span><span style="color: Olive;">&#41;</span><br />
+r.<span style="color: #05a;">mset</span><span style="color: Olive;">&#40;</span>k1<span style="color: Gray;">=</span><span style="color: #a11;">&quot;v1&quot;</span><span style="color: Gray;">,</span> k2<span style="color: Gray;">=</span><span style="color: #a11;">&quot;v2&quot;</span><span style="color: Olive;">&#41;</span> <span style="color: #a50"># 这里k1 和k2 不能带引号，一次设置多个键值对</span><br />
+<span style="color: Green;font-weight:bold;">print</span><span style="color: Olive;">&#40;</span>r.<span style="color: #05a;">mget</span><span style="color: Olive;">&#40;</span><span style="color: #a11;">&quot;k1&quot;</span><span style="color: Gray;">,</span> <span style="color: #a11;">&quot;k2&quot;</span><span style="color: Olive;">&#41;</span><span style="color: Olive;">&#41;</span> &nbsp; <span style="color: #a50"># 一次取出多个键对应的值</span><br />
+<span style="color: Green;font-weight:bold;">print</span><span style="color: Olive;">&#40;</span>r.<span style="color: #05a;">mget</span><span style="color: Olive;">&#40;</span><span style="color: #a11;">&quot;k1&quot;</span><span style="color: Olive;">&#41;</span><span style="color: Olive;">&#41;</span><br />
+</div></div>
+<p>9.<span class="marked">mget(keys, *args)</span></p>
+<p>批量获取</p>
+<p>如：</p>
+<div class="example"><h2 class="example">实例</h2> <div class="example_code">
+<span style="color: Green;font-weight:bold;">print</span><span style="color: Olive;">&#40;</span>r.<span style="color: #05a;">mget</span><span style="color: Olive;">&#40;</span><span style="color: #a11;">'k1'</span><span style="color: Gray;">,</span> <span style="color: #a11;">'k2'</span><span style="color: Olive;">&#41;</span><span style="color: Olive;">&#41;</span><br />
+<span style="color: Green;font-weight:bold;">print</span><span style="color: Olive;">&#40;</span>r.<span style="color: #05a;">mget</span><span style="color: Olive;">&#40;</span><span style="color: Olive;">&#91;</span><span style="color: #a11;">'k1'</span><span style="color: Gray;">,</span> <span style="color: #a11;">'k2'</span><span style="color: Olive;">&#93;</span><span style="color: Olive;">&#41;</span><span style="color: Olive;">&#41;</span><br />
+<span style="color: Green;font-weight:bold;">print</span><span style="color: Olive;">&#40;</span>r.<span style="color: #05a;">mget</span><span style="color: Olive;">&#40;</span><span style="color: #a11;">&quot;fruit&quot;</span><span style="color: Gray;">,</span> <span style="color: #a11;">&quot;fruit1&quot;</span><span style="color: Gray;">,</span> <span style="color: #a11;">&quot;fruit2&quot;</span><span style="color: Gray;">,</span> <span style="color: #a11;">&quot;k1&quot;</span><span style="color: Gray;">,</span> <span style="color: #a11;">&quot;k2&quot;</span><span style="color: Olive;">&#41;</span><span style="color: Olive;">&#41;</span> &nbsp;<span style="color: #a50"># 将目前redis缓存中的键对应的值批量取出来</span><br />
+</div></div>
+<p>10.<span class="marked">getset(name, value)</span></p>
+<p>设置新值并获取原来的值</p>
+
+<pre>print(r.getset("food", "barbecue"))  # 设置的新值是barbecue 设置前的值是beef</pre>
+<p>11.<span class="marked">getrange(key, start, end)</span></p>
+<p>获取子序列（根据字节获取，非字符）</p>
+<p>参数：</p>
+<ul><li>
+name - Redis 的 name</li><li>
+start - 起始位置（字节）</li><li>
+end - 结束位置（字节）</li></ul>
+<p>如： "君惜大大" ，0-3表示 "君"</p>
+
+<div class="example"><h2 class="example">实例</h2> <div class="example_code">
+r.<span style="color: Teal;">set</span><span style="color: Olive;">&#40;</span><span style="color: #a11;">&quot;cn_name&quot;</span><span style="color: Gray;">,</span> <span style="color: #a11;">&quot;君惜大大&quot;</span><span style="color: Olive;">&#41;</span> <span style="color: #a50"># 汉字</span><br />
+<span style="color: Green;font-weight:bold;">print</span><span style="color: Olive;">&#40;</span>r.<span style="color: #05a;">getrange</span><span style="color: Olive;">&#40;</span><span style="color: #a11;">&quot;cn_name&quot;</span><span style="color: Gray;">,</span> <span style="color: Maroon;">0</span><span style="color: Gray;">,</span> <span style="color: Maroon;">2</span><span style="color: Olive;">&#41;</span><span style="color: Olive;">&#41;</span> &nbsp; <span style="color: #a50"># 取索引号是0-2 前3位的字节 君 切片操作 （一个汉字3个字节 1个字母一个字节 每个字节8bit）</span><br />
+<span style="color: Green;font-weight:bold;">print</span><span style="color: Olive;">&#40;</span>r.<span style="color: #05a;">getrange</span><span style="color: Olive;">&#40;</span><span style="color: #a11;">&quot;cn_name&quot;</span><span style="color: Gray;">,</span> <span style="color: Maroon;">0</span><span style="color: Gray;">,</span> -<span style="color: Maroon;">1</span><span style="color: Olive;">&#41;</span><span style="color: Olive;">&#41;</span> &nbsp;<span style="color: #a50"># 取所有的字节 君惜大大 切片操作</span><br />
+r.<span style="color: Teal;">set</span><span style="color: Olive;">&#40;</span><span style="color: #a11;">&quot;en_name&quot;</span><span style="color: Gray;">,</span><span style="color: #a11;">&quot;junxi&quot;</span><span style="color: Olive;">&#41;</span> <span style="color: #a50"># 字母</span><br />
+<span style="color: Green;font-weight:bold;">print</span><span style="color: Olive;">&#40;</span>r.<span style="color: #05a;">getrange</span><span style="color: Olive;">&#40;</span><span style="color: #a11;">&quot;en_name&quot;</span><span style="color: Gray;">,</span> <span style="color: Maroon;">0</span><span style="color: Gray;">,</span> <span style="color: Maroon;">2</span><span style="color: Olive;">&#41;</span><span style="color: Olive;">&#41;</span> &nbsp;<span style="color: #a50"># 取索引号是0-2 前3位的字节 jun 切片操作 （一个汉字3个字节 1个字母一个字节 每个字节8bit）</span><br />
+<span style="color: Green;font-weight:bold;">print</span><span style="color: Olive;">&#40;</span>r.<span style="color: #05a;">getrange</span><span style="color: Olive;">&#40;</span><span style="color: #a11;">&quot;en_name&quot;</span><span style="color: Gray;">,</span> <span style="color: Maroon;">0</span><span style="color: Gray;">,</span> -<span style="color: Maroon;">1</span><span style="color: Olive;">&#41;</span><span style="color: Olive;">&#41;</span> <span style="color: #a50"># 取所有的字节 junxi 切片操作</span><br />
+</div></div>
+<p>12.<span class="marked">setrange(name, offset, value)</span></p>
+<p>修改字符串内容，从指定字符串索引开始向后替换（新值太长时，则向后添加）</p>
+<p>参数：</p><ul><li>
+offset - 字符串的索引，字节（一个汉字三个字节）</li><li>
+value - 要设置的值</li></ul>
+<div class="example"><h2 class="example">实例</h2> <div class="example_code">
+r.<span style="color: #05a;">setrange</span><span style="color: Olive;">&#40;</span><span style="color: #a11;">&quot;en_name&quot;</span><span style="color: Gray;">,</span> <span style="color: Maroon;">1</span><span style="color: Gray;">,</span> <span style="color: #a11;">&quot;ccc&quot;</span><span style="color: Olive;">&#41;</span><br />
+<span style="color: Green;font-weight:bold;">print</span><span style="color: Olive;">&#40;</span>r.<span style="color: #05a;">get</span><span style="color: Olive;">&#40;</span><span style="color: #a11;">&quot;en_name&quot;</span><span style="color: Olive;">&#41;</span><span style="color: Olive;">&#41;</span> &nbsp; &nbsp;<span style="color: #a50"># jccci 原始值是junxi 从索引号是1开始替换成ccc 变成 jccci</span><br />
+</div></div>
+<p>13.<span class="marked">setbit(name, offset, value)</span></p>
+<p>对 name 对应值的二进制表示的位进行操作</p>
+<p>参数：</p><ul><li>
+name - redis的name</li><li>
+offset - 位的索引（将值变换成二进制后再进行索引）</li><li>
+value - 值只能是 1 或 0</li></ul>
+
+<p>注：如果在Redis中有一个对应： n1 = "foo"，</p>
+<p>那么字符串foo的二进制表示为：01100110 01101111 01101111</p>
+<p>所以，如果执行 setbit('n1', 7, 1)，则就会将第7位设置为1，</p>
+<p>那么最终二进制则变成 01100111 01101111 01101111，即："goo"</p>
+
+<p>扩展，转换二进制表示：</p>
+<div class="example"><h2 class="example">实例</h2> <div class="example_code">
+source <span style="color: Gray;">=</span> <span style="color: #a11;">&quot;陈思维&quot;</span><br />
+source <span style="color: Gray;">=</span> <span style="color: #a11;">&quot;foo&quot;</span><br />
+<span style="color: Green;font-weight:bold;">for</span> i <span style="color: Green;font-weight:bold;">in</span> source:<br />
+num <span style="color: Gray;">=</span> <span style="color: Teal;">ord</span><span style="color: Olive;">&#40;</span>i<span style="color: Olive;">&#41;</span><br />
+<span style="color: Green;font-weight:bold;">print</span> bin<span style="color: Olive;">&#40;</span>num<span style="color: Olive;">&#41;</span>.<span style="color: #05a;">replace</span><span style="color: Olive;">&#40;</span><span style="color: #a11;">'b'</span><span style="color: Gray;">,</span><span style="color: #a11;">''</span><span style="color: Olive;">&#41;</span><br />
+</div></div>
+<p><strong>特别的，如果source是汉字 "陈思维"怎么办？</strong></p>
+<p>答：对于utf-8，每一个汉字占 3 个字节，那么 "陈思维" 则有 9个字节
+对于汉字，for循环时候会按照 字节 迭代，那么在迭代时，将每一个字节转换 十进制数，然后再将十进制数转换成二进制
+11100110 10101101 10100110 11100110 10110010 10011011 11101001 10111101 10010000</p>
+<p>14.<span class="marked">getbit(name, offset)</span></p>
+<p>获取name对应的值的二进制表示中的某位的值 （0或1）</p>
+<pre>
+print(r.getbit("foo1", 0)) # 0 foo1 对应的二进制 4个字节 32位 第0位是0还是1</pre>
+<p>15.<span class="marked">bitcount(key, start=None, end=None)</span></p>
+<p>获取name对应的值的二进制表示中 1 的个数</p>
+<p>参数：</p><ul><li>
+key - Redis的name</li><li>
+start - 字节起始位置</li><li>
+end - 字节结束位置</li></ul>
+<div class="example"><h2 class="example">实例</h2> <div class="example_code">
+<span style="color: Green;font-weight:bold;">print</span><span style="color: Olive;">&#40;</span>r.<span style="color: #05a;">get</span><span style="color: Olive;">&#40;</span><span style="color: #a11;">&quot;foo&quot;</span><span style="color: Olive;">&#41;</span><span style="color: Olive;">&#41;</span> &nbsp;<span style="color: #a50"># goo1 01100111</span><br />
+<span style="color: Green;font-weight:bold;">print</span><span style="color: Olive;">&#40;</span>r.<span style="color: #05a;">bitcount</span><span style="color: Olive;">&#40;</span><span style="color: #a11;">&quot;foo&quot;</span><span style="color: Gray;">,</span><span style="color: Maroon;">0</span><span style="color: Gray;">,</span><span style="color: Maroon;">1</span><span style="color: Olive;">&#41;</span><span style="color: Olive;">&#41;</span> &nbsp;<span style="color: #a50"># 11 表示前2个字节中，1出现的个数</span><br />
+</div></div>
+<p>16.<span class="marked">bitop(operation, dest, *keys)</span></p>
+<p>获取多个值，并将值做位运算，将最后的结果保存至新的name对应的值</p>
+
+<p>参数：</p><ul><li>
+operation - AND（并） 、 OR（或） 、 NOT（非） 、 XOR（异或）</li><li>
+dest -  新的Redis的name</li><li>
+*keys - 要查找的Redis的name</li></ul>
+
+<p>如：</p>
+
+<pre>bitop("AND", 'new_name', 'n1', 'n2', 'n3')</pre>
+<p>获取Redis中n1,n2,n3对应的值，然后讲所有的值做位运算（求并集），然后将结果保存 new_name 对应的值中</p>
+<div class="example"><h2 class="example">实例</h2> <div class="example_code">
+r.<span style="color: Teal;">set</span><span style="color: Olive;">&#40;</span><span style="color: #a11;">&quot;foo&quot;</span><span style="color: Gray;">,</span><span style="color: #a11;">&quot;1&quot;</span><span style="color: Olive;">&#41;</span> &nbsp;<span style="color: #a50"># 0110001</span><br />
+r.<span style="color: Teal;">set</span><span style="color: Olive;">&#40;</span><span style="color: #a11;">&quot;foo1&quot;</span><span style="color: Gray;">,</span><span style="color: #a11;">&quot;2&quot;</span><span style="color: Olive;">&#41;</span> &nbsp;<span style="color: #a50"># 0110010</span><br />
+<span style="color: Green;font-weight:bold;">print</span><span style="color: Olive;">&#40;</span>r.<span style="color: #05a;">mget</span><span style="color: Olive;">&#40;</span><span style="color: #a11;">&quot;foo&quot;</span><span style="color: Gray;">,</span><span style="color: #a11;">&quot;foo1&quot;</span><span style="color: Olive;">&#41;</span><span style="color: Olive;">&#41;</span> &nbsp;<span style="color: #a50"># ['goo1', 'baaanew']</span><br />
+<span style="color: Green;font-weight:bold;">print</span><span style="color: Olive;">&#40;</span>r.<span style="color: #05a;">bitop</span><span style="color: Olive;">&#40;</span><span style="color: #a11;">&quot;AND&quot;</span><span style="color: Gray;">,</span><span style="color: #a11;">&quot;new&quot;</span><span style="color: Gray;">,</span><span style="color: #a11;">&quot;foo&quot;</span><span style="color: Gray;">,</span><span style="color: #a11;">&quot;foo1&quot;</span><span style="color: Olive;">&#41;</span><span style="color: Olive;">&#41;</span> &nbsp;<span style="color: #a50"># &quot;new&quot; 0 0110000</span><br />
+<span style="color: Green;font-weight:bold;">print</span><span style="color: Olive;">&#40;</span>r.<span style="color: #05a;">mget</span><span style="color: Olive;">&#40;</span><span style="color: #a11;">&quot;foo&quot;</span><span style="color: Gray;">,</span><span style="color: #a11;">&quot;foo1&quot;</span><span style="color: Gray;">,</span><span style="color: #a11;">&quot;new&quot;</span><span style="color: Olive;">&#41;</span><span style="color: Olive;">&#41;</span><br />
+<br />
+source <span style="color: Gray;">=</span> <span style="color: #a11;">&quot;12&quot;</span><br />
+<span style="color: Green;font-weight:bold;">for</span> i <span style="color: Green;font-weight:bold;">in</span> source:<br />
+num <span style="color: Gray;">=</span> <span style="color: Teal;">ord</span><span style="color: Olive;">&#40;</span>i<span style="color: Olive;">&#41;</span><br />
+<span style="color: Green;font-weight:bold;">print</span><span style="color: Olive;">&#40;</span>num<span style="color: Olive;">&#41;</span> &nbsp;<span style="color: #a50"># 打印每个字母字符或者汉字字符对应的ascii码值 f-102-0b100111-01100111</span><br />
+<span style="color: Green;font-weight:bold;">print</span><span style="color: Olive;">&#40;</span>bin<span style="color: Olive;">&#40;</span>num<span style="color: Olive;">&#41;</span><span style="color: Olive;">&#41;</span> &nbsp;<span style="color: #a50"># 打印每个10进制ascii码值转换成二进制的值 0b1100110（0b表示二进制）</span><br />
+<span style="color: Green;font-weight:bold;">print</span> bin<span style="color: Olive;">&#40;</span>num<span style="color: Olive;">&#41;</span>.<span style="color: #05a;">replace</span><span style="color: Olive;">&#40;</span><span style="color: #a11;">'b'</span><span style="color: Gray;">,</span><span style="color: #a11;">''</span><span style="color: Olive;">&#41;</span> &nbsp;<span style="color: #a50"># 将二进制0b1100110替换成01100110</span><br />
+</div></div>
+<p>17.<span class="marked">strlen(name)</span></p>
+<p>返回name对应值的字节长度（一个汉字3个字节）</p>
+<pre>
+print(r.strlen("foo"))  # 4 'goo1'的长度是4</pre>
+<p>18.<span class="marked">incr(self, name, amount=1)</span></p>
+<p>自增 name 对应的值，当 name 不存在时，则创建 name＝amount，否则，则自增。</p>
+<p>参数：</p><ul>
+<li>name - Redis的name</li><li>
+amount - 自增数（必须是整数）</li></ul>
+<p>注：同 incrby</p>
+
+<div class="example"><h2 class="example">实例</h2> <div class="example_code">
+r.<span style="color: Teal;">set</span><span style="color: Olive;">&#40;</span><span style="color: #a11;">&quot;foo&quot;</span><span style="color: Gray;">,</span> <span style="color: Maroon;">123</span><span style="color: Olive;">&#41;</span><br />
+<span style="color: Green;font-weight:bold;">print</span><span style="color: Olive;">&#40;</span>r.<span style="color: #05a;">mget</span><span style="color: Olive;">&#40;</span><span style="color: #a11;">&quot;foo&quot;</span><span style="color: Gray;">,</span> <span style="color: #a11;">&quot;foo1&quot;</span><span style="color: Gray;">,</span> <span style="color: #a11;">&quot;foo2&quot;</span><span style="color: Gray;">,</span> <span style="color: #a11;">&quot;k1&quot;</span><span style="color: Gray;">,</span> <span style="color: #a11;">&quot;k2&quot;</span><span style="color: Olive;">&#41;</span><span style="color: Olive;">&#41;</span><br />
+r.<span style="color: #05a;">incr</span><span style="color: Olive;">&#40;</span><span style="color: #a11;">&quot;foo&quot;</span><span style="color: Gray;">,</span> amount<span style="color: Gray;">=</span><span style="color: Maroon;">1</span><span style="color: Olive;">&#41;</span><br />
+<span style="color: Green;font-weight:bold;">print</span><span style="color: Olive;">&#40;</span>r.<span style="color: #05a;">mget</span><span style="color: Olive;">&#40;</span><span style="color: #a11;">&quot;foo&quot;</span><span style="color: Gray;">,</span> <span style="color: #a11;">&quot;foo1&quot;</span><span style="color: Gray;">,</span> <span style="color: #a11;">&quot;foo2&quot;</span><span style="color: Gray;">,</span> <span style="color: #a11;">&quot;k1&quot;</span><span style="color: Gray;">,</span> <span style="color: #a11;">&quot;k2&quot;</span><span style="color: Olive;">&#41;</span><span style="color: Olive;">&#41;</span><br />
+</div></div>
+<h3>应用场景 – 页面点击数</h3>
+<p>假定我们对一系列页面需要记录点击次数。例如论坛的每个帖子都要记录点击次数，而点击次数比回帖的次数的多得多。如果使用关系数据库来存储点击，可能存在大量的行级锁争用。所以，点击数的增加使用redis的INCR命令最好不过了。</p>
+<p>当redis服务器启动时，可以从关系数据库读入点击数的初始值（12306这个页面被访问了34634次）</p>
+
+<div class="example"> <div class="example_code">
+r.<span style="color: Teal;">set</span><span style="color: Olive;">&#40;</span><span style="color: #a11;">&quot;visit:12306:totals&quot;</span><span style="color: Gray;">,</span> <span style="color: Maroon;">34634</span><span style="color: Olive;">&#41;</span><br />
+<span style="color: Green;font-weight:bold;">print</span><span style="color: Olive;">&#40;</span>r.<span style="color: #05a;">get</span><span style="color: Olive;">&#40;</span><span style="color: #a11;">&quot;visit:12306:totals&quot;</span><span style="color: Olive;">&#41;</span><span style="color: Olive;">&#41;</span><br />
+</div></div>
+<p>每当有一个页面点击，则使用INCR增加点击数即可。</p>
+<div class="example"> <div class="example_code">
+r.<span style="color: #05a;">incr</span><span style="color: Olive;">&#40;</span><span style="color: #a11;">&quot;visit:12306:totals&quot;</span><span style="color: Olive;">&#41;</span><br />
+r.<span style="color: #05a;">incr</span><span style="color: Olive;">&#40;</span><span style="color: #a11;">&quot;visit:12306:totals&quot;</span><span style="color: Olive;">&#41;</span><br />
+</div></div>
+<p>页面载入的时候则可直接获取这个值</p>
+
+<pre>print(r.get("visit:12306:totals"))</pre>
+<p>19.<span class="marked">incrbyfloat(self, name, amount=1.0)</span></p>
+<p>自增 name对应的值，当name不存在时，则创建name＝amount，否则，则自增。</p>
+<p>参数：</p>
+<ul><li>
+name - Redis的name</li><li>
+amount - 自增数（浮点型）</li></ul>
+
+<div class="example"><h2 class="example">实例</h2> <div class="example_code">
+r.<span style="color: Teal;">set</span><span style="color: Olive;">&#40;</span><span style="color: #a11;">&quot;foo1&quot;</span><span style="color: Gray;">,</span> <span style="color: #a11;">&quot;123.0&quot;</span><span style="color: Olive;">&#41;</span><br />
+r.<span style="color: Teal;">set</span><span style="color: Olive;">&#40;</span><span style="color: #a11;">&quot;foo2&quot;</span><span style="color: Gray;">,</span> <span style="color: #a11;">&quot;221.0&quot;</span><span style="color: Olive;">&#41;</span><br />
+<span style="color: Green;font-weight:bold;">print</span><span style="color: Olive;">&#40;</span>r.<span style="color: #05a;">mget</span><span style="color: Olive;">&#40;</span><span style="color: #a11;">&quot;foo1&quot;</span><span style="color: Gray;">,</span> <span style="color: #a11;">&quot;foo2&quot;</span><span style="color: Olive;">&#41;</span><span style="color: Olive;">&#41;</span><br />
+r.<span style="color: #05a;">incrbyfloat</span><span style="color: Olive;">&#40;</span><span style="color: #a11;">&quot;foo1&quot;</span><span style="color: Gray;">,</span> amount<span style="color: Gray;">=</span><span style="color: Maroon;">2.0</span><span style="color: Olive;">&#41;</span><br />
+r.<span style="color: #05a;">incrbyfloat</span><span style="color: Olive;">&#40;</span><span style="color: #a11;">&quot;foo2&quot;</span><span style="color: Gray;">,</span> amount<span style="color: Gray;">=</span><span style="color: Maroon;">3.0</span><span style="color: Olive;">&#41;</span><br />
+<span style="color: Green;font-weight:bold;">print</span><span style="color: Olive;">&#40;</span>r.<span style="color: #05a;">mget</span><span style="color: Olive;">&#40;</span><span style="color: #a11;">&quot;foo1&quot;</span><span style="color: Gray;">,</span> <span style="color: #a11;">&quot;foo2&quot;</span><span style="color: Olive;">&#41;</span><span style="color: Olive;">&#41;</span><br />
+</div></div>
+<p>20.<span class="marked">decr(self, name, amount=1)</span></p>
+<p>自减 name 对应的值，当 name 不存在时，则创建 name＝amount，否则，则自减。</p>
+<p>参数：</p><ul><li>
+name - Redis的name</li><li>
+amount - 自减数（整数)</li></ul>
+
+
+<div class="example"><h2 class="example">实例</h2> <div class="example_code">
+r.<span style="color: #05a;">decr</span><span style="color: Olive;">&#40;</span><span style="color: #a11;">&quot;foo4&quot;</span><span style="color: Gray;">,</span> amount<span style="color: Gray;">=</span><span style="color: Maroon;">3</span><span style="color: Olive;">&#41;</span> <span style="color: #a50"># 递减3</span><br />
+r.<span style="color: #05a;">decr</span><span style="color: Olive;">&#40;</span><span style="color: #a11;">&quot;foo1&quot;</span><span style="color: Gray;">,</span> amount<span style="color: Gray;">=</span><span style="color: Maroon;">1</span><span style="color: Olive;">&#41;</span> <span style="color: #a50"># 递减1</span><br />
+<span style="color: Green;font-weight:bold;">print</span><span style="color: Olive;">&#40;</span>r.<span style="color: #05a;">mget</span><span style="color: Olive;">&#40;</span><span style="color: #a11;">&quot;foo1&quot;</span><span style="color: Gray;">,</span> <span style="color: #a11;">&quot;foo4&quot;</span><span style="color: Olive;">&#41;</span><span style="color: Olive;">&#41;</span><br />
+</div></div>
+<p>21.<span class="marked">append(key, value)</span></p>
+<p>在redis name对应的值后面追加内容</p>
+<p>参数：</p><ul><li>
+key - redis的name</li><li>
+value - 要追加的字符串</li></ul>
+
+<div class="example"><h2 class="example">实例</h2> <div class="example_code">
+r.<span style="color: #05a;">append</span><span style="color: Olive;">&#40;</span><span style="color: #a11;">&quot;name&quot;</span><span style="color: Gray;">,</span> <span style="color: #a11;">&quot;haha&quot;</span><span style="color: Olive;">&#41;</span> &nbsp; &nbsp;<span style="color: #a50"># 在name对应的值junxi后面追加字符串haha</span><br />
+<span style="color: Green;font-weight:bold;">print</span><span style="color: Olive;">&#40;</span>r.<span style="color: #05a;">mget</span><span style="color: Olive;">&#40;</span><span style="color: #a11;">&quot;name&quot;</span><span style="color: Olive;">&#41;</span><span style="color: Olive;">&#41;</span><br />
+</div></div>
+<hr><h2>
+redis 基本命令 hash</h2>
+<h3>1、单个增加--修改(单个取出)--没有就新增，有的话就修改</h3>
+<pre>hset(name, key, value)</pre>
+<p>name对应的hash中设置一个键值对（不存在，则创建；否则，修改）</p>
+<p>参数：</p><ul><li>
+name - redis的name</li><li>
+key - name对应的hash中的key</li><li>
+value - name对应的hash中的value</li></ul>
+<p>注：hsetnx(name, key, value) 当name对应的hash中不存在当前key时则创建（相当于添加）</p>
+
+<div class="example"><h2 class="example">实例</h2> <div class="example_code">
+<span style="color: Green;font-weight:bold;">import</span> redis<br />
+<span style="color: Green;font-weight:bold;">import</span> <span style="color: #05a;">time</span><br />
+<br />
+pool <span style="color: Gray;">=</span> redis.<span style="color: #05a;">ConnectionPool</span><span style="color: Olive;">&#40;</span>host<span style="color: Gray;">=</span><span style="color: #a11;">'localhost'</span><span style="color: Gray;">,</span> port<span style="color: Gray;">=</span><span style="color: Maroon;">6379</span><span style="color: Gray;">,</span> decode_responses<span style="color: Gray;">=</span><span style="color: Teal;">True</span><span style="color: Olive;">&#41;</span><br />
+r <span style="color: Gray;">=</span> redis.<span style="color: #05a;">Redis</span><span style="color: Olive;">&#40;</span>connection_pool<span style="color: Gray;">=</span>pool<span style="color: Olive;">&#41;</span><br />
+<br />
+r.<span style="color: #05a;">hset</span><span style="color: Olive;">&#40;</span><span style="color: #a11;">&quot;hash1&quot;</span><span style="color: Gray;">,</span> <span style="color: #a11;">&quot;k1&quot;</span><span style="color: Gray;">,</span> <span style="color: #a11;">&quot;v1&quot;</span><span style="color: Olive;">&#41;</span><br />
+r.<span style="color: #05a;">hset</span><span style="color: Olive;">&#40;</span><span style="color: #a11;">&quot;hash1&quot;</span><span style="color: Gray;">,</span> <span style="color: #a11;">&quot;k2&quot;</span><span style="color: Gray;">,</span> <span style="color: #a11;">&quot;v2&quot;</span><span style="color: Olive;">&#41;</span><br />
+<span style="color: Green;font-weight:bold;">print</span><span style="color: Olive;">&#40;</span>r.<span style="color: #05a;">hkeys</span><span style="color: Olive;">&#40;</span><span style="color: #a11;">&quot;hash1&quot;</span><span style="color: Olive;">&#41;</span><span style="color: Olive;">&#41;</span> <span style="color: #a50"># 取hash中所有的key</span><br />
+<span style="color: Green;font-weight:bold;">print</span><span style="color: Olive;">&#40;</span>r.<span style="color: #05a;">hget</span><span style="color: Olive;">&#40;</span><span style="color: #a11;">&quot;hash1&quot;</span><span style="color: Gray;">,</span> <span style="color: #a11;">&quot;k1&quot;</span><span style="color: Olive;">&#41;</span><span style="color: Olive;">&#41;</span> &nbsp; &nbsp;<span style="color: #a50"># 单个取hash的key对应的值</span><br />
+<span style="color: Green;font-weight:bold;">print</span><span style="color: Olive;">&#40;</span>r.<span style="color: #05a;">hmget</span><span style="color: Olive;">&#40;</span><span style="color: #a11;">&quot;hash1&quot;</span><span style="color: Gray;">,</span> <span style="color: #a11;">&quot;k1&quot;</span><span style="color: Gray;">,</span> <span style="color: #a11;">&quot;k2&quot;</span><span style="color: Olive;">&#41;</span><span style="color: Olive;">&#41;</span> <span style="color: #a50"># 多个取hash的key对应的值</span><br />
+r.<span style="color: #05a;">hsetnx</span><span style="color: Olive;">&#40;</span><span style="color: #a11;">&quot;hash1&quot;</span><span style="color: Gray;">,</span> <span style="color: #a11;">&quot;k2&quot;</span><span style="color: Gray;">,</span> <span style="color: #a11;">&quot;v3&quot;</span><span style="color: Olive;">&#41;</span> <span style="color: #a50"># 只能新建</span><br />
+<span style="color: Green;font-weight:bold;">print</span><span style="color: Olive;">&#40;</span>r.<span style="color: #05a;">hget</span><span style="color: Olive;">&#40;</span><span style="color: #a11;">&quot;hash1&quot;</span><span style="color: Gray;">,</span> <span style="color: #a11;">&quot;k2&quot;</span><span style="color: Olive;">&#41;</span><span style="color: Olive;">&#41;</span><br />
+</div></div>
+<h3>2、批量增加（取出）</h3>
+<pre>hmset(name, mapping)</pre>
+<p>在name对应的hash中批量设置键值对</p>
+<p>参数：</p><ul><li>
+name - redis的name</li><li>
+mapping - 字典，如：{'k1':'v1', 'k2': 'v2'}</li></ul>
+<p>如：</p>
+
+<div class="example"><h2 class="example">实例</h2> <div class="example_code">
+r.<span style="color: #05a;">hmset</span><span style="color: Olive;">&#40;</span><span style="color: #a11;">&quot;hash2&quot;</span><span style="color: Gray;">,</span> <span style="color: Olive;">&#123;</span><span style="color: #a11;">&quot;k2&quot;</span>: <span style="color: #a11;">&quot;v2&quot;</span><span style="color: Gray;">,</span> <span style="color: #a11;">&quot;k3&quot;</span>: <span style="color: #a11;">&quot;v3&quot;</span><span style="color: Olive;">&#125;</span><span style="color: Olive;">&#41;</span><br />
+hget<span style="color: Olive;">&#40;</span>name<span style="color: Gray;">,</span>key<span style="color: Olive;">&#41;</span><br />
+</div></div>
+<p>在name对应的hash中获取根据key获取value</p>
+<pre>hmget(name, keys, *args)</pre>
+<p>在name对应的hash中获取多个key的值</p>
+<p>参数：</p><ul><li>
+name - reids对应的name</li><li>
+keys - 要获取key集合，如：['k1', 'k2', 'k3']</li><li>
+*args - 要获取的key，如：k1,k2,k3</li></ul>
+<p>如：</p>
+
+<div class="example"><h2 class="example">实例</h2> <div class="example_code">
+<span style="color: Green;font-weight:bold;">print</span><span style="color: Olive;">&#40;</span>r.<span style="color: #05a;">hget</span><span style="color: Olive;">&#40;</span><span style="color: #a11;">&quot;hash2&quot;</span><span style="color: Gray;">,</span> <span style="color: #a11;">&quot;k2&quot;</span><span style="color: Olive;">&#41;</span><span style="color: Olive;">&#41;</span> &nbsp;<span style="color: #a50"># 单个取出&quot;hash2&quot;的key-k2对应的value</span><br />
+<span style="color: Green;font-weight:bold;">print</span><span style="color: Olive;">&#40;</span>r.<span style="color: #05a;">hmget</span><span style="color: Olive;">&#40;</span><span style="color: #a11;">&quot;hash2&quot;</span><span style="color: Gray;">,</span> <span style="color: #a11;">&quot;k2&quot;</span><span style="color: Gray;">,</span> <span style="color: #a11;">&quot;k3&quot;</span><span style="color: Olive;">&#41;</span><span style="color: Olive;">&#41;</span> &nbsp;<span style="color: #a50"># 批量取出&quot;hash2&quot;的key-k2 k3对应的value --方式1</span><br />
+<span style="color: Green;font-weight:bold;">print</span><span style="color: Olive;">&#40;</span>r.<span style="color: #05a;">hmget</span><span style="color: Olive;">&#40;</span><span style="color: #a11;">&quot;hash2&quot;</span><span style="color: Gray;">,</span> <span style="color: Olive;">&#91;</span><span style="color: #a11;">&quot;k2&quot;</span><span style="color: Gray;">,</span> <span style="color: #a11;">&quot;k3&quot;</span><span style="color: Olive;">&#93;</span><span style="color: Olive;">&#41;</span><span style="color: Olive;">&#41;</span> &nbsp;<span style="color: #a50"># 批量取出&quot;hash2&quot;的key-k2 k3对应的value --方式2</span><br />
+</div></div>
+<h3>3、取出所有的键值对</h3>
+<pre>hgetall(name)</pre>
+<p>获取name对应hash的所有键值</p>
+
+<pre>print(r.hgetall("hash1"))</pre>
+<h3>4、得到所有键值对的格式 hash长度</h3>
+<pre>hlen(name)</pre>
+<p>获取name对应的hash中键值对的个数</p>
+
+<pre>print(r.hlen("hash1"))</pre>
+<h3>5、得到所有的keys（类似字典的取所有keys）</h3>
+<pre>hkeys(name)</pre>
+<p>获取name对应的hash中所有的key的值</p>
+
+<pre>print(r.hkeys("hash1"))</pre>
+<h3>6、得到所有的value（类似字典的取所有value）</h3>
+<pre>hvals(name)</pre>
+<p>获取name对应的hash中所有的value的值</p>
+<pre>
+print(r.hvals("hash1"))</pre>
+<h3>7、判断成员是否存在（类似字典的in）</h3>
+<pre>hexists(name, key)</pre>
+<p>检查 name 对应的 hash 是否存在当前传入的 key</p>
+
+<div class="example"><h2 class="example">实例</h2> <div class="example_code">
+<span style="color: Green;font-weight:bold;">print</span><span style="color: Olive;">&#40;</span>r.<span style="color: #05a;">hexists</span><span style="color: Olive;">&#40;</span><span style="color: #a11;">&quot;hash1&quot;</span><span style="color: Gray;">,</span> <span style="color: #a11;">&quot;k4&quot;</span><span style="color: Olive;">&#41;</span><span style="color: Olive;">&#41;</span> &nbsp;<span style="color: #a50"># False 不存在</span><br />
+<span style="color: Green;font-weight:bold;">print</span><span style="color: Olive;">&#40;</span>r.<span style="color: #05a;">hexists</span><span style="color: Olive;">&#40;</span><span style="color: #a11;">&quot;hash1&quot;</span><span style="color: Gray;">,</span> <span style="color: #a11;">&quot;k1&quot;</span><span style="color: Olive;">&#41;</span><span style="color: Olive;">&#41;</span> &nbsp;<span style="color: #a50"># True 存在</span><br />
+</div></div>
+<h3>8、删除键值对</h3>
+<pre>hdel(name,*keys)</pre>
+<p>将name对应的hash中指定key的键值对删除</p>
+
+<div class="example"><h2 class="example">实例</h2> <div class="example_code">
+<span style="color: Green;font-weight:bold;">print</span><span style="color: Olive;">&#40;</span>r.<span style="color: #05a;">hgetall</span><span style="color: Olive;">&#40;</span><span style="color: #a11;">&quot;hash1&quot;</span><span style="color: Olive;">&#41;</span><span style="color: Olive;">&#41;</span><br />
+r.<span style="color: #05a;">hset</span><span style="color: Olive;">&#40;</span><span style="color: #a11;">&quot;hash1&quot;</span><span style="color: Gray;">,</span> <span style="color: #a11;">&quot;k2&quot;</span><span style="color: Gray;">,</span> <span style="color: #a11;">&quot;v222&quot;</span><span style="color: Olive;">&#41;</span> &nbsp; <span style="color: #a50"># 修改已有的key k2</span><br />
+r.<span style="color: #05a;">hset</span><span style="color: Olive;">&#40;</span><span style="color: #a11;">&quot;hash1&quot;</span><span style="color: Gray;">,</span> <span style="color: #a11;">&quot;k11&quot;</span><span style="color: Gray;">,</span> <span style="color: #a11;">&quot;v1&quot;</span><span style="color: Olive;">&#41;</span> &nbsp; <span style="color: #a50"># 新增键值对 k11</span><br />
+r.<span style="color: #05a;">hdel</span><span style="color: Olive;">&#40;</span><span style="color: #a11;">&quot;hash1&quot;</span><span style="color: Gray;">,</span> <span style="color: #a11;">&quot;k1&quot;</span><span style="color: Olive;">&#41;</span> &nbsp; &nbsp;<span style="color: #a50"># 删除一个键值对</span><br />
+<span style="color: Green;font-weight:bold;">print</span><span style="color: Olive;">&#40;</span>r.<span style="color: #05a;">hgetall</span><span style="color: Olive;">&#40;</span><span style="color: #a11;">&quot;hash1&quot;</span><span style="color: Olive;">&#41;</span><span style="color: Olive;">&#41;</span><br />
+</div></div>
+<h3>9、自增自减整数(将key对应的value--整数 自增1或者2，或者别的整数 负数就是自减)</h3>
+<pre>hincrby(name, key, amount=1)</pre>
+<p>自增name对应的hash中的指定key的值，不存在则创建key=amount</p>
+<p>参数：</p>
+<ul><li>
+name - redis中的name</li><li>
+key - hash对应的key</li><li>
+amount - 自增数（整数）</li></ul>
+
+<div class="example"><h2 class="example">实例</h2> <div class="example_code">
+r.<span style="color: #05a;">hset</span><span style="color: Olive;">&#40;</span><span style="color: #a11;">&quot;hash1&quot;</span><span style="color: Gray;">,</span> <span style="color: #a11;">&quot;k3&quot;</span><span style="color: Gray;">,</span> <span style="color: Maroon;">123</span><span style="color: Olive;">&#41;</span><br />
+r.<span style="color: #05a;">hincrby</span><span style="color: Olive;">&#40;</span><span style="color: #a11;">&quot;hash1&quot;</span><span style="color: Gray;">,</span> <span style="color: #a11;">&quot;k3&quot;</span><span style="color: Gray;">,</span> amount<span style="color: Gray;">=</span>-<span style="color: Maroon;">1</span><span style="color: Olive;">&#41;</span><br />
+<span style="color: Green;font-weight:bold;">print</span><span style="color: Olive;">&#40;</span>r.<span style="color: #05a;">hgetall</span><span style="color: Olive;">&#40;</span><span style="color: #a11;">&quot;hash1&quot;</span><span style="color: Olive;">&#41;</span><span style="color: Olive;">&#41;</span><br />
+r.<span style="color: #05a;">hincrby</span><span style="color: Olive;">&#40;</span><span style="color: #a11;">&quot;hash1&quot;</span><span style="color: Gray;">,</span> <span style="color: #a11;">&quot;k4&quot;</span><span style="color: Gray;">,</span> amount<span style="color: Gray;">=</span><span style="color: Maroon;">1</span><span style="color: Olive;">&#41;</span> &nbsp;<span style="color: #a50"># 不存在的话，value默认就是1</span><br />
+<span style="color: Green;font-weight:bold;">print</span><span style="color: Olive;">&#40;</span>r.<span style="color: #05a;">hgetall</span><span style="color: Olive;">&#40;</span><span style="color: #a11;">&quot;hash1&quot;</span><span style="color: Olive;">&#41;</span><span style="color: Olive;">&#41;</span><br />
+</div></div>
+<h3>10、自增自减浮点数(将key对应的value--浮点数 自增1.0或者2.0，或者别的浮点数 负数就是自减)</h3>
+<pre>hincrbyfloat(name, key, amount=1.0)</pre>
+<p>自增name对应的hash中的指定key的值，不存在则创建key=amount</p>
+<p>参数：</p><ul><li>
+name - redis中的name</li><li>
+key - hash对应的key</li><li>
+amount，自增数（浮点数）</li></ul>
+<p>自增 name 对应的 hash 中的指定 key 的值，不存在则创建 key=amount。</p>
+
+<div class="example"><h2 class="example">实例</h2> <div class="example_code">
+r.<span style="color: #05a;">hset</span><span style="color: Olive;">&#40;</span><span style="color: #a11;">&quot;hash1&quot;</span><span style="color: Gray;">,</span> <span style="color: #a11;">&quot;k5&quot;</span><span style="color: Gray;">,</span> <span style="color: #a11;">&quot;1.0&quot;</span><span style="color: Olive;">&#41;</span><br />
+r.<span style="color: #05a;">hincrbyfloat</span><span style="color: Olive;">&#40;</span><span style="color: #a11;">&quot;hash1&quot;</span><span style="color: Gray;">,</span> <span style="color: #a11;">&quot;k5&quot;</span><span style="color: Gray;">,</span> amount<span style="color: Gray;">=</span>-<span style="color: Maroon;">1.0</span><span style="color: Olive;">&#41;</span> &nbsp; &nbsp;<span style="color: #a50"># 已经存在，递减-1.0</span><br />
+<span style="color: Green;font-weight:bold;">print</span><span style="color: Olive;">&#40;</span>r.<span style="color: #05a;">hgetall</span><span style="color: Olive;">&#40;</span><span style="color: #a11;">&quot;hash1&quot;</span><span style="color: Olive;">&#41;</span><span style="color: Olive;">&#41;</span><br />
+r.<span style="color: #05a;">hincrbyfloat</span><span style="color: Olive;">&#40;</span><span style="color: #a11;">&quot;hash1&quot;</span><span style="color: Gray;">,</span> <span style="color: #a11;">&quot;k6&quot;</span><span style="color: Gray;">,</span> amount<span style="color: Gray;">=</span>-<span style="color: Maroon;">1.0</span><span style="color: Olive;">&#41;</span> &nbsp; &nbsp;<span style="color: #a50"># 不存在，value初始值是-1.0 每次递减1.0</span><br />
+<span style="color: Green;font-weight:bold;">print</span><span style="color: Olive;">&#40;</span>r.<span style="color: #05a;">hgetall</span><span style="color: Olive;">&#40;</span><span style="color: #a11;">&quot;hash1&quot;</span><span style="color: Olive;">&#41;</span><span style="color: Olive;">&#41;</span><br />
+</div></div>
+<h3>11、取值查看--分片读取</h3>
+<pre>hscan(name, cursor=0, match=None, count=None)</pre>
+<p>增量式迭代获取，对于数据大的数据非常有用，hscan可以实现分片的获取数据，并非一次性将数据全部获取完，从而放置内存被撑爆</p>
+<p>参数：</p><ul><li>
+name - redis的name</li><li>
+cursor - 游标（基于游标分批取获取数据）</li><li>
+match - 匹配指定key，默认None 表示所有的key</li><li>
+count - 每次分片最少获取个数，默认None表示采用Redis的默认分片个数</li></ul>
+<p>如：</p>
+<pre>第一次：cursor1, data1 = r.hscan('xx', cursor=0, match=None, count=None)
+第二次：cursor2, data1 = r.hscan('xx', cursor=cursor1, match=None, count=None)
+...</pre>
+<p>直到返回值cursor的值为0时，表示数据已经通过分片获取完毕</p>
+
+<pre>print(r.hscan("hash1"))</pre>
+<h3>12、<span class="marked">hscan_iter(name, match=None, count=None)</span></h3>
+<p>利用yield封装hscan创建生成器，实现分批去redis中获取数据</p>
+<p>参数：</p><ul><li>
+match - 匹配指定key，默认None 表示所有的key</li><li>
+count - 每次分片最少获取个数，默认None表示采用Redis的默认分片个数</li></ul>
+<p>如：</p>
+
+<div class="example"><h2 class="example">实例</h2> <div class="example_code">
+<span style="color: Green;font-weight:bold;">for</span> item <span style="color: Green;font-weight:bold;">in</span> r.<span style="color: #05a;">hscan_iter</span><span style="color: Olive;">&#40;</span><span style="color: #a11;">'hash1'</span><span style="color: Olive;">&#41;</span>:<br />
+&nbsp; &nbsp; <span style="color: Green;font-weight:bold;">print</span><span style="color: Olive;">&#40;</span>item<span style="color: Olive;">&#41;</span><br />
+<span style="color: Green;font-weight:bold;">print</span><span style="color: Olive;">&#40;</span>r.<span style="color: #05a;">hscan_iter</span><span style="color: Olive;">&#40;</span><span style="color: #a11;">&quot;hash1&quot;</span><span style="color: Olive;">&#41;</span><span style="color: Olive;">&#41;</span> &nbsp; &nbsp;<span style="color: #a50"># 生成器内存地址</span><br />
+</div></div>
+<hr><h2>5、redis基本命令 list</h2>
+<p><strong>1.增加（类似于list的append，只是这里是从左边新增加）--没有就新建</strong></p>
+<pre>lpush(name,values)</pre>
+<p>在name对应的list中添加元素，每个新的元素都添加到列表的最左边</p>
+<p>如：</p>
+
+<div class="example"><h2 class="example">实例</h2> <div class="example_code">
+<span style="color: Green;font-weight:bold;">import</span> redis<br />
+<span style="color: Green;font-weight:bold;">import</span> <span style="color: #05a;">time</span><br />
+<br />
+pool <span style="color: Gray;">=</span> redis.<span style="color: #05a;">ConnectionPool</span><span style="color: Olive;">&#40;</span>host<span style="color: Gray;">=</span><span style="color: #a11;">'localhost'</span><span style="color: Gray;">,</span> port<span style="color: Gray;">=</span><span style="color: Maroon;">6379</span><span style="color: Gray;">,</span> decode_responses<span style="color: Gray;">=</span><span style="color: Teal;">True</span><span style="color: Olive;">&#41;</span><br />
+r <span style="color: Gray;">=</span> redis.<span style="color: #05a;">Redis</span><span style="color: Olive;">&#40;</span>connection_pool<span style="color: Gray;">=</span>pool<span style="color: Olive;">&#41;</span><br />
+<br />
+r.<span style="color: #05a;">lpush</span><span style="color: Olive;">&#40;</span><span style="color: #a11;">&quot;list1&quot;</span><span style="color: Gray;">,</span> <span style="color: Maroon;">11</span><span style="color: Gray;">,</span> <span style="color: Maroon;">22</span><span style="color: Gray;">,</span> <span style="color: Maroon;">33</span><span style="color: Olive;">&#41;</span><br />
+<span style="color: Green;font-weight:bold;">print</span><span style="color: Olive;">&#40;</span>r.<span style="color: #05a;">lrange</span><span style="color: Olive;">&#40;</span><span style="color: #a11;">'list1'</span><span style="color: Gray;">,</span> <span style="color: Maroon;">0</span><span style="color: Gray;">,</span> -<span style="color: Maroon;">1</span><span style="color: Olive;">&#41;</span><span style="color: Olive;">&#41;</span><br />
+</div></div>
+<p>保存顺序为: 33,22,11</p>
+
+<p>扩展：</p>
+
+<pre>r.rpush("list2", 11, 22, 33)  # 表示从右向左操作
+print(r.llen("list2"))  # 列表长度
+print(r.lrange("list2", 0, 3))  # 切片取出值，范围是索引号0-3</pre>
+<p><strong>2.增加（从右边增加）--没有就新建</strong></p>
+
+<div class="example"><h2 class="example">实例</h2> <div class="example_code">
+r.<span style="color: #05a;">rpush</span><span style="color: Olive;">&#40;</span><span style="color: #a11;">&quot;list2&quot;</span><span style="color: Gray;">,</span> <span style="color: Maroon;">44</span><span style="color: Gray;">,</span> <span style="color: Maroon;">55</span><span style="color: Gray;">,</span> <span style="color: Maroon;">66</span><span style="color: Olive;">&#41;</span> &nbsp; &nbsp;<span style="color: #a50"># 在列表的右边，依次添加44,55,66</span><br />
+<span style="color: Green;font-weight:bold;">print</span><span style="color: Olive;">&#40;</span>r.<span style="color: #05a;">llen</span><span style="color: Olive;">&#40;</span><span style="color: #a11;">&quot;list2&quot;</span><span style="color: Olive;">&#41;</span><span style="color: Olive;">&#41;</span> &nbsp;<span style="color: #a50"># 列表长度</span><br />
+<span style="color: Green;font-weight:bold;">print</span><span style="color: Olive;">&#40;</span>r.<span style="color: #05a;">lrange</span><span style="color: Olive;">&#40;</span><span style="color: #a11;">&quot;list2&quot;</span><span style="color: Gray;">,</span> <span style="color: Maroon;">0</span><span style="color: Gray;">,</span> -<span style="color: Maroon;">1</span><span style="color: Olive;">&#41;</span><span style="color: Olive;">&#41;</span> <span style="color: #a50"># 切片取出值，范围是索引号0到-1(最后一个元素)</span><br />
+</div></div>
+<p><strong>3.往已经有的name的列表的左边添加元素，没有的话无法创建</strong></p>
+<pre>lpushx(name,value)</pre>
+<p>在name对应的list中添加元素，只有name已经存在时，值添加到列表的最左边</p>
+<p>更多：</p>
+
+<div class="example"><h2 class="example">实例</h2> <div class="example_code">
+r.<span style="color: #05a;">lpushx</span><span style="color: Olive;">&#40;</span><span style="color: #a11;">&quot;list10&quot;</span><span style="color: Gray;">,</span> <span style="color: Maroon;">10</span><span style="color: Olive;">&#41;</span> &nbsp; <span style="color: #a50"># 这里list10不存在</span><br />
+<span style="color: Green;font-weight:bold;">print</span><span style="color: Olive;">&#40;</span>r.<span style="color: #05a;">llen</span><span style="color: Olive;">&#40;</span><span style="color: #a11;">&quot;list10&quot;</span><span style="color: Olive;">&#41;</span><span style="color: Olive;">&#41;</span> &nbsp;<span style="color: #a50"># 0</span><br />
+<span style="color: Green;font-weight:bold;">print</span><span style="color: Olive;">&#40;</span>r.<span style="color: #05a;">lrange</span><span style="color: Olive;">&#40;</span><span style="color: #a11;">&quot;list10&quot;</span><span style="color: Gray;">,</span> <span style="color: Maroon;">0</span><span style="color: Gray;">,</span> -<span style="color: Maroon;">1</span><span style="color: Olive;">&#41;</span><span style="color: Olive;">&#41;</span> &nbsp;<span style="color: #a50"># []</span><br />
+r.<span style="color: #05a;">lpushx</span><span style="color: Olive;">&#40;</span><span style="color: #a11;">&quot;list2&quot;</span><span style="color: Gray;">,</span> <span style="color: Maroon;">77</span><span style="color: Olive;">&#41;</span> &nbsp; <span style="color: #a50"># 这里&quot;list2&quot;之前已经存在，往列表最左边添加一个元素，一次只能添加一个</span><br />
+<span style="color: Green;font-weight:bold;">print</span><span style="color: Olive;">&#40;</span>r.<span style="color: #05a;">llen</span><span style="color: Olive;">&#40;</span><span style="color: #a11;">&quot;list2&quot;</span><span style="color: Olive;">&#41;</span><span style="color: Olive;">&#41;</span> &nbsp;<span style="color: #a50"># 列表长度</span><br />
+<span style="color: Green;font-weight:bold;">print</span><span style="color: Olive;">&#40;</span>r.<span style="color: #05a;">lrange</span><span style="color: Olive;">&#40;</span><span style="color: #a11;">&quot;list2&quot;</span><span style="color: Gray;">,</span> <span style="color: Maroon;">0</span><span style="color: Gray;">,</span> -<span style="color: Maroon;">1</span><span style="color: Olive;">&#41;</span><span style="color: Olive;">&#41;</span> <span style="color: #a50"># 切片取出值，范围是索引号0到-1(最后一个元素</span><br />
+</div></div>
+<p><strong>4.往已经有的name的列表的右边添加元素，没有的话无法创建</strong></p>
+
+<div class="example"><h2 class="example">实例</h2> <div class="example_code">
+r.<span style="color: #05a;">rpushx</span><span style="color: Olive;">&#40;</span><span style="color: #a11;">&quot;list2&quot;</span><span style="color: Gray;">,</span> <span style="color: Maroon;">99</span><span style="color: Olive;">&#41;</span> &nbsp; <span style="color: #a50"># 这里&quot;foo_list1&quot;之前已经存在，往列表最右边添加一个元素，一次只能添加一个</span><br />
+<span style="color: Green;font-weight:bold;">print</span><span style="color: Olive;">&#40;</span>r.<span style="color: #05a;">llen</span><span style="color: Olive;">&#40;</span><span style="color: #a11;">&quot;list2&quot;</span><span style="color: Olive;">&#41;</span><span style="color: Olive;">&#41;</span> &nbsp;<span style="color: #a50"># 列表长度</span><br />
+<span style="color: Green;font-weight:bold;">print</span><span style="color: Olive;">&#40;</span>r.<span style="color: #05a;">lrange</span><span style="color: Olive;">&#40;</span><span style="color: #a11;">&quot;list2&quot;</span><span style="color: Gray;">,</span> <span style="color: Maroon;">0</span><span style="color: Gray;">,</span> -<span style="color: Maroon;">1</span><span style="color: Olive;">&#41;</span><span style="color: Olive;">&#41;</span> <span style="color: #a50"># 切片取出值，范围是索引号0到-1(最后一个元素)</span><br />
+</div></div>
+<p><strong>5.新增（固定索引号位置插入元素）</strong></p>
+<pre>linsert(name, where, refvalue, value))</pre>
+<p>在name对应的列表的某一个值前或后插入一个新值</p>
+<p>参数：</p><ul><li>
+name - redis的name</li><li>
+where - BEFORE或AFTER</li><li>
+refvalue - 标杆值，即：在它前后插入数据</li><li>
+value - 要插入的数据</li></ul>
+
+<div class="example"><h2 class="example">实例</h2> <div class="example_code">
+r.<span style="color: #05a;">linsert</span><span style="color: Olive;">&#40;</span><span style="color: #a11;">&quot;list2&quot;</span><span style="color: Gray;">,</span> <span style="color: #a11;">&quot;before&quot;</span><span style="color: Gray;">,</span> <span style="color: #a11;">&quot;11&quot;</span><span style="color: Gray;">,</span> <span style="color: #a11;">&quot;00&quot;</span><span style="color: Olive;">&#41;</span> &nbsp; <span style="color: #a50"># 往列表中左边第一个出现的元素&quot;11&quot;前插入元素&quot;00&quot;</span><br />
+<span style="color: Green;font-weight:bold;">print</span><span style="color: Olive;">&#40;</span>r.<span style="color: #05a;">lrange</span><span style="color: Olive;">&#40;</span><span style="color: #a11;">&quot;list2&quot;</span><span style="color: Gray;">,</span> <span style="color: Maroon;">0</span><span style="color: Gray;">,</span> -<span style="color: Maroon;">1</span><span style="color: Olive;">&#41;</span><span style="color: Olive;">&#41;</span> &nbsp; <span style="color: #a50"># 切片取出值，范围是索引号0-最后一个元素</span><br />
+</div></div>
+<p><strong>6.修改（指定索引号进行修改）</strong></p>
+<pre>r.lset(name, index, value)</pre>
+<p>对name对应的list中的某一个索引位置重新赋值</p>
+<p>参数：</p><ul><li>
+name - redis的name</li><li>
+index - list的索引位置</li><li>
+value - 要设置的值</li></ul>
+<div class="example"><h2 class="example">实例</h2> <div class="example_code">
+r.<span style="color: #05a;">lset</span><span style="color: Olive;">&#40;</span><span style="color: #a11;">&quot;list2&quot;</span><span style="color: Gray;">,</span> <span style="color: Maroon;">0</span><span style="color: Gray;">,</span> -<span style="color: Maroon;">11</span><span style="color: Olive;">&#41;</span> &nbsp; &nbsp;<span style="color: #a50"># 把索引号是0的元素修改成-11</span><br />
+<span style="color: Green;font-weight:bold;">print</span><span style="color: Olive;">&#40;</span>r.<span style="color: #05a;">lrange</span><span style="color: Olive;">&#40;</span><span style="color: #a11;">&quot;list2&quot;</span><span style="color: Gray;">,</span> <span style="color: Maroon;">0</span><span style="color: Gray;">,</span> -<span style="color: Maroon;">1</span><span style="color: Olive;">&#41;</span><span style="color: Olive;">&#41;</span><br />
+</div></div>
+<p><strong>7.删除（指定值进行删除）</strong></p>
+<pre>r.lrem(name, value, num)</pre>
+<p>在name对应的list中删除指定的值</p>
+<p>参数：</p><ul><li>
+name - redis的name</li><li>
+value - 要删除的值</li><li>
+num - num=0，删除列表中所有的指定值；</li><li>
+num=2 - 从前到后，删除2个, num=1,从前到后，删除左边第1个</li><li>
+num=-2 - 从后向前，删除2个</li></ul>
+
+<div class="example"><h2 class="example">实例</h2> <div class="example_code">
+r.<span style="color: #05a;">lrem</span><span style="color: Olive;">&#40;</span><span style="color: #a11;">&quot;list2&quot;</span><span style="color: Gray;">,</span> <span style="color: #a11;">&quot;11&quot;</span><span style="color: Gray;">,</span> <span style="color: Maroon;">1</span><span style="color: Olive;">&#41;</span> &nbsp; &nbsp;<span style="color: #a50"># 将列表中左边第一次出现的&quot;11&quot;删除</span><br />
+<span style="color: Green;font-weight:bold;">print</span><span style="color: Olive;">&#40;</span>r.<span style="color: #05a;">lrange</span><span style="color: Olive;">&#40;</span><span style="color: #a11;">&quot;list2&quot;</span><span style="color: Gray;">,</span> <span style="color: Maroon;">0</span><span style="color: Gray;">,</span> -<span style="color: Maroon;">1</span><span style="color: Olive;">&#41;</span><span style="color: Olive;">&#41;</span><br />
+r.<span style="color: #05a;">lrem</span><span style="color: Olive;">&#40;</span><span style="color: #a11;">&quot;list2&quot;</span><span style="color: Gray;">,</span> <span style="color: #a11;">&quot;99&quot;</span><span style="color: Gray;">,</span> -<span style="color: Maroon;">1</span><span style="color: Olive;">&#41;</span> &nbsp; &nbsp;<span style="color: #a50"># 将列表中右边第一次出现的&quot;99&quot;删除</span><br />
+<span style="color: Green;font-weight:bold;">print</span><span style="color: Olive;">&#40;</span>r.<span style="color: #05a;">lrange</span><span style="color: Olive;">&#40;</span><span style="color: #a11;">&quot;list2&quot;</span><span style="color: Gray;">,</span> <span style="color: Maroon;">0</span><span style="color: Gray;">,</span> -<span style="color: Maroon;">1</span><span style="color: Olive;">&#41;</span><span style="color: Olive;">&#41;</span><br />
+r.<span style="color: #05a;">lrem</span><span style="color: Olive;">&#40;</span><span style="color: #a11;">&quot;list2&quot;</span><span style="color: Gray;">,</span> <span style="color: #a11;">&quot;22&quot;</span><span style="color: Gray;">,</span> <span style="color: Maroon;">0</span><span style="color: Olive;">&#41;</span> &nbsp; &nbsp;<span style="color: #a50"># 将列表中所有的&quot;22&quot;删除</span><br />
+<span style="color: Green;font-weight:bold;">print</span><span style="color: Olive;">&#40;</span>r.<span style="color: #05a;">lrange</span><span style="color: Olive;">&#40;</span><span style="color: #a11;">&quot;list2&quot;</span><span style="color: Gray;">,</span> <span style="color: Maroon;">0</span><span style="color: Gray;">,</span> -<span style="color: Maroon;">1</span><span style="color: Olive;">&#41;</span><span style="color: Olive;">&#41;</span><br />
+</div></div>
+<p><strong>8.删除并返回</strong></p>
+<pre>lpop(name)</pre>
+<p>在name对应的列表的左侧获取第一个元素并在列表中移除，返回值则是第一个元素</p>
+<p>更多：</p>
+<p>rpop(name) 表示从右向左操作</p>
+
+<div class="example"><h2 class="example">实例</h2> <div class="example_code">
+r.<span style="color: #05a;">lpop</span><span style="color: Olive;">&#40;</span><span style="color: #a11;">&quot;list2&quot;</span><span style="color: Olive;">&#41;</span> &nbsp; &nbsp;<span style="color: #a50"># 删除列表最左边的元素，并且返回删除的元素</span><br />
+<span style="color: Green;font-weight:bold;">print</span><span style="color: Olive;">&#40;</span>r.<span style="color: #05a;">lrange</span><span style="color: Olive;">&#40;</span><span style="color: #a11;">&quot;list2&quot;</span><span style="color: Gray;">,</span> <span style="color: Maroon;">0</span><span style="color: Gray;">,</span> -<span style="color: Maroon;">1</span><span style="color: Olive;">&#41;</span><span style="color: Olive;">&#41;</span><br />
+r.<span style="color: #05a;">rpop</span><span style="color: Olive;">&#40;</span><span style="color: #a11;">&quot;list2&quot;</span><span style="color: Olive;">&#41;</span> &nbsp; &nbsp;<span style="color: #a50"># 删除列表最右边的元素，并且返回删除的元素</span><br />
+<span style="color: Green;font-weight:bold;">print</span><span style="color: Olive;">&#40;</span>r.<span style="color: #05a;">lrange</span><span style="color: Olive;">&#40;</span><span style="color: #a11;">&quot;list2&quot;</span><span style="color: Gray;">,</span> <span style="color: Maroon;">0</span><span style="color: Gray;">,</span> -<span style="color: Maroon;">1</span><span style="color: Olive;">&#41;</span><span style="color: Olive;">&#41;</span><br />
+</div></div>
+<p><strong>9.删除索引之外的值</strong></p>
+<pre>ltrim(name, start, end)</pre>
+<p>在name对应的列表中移除没有在start-end索引之间的值</p>
+<p>参数：</p><ul><li>
+name - redis的name</li><li>
+start - 索引的起始位置</li><li>
+end - 索引结束位置</li></ul>
+
+<div class="example"><h2 class="example">实例</h2> <div class="example_code">
+r.<span style="color: #05a;">ltrim</span><span style="color: Olive;">&#40;</span><span style="color: #a11;">&quot;list2&quot;</span><span style="color: Gray;">,</span> <span style="color: Maroon;">0</span><span style="color: Gray;">,</span> <span style="color: Maroon;">2</span><span style="color: Olive;">&#41;</span> &nbsp; &nbsp;<span style="color: #a50"># 删除索引号是0-2之外的元素，值保留索引号是0-2的元素</span><br />
+<span style="color: Green;font-weight:bold;">print</span><span style="color: Olive;">&#40;</span>r.<span style="color: #05a;">lrange</span><span style="color: Olive;">&#40;</span><span style="color: #a11;">&quot;list2&quot;</span><span style="color: Gray;">,</span> <span style="color: Maroon;">0</span><span style="color: Gray;">,</span> -<span style="color: Maroon;">1</span><span style="color: Olive;">&#41;</span><span style="color: Olive;">&#41;</span><br />
+</div></div>
+<p><strong>10.取值（根据索引号取值）</strong></p>
+<pre>lindex(name, index)</pre>
+<p>在name对应的列表中根据索引获取列表元素</p>
+
+<pre>print(r.lindex("list2", 0))  # 取出索引号是0的值</pre>
+<p><strong>11.移动 元素从一个列表移动到另外一个列表</strong></p>
+<pre>rpoplpush(src, dst)</pre>
+<p>从一个列表取出最右边的元素，同时将其添加至另一个列表的最左边</p>
+<p>参数：</p>
+<ul><li>
+src - 要取数据的列表的 name</li><li>
+dst - 要添加数据的列表的 name</li></ul>
+
+<pre>r.rpoplpush("list1", "list2")
+print(r.lrange("list2", 0, -1))</pre>
+<p><strong>12.移动 元素从一个列表移动到另外一个列表 可以设置超时</strong></p>
+<pre>brpoplpush(src, dst, timeout=0)</pre>
+<p>从一个列表的右侧移除一个元素并将其添加到另一个列表的左侧</p>
+<p>参数：</p><ul><li>
+src - 取出并要移除元素的列表对应的name</li><li>
+dst - 要插入元素的列表对应的name</li><li>
+timeout - 当src对应的列表中没有数据时，阻塞等待其有数据的超时时间（秒），0 表示永远阻塞</li></ul>
+
+<div class="example"><h2 class="example">实例</h2> <div class="example_code">
+r.<span style="color: #05a;">brpoplpush</span><span style="color: Olive;">&#40;</span><span style="color: #a11;">&quot;list1&quot;</span><span style="color: Gray;">,</span> <span style="color: #a11;">&quot;list2&quot;</span><span style="color: Gray;">,</span> timeout<span style="color: Gray;">=</span><span style="color: Maroon;">2</span><span style="color: Olive;">&#41;</span><br />
+<span style="color: Green;font-weight:bold;">print</span><span style="color: Olive;">&#40;</span>r.<span style="color: #05a;">lrange</span><span style="color: Olive;">&#40;</span><span style="color: #a11;">&quot;list2&quot;</span><span style="color: Gray;">,</span> <span style="color: Maroon;">0</span><span style="color: Gray;">,</span> -<span style="color: Maroon;">1</span><span style="color: Olive;">&#41;</span><span style="color: Olive;">&#41;</span><br />
+</div></div>
+<p><strong>13.一次移除多个列表</strong></p>
+<pre>blpop(keys, timeout)</pre>
+<p>将多个列表排列，按照从左到右去pop对应列表的元素</p>
+<p>参数：</p><ul><li>
+keys - redis的name的集合</li><li>
+timeout - 超时时间，当元素所有列表的元素获取完之后，阻塞等待列表内有数据的时间（秒）, 0 表示永远阻塞</li></ul>
+<p>更多：</p>
+<p><span class="marked">r.brpop(keys, timeout)</span> 同 blpop，将多个列表排列,按照从右像左去移除各个列表内的元素</p>
+
+<div class="example"><h2 class="example">实例</h2> <div class="example_code">
+r.<span style="color: #05a;">lpush</span><span style="color: Olive;">&#40;</span><span style="color: #a11;">&quot;list10&quot;</span><span style="color: Gray;">,</span> <span style="color: Maroon;">3</span><span style="color: Gray;">,</span> <span style="color: Maroon;">4</span><span style="color: Gray;">,</span> <span style="color: Maroon;">5</span><span style="color: Olive;">&#41;</span><br />
+r.<span style="color: #05a;">lpush</span><span style="color: Olive;">&#40;</span><span style="color: #a11;">&quot;list11&quot;</span><span style="color: Gray;">,</span> <span style="color: Maroon;">3</span><span style="color: Gray;">,</span> <span style="color: Maroon;">4</span><span style="color: Gray;">,</span> <span style="color: Maroon;">5</span><span style="color: Olive;">&#41;</span><br />
+<span style="color: Green;font-weight:bold;">while</span> <span style="color: Teal;">True</span>:<br />
+&nbsp; &nbsp; r.<span style="color: #05a;">blpop</span><span style="color: Olive;">&#40;</span><span style="color: Olive;">&#91;</span><span style="color: #a11;">&quot;list10&quot;</span><span style="color: Gray;">,</span> <span style="color: #a11;">&quot;list11&quot;</span><span style="color: Olive;">&#93;</span><span style="color: Gray;">,</span> timeout<span style="color: Gray;">=</span><span style="color: Maroon;">2</span><span style="color: Olive;">&#41;</span><br />
+&nbsp; &nbsp; <span style="color: Green;font-weight:bold;">print</span><span style="color: Olive;">&#40;</span>r.<span style="color: #05a;">lrange</span><span style="color: Olive;">&#40;</span><span style="color: #a11;">&quot;list10&quot;</span><span style="color: Gray;">,</span> <span style="color: Maroon;">0</span><span style="color: Gray;">,</span> -<span style="color: Maroon;">1</span><span style="color: Olive;">&#41;</span><span style="color: Gray;">,</span> r.<span style="color: #05a;">lrange</span><span style="color: Olive;">&#40;</span><span style="color: #a11;">&quot;list11&quot;</span><span style="color: Gray;">,</span> <span style="color: Maroon;">0</span><span style="color: Gray;">,</span> -<span style="color: Maroon;">1</span><span style="color: Olive;">&#41;</span><span style="color: Olive;">&#41;</span><br />
+</div></div>
+<p><strong>14.自定义增量迭代</strong></p>
+<p>由于redis类库中没有提供对列表元素的增量迭代，如果想要循环name对应的列表的所有元素，那么就需要获取name对应的所有列表。</p>
+
+<p>循环列表</p>
+
+<p>但是，如果列表非常大，那么就有可能在第一步时就将程序的内容撑爆，所有有必要自定义一个增量迭代的功能：</p>
+
+<div class="example"><h2 class="example">实例</h2> <div class="example_code">
+<span style="color: Green;font-weight:bold;">def</span> list_iter<span style="color: Olive;">&#40;</span>name<span style="color: Olive;">&#41;</span>:<br />
+&nbsp; &nbsp; <span style="color: #a11;">&quot;&quot;&quot;<br />
+&nbsp; &nbsp; 自定义redis列表增量迭代<br />
+&nbsp; &nbsp; :param name: redis中的name，即：迭代name对应的列表<br />
+&nbsp; &nbsp; :return: yield 返回 列表元素<br />
+&nbsp; &nbsp; &quot;&quot;&quot;</span><br />
+&nbsp; &nbsp; list_count <span style="color: Gray;">=</span> r.<span style="color: #05a;">llen</span><span style="color: Olive;">&#40;</span>name<span style="color: Olive;">&#41;</span><br />
+&nbsp; &nbsp; <span style="color: Green;font-weight:bold;">for</span> index <span style="color: Green;font-weight:bold;">in</span> <span style="color: Teal;">range</span><span style="color: Olive;">&#40;</span>list_count<span style="color: Olive;">&#41;</span>:<br />
+&nbsp; &nbsp; &nbsp; &nbsp; <span style="color: Green;font-weight:bold;">yield</span> r.<span style="color: #05a;">lindex</span><span style="color: Olive;">&#40;</span>name<span style="color: Gray;">,</span> index<span style="color: Olive;">&#41;</span><br />
+<br />
+<span style="color: #a50"># 使用</span><br />
+<span style="color: Green;font-weight:bold;">for</span> item <span style="color: Green;font-weight:bold;">in</span> list_iter<span style="color: Olive;">&#40;</span><span style="color: #a11;">'list2'</span><span style="color: Olive;">&#41;</span>: <span style="color: #a50"># 遍历这个列表</span><br />
+&nbsp; &nbsp; <span style="color: Green;font-weight:bold;">print</span><span style="color: Olive;">&#40;</span>item<span style="color: Olive;">&#41;</span><br />
+</div></div>
+<hr>
+<h2>6、redis基本命令 set</h2>
+<p><strong>1.新增</strong></p>
+<pre>sadd(name,values)</pre>
+<p>name - 对应的集合中添加元素</p>
+
+<div class="example"><h2 class="example">实例</h2> <div class="example_code">
+r.<span style="color: #05a;">sadd</span><span style="color: Olive;">&#40;</span><span style="color: #a11;">&quot;set1&quot;</span><span style="color: Gray;">,</span> <span style="color: Maroon;">33</span><span style="color: Gray;">,</span> <span style="color: Maroon;">44</span><span style="color: Gray;">,</span> <span style="color: Maroon;">55</span><span style="color: Gray;">,</span> <span style="color: Maroon;">66</span><span style="color: Olive;">&#41;</span> &nbsp;<span style="color: #a50"># 往集合中添加元素</span><br />
+<span style="color: Green;font-weight:bold;">print</span><span style="color: Olive;">&#40;</span>r.<span style="color: #05a;">scard</span><span style="color: Olive;">&#40;</span><span style="color: #a11;">&quot;set1&quot;</span><span style="color: Olive;">&#41;</span><span style="color: Olive;">&#41;</span> &nbsp;<span style="color: #a50"># 集合的长度是4</span><br />
+<span style="color: Green;font-weight:bold;">print</span><span style="color: Olive;">&#40;</span>r.<span style="color: #05a;">smembers</span><span style="color: Olive;">&#40;</span><span style="color: #a11;">&quot;set1&quot;</span><span style="color: Olive;">&#41;</span><span style="color: Olive;">&#41;</span> &nbsp; <span style="color: #a50"># 获取集合中所有的成员</span><br />
+</div></div>
+<p><strong>2.获取元素个数 类似于len</strong></p>
+<pre>scard(name)</pre>
+<p>获取name对应的集合中元素个数</p>
+
+<pre>print(r.scard("set1"))  # 集合的长度是4</pre>
+<p><strong>3.获取集合中所有的成员</strong></p>
+<pre>smembers(name)</pre>
+<p>获取name对应的集合的所有成员</p>
+
+<pre>print(r.smembers("set1"))   # 获取集合中所有的成员</pre>
+<p>获取集合中所有的成员--元组形式</p>
+<pre>sscan(name, cursor=0, match=None, count=None)</pre>
+<p>实例：</p>
+<pre>print(r.sscan("set1"))</pre>
+<p>获取集合中所有的成员--迭代器的方式</p>
+<pre>sscan_iter(name, match=None, count=None)</pre>
+<p>同字符串的操作，用于增量迭代分批获取元素，避免内存消耗太大</p>
+
+<pre>
+for i in r.sscan_iter("set1"):
+    print(i)</pre>
+<p><strong>4.差集</strong></p>
+<pre>sdiff(keys, *args)</pre>
+<p>在第一个name对应的集合中且不在其他name对应的集合的元素集合</p>
+<div class="example"><h2 class="example">实例</h2> <div class="example_code">
+r.<span style="color: #05a;">sadd</span><span style="color: Olive;">&#40;</span><span style="color: #a11;">&quot;set2&quot;</span><span style="color: Gray;">,</span> <span style="color: Maroon;">11</span><span style="color: Gray;">,</span> <span style="color: Maroon;">22</span><span style="color: Gray;">,</span> <span style="color: Maroon;">33</span><span style="color: Olive;">&#41;</span><br />
+<span style="color: Green;font-weight:bold;">print</span><span style="color: Olive;">&#40;</span>r.<span style="color: #05a;">smembers</span><span style="color: Olive;">&#40;</span><span style="color: #a11;">&quot;set1&quot;</span><span style="color: Olive;">&#41;</span><span style="color: Olive;">&#41;</span> &nbsp; <span style="color: #a50"># 获取集合中所有的成员</span><br />
+<span style="color: Green;font-weight:bold;">print</span><span style="color: Olive;">&#40;</span>r.<span style="color: #05a;">smembers</span><span style="color: Olive;">&#40;</span><span style="color: #a11;">&quot;set2&quot;</span><span style="color: Olive;">&#41;</span><span style="color: Olive;">&#41;</span><br />
+<span style="color: Green;font-weight:bold;">print</span><span style="color: Olive;">&#40;</span>r.<span style="color: #05a;">sdiff</span><span style="color: Olive;">&#40;</span><span style="color: #a11;">&quot;set1&quot;</span><span style="color: Gray;">,</span> <span style="color: #a11;">&quot;set2&quot;</span><span style="color: Olive;">&#41;</span><span style="color: Olive;">&#41;</span> &nbsp; <span style="color: #a50"># 在集合set1但是不在集合set2中</span><br />
+<span style="color: Green;font-weight:bold;">print</span><span style="color: Olive;">&#40;</span>r.<span style="color: #05a;">sdiff</span><span style="color: Olive;">&#40;</span><span style="color: #a11;">&quot;set2&quot;</span><span style="color: Gray;">,</span> <span style="color: #a11;">&quot;set1&quot;</span><span style="color: Olive;">&#41;</span><span style="color: Olive;">&#41;</span> &nbsp; <span style="color: #a50"># 在集合set2但是不在集合set1中</span><br />
+</div></div>
+<p><strong>5.差集--差集存在一个新的集合中</strong></p>
+<pre>sdiffstore(dest, keys, *args)</pre>
+<p>获取第一个name对应的集合中且不在其他name对应的集合，再将其新加入到dest对应的集合中</p>
+
+<div class="example"><h2 class="example">实例</h2> <div class="example_code">
+r.<span style="color: #05a;">sdiffstore</span><span style="color: Olive;">&#40;</span><span style="color: #a11;">&quot;set3&quot;</span><span style="color: Gray;">,</span> <span style="color: #a11;">&quot;set1&quot;</span><span style="color: Gray;">,</span> <span style="color: #a11;">&quot;set2&quot;</span><span style="color: Olive;">&#41;</span> &nbsp; &nbsp;<span style="color: #a50"># 在集合set1但是不在集合set2中</span><br />
+<span style="color: Green;font-weight:bold;">print</span><span style="color: Olive;">&#40;</span>r.<span style="color: #05a;">smembers</span><span style="color: Olive;">&#40;</span><span style="color: #a11;">&quot;set3&quot;</span><span style="color: Olive;">&#41;</span><span style="color: Olive;">&#41;</span> &nbsp; <span style="color: #a50"># 获取集合3中所有的成员</span><br />
+</div></div>
+<p><strong>6.交集</strong></p>
+<pre>sinter(keys, *args)</pre>
+<p>获取多一个name对应集合的交集</p>
+
+<pre>print(r.sinter("set1", "set2")) # 取2个集合的交集</pre>
+<p><strong>7.交集--交集存在一个新的集合中</strong></p>
+<pre>sinterstore(dest, keys, *args)</pre>
+<p>获取多一个name对应集合的并集，再将其加入到dest对应的集合中</p>
+
+<pre>print(r.sinterstore("set3", "set1", "set2")) # 取2个集合的交集
+print(r.smembers("set3"))</pre>
+<p>并集</p>
+<pre>sunion(keys, *args)</pre>
+<p>获取多个name对应的集合的并集</p>
+<pre>
+print(r.sunion("set1", "set2")) # 取2个集合的并集</pre>
+<p>并集--并集存在一个新的集合</p>
+<pre>sunionstore(dest,keys, *args)</pre>
+<p>获取多一个name对应的集合的并集，并将结果保存到dest对应的集合中</p>
+<pre>
+print(r.sunionstore("set3", "set1", "set2")) # 取2个集合的并集
+print(r.smembers("set3"))</pre>
+<p><strong>8.判断是否是集合的成员 类似in</strong></p>
+<pre>sismember(name, value)</pre>
+<p>检查value是否是name对应的集合的成员，结果为True和False</p>
+
+<pre>print(r.sismember("set1", 33))  # 33是集合的成员
+print(r.sismember("set1", 23))  # 23不是集合的成员</pre>
+<p><strong>9.移动</strong></p>
+<pre>smove(src, dst, value)</pre>
+<p>将某个成员从一个集合中移动到另外一个集合</p>
+
+<pre>r.smove("set1", "set2", 44)
+print(r.smembers("set1"))
+print(r.smembers("set2"))</pre>
+<p><strong>10.删除--随机删除并且返回被删除值</strong></p>
+<pre>spop(name)</pre>
+<p>从集合移除一个成员，并将其返回,说明一下，集合是无序的，所有是随机删除的</p>
+
+<pre>print(r.spop("set2"))   # 这个删除的值是随机删除的，集合是无序的
+print(r.smembers("set2"))</pre>
+<p><strong>11.删除--指定值删除</strong></p>
+<pre>srem(name, values)</pre>
+<p>在name对应的集合中删除某些值
+</p>
+<pre>print(r.srem("set2", 11))   # 从集合中删除指定值 11
+print(r.smembers("set2"))</pre>
+
+
+
+
+
+
+
+
+
+<hr>
+
+<h2>7、redis基本命令 有序set</h2>
+<p>Set操作，Set集合就是不允许重复的列表，本身是无序的。</p>
+<p>有序集合，在集合的基础上，为每元素排序；元素的排序需要根据另外一个值来进行比较，所以，对于有序集合，每一个元素有两个值，即：值和分数，分数专门用来做排序。</p>
+
+<p><strong>1.新增</strong></p>
+<pre>zadd(name, *args, **kwargs)</pre>
+<p>在name对应的有序集合中添加元素</p>
+<p>如：</p>
+
+<div class="example"><h2 class="example">实例</h2> <div class="example_code">
+<span style="color: Green;font-weight:bold;">import</span> redis<br />
+<span style="color: Green;font-weight:bold;">import</span> <span style="color: #05a;">time</span><br />
+<br />
+pool <span style="color: Gray;">=</span> redis.<span style="color: #05a;">ConnectionPool</span><span style="color: Olive;">&#40;</span>host<span style="color: Gray;">=</span><span style="color: #a11;">'localhost'</span><span style="color: Gray;">,</span> port<span style="color: Gray;">=</span><span style="color: Maroon;">6379</span><span style="color: Gray;">,</span> decode_responses<span style="color: Gray;">=</span><span style="color: Teal;">True</span><span style="color: Olive;">&#41;</span><br />
+r <span style="color: Gray;">=</span> redis.<span style="color: #05a;">Redis</span><span style="color: Olive;">&#40;</span>connection_pool<span style="color: Gray;">=</span>pool<span style="color: Olive;">&#41;</span><br />
+<br />
+r.<span style="color: #05a;">zadd</span><span style="color: Olive;">&#40;</span><span style="color: #a11;">&quot;zset1&quot;</span><span style="color: Gray;">,</span> n1<span style="color: Gray;">=</span><span style="color: Maroon;">11</span><span style="color: Gray;">,</span> n2<span style="color: Gray;">=</span><span style="color: Maroon;">22</span><span style="color: Olive;">&#41;</span><br />
+r.<span style="color: #05a;">zadd</span><span style="color: Olive;">&#40;</span><span style="color: #a11;">&quot;zset2&quot;</span><span style="color: Gray;">,</span> <span style="color: #a11;">'m1'</span><span style="color: Gray;">,</span> <span style="color: Maroon;">22</span><span style="color: Gray;">,</span> <span style="color: #a11;">'m2'</span><span style="color: Gray;">,</span> <span style="color: Maroon;">44</span><span style="color: Olive;">&#41;</span><br />
+<span style="color: Green;font-weight:bold;">print</span><span style="color: Olive;">&#40;</span>r.<span style="color: #05a;">zcard</span><span style="color: Olive;">&#40;</span><span style="color: #a11;">&quot;zset1&quot;</span><span style="color: Olive;">&#41;</span><span style="color: Olive;">&#41;</span> <span style="color: #a50"># 集合长度</span><br />
+<span style="color: Green;font-weight:bold;">print</span><span style="color: Olive;">&#40;</span>r.<span style="color: #05a;">zcard</span><span style="color: Olive;">&#40;</span><span style="color: #a11;">&quot;zset2&quot;</span><span style="color: Olive;">&#41;</span><span style="color: Olive;">&#41;</span> <span style="color: #a50"># 集合长度</span><br />
+<span style="color: Green;font-weight:bold;">print</span><span style="color: Olive;">&#40;</span>r.<span style="color: #05a;">zrange</span><span style="color: Olive;">&#40;</span><span style="color: #a11;">&quot;zset1&quot;</span><span style="color: Gray;">,</span> <span style="color: Maroon;">0</span><span style="color: Gray;">,</span> -<span style="color: Maroon;">1</span><span style="color: Olive;">&#41;</span><span style="color: Olive;">&#41;</span> &nbsp; <span style="color: #a50"># 获取有序集合中所有元素</span><br />
+<span style="color: Green;font-weight:bold;">print</span><span style="color: Olive;">&#40;</span>r.<span style="color: #05a;">zrange</span><span style="color: Olive;">&#40;</span><span style="color: #a11;">&quot;zset2&quot;</span><span style="color: Gray;">,</span> <span style="color: Maroon;">0</span><span style="color: Gray;">,</span> -<span style="color: Maroon;">1</span><span style="color: Gray;">,</span> withscores<span style="color: Gray;">=</span><span style="color: Teal;">True</span><span style="color: Olive;">&#41;</span><span style="color: Olive;">&#41;</span> &nbsp; <span style="color: #a50"># 获取有序集合中所有元素和分数</span><br />
+</div></div>
+<p><strong>2.获取有序集合元素个数 类似于len</strong></p>
+<pre>zcard(name)</pre>
+<p>获取name对应的有序集合元素的数量</p>
+
+<pre>print(r.zcard("zset1")) # 集合长度</pre>
+<p><strong>3.获取有序集合的所有元素</strong></p>
+<pre>r.zrange( name, start, end, desc=False, withscores=False, score_cast_func=float)</pre>
+<p>按照索引范围获取name对应的有序集合的元素</p>
+<p>参数：</p>
+<ul><li>
+name - redis的name</li><li>
+start - 有序集合索引起始位置（非分数）</li><li>
+end - 有序集合索引结束位置（非分数）</li><li>
+desc - 排序规则，默认按照分数从小到大排序</li><li>
+withscores - 是否获取元素的分数，默认只获取元素的值</li><li>
+score_cast_func - 对分数进行数据转换的函数</li></ul>
+
+<p>3-1 从大到小排序(同zrange，集合是从大到小排序的)</p>
+<pre>zrevrange(name, start, end, withscores=False, score_cast_func=float)</pre>
+<p>实例</p>
+<pre>print(r.zrevrange("zset1", 0, -1))    # 只获取元素，不显示分数
+print(r.zrevrange("zset1", 0, -1, withscores=True)) # 获取有序集合中所有元素和分数,分数倒序</pre>
+<p>3-2 按照分数范围获取name对应的有序集合的元素</p>
+<p>zrangebyscore(name, min, max, start=None, num=None, withscores=False, score_cast_func=float)</p>
+<p>实例</p>
+<div class="example"><h2 class="example">实例</h2> <div class="example_code">
+<span style="color: Green;font-weight:bold;">for</span> i <span style="color: Green;font-weight:bold;">in</span> <span style="color: Teal;">range</span><span style="color: Olive;">&#40;</span><span style="color: Maroon;">1</span><span style="color: Gray;">,</span> <span style="color: Maroon;">30</span><span style="color: Olive;">&#41;</span>:<br />
+&nbsp; &nbsp;element <span style="color: Gray;">=</span> <span style="color: #a11;">'n'</span> + <span style="color: Teal;">str</span><span style="color: Olive;">&#40;</span>i<span style="color: Olive;">&#41;</span><br />
+&nbsp; &nbsp;r.<span style="color: #05a;">zadd</span><span style="color: Olive;">&#40;</span><span style="color: #a11;">&quot;zset3&quot;</span><span style="color: Gray;">,</span> element<span style="color: Gray;">,</span> i<span style="color: Olive;">&#41;</span><br />
+<span style="color: Green;font-weight:bold;">print</span><span style="color: Olive;">&#40;</span>r.<span style="color: #05a;">zrangebyscore</span><span style="color: Olive;">&#40;</span><span style="color: #a11;">&quot;zset3&quot;</span><span style="color: Gray;">,</span> <span style="color: Maroon;">15</span><span style="color: Gray;">,</span> <span style="color: Maroon;">25</span><span style="color: Olive;">&#41;</span><span style="color: Olive;">&#41;</span> <span style="color: #a50"># # 在分数是15-25之间，取出符合条件的元素</span><br />
+<span style="color: Green;font-weight:bold;">print</span><span style="color: Olive;">&#40;</span>r.<span style="color: #05a;">zrangebyscore</span><span style="color: Olive;">&#40;</span><span style="color: #a11;">&quot;zset3&quot;</span><span style="color: Gray;">,</span> <span style="color: Maroon;">12</span><span style="color: Gray;">,</span> <span style="color: Maroon;">22</span><span style="color: Gray;">,</span> withscores<span style="color: Gray;">=</span><span style="color: Teal;">True</span><span style="color: Olive;">&#41;</span><span style="color: Olive;">&#41;</span> &nbsp; &nbsp;<span style="color: #a50"># 在分数是12-22之间，取出符合条件的元素（带分数）</span><br />
+</div></div>
+<p>3-3 按照分数范围获取有序集合的元素并排序（默认从大到小排序）</p>
+<pre>zrevrangebyscore(name, max, min, start=None, num=None, withscores=False, score_cast_func=float)</pre>
+<p>实例</p>
+<pre>print(r.zrevrangebyscore("zset3", 22, 11, withscores=True)) # 在分数是22-11之间，取出符合条件的元素 按照</pre>分数倒序
+<p>3-4 获取所有元素--默认按照分数顺序排序</p>
+<pre>zscan(name, cursor=0, match=None, count=None, score_cast_func=float)</pre>
+<p>实例</p>
+<pre>print(r.zscan("zset3"))</pre>
+<p>3-5 获取所有元素--迭代器</p>
+<pre>zscan_iter(name, match=None, count=None,score_cast_func=float)</pre>
+<p>实例</p>
+<pre>for i in r.zscan_iter("zset3"): # 遍历迭代器
+    print(i)</pre>
+<p><strong>4.zcount(name, min, max)</strong></p>
+<p>获取name对应的有序集合中分数 在 [min,max] 之间的个数</p>
+
+<pre>print(r.zrange("zset3", 0, -1, withscores=True))
+print(r.zcount("zset3", 11, 22))</pre>
+<p><strong>5.自增</strong></p>
+<pre>zincrby(name, value, amount)</pre>
+<p>自增name对应的有序集合的 name 对应的分数</p>
+
+<pre>r.zincrby("zset3", "n2", amount=2)    # 每次将n2的分数自增2
+print(r.zrange("zset3", 0, -1, withscores=True))</pre>
+<p><strong>6.获取值的索引号</strong></p>
+<pre>zrank(name, value)</pre>
+<p>获取某个值在 name对应的有序集合中的索引（从 0 开始）</p>
+<p>更多：</p>
+<p>zrevrank(name, value)，从大到小排序。</p>
+
+<div class="example"><h2 class="example">实例</h2> <div class="example_code">
+<span style="color: Green;font-weight:bold;">print</span><span style="color: Olive;">&#40;</span>r.<span style="color: #05a;">zrank</span><span style="color: Olive;">&#40;</span><span style="color: #a11;">&quot;zset3&quot;</span><span style="color: Gray;">,</span> <span style="color: #a11;">&quot;n1&quot;</span><span style="color: Olive;">&#41;</span><span style="color: Olive;">&#41;</span> &nbsp; <span style="color: #a50"># n1的索引号是0 这里按照分数顺序（从小到大）</span><br />
+<span style="color: Green;font-weight:bold;">print</span><span style="color: Olive;">&#40;</span>r.<span style="color: #05a;">zrank</span><span style="color: Olive;">&#40;</span><span style="color: #a11;">&quot;zset3&quot;</span><span style="color: Gray;">,</span> <span style="color: #a11;">&quot;n6&quot;</span><span style="color: Olive;">&#41;</span><span style="color: Olive;">&#41;</span> &nbsp; <span style="color: #a50"># n6的索引号是1</span><br />
+<br />
+<span style="color: Green;font-weight:bold;">print</span><span style="color: Olive;">&#40;</span>r.<span style="color: #05a;">zrevrank</span><span style="color: Olive;">&#40;</span><span style="color: #a11;">&quot;zset3&quot;</span><span style="color: Gray;">,</span> <span style="color: #a11;">&quot;n1&quot;</span><span style="color: Olive;">&#41;</span><span style="color: Olive;">&#41;</span> &nbsp; &nbsp;<span style="color: #a50"># n1的索引号是29 这里安照分数倒序（从大到小）</span><br />
+</div></div>
+<p><strong>7.删除--指定值删除</strong></p>
+<pre>zrem(name, values)</pre>
+<p>删除name对应的有序集合中值是values的成员</p>
+
+<pre>r.zrem("zset3", "n3")   # 删除有序集合中的元素n3 删除单个
+print(r.zrange("zset3", 0, -1))</pre>
+<p><strong>8.删除--根据排行范围删除，按照索引号来删除</strong></p>
+<pre>zremrangebyrank(name, min, max)</pre>
+<p>根据排行范围删除</p>
+
+<pre>r.zremrangebyrank("zset3", 0, 1)  # 删除有序集合中的索引号是0, 1的元素
+print(r.zrange("zset3", 0, -1))</pre>
+<p><strong>9.删除--根据分数范围删除</strong></p>
+<pre>zremrangebyscore(name, min, max)</pre>
+<p>根据分数范围删除</p>
+
+<pre>r.zremrangebyscore("zset3", 11, 22)   # 删除有序集合中的分数是11-22的元素
+print(r.zrange("zset3", 0, -1))</pre>
+<p><strong>10.获取值对应的分数</strong></p>
+<pre>zscore(name, value)</pre>
+<p>获取name对应有序集合中 value 对应的分数</p>
+
+<pre>print(r.zscore("zset3", "n27"))   # 获取元素n27对应的分数27</pre>
+<hr>
+<h2>8、其他常用操作</h2>
+<p><strong>1.删除</strong></p>
+<pre>delete(*names)</pre>
+<p>根据删除redis中的任意数据类型（string、hash、list、set、有序set）</p>
+
+<pre>r.delete("gender")  # 删除key为gender的键值对</pre>
+<p><strong>2.检查名字是否存在</strong></p>
+<pre>exists(name)</pre>
+<p>检测redis的name是否存在，存在就是True，False 不存在</p>
+<pre>
+print(r.exists("zset1"))</pre>
+<p><strong>3.模糊匹配</strong></p>
+<pre>keys(pattern='')</pre>
+<p>根据模型获取redis的name</p>
+<p>更多：</p>
+<ul><li>
+KEYS * 匹配数据库中所有 key 。</li><li>
+KEYS h?llo 匹配 hello ， hallo 和 hxllo 等。</li><li>
+KEYS hllo 匹配 hllo 和 heeeeello 等。</li><li>
+KEYS h[ae]llo 匹配 hello 和 hallo ，但不匹配 hillo</li></ul>
+
+<pre>print(r.keys("foo*"))</pre>
+<p><strong>4.设置超时时间</strong></p>
+<pre>expire(name ,time)</pre>
+<p>为某个redis的某个name设置超时时间</p>
+
+<pre>r.lpush("list5", 11, 22)
+r.expire("list5", time=3)
+print(r.lrange("list5", 0, -1))
+time.sleep(3)
+print(r.lrange("list5", 0, -1))</pre>
+<p><strong>5.重命名</strong></p>
+<pre>rename(src, dst)</pre>
+<p>对redis的name重命名</p>
+
+<pre>r.lpush("list5", 11, 22)
+r.rename("list5", "list5-1")</pre>
+<p><strong>6.随机获取name</strong></p>
+<pre>randomkey()</pre>
+<p>随机获取一个redis的name（不删除）</p>
+<pre>
+print(r.randomkey())</pre>
+<p><strong>7.获取类型</strong></p>
+<pre>type(name)</pre>
+<p>获取name对应值的类型</p>
+
+<pre>print(r.type("set1"))
+print(r.type("hash2"))</pre>
+<p><strong>8.查看所有元素</strong></p>
+<div class="example"><h2 class="example">实例</h2> <div class="example_code">
+scan<span style="color: Olive;">&#40;</span>cursor<span style="color: Gray;">=</span><span style="color: Maroon;">0</span><span style="color: Gray;">,</span> match<span style="color: Gray;">=</span><span style="color: Teal;">None</span><span style="color: Gray;">,</span> count<span style="color: Gray;">=</span><span style="color: Teal;">None</span><span style="color: Olive;">&#41;</span><br />
+<br />
+<span style="color: Green;font-weight:bold;">print</span><span style="color: Olive;">&#40;</span>r.<span style="color: #05a;">hscan</span><span style="color: Olive;">&#40;</span><span style="color: #a11;">&quot;hash2&quot;</span><span style="color: Olive;">&#41;</span><span style="color: Olive;">&#41;</span><br />
+<span style="color: Green;font-weight:bold;">print</span><span style="color: Olive;">&#40;</span>r.<span style="color: #05a;">sscan</span><span style="color: Olive;">&#40;</span><span style="color: #a11;">&quot;set3&quot;</span><span style="color: Olive;">&#41;</span><span style="color: Olive;">&#41;</span><br />
+<span style="color: Green;font-weight:bold;">print</span><span style="color: Olive;">&#40;</span>r.<span style="color: #05a;">zscan</span><span style="color: Olive;">&#40;</span><span style="color: #a11;">&quot;zset2&quot;</span><span style="color: Olive;">&#41;</span><span style="color: Olive;">&#41;</span><br />
+<span style="color: Green;font-weight:bold;">print</span><span style="color: Olive;">&#40;</span>r.<span style="color: #05a;">getrange</span><span style="color: Olive;">&#40;</span><span style="color: #a11;">&quot;foo1&quot;</span><span style="color: Gray;">,</span> <span style="color: Maroon;">0</span><span style="color: Gray;">,</span> -<span style="color: Maroon;">1</span><span style="color: Olive;">&#41;</span><span style="color: Olive;">&#41;</span><br />
+<span style="color: Green;font-weight:bold;">print</span><span style="color: Olive;">&#40;</span>r.<span style="color: #05a;">lrange</span><span style="color: Olive;">&#40;</span><span style="color: #a11;">&quot;list2&quot;</span><span style="color: Gray;">,</span> <span style="color: Maroon;">0</span><span style="color: Gray;">,</span> -<span style="color: Maroon;">1</span><span style="color: Olive;">&#41;</span><span style="color: Olive;">&#41;</span><br />
+<span style="color: Green;font-weight:bold;">print</span><span style="color: Olive;">&#40;</span>r.<span style="color: #05a;">smembers</span><span style="color: Olive;">&#40;</span><span style="color: #a11;">&quot;set3&quot;</span><span style="color: Olive;">&#41;</span><span style="color: Olive;">&#41;</span><br />
+<span style="color: Green;font-weight:bold;">print</span><span style="color: Olive;">&#40;</span>r.<span style="color: #05a;">zrange</span><span style="color: Olive;">&#40;</span><span style="color: #a11;">&quot;zset3&quot;</span><span style="color: Gray;">,</span> <span style="color: Maroon;">0</span><span style="color: Gray;">,</span> -<span style="color: Maroon;">1</span><span style="color: Olive;">&#41;</span><span style="color: Olive;">&#41;</span><br />
+<span style="color: Green;font-weight:bold;">print</span><span style="color: Olive;">&#40;</span>r.<span style="color: #05a;">hgetall</span><span style="color: Olive;">&#40;</span><span style="color: #a11;">&quot;hash1&quot;</span><span style="color: Olive;">&#41;</span><span style="color: Olive;">&#41;</span><br />
+</div></div>
+<p><strong>9.查看所有元素--迭代器</strong></p>
+<div class="example"><h2 class="example">实例</h2> <div class="example_code">
+scan_iter<span style="color: Olive;">&#40;</span>match<span style="color: Gray;">=</span><span style="color: Teal;">None</span><span style="color: Gray;">,</span> count<span style="color: Gray;">=</span><span style="color: Teal;">None</span><span style="color: Olive;">&#41;</span><br />
+<br />
+<span style="color: Green;font-weight:bold;">for</span> i <span style="color: Green;font-weight:bold;">in</span> r.<span style="color: #05a;">hscan_iter</span><span style="color: Olive;">&#40;</span><span style="color: #a11;">&quot;hash1&quot;</span><span style="color: Olive;">&#41;</span>:<br />
+&nbsp; &nbsp; <span style="color: Green;font-weight:bold;">print</span><span style="color: Olive;">&#40;</span>i<span style="color: Olive;">&#41;</span><br />
+<br />
+<span style="color: Green;font-weight:bold;">for</span> i <span style="color: Green;font-weight:bold;">in</span> r.<span style="color: #05a;">sscan_iter</span><span style="color: Olive;">&#40;</span><span style="color: #a11;">&quot;set3&quot;</span><span style="color: Olive;">&#41;</span>:<br />
+&nbsp; &nbsp; <span style="color: Green;font-weight:bold;">print</span><span style="color: Olive;">&#40;</span>i<span style="color: Olive;">&#41;</span><br />
+<br />
+<span style="color: Green;font-weight:bold;">for</span> i <span style="color: Green;font-weight:bold;">in</span> r.<span style="color: #05a;">zscan_iter</span><span style="color: Olive;">&#40;</span><span style="color: #a11;">&quot;zset3&quot;</span><span style="color: Olive;">&#41;</span>:<br />
+&nbsp; &nbsp; <span style="color: Green;font-weight:bold;">print</span><span style="color: Olive;">&#40;</span>i<span style="color: Olive;">&#41;</span><br />
+</div></div>
+<h3>other 方法</h3>
+
+<div class="example"><h2 class="example">实例</h2> <div class="example_code">
+<span style="color: Green;font-weight:bold;">print</span><span style="color: Olive;">&#40;</span>r.<span style="color: #05a;">get</span><span style="color: Olive;">&#40;</span><span style="color: #a11;">'name'</span><span style="color: Olive;">&#41;</span><span style="color: Olive;">&#41;</span> &nbsp; &nbsp;<span style="color: #a50"># 查询key为name的值</span><br />
+r.<span style="color: #05a;">delete</span><span style="color: Olive;">&#40;</span><span style="color: #a11;">&quot;gender&quot;</span><span style="color: Olive;">&#41;</span> &nbsp;<span style="color: #a50"># 删除key为gender的键值对</span><br />
+<span style="color: Green;font-weight:bold;">print</span><span style="color: Olive;">&#40;</span>r.<span style="color: #05a;">keys</span><span style="color: Olive;">&#40;</span><span style="color: Olive;">&#41;</span><span style="color: Olive;">&#41;</span> <span style="color: #a50"># 查询所有的Key</span><br />
+<span style="color: Green;font-weight:bold;">print</span><span style="color: Olive;">&#40;</span>r.<span style="color: #05a;">dbsize</span><span style="color: Olive;">&#40;</span><span style="color: Olive;">&#41;</span><span style="color: Olive;">&#41;</span> &nbsp; <span style="color: #a50"># 当前redis包含多少条数据</span><br />
+r.<span style="color: #05a;">save</span><span style="color: Olive;">&#40;</span><span style="color: Olive;">&#41;</span> &nbsp; &nbsp;<span style="color: #a50"># 执行&quot;检查点&quot;操作，将数据写回磁盘。保存时阻塞</span><br />
+<span style="color: #a50"># r.flushdb() &nbsp; &nbsp; &nbsp; &nbsp;# 清空r中的所有数据</span><br />
+</div></div>
+<h3>管道（pipeline）</h3>
+<p>redis默认在执行每次请求都会创建（连接池申请连接）和断开（归还连接池）一次连接操作，如果想要在一次请求中指定多个命令，则可以使用pipline实现一次请求指定多个命令，并且默认情况下一次pipline 是原子性操作。</p>
+
+<p>管道（pipeline）是redis在提供单个请求中缓冲多条服务器命令的基类的子类。它通过减少服务器-客户端之间反复的TCP数据库包，从而大大提高了执行批量命令的功能。</p>
+
+<div class="example"><h2 class="example">实例</h2> <div class="example_code">
+<span style="color: Green;font-weight:bold;">import</span> redis<br />
+<span style="color: Green;font-weight:bold;">import</span> <span style="color: #05a;">time</span><br />
+<br />
+pool <span style="color: Gray;">=</span> redis.<span style="color: #05a;">ConnectionPool</span><span style="color: Olive;">&#40;</span>host<span style="color: Gray;">=</span><span style="color: #a11;">'localhost'</span><span style="color: Gray;">,</span> port<span style="color: Gray;">=</span><span style="color: Maroon;">6379</span><span style="color: Gray;">,</span> decode_responses<span style="color: Gray;">=</span><span style="color: Teal;">True</span><span style="color: Olive;">&#41;</span><br />
+r <span style="color: Gray;">=</span> redis.<span style="color: #05a;">Redis</span><span style="color: Olive;">&#40;</span>connection_pool<span style="color: Gray;">=</span>pool<span style="color: Olive;">&#41;</span><br />
+<br />
+<span style="color: #a50"># pipe = r.pipeline(transaction=False) &nbsp; &nbsp;# 默认的情况下，管道里执行的命令可以保证执行的原子性，执行pipe = r.pipeline(transaction=False)可以禁用这一特性。</span><br />
+<span style="color: #a50"># pipe = r.pipeline(transaction=True)</span><br />
+pipe <span style="color: Gray;">=</span> r.<span style="color: #05a;">pipeline</span><span style="color: Olive;">&#40;</span><span style="color: Olive;">&#41;</span> <span style="color: #a50"># 创建一个管道</span><br />
+<br />
+pipe.<span style="color: Teal;">set</span><span style="color: Olive;">&#40;</span><span style="color: #a11;">'name'</span><span style="color: Gray;">,</span> <span style="color: #a11;">'jack'</span><span style="color: Olive;">&#41;</span><br />
+pipe.<span style="color: Teal;">set</span><span style="color: Olive;">&#40;</span><span style="color: #a11;">'role'</span><span style="color: Gray;">,</span> <span style="color: #a11;">'sb'</span><span style="color: Olive;">&#41;</span><br />
+pipe.<span style="color: #05a;">sadd</span><span style="color: Olive;">&#40;</span><span style="color: #a11;">'faz'</span><span style="color: Gray;">,</span> <span style="color: #a11;">'baz'</span><span style="color: Olive;">&#41;</span><br />
+pipe.<span style="color: #05a;">incr</span><span style="color: Olive;">&#40;</span><span style="color: #a11;">'num'</span><span style="color: Olive;">&#41;</span> &nbsp; &nbsp;<span style="color: #a50"># 如果num不存在则vaule为1，如果存在，则value自增1</span><br />
+pipe.<span style="color: #05a;">execute</span><span style="color: Olive;">&#40;</span><span style="color: Olive;">&#41;</span><br />
+<br />
+<span style="color: Green;font-weight:bold;">print</span><span style="color: Olive;">&#40;</span>r.<span style="color: #05a;">get</span><span style="color: Olive;">&#40;</span><span style="color: #a11;">&quot;name&quot;</span><span style="color: Olive;">&#41;</span><span style="color: Olive;">&#41;</span><br />
+<span style="color: Green;font-weight:bold;">print</span><span style="color: Olive;">&#40;</span>r.<span style="color: #05a;">get</span><span style="color: Olive;">&#40;</span><span style="color: #a11;">&quot;role&quot;</span><span style="color: Olive;">&#41;</span><span style="color: Olive;">&#41;</span><br />
+<span style="color: Green;font-weight:bold;">print</span><span style="color: Olive;">&#40;</span>r.<span style="color: #05a;">get</span><span style="color: Olive;">&#40;</span><span style="color: #a11;">&quot;num&quot;</span><span style="color: Olive;">&#41;</span><span style="color: Olive;">&#41;</span><br />
+</div></div>
+<p>管道的命令可以写在一起，如：</p>
+
+<div class="example"><h2 class="example">实例</h2> <div class="example_code">
+pipe.<span style="color: Teal;">set</span><span style="color: Olive;">&#40;</span><span style="color: #a11;">'hello'</span><span style="color: Gray;">,</span> <span style="color: #a11;">'redis'</span><span style="color: Olive;">&#41;</span>.<span style="color: #05a;">sadd</span><span style="color: Olive;">&#40;</span><span style="color: #a11;">'faz'</span><span style="color: Gray;">,</span> <span style="color: #a11;">'baz'</span><span style="color: Olive;">&#41;</span>.<span style="color: #05a;">incr</span><span style="color: Olive;">&#40;</span><span style="color: #a11;">'num'</span><span style="color: Olive;">&#41;</span>.<span style="color: #05a;">execute</span><span style="color: Olive;">&#40;</span><span style="color: Olive;">&#41;</span><br />
+<span style="color: Green;font-weight:bold;">print</span><span style="color: Olive;">&#40;</span>r.<span style="color: #05a;">get</span><span style="color: Olive;">&#40;</span><span style="color: #a11;">&quot;name&quot;</span><span style="color: Olive;">&#41;</span><span style="color: Olive;">&#41;</span><br />
+<span style="color: Green;font-weight:bold;">print</span><span style="color: Olive;">&#40;</span>r.<span style="color: #05a;">get</span><span style="color: Olive;">&#40;</span><span style="color: #a11;">&quot;role&quot;</span><span style="color: Olive;">&#41;</span><span style="color: Olive;">&#41;</span><br />
+<span style="color: Green;font-weight:bold;">print</span><span style="color: Olive;">&#40;</span>r.<span style="color: #05a;">get</span><span style="color: Olive;">&#40;</span><span style="color: #a11;">&quot;num&quot;</span><span style="color: Olive;">&#41;</span><span style="color: Olive;">&#41;</span><br />
+</div></div>
+
+
+<blockquote>
+<p>作者：君惜丶</p>
+<p>链接：<a href='https://www.jianshu.com/p/2639549bedc8'>https://www.jianshu.com/p/2639549bedc8</a></p></blockquote>
+
+
+				</div>
+			</div>
+			<div class="previous-next-links">
+			<div class="previous-design-link">← <a href="http://www.runoob.com/w3cnote/windows10-mysql-installer.html" rel="prev"> Windows10  MYSQL Installer 安装（mysql-installer-community-5.7.19.0.msi）</a> </div>
+			<div class="next-design-link"><a href="http://www.runoob.com/w3cnote/yaml-intro.html" rel="next"> YAML 入门教程</a> →</div>
+			</div>
+			<style>
+.wrapper {
+  /*text-transform: uppercase; */
+  background: #ececec;
+  color: #555;
+  cursor: help;
+  font-family: "Gill Sans", Impact, sans-serif;
+  font-size: 20px;
+  position: relative;
+  text-align: center;
+  width: 200px;
+  -webkit-transform: translateZ(0); /* webkit flicker fix */
+  -webkit-font-smoothing: antialiased; /* webkit text rendering fix */
+}
+
+.wrapper .tooltip {
+  white-space: nowrap;
+  font-size: 14px;
+  text-align: left;
+  background: #96b97d;
+  bottom: 100%;
+  color: #fff;
+  display: block;
+  left: -25px;
+  margin-bottom: 15px;
+  opacity: 0;
+  padding: 14px;
+  pointer-events: none;
+  position: absolute;
+  
+  -webkit-transform: translateY(10px);
+     -moz-transform: translateY(10px);
+      -ms-transform: translateY(10px);
+       -o-transform: translateY(10px);
+          transform: translateY(10px);
+  -webkit-transition: all .25s ease-out;
+     -moz-transition: all .25s ease-out;
+      -ms-transition: all .25s ease-out;
+       -o-transition: all .25s ease-out;
+          transition: all .25s ease-out;
+  -webkit-box-shadow: 2px 2px 6px rgba(0, 0, 0, 0.28);
+     -moz-box-shadow: 2px 2px 6px rgba(0, 0, 0, 0.28);
+      -ms-box-shadow: 2px 2px 6px rgba(0, 0, 0, 0.28);
+       -o-box-shadow: 2px 2px 6px rgba(0, 0, 0, 0.28);
+          box-shadow: 2px 2px 6px rgba(0, 0, 0, 0.28);
+}
+.tooltip a {
+	color:#fff;
+}
+/* This bridges the gap so you can mouse into the tooltip without it disappearing */
+.wrapper .tooltip:before {
+  bottom: -20px;
+  content: " ";
+  display: block;
+  height: 20px;
+  left: 0;
+  position: absolute;
+  width: 100%;
+}  
+
+/* CSS Triangles - see Trevor's post */
+.wrapper .tooltip:after {
+  border-left: solid transparent 10px;
+  border-right: solid transparent 10px;
+  border-top: solid #96b97d 10px;
+  bottom: -10px;
+  content: " ";
+  height: 0;
+  left: 20%;
+  margin-left: -13px;
+  position: absolute;
+  width: 0;
+}
+.wrapper .tooltip1 {
+	margin-left: 50px;
+	padding-top: 0px;
+}
+/*
+.wrapper:hover .tooltip {
+  opacity: 1;
+  pointer-events: auto;
+  -webkit-transform: translateY(0px);
+     -moz-transform: translateY(0px);
+      -ms-transform: translateY(0px);
+       -o-transform: translateY(0px);
+          transform: translateY(0px);
+}
+*/
+/* IE can just show/hide with no transition */
+.lte8 .wrapper .tooltip {
+  display: none;
+}
+
+.lte8 .wrapper:hover .tooltip {
+  display: block;
+}
+
+</style>
+
+<link rel="stylesheet" href="https://static.runoob.com/assets/upvotejs/dist/upvotejs/upvotejs.css">
+<script src="https://static.runoob.com/assets/upvotejs/dist/upvotejs/upvotejs.vanilla.js"></script>
+<script src="https://static.runoob.com/assets/upvotejs/dist/upvotejs/upvotejs.jquery.js"></script>
+<div id="respond" class="no_webshot"> 
+		<div class="comment-signarea" style=" padding: 20px 20px;"> 
+	<h3 class="text-muted" id="share_code" style="color: #799961;"><i class="fa fa-pencil-square-o" aria-hidden="true"></i> 点我分享笔记</h3>
+	<!--
+	<p style="font-size:14px;">笔记需要是本篇文章的内容扩展！</p><br>
+	<p style="font-size:12px;"><a href="//www.runoob.com/tougao" target="_blank">文章投稿，可点击这里</a></p>
+	<p style="font-size:14px;"><a href="/w3cnote/runoob-user-test-intro.html#invite" target="_blank">注册邀请码获取方式</a></p>
+		<h3 class="text-muted"><i class="fa fa-info-circle" aria-hidden="true"></i> 分享笔记前必须<a href="javascript:;" class="runoob-pop">登录</a>！</h3>
+		<p><a href="/w3cnote/runoob-user-test-intro.html#invite" target="_blank">注册邀请码获取方式</a></p>-->
+	</div>
+		
+	<form action="/wp-content/themes/runoob/option/addnote.php" method="post" id="commentform" style="display:none;">
+		<div class="comt">
+			<div class="comt-title">
+				<i style="font-size:36px;" class="fa fa-user-circle" aria-hidden="true"></i>				<p><a id="cancel-comment-reply-link" href="javascript:;">取消</a></p>
+			</div>
+			<div class="comt-box">
+			<div id="mded"></div>
+			
+				<div class="comt-ctrl">
+					<div class="comt-tips"><input type='hidden' name='comment_post_ID' value='21966' id='comment_post_ID' />
+<input type='hidden' name='comment_parent' id='comment_parent' value='0' />
+</div>
+					<button type="submit" name="submit" id="submit" tabindex="5"><i class="fa fa-pencil" aria-hidden="true"></i> 分享笔记</button>
+				</div>
+			</div>
+		
+				
+					<div class="comt-comterinfo"> 
+						<ul id="comment-author-info">
+							<li class="form-inline"><label class="hide" for="author">昵称</label><input class="ipt" type="text" name="author" id="author" value="" tabindex="2" placeholder="昵称"><span class="text-muted">昵称 (必填)</span></li>
+							<li class="form-inline"><label class="hide" for="email">邮箱</label><input class="ipt" type="text" name="email" id="email" value="" tabindex="3" placeholder="邮箱"><span class="text-muted">邮箱 (必填)</span></li>
+							<li class="form-inline"><label class="hide" for="url">引用地址</label><input class="ipt" type="text" name="url" id="url" value="" tabindex="4" placeholder="引用地址"><span class="text-muted">引用地址</span></li>
+						</ul>
+					</div>
+				
+			
+		</div>
+
+	</form>
+	</div>
+<script type="text/javascript">
+$(function() {
+	//初始化编辑器
+	
+	var editor = new Simditor({
+	  textarea: $('#mded'),
+	  placeholder: '写笔记...',
+	  upload:false,
+	 // upload: {url:'/api/comment_upload_file.php',params: null,fileKey: 'upload_file',connectionCount: 1,leaveConfirm: '文件正在上传，您确定离开?'},
+	  defaultImage: 'https://www.runoob.com/images/logo.png',
+	  codeLanguages: '',
+	  autosave: 'editor-content',
+	  toolbar: [  'bold','code','ul','ol','image' ]
+	});
+	editor.on('selectionchanged', function() {
+		$(".code-popover").hide();
+	});
+
+	// 提交数据
+	$("#share_code").click(function() {
+		$(".comment-signarea").hide();
+		$("#commentform").show();
+		
+	});
+	$("#user_add_note").click(function() {
+		$(".comment-signarea").hide();
+		$("#commentform").show();
+		$('html, body').animate({
+       	    scrollTop: $("#respond").offset().top
+    	}, 200);
+	});
+
+	// 提交笔记
+	var commentform=$('#commentform');
+	commentform.prepend('<div id="comment-status" style="display:none;" ></div>');
+	var statusdiv=$('#comment-status');
+	
+	commentform.submit(function(e){
+		e.preventDefault();
+		var noteContent = editor.getValue();
+		// console.log(noteContent);
+		noteContent = noteContent.replace(/<pre><code>/g,"<pre>");
+		noteContent = noteContent.replace(/<\/code><\/pre>/g,"</pre>");
+		
+		// 系列化表单数据
+		var comment_parent = 0;
+		var is_user_logged_in = $("#is_user_logged_in").val();
+		var comment_post_ID =  21966;
+		var _wp_unfiltered_html_comment = $("#_wp_unfiltered_html_comment").val();
+		var comment = noteContent;
+		var author = $("#author").val();
+		var url = $("#url").val();
+		var email = $("#email").val();
+		if(isBlank(author) && is_user_logged_in==0) {
+			statusdiv.html('<p  class="ajax-error">请输入昵称！</p>').show();
+		} else if(isBlank(email)  && is_user_logged_in==0) {
+			statusdiv.html('<p  class="ajax-error">请输入邮箱！</p>').show();
+		} else {
+			// var formdata=commentform.serialize() + "&comment=" + noteContent ;
+			// 添加状态信息
+			statusdiv.html('<p>Processing...</p>').show();
+			// 获取表单提交地址
+			var formurl=commentform.attr('action');
+			
+			// 异步提交
+			$.ajax({
+					type: 'post',
+					url: formurl,
+					dataType:'json',
+					data: {"comment_parent":comment_parent,"comment_post_ID":comment_post_ID, "_wp_unfiltered_html_comment":_wp_unfiltered_html_comment,"comment":comment,"url":url, "email":email,"author":author},
+					error: function(XMLHttpRequest, textStatus, errorThrown){
+					statusdiv.html('<p class="ajax-error" >数据不完整或表单提交太快了！</p>').show();
+				},
+				success: function(data, textStatus){
+					if(data.errorno=="0") {
+						$("#submit").prop('disabled', true);
+						statusdiv.html('<p class="ajax-success" >笔记已提交审核，感谢分享笔记！</p>').show();
+						alert('笔记已提交审核，感谢分享笔记！');
+					}else{
+						statusdiv.html('<p class="ajax-error" >'+data.msg+'</p>').show();
+					}
+					commentform.find('textarea[name=comment]').val('');
+				}
+			});
+			setTimeout(function(){
+		        $("#submit").prop('disabled', false);
+		    }, 10*1000);
+		}
+		return false;
+
+	});
+	$(".comt-author").click(function() {
+		href = $(this).children("a").attr("href");
+		if(href.indexOf("/note/")!=-1) {
+			var win = window.open(href, '_blank');
+  			win.focus();
+		}
+	});
+	$(".comt-meta span").hover(function(){
+		$(this).children(".tooltip").css({ "opacity": 1, "pointer-events": "auto"});
+	},function(){
+		$(this).children(".tooltip").removeAttr("style");
+	});
+	/*
+	$(".wrapper i").hover(function(){
+		$(this).siblings(".tooltip").css({ "opacity": 1, "pointer-events": "auto"});
+	},function(){
+		$(this).siblings(".tooltip").css({ "opacity": 0, "pointer-events": "auto"});
+	});
+	*/
+	//Upvote.create('runoobvote-id', {callback: vote_callback});
+	var ajaxurl = 'https://www.runoob.com/wp-admin/admin-ajax.php';
+	var callback = function(data) {
+		//console.log($('#runoobvote-id').upvote('upvoted'));
+		//console.log($('#runoobvote-id').upvote('downvoted'));
+		//console.log(data);
+		_vote_action = data.action;
+		id_arr = data.id.split('-');
+		um_id= id_arr[2];
+		//console.log(um_id);
+		
+		var re = /^[1-9]+/;
+		if (re.test(um_id)) { 
+			var ajax_data = {
+				_vote_action: _vote_action,
+				action: "pinglun_zan",
+				um_id: um_id,
+				um_action: "ding"
+			};
+			//console.log(ajax_data);
+			$.post(ajaxurl,ajax_data,function(status){
+				//if(status.vote_num>999) {
+				//	_voteHtml = '<span style="display: block; text-align: center;font-size: 20px; color: #6a737c; margin: 8px 0;">'+kFormatter(status.vote_num) +'</span>';
+				//	$("#runoobvote-id-" + um_id + " .count").hide().after(_voteHtml);
+				//}
+				
+			});
+		}
+	};
+	if($('#comments').length && $('.upvotejs').length){
+		$('.upvotejs').upvote({id: 21966, callback: callback});
+	
+		$.post(ajaxurl,{"action":"pinglun_zan","postid":21966},function(data){  
+			$(data).each(function(key,value) {
+				$("#runoobvote-id-" + value.commid + " .upvote").addClass(value.upvotejs_class);
+				$("#runoobvote-id-" + value.commid + " .downvote").addClass(value.downvote_class);
+				$("#runoobvote-id-" + value.commid + " .count").text(value.upvote_count);
+			})
+		},'json');
+		
+	}
+	
+	
+});
+function isBlank(str) {
+    return (!str || /^\s*$/.test(str));
+}
+function kFormatter(num) {
+	// return num;
+    return Math.abs(num) > 999 ? Math.sign(num)*((Math.abs(num)/1000).toFixed(1)) + 'k' : Math.sign(num)*Math.abs(num)
+}
+
+</script>
+
+<link rel="stylesheet" href="/wp-content/themes/runoob/assets/css/qa.css?1.44">
+<link rel="stylesheet" type="text/css" href="https://cdn.staticfile.org/simditor/2.3.6/styles/simditor.min.css" />
+<script type="text/javascript" src="https://static.runoob.com/assets/simditor/2.3.6/scripts/module.js"></script>
+<script type="text/javascript" src="//static.runoob.com/assets/simditor/2.3.6/scripts/hotkeys.js"></script>
+<script type="text/javascript" src="//static.runoob.com/assets/simditor/2.3.6/scripts/uploader.js"></script>
+<script type="text/javascript" src="https://cdn.staticfile.org/simditor/2.3.6/lib/simditor.min.js"></script>
+<script type="text/javascript" src="https://static.runoob.com/assets/simditor/2.3.6/scripts/simditor-autosave.js"></script>
+			<div class="article-heading-ad" id="w3cnote-ad728">
+			<script async src="//pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script>
+			<!-- 移动版 自动调整 -->
+			<ins class="adsbygoogle"
+			     style="display:inline-block;min-width:300px;max-width:970px;width:100%;height:90px"
+			     data-ad-client="ca-pub-5751451760833794"
+			     data-ad-slot="1691338467"
+			     data-ad-format="horizontal"></ins>
+			<script>
+			(adsbygoogle = window.adsbygoogle || []).push({});
+			</script>
+			</div>
+			<style>
+@media screen and (max-width: 768px) {
+	#w3cnote-ad728 {
+		display: none;
+	}
+}
+p.note-author {
+    border-bottom: 1px solid #ddd;
+    font-size: 18px;
+    font-weight: bold;
+    color: #78a15a;
+    padding-bottom: 2px;
+    margin-bottom: 4px;
+}
+</style>
+<script>
+var aid = 21966;
+</script>
+	</div>
+		
+	</div>
+	<div class="listcol last right-column">
+
+
+
+
+<!--
+	<div class="tab tab-light-blue"> 订阅</div>
+	<div class="sidebar-box">
+		<div class="socialicons">
+			<a href="//www.runoob.com/feed" class="rss">RSS 订阅</a>
+		
+			<form action="//list.qq.com/cgi-bin/qf_compose_send" method="post">
+			<input type="hidden" value="qf_booked_feedback" name="t">
+			<input type="hidden" value="4b67b6b6c1f5e792559940cab4aebb8f1126fba880bff1a8" name="id">
+			<input class="placeholder" id="feed_email" name="to" value="输入邮箱 订阅笔记" autocomplete="off">
+			<input type="submit" value="订阅" class="btn btn-primary">
+			</form>
+		
+		</div>
+ 
+	</div>
+-->	
+
+
+
+<!--
+	<div class="sidebar-box cate-list">
+	<div class="sidebar-box recommend-here list-link">
+			<a href="javascript:void(0);" style="font-size: 16px; color:#64854c;font-weight:bold;">笔记列表</a>
+		</div>
+
+ 
+
+</div>
+-->
+
+	 <div class="sidebar-box cate-list">
+		 		
+
+	 	<div class="sidebar-box recommend-here list-link">
+			<a href="javascript:void(0);" style="font-size: 16px; color:#64854c;font-weight:bold;">教程列表</a>
+		</div>
+		
+		<div class="cate-items"> 
+				<a href="http://www.runoob.com/ado">ADO 教程</a>
+	<a href="http://www.runoob.com/ajax">Ajax 教程</a>
+	<a href="http://www.runoob.com/android">Android 教程</a>
+	<a href="http://www.runoob.com/angularjs2">Angular2 教程</a>
+	<a href="http://www.runoob.com/angularjs">AngularJS 教程</a>
+	<a href="http://www.runoob.com/appml">AppML 教程</a>
+	<a href="http://www.runoob.com/asp">ASP 教程</a>
+	<a href="http://www.runoob.com/aspnet">ASP.NET 教程</a>
+	<a href="http://www.runoob.com/bootstrap">Bootstrap 教程</a>
+	<a href="http://www.runoob.com/bootstrap4">Bootstrap4 教程</a>
+	<a href="http://www.runoob.com/bootstrap5">Bootstrap5 教程</a>
+	<a href="http://www.runoob.com/cprogramming">C 教程</a>
+	<a href="http://www.runoob.com/csharp">C# 教程</a>
+	<a href="http://www.runoob.com/cplusplus">C++ 教程</a>
+	<a href="http://www.runoob.com/chartjs">Chart.js 教程</a>
+	<a href="http://www.runoob.com/cssref">CSS 参考手册</a>
+	<a href="http://www.runoob.com/css">CSS 教程</a>
+	<a href="http://www.runoob.com/css3">CSS3 教程</a>
+	<a href="http://www.runoob.com/django">Django 教程</a>
+	<a href="http://www.runoob.com/docker">Docker 教程</a>
+	<a href="http://www.runoob.com/dtd">DTD 教程</a>
+	<a href="http://www.runoob.com/echarts">ECharts 教程</a>
+	<a href="http://www.runoob.com/eclipse">Eclipse 教程</a>
+	<a href="http://www.runoob.com/firebug">Firebug 教程</a>
+	<a href="http://www.runoob.com/font-awesome">Font Awesome 图标</a>
+	<a href="http://www.runoob.com/foundation">Foundation 教程</a>
+	<a href="http://www.runoob.com/git">Git 教程</a>
+	<a href="http://www.runoob.com/go">Go 语言教程</a>
+	<a href="http://www.runoob.com/googleapi">Google 地图 API 教程</a>
+	<a href="http://www.runoob.com/highcharts">Highcharts 教程</a>
+	<a href="http://www.runoob.com/htmldom">HTML DOM 教程</a>
+	<a href="http://www.runoob.com/tags">HTML 参考手册</a>
+	<a href="http://www.runoob.com/charsets">HTML 字符集</a>
+	<a href="http://www.runoob.com/html">HTML 教程</a>
+	<a href="http://www.runoob.com/http">HTTP 教程</a>
+	<a href="http://www.runoob.com/ionic">ionic 教程</a>
+	<a href="http://www.runoob.com/ios">iOS 教程</a>
+	<a href="http://www.runoob.com/java">Java 教程</a>
+	<a href="http://www.runoob.com/jsref">JavaScript 参考手册</a>
+	<a href="http://www.runoob.com/js">Javascript 教程</a>
+	<a href="http://www.runoob.com/jeasyui">jQuery EasyUI 教程</a>
+	<a href="http://www.runoob.com/jquerymobile">jQuery Mobile 教程</a>
+	<a href="http://www.runoob.com/jqueryui">jQuery UI 教程</a>
+	<a href="http://www.runoob.com/jquery">jQuery 教程</a>
+	<a href="http://www.runoob.com/json">JSON 教程</a>
+	<a href="http://www.runoob.com/jsp">JSP 教程</a>
+	<a href="http://www.runoob.com/julia">Julia 教程</a>
+	<a href="http://www.runoob.com/kotlin">Kotlin 教程</a>
+	<a href="http://www.runoob.com/linux">Linux 教程</a>
+	<a href="http://www.runoob.com/lua">Lua 教程</a>
+	<a href="http://www.runoob.com/markdown">Markdown 教程</a>
+	<a href="http://www.runoob.com/matplotlib">Matplotlib 教程</a>
+	<a href="http://www.runoob.com/maven">Maven 教程</a>
+	<a href="http://www.runoob.com/memcached">Memcached 教程</a>
+	<a href="http://www.runoob.com/mongodb">MongoDB 教程</a>
+	<a href="http://www.runoob.com/mysql">MySQL 教程</a>
+	<a href="http://www.runoob.com/nodejs">Node.js 教程</a>
+	<a href="http://www.runoob.com/numpy">NumPy 教程</a>
+	<a href="http://www.runoob.com/pandas">Pandas 教程</a>
+	<a href="http://www.runoob.com/perl">Perl 教程</a>
+	<a href="http://www.runoob.com/php">PHP 教程</a>
+	<a href="http://www.runoob.com/postgresql">PostgreSQL 教程</a>
+	<a href="http://www.runoob.com/python3">Python 3 教程</a>
+	<a href="http://www.runoob.com/python">Python 基础教程</a>
+	<a href="http://www.runoob.com/r">R 教程</a>
+	<a href="http://www.runoob.com/rdf">RDF 教程</a>
+	<a href="http://www.runoob.com/react">React 教程</a>
+	<a href="http://www.runoob.com/redis">Redis 教程</a>
+	<a href="http://www.runoob.com/rss">RSS 教程</a>
+	<a href="http://www.runoob.com/ruby">Ruby 教程</a>
+	<a href="http://www.runoob.com/rust">Rust 教程</a>
+	<a href="http://www.runoob.com/sass">Sass 教程</a>
+	<a href="http://www.runoob.com/scala">Scala 教程</a>
+	<a href="http://www.runoob.com/scipy">SciPy 教程</a>
+	<a href="http://www.runoob.com/servlet">Servlet 教程</a>
+	<a href="http://www.runoob.com/soap">SOAP 教程</a>
+	<a href="http://www.runoob.com/sql">SQL 教程</a>
+	<a href="http://www.runoob.com/sqlite">SQLite 教程</a>
+	<a href="http://www.runoob.com/svg">SVG 教程</a>
+	<a href="http://www.runoob.com/svn">SVN 教程</a>
+	<a href="http://www.runoob.com/swift">Swift 教程</a>
+	<a href="http://www.runoob.com/tcpip">TCP/IP 教程</a>
+	<a href="http://www.runoob.com/typescript">TypeScript 教程</a>
+	<a href="http://www.runoob.com/vbscript">VBScript 教程</a>
+	<a href="http://www.runoob.com/vue2">Vue.js 教程</a>
+	<a href="http://www.runoob.com/vue3">Vue3 教程</a>
+	<a href="http://www.runoob.com/w3c">W3C 教程</a>
+	<a href="http://www.runoob.com/webservices">Web Service 教程</a>
+	<a href="http://www.runoob.com/wsdl">WSDL 教程</a>
+	<a href="http://www.runoob.com/xlink">XLink 教程</a>
+	<a href="http://www.runoob.com/dom">XML DOM 教程</a>
+	<a href="http://www.runoob.com/schema">XML Schema 教程</a>
+	<a href="http://www.runoob.com/xml">XML 教程</a>
+	<a href="http://www.runoob.com/xpath">XPath 教程</a>
+	<a href="http://www.runoob.com/xquery">XQuery 教程</a>
+	<a href="http://www.runoob.com/xslfo">XSLFO 教程</a>
+	<a href="http://www.runoob.com/xsl">XSLT 教程</a>
+	<a href="http://www.runoob.com/data-structures">数据结构</a>
+	<a href="http://www.runoob.com/regexp">正则表达式</a>
+	<a href="http://www.runoob.com/quiz">测验</a>
+	<a href="http://www.runoob.com/browsers">浏览器</a>
+	<a href="http://www.runoob.com/quality">网站品质</a>
+	<a href="http://www.runoob.com/web">网站建设指南</a>
+	<a href="http://www.runoob.com/hosting">网站服务器教程</a>
+	<a href="http://www.runoob.com/design-pattern">设计模式</a>
+			
+		</div> 
+		 	 </div>
+</div>
+	</div>
+</div>
+
+
+<!-- 底部 -->
+<div id="footer" class="mar-t50">
+   <div class="runoob-block">
+    <div class="runoob cf">
+     <dl>
+      <dt>
+       在线实例
+      </dt>
+      <dd>
+       &middot;<a target="_blank" href="/html/html-examples.html">HTML 实例</a>
+      </dd>
+      <dd>
+       &middot;<a target="_blank" href="/css/css-examples.html">CSS 实例</a>
+      </dd>
+      <dd>
+       &middot;<a target="_blank" href="/js/js-examples.html">JavaScript 实例</a>
+      </dd>
+      <dd>
+       &middot;<a target="_blank" href="/ajx/ajax-examples.html">Ajax 实例</a>
+      </dd>
+       <dd>
+       &middot;<a target="_blank" href="/jquery/jquery-examples.html">jQuery 实例</a>
+      </dd>
+      <dd>
+       &middot;<a target="_blank" href="/xml/xml-examples.html">XML 实例</a>
+      </dd>
+      <dd>
+       &middot;<a target="_blank" href="/java/java-examples.html">Java 实例</a>
+      </dd>
+     
+     </dl>
+     <dl>
+      <dt>
+      字符集&工具
+      </dt>
+      <dd>
+       &middot; <a target="_blank" href="/charsets/html-charsets.html">HTML 字符集设置</a>
+      </dd>
+      <dd>
+       &middot; <a target="_blank" href="/tags/html-ascii.html">HTML ASCII 字符集</a>
+      </dd>
+     <dd>
+       &middot; <a target="_blank" href="https://c.runoob.com/front-end/6939/">JS 混淆/加密</a>
+      </dd> 
+      <dd>
+       &middot; <a target="_blank" href="https://c.runoob.com/front-end/6232/">PNG/JPEG 图片压缩</a>
+      </dd>
+      <dd>
+       &middot; <a target="_blank" href="/tags/html-colorpicker.html">HTML 拾色器</a>
+      </dd>
+      <dd>
+       &middot; <a target="_blank" href="//c.runoob.com/front-end/53">JSON 格式化工具</a>
+      </dd>
+      <dd>
+       &middot; <a target="_blank" href="//c.runoob.com/front-end/6680/">随机数生成器</a>
+      </dd>
+     </dl>
+     <dl>
+      <dt>
+       最新更新
+      </dt>
+                   <dd>
+       &middot;
+      <a href="http://www.runoob.com/matplotlib/matplotlib-imread.html" title="Matplotlib imread() 方法">Matplotlib imre...</a>
+      </dd>
+              <dd>
+       &middot;
+      <a href="http://www.runoob.com/matplotlib/matplotlib-imsave.html" title="Matplotlib imsave() 方法">Matplotlib imsa...</a>
+      </dd>
+              <dd>
+       &middot;
+      <a href="http://www.runoob.com/matplotlib/matplotlib-imshow.html" title="Matplotlib imshow() 方法">Matplotlib imsh...</a>
+      </dd>
+              <dd>
+       &middot;
+      <a href="http://www.runoob.com/matplotlib/matplotlib-hist.html" title="Matplotlib 直方图">Matplotlib 直方图</a>
+      </dd>
+              <dd>
+       &middot;
+      <a href="http://www.runoob.com/python3/python-func-object.html" title="Python object() 函数">Python object()...</a>
+      </dd>
+              <dd>
+       &middot;
+      <a href="http://www.runoob.com/python3/python-ai-draw.html" title="Python AI 绘画">Python AI 绘画</a>
+      </dd>
+              <dd>
+       &middot;
+      <a href="http://www.runoob.com/w3cnote/cursor-editor.html" title="神辅助 Cursor 编辑器，加入 GPT-4 让编码更轻松！">神辅助 Cursor ...</a>
+      </dd>
+             </dl>
+     <dl>
+      <dt>
+       站点信息
+      </dt>
+      <dd>
+       &middot;
+       <a target="_blank" href="mailto:admin@runoob.com" rel="external nofollow">意见反馈</a>
+       </dd>
+      <dd>
+       &middot;
+      <a target="_blank" href="/disclaimer">免责声明</a>
+       </dd>
+      <dd>
+       &middot;
+       <a target="_blank" href="/aboutus">关于我们</a>
+       </dd>
+      <dd>
+       &middot;
+      <a target="_blank" href="/archives">文章归档</a>
+      </dd>
+    
+     </dl>
+    
+     <div class="search-share">
+      <div class="app-download">
+        <div>
+         <strong>关注微信</strong>
+        </div>
+      </div>
+      <div class="share">
+      <img width="128" height="128" src="/wp-content/themes/runoob/assets/images/qrcode.png" />
+       </div>
+     </div>
+     
+    </div>
+   </div>
+   <div class="w-1000 copyright">
+     Copyright &copy; 2013-2023    <strong><a href="//www.runoob.com/" target="_blank">菜鸟教程</a></strong>&nbsp;
+    <strong><a href="//www.runoob.com/" target="_blank">runoob.com</a></strong> All Rights Reserved. 备案号：<a target="_blank" rel="nofollow" href="https://beian.miit.gov.cn/">闽ICP备15012807号-1</a>
+   </div>
+  </div>
+  <div class="fixed-btn">
+    <a class="go-top" href="javascript:void(0)" title="返回顶部"> <i class="fa fa-angle-up"></i></a>
+    <a class="qrcode"  href="javascript:void(0)" title="关注我们"><i class="fa fa-qrcode"></i></a>
+    <a class="writer" style="display:none" href="javascript:void(0)"   title="标记/收藏"><i class="fa fa-star" aria-hidden="true"></i></a>
+    <!-- qrcode modal -->
+    <div id="bottom-qrcode" class="modal panel-modal hide fade in">
+      <h4>微信关注</h4>
+      <div class="panel-body"><img alt="微信关注" width="128" height="128" src="/wp-content/themes/runoob/assets/images/qrcode.png"></div> 
+    </div>
+  </div>
+
+ <div style="display:none;">
+<script async src="https://www.googletagmanager.com/gtag/js?id=UA-84264393-2"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+
+  gtag('config', 'UA-84264393-2');
+</script>
+<script>
+var _hmt = _hmt || [];
+(function() {
+  var hm = document.createElement("script");
+  hm.src = "https://hm.baidu.com/hm.js?3eec0b7da6548cf07db3bc477ea905ee";
+  var s = document.getElementsByTagName("script")[0]; 
+  s.parentNode.insertBefore(hm, s);
+})();
+</script>
+
+</div>
+<script>
+window.jsui={
+    www: 'https://www.runoob.com',
+    uri: 'https://www.runoob.com/wp-content/themes/runoob'
+};
+</script>
+
+<script src="https://static.runoob.com/assets/libs/hl/run_prettify.js"></script>
+<script src="/wp-content/themes/runoob/assets/js/main.min.js?v=1.156"></script>
+
+</body>
+</html>

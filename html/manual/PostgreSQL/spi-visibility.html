@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><title>46.4. 数据改变的可见性</title><link rel="stylesheet" type="text/css" href="stylesheet.css" /><link rev="made" href="pgsql-docs@postgresql.org" /><meta name="generator" content="DocBook XSL Stylesheets V1.79.1" /><link rel="prev" href="spi-spi-freeplan.html" title="SPI_freeplan" /><link rel="next" href="spi-examples.html" title="46.5. 例子" /></head><body><div xmlns="http://www.w3.org/TR/xhtml1/transitional" class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="5" align="center">46.4. 数据改变的可见性</th></tr><tr><td width="10%" align="left"><a accesskey="p" href="spi-spi-freeplan.html" title="SPI_freeplan">上一页</a> </td><td width="10%" align="left"><a accesskey="u" href="spi.html" title="第 46 章 服务器编程接口">上一级</a></td><th width="60%" align="center">第 46 章 服务器编程接口</th><td width="10%" align="right"><a accesskey="h" href="index.html" title="PostgreSQL 10.1 手册">起始页</a></td><td width="10%" align="right"> <a accesskey="n" href="spi-examples.html" title="46.5. 例子">下一页</a></td></tr></table><hr></hr></div><div class="sect1" id="SPI-VISIBILITY"><div class="titlepage"><div><div><h2 class="title" style="clear: both">46.4. 数据改变的可见性</h2></div></div></div><p>   下列规则主导了使用 SPI 的函数（或者任何其他 C 函数）中数据改变
+   的可见性：
+
+   </p><div class="itemizedlist"><ul class="itemizedlist" style="list-style-type: disc; "><li class="listitem"><p>      在一个 SQL 命令的执行期间，该命令所作的任何数据更改对该命令本身
+      是不可见的。例如，在
+</p><pre class="programlisting">INSERT INTO a SELECT * FROM a;</pre><p>
+      中，被插入的行对<code class="command">SELECT</code>部分不可见。
+     </p></li><li class="listitem"><p>      一个命令 C 所作的更改对所有在 C 之后开始的命令可见，不管它们是否
+      在 C 之中（在 C 的执行期间）开始还是在 C 完成之后开始。
+     </p></li><li class="listitem"><p>      在一个 SQL 命令（或者一个普通函数或者触发器）调用的函数内通过
+      SPI 执行的命令遵循以上哪条规则取决于传递给 SPI 的读/写标志。以
+      只读模式执行的命令遵循第一条规则：它们不能看到调用它们的命令的
+      改变。在读写模式中执行的命令遵循第二条规则：它们能看见目前为止
+      所有的改变。
+     </p></li><li class="listitem"><p>      所有的标准过程语言会基于函数的易变性属性设置 SPI 读写模式。
+      <code class="literal">STABLE</code>和<code class="literal">IMMUTABLE</code>函数的命令会以
+      只读模式完成，而<code class="literal">VOLATILE</code>函数的命令会以读写模式
+      完成。虽然 C 函数的作者可以违反这种习惯，但是最好不要那样做。
+     </p></li></ul></div><p>
+  </p><p>   下一节包含一个关于这些规则应用的例子：
+  </p></div><div class="navfooter"><hr /><table width="100%" summary="Navigation footer"><tr><td width="40%" align="left"><a accesskey="p" href="spi-spi-freeplan.html">上一页</a> </td><td width="20%" align="center"><a accesskey="u" href="spi.html">上一级</a></td><td width="40%" align="right"> <a accesskey="n" href="spi-examples.html">下一页</a></td></tr><tr><td width="40%" align="left" valign="top">SPI_freeplan </td><td width="20%" align="center"><a accesskey="h" href="index.html">起始页</a></td><td width="40%" align="right" valign="top"> 46.5. 例子</td></tr></table></div></body></html>

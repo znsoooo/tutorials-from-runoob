@@ -1,0 +1,741 @@
+<!Doctype html>
+<html>
+<head>
+	<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+	<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+	<title>Python yield 使用浅析 | 菜鸟教程</title>
+
+  <meta name='robots' content='max-image-preview:large' />
+<link rel='stylesheet' id='classic-theme-styles-css' href='http://www.runoob.com/wp-includes/css/classic-themes.min.css?ver=6.2' type='text/css' media='all' />
+<link rel="canonical" href="http://www.runoob.com/w3cnote/python-yield-used-analysis.html" />
+<meta name="keywords" content="Python yield 使用浅析">
+<meta name="description" content="您可能听说过，带有 yield 的函数在 Python 中被称之为 generator（生成器），何谓 generator ？ 我们先抛开 generator，以一个常见的编程题目来展示 yield 的概念。  如何生成斐波那契數列 斐波那契（Fibonacci）數列是一个非常简单的递归数列，除第一个和第二个数外，任意一个数都可由前两个数相加得到。用计算机程序输出斐波那契數列的前 N 个数是一个非常简单的问题，许多初学者都可以轻易写出如..">
+		
+	<link rel="shortcut icon" href="https://static.runoob.com/images/favicon.ico">
+	<link rel="stylesheet" href="/wp-content/themes/runoob/style.css?v=1.170" type="text/css" media="all" />	
+	<link rel="stylesheet" href="https://cdn.staticfile.org/font-awesome/4.7.0/css/font-awesome.min.css" media="all" />	
+  <!--[if gte IE 9]><!-->
+  <script src="https://cdn.staticfile.org/jquery/2.0.3/jquery.min.js"></script>
+  <!--<![endif]-->
+  <!--[if lt IE 9]>
+     <script src="https://cdn.staticfile.org/jquery/1.9.1/jquery.min.js"></script>
+     <script src="https://cdn.staticfile.org/html5shiv/r29/html5.min.js"></script>
+  <![endif]-->
+  <link rel="apple-touch-icon" href="https://static.runoob.com/images/icon/mobile-icon.png"/>
+  <meta name="apple-mobile-web-app-title" content="菜鸟教程">
+</head>
+<body>
+
+<!--  头部 -->
+<div class="container logo-search">
+
+  <div class="col search row-search-mobile">
+    <form action="index.php">
+      <input class="placeholder" placeholder="搜索……" name="s" autocomplete="off">
+      
+    </form>
+  </div>
+
+  <div class="row">
+    <div class="col logo">
+      <h1><a href="/">菜鸟教程 -- 学的不仅是技术，更是梦想！</a></h1>
+    </div>
+        <div class="col right-list"> 
+    <button class="btn btn-responsive-nav btn-inverse" data-toggle="collapse" data-target=".nav-main-collapse" id="pull" style=""> <i class="fa fa-navicon"></i> </button>
+    </div>
+        
+    <div class="col search search-desktop last">
+      <div class="search-input" >
+      <form action="//www.runoob.com/" target="_blank">
+        <input class="placeholder" id="s" name="s" placeholder="搜索……"  autocomplete="off" style="height: 44px;">
+      </form>
+      
+      </div>
+    </div>
+  </div>
+</div>
+
+
+
+<!-- 导航栏 -->
+<div class="container navigation">
+    <div class="row">
+        <div class="col nav">
+            
+
+                        <ul class="pc-nav" id="note-nav">
+                <li><a href="//www.runoob.com/">首页</a></li>
+                <li><a href="/w3cnote">笔记首页</a></li>
+                <li><a href="/w3cnote/android-tutorial-intro.html" title="Android 基础入门教程">Android</a></li>
+                <li><a href="/w3cnote/es6-tutorial.html" title="ES6 教程">ES6 教程</a></li>
+                <li><a href="/w3cnote/ten-sorting-algorithm.html" title="排序算法">排序算法</a></li>
+                <li><a href="/w3cnote/hadoop-tutorial.html" title="Hadoop 教程">Hadoop</a></li>
+                <li><a href="/w3cnote/zookeeper-tutorial.html" title="Zookeeper 教程">Zookeeper</a></li>
+                <li><a href="/w3cnote/verilog-tutorial.html" title="Verilog 教程">Verilog</a></li>
+                <li><a href="/w3cnote_genre/code" title="编程技术">编程技术</a></li> 
+                <li><a href="/w3cnote_genre/coderlife" title="程序员人生">程序员人生</a></li>
+                
+                <!--<li><a href="javascript:;" class="runoob-pop">登录</a></li>
+                
+                
+                        <li>
+                <a style="font-weight:bold;" href="https://www.runoob.com/linux/linux-tutorial.html#yunserver" target="_blank" onclick="_hmt.push(['_trackEvent', 'aliyun', 'click', 'aliyun'])" title="kkb">云服务器</a>
+                </li>
+                <li><a href="http://gk.link/a/104mQ" target="_blank" style="font-weight: bold;"onclick="_hmt.push(['_trackEvent', '极客时间', 'click', 'jike'])" title="我的圈子">极客时间</a></li>
+            
+                
+                <li><a target="_blank" href="/shoppinglist" rel="nofollow">知识店铺</a></li> 
+        -->
+            </ul>
+                        
+              
+            <ul class="mobile-nav">
+                <li><a href="/w3cnote">首页</a></li>
+                <li><a href="/w3cnote_genre/android" target="_blank" title="Android 基础入门教程">Android</a></li>
+                <li><a href="/w3cnote/es6-tutorial.html" target="_blank" title="ES6 教程">ES6</a></li>
+                <li><a href="/w3cnote_genre/joke" target="_blank" title="程序员笑话">逗乐</a></li>
+                
+                <a href="javascript:void(0)" class="search-reveal">Search</a> 
+            </ul>
+            
+        </div>
+    </div>
+</div>
+
+
+<!--  内容  -->
+<div class="container main">
+	<div class="row">
+
+		<div class="col middle-column big-middle-column">
+	 			<div class="article">
+			<div class="article-heading">
+				<h2>Python yield 使用浅析</h2>				<h3><em>分类</em> <a href="/w3cnote_genre/code" title="编程技术" >编程技术</a> </h3>
+			</div>
+			<div class="article-body note-body">
+				<div class="article-intro">
+					<p>您可能听说过，带有 yield 的函数在 Python 中被称之为 generator（生成器），何谓 generator ？</p>
+<p>我们先抛开 generator，以一个常见的编程题目来展示 yield 的概念。</p>
+<hr>
+<h2>如何生成斐波那契數列</h2>
+<p>斐波那契（Fibonacci）數列是一个非常简单的递归数列，除第一个和第二个数外，任意一个数都可由前两个数相加得到。用计算机程序输出斐波那契數列的前 N 个数是一个非常简单的问题，许多初学者都可以轻易写出如下函数：</p>
+<p><strong>清单 1. 简单输出斐波那契數列前 N 个数</strong></p>
+<div class="example">
+<h2 class="example">实例</h2>
+<div class="example_code">
+<div class="hl-main"><span class="hl-comment">#!/usr/bin/python</span><span class="hl-code">
+</span><span class="hl-comment"># -*- coding: UTF-8 -*-</span><span class="hl-code">
+ 
+</span><span class="hl-reserved">def</span><span class="hl-code"> </span><span class="hl-identifier">fab</span><span class="hl-brackets">(</span><span class="hl-identifier">max</span><span class="hl-brackets">)</span><span class="hl-code">: 
+    </span><span class="hl-identifier">n</span><span class="hl-code">, </span><span class="hl-identifier">a</span><span class="hl-code">, </span><span class="hl-identifier">b</span><span class="hl-code"> = </span><span class="hl-number">0</span><span class="hl-code">, </span><span class="hl-number">0</span><span class="hl-code">, </span><span class="hl-number">1</span><span class="hl-code"> 
+    </span><span class="hl-reserved">while</span><span class="hl-code"> </span><span class="hl-identifier">n</span><span class="hl-code"> &lt; </span><span class="hl-identifier">max</span><span class="hl-code">: 
+        </span><span class="hl-reserved">print</span><span class="hl-code"> </span><span class="hl-identifier">b</span><span class="hl-code"> 
+        </span><span class="hl-identifier">a</span><span class="hl-code">, </span><span class="hl-identifier">b</span><span class="hl-code"> = </span><span class="hl-identifier">b</span><span class="hl-code">, </span><span class="hl-identifier">a</span><span class="hl-code"> + </span><span class="hl-identifier">b</span><span class="hl-code"> 
+        </span><span class="hl-identifier">n</span><span class="hl-code"> = </span><span class="hl-identifier">n</span><span class="hl-code"> + </span><span class="hl-number">1</span><span class="hl-code">
+</span><span class="hl-identifier">fab</span><span class="hl-brackets">(</span><span class="hl-number">5</span><span class="hl-brackets">)</span></div>
+</div></div>
+<p>执行以上代码，我们可以得到如下输出：</p>
+<pre>
+1 
+1 
+2 
+3 
+5
+</pre>
+
+<p>结果没有问题，但有经验的开发者会指出，直接在 fab 函数中用 print 打印数字会导致该函数可复用性较差，因为 fab 函数返回 None，其他函数无法获得该函数生成的数列。</p>
+<p>要提高 fab 函数的可复用性，最好不要直接打印出数列，而是返回一个 List。以下是 fab 函数改写后的第二个版本：</p>
+<p><strong>清单 2. 输出斐波那契數列前 N 个数第二版</strong></p>
+
+<div class="example">
+<h2 class="example">实例</h2>
+<div class="example_code">
+<div class="hl-main"><span class="hl-comment">#!/usr/bin/python</span><span class="hl-code">
+</span><span class="hl-comment"># -*- coding: UTF-8 -*-</span><span class="hl-code">
+ 
+</span><span class="hl-reserved">def</span><span class="hl-code"> </span><span class="hl-identifier">fab</span><span class="hl-brackets">(</span><span class="hl-identifier">max</span><span class="hl-brackets">)</span><span class="hl-code">: 
+    </span><span class="hl-identifier">n</span><span class="hl-code">, </span><span class="hl-identifier">a</span><span class="hl-code">, </span><span class="hl-identifier">b</span><span class="hl-code"> = </span><span class="hl-number">0</span><span class="hl-code">, </span><span class="hl-number">0</span><span class="hl-code">, </span><span class="hl-number">1</span><span class="hl-code"> 
+    </span><span class="hl-identifier">L</span><span class="hl-code"> = </span><span class="hl-brackets">[</span><span class="hl-brackets">]</span><span class="hl-code"> 
+    </span><span class="hl-reserved">while</span><span class="hl-code"> </span><span class="hl-identifier">n</span><span class="hl-code"> &lt; </span><span class="hl-identifier">max</span><span class="hl-code">: 
+        </span><span class="hl-identifier">L</span><span class="hl-code">.</span><span class="hl-identifier">append</span><span class="hl-brackets">(</span><span class="hl-identifier">b</span><span class="hl-brackets">)</span><span class="hl-code"> 
+        </span><span class="hl-identifier">a</span><span class="hl-code">, </span><span class="hl-identifier">b</span><span class="hl-code"> = </span><span class="hl-identifier">b</span><span class="hl-code">, </span><span class="hl-identifier">a</span><span class="hl-code"> + </span><span class="hl-identifier">b</span><span class="hl-code"> 
+        </span><span class="hl-identifier">n</span><span class="hl-code"> = </span><span class="hl-identifier">n</span><span class="hl-code"> + </span><span class="hl-number">1</span><span class="hl-code"> 
+    </span><span class="hl-reserved">return</span><span class="hl-code"> </span><span class="hl-identifier">L</span><span class="hl-code">
+ 
+</span><span class="hl-reserved">for</span><span class="hl-code"> </span><span class="hl-identifier">n</span><span class="hl-code"> </span><span class="hl-reserved">in</span><span class="hl-code"> </span><span class="hl-identifier">fab</span><span class="hl-brackets">(</span><span class="hl-number">5</span><span class="hl-brackets">)</span><span class="hl-code">: 
+    </span><span class="hl-reserved">print</span><span class="hl-code"> </span><span class="hl-identifier">n</span></div>
+</div></div>
+<p>可以使用如下方式打印出 fab 函数返回的 List：</p>
+<pre>
+1 
+1 
+2 
+3 
+5
+</pre>
+
+
+<p>改写后的 fab 函数通过返回 List 能满足复用性的要求，但是更有经验的开发者会指出，该函数在运行中占用的内存会随着参数 max 的增大而增大，如果要控制内存占用，最好不要用 List</p>
+<p>来保存中间结果，而是通过 iterable 对象来迭代。例如，在 Python2.x 中，代码：</p>
+<p><strong>清单 3. 通过 iterable 对象来迭代</strong></p>
+
+<pre>
+for i in range(1000): pass
+</pre>
+
+<p>会导致生成一个 1000 个元素的 List，而代码：</p>
+<pre>
+for i in xrange(1000): pass
+</pre>
+
+<p>则不会生成一个 1000 个元素的 List，而是在每次迭代中返回下一个数值，内存空间占用很小。因为 xrange 不返回 List，而是返回一个 iterable 对象。</p>
+<p>利用 iterable 我们可以把 fab 函数改写为一个支持 iterable 的 class，以下是第三个版本的 Fab：</p>
+<p><strong>清单 4. 第三个版本</strong></p>
+
+
+<div class="example">
+<h2 class="example">实例</h2>
+<div class="example_code">
+<div class="hl-main"><span class="hl-comment">#!/usr/bin/python</span><span class="hl-code">
+</span><span class="hl-comment"># -*- coding: UTF-8 -*-</span><span class="hl-code">
+ 
+</span><span class="hl-reserved">class</span><span class="hl-code"> </span><span class="hl-identifier">Fab</span><span class="hl-brackets">(</span><span class="hl-identifier">object</span><span class="hl-brackets">)</span><span class="hl-code">: 
+ 
+    </span><span class="hl-reserved">def</span><span class="hl-code"> </span><span class="hl-identifier">__init__</span><span class="hl-brackets">(</span><span class="hl-identifier">self</span><span class="hl-code">, </span><span class="hl-identifier">max</span><span class="hl-brackets">)</span><span class="hl-code">: 
+        </span><span class="hl-identifier">self</span><span class="hl-code">.</span><span class="hl-identifier">max</span><span class="hl-code"> = </span><span class="hl-identifier">max</span><span class="hl-code"> 
+        </span><span class="hl-identifier">self</span><span class="hl-code">.</span><span class="hl-identifier">n</span><span class="hl-code">, </span><span class="hl-identifier">self</span><span class="hl-code">.</span><span class="hl-identifier">a</span><span class="hl-code">, </span><span class="hl-identifier">self</span><span class="hl-code">.</span><span class="hl-identifier">b</span><span class="hl-code"> = </span><span class="hl-number">0</span><span class="hl-code">, </span><span class="hl-number">0</span><span class="hl-code">, </span><span class="hl-number">1</span><span class="hl-code"> 
+ 
+    </span><span class="hl-reserved">def</span><span class="hl-code"> </span><span class="hl-identifier">__iter__</span><span class="hl-brackets">(</span><span class="hl-identifier">self</span><span class="hl-brackets">)</span><span class="hl-code">: 
+        </span><span class="hl-reserved">return</span><span class="hl-code"> </span><span class="hl-identifier">self</span><span class="hl-code"> 
+ 
+    </span><span class="hl-reserved">def</span><span class="hl-code"> </span><span class="hl-identifier">next</span><span class="hl-brackets">(</span><span class="hl-identifier">self</span><span class="hl-brackets">)</span><span class="hl-code">: 
+        </span><span class="hl-reserved">if</span><span class="hl-code"> </span><span class="hl-identifier">self</span><span class="hl-code">.</span><span class="hl-identifier">n</span><span class="hl-code"> &lt; </span><span class="hl-identifier">self</span><span class="hl-code">.</span><span class="hl-identifier">max</span><span class="hl-code">: 
+            </span><span class="hl-identifier">r</span><span class="hl-code"> = </span><span class="hl-identifier">self</span><span class="hl-code">.</span><span class="hl-identifier">b</span><span class="hl-code"> 
+            </span><span class="hl-identifier">self</span><span class="hl-code">.</span><span class="hl-identifier">a</span><span class="hl-code">, </span><span class="hl-identifier">self</span><span class="hl-code">.</span><span class="hl-identifier">b</span><span class="hl-code"> = </span><span class="hl-identifier">self</span><span class="hl-code">.</span><span class="hl-identifier">b</span><span class="hl-code">, </span><span class="hl-identifier">self</span><span class="hl-code">.</span><span class="hl-identifier">a</span><span class="hl-code"> + </span><span class="hl-identifier">self</span><span class="hl-code">.</span><span class="hl-identifier">b</span><span class="hl-code"> 
+            </span><span class="hl-identifier">self</span><span class="hl-code">.</span><span class="hl-identifier">n</span><span class="hl-code"> = </span><span class="hl-identifier">self</span><span class="hl-code">.</span><span class="hl-identifier">n</span><span class="hl-code"> + </span><span class="hl-number">1</span><span class="hl-code"> 
+            </span><span class="hl-reserved">return</span><span class="hl-code"> </span><span class="hl-identifier">r</span><span class="hl-code"> 
+        </span><span class="hl-reserved">raise</span><span class="hl-code"> </span><span class="hl-identifier">StopIteration</span><span class="hl-brackets">(</span><span class="hl-brackets">)</span><span class="hl-code">
+ 
+</span><span class="hl-reserved">for</span><span class="hl-code"> </span><span class="hl-identifier">n</span><span class="hl-code"> </span><span class="hl-reserved">in</span><span class="hl-code"> </span><span class="hl-identifier">Fab</span><span class="hl-brackets">(</span><span class="hl-number">5</span><span class="hl-brackets">)</span><span class="hl-code">: 
+    </span><span class="hl-reserved">print</span><span class="hl-code"> </span><span class="hl-identifier">n</span></div>
+</div></div>
+
+<p>Fab 类通过 next() 不断返回数列的下一个数，内存占用始终为常数：</p>
+
+
+<pre>
+1 
+1 
+2 
+3 
+5
+</pre><p>然而，使用 class 改写的这个版本，代码远远没有第一版的 fab 函数来得简洁。如果我们想要保持第一版 fab 函数的简洁性，同时又要获得 iterable 的效果，yield 就派上用场了：</p>
+<p><strong>清单 5. 使用 yield 的第四版</strong></p>
+
+
+<div class="example">
+<h2 class="example">实例</h2>
+<div class="example_code">
+<div class="hl-main"><span class="hl-comment">#!/usr/bin/python</span><span class="hl-code">
+</span><span class="hl-comment"># -*- coding: UTF-8 -*-</span><span class="hl-code">
+ 
+</span><span class="hl-reserved">def</span><span class="hl-code"> </span><span class="hl-identifier">fab</span><span class="hl-brackets">(</span><span class="hl-identifier">max</span><span class="hl-brackets">)</span><span class="hl-code">: 
+    </span><span class="hl-identifier">n</span><span class="hl-code">, </span><span class="hl-identifier">a</span><span class="hl-code">, </span><span class="hl-identifier">b</span><span class="hl-code"> = </span><span class="hl-number">0</span><span class="hl-code">, </span><span class="hl-number">0</span><span class="hl-code">, </span><span class="hl-number">1</span><span class="hl-code"> 
+    </span><span class="hl-reserved">while</span><span class="hl-code"> </span><span class="hl-identifier">n</span><span class="hl-code"> &lt; </span><span class="hl-identifier">max</span><span class="hl-code">: 
+        </span><span class="hl-reserved">yield</span><span class="hl-code"> </span><span class="hl-identifier">b</span><span class="hl-code">      </span><span class="hl-comment"># 使用 yield</span><span class="hl-code">
+        </span><span class="hl-comment"># print b </span><span class="hl-code">
+        </span><span class="hl-identifier">a</span><span class="hl-code">, </span><span class="hl-identifier">b</span><span class="hl-code"> = </span><span class="hl-identifier">b</span><span class="hl-code">, </span><span class="hl-identifier">a</span><span class="hl-code"> + </span><span class="hl-identifier">b</span><span class="hl-code"> 
+        </span><span class="hl-identifier">n</span><span class="hl-code"> = </span><span class="hl-identifier">n</span><span class="hl-code"> + </span><span class="hl-number">1</span><span class="hl-code">
+ 
+</span><span class="hl-reserved">for</span><span class="hl-code"> </span><span class="hl-identifier">n</span><span class="hl-code"> </span><span class="hl-reserved">in</span><span class="hl-code"> </span><span class="hl-identifier">fab</span><span class="hl-brackets">(</span><span class="hl-number">5</span><span class="hl-brackets">)</span><span class="hl-code">: 
+    </span><span class="hl-reserved">print</span><span class="hl-code"> </span><span class="hl-identifier">n</span></div>
+</div></div>
+
+<p>第四个版本的 fab 和第一版相比，仅仅把 print b 改为了 yield b，就在保持简洁性的同时获得了 iterable 的效果。</p>
+<p>调用第四版的 fab 和第二版的 fab 完全一致：</p>
+<pre>
+1 
+1 
+2 
+3 
+5
+</pre><p>简单地讲，yield 的作用就是把一个函数变成一个 generator，带有 yield 的函数不再是一个普通函数，Python 解释器会将其视为一个 generator，调用 fab(5) 不会执行 fab 函数，而是返回一个 iterable 对象！在 for 循环执行时，每次循环都会执行 fab 函数内部的代码，执行到 yield b 时，fab 函数就返回一个迭代值，下次迭代时，代码从 yield b 的下一条语句继续执行，而函数的本地变量看起来和上次中断执行前是完全一样的，于是函数继续执行，直到再次遇到 yield。</p>
+<p>也可以手动调用 fab(5) 的 next() 方法（因为 fab(5) 是一个 generator 对象，该对象具有 next() 方法），这样我们就可以更清楚地看到 fab 的执行流程：</p>
+<p><strong>清单 6. 执行流程</strong></p>
+
+<div class="example">
+<div class="example_code">
+<div class="hl-main"><span class="hl-code">&gt;&gt;&gt;</span><span class="hl-identifier">f</span><span class="hl-code"> = </span><span class="hl-identifier">fab</span><span class="hl-brackets">(</span><span class="hl-number">5</span><span class="hl-brackets">)</span><span class="hl-code"> 
+&gt;&gt;&gt; </span><span class="hl-identifier">f</span><span class="hl-code">.</span><span class="hl-identifier">next</span><span class="hl-brackets">(</span><span class="hl-brackets">)</span><span class="hl-code"> 
+</span><span class="hl-number">1</span><span class="hl-code"> 
+&gt;&gt;&gt; </span><span class="hl-identifier">f</span><span class="hl-code">.</span><span class="hl-identifier">next</span><span class="hl-brackets">(</span><span class="hl-brackets">)</span><span class="hl-code"> 
+</span><span class="hl-number">1</span><span class="hl-code"> 
+&gt;&gt;&gt; </span><span class="hl-identifier">f</span><span class="hl-code">.</span><span class="hl-identifier">next</span><span class="hl-brackets">(</span><span class="hl-brackets">)</span><span class="hl-code"> 
+</span><span class="hl-number">2</span><span class="hl-code"> 
+&gt;&gt;&gt; </span><span class="hl-identifier">f</span><span class="hl-code">.</span><span class="hl-identifier">next</span><span class="hl-brackets">(</span><span class="hl-brackets">)</span><span class="hl-code"> 
+</span><span class="hl-number">3</span><span class="hl-code"> 
+&gt;&gt;&gt; </span><span class="hl-identifier">f</span><span class="hl-code">.</span><span class="hl-identifier">next</span><span class="hl-brackets">(</span><span class="hl-brackets">)</span><span class="hl-code"> 
+</span><span class="hl-number">5</span><span class="hl-code"> 
+&gt;&gt;&gt; </span><span class="hl-identifier">f</span><span class="hl-code">.</span><span class="hl-identifier">next</span><span class="hl-brackets">(</span><span class="hl-brackets">)</span><span class="hl-code"> 
+</span><span class="hl-identifier">Traceback</span><span class="hl-code"> </span><span class="hl-brackets">(</span><span class="hl-identifier">most</span><span class="hl-code"> </span><span class="hl-identifier">recent</span><span class="hl-code"> </span><span class="hl-identifier">call</span><span class="hl-code"> </span><span class="hl-identifier">last</span><span class="hl-brackets">)</span><span class="hl-code">: 
+ </span><span class="hl-identifier">File</span><span class="hl-code"> </span><span class="hl-quotes">&quot;</span><span class="hl-string">&lt;stdin&gt;</span><span class="hl-quotes">&quot;</span><span class="hl-code">, </span><span class="hl-identifier">line</span><span class="hl-code"> </span><span class="hl-number">1</span><span class="hl-code">, </span><span class="hl-reserved">in</span><span class="hl-code"> &lt;</span><span class="hl-identifier">module</span><span class="hl-code">&gt; 
+</span><span class="hl-reserved">StopIteration</span></div>
+</div></div>
+
+<p>当函数执行结束时，generator 自动抛出 StopIteration 异常，表示迭代完成。在 for 循环里，无需处理 StopIteration 异常，循环会正常结束。</p>
+<p><strong>我们可以得出以下结论：</strong></p>
+<p>一个带有 yield 的函数就是一个 generator，它和普通函数不同，生成一个 generator 看起来像函数调用，但不会执行任何函数代码，直到对其调用 next()（在 for 循环中会自动调用 next()）才开始执行。虽然执行流程仍按函数的流程执行，但每执行到一个 yield 语句就会中断，并返回一个迭代值，下次执行时从 yield 的下一个语句继续执行。看起来就好像一个函数在正常执行的过程中被 yield 中断了数次，每次中断都会通过 yield 返回当前的迭代值。</p>
+<p>yield 的好处是显而易见的，把一个函数改写为一个 generator 就获得了迭代能力，比起用类的实例保存状态来计算下一个 next() 的值，不仅代码简洁，而且执行流程异常清晰。</p>
+<p>如何判断一个函数是否是一个特殊的 generator 函数？可以利用 isgeneratorfunction 判断：</p>
+<p><strong>清单 7. 使用 isgeneratorfunction 判断</strong></p>
+
+<div class="example">
+<div class="example_code">
+<div class="hl-main"><span class="hl-code">&gt;&gt;&gt;</span><span class="hl-reserved">from</span><span class="hl-code"> </span><span class="hl-identifier">inspect</span><span class="hl-code"> </span><span class="hl-reserved">import</span><span class="hl-code"> </span><span class="hl-identifier">isgeneratorfunction</span><span class="hl-code"> 
+&gt;&gt;&gt; </span><span class="hl-identifier">isgeneratorfunction</span><span class="hl-brackets">(</span><span class="hl-identifier">fab</span><span class="hl-brackets">)</span><span class="hl-code"> 
+</span><span class="hl-reserved">True</span></div>
+</div></div>
+
+<p>要注意区分 fab 和 fab(5)，fab 是一个 generator function，而 fab(5) 是调用 fab 返回的一个 generator，好比类的定义和类的实例的区别：</p>
+<p><strong>清单 8. 类的定义和类的实例</strong></p>
+
+<div class="example">
+<div class="example_code">
+<div class="hl-main"><span class="hl-code">&gt;&gt;&gt;</span><span class="hl-reserved">import</span><span class="hl-code"> </span><span class="hl-identifier">types</span><span class="hl-code"> 
+&gt;&gt;&gt; </span><span class="hl-builtin">isinstance</span><span class="hl-brackets">(</span><span class="hl-identifier">fab</span><span class="hl-code">, </span><span class="hl-identifier">types</span><span class="hl-code">.</span><span class="hl-identifier">GeneratorType</span><span class="hl-brackets">)</span><span class="hl-code"> 
+</span><span class="hl-reserved">False</span><span class="hl-code"> 
+&gt;&gt;&gt; </span><span class="hl-builtin">isinstance</span><span class="hl-brackets">(</span><span class="hl-identifier">fab</span><span class="hl-brackets">(</span><span class="hl-number">5</span><span class="hl-brackets">)</span><span class="hl-code">, </span><span class="hl-identifier">types</span><span class="hl-code">.</span><span class="hl-identifier">GeneratorType</span><span class="hl-brackets">)</span><span class="hl-code"> 
+</span><span class="hl-reserved">True</span></div>
+</div></div>
+
+
+fab 是无法迭代的，而 fab(5) 是可迭代的：
+<div class="example">
+<div class="example_code">
+<div class="hl-main"><span class="hl-code">&gt;&gt;&gt;</span><span class="hl-reserved">from</span><span class="hl-code"> </span><span class="hl-identifier">collections</span><span class="hl-code"> </span><span class="hl-reserved">import</span><span class="hl-code"> </span><span class="hl-identifier">Iterable</span><span class="hl-code"> 
+&gt;&gt;&gt; </span><span class="hl-builtin">isinstance</span><span class="hl-brackets">(</span><span class="hl-identifier">fab</span><span class="hl-code">, </span><span class="hl-identifier">Iterable</span><span class="hl-brackets">)</span><span class="hl-code"> 
+</span><span class="hl-reserved">False</span><span class="hl-code"> 
+&gt;&gt;&gt; </span><span class="hl-builtin">isinstance</span><span class="hl-brackets">(</span><span class="hl-identifier">fab</span><span class="hl-brackets">(</span><span class="hl-number">5</span><span class="hl-brackets">)</span><span class="hl-code">, </span><span class="hl-identifier">Iterable</span><span class="hl-brackets">)</span><span class="hl-code"> 
+</span><span class="hl-reserved">True</span></div>
+</div></div>
+<p>每次调用 fab 函数都会生成一个新的 generator 实例，各实例互不影响：</p>
+<div class="example">
+<div class="example_code">
+<div class="hl-main"><span class="hl-code">&gt;&gt;&gt;</span><span class="hl-identifier">f1</span><span class="hl-code"> = </span><span class="hl-identifier">fab</span><span class="hl-brackets">(</span><span class="hl-number">3</span><span class="hl-brackets">)</span><span class="hl-code"> 
+&gt;&gt;&gt; </span><span class="hl-identifier">f2</span><span class="hl-code"> = </span><span class="hl-identifier">fab</span><span class="hl-brackets">(</span><span class="hl-number">5</span><span class="hl-brackets">)</span><span class="hl-code"> 
+&gt;&gt;&gt; </span><span class="hl-reserved">print</span><span class="hl-code"> </span><span class="hl-quotes">'</span><span class="hl-string">f1:</span><span class="hl-quotes">'</span><span class="hl-code">, </span><span class="hl-identifier">f1</span><span class="hl-code">.</span><span class="hl-identifier">next</span><span class="hl-brackets">(</span><span class="hl-brackets">)</span><span class="hl-code"> 
+</span><span class="hl-identifier">f1</span><span class="hl-code">: </span><span class="hl-number">1</span><span class="hl-code"> 
+&gt;&gt;&gt; </span><span class="hl-reserved">print</span><span class="hl-code"> </span><span class="hl-quotes">'</span><span class="hl-string">f2:</span><span class="hl-quotes">'</span><span class="hl-code">, </span><span class="hl-identifier">f2</span><span class="hl-code">.</span><span class="hl-identifier">next</span><span class="hl-brackets">(</span><span class="hl-brackets">)</span><span class="hl-code"> 
+</span><span class="hl-identifier">f2</span><span class="hl-code">: </span><span class="hl-number">1</span><span class="hl-code"> 
+&gt;&gt;&gt; </span><span class="hl-reserved">print</span><span class="hl-code"> </span><span class="hl-quotes">'</span><span class="hl-string">f1:</span><span class="hl-quotes">'</span><span class="hl-code">, </span><span class="hl-identifier">f1</span><span class="hl-code">.</span><span class="hl-identifier">next</span><span class="hl-brackets">(</span><span class="hl-brackets">)</span><span class="hl-code"> 
+</span><span class="hl-identifier">f1</span><span class="hl-code">: </span><span class="hl-number">1</span><span class="hl-code"> 
+&gt;&gt;&gt; </span><span class="hl-reserved">print</span><span class="hl-code"> </span><span class="hl-quotes">'</span><span class="hl-string">f2:</span><span class="hl-quotes">'</span><span class="hl-code">, </span><span class="hl-identifier">f2</span><span class="hl-code">.</span><span class="hl-identifier">next</span><span class="hl-brackets">(</span><span class="hl-brackets">)</span><span class="hl-code"> 
+</span><span class="hl-identifier">f2</span><span class="hl-code">: </span><span class="hl-number">1</span><span class="hl-code"> 
+&gt;&gt;&gt; </span><span class="hl-reserved">print</span><span class="hl-code"> </span><span class="hl-quotes">'</span><span class="hl-string">f1:</span><span class="hl-quotes">'</span><span class="hl-code">, </span><span class="hl-identifier">f1</span><span class="hl-code">.</span><span class="hl-identifier">next</span><span class="hl-brackets">(</span><span class="hl-brackets">)</span><span class="hl-code"> 
+</span><span class="hl-identifier">f1</span><span class="hl-code">: </span><span class="hl-number">2</span><span class="hl-code"> 
+&gt;&gt;&gt; </span><span class="hl-reserved">print</span><span class="hl-code"> </span><span class="hl-quotes">'</span><span class="hl-string">f2:</span><span class="hl-quotes">'</span><span class="hl-code">, </span><span class="hl-identifier">f2</span><span class="hl-code">.</span><span class="hl-identifier">next</span><span class="hl-brackets">(</span><span class="hl-brackets">)</span><span class="hl-code"> 
+</span><span class="hl-identifier">f2</span><span class="hl-code">: </span><span class="hl-number">2</span><span class="hl-code"> 
+&gt;&gt;&gt; </span><span class="hl-reserved">print</span><span class="hl-code"> </span><span class="hl-quotes">'</span><span class="hl-string">f2:</span><span class="hl-quotes">'</span><span class="hl-code">, </span><span class="hl-identifier">f2</span><span class="hl-code">.</span><span class="hl-identifier">next</span><span class="hl-brackets">(</span><span class="hl-brackets">)</span><span class="hl-code"> 
+</span><span class="hl-identifier">f2</span><span class="hl-code">: </span><span class="hl-number">3</span><span class="hl-code"> 
+&gt;&gt;&gt; </span><span class="hl-reserved">print</span><span class="hl-code"> </span><span class="hl-quotes">'</span><span class="hl-string">f2:</span><span class="hl-quotes">'</span><span class="hl-code">, </span><span class="hl-identifier">f2</span><span class="hl-code">.</span><span class="hl-identifier">next</span><span class="hl-brackets">(</span><span class="hl-brackets">)</span><span class="hl-code"> 
+</span><span class="hl-identifier">f2</span><span class="hl-code">: </span><span class="hl-number">5</span></div>
+</div></div>
+<hr><h2>
+return 的作用</h2><p>
+在一个 generator function 中，如果没有 return，则默认执行至函数完毕，如果在执行过程中 return，则直接抛出 StopIteration 终止迭代。</p><hr><h2>
+另一个例子</h2><p>
+另一个 yield 的例子来源于文件读取。如果直接对文件对象调用 read() 方法，会导致不可预测的内存占用。好的方法是利用固定长度的缓冲区来不断读取文件内容。通过 yield，我们不再需要编写读文件的迭代类，就可以轻松实现文件读取：</p><p>
+<strong>清单 9. 另一个 yield 的例子</strong></p>
+
+<div class="example">
+<h2 class="example">实例</h2>
+<div class="example_code">
+<div class="hl-main"><span class="hl-reserved">def</span><span class="hl-code"> </span><span class="hl-identifier">read_file</span><span class="hl-brackets">(</span><span class="hl-identifier">fpath</span><span class="hl-brackets">)</span><span class="hl-code">: 
+    </span><span class="hl-identifier">BLOCK_SIZE</span><span class="hl-code"> = </span><span class="hl-number">1024</span><span class="hl-code"> 
+    </span><span class="hl-identifier">with</span><span class="hl-code"> </span><span class="hl-builtin">open</span><span class="hl-brackets">(</span><span class="hl-identifier">fpath</span><span class="hl-code">, </span><span class="hl-quotes">'</span><span class="hl-string">rb</span><span class="hl-quotes">'</span><span class="hl-brackets">)</span><span class="hl-code"> </span><span class="hl-identifier">as</span><span class="hl-code"> </span><span class="hl-identifier">f</span><span class="hl-code">: 
+        </span><span class="hl-reserved">while</span><span class="hl-code"> </span><span class="hl-reserved">True</span><span class="hl-code">: 
+            </span><span class="hl-identifier">block</span><span class="hl-code"> = </span><span class="hl-identifier">f</span><span class="hl-code">.</span><span class="hl-identifier">read</span><span class="hl-brackets">(</span><span class="hl-identifier">BLOCK_SIZE</span><span class="hl-brackets">)</span><span class="hl-code"> 
+            </span><span class="hl-reserved">if</span><span class="hl-code"> </span><span class="hl-identifier">block</span><span class="hl-code">: 
+                </span><span class="hl-reserved">yield</span><span class="hl-code"> </span><span class="hl-identifier">block</span><span class="hl-code"> 
+            </span><span class="hl-reserved">else</span><span class="hl-code">: 
+                </span><span class="hl-reserved">return</span></div>
+</div></div>
+
+<p>以上仅仅简单介绍了 yield 的基本概念和用法，yield 在 Python 3 中还有更强大的用法，我们会在后续文章中讨论。</p>
+<p>注：本文的代码均在 Python 2.7 中调试通过</p>
+
+
+
+
+<blockquote><p>原文地址：https://www.ibm.com/developerworks/cn/opensource/os-cn-python-yield/</p></blockquote>
+
+				</div>
+			</div>
+			<div class="previous-next-links">
+			<div class="previous-design-link">← <a href="http://www.runoob.com/w3cnote/java-string-and-int-convert.html" rel="prev"> JAVA 中 string 和 int 互相转化</a> </div>
+			<div class="next-design-link"><a href="http://www.runoob.com/w3cnote/csharp-foreach.html" rel="next"> C# 中 foreach 遍历的用法</a> →</div>
+			</div>
+						<div class="article-heading-ad" id="w3cnote-ad728">
+			<script async src="//pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script>
+			<!-- 移动版 自动调整 -->
+			<ins class="adsbygoogle"
+			     style="display:inline-block;min-width:300px;max-width:970px;width:100%;height:90px"
+			     data-ad-client="ca-pub-5751451760833794"
+			     data-ad-slot="1691338467"
+			     data-ad-format="horizontal"></ins>
+			<script>
+			(adsbygoogle = window.adsbygoogle || []).push({});
+			</script>
+			</div>
+			<style>
+@media screen and (max-width: 768px) {
+	#w3cnote-ad728 {
+		display: none;
+	}
+}
+p.note-author {
+    border-bottom: 1px solid #ddd;
+    font-size: 18px;
+    font-weight: bold;
+    color: #78a15a;
+    padding-bottom: 2px;
+    margin-bottom: 4px;
+}
+</style>
+<script>
+var aid = 19008;
+</script>
+	</div>
+		
+	</div>
+	<div class="listcol last right-column">
+
+
+
+
+<!--
+	<div class="tab tab-light-blue"> 订阅</div>
+	<div class="sidebar-box">
+		<div class="socialicons">
+			<a href="//www.runoob.com/feed" class="rss">RSS 订阅</a>
+		
+			<form action="//list.qq.com/cgi-bin/qf_compose_send" method="post">
+			<input type="hidden" value="qf_booked_feedback" name="t">
+			<input type="hidden" value="4b67b6b6c1f5e792559940cab4aebb8f1126fba880bff1a8" name="id">
+			<input class="placeholder" id="feed_email" name="to" value="输入邮箱 订阅笔记" autocomplete="off">
+			<input type="submit" value="订阅" class="btn btn-primary">
+			</form>
+		
+		</div>
+ 
+	</div>
+-->	
+
+
+
+<!--
+	<div class="sidebar-box cate-list">
+	<div class="sidebar-box recommend-here list-link">
+			<a href="javascript:void(0);" style="font-size: 16px; color:#64854c;font-weight:bold;">笔记列表</a>
+		</div>
+
+ 
+
+</div>
+-->
+
+	 <div class="sidebar-box cate-list">
+		 		
+
+	 	<div class="sidebar-box recommend-here list-link">
+			<a href="javascript:void(0);" style="font-size: 16px; color:#64854c;font-weight:bold;">教程列表</a>
+		</div>
+		
+		<div class="cate-items"> 
+				<a href="http://www.runoob.com/ado">ADO 教程</a>
+	<a href="http://www.runoob.com/ajax">Ajax 教程</a>
+	<a href="http://www.runoob.com/android">Android 教程</a>
+	<a href="http://www.runoob.com/angularjs2">Angular2 教程</a>
+	<a href="http://www.runoob.com/angularjs">AngularJS 教程</a>
+	<a href="http://www.runoob.com/appml">AppML 教程</a>
+	<a href="http://www.runoob.com/asp">ASP 教程</a>
+	<a href="http://www.runoob.com/aspnet">ASP.NET 教程</a>
+	<a href="http://www.runoob.com/bootstrap">Bootstrap 教程</a>
+	<a href="http://www.runoob.com/bootstrap4">Bootstrap4 教程</a>
+	<a href="http://www.runoob.com/bootstrap5">Bootstrap5 教程</a>
+	<a href="http://www.runoob.com/cprogramming">C 教程</a>
+	<a href="http://www.runoob.com/csharp">C# 教程</a>
+	<a href="http://www.runoob.com/cplusplus">C++ 教程</a>
+	<a href="http://www.runoob.com/chartjs">Chart.js 教程</a>
+	<a href="http://www.runoob.com/cssref">CSS 参考手册</a>
+	<a href="http://www.runoob.com/css">CSS 教程</a>
+	<a href="http://www.runoob.com/css3">CSS3 教程</a>
+	<a href="http://www.runoob.com/django">Django 教程</a>
+	<a href="http://www.runoob.com/docker">Docker 教程</a>
+	<a href="http://www.runoob.com/dtd">DTD 教程</a>
+	<a href="http://www.runoob.com/echarts">ECharts 教程</a>
+	<a href="http://www.runoob.com/eclipse">Eclipse 教程</a>
+	<a href="http://www.runoob.com/firebug">Firebug 教程</a>
+	<a href="http://www.runoob.com/font-awesome">Font Awesome 图标</a>
+	<a href="http://www.runoob.com/foundation">Foundation 教程</a>
+	<a href="http://www.runoob.com/git">Git 教程</a>
+	<a href="http://www.runoob.com/go">Go 语言教程</a>
+	<a href="http://www.runoob.com/googleapi">Google 地图 API 教程</a>
+	<a href="http://www.runoob.com/highcharts">Highcharts 教程</a>
+	<a href="http://www.runoob.com/htmldom">HTML DOM 教程</a>
+	<a href="http://www.runoob.com/tags">HTML 参考手册</a>
+	<a href="http://www.runoob.com/charsets">HTML 字符集</a>
+	<a href="http://www.runoob.com/html">HTML 教程</a>
+	<a href="http://www.runoob.com/http">HTTP 教程</a>
+	<a href="http://www.runoob.com/ionic">ionic 教程</a>
+	<a href="http://www.runoob.com/ios">iOS 教程</a>
+	<a href="http://www.runoob.com/java">Java 教程</a>
+	<a href="http://www.runoob.com/jsref">JavaScript 参考手册</a>
+	<a href="http://www.runoob.com/js">Javascript 教程</a>
+	<a href="http://www.runoob.com/jeasyui">jQuery EasyUI 教程</a>
+	<a href="http://www.runoob.com/jquerymobile">jQuery Mobile 教程</a>
+	<a href="http://www.runoob.com/jqueryui">jQuery UI 教程</a>
+	<a href="http://www.runoob.com/jquery">jQuery 教程</a>
+	<a href="http://www.runoob.com/json">JSON 教程</a>
+	<a href="http://www.runoob.com/jsp">JSP 教程</a>
+	<a href="http://www.runoob.com/julia">Julia 教程</a>
+	<a href="http://www.runoob.com/kotlin">Kotlin 教程</a>
+	<a href="http://www.runoob.com/linux">Linux 教程</a>
+	<a href="http://www.runoob.com/lua">Lua 教程</a>
+	<a href="http://www.runoob.com/markdown">Markdown 教程</a>
+	<a href="http://www.runoob.com/matplotlib">Matplotlib 教程</a>
+	<a href="http://www.runoob.com/maven">Maven 教程</a>
+	<a href="http://www.runoob.com/memcached">Memcached 教程</a>
+	<a href="http://www.runoob.com/mongodb">MongoDB 教程</a>
+	<a href="http://www.runoob.com/mysql">MySQL 教程</a>
+	<a href="http://www.runoob.com/nodejs">Node.js 教程</a>
+	<a href="http://www.runoob.com/numpy">NumPy 教程</a>
+	<a href="http://www.runoob.com/pandas">Pandas 教程</a>
+	<a href="http://www.runoob.com/perl">Perl 教程</a>
+	<a href="http://www.runoob.com/php">PHP 教程</a>
+	<a href="http://www.runoob.com/postgresql">PostgreSQL 教程</a>
+	<a href="http://www.runoob.com/python3">Python 3 教程</a>
+	<a href="http://www.runoob.com/python">Python 基础教程</a>
+	<a href="http://www.runoob.com/r">R 教程</a>
+	<a href="http://www.runoob.com/rdf">RDF 教程</a>
+	<a href="http://www.runoob.com/react">React 教程</a>
+	<a href="http://www.runoob.com/redis">Redis 教程</a>
+	<a href="http://www.runoob.com/rss">RSS 教程</a>
+	<a href="http://www.runoob.com/ruby">Ruby 教程</a>
+	<a href="http://www.runoob.com/rust">Rust 教程</a>
+	<a href="http://www.runoob.com/sass">Sass 教程</a>
+	<a href="http://www.runoob.com/scala">Scala 教程</a>
+	<a href="http://www.runoob.com/scipy">SciPy 教程</a>
+	<a href="http://www.runoob.com/servlet">Servlet 教程</a>
+	<a href="http://www.runoob.com/soap">SOAP 教程</a>
+	<a href="http://www.runoob.com/sql">SQL 教程</a>
+	<a href="http://www.runoob.com/sqlite">SQLite 教程</a>
+	<a href="http://www.runoob.com/svg">SVG 教程</a>
+	<a href="http://www.runoob.com/svn">SVN 教程</a>
+	<a href="http://www.runoob.com/swift">Swift 教程</a>
+	<a href="http://www.runoob.com/tcpip">TCP/IP 教程</a>
+	<a href="http://www.runoob.com/typescript">TypeScript 教程</a>
+	<a href="http://www.runoob.com/vbscript">VBScript 教程</a>
+	<a href="http://www.runoob.com/vue2">Vue.js 教程</a>
+	<a href="http://www.runoob.com/vue3">Vue3 教程</a>
+	<a href="http://www.runoob.com/w3c">W3C 教程</a>
+	<a href="http://www.runoob.com/webservices">Web Service 教程</a>
+	<a href="http://www.runoob.com/wsdl">WSDL 教程</a>
+	<a href="http://www.runoob.com/xlink">XLink 教程</a>
+	<a href="http://www.runoob.com/dom">XML DOM 教程</a>
+	<a href="http://www.runoob.com/schema">XML Schema 教程</a>
+	<a href="http://www.runoob.com/xml">XML 教程</a>
+	<a href="http://www.runoob.com/xpath">XPath 教程</a>
+	<a href="http://www.runoob.com/xquery">XQuery 教程</a>
+	<a href="http://www.runoob.com/xslfo">XSLFO 教程</a>
+	<a href="http://www.runoob.com/xsl">XSLT 教程</a>
+	<a href="http://www.runoob.com/data-structures">数据结构</a>
+	<a href="http://www.runoob.com/regexp">正则表达式</a>
+	<a href="http://www.runoob.com/quiz">测验</a>
+	<a href="http://www.runoob.com/browsers">浏览器</a>
+	<a href="http://www.runoob.com/quality">网站品质</a>
+	<a href="http://www.runoob.com/web">网站建设指南</a>
+	<a href="http://www.runoob.com/hosting">网站服务器教程</a>
+	<a href="http://www.runoob.com/design-pattern">设计模式</a>
+			
+		</div> 
+		 	 </div>
+</div>
+	</div>
+</div>
+
+
+<!-- 底部 -->
+<div id="footer" class="mar-t50">
+   <div class="runoob-block">
+    <div class="runoob cf">
+     <dl>
+      <dt>
+       在线实例
+      </dt>
+      <dd>
+       &middot;<a target="_blank" href="/html/html-examples.html">HTML 实例</a>
+      </dd>
+      <dd>
+       &middot;<a target="_blank" href="/css/css-examples.html">CSS 实例</a>
+      </dd>
+      <dd>
+       &middot;<a target="_blank" href="/js/js-examples.html">JavaScript 实例</a>
+      </dd>
+      <dd>
+       &middot;<a target="_blank" href="/ajx/ajax-examples.html">Ajax 实例</a>
+      </dd>
+       <dd>
+       &middot;<a target="_blank" href="/jquery/jquery-examples.html">jQuery 实例</a>
+      </dd>
+      <dd>
+       &middot;<a target="_blank" href="/xml/xml-examples.html">XML 实例</a>
+      </dd>
+      <dd>
+       &middot;<a target="_blank" href="/java/java-examples.html">Java 实例</a>
+      </dd>
+     
+     </dl>
+     <dl>
+      <dt>
+      字符集&工具
+      </dt>
+      <dd>
+       &middot; <a target="_blank" href="/charsets/html-charsets.html">HTML 字符集设置</a>
+      </dd>
+      <dd>
+       &middot; <a target="_blank" href="/tags/html-ascii.html">HTML ASCII 字符集</a>
+      </dd>
+     <dd>
+       &middot; <a target="_blank" href="https://c.runoob.com/front-end/6939/">JS 混淆/加密</a>
+      </dd> 
+      <dd>
+       &middot; <a target="_blank" href="https://c.runoob.com/front-end/6232/">PNG/JPEG 图片压缩</a>
+      </dd>
+      <dd>
+       &middot; <a target="_blank" href="/tags/html-colorpicker.html">HTML 拾色器</a>
+      </dd>
+      <dd>
+       &middot; <a target="_blank" href="//c.runoob.com/front-end/53">JSON 格式化工具</a>
+      </dd>
+      <dd>
+       &middot; <a target="_blank" href="//c.runoob.com/front-end/6680/">随机数生成器</a>
+      </dd>
+     </dl>
+     <dl>
+      <dt>
+       最新更新
+      </dt>
+                   <dd>
+       &middot;
+      <a href="http://www.runoob.com/matplotlib/matplotlib-imread.html" title="Matplotlib imread() 方法">Matplotlib imre...</a>
+      </dd>
+              <dd>
+       &middot;
+      <a href="http://www.runoob.com/matplotlib/matplotlib-imsave.html" title="Matplotlib imsave() 方法">Matplotlib imsa...</a>
+      </dd>
+              <dd>
+       &middot;
+      <a href="http://www.runoob.com/matplotlib/matplotlib-imshow.html" title="Matplotlib imshow() 方法">Matplotlib imsh...</a>
+      </dd>
+              <dd>
+       &middot;
+      <a href="http://www.runoob.com/matplotlib/matplotlib-hist.html" title="Matplotlib 直方图">Matplotlib 直方图</a>
+      </dd>
+              <dd>
+       &middot;
+      <a href="http://www.runoob.com/python3/python-func-object.html" title="Python object() 函数">Python object()...</a>
+      </dd>
+              <dd>
+       &middot;
+      <a href="http://www.runoob.com/python3/python-ai-draw.html" title="Python AI 绘画">Python AI 绘画</a>
+      </dd>
+              <dd>
+       &middot;
+      <a href="http://www.runoob.com/w3cnote/cursor-editor.html" title="神辅助 Cursor 编辑器，加入 GPT-4 让编码更轻松！">神辅助 Cursor ...</a>
+      </dd>
+             </dl>
+     <dl>
+      <dt>
+       站点信息
+      </dt>
+      <dd>
+       &middot;
+       <a target="_blank" href="mailto:admin@runoob.com" rel="external nofollow">意见反馈</a>
+       </dd>
+      <dd>
+       &middot;
+      <a target="_blank" href="/disclaimer">免责声明</a>
+       </dd>
+      <dd>
+       &middot;
+       <a target="_blank" href="/aboutus">关于我们</a>
+       </dd>
+      <dd>
+       &middot;
+      <a target="_blank" href="/archives">文章归档</a>
+      </dd>
+    
+     </dl>
+    
+     <div class="search-share">
+      <div class="app-download">
+        <div>
+         <strong>关注微信</strong>
+        </div>
+      </div>
+      <div class="share">
+      <img width="128" height="128" src="/wp-content/themes/runoob/assets/images/qrcode.png" />
+       </div>
+     </div>
+     
+    </div>
+   </div>
+   <div class="w-1000 copyright">
+     Copyright &copy; 2013-2023    <strong><a href="//www.runoob.com/" target="_blank">菜鸟教程</a></strong>&nbsp;
+    <strong><a href="//www.runoob.com/" target="_blank">runoob.com</a></strong> All Rights Reserved. 备案号：<a target="_blank" rel="nofollow" href="https://beian.miit.gov.cn/">闽ICP备15012807号-1</a>
+   </div>
+  </div>
+  <div class="fixed-btn">
+    <a class="go-top" href="javascript:void(0)" title="返回顶部"> <i class="fa fa-angle-up"></i></a>
+    <a class="qrcode"  href="javascript:void(0)" title="关注我们"><i class="fa fa-qrcode"></i></a>
+    <a class="writer" style="display:none" href="javascript:void(0)"   title="标记/收藏"><i class="fa fa-star" aria-hidden="true"></i></a>
+    <!-- qrcode modal -->
+    <div id="bottom-qrcode" class="modal panel-modal hide fade in">
+      <h4>微信关注</h4>
+      <div class="panel-body"><img alt="微信关注" width="128" height="128" src="/wp-content/themes/runoob/assets/images/qrcode.png"></div> 
+    </div>
+  </div>
+
+ <div style="display:none;">
+<script async src="https://www.googletagmanager.com/gtag/js?id=UA-84264393-2"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+
+  gtag('config', 'UA-84264393-2');
+</script>
+<script>
+var _hmt = _hmt || [];
+(function() {
+  var hm = document.createElement("script");
+  hm.src = "https://hm.baidu.com/hm.js?3eec0b7da6548cf07db3bc477ea905ee";
+  var s = document.getElementsByTagName("script")[0]; 
+  s.parentNode.insertBefore(hm, s);
+})();
+</script>
+
+</div>
+<script>
+window.jsui={
+    www: 'https://www.runoob.com',
+    uri: 'https://www.runoob.com/wp-content/themes/runoob'
+};
+</script>
+
+<script src="https://static.runoob.com/assets/libs/hl/run_prettify.js"></script>
+<script src="/wp-content/themes/runoob/assets/js/main.min.js?v=1.156"></script>
+
+</body>
+</html>

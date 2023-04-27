@@ -1,0 +1,137 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><title>33.18. SSL 支持</title><link rel="stylesheet" type="text/css" href="stylesheet.css" /><link rev="made" href="pgsql-docs@postgresql.org" /><meta name="generator" content="DocBook XSL Stylesheets V1.79.1" /><link rel="prev" href="libpq-ldap.html" title="33.17. 连接参数的 LDAP 查找" /><link rel="next" href="libpq-threading.html" title="33.19. 在线程化程序中的行为" /></head><body><div xmlns="http://www.w3.org/TR/xhtml1/transitional" class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="5" align="center">33.18. SSL 支持</th></tr><tr><td width="10%" align="left"><a accesskey="p" href="libpq-ldap.html" title="33.17. 连接参数的 LDAP 查找">上一页</a> </td><td width="10%" align="left"><a accesskey="u" href="libpq.html" title="第 33 章 libpq - C 库">上一级</a></td><th width="60%" align="center">第 33 章 <span xmlns="http://www.w3.org/1999/xhtml" class="application">libpq</span> - C 库</th><td width="10%" align="right"><a accesskey="h" href="index.html" title="PostgreSQL 10.1 手册">起始页</a></td><td width="10%" align="right"> <a accesskey="n" href="libpq-threading.html" title="33.19. 在线程化程序中的行为">下一页</a></td></tr></table><hr></hr></div><div class="sect1" id="LIBPQ-SSL"><div class="titlepage"><div><div><h2 class="title" style="clear: both">33.18. SSL 支持</h2></div></div></div><div class="toc"><dl class="toc"><dt><span class="sect2"><a href="libpq-ssl.html#LIBQ-SSL-CERTIFICATES">33.18.1. 服务器证书的客户端验证</a></span></dt><dt><span class="sect2"><a href="libpq-ssl.html#LIBPQ-SSL-CLIENTCERT">33.18.2. 客户端证书</a></span></dt><dt><span class="sect2"><a href="libpq-ssl.html#LIBPQ-SSL-PROTECTION">33.18.3. 不同模式中提供的保护</a></span></dt><dt><span class="sect2"><a href="libpq-ssl.html#LIBPQ-SSL-FILEUSAGE">33.18.4. SSL 客户端文件使用</a></span></dt><dt><span class="sect2"><a href="libpq-ssl.html#LIBPQ-SSL-INITIALIZE">33.18.5. SSL 库初始化</a></span></dt></dl></div><a id="idp28756016" class="indexterm"></a><p>   <span class="productname">PostgreSQL</span>本地支持使用<acronym class="acronym">SSL</acronym>
+   连接加密客户端/服务器通信以提高安全性。关于服务器端的<acronym class="acronym">SSL</acronym>
+   功能详见<a class="xref" href="ssl-tcp.html" title="18.9. 用 SSL 进行安全的 TCP/IP 连接">第 18.9 节</a>。
+  </p><p>   <span class="application">libpq</span>读取系统范围的<span class="productname">OpenSSL</span>
+   配置文件。默认情况下，这个文件被命名为<code class="filename">openssl.cnf</code>并且存放在
+   <code class="literal">openssl version -d</code>报告的目录中。可以通过设置环境变量
+   <code class="envar">OPENSSL_CONF</code>把这个默认值覆盖为想要的配置文件的名称。
+  </p><div class="sect2" id="LIBQ-SSL-CERTIFICATES"><div class="titlepage"><div><div><h3 class="title">33.18.1. 服务器证书的客户端验证</h3></div></div></div><p>   默认情况下，<span class="productname">PostgreSQL</span>将不会执行服务器证书的任何验证。
+   这意味着可以在不被客户端知晓的情况下伪造服务器身份
+   （例如通过修改一个 DNS 记录或者接管服务器的 IP 地址）。为了阻止哄骗，
+   必须使用<acronym class="acronym">SSL</acronym>证书验证。
+  </p><p>   如果参数<code class="literal">sslmode</code>被设置为<code class="literal">verify-ca</code>，
+   libpq 将通过检查证书链一直到一个可信的证书机构（<acronym class="acronym">CA</acronym>）
+   来验证服务器是可信的。如果<code class="literal">sslmode</code>被设置为<code class="literal">verify-full</code>，
+   libpq 将<span class="emphasis"><em>还会</em></span>验证服务器主机名是否匹配它的证书。
+   如果服务器证书不能被验证，SSL 连接将失败。在大部分对安全敏感的环境中，
+   建议使用<code class="literal">verify-full</code>。
+  </p><p>   在<code class="literal">verify-full</code>模式下，主机名与证书的Subject Alternative Name
+   （主题备用名称)属性进行匹配，
+   或者如果没有类型为dNSName的主题备用名称，则与Common Name（公用名称）属性进行匹配。
+   如果证书的名称属性以星号（<code class="literal"> * </code>）开头，则星号将被视为通配符，
+   其将匹配<span class="emphasis"><em>除了</em></span>点(<code class="literal">.</code>)之外的所有字符。这意味着证书将不会匹配子域。
+   如果使用IP地址而不是主机名进行连接，则将匹配IP地址（不进行任何DNS查找）。  
+  </p><p>   要允许服务器证书验证，一个或多个可信的<acronym class="acronym">CA</acronym>必须被放置在用户home目录下的文件
+   <code class="filename">~/.postgresql/root.crt</code>中。如果中间<acronym class="acronym">CA</acronym>出现在
+   <code class="filename">root.crt</code>中，该文件必须也包含到它们的根<acronym class="acronym">CA</acronym>的证书链
+   （在微软 Windows 上该文件被命名为<code class="filename">%APPDATA%\postgresql\root.crt</code>）。
+  </p><p>   如果文件<code class="filename">~/.postgresql/root.crl</code>存在
+   （微软 Windows 上的<code class="filename">%APPDATA%\postgresql\root.crl</code>），
+   也会检查证书撤销列表（CRL）项。
+  </p><p>   根证书文件和 CRL 的位置可以通过设置连接参数<code class="literal">sslrootcert</code>和
+   <code class="literal">sslcrl</code>或环境变量<code class="envar">PGSSLROOTCERT</code>和<code class="envar">PGSSLCRL</code>改变。
+  </p><div class="note"><h3 class="title">注意</h3><p>    为了与 PostgreSQL 的早期版本达到向后兼容，如果存在一个根 CA 文件，
+    <code class="literal">sslmode</code>=<code class="literal">require</code>的行为将与
+    <code class="literal">verify-ca</code>相同，意味着服务器证书根据 CA 验证。
+    不鼓励依赖这种行为，并且需要证书验证的应用程序应该总是使用
+    <code class="literal">verify-ca</code>或者<code class="literal">verify-full</code>。
+   </p></div></div><div class="sect2" id="LIBPQ-SSL-CLIENTCERT"><div class="titlepage"><div><div><h3 class="title">33.18.2. 客户端证书</h3></div></div></div><p>   如果服务器要求一个可信的客户端证书，<span class="application">libpq</span>
+   将发送用户主目录中<code class="filename">~/.postgresql/postgresql.crt</code>文件存储的证书。
+   该证书必须由一个受服务器信任的证书机构（<acronym class="acronym">CA</acronym>）签发。
+   也必须存在一个匹配的私钥文件<code class="filename">~/.postgresql/postgresql.key</code>。
+   该私钥文件不允许全局或组用户的任何访问，可以通过命令
+   <code class="command">chmod 0600 ~/.postgresql/postgresql.key</code>实现。
+   在微软 Windows 上这些文件被命名为<code class="filename">%APPDATA%\postgresql\postgresql.crt</code>
+   和<code class="filename">%APPDATA%\postgresql\postgresql.key</code>，不会有特别的权限检查，
+   因为该目录被假定为安全。证书和密钥文件的位置可以使用连接参数<code class="literal">sslcert</code>
+   和<code class="literal">sslkey</code>或者环境变量<code class="envar">PGSSLCERT</code>和<code class="envar">PGSSLKEY</code>覆盖。
+  </p><p>   在一些情况下，客户端证书可以由<span class="quote">“<span class="quote">中间</span>”</span>证书机构签名，
+   而不是由服务器直接信任的证书机构。
+   要使用这样一个证书，将签发机构的证书加入到<code class="filename">postgresql.crt</code>文件，
+   然后是它的上级机构的证书，并且一直到一个受服务器信任的证书机构（
+   <span class="quote">“<span class="quote">根</span>”</span>机构或者<span class="quote">“<span class="quote">中间</span>”</span>机构），即由该服务器的
+   <code class="filename">root.crt</code>文件中的一个证书签发。
+  </p><p>   注意客户端的<code class="filename">~/.postgresql/root.crt</code>
+   列出了被认为可信的能用于签发服务器证书的顶层 CA。
+   原则上不需要列出签发客户端证书的 CA，
+   大部分情况下这些 CA 也被信任可以用于服务器证书。
+  </p></div><div class="sect2" id="LIBPQ-SSL-PROTECTION"><div class="titlepage"><div><div><h3 class="title">33.18.3. 不同模式中提供的保护</h3></div></div></div><p>   <code class="literal">sslmode</code>参数的不同值提供了不同级别的保护。
+   SSL 能够针对三类攻击提供保护：
+
+   </p><div class="variablelist"><dl class="variablelist"><dt><span class="term">窃听</span></dt><dd><p>如果一个第三方能够检查客户端和服务器之间的网络流量，
+      它能读取连接信息（包括用户名和口令）以及被传递的数据。
+      <acronym class="acronym">SSL</acronym>使用加密来阻止这种攻击。
+      </p></dd><dt><span class="term">中间人（<acronym class="acronym">MITM</acronym>）</span></dt><dd><p>如果一个第三方能对客户端和服务器之间传送的数据进行修改，
+      它就能假装是服务器并且因此能看见并且修改数据，<span class="emphasis"><em>即使这些数据已被加密</em></span>。
+      然后第三方可以将连接信息和数据传送给原来的服务器，使得它不可能检测到攻击。
+      这样做的常用载体包括 DNS 中毒和地址劫持，借此客户端被定向到预期之外的不同的服务器。
+      还有几种其他的攻击方式能够完成这种攻击。<acronym class="acronym">SSL</acronym>
+      使用证书验证让客户端认证服务器，就可以阻止这种攻击。
+      </p></dd><dt><span class="term">模仿</span></dt><dd><p>如果第三方可以伪装成一个授权的客户端，
+      那么它能够轻松访问它本不能访问的数据。通常这可以由不安全的口令管理所致。
+      <acronym class="acronym">SSL</acronym>使用客户端证书来阻止这种情况，
+      即确保只有持有合法证书的客户才能访问服务器。
+      </p></dd></dl></div><p>
+  </p><p>   对于一个已知安全的连接，在连接被建立之前，必须在
+   <span class="emphasis"><em>客户端和服务器端</em></span>都进行SSL配置。如果只在服务器上配置，
+   客户端在知道服务器要求高安全性之前可能会结束发送敏感信息（例如口令）。
+   在 libpq 中，可以通过将<code class="literal">sslmode</code>参数设置为<code class="literal">verify-full</code>或
+   <code class="literal">verify-ca</code>来确保安全连接，并且为系统提供一个根证书用来验证。
+   这类似于使用<code class="literal">https</code> <acronym class="acronym">URL</acronym>进行加密网页浏览。
+  </p><p>   一旦服务器已经被认证，客户端可以传递敏感数据。这意味着直到这一点，
+   客户端都不需要知道是否证书将被用于认证，这样只需要在服务器配置中指定就比较安全。
+  </p><p>   所有<acronym class="acronym">SSL</acronym>选项都带来了加密和密钥交换的开销，
+   因此必须在性能和安全性之间做出平衡。<a class="xref" href="libpq-ssl.html#LIBPQ-SSL-SSLMODE-STATEMENTS" title="表 33.1. SSL 模式描述">表 33.1</a>
+   说明不同<code class="literal">sslmode</code>值所保护的风险，以及关于安全和开销所做出的声明。
+  </p><div class="table" id="LIBPQ-SSL-SSLMODE-STATEMENTS"><p class="title"><strong>表 33.1. SSL 模式描述</strong></p><div class="table-contents"><table class="table" summary="SSL 模式描述" border="1"><colgroup><col /><col /><col /><col /></colgroup><thead><tr><th><code class="literal">sslmode</code></th><th>窃听保护</th><th><acronym class="acronym">MITM</acronym>保护</th><th>声明</th></tr></thead><tbody><tr><td><code class="literal">disable</code></td><td>否</td><td>否</td><td>我不关心安全性，并且我不想承担加密的开销。
+      </td></tr><tr><td><code class="literal">allow</code></td><td>可能</td><td>否</td><td>我不关心安全性，但如果服务器坚持，我会承担加密开销 。
+      </td></tr><tr><td><code class="literal">prefer</code></td><td>可能</td><td>否</td><td>我不关心加密，但如果服务器支持，我希望承担加密开销。
+      </td></tr><tr><td><code class="literal">require</code></td><td>是</td><td>否</td><td>我希望我的数据加密，我接受开销。
+      我相信该网络将确保我始终连接到想要连接的服务器。
+      </td></tr><tr><td><code class="literal">verify-ca</code></td><td>是</td><td><code class="literal">取决于 CA</code>-策略</td><td>我希望我的数据加密，我接受开销。
+      我想要确保我连接到的是我信任的服务器。
+      </td></tr><tr><td><code class="literal">verify-full</code></td><td>是</td><td>是</td><td>我希望我的数据加密，我接受开销。
+       我想要确保我连接到的是我信任的服务器，并且就是我指定的那一个。
+       </td></tr></tbody></table></div></div><br class="table-break" /><p>   <code class="literal">verify-ca</code>和<code class="literal">verify-full</code>之间的区别取决于根<acronym class="acronym">CA</acronym>的策略。
+   如果使用了一个公共<acronym class="acronym">CA</acronym>，<code class="literal">verify-ca</code>允许连接到那些可能已经被
+   <span class="emphasis"><em>其他人</em></span>注册到该<acronym class="acronym">CA</acronym>的服务器。在这种情况下，总是应该使用
+   <code class="literal">verify-full</code>。如果使用了一个本地<acronym class="acronym">CA</acronym>或者甚至是一个自签名的证书，
+   使用<code class="literal">verify-ca</code>通常就可以提供足够的保护。
+  </p><p>   <code class="literal">sslmode</code>的默认值是<code class="literal">prefer</code>。如表中所示，
+   从安全角度来看这样做是没有意义的，并且它只承诺可能的性能开销。
+   提供它作为默认值只是为了向后兼容，在安全部署中不建议使用。
+  </p></div><div class="sect2" id="LIBPQ-SSL-FILEUSAGE"><div class="titlepage"><div><div><h3 class="title">33.18.4. SSL 客户端文件使用</h3></div></div></div><p>   <a class="xref" href="libpq-ssl.html#LIBPQ-SSL-FILE-USAGE" title="表 33.2. Libpq/客户端 SSL 文件用法">表 33.2</a>总结了与客户端 SSL 设置相关的文件。
+  </p><div class="table" id="LIBPQ-SSL-FILE-USAGE"><p class="title"><strong>表 33.2. Libpq/客户端 SSL 文件用法</strong></p><div class="table-contents"><table class="table" summary="Libpq/客户端 SSL 文件用法" border="1"><colgroup><col /><col /><col /></colgroup><thead><tr><th>文件</th><th>内容</th><th>影响</th></tr></thead><tbody><tr><td><code class="filename">~/.postgresql/postgresql.crt</code></td><td>客户端证书</td><td>由服务器要求</td></tr><tr><td><code class="filename">~/.postgresql/postgresql.key</code></td><td>客户端私钥</td><td>证明由所有者发送客户端证书，并不表示证书所有者是可信的</td></tr><tr><td><code class="filename">~/.postgresql/root.crt</code></td><td>受信任的证书颁发机构</td><td>检查服务器证书是由一个可信的证书机构签发</td></tr><tr><td><code class="filename">~/.postgresql/root.crl</code></td><td>被证书颁发机构撤销的证书</td><td>服务器证书必须不在这个列表中</td></tr></tbody></table></div></div><br class="table-break" /></div><div class="sect2" id="LIBPQ-SSL-INITIALIZE"><div class="titlepage"><div><div><h3 class="title">33.18.5. SSL 库初始化</h3></div></div></div><p>   如果你的应用初始化<code class="literal">libssl</code>或<code class="literal">libcrypto</code>库以及
+   <span class="application">libpq</span>编译为支持<acronym class="acronym">SSL</acronym>，你应该调用
+   <code class="function">PQinitOpenSSL</code>来告诉<span class="application">libpq</span>：<code class="literal">libssl</code>
+   或<code class="literal">libcrypto</code>库已经被你的应用初始化，这样<span class="application">libpq</span>
+   将不会再初始化这些库。
+   
+   关于 SSL API 详见<a class="ulink" href="http://h71000.www7.hp.com/doc/83final/ba554_90007/ch04.html" target="_top">http://h71000.www7.hp.com/doc/83final/ba554_90007/ch04.html</a>。
+  </p><p>   </p><div class="variablelist"><dl class="variablelist"><dt id="LIBPQ-PQINITOPENSSL"><span class="term">      <code class="function">PQinitOpenSSL</code>
+      <a id="idp28859840" class="indexterm"></a>
+     </span></dt><dd><p>       允许应用选择要初始化哪个安全库。
+</p><pre class="synopsis">void PQinitOpenSSL(int do_ssl, int do_crypto);</pre><p>
+      </p><p>       当<em class="parameter"><code>do_ssl</code></em>是非零时，<span class="application">libpq</span>
+       将在第一次打开数据库连接前初始化<span class="application">OpenSSL</span>库。
+       当<em class="parameter"><code>do_crypto</code></em>是非零时，<code class="literal">libcrypto</code>库将被初始化。
+       默认情况下（如果没有调用<code class="function">PQinitOpenSSL</code>），两个库都会被初始化。
+       当 SSL 支持没有被编译时，这个函数也存在但是什么也不做。
+      </p><p>       如果你的应用使用并且初始化<span class="application">OpenSSL</span>或者它的底层<code class="literal">libcrypto</code>库，
+       你<span class="emphasis"><em>必须</em></span>在第一次打开数据库连接前以合适的非零参数调用这个函数。
+       同时要确保在打开一个数据库连接前已经完成了初始化。
+      </p></dd><dt id="LIBPQ-PQINITSSL"><span class="term">      <code class="function">PQinitSSL</code>
+      <a id="idp28870720" class="indexterm"></a>
+     </span></dt><dd><p>       允许应用选择要初始化哪个安全库。
+</p><pre class="synopsis">void PQinitSSL(int do_ssl);</pre><p>
+      </p><p>       这个函数等效于<code class="literal">PQinitOpenSSL(do_ssl, do_ssl)</code>。
+       这对于要么初始化<span class="application">OpenSSL</span>以及<code class="literal">libcrypto</code>
+       要么都不初始化的应用足够用了。
+      </p><p>       <code class="function">PQinitSSL</code>从<span class="productname">PostgreSQL</span> 8.0 就存在了，
+       而<code class="function">PQinitOpenSSL</code>直到<span class="productname">PostgreSQL</span> 8.4 才被加入，
+       因此<code class="function">PQinitSSL</code>可能对那些需要与旧版本
+       <span class="application">libpq</span>一起工作的应用来说更合适。
+      </p></dd></dl></div><p>
+  </p></div></div><div class="navfooter"><hr /><table width="100%" summary="Navigation footer"><tr><td width="40%" align="left"><a accesskey="p" href="libpq-ldap.html">上一页</a> </td><td width="20%" align="center"><a accesskey="u" href="libpq.html">上一级</a></td><td width="40%" align="right"> <a accesskey="n" href="libpq-threading.html">下一页</a></td></tr><tr><td width="40%" align="left" valign="top">33.17. 连接参数的 LDAP 查找 </td><td width="20%" align="center"><a accesskey="h" href="index.html">起始页</a></td><td width="40%" align="right" valign="top"> 33.19. 在线程化程序中的行为</td></tr></table></div></body></html>

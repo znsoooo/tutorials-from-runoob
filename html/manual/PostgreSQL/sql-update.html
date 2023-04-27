@@ -1,0 +1,165 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><title>UPDATE</title><link rel="stylesheet" type="text/css" href="stylesheet.css" /><link rev="made" href="pgsql-docs@postgresql.org" /><meta name="generator" content="DocBook XSL Stylesheets V1.79.1" /><link rel="prev" href="sql-unlisten.html" title="UNLISTEN" /><link rel="next" href="sql-vacuum.html" title="VACUUM" /></head><body><div xmlns="http://www.w3.org/TR/xhtml1/transitional" class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="5" align="center">UPDATE</th></tr><tr><td width="10%" align="left"><a accesskey="p" href="sql-unlisten.html" title="UNLISTEN">上一页</a> </td><td width="10%" align="left"><a accesskey="u" href="sql-commands.html" title="SQL 命令">上一级</a></td><th width="60%" align="center">SQL 命令</th><td width="10%" align="right"><a accesskey="h" href="index.html" title="PostgreSQL 10.1 手册">起始页</a></td><td width="10%" align="right"> <a accesskey="n" href="sql-vacuum.html" title="VACUUM">下一页</a></td></tr></table><hr></hr></div><div class="refentry" id="SQL-UPDATE"><div class="titlepage"></div><a id="idp49656400" class="indexterm"></a><div class="refnamediv"><h2><span class="refentrytitle">UPDATE</span></h2><p>UPDATE — 更新一个表的行</p></div><div class="refsynopsisdiv"><h2>大纲</h2><pre class="synopsis">[ WITH [ RECURSIVE ] <em class="replaceable"><code>with_query</code></em> [, ...] ]
+UPDATE [ ONLY ] <em class="replaceable"><code>table_name</code></em> [ * ] [ [ AS ] <em class="replaceable"><code>alias</code></em> ]
+    SET { <em class="replaceable"><code>column_name</code></em> = { <em class="replaceable"><code>expression</code></em> | DEFAULT } |
+          ( <em class="replaceable"><code>column_name</code></em> [, ...] ) = [ ROW ] ( { <em class="replaceable"><code>expression</code></em> | DEFAULT } [, ...] ) |
+          ( <em class="replaceable"><code>column_name</code></em> [, ...] ) = ( <em class="replaceable"><code>sub-SELECT</code></em> )
+        } [, ...]
+    [ FROM <em class="replaceable"><code>from_list</code></em> ]
+    [ WHERE <em class="replaceable"><code>condition</code></em> | WHERE CURRENT OF <em class="replaceable"><code>cursor_name</code></em> ]
+    [ RETURNING * | <em class="replaceable"><code>output_expression</code></em> [ [ AS ] <em class="replaceable"><code>output_name</code></em> ] [, ...] ]</pre></div><div class="refsect1" id="idp49669968"><h2>描述</h2><p>   <code class="command">UPDATE</code>更改满足条件的所有行中指定列
+   的值。只有要被修改的列需要在<code class="literal">SET</code>子句中提及，
+   没有被显式修改的列保持它们之前的值。
+  </p><p>   有两种方法使用包含在数据库其他表中的信息来修改一个表：使用子选择
+   或者在<code class="literal">FROM</code>子句中指定额外的表。这种技术只适合
+   特定的环境。
+  </p><p>   可选的<code class="literal">RETURNING</code>子句导致<code class="command">UPDATE</code>
+   基于实际被更新的每一行计算并且返回值。任何使用该表的列以及
+   <code class="literal">FROM</code>中提到的其他表的列的表达式都能被计算。
+   计算时会使用该表的列的新（更新后）值。<code class="literal">RETURNING</code>
+   列表的语法和<code class="command">SELECT</code>的输出列表相同。
+  </p><p>   你必须拥有该表上的<code class="literal">UPDATE</code>特权，或者至少拥有
+   要被更新的列上的该特权。如果任何一列的值需要被
+   <em class="replaceable"><code>expressions</code></em>或者
+   <em class="replaceable"><code>condition</code></em>读取，
+   你还必须拥有该列上的<code class="literal">SELECT</code>特权。
+  </p></div><div class="refsect1" id="idp49681040"><h2>参数</h2><div class="variablelist"><dl class="variablelist"><dt><span class="term"><em class="replaceable"><code>with_query</code></em></span></dt><dd><p>      <code class="literal">WITH</code>子句允许你指定一个或者更多个在
+      <code class="command">UPDATE</code>中可用其名称引用的子查询。详见
+      <a class="xref" href="queries-with.html" title="7.8. WITH查询（公共表表达式）">第 7.8 节</a>和<a class="xref" href="sql-select.html" title="SELECT"><span class="refentrytitle">SELECT</span></a>。
+     </p></dd><dt><span class="term"><em class="replaceable"><code>table_name</code></em></span></dt><dd><p>      要更新的表的名称（可以是模式限定的）。如果在表名前指定了
+      <code class="literal">ONLY</code>，只会更新所提及表中的匹配行。如果没有指定
+      <code class="literal">ONLY</code>，任何从所提及表继承得到的表中的匹配行也会
+      被更新。可选地，在表名之后指定<code class="literal">*</code>可以显式地指示要
+      把后代表也包括在内。
+     </p></dd><dt><span class="term"><em class="replaceable"><code>alias</code></em></span></dt><dd><p>      目标表的一个替代名称。在提供了一个别名时，它会完全隐藏表的真实
+      名称。例如，给定<code class="literal">UPDATE foo AS f</code>，
+      <code class="command">UPDATE</code>语句的剩余部分必须用
+      <code class="literal">f</code>而不是<code class="literal">foo</code>来引用该表。
+     </p></dd><dt><span class="term"><em class="replaceable"><code>column_name</code></em></span></dt><dd><p>      <em class="replaceable"><code>table_name</code></em>
+      所指定的表的一列的名称。如果需要，该列名可以用一个子域名称或者
+      数组下标限定。不要在目标列的说明中包括表的名称 — 例如
+      <code class="literal">UPDATE table_name SET table_name.col = 1</code>是非法的。
+     </p></dd><dt><span class="term"><em class="replaceable"><code>expression</code></em></span></dt><dd><p>      要被赋值给该列的一个表达式。该表达式可以使用该表中这一列或者
+      其他列的旧值。
+     </p></dd><dt><span class="term"><code class="literal">DEFAULT</code></span></dt><dd><p>      将该列设置为它的默认值（如果没有为它指定默认值表达式，默认值
+      将会为 NULL）。
+     </p></dd><dt><span class="term"><em class="replaceable"><code>sub-SELECT</code></em></span></dt><dd><p>      一个<code class="literal">SELECT</code>子查询，它产生和在它之前的圆括号中列列表中
+      一样多的输出列。被执行时，该子查询必须得到不超过一行。如果它得到
+      一行，其列值会被赋予给目标列。如果它得不到行，NULL 值将被赋予给
+      目标列。该子查询可以引用被更新表中当前行的旧值。
+     </p></dd><dt><span class="term"><em class="replaceable"><code>from_list</code></em></span></dt><dd><p>      表表达式的列表，允许来自其他表的列出现在<code class="literal">WHERE</code>
+      条件和更新表达式中。这类似于可以在
+      <code class="command">SELECT</code>语句的<a class="xref" href="sql-select.html#SQL-FROM" title="FROM 子句"><code class="literal">FROM</code> 子句</a>中指定的表列表。注意目标表不能出现在
+      <em class="replaceable"><code>from_list</code></em>中，除非你想做自连接（这种情况下它必须
+      以别名出现在<em class="replaceable"><code>from_list</code></em>中）。
+     </p></dd><dt><span class="term"><em class="replaceable"><code>condition</code></em></span></dt><dd><p>      一个返回<code class="type">boolean</code>类型值的表达式。让这个
+      表达式返回<code class="literal">true</code>的行将会被更新。
+     </p></dd><dt><span class="term"><em class="replaceable"><code>cursor_name</code></em></span></dt><dd><p>      要在<code class="literal">WHERE CURRENT OF</code>条件中使用的游标名。
+      要被更新的是从这个游标中最近取出的行。该游标必须是一个
+      在<code class="command">UPDATE</code>目标表上的非分组查询。注意
+      <code class="literal">WHERE CURRENT OF</code>不能和一个布尔条件一起
+      指定。有关对游标使用<code class="literal">WHERE CURRENT OF</code>的
+      更多信息请见<a class="xref" href="sql-declare.html" title="DECLARE"><span class="refentrytitle">DECLARE</span></a>。
+     </p></dd><dt><span class="term"><em class="replaceable"><code>output_expression</code></em></span></dt><dd><p>      在每一行被更新后，要被<code class="command">UPDATE</code>命令计算并且返回
+      的表达式。该表达式可以使用
+      <em class="replaceable"><code>table_name</code></em>指定
+      的表或者<code class="literal">FROM</code>列出的表中的任何列名。写<code class="literal">*</code>
+      可以返回所有列。
+     </p></dd><dt><span class="term"><em class="replaceable"><code>output_name</code></em></span></dt><dd><p>      用于一个被返回列的名称。
+     </p></dd></dl></div></div><div class="refsect1" id="idp49720368"><h2>输出</h2><p>   成功完成时，一个<code class="command">UPDATE</code>命令返回形如
+</p><pre class="screen">UPDATE <em class="replaceable"><code>count</code></em></pre><p>
+   的命令标签。
+   <em class="replaceable"><code>count</code></em>是被更新的行数，
+   包括值没有更改的匹配行。注意，当更新被一个<code class="literal">BEFORE UPDATE</code>
+   触发器抑制时，这个数量可能比匹配
+   <em class="replaceable"><code>condition</code></em>的行数少。如果
+   <em class="replaceable"><code>count</code></em>为零，没有行被该查
+   询更新（这不是一个错误）。
+  </p><p>   如果<code class="command">UPDATE</code>命令包含一个<code class="literal">RETURNING</code>
+   子句，其结果将类似于一个包含<code class="literal">RETURNING</code>列表中定义的
+   列和值的<code class="command">SELECT</code>语句（在被该命令更新的行上计算）
+   的结果。
+  </p></div><div class="refsect1" id="idp49729584"><h2>注解</h2><p>   当存在<code class="literal">FROM</code>子句时，实际发生的是：目标表被连接到
+   <em class="replaceable"><code>from_list</code></em>中的表，并且该连接的每一
+   个输出行表示对目标表的一个更新操作。在使用<code class="literal">FROM</code>
+   时，你应该确保该连接对每一个要修改的行产生至多一个输出行。换
+   句话说，一个目标行不应该连接到来自其他表的多于一行上。如果发
+   生这种情况，则只有一个连接行将被用于更新目标行，但是将使用哪
+   一行是很难预测的。
+  </p><p>   由于这种不确定性，只在一个子选择中引用其他表更安全，不过这种
+   语句通常很难写并且也比使用连接慢。
+  </p><p>   在分区表的情况下，更新行可能会导致它不再满足分区约束。
+   由于没有规定将行移动到适合其分区键新值的分区，因此在这种情况下会发生错误。
+   直接更新分区时也会发生这种情况。
+  </p></div><div class="refsect1" id="idp49734272"><h2>示例</h2><p>   把表<code class="structname">films</code>的列<code class="structfield">kind</code>
+   中的单词<code class="literal">Drama</code>改成<code class="literal">Dramatic</code>：
+
+</p><pre class="programlisting">UPDATE films SET kind = 'Dramatic' WHERE kind = 'Drama';</pre><p>
+  </p><p>   在表<code class="structname">weather</code>的一行中调整温度项并且
+   把沉淀物重置为它的默认值：
+
+</p><pre class="programlisting">UPDATE weather SET temp_lo = temp_lo+1, temp_hi = temp_lo+15, prcp = DEFAULT
+  WHERE city = 'San Francisco' AND date = '2003-07-03';</pre><p>
+  </p><p>   执行相同的操作并且返回更新后的项：
+
+</p><pre class="programlisting">UPDATE weather SET temp_lo = temp_lo+1, temp_hi = temp_lo+15, prcp = DEFAULT
+  WHERE city = 'San Francisco' AND date = '2003-07-03'
+  RETURNING temp_lo, temp_hi, prcp;</pre><p>
+  </p><p>   使用另一种列列表语法来做同样的更新：
+</p><pre class="programlisting">UPDATE weather SET (temp_lo, temp_hi, prcp) = (temp_lo+1, temp_lo+15, DEFAULT)
+  WHERE city = 'San Francisco' AND date = '2003-07-03';</pre><p>
+  </p><p>   为管理Acme Corporation账户的销售人员增加销售量，使用
+   <code class="literal">FROM</code>子句语法：
+</p><pre class="programlisting">UPDATE employees SET sales_count = sales_count + 1 FROM accounts
+  WHERE accounts.name = 'Acme Corporation'
+  AND employees.id = accounts.sales_person;</pre><p>
+  </p><p>   执行相同的操作，在
+   <code class="literal">WHERE</code>子句中使用子选择：
+</p><pre class="programlisting">UPDATE employees SET sales_count = sales_count + 1 WHERE id =
+  (SELECT sales_person FROM accounts WHERE name = 'Acme Corporation');</pre><p>
+  </p><p>   更新 accounts 表中的联系人姓名以匹配当前被分配的销售员：
+</p><pre class="programlisting">UPDATE accounts SET (contact_first_name, contact_last_name) =
+    (SELECT first_name, last_name FROM salesmen
+     WHERE salesmen.id = accounts.sales_id);</pre><p>
+   可以用连接完成类似的结果：
+</p><pre class="programlisting">UPDATE accounts SET contact_first_name = first_name,
+                    contact_last_name = last_name
+  FROM salesmen WHERE salesmen.id = accounts.sales_id;</pre><p>
+   不过，如果<code class="structname">salesmen</code>.<code class="structfield">id</code>不是一个唯一键，
+   第二个查询可能会给出令人意外的结果，然而如果有多个<code class="structfield">id</code>匹配，
+   第一个查询保证会发生错误。还有，如果对于一个特定的
+   <code class="structname">accounts</code>.<code class="structfield">sales_id</code>项没有匹配，第一个查询将
+   把相应的姓名域设置为 NULL，而第二个查询完全不会更新该行。
+  </p><p>   更新一个统计表中的统计数据以匹配当前数据：
+</p><pre class="programlisting">UPDATE summary s SET (sum_x, sum_y, avg_x, avg_y) =
+    (SELECT sum(x), sum(y), avg(x), avg(y) FROM data d
+     WHERE d.group_id = s.group_id);</pre><p>
+  </p><p>   尝试插入一个新库存项及其库存量。如果该项已经存在，则转而更新
+   已有项的库存量。要这样做并且不让整个事务失败，可以使用保存点：
+</p><pre class="programlisting">BEGIN;
+-- 其他操作
+SAVEPOINT sp1;
+INSERT INTO wines VALUES('Chateau Lafite 2003', '24');
+-- 假定上述语句由于未被唯一键失败，
+-- 那么现在我们发出这些命令：
+ROLLBACK TO sp1;
+UPDATE wines SET stock = stock + 24 WHERE winename = 'Chateau Lafite 2003';
+-- 继续其他操作，并且最终
+COMMIT;</pre><p>
+  </p><p>   更改表<code class="structname">films</code>中由游标<code class="literal">c_films</code>
+   定位的行的<code class="structfield">kind</code>列：
+</p><pre class="programlisting">UPDATE films SET kind = 'Dramatic' WHERE CURRENT OF c_films;</pre></div><div class="refsect1" id="idp49756256"><h2>兼容性</h2><p>   这个命令符合<acronym class="acronym">SQL</acronym>标准，不过
+   <code class="literal">FROM</code>和<code class="literal">RETURNING</code>子句是
+   <span class="productname">PostgreSQL</span>扩展，把
+   <code class="literal">WITH</code>用于<code class="command">UPDATE</code>也是扩展。
+  </p><p>   有些其他数据库系统提供了一个<code class="literal">FROM</code>选项，在其中在其中目标表
+   可以在<code class="literal">FROM</code>中被再次列出。但
+   <span class="productname">PostgreSQL</span>不是这样解释
+   <code class="literal">FROM</code>的。在移植使用这种扩展的应用时要小心。
+  </p><p>   根据标准，一个目标列名的圆括号子列表的来源值可以是任意得到正确列数的行值
+   表达式。<span class="productname">PostgreSQL</span>只允许来源值是一个
+   <a class="link" href="sql-expressions.html#SQL-SYNTAX-ROW-CONSTRUCTORS" title="4.2.13. 行构造器">行构造器</a>或者一个子-<code class="literal">SELECT</code>。一个列的
+   被更新值可以在行构造器的情况中被指定为<code class="literal">DEFAULT</code>，但在
+   子-<code class="literal">SELECT</code>的情况中不能这样做。
+  </p></div></div><div class="navfooter"><hr /><table width="100%" summary="Navigation footer"><tr><td width="40%" align="left"><a accesskey="p" href="sql-unlisten.html">上一页</a> </td><td width="20%" align="center"><a accesskey="u" href="sql-commands.html">上一级</a></td><td width="40%" align="right"> <a accesskey="n" href="sql-vacuum.html">下一页</a></td></tr><tr><td width="40%" align="left" valign="top">UNLISTEN </td><td width="20%" align="center"><a accesskey="h" href="index.html">起始页</a></td><td width="40%" align="right" valign="top"> VACUUM</td></tr></table></div></body></html>

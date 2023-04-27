@@ -1,0 +1,718 @@
+<!Doctype html>
+<html>
+<head>
+	<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+	<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+	<title>8.2 Verilog TF 子程序 | 菜鸟教程</title>
+
+  <meta name='robots' content='max-image-preview:large' />
+<link rel='stylesheet' id='classic-theme-styles-css' href='http://www.runoob.com/wp-includes/css/classic-themes.min.css?ver=6.2' type='text/css' media='all' />
+<link rel="canonical" href="http://www.runoob.com/w3cnote/verilog2-tf.html" />
+<meta name="keywords" content="8.2 Verilog TF 子程序">
+<meta name="description" content="功能特性 TF (task/function) 子程序主要用于 Verilog 与用户 C 程序边界的两个方向上的数据传输。 TF 子程序总是以 tf_ 为前缀，定义在头文件 veriuser.h 中。所以用 C 语言写系统任务或函数时，都需要在 C 文件中添加 #include &#039;veriuser.h&#039; 。  TF 子程序用途可划分为：  获取系统任务的信息 获取参数列表信息 获取参数值 把参数值回传给系统任务 监..">
+		
+	<link rel="shortcut icon" href="https://static.runoob.com/images/favicon.ico">
+	<link rel="stylesheet" href="/wp-content/themes/runoob/style.css?v=1.170" type="text/css" media="all" />	
+	<link rel="stylesheet" href="https://cdn.staticfile.org/font-awesome/4.7.0/css/font-awesome.min.css" media="all" />	
+  <!--[if gte IE 9]><!-->
+  <script src="https://cdn.staticfile.org/jquery/2.0.3/jquery.min.js"></script>
+  <!--<![endif]-->
+  <!--[if lt IE 9]>
+     <script src="https://cdn.staticfile.org/jquery/1.9.1/jquery.min.js"></script>
+     <script src="https://cdn.staticfile.org/html5shiv/r29/html5.min.js"></script>
+  <![endif]-->
+  <link rel="apple-touch-icon" href="https://static.runoob.com/images/icon/mobile-icon.png"/>
+  <meta name="apple-mobile-web-app-title" content="菜鸟教程">
+</head>
+<body>
+
+<!--  头部 -->
+<div class="container logo-search">
+
+  <div class="col search row-search-mobile">
+    <form action="index.php">
+      <input class="placeholder" placeholder="搜索……" name="s" autocomplete="off">
+      
+    </form>
+  </div>
+
+  <div class="row">
+    <div class="col logo">
+      <h1><a href="/">菜鸟教程 -- 学的不仅是技术，更是梦想！</a></h1>
+    </div>
+        <div class="col right-list"> 
+    <button class="btn btn-responsive-nav btn-inverse" data-toggle="collapse" data-target=".nav-main-collapse" id="pull" style=""> <i class="fa fa-navicon"></i> </button>
+    </div>
+        
+    <div class="col search search-desktop last">
+      <div class="search-input" >
+      <form action="//www.runoob.com/" target="_blank">
+        <input class="placeholder" id="s" name="s" placeholder="搜索……"  autocomplete="off" style="height: 44px;">
+      </form>
+      
+      </div>
+    </div>
+  </div>
+</div>
+
+
+
+<!-- 导航栏 -->
+<div class="container navigation">
+    <div class="row">
+        <div class="col nav">
+            
+
+                        <ul class="pc-nav" id="note-nav">
+                <li><a href="//www.runoob.com/">首页</a></li>
+                <li><a href="/w3cnote">笔记首页</a></li>
+                <li><a href="/w3cnote/android-tutorial-intro.html" title="Android 基础入门教程">Android</a></li>
+                <li><a href="/w3cnote/es6-tutorial.html" title="ES6 教程">ES6 教程</a></li>
+                <li><a href="/w3cnote/ten-sorting-algorithm.html" title="排序算法">排序算法</a></li>
+                <li><a href="/w3cnote/hadoop-tutorial.html" title="Hadoop 教程">Hadoop</a></li>
+                <li><a href="/w3cnote/zookeeper-tutorial.html" title="Zookeeper 教程">Zookeeper</a></li>
+                <li><a href="/w3cnote/verilog-tutorial.html" title="Verilog 教程">Verilog</a></li>
+                <li><a href="/w3cnote_genre/code" title="编程技术">编程技术</a></li> 
+                <li><a href="/w3cnote_genre/coderlife" title="程序员人生">程序员人生</a></li>
+                
+                <!--<li><a href="javascript:;" class="runoob-pop">登录</a></li>
+                
+                
+                        <li>
+                <a style="font-weight:bold;" href="https://www.runoob.com/linux/linux-tutorial.html#yunserver" target="_blank" onclick="_hmt.push(['_trackEvent', 'aliyun', 'click', 'aliyun'])" title="kkb">云服务器</a>
+                </li>
+                <li><a href="http://gk.link/a/104mQ" target="_blank" style="font-weight: bold;"onclick="_hmt.push(['_trackEvent', '极客时间', 'click', 'jike'])" title="我的圈子">极客时间</a></li>
+            
+                
+                <li><a target="_blank" href="/shoppinglist" rel="nofollow">知识店铺</a></li> 
+        -->
+            </ul>
+                        
+              
+            <ul class="mobile-nav">
+                <li><a href="/w3cnote">首页</a></li>
+                <li><a href="/w3cnote_genre/android" target="_blank" title="Android 基础入门教程">Android</a></li>
+                <li><a href="/w3cnote/es6-tutorial.html" target="_blank" title="ES6 教程">ES6</a></li>
+                <li><a href="/w3cnote_genre/joke" target="_blank" title="程序员笑话">逗乐</a></li>
+                
+                <a href="javascript:void(0)" class="search-reveal">Search</a> 
+            </ul>
+            
+        </div>
+    </div>
+</div>
+
+
+<!--  内容  -->
+<div class="container main">
+	<div class="row">
+
+		<!--  Android 基础入门教程 start  -->
+	<div class="col left-column" style="display:none;">
+		<div class="tab">Verilog 高级教程</div>
+		<div class="sidebar-box gallery-list">
+			<div class="design" id="leftcolumn">  
+			</div> 
+		</div> 
+	</div>
+	<!--  Android 基础入门教程 end  -->
+		<div class="col middle-column big-middle-column">
+	 			<div class="article">
+			<div class="article-heading">
+				<h2>8.2 Verilog TF 子程序</h2>				<h3><em>分类</em> <a href="/w3cnote_genre/verilog2" title="Verilog 教程高级篇" >Verilog 教程高级篇</a> </h3>
+			</div>
+			<div class="article-body note-body">
+				<div class="article-intro">
+					<h3>功能特性</h3><p>
+TF (task/function) 子程序主要用于 Verilog 与用户 C 程序边界的两个方向上的数据传输。</p>
+<p>TF 子程序总是以 tf_ 为前缀，定义在头文件 veriuser.h 中。所以用 C 语言写系统任务或函数时，都需要在 C 文件中添加 #include "veriuser.h" 。</p>
+<p>
+TF 子程序用途可划分为：</p>
+<ul><li>
+获取系统任务的信息
+</li><li>获取参数列表信息
+</li><li>获取参数值
+</li><li>把参数值回传给系统任务
+</li><li>监视参数值的改变
+</li><li>获取仿真时间和调度事件的信息
+</li><li>算数运算
+</li><li>显示信息
+</li><li>管理维护任务
+</li><li>挂起、终止、保存、恢复等其他任务</li></ul><p>
+完整的 TF 子程序及其简单用法说明参考下一节<a href="https://www.runoob.com/w3cnote/verilog2-tf-sub.html" rel="noopener" target="_blank">《8.3 TF 子程序列表》</a>。</p>
+<h3>
+TF 子程序举例</h3>
+<p>PLI 子程序库函数数量繁多，如果一一举例说明需要大量的篇幅去总结。所以建议有需求时再去仔细研究个别子程序。下面只对 TF 中的一些子程序进行举例，主要说明使用 TF 子程序设计 Verilog 系统任务的基本流程。</p>
+<p><strong>设计需求</strong></p><p>
+有时候为减小 C 语言文件编译后目的文件的大小，或按一定格式输出调试信息，软件中的打印函数可能不会使用 C 语言自带的 printf 函数，也不使用 TF 子程序里的 io_printf 函数，而是借助 PLI 接口并使用 Verilog 中的系统显示函数 ($display 或 $write) 完成用户自定义的软件打印函数。</p><p>
+本次设计一个软件打印函数，命名为 print_my，输出格式为"字符串+整形"。</p>
+<p><strong>设计分析</strong></p><p>
+用户自定义的软件打印函数 print_my 只是一个不好看的皮囊，用来将打印信息传递给软件形参变量。为将打印信息传递到 Verilog 中，还需要一个 TF 子程序组建的系统任务，命名为 $send_my()。</p><p>
+需要说明的是，用 TF 子程序完成的系统任务一般要在 Verilog 代码中调用。软件直接调用该"系统任务"就相当于调用了一个软件函数，和 Verilog 代码中的相关变量的描述没有直接联系。所以在软件函数 print_my 中直接调用"软件函数" send_my 是没有意义的，就需要在 print_my 中加入一些特定的软件行为去触发系统任务 $send_my 被 Verilog 调用。</p>
+
+<p>如果数字系统包含有 CPU，可以使用软件写总线或写 memory 然后 testbench 中监测相关信号变量的方法。本次设计规模较小，可采用另一种方法，即 Verilog 里一直执行系统任务 $send_my，在软件函数 print_my 中置全局变量来控制是否进行信息传输并打印的操作。</p>
+<p><img decoding="async" src="https://www.runoob.com/wp-content/uploads/2021/05/v-tf-1.png"></p>
+<p><strong>软件设计</strong></p>
+<p>软件设计代码如下，细节在注释中说明，保存到文件 print_gyc.c 中。</p>
+<div class="example"><h2 class="example">实例</h2> <div class="example_code">
+<span style="color: #085;">#include &quot;veriuser.h&quot;</span><br />
+<br />
+<span style="color: #666666; font-style: italic;">//打印的字符串、整型数据、软件开始打印标志</span><br />
+<span style="color: #993333;">char</span> &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;<span style="color: #339933;">*</span>str_mes <span style="color: #339933;">;</span> &nbsp; <br />
+<span style="color: #993333;">unsigned</span> <span style="color: #993333;">int</span> &nbsp; &nbsp;int_mes <span style="color: #339933;">;</span><br />
+<span style="color: #993333;">int</span> &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; flags <span style="color: #339933;">=</span> <span style="color: #164;">0</span><span style="color: #339933;">;</span><br />
+<br />
+<span style="color: #666666; font-style: italic;">//===== define print_my() used in C ======</span><br />
+<span style="color: #993333;">void</span> print_my<span style="color: #000;">&#40;</span><span style="color: #993333;">char</span> <span style="color: #339933;">*</span> str_send<span style="color: #339933;">,</span> <span style="color: #993333;">unsigned</span> <span style="color: #993333;">int</span> int_send<span style="color: #000;">&#41;</span><span style="color: #000;">&#123;</span><br />
+&nbsp; &nbsp; str_mes &nbsp;<span style="color: #339933;">=</span> str_send <span style="color: #339933;">;</span><br />
+&nbsp; &nbsp; int_mes &nbsp;<span style="color: #339933;">=</span> int_send <span style="color: #339933;">;</span><br />
+&nbsp; &nbsp; flags &nbsp; &nbsp;<span style="color: #339933;">=</span> <span style="color: #164;">1</span> <span style="color: #339933;">;</span><br />
+<span style="color: #000;">&#125;</span><br />
+<br />
+<br />
+<span style="color: #666666; font-style: italic;">//打印的字符串对应的ASCII码的字符型数据，原始字符型长度限制为100</span><br />
+<span style="color: #666666; font-style: italic;">//例如字符"1"对应的ASCII码0x31的字符型数据为0x33、0x31</span><br />
+<span style="color: #993333;">char</span> &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;str_mes_format<span style="color: #000;">&#91;</span><span style="color: #164;">200</span><span style="color: #000;">&#93;</span> <span style="color: #339933;">;</span><br />
+<span style="color: #666666; font-style: italic;">//TF 子程序传递字符串类型的数据时，只能传递相关进制格式的数据</span><br />
+<span style="color: #666666; font-style: italic;">//例如能传递"0xc0de1234",却不能传递 "www.runoob.com"</span><br />
+<span style="color: #666666; font-style: italic;">//所以需要将原始的字符串数据转换为对应的ASCII码的字符型数据</span><br />
+<span style="color: #993333;">void</span> byte2hexstr<span style="color: #000;">&#40;</span><span style="color: #993333;">char</span><span style="color: #339933;">*</span> str<span style="color: #339933;">,</span> <span style="color: #993333;">char</span><span style="color: #339933;">*</span> dest<span style="color: #339933;">,</span> <span style="color: #993333;">int</span> len<span style="color: #000;">&#41;</span><br />
+<span style="color: #000;">&#123;</span><br />
+&nbsp; &nbsp; <span style="color: #993333;">char</span> tmp<span style="color: #339933;">;</span><br />
+&nbsp; &nbsp; <span style="color: #993333;">int</span> &nbsp;i <span style="color: #339933;">;</span><br />
+&nbsp; &nbsp; <span style="color: #993333;">char</span> stb<span style="color: #000;">&#91;</span><span style="color: #164;">16</span><span style="color: #000;">&#93;</span> <span style="color: #339933;">=</span> <span style="color: #000;">&#123;</span> <span style="color: #a11;">'0'</span><span style="color: #339933;">,</span> <span style="color: #a11;">'1'</span><span style="color: #339933;">,</span> <span style="color: #a11;">'2'</span><span style="color: #339933;">,</span> <span style="color: #a11;">'3'</span><span style="color: #339933;">,</span> <span style="color: #a11;">'4'</span><span style="color: #339933;">,</span> <span style="color: #a11;">'5'</span><span style="color: #339933;">,</span> <span style="color: #a11;">'6'</span><span style="color: #339933;">,</span> <span style="color: #a11;">'7'</span><span style="color: #339933;">,</span> <span style="color: #a11;">'8'</span><span style="color: #339933;">,</span> <span style="color: #a11;">'9'</span><span style="color: #339933;">,</span> <span style="color: #a11;">'A'</span><span style="color: #339933;">,</span> <span style="color: #a11;">'B'</span><span style="color: #339933;">,</span> <span style="color: #a11;">'C'</span><span style="color: #339933;">,</span> <span style="color: #a11;">'D'</span><span style="color: #339933;">,</span> <span style="color: #a11;">'E'</span><span style="color: #339933;">,</span> <span style="color: #a11;">'F'</span> <span style="color: #000;">&#125;</span><span style="color: #339933;">;</span><br />
+&nbsp; &nbsp; <span style="color: #708;">for</span> <span style="color: #000;">&#40;</span>i <span style="color: #339933;">=</span> <span style="color: #164;">0</span><span style="color: #339933;">;</span> i <span style="color: #339933;">&lt;</span> len<span style="color: #339933;">;</span> i<span style="color: #339933;">++</span><span style="color: #000;">&#41;</span><span style="color: #000;">&#123;</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; tmp <span style="color: #339933;">=</span> str<span style="color: #000;">&#91;</span>i<span style="color: #000;">&#93;</span><span style="color: #339933;">;</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; dest<span style="color: #000;">&#91;</span>i <span style="color: #339933;">*</span> <span style="color: #164;">2</span><span style="color: #000;">&#93;</span> <span style="color: #339933;">=</span> stb<span style="color: #000;">&#91;</span>tmp <span style="color: #339933;">&gt;&gt;</span> <span style="color: #164;">4</span><span style="color: #000;">&#93;</span><span style="color: #339933;">;</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; dest<span style="color: #000;">&#91;</span>i <span style="color: #339933;">*</span> <span style="color: #164;">2</span> <span style="color: #339933;">+</span> <span style="color: #164;">1</span><span style="color: #000;">&#93;</span> <span style="color: #339933;">=</span> stb<span style="color: #000;">&#91;</span>tmp <span style="color: #339933;">&amp;</span> <span style="color: #164;">15</span><span style="color: #000;">&#93;</span><span style="color: #339933;">;</span><br />
+&nbsp; &nbsp; <span style="color: #000;">&#125;</span><br />
+&nbsp; &nbsp; <span style="color: #708;">return</span><span style="color: #339933;">;</span><br />
+<span style="color: #000;">&#125;</span><br />
+<br />
+<span style="color: #666666; font-style: italic;">//===== define PLI: send_my() =======</span><br />
+<span style="color: #993333;">void</span> send_my<span style="color: #000;">&#40;</span><span style="color: #000;">&#41;</span><span style="color: #000;">&#123;</span><br />
+&nbsp; &nbsp; <span style="color: #993333;">int</span> i <span style="color: #339933;">=</span> <span style="color: #164;">0</span> <span style="color: #339933;">;</span><br />
+&nbsp; &nbsp; <span style="color: #666666; font-style: italic;">//检测到软件打印开始标志flags</span><br />
+&nbsp; &nbsp; <span style="color: #666666; font-style: italic;">//且系统任务 $send_my 被 Verilog 调用时传入了 3 个参数</span><br />
+&nbsp; &nbsp; <span style="color: #708;">if</span> <span style="color: #000;">&#40;</span>flags <span style="color: #339933;">&amp;&amp;</span> tf_nump<span style="color: #000;">&#40;</span><span style="color: #000;">&#41;</span><span style="color: #339933;">==</span><span style="color: #164;">3</span><span style="color: #000;">&#41;</span> <span style="color: #000;">&#123;</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; <span style="color: #666666; font-style: italic;">//将打印的字符串数据转为ASCII对应的字符串类型</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; byte2hexstr<span style="color: #000;">&#40;</span>str_mes<span style="color: #339933;">,</span> str_mes_format<span style="color: #339933;">,</span> <span style="color: #164;">100</span><span style="color: #000;">&#41;</span><span style="color: #339933;">;</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; <span style="color: #666666; font-style: italic;">//将16进制的字符型数据传递给系统任务 send_my 中的第2个参数</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; <span style="color: #666666; font-style: italic;">//长度为1600bits，对应100个char、200个ASCII字符型数据</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; tf_strdelputp<span style="color: #000;">&#40;</span><span style="color: #164;">2</span><span style="color: #339933;">,</span> <span style="color: #164;">1600</span><span style="color: #339933;">,</span> <span style="color: #a11;">'H'</span><span style="color: #339933;">,</span> str_mes_format<span style="color: #339933;">,</span> <span style="color: #164;">0</span><span style="color: #339933;">,</span> <span style="color: #164;">0</span><span style="color: #000;">&#41;</span><span style="color: #339933;">;</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; <span style="color: #666666; font-style: italic;">//将整型数据传递给第3个参数</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; tf_putp<span style="color: #000;">&#40;</span><span style="color: #164;">3</span><span style="color: #339933;">,</span> int_mes<span style="color: #000;">&#41;</span><span style="color: #339933;">;</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; <span style="color: #666666; font-style: italic;">//将硬件打印开始标志传递给第一个参数</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; tf_putp<span style="color: #000;">&#40;</span><span style="color: #164;">1</span><span style="color: #339933;">,</span> <span style="color: #164;">1</span><span style="color: #000;">&#41;</span> <span style="color: #339933;">;</span> <br />
+&nbsp; &nbsp; &nbsp; &nbsp; flags <span style="color: #339933;">=</span> <span style="color: #164;">0</span> <span style="color: #339933;">;</span><br />
+&nbsp; &nbsp; <span style="color: #000;">&#125;</span><br />
+<span style="color: #000;">&#125;</span><br />
+</div></div>
+<p><strong>硬件设计</strong></p><p>
+根据仿真测试可知，软件传递到 Verilog 中的数据，在位宽为 1600bit 寄存器中的存储方式如下图所示。</p>
+<p><img decoding="async" src="https://www.runoob.com/wp-content/uploads/2021/05/v-tf-2.png"></p>
+<p><strong>当寄存器中存有正常数据时，该寄存器从第 799bit（寄存器位宽的一半）开始存储正常的字符数据。低位剩余位宽存储"NULL"（对应数据 0）和系统默认的数据。这两部分数据长度根据存储的正常数据长度的变化而变化。</strong></p>
+<p><strong>当寄存器中没有正常数据时，该寄存器会用超过 800bit 的寄存器长度去存储"NULL"（对应数据 0）。剩余位宽存储系统默认的数据。</strong></p><p>
+可以根据以上特性，检测正常的字符串数据，而不用将寄存器中的数据全部打印，以避免打印信息中出现大量的空格信息，影响美观。</p>
+
+<p>硬件 Verilog 代码设计如下，具体细节在注释中说明，保存到文件 test.v 中。</p>
+<div class="example"><h2 class="example">实例</h2> <div class="example_code">
+<span style="color: #008800;">`timescale</span> <span style="color: #ff0055;">1ns</span><span style="color: #5D478B;">/</span><span style="color: #ff0055;">1ps</span><br />
+<span style="color: #A52A2A; font-weight: bold;">module</span> test <span style="color: #5D478B;">;</span><br />
+&nbsp; &nbsp;<span style="color: #A52A2A; font-weight: bold;">reg</span> <span style="color: #9F79EE;">&#91;</span><span style="color: #ff0055;">1599</span><span style="color: #5D478B;">:</span><span style="color: #ff0055;">0</span><span style="color: #9F79EE;">&#93;</span> &nbsp; &nbsp; &nbsp; &nbsp; str_my <span style="color: #5D478B;">;</span><br />
+&nbsp; &nbsp;<span style="color: #A52A2A; font-weight: bold;">reg</span> <span style="color: #9F79EE;">&#91;</span><span style="color: #ff0055;">31</span><span style="color: #5D478B;">:</span><span style="color: #ff0055;">0</span><span style="color: #9F79EE;">&#93;</span> &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; int_my <span style="color: #5D478B;">;</span><br />
+&nbsp; &nbsp;<span style="color: #A52A2A; font-weight: bold;">reg</span> &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;flag_my <span style="color: #5D478B;">;</span><br />
+<br />
+&nbsp; &nbsp;<span style="color: #00008B; font-style: italic;">//时刻检测硬件打印标志 flagh 确定是否打印</span><br />
+&nbsp; &nbsp;<span style="color: #A52A2A; font-weight: bold;">integer</span> &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;i <span style="color: #5D478B;">=</span> <span style="color: #ff0055;">1599</span><span style="color: #5D478B;">;</span><br />
+&nbsp; &nbsp;<span style="color: #A52A2A; font-weight: bold;">integer</span> &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;j <span style="color: #5D478B;">=</span> <span style="color: #ff0055;">1599</span><span style="color: #5D478B;">;</span><br />
+&nbsp; &nbsp;<span style="color: #A52A2A; font-weight: bold;">reg</span> <span style="color: #9F79EE;">&#91;</span><span style="color: #ff0055;">7</span><span style="color: #5D478B;">:</span><span style="color: #ff0055;">0</span><span style="color: #9F79EE;">&#93;</span> &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;str_tmp <span style="color: #5D478B;">;</span> <span style="color: #00008B; font-style: italic;">//字符串数据存储寄存器</span><br />
+&nbsp; &nbsp;<span style="color: #A52A2A; font-weight: bold;">initial</span> <span style="color: #A52A2A; font-weight: bold;">begin</span><br />
+&nbsp; &nbsp; &nbsp; flagh <span style="color: #5D478B;">=</span> <span style="color: #ff0055;">0</span> <span style="color: #5D478B;">;</span><br />
+&nbsp; &nbsp; &nbsp; <span style="color: #A52A2A; font-weight: bold;">forever</span> <span style="color: #A52A2A; font-weight: bold;">begin</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp;<span style="color: #5D478B;">#</span><span style="color: #ff0055;">20</span> <span style="color: #5D478B;">;</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp;<span style="color: #00008B; font-style: italic;">//调用系统任务，并将数据从软件传递到硬件（Verilog）中</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp;$send_my<span style="color: #9F79EE;">&#40;</span>flagh<span style="color: #5D478B;">,</span> str_my<span style="color: #5D478B;">,</span> int_my<span style="color: #9F79EE;">&#41;</span><span style="color: #5D478B;">;</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp;<span style="color: #A52A2A; font-weight: bold;">if</span> <span style="color: #9F79EE;">&#40;</span>flagh<span style="color: #9F79EE;">&#41;</span> <span style="color: #A52A2A; font-weight: bold;">begin</span> &nbsp;<span style="color: #00008B; font-style: italic;">//开始打印信息</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; <span style="color: #5D478B;">#</span><span style="color: #ff0055;">1</span> <span style="color: #5D478B;">;</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; <span style="color: #00008B; font-style: italic;">//寄存器位宽有冗余，全部打印会出现大量空格</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; <span style="color: #00008B; font-style: italic;">//这里对未使用到的寄存器进行检测并屏蔽打印显示</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; <span style="color: #A52A2A; font-weight: bold;">for</span><span style="color: #9F79EE;">&#40;</span>i<span style="color: #5D478B;">=</span><span style="color: #ff0055;">1599</span><span style="color: #5D478B;">;</span> i<span style="color: #5D478B;">&gt;=</span><span style="color: #ff0055;">0</span><span style="color: #5D478B;">;</span> i<span style="color: #5D478B;">=</span> i<span style="color: #5D478B;">-</span><span style="color: #ff0055;">8</span><span style="color: #9F79EE;">&#41;</span> <span style="color: #A52A2A; font-weight: bold;">begin</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;<span style="color: #A52A2A; font-weight: bold;">if</span> <span style="color: #9F79EE;">&#40;</span>str_my<span style="color: #9F79EE;">&#91;</span>i <span style="color: #5D478B;">-:</span> <span style="color: #ff0055;">8</span><span style="color: #9F79EE;">&#93;</span> <span style="color: #5D478B;">!=</span> <span style="color: #ff0055;">0</span><span style="color: #9F79EE;">&#41;</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;<span style="color: #A52A2A; font-weight: bold;">break</span> <span style="color: #5D478B;">;</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; <span style="color: #A52A2A; font-weight: bold;">end</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; <span style="color: #00008B; font-style: italic;">//一般会用寄存器一半位宽对字符串数据进行存储</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; <span style="color: #00008B; font-style: italic;">//所以字符串传输正确时，从 str_my[799] 开始有数据</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; <span style="color: #9932CC;">$display</span><span style="color: #9F79EE;">&#40;</span><span style="color: #FF00FF;">&quot;--DEBUG--- Valid data number: %d&quot;</span><span style="color: #5D478B;">,</span> i<span style="color: #9F79EE;">&#41;</span><span style="color: #5D478B;">;</span><br />
+<br />
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; <span style="color: #00008B; font-style: italic;">//如果没有字符串数据，str_my也不会全为空</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; <span style="color: #00008B; font-style: italic;">//但是str_my[799 -: 8]不会有数据</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; <span style="color: #A52A2A; font-weight: bold;">if</span> <span style="color: #9F79EE;">&#40;</span>i<span style="color: #5D478B;">&lt;=</span><span style="color: #ff0055;">791</span><span style="color: #9F79EE;">&#41;</span> <span style="color: #A52A2A; font-weight: bold;">begin</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;<span style="color: #9932CC;">$display</span><span style="color: #9F79EE;">&#40;</span><span style="color: #FF00FF;">&quot;--ERR--- PLEASE INPUT VALID STRING INFO!!!&quot;</span><span style="color: #9F79EE;">&#41;</span><span style="color: #5D478B;">;</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;<span style="color: #9932CC;">$display</span><span style="color: #9F79EE;">&#40;</span><span style="color: #FF00FF;">&quot;--ERR--- Default data number: %d&quot;</span><span style="color: #5D478B;">,</span> i<span style="color: #9F79EE;">&#41;</span><span style="color: #5D478B;">;</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;<span style="color: #9932CC;">$display</span><span style="color: #9F79EE;">&#40;</span><span style="color: #FF00FF;">&quot;--ERR--- String data structure: %h&quot;</span><span style="color: #5D478B;">,</span> str_my<span style="color: #9F79EE;">&#41;</span><span style="color: #5D478B;">;</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; <span style="color: #A52A2A; font-weight: bold;">end</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; <span style="color: #A52A2A; font-weight: bold;">else</span> <span style="color: #A52A2A; font-weight: bold;">begin</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;<span style="color: #9932CC;">$write</span><span style="color: #9F79EE;">&#40;</span><span style="color: #FF00FF;">&quot;---YYY---&quot;</span><span style="color: #9F79EE;">&#41;</span><span style="color: #5D478B;">;</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;<span style="color: #A52A2A; font-weight: bold;">for</span><span style="color: #9F79EE;">&#40;</span>j<span style="color: #5D478B;">=</span>i<span style="color: #5D478B;">;</span> j<span style="color: #5D478B;">&gt;=</span><span style="color: #ff0055;">0</span><span style="color: #5D478B;">;</span> j<span style="color: #5D478B;">=</span> j<span style="color: #5D478B;">-</span><span style="color: #ff0055;">8</span><span style="color: #9F79EE;">&#41;</span> <span style="color: #A52A2A; font-weight: bold;">begin</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; str_tmp <span style="color: #5D478B;">=</span> str_my<span style="color: #9F79EE;">&#91;</span>j <span style="color: #5D478B;">-:</span> <span style="color: #ff0055;">8</span><span style="color: #9F79EE;">&#93;</span> <span style="color: #5D478B;">;</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; <span style="color: #00008B; font-style: italic;">//再次检测到空字符时停止打印显示 &nbsp; &nbsp;</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; <span style="color: #A52A2A; font-weight: bold;">if</span> <span style="color: #9F79EE;">&#40;</span>str_tmp <span style="color: #5D478B;">==</span> <span style="color: #FF00FF;">&quot;&quot;</span><span style="color: #9F79EE;">&#41;</span> <span style="color: #A52A2A; font-weight: bold;">begin</span> &nbsp;<br />
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;<span style="color: #A52A2A; font-weight: bold;">break</span> <span style="color: #5D478B;">;</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; <span style="color: #A52A2A; font-weight: bold;">end</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; <span style="color: #00008B; font-style: italic;">//逐个字符打印</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; <span style="color: #A52A2A; font-weight: bold;">else</span> <span style="color: #A52A2A; font-weight: bold;">begin</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;<span style="color: #9932CC;">$write</span><span style="color: #9F79EE;">&#40;</span><span style="color: #FF00FF;">&quot;%s&quot;</span><span style="color: #5D478B;">,</span> str_tmp<span style="color: #9F79EE;">&#41;</span><span style="color: #5D478B;">;</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; <span style="color: #A52A2A; font-weight: bold;">end</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;<span style="color: #A52A2A; font-weight: bold;">end</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;<span style="color: #00008B; font-style: italic;">//打印整型数据</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;<span style="color: #9932CC;">$write</span><span style="color: #9F79EE;">&#40;</span><span style="color: #FF00FF;">&quot;%h <span style="color: #9F79EE">\n</span>&quot;</span><span style="color: #5D478B;">,</span> int_my<span style="color: #9F79EE;">&#41;</span><span style="color: #5D478B;">;</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; <span style="color: #A52A2A; font-weight: bold;">end</span><br />
+<br />
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; <span style="color: #00008B; font-style: italic;">/* $display 不支持寄存器向量域中带变量访问<br />
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; //所以下列描述是不正确的，只能逐次使用 $write 打印<br />
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; else begin<br />
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;$display(&quot;--YYY--- %s%h&quot;, str_my[i : j], int_my);<br />
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; end<br />
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;*/</span><br />
+<br />
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; flagh <span style="color: #5D478B;">=</span> <span style="color: #ff0055;">0</span> <span style="color: #5D478B;">;</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp;<span style="color: #A52A2A; font-weight: bold;">end</span><br />
+&nbsp; &nbsp; &nbsp; <span style="color: #A52A2A; font-weight: bold;">end</span><br />
+&nbsp; &nbsp;<span style="color: #A52A2A; font-weight: bold;">end</span><br />
+<br />
+&nbsp; &nbsp;<span style="color: #00008B; font-style: italic;">//停止仿真</span><br />
+&nbsp; &nbsp;<span style="color: #A52A2A; font-weight: bold;">initial</span> <span style="color: #A52A2A; font-weight: bold;">begin</span><br />
+&nbsp; &nbsp; &nbsp; <span style="color: #A52A2A; font-weight: bold;">forever</span> <span style="color: #A52A2A; font-weight: bold;">begin</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp;<span style="color: #5D478B;">#</span><span style="color: #ff0055;">10000</span><span style="color: #5D478B;">;</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp;<span style="color: #A52A2A; font-weight: bold;">if</span> <span style="color: #9F79EE;">&#40;</span><span style="color: #9932CC;">$time</span> <span style="color: #5D478B;">&gt;=</span> <span style="color: #ff0055;">300</span><span style="color: #9F79EE;">&#41;</span> &nbsp;<span style="color: #9932CC;">$finish</span> <span style="color: #5D478B;">;</span><br />
+&nbsp; &nbsp; &nbsp; <span style="color: #A52A2A; font-weight: bold;">end</span><br />
+&nbsp; &nbsp;<span style="color: #A52A2A; font-weight: bold;">end</span><br />
+<span style="color: #A52A2A; font-weight: bold;">endmodule</span> <br />
+</div></div>
+<p><strong>软件调用</strong></p><p>
+由于本次设计软件部分不能主动执行，所以再增加一个用 TF 子程序设计的 Verilog 系统任务。该系统任务在 testbench 中执行时，可以调用软件程序中的函数 print_my。</p>
+<p>在文件 print_gyc.c 中增加如下 C 代码：</p>
+<div class="example"><div class="example_code">
+<span style="color: #993333;">void</span> call_c_print<span style="color: #000;">&#40;</span><span style="color: #000;">&#41;</span><span style="color: #000;">&#123;</span><br />
+&nbsp; &nbsp; <span style="color: #708;">if</span> <span style="color: #000;">&#40;</span>tf_getp<span style="color: #000;">&#40;</span><span style="color: #164;">1</span><span style="color: #000;">&#41;</span> <span style="color: #339933;">==</span> <span style="color: #164;">1</span><span style="color: #000;">&#41;</span> &nbsp; <span style="color: #666666; font-style: italic;">//如果系统函数第一个参数值为 1</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; print_my<span style="color: #000;">&#40;</span><span style="color: #a11;">&quot;It's the first successfull print: &quot;</span><span style="color: #339933;">,</span> <span style="color: #208080;">0x20170714</span><span style="color: #000;">&#41;</span><span style="color: #339933;">;</span><br />
+&nbsp; &nbsp; <span style="color: #708;">else</span> <span style="color: #708;">if</span> <span style="color: #000;">&#40;</span>tf_getp<span style="color: #000;">&#40;</span><span style="color: #164;">1</span><span style="color: #000;">&#41;</span> <span style="color: #339933;">==</span> <span style="color: #164;">2</span><span style="color: #000;">&#41;</span> <span style="color: #666666; font-style: italic;">//如果系统函数第二个参数值为 2</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; print_my<span style="color: #000;">&#40;</span><span style="color: #a11;">&quot;2nd: &quot;</span><span style="color: #339933;">,</span> <span style="color: #208080;">0x09070602</span><span style="color: #000;">&#41;</span><span style="color: #339933;">;</span><br />
+&nbsp; &nbsp; <span style="color: #708;">else</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; print_my<span style="color: #000;">&#40;</span><span style="color: #a11;">&quot;&quot;</span><span style="color: #339933;">,</span> <span style="color: #208080;">0x1</span><span style="color: #000;">&#41;</span><span style="color: #339933;">;</span> <span style="color: #666666; font-style: italic;">//不传输字符串数据，则报错</span><br />
+<span style="color: #000;">&#125;</span><br />
+</div></div>
+<p>在文件 test.v 中增加如下 Verilog 代码：</p>
+<div class="example"> <div class="example_code">
+&nbsp; &nbsp;<span style="color: #00008B; font-style: italic;">//c print</span><br />
+&nbsp; &nbsp;<span style="color: #A52A2A; font-weight: bold;">initial</span> <span style="color: #A52A2A; font-weight: bold;">begin</span><br />
+&nbsp; &nbsp; &nbsp; <span style="color: #5D478B;">#</span><span style="color: #ff0055;">100</span> <span style="color: #5D478B;">;</span><br />
+&nbsp; &nbsp; &nbsp; $call_c_print<span style="color: #9F79EE;">&#40;</span><span style="color: #ff0055;">1</span><span style="color: #9F79EE;">&#41;</span><span style="color: #5D478B;">;</span><br />
+&nbsp; &nbsp; &nbsp; <span style="color: #5D478B;">#</span><span style="color: #ff0055;">100</span> <span style="color: #5D478B;">;</span><br />
+&nbsp; &nbsp; &nbsp; $call_c_print<span style="color: #9F79EE;">&#40;</span><span style="color: #ff0055;">2</span><span style="color: #9F79EE;">&#41;</span><span style="color: #5D478B;">;</span><br />
+&nbsp; &nbsp; &nbsp; <span style="color: #5D478B;">#</span><span style="color: #ff0055;">100</span> <span style="color: #5D478B;">;</span><br />
+&nbsp; &nbsp; &nbsp; $call_c_print<span style="color: #9F79EE;">&#40;</span><span style="color: #ff0055;">3</span><span style="color: #9F79EE;">&#41;</span><span style="color: #5D478B;">;</span><br />
+&nbsp; &nbsp;<span style="color: #A52A2A; font-weight: bold;">end</span><br />
+</div></div>
+<p><strong>编译仿真</strong></p><p>
+Linux 下用如下命令对 print_gyc.c 进行编译，输出 print_gyc.o 文件，注意相对路径。</p>
+<pre>gcc -I ${VCS_HOME}/include -c ../tb/print_gyc.c</pre><p>
+使用 VCS 编译，需要创建 VCS 可识别的链接 table 文件，文件命名为 pli_gyc.tab, 内容如下。</p><p>
+$send_my, $call_c_print 是 Verilog 调用的系统任务名字；</p><p>
+call=my_monitor, call=call_c_print 等表示调用软件 C 程序中的函数；</p>
+<pre>$send_my call=send_my
+$call_c_print call=call_c_print</pre>
+<p>VCS 编译时增加如下参数行。</p>
+<pre>-P ../tb/pli_gyc.tab</pre><p>
+仿真结果如下。</p><p>
+由图可知，打印输出正常，没有多余的空格信息。</p><p>
+当打印信息中没有字符串数据时，会报 Error，并输出一些调试信息。</p><p>
+可以修改 testbench 中的一些参数，来进行数据存储格式上的调试学习。</p>
+<p><img decoding="async" src="https://www.runoob.com/wp-content/uploads/2021/05/v-tf-3.png"></p>
+<h3>本章节源码下载</h3><p>
+<a class="download" href="https://www.runoob.com/wp-content/uploads/2021/05/v8.2_my_printf.zip">Download</a>   </p>
+				</div>
+			</div>
+			<div class="previous-next-links">
+			<div class="previous-design-link">← <a href="http://www.runoob.com/w3cnote/verilog2-pli-intro.html" rel="prev"> 8.1 Verilog  PLI 简介</a> </div>
+			<div class="next-design-link"><a href="http://www.runoob.com/w3cnote/verilog2-tf-sub.html" rel="next"> 8.3 Verilog TF 子程序列表</a> →</div>
+			</div>
+						<div class="article-heading-ad" id="w3cnote-ad728">
+			<script async src="//pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script>
+			<!-- 移动版 自动调整 -->
+			<ins class="adsbygoogle"
+			     style="display:inline-block;min-width:300px;max-width:970px;width:100%;height:90px"
+			     data-ad-client="ca-pub-5751451760833794"
+			     data-ad-slot="1691338467"
+			     data-ad-format="horizontal"></ins>
+			<script>
+			(adsbygoogle = window.adsbygoogle || []).push({});
+			</script>
+			</div>
+			<style>
+@media screen and (max-width: 768px) {
+	#w3cnote-ad728 {
+		display: none;
+	}
+}
+p.note-author {
+    border-bottom: 1px solid #ddd;
+    font-size: 18px;
+    font-weight: bold;
+    color: #78a15a;
+    padding-bottom: 2px;
+    margin-bottom: 4px;
+}
+</style>
+<script>
+var aid = 23865;
+</script>
+	</div>
+		
+	</div>
+	<div class="listcol last right-column">
+
+	<script type="text/javascript">
+jQuery(document).ready(function ($){
+	var total = $(".membership li").length;
+	var left_list = '';
+	href = window.location.href;
+	
+	$(".membership li").each(function(index, value){
+
+		left_list += $(this).html();
+
+		cur_href = $(this).find("a").attr("href");
+		cur_obj = $(this);
+		
+		if(href.match(cur_href) != null) {
+			if(index==0) {
+				$(".previous-design-link").hide();
+			}
+			if(index==(total-1)) {
+				$(".next-design-link").hide();
+			}
+			prev_href = cur_obj.prev("li").find("a").attr("href");
+			prev_title = cur_obj.prev("li").find("a").attr("title");
+
+			next_href = cur_obj.next("li").find("a").attr("href");
+			next_title = cur_obj.next("li").find("a").attr("title");
+			if(prev_title) {
+				$(".previous-design-link a").attr("href", prev_href);
+				$(".previous-design-link a").attr("title", prev_title);
+				$(".previous-design-link a").text(prev_title);
+			} else {
+				$(".previous-design-link").html("");
+			}
+
+			if(next_title) {
+				$(".next-design-link a").attr("href", next_href);
+				$(".next-design-link a").attr("title", next_title);
+				$(".next-design-link a").text(next_title);
+			} else {
+				$(".next-design-link").html("");
+			}
+		}
+	});
+
+	$("#leftcolumn").html(left_list);
+});
+	</script>
+	<div class="sidebar-box cate-list">
+	<div class="sidebar-box recommend-here list-link">
+	<a href="javascript:void(0);">Verilog 高级教程</a>	</div>
+	
+	<ul class="membership">
+		
+	<li><a target="_top" data-id="23639" title="0.1 数字逻辑设计" href="http://www.runoob.com/w3cnote/verilog2-tutorial.html" >0.1 数字逻辑设计</a></li>
+	
+		
+	<li><a target="_top" data-id="23641" title="0.2 Verilog 编码风格" href="http://www.runoob.com/w3cnote/verilog2-codestyle.html" >0.2 Verilog 编码风格</a></li>
+	
+		
+	<li><a target="_top" data-id="23644" title="0.3 Verilog 代码规范" href="http://www.runoob.com/w3cnote/verilog2-codeguide.html" >0.3 Verilog 代码规范</a></li>
+	
+		
+	<li><a target="_top" data-id="23645" title="1.1 Verilog 门的类型" href="http://www.runoob.com/w3cnote/verilog2-gate.html" >1.1 Verilog 门的类型</a></li>
+	
+		
+	<li><a target="_top" data-id="23648" title="1.2 Verilog 开关级建模" href="http://www.runoob.com/w3cnote/verilog2-level-modeling.html" >1.2 Verilog 开关级建模</a></li>
+	
+		
+	<li><a target="_top" data-id="23656" title="1.3 Verilog 门延迟" href="http://www.runoob.com/w3cnote/verilog2-gate-delay.html" >1.3 Verilog 门延迟</a></li>
+	
+		
+	<li><a target="_top" data-id="23673" title="2.1 Verilog UDP 基础知识" href="http://www.runoob.com/w3cnote/verilog2-udp.html" >2.1 Verilog UDP 基础知识</a></li>
+	
+		
+	<li><a target="_top" data-id="23674" title="2.2 Verilog 组合逻辑 UDP" href="http://www.runoob.com/w3cnote/verilog2-udp-logic.html" >2.2 Verilog 组合逻辑 UDP</a></li>
+	
+		
+	<li><a target="_top" data-id="23677" title="2.3 Verilog 时序逻辑 UDP" href="http://www.runoob.com/w3cnote/verilog2-udp-timing.html" >2.3 Verilog 时序逻辑 UDP</a></li>
+	
+		
+	<li><a target="_top" data-id="23685" title="3.1 Verilog 延迟模型" href="http://www.runoob.com/w3cnote/verilog2-delay-type.html" >3.1 Verilog 延迟模型</a></li>
+	
+		
+	<li><a target="_top" data-id="23690" title="3.2 Verilog specify 块语句" href="http://www.runoob.com/w3cnote/verilog2-specify.html" >3.2 Verilog specify 块语句</a></li>
+	
+		
+	<li><a target="_top" data-id="23692" title="3.3 Verilog 建立时间和保持时间" href="http://www.runoob.com/w3cnote/verilog2-setup-hold-time.html" >3.3 Verilog 建立时间和保持时间</a></li>
+	
+		
+	<li><a target="_top" data-id="23701" title="3.4 Verilog 时序检查" href="http://www.runoob.com/w3cnote/verilog2-timing-check.html" >3.4 Verilog 时序检查</a></li>
+	
+		
+	<li><a target="_top" data-id="23708" title="3.5 Verilog 延迟反标注" href="http://www.runoob.com/w3cnote/verilog2-sdf.html" >3.5 Verilog 延迟反标注</a></li>
+	
+		
+	<li><a target="_top" data-id="23714" title="4.1 Verilog 同步与异步" href="http://www.runoob.com/w3cnote/verilog-sync.html" >4.1 Verilog 同步与异步</a></li>
+	
+		
+	<li><a target="_top" data-id="23725" title="4.2 Verilog 跨时钟域传输：慢到快" href="http://www.runoob.com/w3cnote/verilog2-slow2fast.html" >4.2 Verilog 跨时钟域传输：慢到快</a></li>
+	
+		
+	<li><a target="_top" data-id="23729" title="4.3 Verilog 跨时钟域传输：快到慢" href="http://www.runoob.com/w3cnote/verilog2-fast2slow.html" >4.3 Verilog 跨时钟域传输：快到慢</a></li>
+	
+		
+	<li><a target="_top" data-id="23731" title="4.4 Verilog FIFO 设计" href="http://www.runoob.com/w3cnote/verilog2-fifo.html" >4.4 Verilog FIFO 设计</a></li>
+	
+		
+	<li><a target="_top" data-id="23739" title="5.1 Verilog 复位简介" href="http://www.runoob.com/w3cnote/verilog2-reset.html" >5.1 Verilog 复位简介</a></li>
+	
+		
+	<li><a target="_top" data-id="23743" title="5.2 Verilog 时钟简介" href="http://www.runoob.com/w3cnote/verilog2-clock.html" >5.2 Verilog 时钟简介</a></li>
+	
+		
+	<li><a target="_top" data-id="23757" title="5.3 Verilog 时钟分频" href="http://www.runoob.com/w3cnote/verilog2-clock-division.html" >5.3 Verilog 时钟分频</a></li>
+	
+		
+	<li><a target="_top" data-id="23768" title="5.4 Verilog 时钟切换" href="http://www.runoob.com/w3cnote/verilog2-clock-switch.html" >5.4 Verilog 时钟切换</a></li>
+	
+		
+	<li><a target="_top" data-id="23779" title="6.1 Verilog 低功耗简介" href="http://www.runoob.com/w3cnote/verilog2-low-power.html" >6.1 Verilog 低功耗简介</a></li>
+	
+		
+	<li><a target="_top" data-id="23788" title="6.2 Verilog 系统级低功耗设计" href="http://www.runoob.com/w3cnote/verilog2-lower-power-design.html" >6.2 Verilog 系统级低功耗设计</a></li>
+	
+		
+	<li><a target="_top" data-id="23792" title="6.3 Verilog  RTL 级低功耗设计（上）" href="http://www.runoob.com/w3cnote/verilog2-rtl-low-power-design-1.html" >6.3 Verilog  RTL 级低功耗设计（上）</a></li>
+	
+		
+	<li><a target="_top" data-id="23796" title="6.4 Verilog RTL 级低功耗设计（下）" href="http://www.runoob.com/w3cnote/verilog2-rtl-low-power-design-2.html" >6.4 Verilog RTL 级低功耗设计（下）</a></li>
+	
+		
+	<li><a target="_top" data-id="23806" title="7.1 Verilog 显示任务" href="http://www.runoob.com/w3cnote/verilog2-display.html" >7.1 Verilog 显示任务</a></li>
+	
+		
+	<li><a target="_top" data-id="23813" title="7.2 Verilog 文件操作" href="http://www.runoob.com/w3cnote/verilog2-file.html" >7.2 Verilog 文件操作</a></li>
+	
+		
+	<li><a target="_top" data-id="23825" title="7.3 Verilog 随机数及概率分布" href="http://www.runoob.com/w3cnote/verilog2-random.html" >7.3 Verilog 随机数及概率分布</a></li>
+	
+		
+	<li><a target="_top" data-id="23847" title="7.4 Verilog 实数整数转换" href="http://www.runoob.com/w3cnote/verilog2-real2int.html" >7.4 Verilog 实数整数转换</a></li>
+	
+		
+	<li><a target="_top" data-id="23851" title="7.5 Verilog 其他系统任务" href="http://www.runoob.com/w3cnote/verilog2-other-task.html" >7.5 Verilog 其他系统任务</a></li>
+	
+		
+	<li><a target="_top" data-id="23862" title="8.1 Verilog  PLI 简介" href="http://www.runoob.com/w3cnote/verilog2-pli-intro.html" >8.1 Verilog  PLI 简介</a></li>
+	
+		<li>
+	8.2 Verilog TF 子程序	</li>
+	
+		
+	<li><a target="_top" data-id="23869" title="8.3 Verilog TF 子程序列表" href="http://www.runoob.com/w3cnote/verilog2-tf-sub.html" >8.3 Verilog TF 子程序列表</a></li>
+	
+		
+	<li><a target="_top" data-id="23870" title="8.4 Verilog ACC 子程序" href="http://www.runoob.com/w3cnote/verilog2-acc.html" >8.4 Verilog ACC 子程序</a></li>
+	
+		
+	<li><a target="_top" data-id="23872" title="8.5 Verilog ACC 子程序列表" href="http://www.runoob.com/w3cnote/verilog2-acc-sub.html" >8.5 Verilog ACC 子程序列表</a></li>
+	
+		
+	<li><a target="_top" data-id="23876" title="9.1 Verilog 逻辑综合" href="http://www.runoob.com/w3cnote/verilog2-logic-sumarry.html" >9.1 Verilog 逻辑综合</a></li>
+	
+		
+	<li><a target="_top" data-id="23882" title="9.2 Verilog 可综合性设计" href="http://www.runoob.com/w3cnote/verilog2-integrated-design.html" >9.2 Verilog 可综合性设计</a></li>
+	
+	</ul></div>	</div>
+</div>
+
+
+<!-- 底部 -->
+<div id="footer" class="mar-t50">
+   <div class="runoob-block">
+    <div class="runoob cf">
+     <dl>
+      <dt>
+       在线实例
+      </dt>
+      <dd>
+       &middot;<a target="_blank" href="/html/html-examples.html">HTML 实例</a>
+      </dd>
+      <dd>
+       &middot;<a target="_blank" href="/css/css-examples.html">CSS 实例</a>
+      </dd>
+      <dd>
+       &middot;<a target="_blank" href="/js/js-examples.html">JavaScript 实例</a>
+      </dd>
+      <dd>
+       &middot;<a target="_blank" href="/ajx/ajax-examples.html">Ajax 实例</a>
+      </dd>
+       <dd>
+       &middot;<a target="_blank" href="/jquery/jquery-examples.html">jQuery 实例</a>
+      </dd>
+      <dd>
+       &middot;<a target="_blank" href="/xml/xml-examples.html">XML 实例</a>
+      </dd>
+      <dd>
+       &middot;<a target="_blank" href="/java/java-examples.html">Java 实例</a>
+      </dd>
+     
+     </dl>
+     <dl>
+      <dt>
+      字符集&工具
+      </dt>
+      <dd>
+       &middot; <a target="_blank" href="/charsets/html-charsets.html">HTML 字符集设置</a>
+      </dd>
+      <dd>
+       &middot; <a target="_blank" href="/tags/html-ascii.html">HTML ASCII 字符集</a>
+      </dd>
+     <dd>
+       &middot; <a target="_blank" href="https://c.runoob.com/front-end/6939/">JS 混淆/加密</a>
+      </dd> 
+      <dd>
+       &middot; <a target="_blank" href="https://c.runoob.com/front-end/6232/">PNG/JPEG 图片压缩</a>
+      </dd>
+      <dd>
+       &middot; <a target="_blank" href="/tags/html-colorpicker.html">HTML 拾色器</a>
+      </dd>
+      <dd>
+       &middot; <a target="_blank" href="//c.runoob.com/front-end/53">JSON 格式化工具</a>
+      </dd>
+      <dd>
+       &middot; <a target="_blank" href="//c.runoob.com/front-end/6680/">随机数生成器</a>
+      </dd>
+     </dl>
+     <dl>
+      <dt>
+       最新更新
+      </dt>
+                   <dd>
+       &middot;
+      <a href="http://www.runoob.com/matplotlib/matplotlib-imread.html" title="Matplotlib imread() 方法">Matplotlib imre...</a>
+      </dd>
+              <dd>
+       &middot;
+      <a href="http://www.runoob.com/matplotlib/matplotlib-imsave.html" title="Matplotlib imsave() 方法">Matplotlib imsa...</a>
+      </dd>
+              <dd>
+       &middot;
+      <a href="http://www.runoob.com/matplotlib/matplotlib-imshow.html" title="Matplotlib imshow() 方法">Matplotlib imsh...</a>
+      </dd>
+              <dd>
+       &middot;
+      <a href="http://www.runoob.com/matplotlib/matplotlib-hist.html" title="Matplotlib 直方图">Matplotlib 直方图</a>
+      </dd>
+              <dd>
+       &middot;
+      <a href="http://www.runoob.com/python3/python-func-object.html" title="Python object() 函数">Python object()...</a>
+      </dd>
+              <dd>
+       &middot;
+      <a href="http://www.runoob.com/python3/python-ai-draw.html" title="Python AI 绘画">Python AI 绘画</a>
+      </dd>
+              <dd>
+       &middot;
+      <a href="http://www.runoob.com/w3cnote/cursor-editor.html" title="神辅助 Cursor 编辑器，加入 GPT-4 让编码更轻松！">神辅助 Cursor ...</a>
+      </dd>
+             </dl>
+     <dl>
+      <dt>
+       站点信息
+      </dt>
+      <dd>
+       &middot;
+       <a target="_blank" href="mailto:admin@runoob.com" rel="external nofollow">意见反馈</a>
+       </dd>
+      <dd>
+       &middot;
+      <a target="_blank" href="/disclaimer">免责声明</a>
+       </dd>
+      <dd>
+       &middot;
+       <a target="_blank" href="/aboutus">关于我们</a>
+       </dd>
+      <dd>
+       &middot;
+      <a target="_blank" href="/archives">文章归档</a>
+      </dd>
+    
+     </dl>
+    
+     <div class="search-share">
+      <div class="app-download">
+        <div>
+         <strong>关注微信</strong>
+        </div>
+      </div>
+      <div class="share">
+      <img width="128" height="128" src="/wp-content/themes/runoob/assets/images/qrcode.png" />
+       </div>
+     </div>
+     
+    </div>
+   </div>
+   <div class="w-1000 copyright">
+     Copyright &copy; 2013-2023    <strong><a href="//www.runoob.com/" target="_blank">菜鸟教程</a></strong>&nbsp;
+    <strong><a href="//www.runoob.com/" target="_blank">runoob.com</a></strong> All Rights Reserved. 备案号：<a target="_blank" rel="nofollow" href="https://beian.miit.gov.cn/">闽ICP备15012807号-1</a>
+   </div>
+  </div>
+  <div class="fixed-btn">
+    <a class="go-top" href="javascript:void(0)" title="返回顶部"> <i class="fa fa-angle-up"></i></a>
+    <a class="qrcode"  href="javascript:void(0)" title="关注我们"><i class="fa fa-qrcode"></i></a>
+    <a class="writer" style="display:none" href="javascript:void(0)"   title="标记/收藏"><i class="fa fa-star" aria-hidden="true"></i></a>
+    <!-- qrcode modal -->
+    <div id="bottom-qrcode" class="modal panel-modal hide fade in">
+      <h4>微信关注</h4>
+      <div class="panel-body"><img alt="微信关注" width="128" height="128" src="/wp-content/themes/runoob/assets/images/qrcode.png"></div> 
+    </div>
+  </div>
+
+ <div style="display:none;">
+<script async src="https://www.googletagmanager.com/gtag/js?id=UA-84264393-2"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+
+  gtag('config', 'UA-84264393-2');
+</script>
+<script>
+var _hmt = _hmt || [];
+(function() {
+  var hm = document.createElement("script");
+  hm.src = "https://hm.baidu.com/hm.js?3eec0b7da6548cf07db3bc477ea905ee";
+  var s = document.getElementsByTagName("script")[0]; 
+  s.parentNode.insertBefore(hm, s);
+})();
+</script>
+
+</div>
+<script>
+window.jsui={
+    www: 'https://www.runoob.com',
+    uri: 'https://www.runoob.com/wp-content/themes/runoob'
+};
+</script>
+
+<script src="https://static.runoob.com/assets/libs/hl/run_prettify.js"></script>
+<script src="/wp-content/themes/runoob/assets/js/main.min.js?v=1.156"></script>
+
+</body>
+</html>

@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><title>SET SESSION AUTHORIZATION</title><link rel="stylesheet" type="text/css" href="stylesheet.css" /><link rev="made" href="pgsql-docs@postgresql.org" /><meta name="generator" content="DocBook XSL Stylesheets V1.79.1" /><link rel="prev" href="sql-set-role.html" title="SET ROLE" /><link rel="next" href="sql-set-transaction.html" title="SET TRANSACTION" /></head><body><div xmlns="http://www.w3.org/TR/xhtml1/transitional" class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="5" align="center">SET SESSION AUTHORIZATION</th></tr><tr><td width="10%" align="left"><a accesskey="p" href="sql-set-role.html" title="SET ROLE">上一页</a> </td><td width="10%" align="left"><a accesskey="u" href="sql-commands.html" title="SQL 命令">上一级</a></td><th width="60%" align="center">SQL 命令</th><td width="10%" align="right"><a accesskey="h" href="index.html" title="PostgreSQL 10.1 手册">起始页</a></td><td width="10%" align="right"> <a accesskey="n" href="sql-set-transaction.html" title="SET TRANSACTION">下一页</a></td></tr></table><hr></hr></div><div class="refentry" id="SQL-SET-SESSION-AUTHORIZATION"><div class="titlepage"></div><a id="idp49412336" class="indexterm"></a><div class="refnamediv"><h2><span class="refentrytitle">SET SESSION AUTHORIZATION</span></h2><p>SET SESSION AUTHORIZATION — 设置当前会话的会话用户标识符和当前用户标识符</p></div><div class="refsynopsisdiv"><h2>大纲</h2><pre class="synopsis">SET [ SESSION | LOCAL ] SESSION AUTHORIZATION <em class="replaceable"><code>user_name</code></em>
+SET [ SESSION | LOCAL ] SESSION AUTHORIZATION DEFAULT
+RESET SESSION AUTHORIZATION</pre></div><div class="refsect1" id="idp49416672"><h2>描述</h2><p>   这个命令把当前 SQL 会话的会话用户标识符和当前用户标识符设置为
+   <em class="replaceable"><code>user_name</code></em>。
+   用户名可以被写成一个标识符或者一个字符串。例如，可以使用这个
+   命令临时成为一个无特权用户并且稍后切换回来成为一个超级用户。
+  </p><p>   会话用户标识符初始时被设置为客户端提供的（可能已认证的）用户名。
+   当前用户标识符通常等于会话用户标识符，但是可能在
+   <code class="literal">SECURITY DEFINER</code>函数和类似机制的环境中临时更改。
+   也可以用<a class="xref" href="sql-set-role.html" title="SET ROLE"><span class="refentrytitle">SET ROLE</span></a>更改它。当前用户标识符与
+   权限检查相关。
+  </p><p>   会话用户标识符只能在初始会话用户
+   <em class="firstterm">已认证用户</em>具有超级用户特权时被更改。
+   否则，只有该命令指定已认证用户名时才会被接受。
+  </p><p>   <code class="literal">SESSION</code>和<code class="literal">LOCAL</code>修饰符发挥的作用和常规
+   <a class="xref" href="sql-set.html" title="SET"><span class="refentrytitle">SET</span></a>命令一样。
+  </p><p>   <code class="literal">DEFAULT</code>和<code class="literal">RESET</code>形式把会话用户标识符和
+   当前用户标识符重置为初始的已认证用户名。这些形式可以由任何用户执行。
+  </p></div><div class="refsect1" id="idp49425696"><h2>注解</h2><p>   <code class="command">SET SESSION AUTHORIZATION</code>不能在一个
+   <code class="literal">SECURITY DEFINER</code>函数中使用。
+  </p></div><div class="refsect1" id="idp49427824"><h2>示例</h2><pre class="programlisting">SELECT SESSION_USER, CURRENT_USER;
+
+ session_user | current_user 
+--------------+--------------
+ peter        | peter
+
+SET SESSION AUTHORIZATION 'paul';
+
+SELECT SESSION_USER, CURRENT_USER;
+
+ session_user | current_user 
+--------------+--------------
+ paul         | paul</pre></div><div class="refsect1" id="idp49429056"><h2>兼容性</h2><p>   SQL 标准允许一些其他表达式出现在文本
+   <em class="replaceable"><code>user_name</code></em>的位置上，但是实际上这些
+   选项并不重要。<span class="productname">PostgreSQL</span>允许标
+   识符语法（<code class="literal">"<em class="replaceable"><code>username</code></em>"</code>），而 SQL 标准不允许。
+   SQL 不允许在事务中使用这个命令，而
+   <span class="productname">PostgreSQL</span>并不做此限
+   制，因为并没有原因需要这样做。和<code class="literal">RESET</code>语法
+   一样，<code class="literal">SESSION</code>和
+   <code class="literal">LOCAL</code>修饰符是一种
+   <span class="productname">PostgreSQL</span>扩展。
+  </p><p>   标准把执行这个命令所需的特权留给实现定义。
+  </p></div><div class="refsect1" id="idp49436336"><h2>另见</h2><span class="simplelist"><a class="xref" href="sql-set-role.html" title="SET ROLE"><span class="refentrytitle">SET ROLE</span></a></span></div></div><div class="navfooter"><hr /><table width="100%" summary="Navigation footer"><tr><td width="40%" align="left"><a accesskey="p" href="sql-set-role.html">上一页</a> </td><td width="20%" align="center"><a accesskey="u" href="sql-commands.html">上一级</a></td><td width="40%" align="right"> <a accesskey="n" href="sql-set-transaction.html">下一页</a></td></tr><tr><td width="40%" align="left" valign="top">SET ROLE </td><td width="20%" align="center"><a accesskey="h" href="index.html">起始页</a></td><td width="40%" align="right" valign="top"> SET TRANSACTION</td></tr></table></div></body></html>

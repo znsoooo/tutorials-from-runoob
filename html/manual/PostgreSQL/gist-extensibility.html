@@ -1,0 +1,353 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><title>62.3. 可扩展性</title><link rel="stylesheet" type="text/css" href="stylesheet.css" /><link rev="made" href="pgsql-docs@postgresql.org" /><meta name="generator" content="DocBook XSL Stylesheets V1.79.1" /><link rel="prev" href="gist-builtin-opclasses.html" title="62.2. 内建操作符类" /><link rel="next" href="gist-implementation.html" title="62.4. 实现" /></head><body><div xmlns="http://www.w3.org/TR/xhtml1/transitional" class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="5" align="center">62.3. 可扩展性</th></tr><tr><td width="10%" align="left"><a accesskey="p" href="gist-builtin-opclasses.html" title="62.2. 内建操作符类">上一页</a> </td><td width="10%" align="left"><a accesskey="u" href="gist.html" title="第 62 章 GiST 索引">上一级</a></td><th width="60%" align="center">第 62 章 GiST 索引</th><td width="10%" align="right"><a accesskey="h" href="index.html" title="PostgreSQL 10.1 手册">起始页</a></td><td width="10%" align="right"> <a accesskey="n" href="gist-implementation.html" title="62.4. 实现">下一页</a></td></tr></table><hr></hr></div><div class="sect1" id="GIST-EXTENSIBILITY"><div class="titlepage"><div><div><h2 class="title" style="clear: both">62.3. 可扩展性</h2></div></div></div><p>   在传统上，实现一种新的索引访问方法意味着很多困难的工作。开发者必须要理解数据库的内部工作，例如锁管理器和预写式日志。<acronym class="acronym">GiST</acronym>接口有一个高层的抽象，要求访问方法实现者只实现要被访问的数据类型的语义。<acronym class="acronym">GiST</acronym>层本身会处理并发、日志和对树结构的搜索。
+ </p><p>   这种可扩展性不应该与其他标准搜索树对于它们所处理的数据上的可扩展性混淆。例如，<span class="productname">PostgreSQL</span>支持可扩展的 B 树和哈希索引。也就是说你可以用<span class="productname">PostgreSQL</span>在任何你想要的数据类型上构建一个 B 树或哈希。但是 B 树只支持范围谓词（<code class="literal">&lt;</code>、<code class="literal">=</code>、<code class="literal">&gt;</code>），而哈希索引支持等值查询。
+ </p><p>   这样如果你用一个<span class="productname">PostgreSQL</span>的 B 树索引一个图像集合，你只能发出例如<span class="quote">“<span class="quote">imagex 等于 imagey 吗</span>”</span>、<span class="quote">“<span class="quote">imagex 小于 imagey 吗</span>”</span>以及<span class="quote">“<span class="quote">imagex 大于 imagey 吗</span>”</span>的查询。取决于你如何在这种上下文中定义<span class="quote">“<span class="quote">等于</span>”</span>、<span class="quote">“<span class="quote">小于</span>”</span>和<span class="quote">“<span class="quote">大于</span>”</span>，这可能会有用。但是，通过使用一个基于<acronym class="acronym">GiST</acronym>的索引，你可以创建提问领域相关问题的方法，可能是<span class="quote">“<span class="quote">找所有马的图片</span>”</span>或者<span class="quote">“<span class="quote">找所有曝光过度的图片</span>”</span>。
+ </p><p>   建立一个<acronym class="acronym">GiST</acronym>访问方法并让其运行的所有工作是实现几个用户定义的方法，它们定义了树中键的行为。当然这些方法必须相当特别来支持特别的查询，但是对于所有标准查询（B 树、R 树等）它们相对直接。简而言之，<acronym class="acronym">GiST</acronym>在可扩展性之上结合了通用型、代码重用和一个干净的接口。
+  </p><p>   一个用于<acronym class="acronym">GiST</acronym>的索引操作符类必须提供七个方法，并且还有两个可选的方法。索引的正确性由正确实现的<code class="function">same</code>、<code class="function">consistent</code>和<code class="function">union</code>方法保证，而索引的效率（尺寸和速度）将依赖于<code class="function">penalty</code>和<code class="function">picksplit</code>方法。剩下的两个基本方法是<code class="function">compress</code>和<code class="function">decompress</code>，它们允许一个索引能对内部数据使用一种不同于被其索引的数据的类型。叶子是被索引的数据类型，而其他树结点可以是任何 C 结构（但是你仍必须遵循<span class="productname">PostgreSQL</span>的数据类型规则，见用于可变尺寸数据的<code class="literal">varlena</code>）。如果树的内部数据类型在 SQL 层上存在，可以使用<code class="command">CREATE OPERATOR CLASS</code>命令的<code class="literal">STORAGE</code>选项。可选的第八个方法是<code class="function">distance</code>，如果操作符类希望支持有序扫描（最近邻搜索）就需要它。如果该操作符希望支持只用索引的扫描，则需要可选的第九个方法<code class="function">fetch</code>。
+ </p><div class="variablelist"><dl class="variablelist"><dt><span class="term"><code class="function">consistent</code></span></dt><dd><p>       给定一个索引项<code class="literal">p</code>和一个查询值<code class="literal">q</code>，这个函数决定该索引项是否与该查询<span class="quote">“<span class="quote">一致</span>”</span>，就是说：是否该索引项表示的行使得谓词<span class="quote">“<span class="quote"><em class="replaceable"><code>indexed_column</code></em><em class="replaceable"><code>indexable_operator</code></em> <code class="literal">q</code></span>”</span>为真？对于一个叶子索引项，这等效于测试索引条件；而对于一个内部树结点，这会决定是否需要扫描由该树结点表示的索引子树。当结果为<code class="literal">true</code>时，还必须返回一个<code class="literal">recheck</code>标志。这指示该谓词一定为真或者只是可能为真。如果<code class="literal">recheck</code> = <code class="literal">false</code>那么该索引已经完全测试过该谓词条件，而如果<code class="literal">recheck</code> = <code class="literal">true</code>则该行只是一个候选匹配。在那种情况下，系统将根据实际的行值自动评估<em class="replaceable"><code>indexable_operator</code></em>来看它是否真的是一个匹配。这允许<acronym class="acronym">GiST</acronym>同时支持有损和无损的索引结构。
+      </p><p>        该函数的<acronym class="acronym">SQL</acronym>声明必须看起来像这样：
+
+</p><pre class="programlisting">CREATE OR REPLACE FUNCTION my_consistent(internal, data_type, smallint, oid, internal)
+RETURNS bool
+AS 'MODULE_PATHNAME'
+LANGUAGE C STRICT;</pre><p>
+
+        在 C 模块中匹配的代码则应该遵循这样的框架：
+
+</p><pre class="programlisting">PG_FUNCTION_INFO_V1(my_consistent);
+
+Datum
+my_consistent(PG_FUNCTION_ARGS)
+{
+    GISTENTRY  *entry = (GISTENTRY *) PG_GETARG_POINTER(0);
+    data_type  *query = PG_GETARG_DATA_TYPE_P(1);
+    StrategyNumber strategy = (StrategyNumber) PG_GETARG_UINT16(2);
+    /* Oid subtype = PG_GETARG_OID(3); */
+    bool       *recheck = (bool *) PG_GETARG_POINTER(4);
+    data_type  *key = DatumGetDataType(entry-&gt;key);
+    bool        retval;
+
+    /*
+     * 根据策略、键和查询确定返回值。
+     *
+     * 使用 GIST_LEAF(entry) 可以了解当前函数是在索引树的哪里被调用，
+     * 这在支持例如 = 操作符时很方便（可以在非叶子节点中检查非空 union()
+     * 以及在叶子节点中检查等值）。
+     */
+
+    *recheck = true;        /* 如果检查是准确的则返回 false */
+
+    PG_RETURN_BOOL(retval);
+}</pre><p>
+
+       这里，<code class="varname">key</code>是该索引中的一个元素而<code class="varname">query</code>是在该索引中查找的值。<code class="literal">StrategyNumber</code>参数指示在你的操作符类中哪个操作符被应用 — 它匹配<code class="command">CREATE OPERATOR CLASS</code>命令中的操作符编号之一。
+      </p><p>       取决于在操作符类中包含着哪些操作符，<code class="varname">query</code>的数据类型可能随着操作符而变化，因为它可能是该操作符右手边的任何类型，而这种类型可能和出现在其左手边的被索引数据类型不同（上面的代码框架假定只有一种类型；如果不是这样，取<code class="varname">query</code>参数值的方式可能必须取决于操作符）。我们推荐让<code class="function">consistent</code>函数的 SQL 声明对<code class="varname">query</code>参数使用操作符类的被索引数据类型，即便实际类型可能是其他依赖于操作符的类型也是如此。
+      </p></dd><dt><span class="term"><code class="function">union</code></span></dt><dd><p>       这个方法联合树中的信息。给定一组项，这个函数产生一个新的索引项，它表示所有给定的项。
+      </p><p>        该函数的<acronym class="acronym">SQL</acronym>声明必须看起来像这样：
+
+</p><pre class="programlisting">CREATE OR REPLACE FUNCTION my_union(internal, internal)
+RETURNS storage_type
+AS 'MODULE_PATHNAME'
+LANGUAGE C STRICT;</pre><p>
+
+        在 C 模块中匹配的代码则应该遵循这样的框架：
+
+</p><pre class="programlisting">PG_FUNCTION_INFO_V1(my_union);
+
+Datum
+my_union(PG_FUNCTION_ARGS)
+{
+    GistEntryVector *entryvec = (GistEntryVector *) PG_GETARG_POINTER(0);
+    GISTENTRY  *ent = entryvec-&gt;vector;
+    data_type  *out,
+               *tmp,
+               *old;
+    int         numranges,
+                i = 0;
+
+    numranges = entryvec-&gt;n;
+    tmp = DatumGetDataType(ent[0].key);
+    out = tmp;
+
+    if (numranges == 1)
+    {
+        out = data_type_deep_copy(tmp);
+
+        PG_RETURN_DATA_TYPE_P(out);
+    }
+
+    for (i = 1; i &lt; numranges; i++)
+    {
+        old = out;
+        tmp = DatumGetDataType(ent[i].key);
+        out = my_union_implementation(out, tmp);
+    }
+
+    PG_RETURN_DATA_TYPE_P(out);
+}</pre><p>
+      </p><p>        如你所见，在这个框架中我们处理一种数据类型<code class="literal">union(X, Y, Z) = union(union(X, Y), Z)</code>。通过在这个<acronym class="acronym">GiST</acronym>支持方法中实现正确的联合算法，支持不是这种情况的数据类型足够简单。
+      </p><p>        <code class="function">union</code>函数的结果必须是该索引的存储类型的一个值，它可能与被索引列的类型不同，也可能相同。<code class="function">union</code>函数应该返回一个指针指向新<code class="function">palloc()</code>的内存。不能照原样返回输入值，即使没有类型改变也不能。
+      </p><p>       如上所示，<code class="function">union</code>函数的第一个<code class="type">internal</code>参数实际上是一个<code class="structname">GistEntryVector</code>指针。第二个参数是一个指向整数变量的指针，它可以被忽略（过去要求<code class="function">union</code>函数将其结果值的尺寸存储在这个变量中，但现在这已不再必要）。
+      </p></dd><dt><span class="term"><code class="function">compress</code></span></dt><dd><p>       把数据项转换成适合于一个索引页面中物理存储的格式。
+      </p><p>        该函数的<acronym class="acronym">SQL</acronym>声明必须看起来像这样：
+
+</p><pre class="programlisting">CREATE OR REPLACE FUNCTION my_compress(internal)
+RETURNS internal
+AS 'MODULE_PATHNAME'
+LANGUAGE C STRICT;</pre><p>
+
+        在 C 模块中匹配的代码则应该遵循这样的框架：
+
+</p><pre class="programlisting">PG_FUNCTION_INFO_V1(my_compress);
+
+Datum
+my_compress(PG_FUNCTION_ARGS)
+{
+    GISTENTRY  *entry = (GISTENTRY *) PG_GETARG_POINTER(0);
+    GISTENTRY  *retval;
+
+    if (entry-&gt;leafkey)
+    {
+        /* 用一个压缩版本替换 entry-&gt;key */
+        compressed_data_type *compressed_data = palloc(sizeof(compressed_data_type));
+
+        /* 从 entry-&gt;key ... 填充 *compressed_data */
+
+        retval = palloc(sizeof(GISTENTRY));
+        gistentryinit(*retval, PointerGetDatum(compressed_data),
+                      entry-&gt;rel, entry-&gt;page, entry-&gt;offset, FALSE);
+    }
+    else
+    {
+        /* 通常我们不需要对非叶子项做任何事情 */
+        retval = entry;
+    }
+
+    PG_RETURN_POINTER(retval);
+}</pre><p>
+      </p><p>       当然，为了压缩你的叶结点，你必须把<em class="replaceable"><code>compressed_data_type</code></em>改编成你正在转换到的指定类型。
+      </p></dd><dt><span class="term"><code class="function">decompress</code></span></dt><dd><p>       <code class="function">compress</code>方法的逆方法。将该数据项的索引表示转换成该操作符类中其他 GiST 方法能操纵的格式。
+      </p><p>        该函数的<acronym class="acronym">SQL</acronym>声明必须看起来像这样：
+
+</p><pre class="programlisting">CREATE OR REPLACE FUNCTION my_decompress(internal)
+RETURNS internal
+AS 'MODULE_PATHNAME'
+LANGUAGE C STRICT;</pre><p>
+
+        在 C 模块中匹配的代码则应该遵循这样的框架：
+
+</p><pre class="programlisting">PG_FUNCTION_INFO_V1(my_decompress);
+
+Datum
+my_decompress(PG_FUNCTION_ARGS)
+{
+    PG_RETURN_POINTER(PG_GETARG_POINTER(0));
+}</pre><p>
+
+        上述框架适合于不需要解压的情况。
+      </p></dd><dt><span class="term"><code class="function">penalty</code></span></dt><dd><p>       返回一个值，它指示在树的一个特定分支插入新项的<span class="quote">“<span class="quote">代价</span>”</span>。项将被插入到树中具有最小<code class="function">penalty</code>的路径中。<code class="function">penalty</code>返回的值应该为非负。如果一个赋值被返回，它将被当作零来处理。
+      </p><p>        该函数的<acronym class="acronym">SQL</acronym>声明必须看起来像这样：
+
+</p><pre class="programlisting">CREATE OR REPLACE FUNCTION my_penalty(internal, internal, internal)
+RETURNS internal
+AS 'MODULE_PATHNAME'
+LANGUAGE C STRICT;  -- in some cases penalty functions need not be strict</pre><p>
+
+        在 C 模块中匹配的代码则应该遵循这样的框架：
+
+</p><pre class="programlisting">PG_FUNCTION_INFO_V1(my_penalty);
+
+Datum
+my_penalty(PG_FUNCTION_ARGS)
+{
+    GISTENTRY  *origentry = (GISTENTRY *) PG_GETARG_POINTER(0);
+    GISTENTRY  *newentry = (GISTENTRY *) PG_GETARG_POINTER(1);
+    float      *penalty = (float *) PG_GETARG_POINTER(2);
+    data_type  *orig = DatumGetDataType(origentry-&gt;key);
+    data_type  *new = DatumGetDataType(newentry-&gt;key);
+
+    *penalty = my_penalty_implementation(orig, new);
+    PG_RETURN_POINTER(penalty);
+}</pre><p>
+        由于历史原因，<code class="function">penalty</code>函数不只是返回一个<code class="type">float</code>结果，而是必须把该值存储在由第三个参数指定的位置。虽然传回该参数的地址符合惯例，但返回值本身可以被忽略。
+      </p><p>        <code class="function">penalty</code>函数对于索引的好性能是至关重要的。在插入时，当要选择在树中的哪个位置加入新项时，这个函数有助于决定应该顺着哪个分支进行。在查询时，索引越平衡，查找越快速。
+      </p></dd><dt><span class="term"><code class="function">picksplit</code></span></dt><dd><p>       当需要一次索引页面分裂时，这个函数决定在该页面上哪些项会留在旧页面上，以及哪些项会移动到新页面上。
+      </p><p>        该函数的<acronym class="acronym">SQL</acronym>声明必须看起来像这样：
+
+</p><pre class="programlisting">CREATE OR REPLACE FUNCTION my_picksplit(internal, internal)
+RETURNS internal
+AS 'MODULE_PATHNAME'
+LANGUAGE C STRICT;</pre><p>
+
+        在 C 模块中匹配的代码则应该遵循这样的框架：
+
+</p><pre class="programlisting">PG_FUNCTION_INFO_V1(my_picksplit);
+
+Datum
+my_picksplit(PG_FUNCTION_ARGS)
+{
+    GistEntryVector *entryvec = (GistEntryVector *) PG_GETARG_POINTER(0);
+    GIST_SPLITVEC *v = (GIST_SPLITVEC *) PG_GETARG_POINTER(1);
+    OffsetNumber maxoff = entryvec-&gt;n - 1;
+    GISTENTRY  *ent = entryvec-&gt;vector;
+    int         i,
+                nbytes;
+    OffsetNumber *left,
+               *right;
+    data_type  *tmp_union;
+    data_type  *unionL;
+    data_type  *unionR;
+    GISTENTRY **raw_entryvec;
+
+    maxoff = entryvec-&gt;n - 1;
+    nbytes = (maxoff + 1) * sizeof(OffsetNumber);
+
+    v-&gt;spl_left = (OffsetNumber *) palloc(nbytes);
+    left = v-&gt;spl_left;
+    v-&gt;spl_nleft = 0;
+
+    v-&gt;spl_right = (OffsetNumber *) palloc(nbytes);
+    right = v-&gt;spl_right;
+    v-&gt;spl_nright = 0;
+
+    unionL = NULL;
+    unionR = NULL;
+
+    /* 初始化裸的项向量。 */
+    raw_entryvec = (GISTENTRY **) malloc(entryvec-&gt;n * sizeof(void *));
+    for (i = FirstOffsetNumber; i &lt;= maxoff; i = OffsetNumberNext(i))
+        raw_entryvec[i] = &amp;(entryvec-&gt;vector[i]);
+
+    for (i = FirstOffsetNumber; i &lt;= maxoff; i = OffsetNumberNext(i))
+    {
+        int         real_index = raw_entryvec[i] - entryvec-&gt;vector;
+
+        tmp_union = DatumGetDataType(entryvec-&gt;vector[real_index].key);
+        Assert(tmp_union != NULL);
+
+        /*
+         * 选择在哪里放置索引项并且相应地更新 unionL 和 unionR。
+         * 把项追加到 v_spl_left 或者 v_spl_right，并且设置好计数器。
+         */
+
+        if (my_choice_is_left(unionL, curl, unionR, curr))
+        {
+            if (unionL == NULL)
+                unionL = tmp_union;
+            else
+                unionL = my_union_implementation(unionL, tmp_union);
+
+            *left = real_index;
+            ++left;
+            ++(v-&gt;spl_nleft);
+        }
+        else
+        {
+            /*
+             * 和在右边的过程相同
+             */
+        }
+    }
+
+    v-&gt;spl_ldatum = DataTypeGetDatum(unionL);
+    v-&gt;spl_rdatum = DataTypeGetDatum(unionR);
+    PG_RETURN_POINTER(v);
+}</pre><p>
+
+       注意<code class="function">picksplit</code>函数的结果通过修改传入的<code class="structname">v</code>结构来传递。尽管传回<code class="structname">v</code>的地址符合惯例，但返回值本身可以被忽略。
+      </p><p>        和<code class="function">penalty</code>一样，<code class="function">picksplit</code>函数对于索引的好性能至关重要。设计合适的<code class="function">penalty</code>和<code class="function">picksplit</code>是实现一个好的<acronym class="acronym">GiST</acronym>索引中最大的挑战。
+      </p></dd><dt><span class="term"><code class="function">same</code></span></dt><dd><p>       如果两个索引项相同则返回真，否则返回假（一个<span class="quote">“<span class="quote">索引项</span>”</span>是该索引的存储类型的一个值，而不一定是原始被索引列类型的值）。
+      </p><p>        该函数的<acronym class="acronym">SQL</acronym>声明必须看起来像这样：
+
+</p><pre class="programlisting">CREATE OR REPLACE FUNCTION my_same(storage_type, storage_type, internal)
+RETURNS internal
+AS 'MODULE_PATHNAME'
+LANGUAGE C STRICT;</pre><p>
+
+        在 C 模块中匹配的代码则应该遵循这样的框架：
+
+</p><pre class="programlisting">PG_FUNCTION_INFO_V1(my_same);
+
+Datum
+my_same(PG_FUNCTION_ARGS)
+{
+    prefix_range *v1 = PG_GETARG_PREFIX_RANGE_P(0);
+    prefix_range *v2 = PG_GETARG_PREFIX_RANGE_P(1);
+    bool       *result = (bool *) PG_GETARG_POINTER(2);
+
+    *result = my_eq(v1, v2);
+    PG_RETURN_POINTER(result);
+}</pre><p>
+
+        由于历史原因，<code class="function">same</code>函数不只返回一个布尔结果。相反它必须把该标志存储在第三个参数指示的位置。尽管传回该参数的地址符合惯例，但返回值本身可以被忽略。
+      </p></dd><dt><span class="term"><code class="function">distance</code></span></dt><dd><p>       给定一个索引项<code class="literal">p</code>和一个查询值<code class="literal">q</code>，这个函数决定两者之间的<span class="quote">“<span class="quote">距离</span>”</span>。如果操作符类包含任何排序操作符，就必须提供这个函数。一个使用排序操作符的查询将首先返回具有最小<span class="quote">“<span class="quote">距离</span>”</span>值的索引项，因此结果必须与操作符的语义一致。对于一个页索引项，结果只表示到索引项的距离；对于一个内部树结点，结果必须是到任何子项的最小距离。
+      </p><p>        该函数的<acronym class="acronym">SQL</acronym>声明必须看起来像这样：
+
+</p><pre class="programlisting">CREATE OR REPLACE FUNCTION my_distance(internal, data_type, smallint, oid, internal)
+RETURNS float8
+AS 'MODULE_PATHNAME'
+LANGUAGE C STRICT;</pre><p>
+
+        在 C 模块中匹配的代码则应该遵循这样的框架：
+
+</p><pre class="programlisting">PG_FUNCTION_INFO_V1(my_distance);
+
+Datum
+my_distance(PG_FUNCTION_ARGS)
+{
+    GISTENTRY  *entry = (GISTENTRY *) PG_GETARG_POINTER(0);
+    data_type  *query = PG_GETARG_DATA_TYPE_P(1);
+    StrategyNumber strategy = (StrategyNumber) PG_GETARG_UINT16(2);
+    /* Oid subtype = PG_GETARG_OID(3); */
+    /* bool *recheck = (bool *) PG_GETARG_POINTER(4); */
+    data_type  *key = DatumGetDataType(entry-&gt;key);
+    double      retval;
+
+    /*
+     * determine return value as a function of strategy, key and query.
+     */
+
+    PG_RETURN_FLOAT8(retval);
+}</pre><p>
+
+       <code class="function">distance</code>函数的参数和<code class="function">consistent</code>函数的相同。
+      </p><p>       在决定距离时允许有某种近似，只要结果不要超过该项的实际距离即可。因此，例如在几何应用中到一个外包盒的距离就足够了。对于一个内部树节点，返回的距离不能超过到其任意一个子节点的距离。如果返回的距离不准确，该函数必须设置<code class="literal">*recheck</code>为真（这对于内部树节点是不必要的，对于它们，计算总是被假定为不准确）。在这种情况下，执行器将在从堆中取出元组后计算精确的距离，并且在必要时记录这些元组。
+      </p><p>       如果距离函数对任意叶子节点都返回<code class="literal">*recheck = true</code>，初始的排序操作符的返回类型必须是<code class="type">float8</code>或者<code class="type">float4</code>，并且距离函数的结果值必须能和初始排序操作符的结果进行比较，因为执行器将使用距离函数结果和重新计算的排序操作符结果进行排序。否则，该距离函数的结果值可以是任意有限的<code class="type">float8</code>值，只要这些结果值的相对顺序匹配该排序操作符返回的顺序（在内部会使用无穷以及负无穷来处理空值等情况，因此我们不推荐<code class="function">distance</code>函数返回这些值）。
+      </p></dd><dt><span class="term"><code class="function">fetch</code></span></dt><dd><p>       为只用索引的扫描将一个数据项压缩过的索引表达转换成原始的数据类型。被返回的数据必须是原始被索引值的一份准确的、非有损的拷贝。
+      </p><p>        该函数的<acronym class="acronym">SQL</acronym>声明必须看起来像这样：
+
+</p><pre class="programlisting">CREATE OR REPLACE FUNCTION my_fetch(internal)
+RETURNS internal
+AS 'MODULE_PATHNAME'
+LANGUAGE C STRICT;</pre><p>
+
+        参数是一个指向<code class="structname">GISTENTRY</code>结构的指针。在项上，它的<code class="structfield">key</code>域包含一个压缩形式的非-NULL 叶子数据。返回值是另一个<code class="structname">GISTENTRY</code>结构，其<code class="structfield">key</code>域包含同一数据的原始的未压缩形式。如果操作符类的压缩函数不对叶子项做任何事情，<code class="function">fetch</code>方法可以原样返回参数。
+       </p><p>        C 模块中相应的代码可能会遵循下面的框架：
+
+</p><pre class="programlisting">PG_FUNCTION_INFO_V1(my_fetch);
+
+Datum
+my_fetch(PG_FUNCTION_ARGS)
+{
+    GISTENTRY  *entry = (GISTENTRY *) PG_GETARG_POINTER(0);
+    input_data_type *in = DatumGetP(entry-&gt;key);
+    fetched_data_type *fetched_data;
+    GISTENTRY  *retval;
+
+    retval = palloc(sizeof(GISTENTRY));
+    fetched_data = palloc(sizeof(fetched_data_type));
+
+    /*
+     * 将 'fetched_data' 转换成原始数据类型的一个 Datum。
+     */
+
+    /* 从 fetch_data 填充 *retval。 */
+    gistentryinit(*retval, PointerGetDatum(converted_datum),
+                  entry-&gt;rel, entry-&gt;page, entry-&gt;offset, FALSE);
+
+    PG_RETURN_POINTER(retval);
+}</pre><p>
+      </p><p>       如果该压缩方法对于叶子项是有损的，操作符类就不能支持只用索引的扫描，并且不能定义<code class="function">fetch</code>函数。
+      </p></dd></dl></div><p>   所有的 GiST 支持方法通常都在一个短暂存在的内存上下文中被调用；就是说，每个元组被处理之后<code class="varname">CurrentMemoryContext</code>将被重置。因此没有必要操心释放你 palloc 的所有东西。但是，在某些情况下，一个支持方法在重复调用之间缓存数据是有用的。要这样做，将这些长期生存的数据分配在<code class="literal">fcinfo-&gt;flinfo-&gt;fn_mcxt</code>中，并且在<code class="literal">fcinfo-&gt;flinfo-&gt;fn_extra</code>中保持一个到它的指针。这种数据将在索引操作期间都存在（例如一次 GiST 索引扫描、索引构建或索引元组插入）。注意当替换一个<code class="literal">fn_extra</code>值时要释放之前的值，否则在操作期间该泄露会累积。
+  </p></div><div class="navfooter"><hr /><table width="100%" summary="Navigation footer"><tr><td width="40%" align="left"><a accesskey="p" href="gist-builtin-opclasses.html">上一页</a> </td><td width="20%" align="center"><a accesskey="u" href="gist.html">上一级</a></td><td width="40%" align="right"> <a accesskey="n" href="gist-implementation.html">下一页</a></td></tr><tr><td width="40%" align="left" valign="top">62.2. 内建操作符类 </td><td width="20%" align="center"><a accesskey="h" href="index.html">起始页</a></td><td width="40%" align="right" valign="top"> 62.4. 实现</td></tr></table></div></body></html>

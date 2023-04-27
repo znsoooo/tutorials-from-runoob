@@ -1,0 +1,139 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><title>14.2. 规划器使用的统计信息</title><link rel="stylesheet" type="text/css" href="stylesheet.css" /><link rev="made" href="pgsql-docs@postgresql.org" /><meta name="generator" content="DocBook XSL Stylesheets V1.79.1" /><link rel="prev" href="using-explain.html" title="14.1. 使用EXPLAIN" /><link rel="next" href="explicit-joins.html" title="14.3. 用显式JOIN子句控制规划器" /></head><body><div xmlns="http://www.w3.org/TR/xhtml1/transitional" class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="5" align="center">14.2. 规划器使用的统计信息</th></tr><tr><td width="10%" align="left"><a accesskey="p" href="using-explain.html" title="14.1. 使用EXPLAIN">上一页</a> </td><td width="10%" align="left"><a accesskey="u" href="performance-tips.html" title="第 14 章 性能提示">上一级</a></td><th width="60%" align="center">第 14 章 性能提示</th><td width="10%" align="right"><a accesskey="h" href="index.html" title="PostgreSQL 10.1 手册">起始页</a></td><td width="10%" align="right"> <a accesskey="n" href="explicit-joins.html" title="14.3. 用显式JOIN子句控制规划器">下一页</a></td></tr></table><hr></hr></div><div class="sect1" id="PLANNER-STATS"><div class="titlepage"><div><div><h2 class="title" style="clear: both">14.2. 规划器使用的统计信息</h2></div></div></div><div class="toc"><dl class="toc"><dt><span class="sect2"><a href="planner-stats.html#idp18383184">14.2.1. 单列统计</a></span></dt><dt><span class="sect2"><a href="planner-stats.html#PLANNER-STATS-EXTENDED">14.2.2. 扩展统计</a></span></dt></dl></div><a id="idp18381728" class="indexterm"></a><div class="sect2" id="idp18383184"><div class="titlepage"><div><div><h3 class="title">14.2.1. 单列统计</h3></div></div></div><p>   如我们在上一节所见，查询规划器需要估计一个查询要检索的行数，这样才能对查询计划做出好的选择。 本节对系统用于这些估计的统计信息进行一个快速的介绍。
+  </p><p>   统计信息的一个部分就是每个表和索引中的项的总数，以及每个表和索引占用的磁盘块数。这些信息保存在<a class="link" href="catalog-pg-class.html" title="51.11. pg_class"><code class="structname">pg_class</code></a>表的<code class="structfield">reltuples</code>和<code class="structfield">relpages</code>列中。 我们可以用类似下面的查询查看这些信息：
+
+</p><pre class="screen">SELECT relname, relkind, reltuples, relpages
+FROM pg_class
+WHERE relname LIKE 'tenk1%';
+
+       relname        | relkind | reltuples | relpages
+----------------------+---------+-----------+----------
+ tenk1                | r       |     10000 |      358
+ tenk1_hundred        | i       |     10000 |       30
+ tenk1_thous_tenthous | i       |     10000 |       30
+ tenk1_unique1        | i       |     10000 |       30
+ tenk1_unique2        | i       |     10000 |       30
+(5 rows)</pre><p>
+
+   这里我们可以看到<code class="structname">tenk1</code>包含 10000 行， 它的索引也有这么多行，但是索引远比表小得多（不奇怪）。
+  </p><p>   出于效率考虑，<code class="structfield">reltuples</code>和<code class="structfield">relpages</code>不是实时更新的 ，因此它们通常包含有些过时的值。它们被<code class="command">VACUUM</code>、<code class="command">ANALYZE</code>和几个 DDL 命令（例如<code class="command">CREATE INDEX</code>）更新。一个不扫描全表的<code class="command">VACUUM</code>或<code class="command">ANALYZE</code>操作（常见情况）将以它扫描的部分为基础增量更新<code class="structfield">reltuples</code>计数，这就导致了一个近似值。在任何情况中，规划器将缩放它在<code class="structname">pg_class</code>中找到的值来匹配当前的物理表尺寸，这样得到一个较紧的近似。
+  </p><a id="idp18394688" class="indexterm"></a><p>   大多数查询只是检索表中行的一部分，因为它们有限制要被检查的行的<code class="literal">WHERE</code>子句。 因此规划器需要估算<code class="literal">WHERE</code>子句的<em class="firstterm">选择度</em>，即符合<code class="literal">WHERE</code>子句中每个条件的行的比例。 用于这个任务的信息存储在<a class="link" href="catalog-pg-statistic.html" title="51.50. pg_statistic"><code class="structname">pg_statistic</code></a>系统目录中。 在<code class="structname">pg_statistic</code>中的项由<code class="command">ANALYZE</code>和<code class="command">VACUUM ANALYZE</code>命令更新， 并且总是近似值（即使刚刚更新完）。
+  </p><a id="idp18401552" class="indexterm"></a><p>   除了直接查看<code class="structname">pg_statistic</code>之外， 手工检查统计信息的时候最好查看它的视图<a class="link" href="view-pg-stats.html" title="51.87. pg_stats"><code class="structname">pg_stats</code></a>。<code class="structname">pg_stats</code>被设计为更容易阅读。 而且，<code class="structname">pg_stats</code>是所有人都可以读取的，而<code class="structname">pg_statistic</code>只能由超级用户读取（这样可以避免非授权用户从统计信息中获取一些其他人的表的内容的信息。<code class="structname">pg_stats</code>视图被限制为只显示当前用户可读的表）。例如，我们可以：
+
+</p><pre class="screen">SELECT attname, inherited, n_distinct,
+       array_to_string(most_common_vals, E'\n') as most_common_vals
+FROM pg_stats
+WHERE tablename = 'road';
+
+ attname | inherited | n_distinct |          most_common_vals
+---------+-----------+------------+------------------------------------
+ name    | f         |  -0.363388 | I- 580                        Ramp+
+         |           |            | I- 880                        Ramp+
+         |           |            | Sp Railroad                       +
+         |           |            | I- 580                            +
+         |           |            | I- 680                        Ramp
+ name    | t         |  -0.284859 | I- 880                        Ramp+
+         |           |            | I- 580                        Ramp+
+         |           |            | I- 680                        Ramp+
+         |           |            | I- 580                            +
+         |           |            | State Hwy 13                  Ramp
+(2 rows)</pre><p>
+
+   注意，这两行显示的是相同的列，一个对应开始于<code class="literal">road</code>表（<code class="literal">inherited</code>=<code class="literal">t</code>）的完全继承层次， 另一个只包括<code class="literal">road</code>表本身（<code class="literal">inherited</code>=<code class="literal">f</code>）。
+  </p><p>   <code class="command">ANALYZE</code>在<code class="structname">pg_statistic</code>中存储的信息量（特别是每个列的<code class="structfield">most_common_vals</code>中的最大项数和<code class="structfield">histogram_bounds</code>数组）可以用<code class="command">ALTER TABLE SET STATISTICS</code>命令为每一列设置， 或者通过设置配置变量<a class="xref" href="runtime-config-query.html#GUC-DEFAULT-STATISTICS-TARGET">default_statistics_target</a>进行全局设置。 目前的默认限制是 100 个项。提升该限制可能会让规划器做出更准确的估计（特别是对那些有不规则数据分布的列）， 其代价是在<code class="structname">pg_statistic</code>中消耗了更多空间，并且需要略微多一些的时间来计算估计数值。 相比之下，比较低的限制可能更适合那些数据分布比较简单的列。
+  </p><p>   更多规划器对统计信息的使用可参阅<a class="xref" href="planner-stats-details.html" title="第 68 章 规划器如何使用统计信息">第 68 章</a>。
+  </p></div><div class="sect2" id="PLANNER-STATS-EXTENDED"><div class="titlepage"><div><div><h3 class="title">14.2.2. 扩展统计</h3></div></div></div><a id="idp18419088" class="indexterm"></a><a id="idp18420576" class="indexterm"></a><a id="idp18421552" class="indexterm"></a><p>    通常会看到缓慢的查询运行错误的执行计划，因为查询子句中使用的多列是相关的。
+	规划器通常假定多个条件彼此独立，当列值相关时，这种假设不成立。
+	由于每个单独列的性质，定期统计无法捕捉有关跨列关联的任何知识。
+	但是，<span class="productname">PostgreSQL</span>能够计算<em class="firstterm">多元统计信息</em>，
+	它可以捕获这些信息。
+   </p><p>    由于可能的列组合数量非常大，因此自动计算多元统计信息是不切实际的。
+	相反，可以创建<em class="firstterm">扩展统计信息对象</em>，
+	通常称为<em class="firstterm">统计信息对象</em>，以指示服务器通过有趣的列集获得统计信息。
+   </p><p>    统计信息对象是使用<a class="xref" href="sql-createstatistics.html" title="CREATE STATISTICS"><span class="refentrytitle">CREATE STATISTICS</span></a>创建的，
+	它可以查看更多详细信息。创建这样一个对象只是创建一个表示对统计信息感兴趣的目录条目。
+	实际的数据收集由<code class="command">ANALYZE</code>执行（手动命令或后端自动分析）。
+	可以在<a class="link" href="catalog-pg-statistic-ext.html" title="51.51. pg_statistic_ext"><code class="structname">pg_statistic_ext</code></a>
+	目录中检查收集的值。
+   </p><p>    <code class="command">ANALYZE</code>根据计算常规单列统计信息所用的相同表行样本来计算扩展统计信息。
+	由于通过增加表或其任何列的统计目标（如前一节中所述）来增加样本大小，
+	因此较大的统计目标通常会导致更加准确的扩展统计量，以及花费更多时间计算它们。
+   </p><p>    以下小节介绍当前支持的扩展统计信息的种类。
+   </p><div class="sect3" id="idp18431088"><div class="titlepage"><div><div><h4 class="title">14.2.2.1. 函数依赖</h4></div></div></div><p>     最简单的扩展统计信息跟踪<em class="firstterm">函数依赖</em>，一个用于数据库标准表单的定义中的概念。
+	 如果知道<code class="structfield">a</code>的值足够确定<code class="structfield">b</code>的值，
+	 我们说列<code class="structfield">b</code>函数依赖于列<code class="structfield">a</code>，
+	 即没有两行会有相同的<code class="structfield">a</code>值但<code class="structfield">b</code>值不同。
+	 在完全规范化的数据库中，函数依赖关系只应存在于主键和超级键上。
+	 但是，实际上很多数据集由于各种原因未完全标准化；
+	 出于性能原因的故意的非规范化是一个常见的例子。即使在完全标准化的数据库中，
+	 某些列之间也可能存在部分相关性，可以将其表示为部分函数依赖性。
+    </p><p>     函数依赖的存在直接影响某些查询中估计的准确性。
+	 如果查询在独立列和从属列上都包含条件，则从属列上的条件不会进一步减小结果大小；
+	 但没有关于函数依赖关系的知识，查询规划器会认为条件是独立的，导致低估结果大小。
+    </p><p>     为了向规划器通知函数依赖关系，<code class="command">ANALYZE</code>可以收集跨列依赖关系的度量。
+	 评估所有列集之间的依赖程度会非常昂贵，因此数据收集仅限于那些在使用
+	 <code class="literal">dependencies</code>选项定义的统计信息对象中一起出现的列组。
+	 建议仅为强关联的列组创建<code class="literal">dependencies</code>统计信息，
+	 以避免在<code class="command">ANALYZE</code>和以后的查询计划中产生不必要的开销。
+    </p><p>     这里是一个收集函数依赖性统计信息的示例：
+</p><pre class="programlisting">CREATE STATISTICS stts (dependencies) ON zip, city FROM zipcodes;
+
+ANALYZE zipcodes;
+
+SELECT stxname, stxkeys, stxdependencies
+  FROM pg_statistic_ext
+  WHERE stxname = 'stts';
+ stxname | stxkeys |             stxdependencies               
+---------+---------+------------------------------------------
+ stts    | 1 5     | {"1 =&gt; 5": 1.000000, "5 =&gt; 1": 0.423130}
+(1 row)</pre><p>
+     在这里可以看出，第1列（zip code）完全确定第5列（city），因此系数为1.0，
+	 而city仅确定大约42％的zip code，这意味着有很多cities（58％）是由多个ZIP code代表的。
+    </p><p>     当计算包含函数依赖性列的查询的选择性时，规划器使用依赖系数调整每个条件的选择性估计，
+	 以免产生低估。
+    </p><div class="sect4" id="idp18442816"><div class="titlepage"><div><div><h5 class="title">14.2.2.1.1. 函数依赖的局限性</h5></div></div></div><p>      函数依赖性当前仅在考虑将列与常量值进行比较的简单相等条件时才适用。
+	  它们不用于改进对比较两列或将列与表达式进行比较的相等条件的估计值，
+	  也不用于范围子句、<code class="literal">LIKE</code>或任何其他类型的条件。
+     </p><p>      When estimating with functional dependencies, the planner assumes that
+      conditions on the involved columns are compatible and hence redundant.
+      If they are incompatible, the correct estimate would be zero rows, but
+      that possibility is not considered.  For example, given a query like
+	  当使用函数依赖性进行估计时，规划器假设包含列上的条件是兼容的，并且因此使冗余的。
+	  如果它们不兼容，则正确的估计应该是0行，但是不考虑这种可能性。例如，
+	  给出一个查询
+</p><pre class="programlisting">SELECT * FROM zipcodes WHERE city = 'San Francisco' AND zip = '94105';</pre><p>
+      规划器将忽略<code class="structfield">city</code>子句没有改变选择性，这是正确的。不过，
+	  它会对下面语句做出相同的假设
+</p><pre class="programlisting">SELECT * FROM zipcodes WHERE city = 'San Francisco' AND zip = '90210';</pre><p>
+      即使实际上没有行满足这个查询。然而，函数依赖统计信息没有提供足够的信息来得出结论。
+     </p><p>      在许多实际情况中，这个假设通常是满足的；例如，应用程序中可能存在GUI，
+	  只允许选择兼容的city和ZIP code值用于查询。但是，如果情况并非如此，
+	  函数依赖可能不是一个可行的选择。
+     </p></div></div><div class="sect3" id="idp18449296"><div class="titlepage"><div><div><h4 class="title">14.2.2.2.  N 个不同多变量的计数</h4></div></div></div><p>     单列统计信息存储每列中不同值的数量。当规划器只有单列统计数据时，
+	 如果组合多个列（例如，对于<code class="literal">GROUP BY a, b</code>），
+	 对不同值个数的估计常常是错误的，导致它选择不好的计划。
+    </p><p>     为了改进这种估计，<code class="command">ANALYZE</code>可以为列组收集n个不同的统计数据。
+	 与以前一样，对每个可能的列组都进行此操作是不切实际的，
+	 因此仅针对那些出现在由<code class="literal">ndistinct</code>
+	 选项定义的统计信息对象中的列组收集数据。
+	 将针对列出的列中的两列或更多列的每个可能组合收集数据。
+    </p><p>     继续前面的例子，邮政编码表中的n个不同的计数可能如下所示：
+</p><pre class="programlisting">CREATE STATISTICS stts2 (ndistinct) ON zip, state, city FROM zipcodes;
+
+ANALYZE zipcodes;
+
+SELECT stxkeys AS k, stxndistinct AS nd
+  FROM pg_statistic_ext
+  WHERE stxname = 'stts2';
+-[ RECORD 1 ]--------------------------------------------------------
+k  | 1 2 5
+nd | {"1, 2": 33178, "1, 5": 33178, "2, 5": 27435, "1, 2, 5": 33178}
+(1 row)</pre><p>
+     这表明有三种组合的列有33178个不同的值：ZIP code和state；
+	 ZIP code和city；ZIP code、city和state（事实上，他们都是平等的，
+	 因为ZIP code本身在此表中是独一无二的）。另一方面，
+	 city与state的组合只有27435个不同的值。
+    </p><p>     建议仅在实际用于分组的列的组合上创建<code class="literal">ndistinct</code>统计信息对象，
+	 并且对组数进行错误估计会导致计划错误。否则，<code class="command">ANALYZE</code>周期只会被浪费。
+    </p></div></div></div><div class="navfooter"><hr /><table width="100%" summary="Navigation footer"><tr><td width="40%" align="left"><a accesskey="p" href="using-explain.html">上一页</a> </td><td width="20%" align="center"><a accesskey="u" href="performance-tips.html">上一级</a></td><td width="40%" align="right"> <a accesskey="n" href="explicit-joins.html">下一页</a></td></tr><tr><td width="40%" align="left" valign="top">14.1. 使用<code class="command">EXPLAIN</code> </td><td width="20%" align="center"><a accesskey="h" href="index.html">起始页</a></td><td width="40%" align="right" valign="top"> 14.3. 用显式<code class="literal">JOIN</code>子句控制规划器</td></tr></table></div></body></html>

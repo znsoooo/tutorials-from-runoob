@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><title>48.2. 逻辑解码概念</title><link rel="stylesheet" type="text/css" href="stylesheet.css" /><link rev="made" href="pgsql-docs@postgresql.org" /><meta name="generator" content="DocBook XSL Stylesheets V1.79.1" /><link rel="prev" href="logicaldecoding-example.html" title="48.1. 逻辑解码的例子" /><link rel="next" href="logicaldecoding-walsender.html" title="48.3. 流复制协议接口" /></head><body><div xmlns="http://www.w3.org/TR/xhtml1/transitional" class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="5" align="center">48.2. 逻辑解码概念</th></tr><tr><td width="10%" align="left"><a accesskey="p" href="logicaldecoding-example.html" title="48.1. 逻辑解码的例子">上一页</a> </td><td width="10%" align="left"><a accesskey="u" href="logicaldecoding.html" title="第 48 章 逻辑解码">上一级</a></td><th width="60%" align="center">第 48 章 逻辑解码</th><td width="10%" align="right"><a accesskey="h" href="index.html" title="PostgreSQL 10.1 手册">起始页</a></td><td width="10%" align="right"> <a accesskey="n" href="logicaldecoding-walsender.html" title="48.3. 流复制协议接口">下一页</a></td></tr></table><hr></hr></div><div class="sect1" id="LOGICALDECODING-EXPLANATION"><div class="titlepage"><div><div><h2 class="title" style="clear: both">48.2. 逻辑解码概念</h2></div></div></div><div class="toc"><dl class="toc"><dt><span class="sect2"><a href="logicaldecoding-explanation.html#idp39429744">48.2.1. 逻辑解码</a></span></dt><dt><span class="sect2"><a href="logicaldecoding-explanation.html#LOGICALDECODING-REPLICATION-SLOTS">48.2.2. 复制槽</a></span></dt><dt><span class="sect2"><a href="logicaldecoding-explanation.html#idp39444848">48.2.3. 输出插件</a></span></dt><dt><span class="sect2"><a href="logicaldecoding-explanation.html#idp39445760">48.2.4. 导出快照</a></span></dt></dl></div><div class="sect2" id="idp39429744"><div class="titlepage"><div><div><h3 class="title">48.2.1. 逻辑解码</h3></div></div></div><a id="idp39430160" class="indexterm"></a><p>     逻辑解码是一种将对数据库表的所有持久更改抽取到一种清晰、易于理解的格式
+     的处理，这种技术允许在不了解数据库内部状态的详细知识的前提下解释该格式。
+    </p><p>     在<span class="productname">PostgreSQL</span>中，逻辑解码通过解码
+     <a class="link" href="wal.html" title="第 30 章 可靠性和预写式日志">预写式日志</a>的内容来实现，预写式日志描述了存储
+     层面上的更改，而逻辑解码则会把更改解码成一种应用相关的形式，例如一个元组
+     流或者 SQL 语句流。
+    </p></div><div class="sect2" id="LOGICALDECODING-REPLICATION-SLOTS"><div class="titlepage"><div><div><h3 class="title">48.2.2. 复制槽</h3></div></div></div><a id="idp39434480" class="indexterm"></a><p>     在逻辑复制的环境下，一个槽表示一个更改流，这些更改可以在客户机上以它们在原服务器上产生的顺序被重播。每一个流从一个单一数据库中流式传送更改序列。
+    </p><div class="note"><h3 class="title">注意</h3><p><span class="productname">PostgreSQL</span>也有流复制槽（见<a class="xref" href="warm-standby.html#STREAMING-REPLICATION" title="26.2.5. 流复制">第 26.2.5 节</a>），但是它们的使用有所不同。
+     </p></div><p>     一个复制槽在一个<span class="productname">PostgreSQL</span>集簇的所
+     有数据库之间具有一个唯一的标识符。槽在使用它们的连接之间保持独立并且
+     对于崩溃是安全的。
+    </p><p>     在常规操作中，一个逻辑槽只会把每次更改发出一次。只有在检查点时才会持久化每一个槽的当前位置，因此如果发生崩溃，槽可能会回到一个较早的 LSN，这会导致服务器重启时重新发送最近的更改。逻辑解码客户端负责避免多次处理同一消息导致的副作用。客户端可能会希望在解码时记录它们看到的最新的 LSN，并且跳过任何从该 LSN 解码得到的重复数据或者（使用复制协议时的）请求，而不是让服务器来决定开始点。复制进度跟踪特性就是为此服务的，请参考<a class="link" href="replication-origins.html" title="第 49 章 复制进度追踪">复制源头</a>。
+    </p><p>     对于同一个数据库可能会存在多个独立的槽。每一个槽有自己的状态，允许不
+     同的消费者从该数据库的更改流中的不同点开始接收更改。对于大多数应用，
+     每一个消费者都将要求一个单独的槽。
+    </p><p>     逻辑复制槽完全不知道接收者的状态。甚至可能会有多个不同的接收者在不同
+     时间使用同一个槽，它们将只是从上一个接收者停止消费更改的地方开始得到
+     更改。但在任一给定时刻，只有一个接收者可以从一个槽中消费更改。
+    </p><div class="note"><h3 class="title">注意</h3><p>      复制槽可以在崩溃时保持，并且不知道其消费者的状态。即便没有连接使用它们，
+      它们也将阻止移除所需的资源。这会消耗存储，因为只要还有一个复制槽需要，
+      WAL 和来自于系统目录的行就不能被<code class="command">VACUUM</code>移除。
+      因此如果不再需要一个槽，那就应该删除它。
+     </p></div></div><div class="sect2" id="idp39444848"><div class="titlepage"><div><div><h3 class="title">48.2.3. 输出插件</h3></div></div></div><p>     输出插件将数据从预写式日志的内部表示转换成复制槽的消费者所需的格式。
+    </p></div><div class="sect2" id="idp39445760"><div class="titlepage"><div><div><h3 class="title">48.2.4. 导出快照</h3></div></div></div><p>     当使用流复制接口（<a class="xref" href="protocol-replication.html#PROTOCOL-REPLICATION-CREATE-SLOT">CREATE_REPLICATION_SLOT</a>）
+	 创建一个新的复制槽时，一个快照将被导出（见
+     <a class="xref" href="functions-admin.html#FUNCTIONS-SNAPSHOT-SYNCHRONIZATION" title="9.26.5. 快照同步函数">第 9.26.5 节</a>），在它所显示的
+     数据库状态之后所有的更改都将被包括在更改流中。通过使用
+     <a class="link" href="sql-set-transaction.html" title="SET TRANSACTION"><code class="literal">SET TRANSACTION
+     SNAPSHOT</code></a>读取槽被创建时的数据库状态，这可以用来创建
+     一个新的复制。然后这个事务可以被用来及时转储那一点的数据库状态，它后来
+     可以被槽的内容更新而不丢失任何更改。
+    </p><p>     创建快照并不总是可能的。特别是，连接到热备份时会失败。
+	 不需要快照导出的应用程序可以使用<code class="literal">NOEXPORT_SNAPSHOT</code>选项来抑制它。
+    </p></div></div><div class="navfooter"><hr /><table width="100%" summary="Navigation footer"><tr><td width="40%" align="left"><a accesskey="p" href="logicaldecoding-example.html">上一页</a> </td><td width="20%" align="center"><a accesskey="u" href="logicaldecoding.html">上一级</a></td><td width="40%" align="right"> <a accesskey="n" href="logicaldecoding-walsender.html">下一页</a></td></tr><tr><td width="40%" align="left" valign="top">48.1. 逻辑解码的例子 </td><td width="20%" align="center"><a accesskey="h" href="index.html">起始页</a></td><td width="40%" align="right" valign="top"> 48.3. 流复制协议接口</td></tr></table></div></body></html>

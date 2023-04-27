@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><title>11.1. 简介</title><link rel="stylesheet" type="text/css" href="stylesheet.css" /><link rev="made" href="pgsql-docs@postgresql.org" /><meta name="generator" content="DocBook XSL Stylesheets V1.79.1" /><link rel="prev" href="indexes.html" title="第 11 章 索引" /><link rel="next" href="indexes-types.html" title="11.2. 索引类型" /></head><body><div xmlns="http://www.w3.org/TR/xhtml1/transitional" class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="5" align="center">11.1. 简介</th></tr><tr><td width="10%" align="left"><a accesskey="p" href="indexes.html" title="第 11 章 索引">上一页</a> </td><td width="10%" align="left"><a accesskey="u" href="indexes.html" title="第 11 章 索引">上一级</a></td><th width="60%" align="center">第 11 章 索引</th><td width="10%" align="right"><a accesskey="h" href="index.html" title="PostgreSQL 10.1 手册">起始页</a></td><td width="10%" align="right"> <a accesskey="n" href="indexes-types.html" title="11.2. 索引类型">下一页</a></td></tr></table><hr></hr></div><div class="sect1" id="INDEXES-INTRO"><div class="titlepage"><div><div><h2 class="title" style="clear: both">11.1. 简介</h2></div></div></div><p>   假设我们有一个如下的表：
+</p><pre class="programlisting">CREATE TABLE test1 (
+    id integer,
+    content varchar
+);</pre><p>
+   而应用发出很多以下形式的查询：
+</p><pre class="programlisting">SELECT content FROM test1 WHERE id = <em class="replaceable"><code>constant</code></em>;</pre><p>
+   在没有事前准备的情况下，系统不得不扫描整个<code class="structname">test1</code>表，一行一行地去找到所有匹配的项。如果<code class="structname">test1</code>中有很多行但是只有一小部分行（可能是0或者1）需要被该查询返回，这显然是一种低效的方式。但是如果系统被指示维护一个在<code class="structfield">id</code>列上的索引，它就能使用一种更有效的方式来定位匹配行。例如，它可能仅仅需要遍历一棵搜索树的几层而已。
+  </p><p>   类似的方法也被用于大部分非小说书籍中：经常被读者查找的术语和概念被收集在一个字母序索引中放在书籍的末尾。感兴趣的读者可以相对快地扫描索引并跳到合适的页而不需要阅读整本书来寻找感兴趣的材料。正如作者的任务是准备好读者可能会查找的术语一样，数据库程序员也需要预见哪些索引会有用。
+  </p><p>   正如前面讨论的，下列命令可以用来在<code class="structfield">id</code>列上创建一个索引：
+</p><pre class="programlisting">CREATE INDEX test1_id_index ON test1 (id);</pre><p>
+   索引的名字<code class="structname">test1_id_index</code>可以自由选择，但我们最好选择一个能让我们想起该索引用途的名字。
+  </p><p>   为了移除一个索引，可以使用<code class="command">DROP INDEX</code>命令。索引可以随时被创建或删除。
+  </p><p>   一旦一个索引被创建，就不再需要进一步的干预：系统会在表更新时更新索引，而且会在它觉得使用索引比顺序扫描表效率更高时使用索引。但我们可能需要定期地运行<code class="command">ANALYZE</code>命令来更新统计信息以便查询规划器能做出正确的决定。通过<a class="xref" href="performance-tips.html" title="第 14 章 性能提示">第 14 章</a>的信息可以了解如何找出一个索引是否被使用以及规划器在何时以及为什么会选择<span class="emphasis"><em>不</em></span>使用索引。
+  </p><p>   索引也会使带有搜索条件的<code class="command">UPDATE</code>和<code class="command">DELETE</code>命令受益。此外索引还可以在连接搜索中使用。因此，一个定义在连接条件列上的索引可以显著地提高连接查询的速度。
+  </p><p>   在一个大表上创建一个索引会耗费很长的时间。默认情况下，<span class="productname">PostgreSQL</span>允许在索引创建时并行地进行读（<code class="command">SELECT</code>命令），但写（<code class="command">INSERT</code>、<code class="command">UPDATE</code>和<code class="command">DELETE</code>）则会被阻塞直到索引创建完成。在生产环境中这通常是不可接受的。在创建索引时允许并行的写是可能的，但是有些警告需要注意，更多信息可以参考<a class="xref" href="sql-createindex.html#SQL-CREATEINDEX-CONCURRENTLY" title="并发构建索引">并发构建索引</a>。
+  </p><p>   一个索引被创建后，系统必须保持它与表同步。这增加了数据操作的负担。因此哪些很少或从不在查询中使用的索引应该被移除。
+  </p></div><div class="navfooter"><hr /><table width="100%" summary="Navigation footer"><tr><td width="40%" align="left"><a accesskey="p" href="indexes.html">上一页</a> </td><td width="20%" align="center"><a accesskey="u" href="indexes.html">上一级</a></td><td width="40%" align="right"> <a accesskey="n" href="indexes-types.html">下一页</a></td></tr><tr><td width="40%" align="left" valign="top">第 11 章 索引 </td><td width="20%" align="center"><a accesskey="h" href="index.html">起始页</a></td><td width="40%" align="right" valign="top"> 11.2. 索引类型</td></tr></table></div></body></html>

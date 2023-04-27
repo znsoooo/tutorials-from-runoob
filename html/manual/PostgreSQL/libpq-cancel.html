@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><title>33.6. 取消进行中的查询</title><link rel="stylesheet" type="text/css" href="stylesheet.css" /><link rev="made" href="pgsql-docs@postgresql.org" /><meta name="generator" content="DocBook XSL Stylesheets V1.79.1" /><link rel="prev" href="libpq-single-row-mode.html" title="33.5. 一行一行地检索查询结果" /><link rel="next" href="libpq-fastpath.html" title="33.7. 快速路径接口" /></head><body><div xmlns="http://www.w3.org/TR/xhtml1/transitional" class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="5" align="center">33.6. 取消进行中的查询</th></tr><tr><td width="10%" align="left"><a accesskey="p" href="libpq-single-row-mode.html" title="33.5. 一行一行地检索查询结果">上一页</a> </td><td width="10%" align="left"><a accesskey="u" href="libpq.html" title="第 33 章 libpq - C 库">上一级</a></td><th width="60%" align="center">第 33 章 <span xmlns="http://www.w3.org/1999/xhtml" class="application">libpq</span> - C 库</th><td width="10%" align="right"><a accesskey="h" href="index.html" title="PostgreSQL 10.1 手册">起始页</a></td><td width="10%" align="right"> <a accesskey="n" href="libpq-fastpath.html" title="33.7. 快速路径接口">下一页</a></td></tr></table><hr></hr></div><div class="sect1" id="LIBPQ-CANCEL"><div class="titlepage"><div><div><h2 class="title" style="clear: both">33.6. 取消进行中的查询</h2></div></div></div><a id="idp28049456" class="indexterm"></a><p>   一个客户端应用可以使用本节描述的函数请求取消一个仍在被服务器处理的命令。
+
+   </p><div class="variablelist"><dl class="variablelist"><dt id="LIBPQ-PQGETCANCEL"><span class="term">      <code class="function">PQgetCancel</code>
+      <a id="idp28052864" class="indexterm"></a>
+     </span></dt><dd><p>       创建一个数据结构，这个数据结构包含取消一个通过特定数据库连接发出的命令所需要的信息。
+</p><pre class="synopsis">PGcancel *PQgetCancel(PGconn *conn);</pre><p>
+      </p><p>       给出一个PQgetCancel连接对象，PQgetCancel创建一个 PGcancel对象。如果给出 的conn是NULL或者是一个无效的连接，那么它将返回NULL。PGcancel对象是一个不透明的结构， 不应该为应用所直接访问；我们只能把它传递给PQcancel或者PQfreeCancel。
+       给定一个<code class="structname">PGconn</code>连接对象，<code class="function">PQgetCancel</code>创建一个<code class="structname">PGcancel</code><a id="idp28057408" class="indexterm"></a>对象。如果给定的<em class="parameter"><code>conn</code></em>为<code class="symbol">NULL</code>或者一个不合法的连接，它将返回<code class="symbol">NULL</code>。<code class="structname">PGcancel</code>对象是一个透明的结构，它不能直接被应用访问。它只能被传递给<code class="function">PQcancel</code>或<code class="function">PQfreeCancel</code>。
+      </p></dd><dt id="LIBPQ-PQFREECANCEL"><span class="term">      <code class="function">PQfreeCancel</code>
+      <a id="idp28063424" class="indexterm"></a>
+     </span></dt><dd><p>       释放一个由<code class="function">PQgetCancel</code>创建的数据结构。
+</p><pre class="synopsis">void PQfreeCancel(PGcancel *cancel);</pre><p>
+      </p><p>       PQfreeCancel释放一个由前面的PQgetCancel创建的数据对象。
+       <code class="function">PQfreeCancel</code>释放一个之前由<code class="function">PQgetCancel</code>创建的数据对象。
+      </p></dd><dt id="LIBPQ-PQCANCEL"><span class="term">      <code class="function">PQcancel</code>
+      <a id="idp28069520" class="indexterm"></a>
+     </span></dt><dd><p>       要求服务器放弃当前命令的处理。
+</p><pre class="synopsis">int PQcancel(PGcancel *cancel, char *errbuf, int errbufsize);</pre><p>
+      </p><p>       如果取消请求成功发送，则返回值为 1，否则为 0。如果不成功，则<em class="parameter"><code>errbuf</code></em>会被填充一个解释性的错误消息。<em class="parameter"><code>errbuf</code></em>必须是一个尺寸为<em class="parameter"><code>errbufsize</code></em>的字符数组（推荐尺寸为 256 字节）。，解释为何不成功。errbuf必须是 一个大小为errbufsize的 char 数组（建议大小为 256 字节）。
+      </p><p>       不过，成功的发送并不保证请求会有任何效果。如果取消有效，那么当前的命令将提前终止并且返回一个错误结果。如果取消失败（也就是说， 因为服务器已经完成命令的处理），那么就根本不会有可见的结果。
+      </p><p>       如果PQcancel是信号句柄里的一个局部变量，那么PQcancel可以在一个信号 句柄里安全地调用。在PQcancel涉及的范围里，PQcancel对象都是只读的， 因此我们也可以从一个与处理PGconn对象的线程分离的线程里处理它。
+       如果<em class="parameter"><code>errbuf</code></em>是信号处理器中的一个局部变量，<code class="function">PQcancel</code>可以从一个信号处理器中安全地调用。在<code class="structname">PGcancel</code>有关的范围内，<code class="function">PQcancel</code>都是只读的，因此也可以在一个从操纵<code class="structname">PGconn</code>对象的线程中独立出来的线程中调用它。
+      </p></dd></dl></div><p>
+
+   </p><div class="variablelist"><dl class="variablelist"><dt id="LIBPQ-PQREQUESTCANCEL"><span class="term">      <code class="function">PQrequestCancel</code>
+      <a id="idp28081104" class="indexterm"></a>
+     </span></dt><dd><p>       <code class="function">PQrequestCancel</code>是<code class="function">PQcancel</code>的一个被废弃的变体。
+</p><pre class="synopsis">int PQrequestCancel(PGconn *conn);</pre><p>
+      </p><p>       要求服务器放弃当前命令的处理。它直接在<code class="structname">PGconn</code>对象上进行操作， 并且如果失败，就会在<code class="structname">PGconn</code>对象里存储错误消息（因此可以用<code class="function">PQerrorMessage</code>检索出来）。 尽管功能相同，这个方法在多线程程序里和信号处理器里会带来危险，因为它可能 覆盖<code class="structname">PGconn</code>的错误消息，进而将当前连接上正在处理的操作搞乱。
+      </p></dd></dl></div><p>
+  </p></div><div class="navfooter"><hr /><table width="100%" summary="Navigation footer"><tr><td width="40%" align="left"><a accesskey="p" href="libpq-single-row-mode.html">上一页</a> </td><td width="20%" align="center"><a accesskey="u" href="libpq.html">上一级</a></td><td width="40%" align="right"> <a accesskey="n" href="libpq-fastpath.html">下一页</a></td></tr><tr><td width="40%" align="left" valign="top">33.5. 一行一行地检索查询结果 </td><td width="20%" align="center"><a accesskey="h" href="index.html">起始页</a></td><td width="40%" align="right" valign="top"> 33.7. 快速路径接口</td></tr></table></div></body></html>

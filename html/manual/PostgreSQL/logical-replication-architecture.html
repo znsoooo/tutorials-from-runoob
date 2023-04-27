@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><title>31.5. 架构</title><link rel="stylesheet" type="text/css" href="stylesheet.css" /><link rev="made" href="pgsql-docs@postgresql.org" /><meta name="generator" content="DocBook XSL Stylesheets V1.79.1" /><link rel="prev" href="logical-replication-restrictions.html" title="31.4. 限制" /><link rel="next" href="logical-replication-monitoring.html" title="31.6. 监控" /></head><body><div xmlns="http://www.w3.org/TR/xhtml1/transitional" class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="5" align="center">31.5. 架构</th></tr><tr><td width="10%" align="left"><a accesskey="p" href="logical-replication-restrictions.html" title="31.4. 限制">上一页</a> </td><td width="10%" align="left"><a accesskey="u" href="logical-replication.html" title="第 31 章 逻辑复制">上一级</a></td><th width="60%" align="center">第 31 章 逻辑复制</th><td width="10%" align="right"><a accesskey="h" href="index.html" title="PostgreSQL 10.1 手册">起始页</a></td><td width="10%" align="right"> <a accesskey="n" href="logical-replication-monitoring.html" title="31.6. 监控">下一页</a></td></tr></table><hr></hr></div><div class="sect1" id="LOGICAL-REPLICATION-ARCHITECTURE"><div class="titlepage"><div><div><h2 class="title" style="clear: both">31.5. 架构</h2></div></div></div><div class="toc"><dl class="toc"><dt><span class="sect2"><a href="logical-replication-architecture.html#LOGICAL-REPLICATION-SNAPSHOT">31.5.1. 初始快照</a></span></dt></dl></div><p>   逻辑复制首先复制发布者数据库上的数据快照。一旦完成，
+   发布者的变化就会实时发送给订阅者。订阅者按照发布者提交的顺序应用数据，
+   以确保任何单个订阅中的发布的事务一致性。
+  </p><p>   逻辑复制采用类似于物理流式复制的体系结构（请参见
+   <a class="xref" href="warm-standby.html#STREAMING-REPLICATION" title="26.2.5. 流复制">第 26.2.5 节</a>）。它是通过<span class="quote">“<span class="quote">walsender</span>”</span>
+   和<span class="quote">“<span class="quote">apply</span>”</span>进程实现的。walsender进程启动WAL的逻辑解码
+   （在<a class="xref" href="logicaldecoding.html" title="第 48 章 逻辑解码">第 48 章</a>中描述），并加载标准的逻辑解码插件
+   （pgoutput）。该插件将从WAL读取的更改转换为逻辑复制协议
+   （请参阅<a class="xref" href="protocol-logical-replication.html" title="52.5. 逻辑流式复制协议">第 52.5 节</a>），
+   并根据发布规范过滤数据。然后使用流式复制协议将数据连续传输到应用工作人员，
+   应用工作人员将数据映射到本地表，并按照正确的事务顺序应用接收到的各个更改。
+  </p><p>   订阅者数据库上的应用程序始终以<code class="varname">session_replication_role</code>
+   设置为<code class="literal">replica</code>运行，这会对触发器和约束产生通常的影响。
+  </p><p>   逻辑复制应用程序目前仅触发行触发器，不触发语句触发器。不过，
+   初始表同步像<code class="command">COPY</code>命令一样执行，
+   因此触发了<code class="command">INSERT</code>的行和语句触发器。
+  </p><div class="sect2" id="LOGICAL-REPLICATION-SNAPSHOT"><div class="titlepage"><div><div><h3 class="title">31.5.1. 初始快照</h3></div></div></div><p>      给现有订阅表中的初始数据做快照，并复制到特殊类型的应用程序的并行实例中。
+	  此过程将创建自己的临时复制槽并复制现有数据。一旦现有数据复制完成，
+	  工作人员进入同步模式，通过使用标准逻辑复制，
+	  流式传输在初始数据复制过程中发生的任何变化，
+	  确保表与主应用程序进入同步状态。一旦完成同步，
+	  表的复制的控制权返回到复制继续正常进行的主应用进程。
+    </p></div></div><div class="navfooter"><hr /><table width="100%" summary="Navigation footer"><tr><td width="40%" align="left"><a accesskey="p" href="logical-replication-restrictions.html">上一页</a> </td><td width="20%" align="center"><a accesskey="u" href="logical-replication.html">上一级</a></td><td width="40%" align="right"> <a accesskey="n" href="logical-replication-monitoring.html">下一页</a></td></tr><tr><td width="40%" align="left" valign="top">31.4. 限制 </td><td width="20%" align="center"><a accesskey="h" href="index.html">起始页</a></td><td width="40%" align="right" valign="top"> 31.6. 监控</td></tr></table></div></body></html>

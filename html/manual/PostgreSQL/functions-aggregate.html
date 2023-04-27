@@ -1,0 +1,295 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><title>9.20. 聚集函数</title><link rel="stylesheet" type="text/css" href="stylesheet.css" /><link rev="made" href="pgsql-docs@postgresql.org" /><meta name="generator" content="DocBook XSL Stylesheets V1.79.1" /><link rel="prev" href="functions-range.html" title="9.19. 范围函数和操作符" /><link rel="next" href="functions-window.html" title="9.21. 窗口函数" /></head><body><div xmlns="http://www.w3.org/TR/xhtml1/transitional" class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="5" align="center">9.20. 聚集函数</th></tr><tr><td width="10%" align="left"><a accesskey="p" href="functions-range.html" title="9.19. 范围函数和操作符">上一页</a> </td><td width="10%" align="left"><a accesskey="u" href="functions.html" title="第 9 章 函数和操作符">上一级</a></td><th width="60%" align="center">第 9 章 函数和操作符</th><td width="10%" align="right"><a accesskey="h" href="index.html" title="PostgreSQL 10.1 手册">起始页</a></td><td width="10%" align="right"> <a accesskey="n" href="functions-window.html" title="9.21. 窗口函数">下一页</a></td></tr></table><hr></hr></div><div class="sect1" id="FUNCTIONS-AGGREGATE"><div class="titlepage"><div><div><h2 class="title" style="clear: both">9.20. 聚集函数</h2></div></div></div><a id="idp13947952" class="indexterm"></a><p>   <em class="firstterm">聚集函数</em>从一个输入值的集合计算一个单一结果。内建的通用聚集函数被列在<a class="xref" href="functions-aggregate.html#FUNCTIONS-AGGREGATE-TABLE" title="表 9.52. 通用聚集函数">表 9.52</a>中，统计信息聚合函数列在<a class="xref" href="functions-aggregate.html#FUNCTIONS-AGGREGATE-STATISTICS-TABLE" title="表 9.53. 用于统计的聚集函数">表 9.53</a>中。内建的组内顺序集聚集函数被列在<a class="xref" href="functions-aggregate.html#FUNCTIONS-ORDEREDSET-TABLE" title="表 9.54. 有序集聚集函数">表 9.54</a>中，
+   而内置的组内假设集函数列在<a class="xref" href="functions-aggregate.html#FUNCTIONS-HYPOTHETICAL-TABLE" title="表 9.55. 假想集聚集函数">表 9.55</a>中。分组操作，这与聚集函数有密切联系，被列在<a class="xref" href="functions-aggregate.html#FUNCTIONS-GROUPING-TABLE" title="表 9.56. 分组操作">表 9.56</a>中。聚集函数的特殊语法考虑在<a class="xref" href="sql-expressions.html#SYNTAX-AGGREGATES" title="4.2.7. 聚合表达式">第 4.2.7 节</a>中解释。更多介绍性信息请参考<a class="xref" href="tutorial-agg.html" title="2.7. 聚集函数">第 2.7 节</a>。
+  </p><div class="table" id="FUNCTIONS-AGGREGATE-TABLE"><p class="title"><strong>表 9.52. 通用聚集函数</strong></p><div class="table-contents"><table class="table" summary="通用聚集函数" border="1"><colgroup><col /><col /><col /><col /><col /></colgroup><thead><tr><th>函数</th><th>参数类型</th><th>返回类型</th><th>局部模式</th><th>描述</th></tr></thead><tbody><tr><td>       <a id="idp13959136" class="indexterm"></a>
+       <code class="function">array_agg(<em class="replaceable"><code>expression</code></em>)</code>
+      </td><td>        任何非数组类型
+      </td><td>       参数类型的数组
+      </td><td>No</td><td>输入值（包括空）被连接到一个数组</td></tr><tr><td>       <code class="function">array_agg(<em class="replaceable"><code>expression</code></em>)</code>
+      </td><td>       任何数组类型
+      </td><td>       和参数数据类型一样
+      </td><td>No</td><td>级联到更高维数组的输入数组（输入必须都具有相同的维度，不能为空或NULL）</td></tr><tr><td>       <a id="idp13966048" class="indexterm"></a>
+       <a id="idp13966864" class="indexterm"></a>
+       <code class="function">avg(<em class="replaceable"><code>expression</code></em>)</code>
+      </td><td>       <code class="type">smallint</code>, <code class="type">int</code>,
+       <code class="type">bigint</code>、<code class="type">real</code>、<code class="type">double
+       precision</code>、<code class="type">numeric</code>或<code class="type">interval</code>
+      </td><td>       对于任何整数类型参数是<code class="type">numeric</code>，对于一个浮点参数是<code class="type">double precision</code>，否则和参数数据类型相同
+      </td><td>Yes</td><td>所有输入值的平均值（算术平均）</td></tr><tr><td>       <a id="idp13974624" class="indexterm"></a>
+       <code class="function">bit_and(<em class="replaceable"><code>expression</code></em>)</code>
+      </td><td>       <code class="type">smallint</code>、<code class="type">int</code>、<code class="type">bigint</code>或<code class="type">bit</code>
+      </td><td>        与参数数据类型相同
+      </td><td>Yes</td><td>所有非空输入值的按位与，如果没有非空值则结果是空值</td></tr><tr><td>       <a id="idp13980112" class="indexterm"></a>
+       <code class="function">bit_or(<em class="replaceable"><code>expression</code></em>)</code>
+      </td><td>       <code class="type">smallint</code>, <code class="type">int</code>, <code class="type">bigint</code>, or
+       <code class="type">bit</code>
+      </td><td>        与参数数据类型相同
+      </td><td>Yes</td><td>所有非空输入值的按位或，如果没有非空值则结果是空值</td></tr><tr><td>       <a id="idp13985536" class="indexterm"></a>
+       <code class="function">bool_and(<em class="replaceable"><code>expression</code></em>)</code>
+      </td><td>       <code class="type">bool</code>
+      </td><td>       <code class="type">bool</code>
+      </td><td>Yes</td><td>如果所有输入值为真则结果为真，否则为假</td></tr><tr><td>       <a id="idp13990048" class="indexterm"></a>
+       <code class="function">bool_or(<em class="replaceable"><code>expression</code></em>)</code>
+      </td><td>       <code class="type">bool</code>
+      </td><td>       <code class="type">bool</code>
+      </td><td>Yes</td><td>至少一个输入值为真时结果为真，否则为假</td></tr><tr><td>       <a id="idp13994560" class="indexterm"></a>
+       <code class="function">count(*)</code>
+      </td><td> </td><td><code class="type">bigint</code></td><td>Yes</td><td>输入的行数</td></tr><tr><td><code class="function">count(<em class="replaceable"><code>expression</code></em>)</code></td><td>any</td><td><code class="type">bigint</code></td><td>Yes</td><td>       <em class="replaceable"><code>expression</code></em>值非空的输入行的数目
+      </td></tr><tr><td>       <a id="idp14000960" class="indexterm"></a>
+       <code class="function">every(<em class="replaceable"><code>expression</code></em>)</code>
+      </td><td>       <code class="type">bool</code>
+      </td><td>       <code class="type">bool</code>
+      </td><td>Yes</td><td>等价于<code class="function">bool_and</code></td></tr><tr><td>       <a id="idp14005984" class="indexterm"></a>
+       <code class="function">json_agg(<em class="replaceable"><code>expression</code></em>)</code>
+      </td><td>       <code class="type">any</code>
+      </td><td>       <code class="type">json</code>
+      </td><td>No</td><td>将值聚集成一个 JSON 数组</td></tr><tr><td>       <a id="idp14010432" class="indexterm"></a>
+       <code class="function">jsonb_agg(<em class="replaceable"><code>expression</code></em>)</code>
+      </td><td>       <code class="type">any</code>
+      </td><td>       <code class="type">jsonb</code>
+      </td><td>No</td><td>将值聚集成一个JSON数组</td></tr><tr><td>       <a id="idp14014880" class="indexterm"></a>
+       <code class="function">json_object_agg(<em class="replaceable"><code>name</code></em>, <em class="replaceable"><code>value</code></em>)</code>
+      </td><td>       <code class="type">(any, any)</code>
+      </td><td>       <code class="type">json</code>
+      </td><td>No</td><td>将名字/值对聚集成一个 JSON 对象</td></tr><tr><td>       <a id="idp14020064" class="indexterm"></a>
+       <code class="function">jsonb_object_agg(<em class="replaceable"><code>name</code></em>, <em class="replaceable"><code>value</code></em>)</code>
+      </td><td>       <code class="type">(any, any)</code>
+      </td><td>       <code class="type">jsonb</code>
+      </td><td>No</td><td>将名字/值对聚集成一个JSON对象</td></tr><tr><td>       <a id="idp14025248" class="indexterm"></a>
+       <code class="function">max(<em class="replaceable"><code>expression</code></em>)</code>
+      </td><td>任意数字、字符串，日期/时间，网络，或枚举类型或这些类型数组</td><td>与参数数据类型相同</td><td>Yes</td><td>       所有输入值中<em class="replaceable"><code>expression</code></em>的最大值
+      </td></tr><tr><td>       <a id="idp14029760" class="indexterm"></a>
+       <code class="function">min(<em class="replaceable"><code>expression</code></em>)</code>
+      </td><td>任意数字、字符串，日期/时间，网络，或枚举类型或这些类型数组</td><td>与参数数据类型相同</td><td>Yes</td><td>       所有输入值中<em class="replaceable"><code>expression</code></em>的最小值
+      </td></tr><tr><td>       <a id="idp14034272" class="indexterm"></a>
+       <code class="function">         string_agg(<em class="replaceable"><code>expression</code></em>,
+                    <em class="replaceable"><code>delimiter</code></em>)
+       </code>
+      </td><td>       (<code class="type">text</code>, <code class="type">text</code>) 或 (<code class="type">bytea</code>, <code class="type">bytea</code>)
+      </td><td>       与参数数据类型相同
+      </td><td>No</td><td>输入值连接成一个串，用定界符分隔</td></tr><tr><td>       <a id="idp14040544" class="indexterm"></a>
+       <code class="function">sum(<em class="replaceable"><code>expression</code></em>)</code>
+      </td><td>       <code class="type">smallint</code>、<code class="type">int</code>、
+       <code class="type">bigint</code>、<code class="type">real</code>、<code class="type">double
+       precision</code>、<code class="type">numeric</code>、
+       <code class="type">interval</code>或<code class="type">money</code>
+      </td><td>       对<code class="type">smallint</code>或<code class="type">int</code>参数是<code class="type">bigint</code>，对<code class="type">bigint</code>参数是<code class="type">numeric</code>，否则和参数数据类型相同
+      </td><td>Yes</td><td>所有输入值的<em class="replaceable"><code>expression</code></em>的和</td></tr><tr><td>       <a id="idp14050656" class="indexterm"></a>
+       <code class="function">xmlagg(<em class="replaceable"><code>expression</code></em>)</code>
+      </td><td>       <code class="type">xml</code>
+      </td><td>       <code class="type">xml</code>
+      </td><td>No</td><td>连接 XML 值（参见<a class="xref" href="functions-xml.html#FUNCTIONS-XML-XMLAGG" title="9.14.1.7. xmlagg">第 9.14.1.7 节</a>）</td></tr></tbody></table></div></div><br class="table-break" /><p>   请注意，除了<code class="function">count</code>以外，这些函数在没有行被选中时返回空值。尤其是<code class="function">sum</code>函数在没有输入行时返回空值，而不是零，并且<code class="function">array_agg</code>在这种情况返回空值而不是一个空数组。必要时可以用<code class="function">coalesce</code>把空值替换成零或一个空数组。
+  </p><p>   支持<em class="firstterm">局部模式</em>的聚集函数有资格参与到各种优化中，
+   例如并行聚集。
+  </p><div class="note"><h3 class="title">注意</h3><a id="idp14059760" class="indexterm"></a><a id="idp14060416" class="indexterm"></a><p>      布尔聚集<code class="function">bool_and</code>和<code class="function">bool_or</code>对应于标准的 SQL 聚集<code class="function">every</code>和<code class="function">any</code>或<code class="function">some</code>。而对于<code class="function">any</code> 和<code class="function">some</code>，似乎在标准语法中有一个歧义：
+</p><pre class="programlisting">SELECT b1 = ANY((SELECT b2 FROM t2 ...)) FROM t1 ...;</pre><p>
+      如果子查询返回一行有一个布尔值的结果，这里的<code class="function">ANY</code>可以被认为是引入一个子查询，或者是作为一个聚集函数。因而标准的名称不能指定给这些聚集。
+    </p></div><div class="note"><h3 class="title">注意</h3><p>    在把<code class="function">count</code>聚集应用到整个表上时，习惯于使用其他 SQL 数据管理系统的用户可能会对它的性能感到失望。一个如下的查询：
+</p><pre class="programlisting">SELECT count(*) FROM sometable;</pre><p>
+    将会要求与整个表大小成比例的工作：<span class="productname">PostgreSQL</span>将需要扫描整个表或者整个包含表中所有行的索引。
+   </p></div><p>   与相似的用户定义的聚集函数一样，聚集函数<code class="function">array_agg</code>、
+   <code class="function">json_agg</code>、<code class="function">jsonb_agg</code>、
+   <code class="function">json_object_agg</code>、<code class="function">jsonb_object_agg</code>、<code class="function">string_agg</code>和<code class="function">xmlagg</code>会依赖输入值的顺序产生有意义的不同结果值。这个顺序默认是不用指定的，但是可以在聚集调用时使用<code class="literal">ORDER BY</code>子句进行控制，如<a class="xref" href="sql-expressions.html#SYNTAX-AGGREGATES" title="4.2.7. 聚合表达式">第 4.2.7 节</a>中所示。作为一种选择，从一个排序号的子查询来提供输入值通常会有帮助。例如：
+
+</p><pre class="screen">SELECT xmlagg(x) FROM (SELECT x FROM test ORDER BY y DESC) AS tab;</pre><p>
+
+   但是在 SQL 标准中不允许这种语法，并且不能被移植到其他数据库系统。
+  </p><p>   <a class="xref" href="functions-aggregate.html#FUNCTIONS-AGGREGATE-STATISTICS-TABLE" title="表 9.53. 用于统计的聚集函数">表 9.53</a>展示了通常被用在统计分析中的聚集函数（这些被隔离出来是为了不和常用聚集混淆）。其中描述提到了<em class="replaceable"><code>N</code></em>，它表示对应于所有非空输入表达式的输入行的数目。在所有情况中，如果计算是无意义的，将会返回空值，例如当<em class="replaceable"><code>N</code></em>为零。
+  </p><a id="idp14081680" class="indexterm"></a><a id="idp14082368" class="indexterm"></a><div class="table" id="FUNCTIONS-AGGREGATE-STATISTICS-TABLE"><p class="title"><strong>表 9.53. 用于统计的聚集函数</strong></p><div class="table-contents"><table class="table" summary="用于统计的聚集函数" border="1"><colgroup><col /><col /><col /><col /><col /></colgroup><thead><tr><th>函数</th><th>参数类型</th><th>返回类型</th><th>局部模式</th><th>描述</th></tr></thead><tbody><tr><td>       <a id="idp14086480" class="indexterm"></a>
+       <a id="idp14087296" class="indexterm"></a>
+       <code class="function">corr(<em class="replaceable"><code>Y</code></em>, <em class="replaceable"><code>X</code></em>)</code>
+      </td><td>       <code class="type">double precision</code>
+      </td><td>       <code class="type">double precision</code>
+      </td><td>Yes</td><td>相关系数</td></tr><tr><td>       <a id="idp14092384" class="indexterm"></a>
+       <a id="idp14093488" class="indexterm"></a>
+       <code class="function">covar_pop(<em class="replaceable"><code>Y</code></em>, <em class="replaceable"><code>X</code></em>)</code>
+      </td><td>       <code class="type">double precision</code>
+      </td><td>       <code class="type">double precision</code>
+      </td><td>Yes</td><td>总体协方差</td></tr><tr><td>       <a id="idp14098576" class="indexterm"></a>
+       <a id="idp14099680" class="indexterm"></a>
+       <code class="function">covar_samp(<em class="replaceable"><code>Y</code></em>, <em class="replaceable"><code>X</code></em>)</code>
+      </td><td>       <code class="type">double precision</code>
+      </td><td>       <code class="type">double precision</code>
+      </td><td>Yes</td><td>样本协方差</td></tr><tr><td>       <a id="idp14104768" class="indexterm"></a>
+       <code class="function">regr_avgx(<em class="replaceable"><code>Y</code></em>, <em class="replaceable"><code>X</code></em>)</code>
+      </td><td>       <code class="type">double precision</code>
+      </td><td>       <code class="type">double precision</code>
+      </td><td>Yes</td><td>自变量的平均值
+      （<code class="literal">sum(<em class="replaceable"><code>X</code></em>)/<em class="replaceable"><code>N</code></em></code>）</td></tr><tr><td>       <a id="idp14111824" class="indexterm"></a>
+       <code class="function">regr_avgy(<em class="replaceable"><code>Y</code></em>, <em class="replaceable"><code>X</code></em>)</code>
+      </td><td>       <code class="type">double precision</code>
+      </td><td>       <code class="type">double precision</code>
+      </td><td>Yes</td><td>因变量的平均值
+      （<code class="literal">sum(<em class="replaceable"><code>Y</code></em>)/<em class="replaceable"><code>N</code></em></code>）</td></tr><tr><td>       <a id="idp14118832" class="indexterm"></a>
+       <code class="function">regr_count(<em class="replaceable"><code>Y</code></em>, <em class="replaceable"><code>X</code></em>)</code>
+      </td><td>       <code class="type">double precision</code>
+      </td><td>       <code class="type">bigint</code>
+      </td><td>Yes</td><td>两个表达式都不为空的输入行的数目</td></tr><tr><td>       <a id="idp14123952" class="indexterm"></a>
+       <a id="idp14124768" class="indexterm"></a>
+       <code class="function">regr_intercept(<em class="replaceable"><code>Y</code></em>, <em class="replaceable"><code>X</code></em>)</code>
+      </td><td>       <code class="type">double precision</code>
+      </td><td>       <code class="type">double precision</code>
+      </td><td>Yes</td><td>由（<em class="replaceable"><code>X</code></em>, <em class="replaceable"><code>Y</code></em>）对决定的最小二乘拟合的线性方程的 y截距</td></tr><tr><td>       <a id="idp14131248" class="indexterm"></a>
+       <code class="function">regr_r2(<em class="replaceable"><code>Y</code></em>, <em class="replaceable"><code>X</code></em>)</code>
+      </td><td>       <code class="type">double precision</code>
+      </td><td>       <code class="type">double precision</code>
+      </td><td>Yes</td><td>相关系数的平方</td></tr><tr><td>       <a id="idp14136336" class="indexterm"></a>
+       <a id="idp14137152" class="indexterm"></a>
+       <code class="function">regr_slope(<em class="replaceable"><code>Y</code></em>, <em class="replaceable"><code>X</code></em>)</code>
+      </td><td>       <code class="type">double precision</code>
+      </td><td>       <code class="type">double precision</code>
+      </td><td>Yes</td><td>由（<em class="replaceable"><code>X</code></em>, <em class="replaceable"><code>Y</code></em>）对决定的最小二乘拟合的线性方程的斜率</td></tr><tr><td>       <a id="idp14143632" class="indexterm"></a>
+       <code class="function">regr_sxx(<em class="replaceable"><code>Y</code></em>, <em class="replaceable"><code>X</code></em>)</code>
+      </td><td>       <code class="type">double precision</code>
+      </td><td>       <code class="type">double precision</code>
+      </td><td>Yes</td><td><code class="literal">sum(<em class="replaceable"><code>X</code></em>^2) - sum(<em class="replaceable"><code>X</code></em>)^2/<em class="replaceable"><code>N</code></em></code>（自变量的<span class="quote">“<span class="quote">平方和</span>”</span>）</td></tr><tr><td>       <a id="idp14151632" class="indexterm"></a>
+       <code class="function">regr_sxy(<em class="replaceable"><code>Y</code></em>, <em class="replaceable"><code>X</code></em>)</code>
+      </td><td>       <code class="type">double precision</code>
+      </td><td>       <code class="type">double precision</code>
+      </td><td>Yes</td><td><code class="literal">sum(<em class="replaceable"><code>X</code></em>*<em class="replaceable"><code>Y</code></em>) - sum(<em class="replaceable"><code>X</code></em>) * sum(<em class="replaceable"><code>Y</code></em>)/<em class="replaceable"><code>N</code></em></code>（自变量乘以因变量的<span class="quote">“<span class="quote">积之合</span>”</span>）</td></tr><tr><td>       <a id="idp14160960" class="indexterm"></a>
+       <code class="function">regr_syy(<em class="replaceable"><code>Y</code></em>, <em class="replaceable"><code>X</code></em>)</code>
+      </td><td>       <code class="type">double precision</code>
+      </td><td>       <code class="type">double precision</code>
+      </td><td>Yes</td><td><code class="literal">sum(<em class="replaceable"><code>Y</code></em>^2) - sum(<em class="replaceable"><code>Y</code></em>)^2/<em class="replaceable"><code>N</code></em></code>（因变量的<span class="quote">“<span class="quote">平方和</span>”</span>）</td></tr><tr><td>       <a id="idp14168960" class="indexterm"></a>
+       <a id="idp14169776" class="indexterm"></a>
+       <code class="function">stddev(<em class="replaceable"><code>expression</code></em>)</code>
+      </td><td>       <code class="type">smallint</code>、<code class="type">int</code>、
+       <code class="type">bigint</code>、<code class="type">real</code>、<code class="type">double
+       precision</code>或<code class="type">numeric</code>
+      </td><td>       浮点参数为<code class="type">double precision</code>，否则为<code class="type">numeric</code>
+      </td><td>Yes</td><td><code class="function">stddev_samp</code>的历史别名</td></tr><tr><td>       <a id="idp14177520" class="indexterm"></a>
+       <a id="idp14178624" class="indexterm"></a>
+       <code class="function">stddev_pop(<em class="replaceable"><code>expression</code></em>)</code>
+      </td><td>       <code class="type">smallint</code>、<code class="type">int</code>、
+       <code class="type">bigint</code>、<code class="type">real</code>、<code class="type">double
+       precision</code>或<code class="type">numeric</code>
+      </td><td>       浮点参数为<code class="type">double precision</code>，否则为<code class="type">numeric</code>
+      </td><td>Yes</td><td>输入值的总体标准偏差</td></tr><tr><td>       <a id="idp14185824" class="indexterm"></a>
+       <a id="idp14186928" class="indexterm"></a>
+       <code class="function">stddev_samp(<em class="replaceable"><code>expression</code></em>)</code>
+      </td><td>       <code class="type">smallint</code>、<code class="type">int</code>、
+       <code class="type">bigint</code>、<code class="type">real</code>、<code class="type">double
+       precision</code>或<code class="type">numeric</code>
+      </td><td>       浮点参数为<code class="type">double precision</code>，否则为<code class="type">numeric</code>
+      </td><td>Yes</td><td>输入值的样本标准偏差</td></tr><tr><td>       <a id="idp14194128" class="indexterm"></a>
+       <code class="function">variance</code>(<em class="replaceable"><code>expression</code></em>)
+      </td><td>       <code class="type">smallint</code>、<code class="type">int</code>、
+       <code class="type">bigint</code>、<code class="type">real</code>、<code class="type">double
+       precision</code>或<code class="type">numeric</code>
+      </td><td>       浮点参数为<code class="type">double precision</code>，否则为<code class="type">numeric</code>
+      </td><td>Yes</td><td><code class="function">var_samp</code>的历史别名</td></tr><tr><td>       <a id="idp14201904" class="indexterm"></a>
+       <a id="idp14203008" class="indexterm"></a>
+       <code class="function">var_pop</code>(<em class="replaceable"><code>expression</code></em>)
+      </td><td>       <code class="type">smallint</code>、<code class="type">int</code>、
+       <code class="type">bigint</code>、<code class="type">real</code>、<code class="type">double
+       precision</code>或<code class="type">numeric</code>
+      </td><td>       浮点参数为<code class="type">double precision</code>，否则为<code class="type">numeric</code>
+      </td><td>Yes</td><td>输入值的总体方差（总体标准偏差的平方）</td></tr><tr><td>       <a id="idp14210272" class="indexterm"></a>
+       <a id="idp14211376" class="indexterm"></a>
+       <code class="function">var_samp</code>(<em class="replaceable"><code>expression</code></em>)
+      </td><td>       <code class="type">smallint</code>、<code class="type">int</code>、
+       <code class="type">bigint</code>、<code class="type">real</code>、<code class="type">double
+       precision</code>或<code class="type">numeric</code>
+      </td><td>       浮点参数为<code class="type">double precision</code>，否则为<code class="type">numeric</code>
+      </td><td>Yes</td><td>输入值的样本方差（样本标准偏差的平方）</td></tr></tbody></table></div></div><br class="table-break" /><p>   <a class="xref" href="functions-aggregate.html#FUNCTIONS-ORDEREDSET-TABLE" title="表 9.54. 有序集聚集函数">表 9.54</a>展示了一些使用
+   <em class="firstterm">有序集聚集</em>语法的聚集函数。这些函数有时也被称为
+   <span class="quote">“<span class="quote">逆分布</span>”</span>函数。
+  </p><a id="idp14220176" class="indexterm"></a><a id="idp14221152" class="indexterm"></a><div class="table" id="FUNCTIONS-ORDEREDSET-TABLE"><p class="title"><strong>表 9.54. 有序集聚集函数</strong></p><div class="table-contents"><table class="table" summary="有序集聚集函数" border="1"><colgroup><col /><col /><col /><col /><col /><col /></colgroup><thead><tr><th>函数</th><th>直接参数类型</th><th>聚集参数类型</th><th>返回类型</th><th>局部模式</th><th>描述</th></tr></thead><tbody><tr><td>       <a id="idp14225568" class="indexterm"></a>
+       <code class="function">mode() WITHIN GROUP (ORDER BY <em class="replaceable"><code>sort_expression</code></em>)</code>
+      </td><td>      </td><td>       任何可排序类型
+      </td><td>       与排序表达式相同
+      </td><td>No</td><td>       返回最频繁的输入值（如果有多个频度相同的值就选第一个）
+      </td></tr><tr><td>       <a id="idp14230064" class="indexterm"></a>
+       <code class="function">percentile_cont(<em class="replaceable"><code>fraction</code></em>) WITHIN GROUP (ORDER BY <em class="replaceable"><code>sort_expression</code></em>)</code>
+      </td><td>       <code class="type">double precision</code>
+      </td><td>       <code class="type">double precision</code>或者<code class="type">interval</code>
+      </td><td>       与排序表达式相同
+      </td><td>No</td><td>       连续百分率：返回一个对应于排序中指定分数的值，如有必要就在相邻的输入项之间插值
+      </td></tr><tr><td>       <code class="function">percentile_cont(<em class="replaceable"><code>fractions</code></em>) WITHIN GROUP (ORDER BY <em class="replaceable"><code>sort_expression</code></em>)</code>
+      </td><td>       <code class="type">double precision[]</code>
+      </td><td>       <code class="type">double precision</code>或者<code class="type">interval</code>
+      </td><td>       排序表达式的类型的数组
+      </td><td>No</td><td>       多重连续百分率：返回一个匹配<code class="literal">fractions</code>参数形状的结果数组，
+       其中每一个非空元素都用对应于那个百分率的值替换
+      </td></tr><tr><td>       <a id="idp14242688" class="indexterm"></a>
+       <code class="function">percentile_disc(<em class="replaceable"><code>fraction</code></em>) WITHIN GROUP (ORDER BY <em class="replaceable"><code>sort_expression</code></em>)</code>
+      </td><td>       <code class="type">double precision</code>
+      </td><td>       一种可排序类型
+      </td><td>       与排序表达式相同
+      </td><td>No</td><td>       离散百分率：返回第一个在排序中位置等于或者超过指定分数的输入值
+      </td></tr><tr><td>       <code class="function">percentile_disc(<em class="replaceable"><code>fractions</code></em>) WITHIN GROUP (ORDER BY <em class="replaceable"><code>sort_expression</code></em>)</code>
+      </td><td>       <code class="type">double precision[]</code>
+      </td><td>       任何可排序类型
+      </td><td>       排序表达式的类型的数组
+      </td><td>No</td><td>       多重离散百分率：返回一个匹配<code class="literal">fractions</code>参数形状的结果数组，
+       其中每一个非空元素都用对应于那个百分率的输入值替换
+      </td></tr></tbody></table></div></div><br class="table-break" /><p>   所有列在<a class="xref" href="functions-aggregate.html#FUNCTIONS-ORDEREDSET-TABLE" title="表 9.54. 有序集聚集函数">表 9.54</a>中的聚集会忽略它们的已
+   排序输入中的空值。对那些有一个<em class="replaceable"><code>fraction</code></em>参数的聚
+   集来说，该分数值必须位于 0 和 1 之间，否则会抛出错误。不过，一个空分数值会
+   产生一个空结果。
+  </p><a id="idp14255040" class="indexterm"></a><p>   每个列在<a class="xref" href="functions-aggregate.html#FUNCTIONS-HYPOTHETICAL-TABLE" title="表 9.55. 假想集聚集函数">表 9.55</a>中的聚集都与一个定义在
+   <a class="xref" href="functions-window.html" title="9.21. 窗口函数">第 9.21 节</a>中的同名窗口函数相关联。在每种情况中，聚集
+   结果的计算方法是：假设根据<em class="replaceable"><code>args</code></em>构建的<span class="quote">“<span class="quote">假想</span>”</span>行已
+   经被增加到从<em class="replaceable"><code>sorted_args</code></em>计算得到的已排序行分组中，
+   然后用相关联的窗口函数针对该行返回的值就是聚集的结果。
+  </p><div class="table" id="FUNCTIONS-HYPOTHETICAL-TABLE"><p class="title"><strong>表 9.55. 假想集聚集函数</strong></p><div class="table-contents"><table class="table" summary="假想集聚集函数" border="1"><colgroup><col /><col /><col /><col /><col /><col /></colgroup><thead><tr><th>函数</th><th>直接参数类型</th><th>聚集参数类型</th><th>返回类型</th><th>局部模式</th><th>描述</th></tr></thead><tbody><tr><td>       <a id="idp14263040" class="indexterm"></a>
+       <code class="function">rank(<em class="replaceable"><code>args</code></em>) WITHIN GROUP (ORDER BY <em class="replaceable"><code>sorted_args</code></em>)</code>
+      </td><td>       <code class="literal">VARIADIC</code> <code class="type">"any"</code>
+      </td><td>       <code class="literal">VARIADIC</code> <code class="type">"any"</code>
+      </td><td>       <code class="type">bigint</code>
+      </td><td>No</td><td>       假想行的排名，为重复的行留下间隔
+      </td></tr><tr><td>       <a id="idp14270640" class="indexterm"></a>
+       <code class="function">dense_rank(<em class="replaceable"><code>args</code></em>) WITHIN GROUP (ORDER BY <em class="replaceable"><code>sorted_args</code></em>)</code>
+      </td><td>       <code class="literal">VARIADIC</code> <code class="type">"any"</code>
+      </td><td>       <code class="literal">VARIADIC</code> <code class="type">"any"</code>
+      </td><td>       <code class="type">bigint</code>
+      </td><td>No</td><td>       假想行的排名，不留间隔
+      </td></tr><tr><td>       <a id="idp14278256" class="indexterm"></a>
+       <code class="function">percent_rank(<em class="replaceable"><code>args</code></em>) WITHIN GROUP (ORDER BY <em class="replaceable"><code>sorted_args</code></em>)</code>
+      </td><td>       <code class="literal">VARIADIC</code> <code class="type">"any"</code>
+      </td><td>       <code class="literal">VARIADIC</code> <code class="type">"any"</code>
+      </td><td>       <code class="type">double precision</code>
+      </td><td>No</td><td>       假想行的相对排名，范围从 0 到 1
+      </td></tr><tr><td>       <a id="idp14285888" class="indexterm"></a>
+       <code class="function">cume_dist(<em class="replaceable"><code>args</code></em>) WITHIN GROUP (ORDER BY <em class="replaceable"><code>sorted_args</code></em>)</code>
+      </td><td>       <code class="literal">VARIADIC</code> <code class="type">"any"</code>
+      </td><td>       <code class="literal">VARIADIC</code> <code class="type">"any"</code>
+      </td><td>       <code class="type">double precision</code>
+      </td><td>No</td><td>       假想行的相对排名，范围从 1/<em class="replaceable"><code>N</code></em> 到 1
+      </td></tr></tbody></table></div></div><br class="table-break" /><p>   对于这些假想集聚集的每一个，<em class="replaceable"><code>args</code></em>中给定的直接参数
+   列表必须匹配<em class="replaceable"><code>sorted_args</code></em>中给定的聚集参数的
+   数量和类型。与大部分的内建聚集不同，这些聚集并不严格，即它们不会丢弃包含空值
+   的输入行。空值的排序根据<code class="literal">ORDER BY</code>子句中指定的规则进行。
+  </p><div class="table" id="FUNCTIONS-GROUPING-TABLE"><p class="title"><strong>表 9.56. 分组操作</strong></p><div class="table-contents"><table class="table" summary="分组操作" border="1"><colgroup><col /><col /><col /></colgroup><thead><tr><th>函数</th><th>返回类型</th><th>描述</th></tr></thead><tbody><tr><td>       <a id="idp14298688" class="indexterm"></a>
+       <code class="function">GROUPING(<em class="replaceable"><code>args...</code></em>)</code>
+      </td><td> 
+       <code class="type">integer</code>
+      </td><td>整数位掩码表示当前分组集中不包含的参数</td></tr></tbody></table></div></div><br class="table-break" /><p>    分组操作与分组集合一起（参见<a class="xref" href="queries-table-expressions.html#QUERIES-GROUPING-SETS" title="7.2.4. GROUPING SETS、CUBE和ROLLUP">第 7.2.4 节</a>）区分结果行。
+    这个<code class="literal">GROUPING</code>操作的参数实际上并没有进行评估，
+    但它们必须完全匹配关联查询级别的<code class="literal">GROUP BY</code>子句中的表达式。
+    Bit连同最右边参数是最不重要的一点；
+    如果对应的表达式被包含在分组集生成的结果行的分组条件中，那么每位是0，
+    如果不是，则为1。比如：
+ 
+</p><pre class="screen"><code class="prompt">=&gt;</code> <strong class="userinput"><code>SELECT * FROM items_sold;</code></strong>
+ make  | model | sales
+-------+-------+-------
+ Foo   | GT    |  10
+ Foo   | Tour  |  20 
+ Bar   | City  |  15
+ Bar   | Sport |  5
+(4 rows)
+
+<code class="prompt">=&gt;</code> <strong class="userinput"><code>SELECT make, model, GROUPING(make,model), sum(sales) FROM items_sold GROUP BY ROLLUP(make,model);</code></strong>
+ make  | model | grouping | sum
+-------+-------+----------+-----
+ Foo   | GT    |        0 | 10
+ Foo   | Tour  |        0 | 20
+ Bar   | City  |        0 | 15
+ Bar   | Sport |        0 | 5
+ Foo   |       |        1 | 30
+ Bar   |       |        1 | 20
+       |       |        3 | 50
+(7 rows)</pre><p>
+   </p></div><div class="navfooter"><hr /><table width="100%" summary="Navigation footer"><tr><td width="40%" align="left"><a accesskey="p" href="functions-range.html">上一页</a> </td><td width="20%" align="center"><a accesskey="u" href="functions.html">上一级</a></td><td width="40%" align="right"> <a accesskey="n" href="functions-window.html">下一页</a></td></tr><tr><td width="40%" align="left" valign="top">9.19. 范围函数和操作符 </td><td width="20%" align="center"><a accesskey="h" href="index.html">起始页</a></td><td width="40%" align="right" valign="top"> 9.21. 窗口函数</td></tr></table></div></body></html>

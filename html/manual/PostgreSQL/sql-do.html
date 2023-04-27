@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><title>DO</title><link rel="stylesheet" type="text/css" href="stylesheet.css" /><link rev="made" href="pgsql-docs@postgresql.org" /><meta name="generator" content="DocBook XSL Stylesheets V1.79.1" /><link rel="prev" href="sql-discard.html" title="DISCARD" /><link rel="next" href="sql-drop-access-method.html" title="DROP ACCESS METHOD" /></head><body><div xmlns="http://www.w3.org/TR/xhtml1/transitional" class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="5" align="center">DO</th></tr><tr><td width="10%" align="left"><a accesskey="p" href="sql-discard.html" title="DISCARD">上一页</a> </td><td width="10%" align="left"><a accesskey="u" href="sql-commands.html" title="SQL 命令">上一级</a></td><th width="60%" align="center">SQL 命令</th><td width="10%" align="right"><a accesskey="h" href="index.html" title="PostgreSQL 10.1 手册">起始页</a></td><td width="10%" align="right"> <a accesskey="n" href="sql-drop-access-method.html" title="DROP ACCESS METHOD">下一页</a></td></tr></table><hr></hr></div><div class="refentry" id="SQL-DO"><div class="titlepage"></div><a id="idp46173616" class="indexterm"></a><a id="idp46174656" class="indexterm"></a><div class="refnamediv"><h2><span class="refentrytitle">DO</span></h2><p>DO — 执行一个匿名代码块</p></div><div class="refsynopsisdiv"><h2>大纲</h2><pre class="synopsis">DO [ LANGUAGE <em class="replaceable"><code>lang_name</code></em> ] <em class="replaceable"><code>code</code></em></pre></div><div class="refsect1" id="idp46179264"><h2>描述</h2><p>   <code class="command">DO</code>执行一个匿名代码块，或者换句话说
+   执行一个以一种过程语言编写的瞬时匿名函数。
+  </p><p>   代码块就好像是一个没有参数并且返回<code class="type">void</code>的函数的函数体。
+   它会被在一次时间内解析并且执行。
+  </p><p>   可选的<code class="literal">LANGUAGE</code>子句可以卸载代码块之前或者之后。
+  </p></div><div class="refsect1" id="idp46182672"><h2>参数</h2><div class="variablelist"><dl class="variablelist"><dt><span class="term"><em class="replaceable"><code>code</code></em></span></dt><dd><p>      要被执行的过程语言代码。就像在
+      <code class="command">CREATE FUNCTION</code>中一样，必须把它指定为一个
+      字符串。推荐使用一个美元引用的文本。
+     </p></dd><dt><span class="term"><em class="replaceable"><code>lang_name</code></em></span></dt><dd><p>      编写该代码的过程语言的名称。如果省略，默认为<code class="literal">plpgsql</code>。
+     </p></dd></dl></div></div><div class="refsect1" id="idp46187440"><h2>注解</h2><p>   要使用的过程语言必须已经用<code class="command">CREATE LANGUAGE</code>安装在
+   当前数据库中。默认已经安装了<code class="literal">plpgsql</code>，但是其他语言没有被
+   安装。
+  </p><p>   用户必须拥有该过程语言的<code class="literal">USAGE</code>特权，如果该语言
+   是不可信的则必须是一个超级用户。这和创建一个该语言的函数对
+   特权的要求相同。
+  </p></div><div class="refsect1" id="SQL-DO-EXAMPLES"><h2>例子</h2><p>   把模式<code class="literal">public</code>中所有视图上的所有特权授予
+   给角色<code class="literal">webuser</code>：
+</p><pre class="programlisting">DO $$DECLARE r record;
+BEGIN
+    FOR r IN SELECT table_schema, table_name FROM information_schema.tables
+             WHERE table_type = 'VIEW' AND table_schema = 'public'
+    LOOP
+        EXECUTE 'GRANT ALL ON ' || quote_ident(r.table_schema) || '.' || quote_ident(r.table_name) || ' TO webuser';
+    END LOOP;
+END$$;</pre></div><div class="refsect1" id="idp46194928"><h2>兼容性</h2><p>   SQL 标准中没有<code class="command">DO</code>语句。
+  </p></div><div class="refsect1" id="idp46196352"><h2>另见</h2><span class="simplelist"><a class="xref" href="sql-createlanguage.html" title="CREATE LANGUAGE"><span class="refentrytitle">CREATE LANGUAGE</span></a></span></div></div><div class="navfooter"><hr /><table width="100%" summary="Navigation footer"><tr><td width="40%" align="left"><a accesskey="p" href="sql-discard.html">上一页</a> </td><td width="20%" align="center"><a accesskey="u" href="sql-commands.html">上一级</a></td><td width="40%" align="right"> <a accesskey="n" href="sql-drop-access-method.html">下一页</a></td></tr><tr><td width="40%" align="left" valign="top">DISCARD </td><td width="20%" align="center"><a accesskey="h" href="index.html">起始页</a></td><td width="40%" align="right" valign="top"> DROP ACCESS METHOD</td></tr></table></div></body></html>

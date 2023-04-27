@@ -1,0 +1,111 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><title>LOCK</title><link rel="stylesheet" type="text/css" href="stylesheet.css" /><link rev="made" href="pgsql-docs@postgresql.org" /><meta name="generator" content="DocBook XSL Stylesheets V1.79.1" /><link rel="prev" href="sql-load.html" title="LOAD" /><link rel="next" href="sql-move.html" title="MOVE" /></head><body><div xmlns="http://www.w3.org/TR/xhtml1/transitional" class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="5" align="center">LOCK</th></tr><tr><td width="10%" align="left"><a accesskey="p" href="sql-load.html" title="LOAD">上一页</a> </td><td width="10%" align="left"><a accesskey="u" href="sql-commands.html" title="SQL 命令">上一级</a></td><th width="60%" align="center">SQL 命令</th><td width="10%" align="right"><a accesskey="h" href="index.html" title="PostgreSQL 10.1 手册">起始页</a></td><td width="10%" align="right"> <a accesskey="n" href="sql-move.html" title="MOVE">下一页</a></td></tr></table><hr></hr></div><div class="refentry" id="SQL-LOCK"><div class="titlepage"></div><a id="idp47810368" class="indexterm"></a><div class="refnamediv"><h2><span class="refentrytitle">LOCK</span></h2><p>LOCK — 锁定一个表</p></div><div class="refsynopsisdiv"><h2>大纲</h2><pre class="synopsis">LOCK [ TABLE ] [ ONLY ] <em class="replaceable"><code>name</code></em> [ * ] [, ...] [ IN <em class="replaceable"><code>lockmode</code></em> MODE ] [ NOWAIT ]
+
+<span class="phrase">其中 <em class="replaceable"><code>lockmode</code></em> 可以是以下之一：</span>
+
+    ACCESS SHARE | ROW SHARE | ROW EXCLUSIVE | SHARE UPDATE EXCLUSIVE
+    | SHARE | SHARE ROW EXCLUSIVE | EXCLUSIVE | ACCESS EXCLUSIVE</pre></div><div class="refsect1" id="idp47816560"><h2>描述</h2><p>   <code class="command">LOCK TABLE</code>获得一个表级锁，必要时会
+   等待任何冲突锁被释放。如果指定了<code class="literal">NOWAIT</code>，
+   <code class="command">LOCK TABLE</code>不会等待以获得想要的锁：
+   如果它不能立刻得到，该命令会被中止并且发出一个错误。一旦获取到，
+   该锁会被在当前事务中一直持有（没有<code class="command">UNLOCK
+   TABLE</code>命令，锁总是在事务结束时被释放）。
+  </p><p>   在为引用表的命令自动获取锁时，
+   <span class="productname">PostgreSQL</span>总是尽可能使用最不严格的
+   锁模式。提供<code class="command">LOCK TABLE</code>是用于想要更严格
+   的锁定的情况。例如，假设一个应用运行一个<code class="literal">READ COMMITTED</code>
+   隔离级别的事务，
+   并且需要确保一个表中的数据在该事务的期间保持稳定。要实现这个目的，
+   必须在查询之前在表上获得<code class="literal">SHARE</code>锁模式。这将阻止并发的
+   数据更改并且确保该表的后续读操作会看到已提交数据的一个稳定视图，
+   因为<code class="literal">SHARE</code>锁模式与写入者所要求的
+   <code class="literal">ROW EXCLUSIVE</code>锁有冲突，并且你的
+   <code class="command">LOCK TABLE <em class="replaceable"><code>name</code></em> IN SHARE MODE</code>
+   语句将等待，直到任何并发持有<code class="literal">ROW
+   EXCLUSIVE</code>模式锁的持有者提交或者回滚。因此，一旦得到锁，
+   就不会有未提交的写入还没有解决。更进一步，在释放该锁之前，任何
+   人都不能开始。
+  </p><p>   要在运行在<code class="literal">REPEATABLE READ</code>或<code class="literal">SERIALIZABLE</code>
+   隔离级别的事务中得到类似的效果，你必须在执行任何
+   <code class="command">SELECT</code>或者数据修改语句之前执行
+   <code class="command">LOCK TABLE</code>语句。一个
+   <code class="literal">REPEATABLE READ</code>或者<code class="literal">SERIALIZABLE</code>事务的
+   数据视图将在它的第一个<code class="command">SELECT</code>或者数据修改语句开始
+   时被冻结。在该事务中稍后的一个<code class="command">LOCK
+   TABLE</code>仍将阻止并发写
+   — 但它不会确保该事务读到的东西对应于最新的已提交值。
+  </p><p>   如果一个此类事务正要修改表中的数据，那么它应该使用
+   <code class="literal">SHARE ROW EXCLUSIVE</code>锁模式来取代
+   <code class="literal">SHARE</code>模式。这会保证一次只有一个此类事务运行。如果
+   不用这种模式，死锁就可能出现：两个事务可能都要求
+   <code class="literal">SHARE</code>模式，并且都不能获得
+   <code class="literal">ROW EXCLUSIVE</code>模式来真正地执行它们的更新（注意一个
+   事务所拥有的锁不会冲突，因此一个事务可以在它持有<code class="literal">SHARE</code>
+   模式时获得<code class="literal">ROW EXCLUSIVE</code>模式 — 但是如果有其他
+   人持有<code class="literal">SHARE</code>模式时则不能）。为了避免死锁，确保所有的
+   事务在同样的对象上以相同的顺序获得锁，并且如果在一个对象上涉及多
+   种锁模式，事务应该总是首先获得最严格的那种模式。
+  </p><p>   更多关于锁模式和锁策略的信息可见<a class="xref" href="explicit-locking.html" title="13.3. 显式锁定">第 13.3 节</a>。
+  </p></div><div class="refsect1" id="idp47841872"><h2>参数</h2><div class="variablelist"><dl class="variablelist"><dt><span class="term"><em class="replaceable"><code>name</code></em></span></dt><dd><p>      要锁定的一个现有表的名称（可以是模式限定的）。如果在表名前指定了
+    <code class="literal">ONLY</code>，只有该表会被锁定。如果没有指定了
+    <code class="literal">ONLY</code>，该表和它所有的后代表（如果有）都会被锁定。可选
+    地，在表名后指定<code class="literal">*</code>来显式地表示把后代表包括在内。
+     </p><p>      命令<code class="literal">LOCK TABLE a, b;</code>等效于
+      <code class="literal">LOCK TABLE a; LOCK TABLE b;</code>。这些表会被按照在
+      <code class="command">LOCK TABLE</code>中指定的顺序一个一个
+      被锁定。
+     </p></dd><dt><span class="term"><em class="replaceable"><code>lockmode</code></em></span></dt><dd><p>      锁模式指定这个锁和哪些锁冲突。锁模式在
+      <a class="xref" href="explicit-locking.html" title="13.3. 显式锁定">第 13.3 节</a>中描述。
+     </p><p>      如果没有指定锁模式，那儿将使用最严格的模式<code class="literal">ACCESS
+      EXCLUSIVE</code>。
+     </p></dd><dt><span class="term"><code class="literal">NOWAIT</code></span></dt><dd><p>      指定<code class="command">LOCK TABLE</code>不等待任何冲突锁被释放：
+      如果所指定的锁不能立即获得，那么事务就会中止。
+     </p></dd></dl></div></div><div class="refsect1" id="idp47853888"><h2>注解</h2><p>    <code class="literal">LOCK TABLE ... IN ACCESS SHARE MODE</code>要求目标表上的
+    <code class="literal">SELECT</code>特权。<code class="literal">LOCK TABLE ... IN ROW EXCLUSIVE
+    MODE</code>要求目标表上的<code class="literal">INSERT</code>、<code class="literal">UPDATE</code>、
+    <code class="literal">DELETE</code>或<code class="literal">TRUNCATE</code>特权。所有其他形式的
+    <code class="command">LOCK</code>要求表级<code class="literal">UPDATE</code>、<code class="literal">DELETE</code>
+    或<code class="literal">TRUNCATE</code>特权。
+   </p><p>    <code class="command">LOCK TABLE</code>在一个事务块外部没有用处：锁将只保持到语句
+    完成。因此如果在一个事务块外部使用了<code class="command">LOCK</code>，
+    <span class="productname">PostgreSQL</span>会报告一个错误。使用
+    <a class="xref" href="sql-begin.html" title="BEGIN"><span class="refentrytitle">BEGIN</span></a>和<a class="xref" href="sql-commit.html" title="COMMIT"><span class="refentrytitle">COMMIT</span></a>（或者
+    <a class="xref" href="sql-rollback.html" title="ROLLBACK"><span class="refentrytitle">ROLLBACK</span></a>）定义一个事务块。
+   </p><p>   <code class="command">LOCK TABLE</code>只处理表级锁，因此涉及到
+   <code class="literal">ROW</code>的模式名称在这里都是不当的。这些模式名称应该通常
+   被解读为用户在被锁定表中获取行级锁的意向。还有，
+   <code class="literal">ROW EXCLUSIVE</code>模式是一个可共享的表锁。记住就
+   <code class="command">LOCK TABLE</code>而言，所有的锁模式都具有相同的语义，
+   只有模式的冲突规则有所不同。关于如何获取一个真正的行级锁的信息，
+   请见<code class="command">SELECT</code>参考文档中的
+   <a class="xref" href="explicit-locking.html#LOCKING-ROWS" title="13.3.2. 行级锁">第 13.3.2 节</a>和<a class="xref" href="sql-select.html#SQL-FOR-UPDATE-SHARE" title="锁定子句">锁定子句</a>。
+  </p></div><div class="refsect1" id="idp47873440"><h2>示例</h2><p>   在将要向一个外键表中执行插入时在主键表上获得一个
+   <code class="literal">SHARE</code>锁：
+
+</p><pre class="programlisting">BEGIN WORK;
+LOCK TABLE films IN SHARE MODE;
+SELECT id FROM films
+    WHERE name = 'Star Wars: Episode I - The Phantom Menace';
+-- 如果记录没有被返回就做 ROLLBACK
+INSERT INTO films_user_comments VALUES
+    (_id_, 'GREAT! I was waiting for it for so long!');
+COMMIT WORK;</pre><p>
+  </p><p>   在将要执行一次删除操作前在主键表上取一个
+   <code class="literal">SHARE ROW EXCLUSIVE</code>锁：
+
+</p><pre class="programlisting">BEGIN WORK;
+LOCK TABLE films IN SHARE ROW EXCLUSIVE MODE;
+DELETE FROM films_user_comments WHERE id IN
+    (SELECT id FROM films WHERE rating &lt; 5);
+DELETE FROM films WHERE rating &lt; 5;
+COMMIT WORK;</pre></div><div class="refsect1" id="idp47878192"><h2>兼容性</h2><p>   在 SQL 标准中没有<code class="command">LOCK TABLE</code>，SQL 标准中使用
+   <code class="command">SET TRANSACTION</code>指定事务上的并发层次。
+   <span class="productname">PostgreSQL</span>也支持这样做，详见
+   <a class="xref" href="sql-set-transaction.html" title="SET TRANSACTION"><span class="refentrytitle">SET TRANSACTION</span></a>。
+  </p><p>   除<code class="literal">ACCESS SHARE</code>、<code class="literal">ACCESS EXCLUSIVE</code>和
+   <code class="literal">SHARE UPDATE EXCLUSIVE</code>锁模式之外，
+   <span class="productname">PostgreSQL</span>锁模式和
+   <code class="command">LOCK TABLE</code>语法与
+   <span class="productname">Oracle</span>中的兼容。
+  </p></div></div><div class="navfooter"><hr /><table width="100%" summary="Navigation footer"><tr><td width="40%" align="left"><a accesskey="p" href="sql-load.html">上一页</a> </td><td width="20%" align="center"><a accesskey="u" href="sql-commands.html">上一级</a></td><td width="40%" align="right"> <a accesskey="n" href="sql-move.html">下一页</a></td></tr><tr><td width="40%" align="left" valign="top">LOAD </td><td width="20%" align="center"><a accesskey="h" href="index.html">起始页</a></td><td width="40%" align="right" valign="top"> MOVE</td></tr></table></div></body></html>

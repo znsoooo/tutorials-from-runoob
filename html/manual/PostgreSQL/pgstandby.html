@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><title>pg_standby</title><link rel="stylesheet" type="text/css" href="stylesheet.css" /><link rev="made" href="pgsql-docs@postgresql.org" /><meta name="generator" content="DocBook XSL Stylesheets V1.79.1" /><link rel="prev" href="contrib-prog-server.html" title="G.2. 服务器应用" /><link rel="next" href="external-projects.html" title="附录 H. 外部项目" /></head><body><div xmlns="http://www.w3.org/TR/xhtml1/transitional" class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="5" align="center"><span xmlns="http://www.w3.org/1999/xhtml" class="application">pg_standby</span></th></tr><tr><td width="10%" align="left"><a accesskey="p" href="contrib-prog-server.html" title="G.2. 服务器应用">上一页</a> </td><td width="10%" align="left"><a accesskey="u" href="contrib-prog-server.html" title="G.2. 服务器应用">上一级</a></td><th width="60%" align="center">G.2. 服务器应用</th><td width="10%" align="right"><a accesskey="h" href="index.html" title="PostgreSQL 10.1 手册">起始页</a></td><td width="10%" align="right"> <a accesskey="n" href="external-projects.html" title="附录 H. 外部项目">下一页</a></td></tr></table><hr></hr></div><div class="refentry" id="PGSTANDBY"><div class="titlepage"></div><a id="idp88414656" class="indexterm"></a><div class="refnamediv"><h2><span class="refentrytitle"><span class="application">pg_standby</span></span></h2><p>pg_standby — 对创建一个<span class="productname">PostgreSQL</span>温备服务器提供支持</p></div><div class="refsynopsisdiv"><h2>大纲</h2><div class="cmdsynopsis"><p id="idp88418624"><code class="command">pg_standby</code> [<em class="replaceable"><code>option</code></em>...]  <em class="replaceable"><code>archivelocation</code></em>   <em class="replaceable"><code>nextwalfile</code></em>   <em class="replaceable"><code>walfilepath</code></em>  [<em class="replaceable"><code>restartwalfile</code></em>]</p></div></div><div class="refsect1" id="idp88424288"><h2>描述</h2><p>  <span class="application">pg_standby</span>用于支持创建一个<span class="quote">“<span class="quote">温备</span>”</span>数据库服务器。它被设计为一个可以随时投入生产的程序，以及一个可定制的模板供你进行特定的修改。
+ </p><p>  <span class="application">pg_standby</span>被设计成一个等待着的<code class="varname">restore_command</code>，它被用来把一次标准的归档恢复变成一次温备操作。还需要一些其他的配置，所有这些配置都在主服务器手册中有相应的描述（见<a class="xref" href="warm-standby.html" title="26.2. 日志传送后备服务器">第 26.2 节</a>）。
+ </p><p>   要配置一台后备服务器去使用<span class="application">pg_standby</span>，可以把下面的内容放在<code class="filename">recovery.conf</code>配置文件中：
+</p><pre class="programlisting">restore_command = 'pg_standby <em class="replaceable"><code>archiveDir</code></em> %f %p %r'</pre><p>
+   其中<em class="replaceable"><code>archiveDir</code></em>是 WAL 段文件应该被存储的目录。
+  </p><p>   如果指定了<em class="replaceable"><code>restartwalfile</code></em>（通常用<code class="literal">%r</code>宏指定），那么所有在逻辑上位于这个文件之前的 WAL 文件都将被从<em class="replaceable"><code>archivelocation</code></em>中移除。这使需要被保留的文件数最小化，与此同时能够保持崩溃重启的能力。如果<em class="replaceable"><code>archivelocation</code></em>对于这个特定后备服务器是一个瞬态区域，使用这个参数是合适的，但当<em class="replaceable"><code>archivelocation</code></em>是一个长期 WAL 归档区域时则<span class="emphasis"><em>不是</em></span>合适的。
+  </p><p>   <span class="application">pg_standby</span>假定<em class="replaceable"><code>archivelocation</code></em>是一个拥有服务器的用户可读的目录。如果指定了<em class="replaceable"><code>restartwalfile</code></em>（或者<code class="literal">-k</code>），<em class="replaceable"><code>archivelocation</code></em>目录必须也是可写的。
+  </p><p>   当主服务器失效时，有两种方式转移到一个<span class="quote">“<span class="quote">温备</span>”</span>数据库服务器：
+
+   </p><div class="variablelist"><dl class="variablelist"><dt><span class="term">智能失效备援</span></dt><dd><p>       在智能失效备援中，服务器在应用归档中可用的所有 WAL 文件之后被提升。即便后备服务器落后于主服务器，这也会导致零数据丢失，但是如果有很多未应用的 WAL，在后备服务器准备好之前就需要比较长的时间。要触发一次智能失效备援，创建一个包含单词<code class="literal">smart</code>的触发文件，或者只创建一个空文件。
+      </p></dd><dt><span class="term">快速失效备援</span></dt><dd><p>       在快速失效备援中，服务器被立即提升。归档中任何还未被应用的 WAL 文件将被忽略，并且这些文件中的所有事务都会丢失。要触发一次快速失效备援，创建一个触发文件并且把单词<code class="literal">fast</code>写在其中。<span class="application">pg_standby</span>也能被配置为在一段定义好的区间内没有新 WAL 文件出现时自动执行一次快速失效备援。
+      </p></dd></dl></div><p>
+  </p></div><div class="refsect1" id="idp88444768"><h2>选项</h2><p>    <span class="application">pg_standby</span>接受下列命令行参数：
+
+    </p><div class="variablelist"><dl class="variablelist"><dt><span class="term"><code class="option">-c</code></span></dt><dd><p>        使用<code class="literal">cp</code>或者<code class="literal">copy</code>命令来存储来自归档的 WAL 文件。这是唯一支持的行为，因此这个选项是无用的。
+       </p></dd><dt><span class="term"><code class="option">-d</code></span></dt><dd><p>        在<code class="filename">stderr</code>上打印大量调试日志输出。
+       </p></dd><dt><span class="term"><code class="option">-k</code></span></dt><dd><p>        从<em class="replaceable"><code>archivelocation</code></em>移除文件，这样当前 WAL 文件之前不超过这么多个 WAL 文件会被保留在归档中。零（默认值）意味着不从<em class="replaceable"><code>archivelocation</code></em>移除任何文件。如果指定了<em class="replaceable"><code>restartwalfile</code></em>，这个参数将被安静地忽略，因为那种说明方法对于决定正确的归档切断点更为精确。从<span class="productname">PostgreSQL</span> 8.3 开始，这个参数的使用已经被<span class="emphasis"><em>废弃</em></span>，指定一个<em class="replaceable"><code>restartwalfile</code></em>参数更加安全和有效。一个太小的值可能导致后备服务器的重启仍需要已经被移除的文件，而一个太大的值则浪费归档空间。
+       </p></dd><dt><span class="term"><code class="option">-r</code> <em class="replaceable"><code>maxretries</code></em></span></dt><dd><p>        设定拷贝命令失败时重试的最大次数（默认为 3）。在每一次失败后，我们等待<em class="replaceable"><code>sleeptime</code></em> * <em class="replaceable"><code>num_retries</code></em>，这样等待时间会逐步增加。因此默认情况下，我们将等待 5 秒、10 秒、15秒，然后向后备服务器报告失败。这将被解释为恢复的终点并且该后备服务器将会完全被提升。
+       </p></dd><dt><span class="term"><code class="option">-s</code> <em class="replaceable"><code>sleeptime</code></em></span></dt><dd><p>        设置在检查要被恢复的 WAL 文件在归档中是否可用的测试之间休眠的秒数（最高 60，默认为 5）。默认设置并不一定值得推荐，相关的讨论可参考<a class="xref" href="warm-standby.html" title="26.2. 日志传送后备服务器">第 26.2 节</a>。
+       </p></dd><dt><span class="term"><code class="option">-t</code> <em class="replaceable"><code>triggerfile</code></em></span></dt><dd><p>        指定一个触发文件，它的出现将会导致失效备援。我们推荐使用一个有结构的文件名，这样可以避免在同一个系统上有多个服务器存在时无法确定是要触发哪个服务器。例如可以用<code class="filename">/tmp/pgsql.trigger.5432</code>。
+       </p></dd><dt><span class="term"><code class="option">-V</code><br /></span><span class="term"><code class="option">--version</code></span></dt><dd><p>        打印<span class="application">pg_standby</span>版本并退出。
+       </p></dd><dt><span class="term"><code class="option">-w</code> <em class="replaceable"><code>maxwaittime</code></em></span></dt><dd><p>        设置等待下一个 WAL 文件的最大秒数，之后将会执行一次快速失效备援。设置为 0 （默认值）表示永远等待。默认设置并不一定值得推荐，相关讨论可以参考<a class="xref" href="warm-standby.html" title="26.2. 日志传送后备服务器">第 26.2 节</a>。
+       </p></dd><dt><span class="term"><code class="option">-?</code><br /></span><span class="term"><code class="option">--help</code></span></dt><dd><p>        显示有关<span class="application">pg_standby</span>的命令行参数，然后退出。
+       </p></dd></dl></div><p>
+   </p></div><div class="refsect1" id="idp88469168"><h2>注解</h2><p>   <span class="application">pg_standby</span>被设计为配合<span class="productname">PostgreSQL</span> 8.2 及后续版本工作。
+  </p><p>   <span class="productname">PostgreSQL</span> 8.3 提供<code class="literal">%r</code>宏，它被设计用来让<span class="application">pg_standby</span>知道它需要保留的最后一个文件。在<span class="productname">PostgreSQL</span> 8.2 中，如果要求归档清理则必须使用<code class="literal">-k</code>选项。在 8.3 中该选项仍然存在，但是其使用已被废弃。
+  </p><p>   <span class="productname">PostgreSQL</span> 8.4 提供<code class="varname">recovery_end_command</code>选项。没有这个选项一个残留的触发文件能够导致灾难。
+  </p><p>   <span class="application">pg_standby</span>由 C 写成并且其代码易于修改，其中的小节经过特别设计以便按你的需要修改。
+  </p></div><div class="refsect1" id="idp88477872"><h2>例子</h2><p>在 Linux 或 Unix 系统上，你可能会使用：
+
+</p><pre class="programlisting">archive_command = 'cp %p .../archive/%f'
+
+restore_command = 'pg_standby -d -s 2 -t /tmp/pgsql.trigger.5442 .../archive %f %p %r 2&gt;&gt;standby.log'
+
+recovery_end_command = 'rm -f /tmp/pgsql.trigger.5442'</pre><p>
+   其中归档目录被物理防止在后备服务器上，因此<code class="varname">archive_command</code>通过 NFS 访问它，但是那些文件对于后备服务器是本地的（启用<code class="literal">ln</code>）。这将：
+  </p><div class="itemizedlist"><ul class="itemizedlist" style="list-style-type: disc; "><li class="listitem"><p>     在<code class="filename">standby.log</code>中产生调试输出
+    </p></li><li class="listitem"><p>     在检查下一个 WAL 文件的可用性之间睡眠 2 秒
+    </p></li><li class="listitem"><p>     只有当一个名为<code class="filename">/tmp/pgsql.trigger.5442</code>的触发文件出现时停止等待并且根据其内容执行失效备援
+    </p></li><li class="listitem"><p>     在恢复结束时移除触发文件
+    </p></li><li class="listitem"><p>     从归档目录中移除不再需要的文件
+    </p></li></ul></div><p>
+  </p><p>在 Windows 上，你可能会用：
+
+</p><pre class="programlisting">archive_command = 'copy %p ...\\archive\\%f'
+
+restore_command = 'pg_standby -d -s 5 -t C:\pgsql.trigger.5442 ...\archive %f %p %r 2&gt;&gt;standby.log'
+
+recovery_end_command = 'del C:\pgsql.trigger.5442'</pre><p>
+   注意<code class="varname">archive_command</code>中的反斜线需要被双写，但是在<code class="varname">restore_command</code>或者<code class="varname">recovery_end_command</code>中<span class="emphasis"><em>不</em></span>需要。这将：
+  </p><div class="itemizedlist"><ul class="itemizedlist" style="list-style-type: disc; "><li class="listitem"><p>     使用<code class="literal">copy</code>命令恢复来自归档的 WAL 文件
+    </p></li><li class="listitem"><p>     在<code class="filename">standby.log</code>中产生调试输出
+    </p></li><li class="listitem"><p>     在检查下一个 WAL 文件的可用性之间睡眠 5 秒
+    </p></li><li class="listitem"><p>     只有当一个名为<code class="filename">C:\pgsql.trigger.5442</code>的触发文件出现时停止等待并且根据其内容执行失效备援
+    </p></li><li class="listitem"><p>     在恢复结束时移除触发文件
+    </p></li><li class="listitem"><p>     从归档目录中移除不再需要的文件
+    </p></li></ul></div><p>
+  </p><p>   Windows 上的<code class="literal">copy</code>命令在文件被完全拷贝之前就会设置最终的文件尺寸，这通常会迷惑<span class="application">pg_standby</span>。因此一旦看到正确的文件尺寸，<span class="application">pg_standby</span>会等待<em class="replaceable"><code>sleeptime</code></em>秒。GNUWin32 的<code class="literal">cp</code>只会在文件拷贝完成后设置文件尺寸。
+  </p><p>   由于 Windows 的例子在两端都使用<code class="literal">copy</code>，一个或者两个服务器可能通过网络访问归档目录。
+  </p></div><div class="refsect1" id="idp88498432"><h2>作者</h2><p>   Simon Riggs <code class="email">&lt;<a class="email" href="mailto:simon@2ndquadrant.com">simon@2ndquadrant.com</a>&gt;</code>
+  </p></div><div class="refsect1" id="idp88499552"><h2>参见</h2><span class="simplelist"><a class="xref" href="pgarchivecleanup.html" title="pg_archivecleanup"><span class="refentrytitle"><span class="application">pg_archivecleanup</span></span></a></span></div></div><div class="navfooter"><hr /><table width="100%" summary="Navigation footer"><tr><td width="40%" align="left"><a accesskey="p" href="contrib-prog-server.html">上一页</a> </td><td width="20%" align="center"><a accesskey="u" href="contrib-prog-server.html">上一级</a></td><td width="40%" align="right"> <a accesskey="n" href="external-projects.html">下一页</a></td></tr><tr><td width="40%" align="left" valign="top">G.2. 服务器应用 </td><td width="20%" align="center"><a accesskey="h" href="index.html">起始页</a></td><td width="40%" align="right" valign="top"> 附录 H. 外部项目</td></tr></table></div></body></html>

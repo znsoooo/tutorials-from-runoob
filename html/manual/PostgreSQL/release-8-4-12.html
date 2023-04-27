@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><title>E.142. 版本8.4.12</title><link rel="stylesheet" type="text/css" href="stylesheet.css" /><link rev="made" href="pgsql-docs@postgresql.org" /><meta name="generator" content="DocBook XSL Stylesheets V1.79.1" /><link rel="prev" href="release-8-4-13.html" title="E.141. 版本8.4.13" /><link rel="next" href="release-8-4-11.html" title="E.143. 版本8.4.11" /></head><body><div xmlns="http://www.w3.org/TR/xhtml1/transitional" class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="5" align="center">E.142. 版本8.4.12</th></tr><tr><td width="10%" align="left"><a accesskey="p" href="release-8-4-13.html" title="E.141. 版本8.4.13">上一页</a> </td><td width="10%" align="left"><a accesskey="u" href="release.html" title="附录 E. 版本说明">上一级</a></td><th width="60%" align="center">附录 E. 版本说明</th><td width="10%" align="right"><a accesskey="h" href="index.html" title="PostgreSQL 10.1 手册">起始页</a></td><td width="10%" align="right"> <a accesskey="n" href="release-8-4-11.html" title="E.143. 版本8.4.11">下一页</a></td></tr></table><hr></hr></div><div class="sect1" id="RELEASE-8-4-12"><div class="titlepage"><div><div><h2 class="title" style="clear: both">E.142. 版本8.4.12</h2></div></div></div><div class="toc"><dl class="toc"><dt><span class="sect2"><a href="release-8-4-12.html#idp76620496">E.142.1. 迁移到版本8.4.12</a></span></dt><dt><span class="sect2"><a href="release-8-4-12.html#idp76622336">E.142.2. 修改列表</a></span></dt></dl></div><p><strong>发布日期：. </strong>2012-06-04</p><p>    该发布包含8.4.11中各种修复。
+关于8.4主要发布的新功能的信息，
+参阅<a class="xref" href="release-8-4.html" title="E.154. 版本8.4">第 E.154 节</a>。</p><div class="sect2" id="idp76620496"><div class="titlepage"><div><div><h3 class="title">E.142.1. 迁移到版本8.4.12</h3></div></div></div><p>    运行8.4.X不需要备份/恢复。</p><p>   然而，如果你从8.4.10更早版本更新，
+   参阅<a class="xref" href="release-8-4-10.html" title="E.144. 版本8.4.10">第 E.144 节</a>。</p></div><div class="sect2" id="idp76622336"><div class="titlepage"><div><div><h3 class="title">E.142.2. 修改列表</h3></div></div></div><div class="itemizedlist"><ul class="itemizedlist" style="list-style-type: disc; "><li class="listitem"><p>   修复<code class="filename">contrib/pgcrypto</code>的DES<code class="function">crypt()</code>函数中
+   不正确的密码转换(Solar Designer)</p><p>    如果密码字符串包含字节值<code class="literal">0x80</code>，那么忽略剩余的密码，
+导致密码比它出现的更加弱。
+使用这个修复，剩余字符串被恰当地包含在DES哈希中。
+受这个错误影响的任何存储密码值将不再匹配，因此
+存储值可能需要被更新。(CVE-2012-2143)</p></li><li class="listitem"><p>   为程序语言的调用处理器忽略<code class="literal">SECURITY DEFINER</code>和<code class="literal">SET</code>属性(Tom Lane)</p><p>     应用这些属性到调用处理器可以使服务器崩溃(CVE-2012-2655)</p></li><li class="listitem"><p>    允许<code class="type">timestamp</code>输入
+中数值时区偏移量远离UTC达到16小时(Tom Lane)</p><p>    一些历史时区有大于15小时的偏移量，先前限制。
+这可能导致备份数据值在重载期间被拒绝。</p></li><li class="listitem"><p>    当给定时间恰恰是当前时区的最后DST转变时间时，
+修复时间戳转换处理(Tom Lane)</p><p>    这次疏忽已有很长时间，但是以前没有被注意到，
+ 因为假设大多数DST时区有未来DST转换的不明确的序列。</p></li><li class="listitem"><p>    修复<code class="type">text</code>到<code class="type">name</code>并且<code class="type">char</code>到<code class="type">name</code>投射以便在
+多字节编码中正确执行字符串截断(Karl Schnaitter)</p></li><li class="listitem"><p>    修复<code class="function">to_tsquery()</code>中内存复制错误(Heikki Linnakangas)</p></li><li class="listitem"><p>    修复子查询内PlaceHolderVars外的规划器处理
+(Tom Lane)</p><p>    这个错误涉及到子SELECT，它引用来自周围查询的外部连接的空侧的变量。
+   在9.1中，这个错误影响的查询可能
+   伴随有<span class="quote">“<span class="quote">错误：在不被预期的地方发现上层PlaceHolderVar</span>”</span>而失败。
+   但是在9.0和8.4中，你可能默默地获得可能的错误结果，因为当需要时，
+   传递到子查询中的值不能定位到空。</p></li><li class="listitem"><p>    当<code class="structname">pg_attribute</code>很大的时候，修复缓慢会话启动(Tom Lane)</p><p>    如果<code class="structname">pg_attribute</code>超过了
+      <code class="varname">shared_buffers</code>的四分之一，
+  在会话开始时有时需要缓存重建代码可以触发同步扫描逻辑，
+  导致它采取比正常更长的时间。
+  如果许多新会话马上开始，那么问题是相当严重的。</p></li><li class="listitem"><p>    确保顺序扫描合理地检查查询取消(Merlin Moncure) </p><p>    遇到许多包含非活跃元组连续页的扫描不会同时响应中断。</p></li><li class="listitem"><p>    确保返回之前<code class="function">PGSemaphoreLock()</code>
+    清除<code class="varname">ImmediateInterruptOK</code>的Windows实现(Tom Lane)</p><p>    这种疏忽意味着在同一个查询中后来收到的查询取消中断可能在不安全时间
+   被接受，伴随着不可预知的但不好的结果。</p></li><li class="listitem"><p>     当输出视图或者规则时，安全显示整行变量(Abbas Butt, Tom Lane)</p><p>    涉及歧义名字(也就是说，该名字可以是一个表或者查询的列名)的情况被以模糊方式输出，
+   冒险转储和重载之后不同地解释视图或者规则。
+   通过附加无操作计算避免模凌两可的情况。</p></li><li class="listitem"><p>    修复<code class="command">COPY FROM</code>以正确处理与无效编码一致的空标记字符串(Tom Lane)</p><p>   一个空标记字符串比如<code class="literal">E'\\0'</code>应该工作，
+   并且工作于过去，但是这种情况在8.4中被打破。</p></li><li class="listitem"><p>    确保autovacuum工作进程恰当执行堆栈深度检查(Heikki Linnakangas)</p><p>   先前，通过自动<code class="command">ANALYZE</code>调用的无限递归函数可以
+   使工作进程崩溃。</p></li><li class="listitem"><p>   修复日志收集器在高负载下没有丢失日志一致性(Andrew Dunstan)</p><p>    如果它太忙，那么收集器先前可能重新收集大的信息失败。</p></li><li class="listitem"><p>    修复日志收集器以确保它在接收<span class="systemitem">SIGHUP</span>之后
+重启文件旋转(Tom Lane)</p></li><li class="listitem"><p>    如果索引随后被删除，那么修复GIN索引WAL回放逻辑而不失败(Tom Lane)</p></li><li class="listitem"><p>    修复PL/pgSQL的<code class="command">RETURN NEXT</code>命令中内存泄露(Joe Conway)</p></li><li class="listitem"><p>    当该目标是函数的第一个变量时，修复PL/pgSQL的<code class="command">GET DIAGNOSTICS</code>
+命令(Tom Lane)</p></li><li class="listitem"><p>     修复<span class="application">psql</span>的扩展显示(<code class="command">\x</code>)模式中潜在的
+ 访问内存结尾(Peter Eisentraut)</p></li><li class="listitem"><p>   当数据库包含许多对象时，修复<span class="application">pg_dump</span>中
+   若干性能问题(Jeff Janes, Tom Lane)</p><p>   如果数据库包含许多视图，或者如果许多对象在依赖循环中，
+或者如果有许多拥有的序列，
+那么<span class="application">pg_dump</span>可能会很慢。</p></li><li class="listitem"><p>    修复<code class="filename">contrib/dblink</code>的<code class="function">dblink_exec()</code>
+   不泄露临时数据库连接错误(Tom Lane)</p></li><li class="listitem"><p>   修复<code class="filename">contrib/dblink</code>以
+   报告错误消息中正确连接名(Kyotaro Horiguchi)</p></li><li class="listitem"><p>   为了在Antarctica, Armenia, Chile, Cuba, Falkland
+   Islands, Gaza, Haiti, Hebron, Morocco, Syria和
+   Tokelau Islands中DST变化规律
+   更新时区数据文件到<span class="application">tzdata</span>发布2012c；
+   同时为Canada历史修正。</p></li></ul></div></div></div><div class="navfooter"><hr /><table width="100%" summary="Navigation footer"><tr><td width="40%" align="left"><a accesskey="p" href="release-8-4-13.html">上一页</a> </td><td width="20%" align="center"><a accesskey="u" href="release.html">上一级</a></td><td width="40%" align="right"> <a accesskey="n" href="release-8-4-11.html">下一页</a></td></tr><tr><td width="40%" align="left" valign="top">E.141. 版本8.4.13 </td><td width="20%" align="center"><a accesskey="h" href="index.html">起始页</a></td><td width="40%" align="right" valign="top"> E.143. 版本8.4.11</td></tr></table></div></body></html>

@@ -1,0 +1,208 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><title>19.11. 客户端连接默认值</title><link rel="stylesheet" type="text/css" href="stylesheet.css" /><link rev="made" href="pgsql-docs@postgresql.org" /><meta name="generator" content="DocBook XSL Stylesheets V1.79.1" /><link rel="prev" href="runtime-config-autovacuum.html" title="19.10. 自动清理" /><link rel="next" href="runtime-config-locks.html" title="19.12. 锁管理" /></head><body><div xmlns="http://www.w3.org/TR/xhtml1/transitional" class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="5" align="center">19.11. 客户端连接默认值</th></tr><tr><td width="10%" align="left"><a accesskey="p" href="runtime-config-autovacuum.html" title="19.10. 自动清理">上一页</a> </td><td width="10%" align="left"><a accesskey="u" href="runtime-config.html" title="第 19 章 服务器配置">上一级</a></td><th width="60%" align="center">第 19 章 服务器配置</th><td width="10%" align="right"><a accesskey="h" href="index.html" title="PostgreSQL 10.1 手册">起始页</a></td><td width="10%" align="right"> <a accesskey="n" href="runtime-config-locks.html" title="19.12. 锁管理">下一页</a></td></tr></table><hr></hr></div><div class="sect1" id="RUNTIME-CONFIG-CLIENT"><div class="titlepage"><div><div><h2 class="title" style="clear: both">19.11. 客户端连接默认值</h2></div></div></div><div class="toc"><dl class="toc"><dt><span class="sect2"><a href="runtime-config-client.html#RUNTIME-CONFIG-CLIENT-STATEMENT">19.11.1. 语句行为</a></span></dt><dt><span class="sect2"><a href="runtime-config-client.html#RUNTIME-CONFIG-CLIENT-FORMAT">19.11.2. 区域和格式化</a></span></dt><dt><span class="sect2"><a href="runtime-config-client.html#RUNTIME-CONFIG-CLIENT-PRELOAD">19.11.3. 共享库预载入</a></span></dt><dt><span class="sect2"><a href="runtime-config-client.html#RUNTIME-CONFIG-CLIENT-OTHER">19.11.4. 其他默认值</a></span></dt></dl></div><div class="sect2" id="RUNTIME-CONFIG-CLIENT-STATEMENT"><div class="titlepage"><div><div><h3 class="title">19.11.1. 语句行为</h3></div></div></div><div class="variablelist"><dl class="variablelist"><dt id="GUC-SEARCH-PATH"><span class="term"><code class="varname">search_path</code> (<code class="type">string</code>)
+      <a id="idp21851840" class="indexterm"></a>
+      <a id="idp21852944" class="indexterm"></a></span></dt><dd><p>        这个变量指定当一个对象（表、数据类型、函数等）被用一个无模式限定的简单名称引用时，用于进行搜索该对象的模式顺序。当在不同模式中有同名对象时，将使用第一个在搜索路径中被找到的对象。一个不属于搜索路径中任何一个模式的对象只能通过用限定名（带点号）指定包含它的模式来引用。
+       </p><p>        <code class="varname">search_path</code>的值必需是一个逗号分隔的模式名列表。任何不是一个已有模式的名称，或者是一个用户不具有<code class="literal">USAGE</code>权限的模式，将被安静地忽略。
+       </p><p>        如果列表项之一是特殊名<code class="literal">$user</code>，则具有<code class="function">SESSION_USER</code>返回的名字的模式将取代它（如果有这样一个模式并且该用户有该模式的<code class="literal">USAGE</code>权限；如果没有，<code class="literal">$user</code>会被忽略）。
+       </p><p>        系统目录模式<code class="literal">pg_catalog</code>总是被搜索，不管它是否在搜索路径中被提及。如果它在路径中被提及，那么它将被按照路径指定的顺序搜索。如果<code class="literal">pg_catalog</code>不在路径中，则它将在任何路径项<span class="emphasis"><em>之前</em></span>被搜索。
+       </p><p>        同样，当前会话的临时表模式<code class="literal">pg_temp_<em class="replaceable"><code>nnn</code></em></code>也总是被搜索（如果存在）。它可以在路径中通过使用别名<code class="literal">pg_temp</code><a id="idp21864208" class="indexterm"></a>显式列出。如果在路径中没有列出，那么会首先对它进行搜索（甚至是在<code class="literal">pg_catalog</code>之前）。然而，临时模式只被用来搜索关系（表、视图、序列等）和数据类型名。它从不用于搜索函数或操作符名。
+       </p><p>        当对象创建时没有指定一个特定目标模式，它们将被放置在<code class="varname">search_path</code>中第一个合法模式中。如果搜索路径为空将报告一个错误。
+       </p><p>        这个参数的缺省值是<code class="literal">"$user", public</code>。这种设置支持一个数据库（其中没有用户拥有私有模式，并且所有人共享使用<code class="literal">public</code>）   、每个用户私有模式及其组合的共享使用。其它效果可以通过全局或者针对每个用户修改默认搜索路径设置获得。
+       </p><p>        搜索路径的当前有效值可以通过<acronym class="acronym">SQL</acronym>函数<code class="function">current_schemas</code>检查（见<a class="xref" href="functions-info.html" title="9.25. 系统信息函数">第 9.25 节</a>）。它和检查<code class="varname">search_path</code>的值不太一样，因为<code class="function">current_schemas</code>显示出现在<code class="varname">search_path</code>中的项如何被解析。
+       </p><p>        更多关于模式处理的信息，请见<a class="xref" href="ddl-schemas.html" title="5.8. 模式">第 5.8 节</a>。
+       </p></dd><dt id="GUC-ROW-SECURITY"><span class="term"><code class="varname">row_security</code> (<code class="type">boolean</code>)
+      <a id="idp21875664" class="indexterm"></a>
+      </span></dt><dd><p>        此变量控制是否提高错误以代替应用行安全策略。
+        当设置为<code class="literal">on</code>时，策略往往适用。
+        当设置为<code class="literal">off</code>时，查询失败，这将应用至少一个策略。
+        默认为<code class="literal">on</code>。
+        在有限的行可见性引起不正确的结果的位置更改为<code class="literal">off</code>。
+        例如，<span class="application">pg_dump</span>使用缺省更改。
+        这个变量不影响避开每行安全策略的角色，
+        即超级用户和具有<code class="literal">BYPASSRLS</code>属性的角色。
+       </p><p>        关于行安全策略的更多信息，参阅<a class="xref" href="sql-createpolicy.html" title="CREATE POLICY"><span class="refentrytitle">CREATE POLICY</span></a>。
+       </p></dd><dt id="GUC-DEFAULT-TABLESPACE"><span class="term"><code class="varname">default_tablespace</code> (<code class="type">string</code>)
+      <a id="idp21884768" class="indexterm"></a>
+      <a id="idp21885872" class="indexterm"></a></span></dt><dd><p>        这个变量指定当一个<code class="command">CREATE</code>命令没有显式指定一个表空间时，创建对象（表和索引）的默认表空间。
+       </p><p>        该值要么是一个表空间的名字，要么是一个指定使用当前数据库默认表空间的空字符串。如果该值和任何现有表空间的名字都不匹配，<span class="productname">PostgreSQL</span>将自动使用当前数据库的默认表空间。如果指定了一个非默认的表空间，用户必须对它有<code class="literal">CREATE</code>权限，否则创建企图将失败。
+       </p><p>        这个变量不被用于临时表，对临时表会使用<a class="xref" href="runtime-config-client.html#GUC-TEMP-TABLESPACES">temp_tablespaces</a>。
+       </p><p>        当创建数据库时也会使用这个变量。默认情况下，一个新数据库会从它的模板数据库继承其表空间设置。
+       </p><p>        有关表空间的更多的信息，请见<a class="xref" href="manage-ag-tablespaces.html" title="22.6. 表空间">第 22.6 节</a>。
+       </p></dd><dt id="GUC-TEMP-TABLESPACES"><span class="term"><code class="varname">temp_tablespaces</code> (<code class="type">string</code>)
+      <a id="idp21895200" class="indexterm"></a>
+      <a id="idp21896304" class="indexterm"></a></span></dt><dd><p>        这个变量指定当一个<code class="command">CREATE</code>命令没有显式指定一个表空间时，创建临时对象（临时表和临时表上的索引）的默认表空间。用于排序大型数据集的临时文件也被创建在这些表空间中。
+       </p><p>        该值是一个表空间名字的列表。当列表中有多于一个名称时，每次一个临时对象被创建时<span class="productname">PostgreSQL</span>随机选择列表中的一个成员。例外是在一个事务中，连续创建的临时对象被放置在里表中的连续表空间中。如果列表被选中元素是一个空字符串，<span class="productname">PostgreSQL</span>将自动使用当前数据库的默认表空间。
+       </p><p>        当<code class="varname">temp_tablespaces</code>被交互式地设置时，指定一个不存在的表空间是一种错误，类似于为用户指定一个不具有<code class="literal">CREATE</code>权限的表空间。不过，当使用一个之前设置的值时，不存在的表空间会被忽略，就像用户缺少<code class="literal">CREATE</code>权限的表空间一样。特殊地，使用一个在<code class="filename">postgresql.conf</code>中设置的值时，这条规则起效。
+       </p><p>        默认值是一个空字符串，它使得所有临时对象被创建在当前数据库的默认表空间中。
+       </p><p>        参阅<a class="xref" href="runtime-config-client.html#GUC-DEFAULT-TABLESPACE">default_tablespace</a>。
+       </p></dd><dt id="GUC-CHECK-FUNCTION-BODIES"><span class="term"><code class="varname">check_function_bodies</code> (<code class="type">boolean</code>)
+      <a id="idp21907600" class="indexterm"></a></span></dt><dd><p>        这个参数通常为打开 。当设置为<code class="literal">off</code>时，它禁用<a class="xref" href="sql-createfunction.html" title="CREATE FUNCTION"><span class="refentrytitle">CREATE FUNCTION</span></a>期间对函数体字符串的验证。禁用验证避免了验证处理的副作用并且避免了如向前引用导致的伪肯定。在代表其他用户载入函数之前设置这个参数为<code class="literal">off</code>；<span class="application">pg_dump</span>会自动这样做。
+       </p></dd><dt id="GUC-DEFAULT-TRANSACTION-ISOLATION"><span class="term"><code class="varname">default_transaction_isolation</code> (<code class="type">enum</code>)
+      <a id="idp21913920" class="indexterm"></a>
+      <a id="idp21915040" class="indexterm"></a></span></dt><dd><p>        每个 SQL 事务都有一个隔离级别，可以是<span class="quote">“<span class="quote">读未提交</span>”</span>、<span class="quote">“<span class="quote">读已提交</span>”</span>、<span class="quote">“<span class="quote">可重复读</span>”</span>或者<span class="quote">“<span class="quote">可序列化</span>”</span>。这个参数控制每个新事务的默认隔离级别。默认是<span class="quote">“<span class="quote">读已提交</span>”</span>。
+       </p><p>        更多信息请参阅<a class="xref" href="mvcc.html" title="第 13 章 并发控制">第 13 章</a>和<a class="xref" href="sql-set-transaction.html" title="SET TRANSACTION"><span class="refentrytitle">SET TRANSACTION</span></a>。
+       </p></dd><dt id="GUC-DEFAULT-TRANSACTION-READ-ONLY"><span class="term"><code class="varname">default_transaction_read_only</code> (<code class="type">boolean</code>)
+      <a id="idp21922464" class="indexterm"></a>
+      <a id="idp21923568" class="indexterm"></a></span></dt><dd><p>        一个只读的 SQL 事务不能修改非临时表。这个参数控制每个新事务的默认只读状态 。默认是<code class="literal">off</code>（读/写）。
+       </p><p>        更多信息请参考<a class="xref" href="sql-set-transaction.html" title="SET TRANSACTION"><span class="refentrytitle">SET TRANSACTION</span></a>。
+       </p></dd><dt id="GUC-DEFAULT-TRANSACTION-DEFERRABLE"><span class="term"><code class="varname">default_transaction_deferrable</code> (<code class="type">boolean</code>)
+      <a id="idp21928816" class="indexterm"></a>
+      <a id="idp21929920" class="indexterm"></a></span></dt><dd><p>        当运行在<code class="literal">可序列化</code>隔离级别时，一个可延迟只读 SQL 事务可以在它被允许继续之前延迟一段时间。但是，一旦它开始执行就不会产生任何用来保证可序列化性的负荷；因此序列化代码将没有任何理由因为并发更新而强制它中断，使得这个选项适合于长时间运行的只读事务。
+        </p><p>        这个参数控制每个新事务的默认可延迟状态。目前它对读写事务或者那些操作在低于<code class="literal">可序列化</code>隔离级别上的事务无效。默认值是<code class="literal">off</code>。
+       </p><p>        详情请参阅<a class="xref" href="sql-set-transaction.html" title="SET TRANSACTION"><span class="refentrytitle">SET TRANSACTION</span></a>。
+       </p></dd><dt id="GUC-SESSION-REPLICATION-ROLE"><span class="term"><code class="varname">session_replication_role</code> (<code class="type">enum</code>)
+      <a id="idp21937632" class="indexterm"></a></span></dt><dd><p>        为当前会话控制复制相关的触发器和规则的触发。需要超级用户权限才能设置这个变量，并且会导致丢弃任何之前缓存下来的查询计划。可能的值有<code class="literal">origin</code>（默认）、<code class="literal">replica</code>和<code class="literal">local</code>。详见<a class="xref" href="sql-altertable.html" title="ALTER TABLE"><span class="refentrytitle">ALTER TABLE</span></a>。
+       </p></dd><dt id="GUC-STATEMENT-TIMEOUT"><span class="term"><code class="varname">statement_timeout</code> (<code class="type">integer</code>)
+      <a id="idp21944128" class="indexterm"></a></span></dt><dd><p>        中止任何使用了超过指定毫秒数的语句，从命令到达服务器开始计时。如果<code class="varname">log_min_error_statement</code>被设置为<code class="literal">ERROR</code>或更低，语句如果超时也会被记录。一个零值（默认）将关闭这个参数。
+       </p><p>        我们不推荐在<code class="filename">postgresql.conf</code>中设置<code class="varname">statement_timeout</code>，因为它会影响所有会话。
+       </p></dd><dt id="GUC-LOCK-TIMEOUT"><span class="term"><code class="varname">lock_timeout</code> (<code class="type">integer</code>)
+      <a id="idp21950368" class="indexterm"></a></span></dt><dd><p>        如果任何语句在试图获取表、索引、行或其他数据库对象上的锁时等到超过指定的毫秒数，该语句将被中止。该时间限制独立地应用于每一次锁获取尝试。该限制会应用到显式锁定请求（如<code class="command">LOCK TABLE</code>或不带<code class="literal">NOWAIT</code>的<code class="command">SELECT FOR UPDATE</code>）和隐式获得的锁。如果<code class="varname">log_min_error_statement</code>被设置为<code class="literal">ERROR</code>或更低，超时的语句会被记录。一个零值（默认）将关闭这个参数。
+       </p><p>        与<code class="varname">statement_timeout</code>不同，这个超时只在等待锁时发生。注意如果<code class="varname">statement_timeout</code>为非零，设置<code class="varname">lock_timeout</code>为相同或更大的值没有意义，因为事务超时将总是第一个被触发。
+       </p><p>        我们不推荐在<code class="filename">postgresql.conf</code>中设置<code class="varname">lock_timeout</code>，因为它会影响所有会话。
+       </p></dd><dt id="GUC-IDLE-IN-TRANSACTION-SESSION-TIMEOUT"><span class="term"><code class="varname">idle_in_transaction_session_timeout</code> (<code class="type">integer</code>)
+      <a id="idp21960848" class="indexterm"></a>
+      </span></dt><dd><p>       终止任何已经闲置超过这个参数所指定的时间（以毫秒计）的打开事务的会话。
+       这使得该会话所持有的任何锁被释放，并且其所持有的连接槽可以被重用，
+       它也允许只对这个事务可见的元组被清理。有关于此的详情请见
+       <a class="xref" href="routine-vacuuming.html" title="24.1. 日常清理">第 24.1 节</a>。
+       </p><p>       默认值 0 会禁用这个特性。
+
+       </p></dd><dt id="GUC-VACUUM-FREEZE-TABLE-AGE"><span class="term"><code class="varname">vacuum_freeze_table_age</code> (<code class="type">integer</code>)
+      <a id="idp21966128" class="indexterm"></a></span></dt><dd><p>        当表的<code class="structname">pg_class</code>.<code class="structfield">relfrozenxid</code>域达到该设置指定的年龄时，<code class="command">VACUUM</code>会执行一次全表扫描。
+		积极的扫描不同于常规的<code class="command">VACUUM</code>，因为它会访问每个可能包含未冻结XID或MXID的页面，而不仅仅是那些可能包含死元组的页面。
+		默认值是 1.5 亿个事务。尽管用户可以把这个值设置为从 0 到 20 亿，<code class="command">VACUUM</code>会悄悄地将有效值设置为<a class="xref" href="runtime-config-autovacuum.html#GUC-AUTOVACUUM-FREEZE-MAX-AGE">autovacuum_freeze_max_age</a>值的95%，因此在表上启动一次反回卷自动清理之前有机会进行一次定期手动<code class="command">VACUUM</code>。更多信息请见<a class="xref" href="routine-vacuuming.html#VACUUM-FOR-WRAPAROUND" title="24.1.5. 防止事务 ID 回卷失败">第 24.1.5 节</a>。
+       </p></dd><dt id="GUC-VACUUM-FREEZE-MIN-AGE"><span class="term"><code class="varname">vacuum_freeze_min_age</code> (<code class="type">integer</code>)
+      <a id="idp21975008" class="indexterm"></a></span></dt><dd><p>        指定<code class="command">VACUUM</code>在扫描表时用来决定是否冻结行版本的切断年龄（以事务计）。默认值是 5 千万个事务。尽管用户可以将这个值设置为从 0 到 10 亿，<code class="command">VACUUM</code>会悄悄地将有效值设置为<a class="xref" href="runtime-config-autovacuum.html#GUC-AUTOVACUUM-FREEZE-MAX-AGE">autovacuum_freeze_max_age</a>值的一半，这样在强制执行的自动清理之间不会有过短的时间间隔。更多信息请见<a class="xref" href="routine-vacuuming.html#VACUUM-FOR-WRAPAROUND" title="24.1.5. 防止事务 ID 回卷失败">第 24.1.5 节</a>。
+       </p></dd><dt id="GUC-VACUUM-MULTIXACT-FREEZE-TABLE-AGE"><span class="term"><code class="varname">vacuum_multixact_freeze_table_age</code> (<code class="type">integer</code>)
+      <a id="idp21981344" class="indexterm"></a></span></dt><dd><p>        如果表的<code class="structname">pg_class</code>.<code class="structfield">relminmxid</code>域超过了这个设置指定的年龄，<code class="command">VACUUM</code>会执行一次全表扫描。
+		积极的扫描不同于常规的<code class="command">VACUUM</code>，因为它会访问每个可能包含未冻结XID或MXID的页面，而不仅仅是那些可能包含死元组的页面。
+		默认值是 1.5 亿个组合事务。尽管用户可以把这个值设置为从 0 到 20 亿，<code class="command">VACUUM</code>会悄悄地将有效值设置为<a class="xref" href="runtime-config-autovacuum.html#GUC-AUTOVACUUM-MULTIXACT-FREEZE-MAX-AGE">autovacuum_multixact_freeze_max_age</a>值的95%，因此在表上启动一次反回卷自动清理之前有机会进行一次定期手动<code class="command">VACUUM</code>。更多信息请见<a class="xref" href="routine-vacuuming.html#VACUUM-FOR-MULTIXACT-WRAPAROUND" title="24.1.5.1. 多事务和回卷">第 24.1.5.1 节</a>。
+       </p></dd><dt id="GUC-VACUUM-MULTIXACT-FREEZE-MIN-AGE"><span class="term"><code class="varname">vacuum_multixact_freeze_min_age</code> (<code class="type">integer</code>)
+      <a id="idp21990384" class="indexterm"></a></span></dt><dd><p>        指定<code class="command">VACUUM</code>在扫描表时用来决定是否把组合事务 ID 替换为一个更新的事务 ID 或组合事务 ID 的切断年龄（以组合事务计）。默认值是 5 千万个组合事务。尽管用户可以将这个值设置为从 0 到 10 亿，<code class="command">VACUUM</code>会悄悄地将有效值设置为<a class="xref" href="runtime-config-autovacuum.html#GUC-AUTOVACUUM-MULTIXACT-FREEZE-MAX-AGE">autovacuum_multixact_freeze_max_age</a>值的一半，这样在强制执行的自动清理之间不会有过短的时间间隔。更多信息请见<a class="xref" href="routine-vacuuming.html#VACUUM-FOR-MULTIXACT-WRAPAROUND" title="24.1.5.1. 多事务和回卷">第 24.1.5.1 节</a>。
+       </p></dd><dt id="GUC-BYTEA-OUTPUT"><span class="term"><code class="varname">bytea_output</code> (<code class="type">enum</code>)
+      <a id="idp21996864" class="indexterm"></a></span></dt><dd><p>        设置<code class="type">bytea</code>类型值的输出格式。有效值是<code class="literal">hex</code>（默认）和 <code class="literal">escape</code>（传统的 PostgreSQL 格式）。详见<a class="xref" href="datatype-binary.html" title="8.4. 二进制数据类型">第 8.4 节</a>。不管这个设置的值如何，<code class="type">bytea</code>类型总是接受这两种格式的输入。
+       </p></dd><dt id="GUC-XMLBINARY"><span class="term"><code class="varname">xmlbinary</code> (<code class="type">enum</code>)
+      <a id="idp22003120" class="indexterm"></a></span></dt><dd><p>        设置二进制值如何被编码为 XML。例如，这适用于通过<code class="function">xmlelement</code>函数或<code class="function">xmlforest</code>函数将<code class="type">bytea</code>值转换到 XML 值。可能的值有<code class="literal">base64</code>和<code class="literal">hex</code>，它们都是用 XML 模式标准定义的。默认值是<code class="literal">base64</code>。更多关于 XML 相关函数的信息可参阅<a class="xref" href="functions-xml.html" title="9.14. XML 函数">第 9.14 节</a>。
+       </p><p>        这里的实际选择都是根据爱好做出的，只受客户端应用中可能存在的限制的约束。两种方法都支持所有可能的值，尽管十六进制编码将比 base64 编码更大。
+       </p></dd><dt id="GUC-XMLOPTION"><span class="term"><code class="varname">xmloption</code> (<code class="type">enum</code>)
+      <a id="idp22011968" class="indexterm"></a>
+      <a id="idp22013072" class="indexterm"></a>
+      <a id="idp22014016" class="indexterm"></a></span></dt><dd><p>        当在XML和字符串值之间进行转换时，无论设置DOCUMENT或 CONTENT都是隐式的。可参阅Section 8.13。 有效值是DOCUMENT和CONTENT。 缺省值是CONTENT。
+        当在 XML 和字符串值之间进行转换时，设置<code class="literal">DOCUMENT</code>或<code class="literal">CONTENT</code>都是隐式的。详见<a class="xref" href="datatype-xml.html" title="8.13. XML类型">第 8.13 节</a>。有效值是<code class="literal">DOCUMENT</code>和<code class="literal">CONTENT</code>。默认值是<code class="literal">CONTENT</code>。
+       </p><p>        根据 SQL 标准，设置这个选项的命令是：
+</p><pre class="synopsis">SET XML OPTION { DOCUMENT | CONTENT };</pre><p>
+        这种语法在 PostgreSQL 也可用。
+       </p></dd><dt id="GUC-GIN-PENDING-LIST-LIMIT"><span class="term"><code class="varname">gin_pending_list_limit</code> (<code class="type">integer</code>)
+      <a id="idp22023024" class="indexterm"></a>
+      </span></dt><dd><p>         当启用<code class="literal">fastupdate</code>时，设置正在使用的GIN挂起列表的最大尺寸。
+         如果列表增长大于这个最大尺寸，
+         通过移动块存储的主要的GIN数据结构项进行清理。
+         默认值为四字节(<code class="literal">4MB</code>)。
+         为单个GIN索引改变索引存储参数来重写此设置。
+         参阅<a class="xref" href="gin-implementation.html#GIN-FAST-UPDATE" title="64.4.1. GIN 快速更新技术">第 64.4.1 节</a>和<a class="xref" href="gin-tips.html" title="64.5. GIN 提示和技巧">第 64.5 节</a>
+         获取更多信息。
+       </p></dd></dl></div></div><div class="sect2" id="RUNTIME-CONFIG-CLIENT-FORMAT"><div class="titlepage"><div><div><h3 class="title">19.11.2. 区域和格式化</h3></div></div></div><div class="variablelist"><dl class="variablelist"><dt id="GUC-DATESTYLE"><span class="term"><code class="varname">DateStyle</code> (<code class="type">string</code>)
+      <a id="idp22030640" class="indexterm"></a></span></dt><dd><p>        设置日期和时间值的显示格式，以及解释有歧义的日期输入值的规则。由于历史原因， 这个变量包含两个独立的部分：输出格式声明（<code class="literal">ISO</code>、<code class="literal">Postgres</code>、<code class="literal">SQL</code>或<code class="literal">German</code>）、 输入/输出的年/月/日顺序（<code class="literal">DMY</code>、<code class="literal">MDY</code>或<code class="literal">YMD</code>）。这些可以被独立设置或者一起设置。关键字<code class="literal">Euro</code>和<code class="literal">European</code>是<code class="literal">DMY</code>的同义词；关键字<code class="literal">US</code>、<code class="literal">NonEuro</code>和<code class="literal">NonEuropean</code>是<code class="literal">MDY</code>的同义词。详见<a class="xref" href="datatype-datetime.html" title="8.5. 日期/时间类型">第 8.5 节</a>。内建默认值是<code class="literal">ISO, MDY</code>，但是<span class="application">initdb</span>将用对应于选中的<code class="varname">lc_time</code>区域行为的设置初始化配置文件。
+       </p></dd><dt id="GUC-INTERVALSTYLE"><span class="term"><code class="varname">IntervalStyle</code> (<code class="type">enum</code>)
+      <a id="idp22046688" class="indexterm"></a></span></dt><dd><p>        设置间隔值的显示格式。值<code class="literal">sql_standard</code>将产生匹配<acronym class="acronym">SQL</acronym>标准间隔文本的输出。当<a class="xref" href="runtime-config-client.html#GUC-DATESTYLE">DateStyle</a>参数被设置为<code class="literal">ISO</code>时，值<code class="literal">postgres</code>（默认）将产生匹配<span class="productname">PostgreSQL</span>发行 8.4 之前的输出。当<code class="varname">DateStyle</code>参数被设置为非<code class="literal">ISO</code>输出时，值<code class="literal">postgres_verbose</code>会产生匹配<span class="productname">PostgreSQL</span>发行 8.4 之前的输出。值<code class="literal">iso_8601</code>会产生匹配在 ISO 8601 的 4.4.3.2 节中定义的<span class="quote">“<span class="quote">带标志符格式</span>”</span>的时间间隔的输出。
+       </p><p>        <code class="varname">IntervalStyle</code>参数也可以影响对有歧义的间隔输入的解释。详见<a class="xref" href="datatype-datetime.html#DATATYPE-INTERVAL-INPUT" title="8.5.4. 间隔输入">第 8.5.4 节</a>。
+       </p></dd><dt id="GUC-TIMEZONE"><span class="term"><code class="varname">TimeZone</code> (<code class="type">string</code>)
+      <a id="idp22059264" class="indexterm"></a>
+      <a id="idp22060368" class="indexterm"></a></span></dt><dd><p>        设置用于显示和解释时间戳的时区。内建默认值是<code class="literal">GMT</code>，但是它通常会在<code class="filename">postgresql.conf</code>中被覆盖；<span class="application">initdb</span>将安装一个对应于其系统环境的设置。详见<a class="xref" href="datatype-datetime.html#DATATYPE-TIMEZONES" title="8.5.3.  时区">第 8.5.3 节</a>。
+       </p></dd><dt id="GUC-TIMEZONE-ABBREVIATIONS"><span class="term"><code class="varname">timezone_abbreviations</code> (<code class="type">string</code>)
+      <a id="idp22066416" class="indexterm"></a>
+      <a id="idp22067520" class="indexterm"></a></span></dt><dd><p>        设置服务器接受的日期时间输入中使用的时区缩写集合。默认值为<code class="literal">'Default'</code>， 这个集合在全世界大多数地方都能工作。也还有<code class="literal">'Australia'</code>和<code class="literal">'India'</code>，以及可能为一种特定安装定义的其他集合。详见<a class="xref" href="datetime-config-files.html" title="B.3. 日期/时间配置文件">第 B.3 节</a>。
+       </p></dd><dt id="GUC-EXTRA-FLOAT-DIGITS"><span class="term"><code class="varname">extra_float_digits</code> (<code class="type">integer</code>)
+      <a id="idp22073504" class="indexterm"></a>
+      <a id="idp22074320" class="indexterm"></a>
+      <a id="idp22075424" class="indexterm"></a></span></dt><dd><p>        这个参数为浮点值调整显示的位数，包括<code class="type">float4</code>、<code class="type">float8</code>以及几何数据类型。参数值被加在标准的位数（<code class="literal">FLT_DIG</code>或<code class="literal">DBL_DIG</code>，视情况而定）上。该值最高可以被设置为 3 来包括部分有效位；这特别有助于转储需要被准确恢复的否点数据。或者它可以被设置为负值来消除不需要的位。另请参见<a class="xref" href="datatype-numeric.html#DATATYPE-FLOAT" title="8.1.3. 浮点类型">第 8.1.3 节</a>。
+       </p></dd><dt id="GUC-CLIENT-ENCODING"><span class="term"><code class="varname">client_encoding</code> (<code class="type">string</code>)
+      <a id="idp22082064" class="indexterm"></a>
+      <a id="idp22083168" class="indexterm"></a></span></dt><dd><p>        设置客户端编码（字符集）。默认使用数据库编码。<span class="productname">PostgreSQL</span>服务器所支持的字符集在<a class="xref" href="multibyte.html#MULTIBYTE-CHARSET-SUPPORTED" title="23.3.1. 被支持的字符集">第 23.3.1 节</a>中描述。
+       </p></dd><dt id="GUC-LC-MESSAGES"><span class="term"><code class="varname">lc_messages</code> (<code class="type">string</code>)
+      <a id="idp22087856" class="indexterm"></a></span></dt><dd><p>        设置消息显示的语言。可接受的值是系统相关的；详见<a class="xref" href="locale.html" title="23.1. 区域支持">第 23.1 节</a>。如果这个变量被设置为空字符串（默认），那么该值将以一种系统相关的方式从服务器的执行环境中继承。
+       </p><p>        在一些系统上，这个区域分类并不存在。仍然可以设置这个变量，只是不会有任何效果。同样，所期望语言的翻译消息也可能不存在。在这种情况下，你将仍然继续看到英文消息。
+       </p><p>        只有超级用户可以改变这个设置。因为它同时影响发送到服务器日志和客户端的消息。一个不正确的值可能会降低服务器日志的可读性。
+       </p></dd><dt id="GUC-LC-MONETARY"><span class="term"><code class="varname">lc_monetary</code> (<code class="type">string</code>)
+      <a id="idp22093488" class="indexterm"></a></span></dt><dd><p>        设置用于格式化货币量的区域，例如用<code class="function">to_char</code>函数族。可接受的值是系统相关的；详见<a class="xref" href="locale.html" title="23.1. 区域支持">第 23.1 节</a>。如果这个变量被设置为空字符串（默认），那么该值将以一种系统相关的方式从服务器的执行环境中继承。
+       </p></dd><dt id="GUC-LC-NUMERIC"><span class="term"><code class="varname">lc_numeric</code> (<code class="type">string</code>)
+      <a id="idp22098368" class="indexterm"></a></span></dt><dd><p>        设置用于格式化数字的区域，例如用<code class="function">to_char</code>函数族。可接受的值是系统相关的；详见<a class="xref" href="locale.html" title="23.1. 区域支持">第 23.1 节</a>。如果这个变量被设置为空字符串（默认），那么该值将以一种系统相关的方式从服务器的执行环境中继承。
+       </p></dd><dt id="GUC-LC-TIME"><span class="term"><code class="varname">lc_time</code> (<code class="type">string</code>)
+      <a id="idp22103248" class="indexterm"></a></span></dt><dd><p>        设置用于格式化日期和时间的区域，例如用<code class="function">to_char</code>函数族。可接受的值是系统相关的；详见<a class="xref" href="locale.html" title="23.1. 区域支持">第 23.1 节</a>。如果这个变量被设置为空字符串（默认），那么该值将以一种系统相关的方式从服务器的执行环境中继承。
+       </p></dd><dt id="GUC-DEFAULT-TEXT-SEARCH-CONFIG"><span class="term"><code class="varname">default_text_search_config</code> (<code class="type">string</code>)
+      <a id="idp22108144" class="indexterm"></a></span></dt><dd><p>        选择被那些没有显式参数指定配置的文本搜索函数变体使用的文本搜索配置。详见<a class="xref" href="textsearch.html" title="第 12 章 全文搜索">第 12 章</a>。内建默认值是<code class="literal">pg_catalog.simple</code>，但是如果能够标识一个匹配区域的配置，<span class="application">initdb</span>将用对应于选中的<code class="varname">lc_ctype</code>区域的设置初始化配置文件。
+       </p></dd></dl></div></div><div class="sect2" id="RUNTIME-CONFIG-CLIENT-PRELOAD"><div class="titlepage"><div><div><h3 class="title">19.11.3. 共享库预载入</h3></div></div></div><p>      为了载入附加的功能或者达到提高性能的目的，可用多个设置来预先载入共享库到服务器中。
+      例如<code class="literal">'$libdir/mylib'</code>设置可能会导致<code class="literal">mylib.so</code>（或者某些平台上的<code class="literal">mylib.sl</code>）从安装的标准库目录被预装载。这些设置之间的区别在于生效的时间以及改变它们所需的特权。
+     </p><p>      可以用这个方法预装载<span class="productname">PostgreSQL</span>的过程语言库，通常是使用<code class="literal">'$libdir/plXXX'</code>语法，其中的<code class="literal">XXX</code>是<code class="literal">pgsql</code>、<code class="literal">perl</code>、<code class="literal">tcl</code>或<code class="literal">python</code>。
+     </p><p>      只有特别为与PostgreSQL一起使用设计的共享库才能以这种方式载入。每一个PostgreSQL支持
+      的库都有一个<span class="quote">“<span class="quote">魔法块</span>”</span>，它会被检查以保证兼容性。由于这个原因，非PostgreSQL无法
+      以这种方式被载入。你可能可以使用操作系统的工具（如<code class="envar">LD_PRELOAD</code>）载入它。
+     </p><p>      总之，请参考特定模块的文档来用推荐的方法载入它。
+     </p><div class="variablelist"><dl class="variablelist"><dt id="GUC-LOCAL-PRELOAD-LIBRARIES"><span class="term"><code class="varname">local_preload_libraries</code> (<code class="type">string</code>)
+      <a id="idp22125776" class="indexterm"></a>
+      <a id="idp22126880" class="indexterm"></a>
+      </span></dt><dd><p>        这个变量指定一个或者多个要在连接开始时预载入的共享库。
+        它包含逗号分隔的库名称列表，其中每个名称都被解释为
+		<a class="xref" href="sql-load.html" title="LOAD"><span class="refentrytitle">LOAD</span></a>命令。项之间的空白被忽略；
+		如果需要在名称中包含空格或逗号，请用双引号括住库名。
+		这个参数在连接启动时起作用，对后续更改没有影响。
+        如果指定的库没有找到，连接尝试将会失败。    
+       </p><p>        任何用户都能设置这个选项。正因为如此，能被这样载入的库被严格限制为出现于安装的标准库
+        目录中<code class="filename">plugins</code>子目录下的共享库（保证只有<span class="quote">“<span class="quote">安全的</span>”</span>库被安装到
+        这里是数据库管理员的责任）。<code class="varname">local_preload_libraries</code>中的项可以显式
+        指定这个目录，例如<code class="literal">$libdir/plugins/mylib</code>，或者只是指定库的
+        名称 — <code class="literal">mylib</code> 和
+        <code class="literal">$libdir/plugins/mylib</code>的效果是相同的。
+       </p><p>        这个功能的目的是允许非特权用户加载调试或性能测量库到特定会话，
+        而不需要显式的<code class="command">LOAD</code>命令。
+        为达到此目的，典型的使用<code class="envar">PGOPTIONS</code>环境变量或使用<code class="command">ALTER ROLE SET</code>设置这个参数。
+       </p><p>        除非一个模块被特别设计成由非超级用户以这种方式使用，通常不推荐使用这个设置。应该看看
+        <a class="xref" href="runtime-config-client.html#GUC-SESSION-PRELOAD-LIBRARIES">session_preload_libraries</a>。
+       </p></dd><dt id="GUC-SESSION-PRELOAD-LIBRARIES"><span class="term"><code class="varname">session_preload_libraries</code> (<code class="type">string</code>)
+      <a id="idp22140224" class="indexterm"></a>
+      </span></dt><dd><p>        这个变量指定一个或者多个要在连接开始时预载入的共享库。
+		它包含逗号分隔的库名称列表，其中每个名称都被解释为
+		<a class="xref" href="sql-load.html" title="LOAD"><span class="refentrytitle">LOAD</span></a>命令。项之间的空白被忽略；
+		如果需要在名称中包含空格或逗号，请用双引号括住库名。		
+        这个参数只在连接开始时起效。后续的改变没有效果。如果指定的库没有找到，连接尝试将会失败。
+		只有超级用户更够更改这个设置。
+       </p><p>        这个特性的意图是允许在特定会话中载入调试用的或者测量性能的库，而不需要显式的给出一个
+        <code class="command">LOAD</code>命令。例如，通过用<code class="command">ALTER ROLE SET</code>设置这个参数可以
+        为一个给定用户名下的所有会话启用<a class="xref" href="auto-explain.html" title="F.4. auto_explain">auto_explain</a>。还有，无需重启
+        服务器就能更改这个参数（但是只有新会话启动时才会生效），这样可以以这种方式更容易地增
+        加新模块，即便它们会应用到所有会话。
+       </p><p>        和<a class="xref" href="runtime-config-client.html#GUC-SHARED-PRELOAD-LIBRARIES">shared_preload_libraries</a>不同，相对于在库被第一次使用
+        时载入它，在会话开始时载入库并没有什么性能优势。不过，当使用连接池时这样做还是有一些
+        优势。
+       </p></dd><dt id="GUC-SHARED-PRELOAD-LIBRARIES"><span class="term"><code class="varname">shared_preload_libraries</code> (<code class="type">string</code>)
+      <a id="idp22149760" class="indexterm"></a>
+      </span></dt><dd><p>        这个变量指定一个或者多个要在服务器启动时预载入的共享库。
+		它包含逗号分隔的库名称列表，其中每个名称都被解释为
+		<a class="xref" href="sql-load.html" title="LOAD"><span class="refentrytitle">LOAD</span></a>命令。项之间的空白被忽略；
+		如果需要在名称中包含空格或逗号，请用双引号括住库名。
+		这个参数只能在服务器启动时设置。
+        如果指定的库没有找到，服务器将无法启动。
+       </p><p>        有些库需要执行只能在postmaster启动时发生的特定操作，例如分配共享内存、保留轻量级锁
+        或者启动后台工作者。这些库必须通过这个参数在服务器启动时载入。每个库的详情请见文档。
+       </p><p>        其他库也能被预载入。通过预载入一个共享库，当该库被第一次使用时就可以避免库的启动时间。
+        不过，启动每个新服务器进程的时间可能会略有增加，即使该进程从不使用该库。因此，推荐只
+        把这个参数用于那些要在大多数会话中使用的库上。还有，改变这个参数要求重启服务器，因此
+        对于短期的调试任务来说这不是好的选择，应该转用
+        <a class="xref" href="runtime-config-client.html#GUC-SESSION-PRELOAD-LIBRARIES">session_preload_libraries</a>。
+       </p><div class="note"><h3 class="title">注意</h3><p>        在 Windows 主机上，在服务器启动时预载入一个库并不会减少启动每个新服务器进程所需的
+        时间；每一个服务器进程将会重新载入预载入的库。不过，对于那些要在postmaster启动时
+        执行操作的库来说，Windows 主机上的
+        <code class="varname">shared_preload_libraries</code>任然有用。
+       </p></div></dd></dl></div></div><div class="sect2" id="RUNTIME-CONFIG-CLIENT-OTHER"><div class="titlepage"><div><div><h3 class="title">19.11.4. 其他默认值</h3></div></div></div><div class="variablelist"><dl class="variablelist"><dt id="GUC-DYNAMIC-LIBRARY-PATH"><span class="term"><code class="varname">dynamic_library_path</code> (<code class="type">string</code>)
+      <a id="idp22159408" class="indexterm"></a>
+      <a id="idp22160512" class="indexterm"></a></span></dt><dd><p>        如果需要打开一个可以动态装载的模块并且在<code class="command">CREATE FUNCTION</code>或<code class="command">LOAD</code>命令中指定的文件名没有目录部分（即名字中不包含斜线），那么系统将搜索这个路径以查找所需的文件。
+       </p><p>        <code class="varname">dynamic_library_path</code>的值必须是一个冒号分隔（或者在 Windows 上以分号分隔）的绝对目录路径的列表。如果一个列表元素以特殊字符串开始，<code class="literal">$libdir</code>会被替换为<span class="productname">PostgreSQL</span>包中已编译好的库目录。这里是<span class="productname">PostgreSQL</span>发布提供的模块被安装的位置（使用<code class="literal">pg_config --pkglibdir</code>来找到这个目录的名字）。例如：
+</p><pre class="programlisting">dynamic_library_path = '/usr/local/lib/postgresql:/home/my_project/lib:$libdir'</pre><p>
+        或者在 Windows 环境中：
+</p><pre class="programlisting">dynamic_library_path = 'C:\tools\postgresql;H:\my_project\lib;$libdir'</pre><p>
+       </p><p>        这个参数的默认值是<code class="literal">'$libdir'</code>。如果该值被设置为一个空字符串，则关闭自动路径搜索。
+       </p><p>        这个参数可以在运行时由超级用户修改，但是这样修改的设置只能保持到这个客户端连接的结尾，因此这个方法应该保留给开发目的。 我们建议在<code class="filename">postgresql.conf</code>配置文件中设置这个参数。
+       </p></dd><dt id="GUC-GIN-FUZZY-SEARCH-LIMIT"><span class="term"><code class="varname">gin_fuzzy_search_limit</code> (<code class="type">integer</code>)
+      <a id="idp22173120" class="indexterm"></a></span></dt><dd><p>        GIN 索引返回的集合尺寸的软上限。详见<a class="xref" href="gin-tips.html" title="64.5. GIN 提示和技巧">第 64.5 节</a>。
+       </p></dd></dl></div></div></div><div class="navfooter"><hr /><table width="100%" summary="Navigation footer"><tr><td width="40%" align="left"><a accesskey="p" href="runtime-config-autovacuum.html">上一页</a> </td><td width="20%" align="center"><a accesskey="u" href="runtime-config.html">上一级</a></td><td width="40%" align="right"> <a accesskey="n" href="runtime-config-locks.html">下一页</a></td></tr><tr><td width="40%" align="left" valign="top">19.10. 自动清理 </td><td width="20%" align="center"><a accesskey="h" href="index.html">起始页</a></td><td width="40%" align="right" valign="top"> 19.12. 锁管理</td></tr></table></div></body></html>

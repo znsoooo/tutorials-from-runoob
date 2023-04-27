@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><title>E.32. 版本 9.4.4</title><link rel="stylesheet" type="text/css" href="stylesheet.css" /><link rev="made" href="pgsql-docs@postgresql.org" /><meta name="generator" content="DocBook XSL Stylesheets V1.79.1" /><link rel="prev" href="release-9-4-5.html" title="E.31. 版本 9.4.5" /><link rel="next" href="release-9-4-3.html" title="E.33. 版本 9.4.3" /></head><body><div xmlns="http://www.w3.org/TR/xhtml1/transitional" class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="5" align="center">E.32. 版本 9.4.4</th></tr><tr><td width="10%" align="left"><a accesskey="p" href="release-9-4-5.html" title="E.31. 版本 9.4.5">上一页</a> </td><td width="10%" align="left"><a accesskey="u" href="release.html" title="附录 E. 版本说明">上一级</a></td><th width="60%" align="center">附录 E. 版本说明</th><td width="10%" align="right"><a accesskey="h" href="index.html" title="PostgreSQL 10.1 手册">起始页</a></td><td width="10%" align="right"> <a accesskey="n" href="release-9-4-3.html" title="E.33. 版本 9.4.3">下一页</a></td></tr></table><hr></hr></div><div class="sect1" id="RELEASE-9-4-4"><div class="titlepage"><div><div><h2 class="title" style="clear: both">E.32. 版本 9.4.4</h2></div></div></div><div class="toc"><dl class="toc"><dt><span class="sect2"><a href="release-9-4-4.html#idp67494928">E.32.1. 迁移到版本 9.4.4</a></span></dt><dt><span class="sect2"><a href="release-9-4-4.html#idp67498208">E.32.2. 修改列表</a></span></dt></dl></div><p><strong>发布日期：. </strong>2015-06-12</p><p>   这个版本包含少量来自9.4.3的补丁。关于9.4主版本的新特性信息，请查看<a class="xref" href="release-9-4.html" title="E.36. 版本 9.4">第 E.36 节</a>。
+  </p><div class="sect2" id="idp67494928"><div class="titlepage"><div><div><h3 class="title">E.32.1. 迁移到版本 9.4.4</h3></div></div></div><p>    运行9.4.X版本的用户不需要转储/恢复。
+   </p><p>    不过，如果你正在升级一个以前使用9.3.0到9.3.4之间的<span class="application">pg_upgrade</span>
+    版本升级的安装，请查看下面的第一个更新日志条目。
+   </p><p>    另外，如果你从一个早于9.4.2的版本升级而来，请查看<a class="xref" href="release-9-4-2.html" title="E.34. 版本 9.4.2">第 E.34 节</a>。
+   </p></div><div class="sect2" id="idp67498208"><div class="titlepage"><div><div><h3 class="title">E.32.2. 修改列表</h3></div></div></div><div class="itemizedlist"><ul class="itemizedlist" style="list-style-type: disc; "><li class="listitem"><p>      修复可能的失败，以便从一个不一致的数据库状态中恢复
+      (Robert Haas)
+     </p><p>最近的<span class="productname">PostgreSQL</span>版本引入了防范multixact概括的机制，
+但是一些代码并没有说明数据库不在一个一致的状态时，它需要在崩溃恢复期间运行的可能性。
+这会导致崩溃后未能重启或未能启动辅助服务器。在<span class="application">pg_upgrade</span>
+中以前修复的一个bug一直存在的影响也会导致这样的失败，
+在曾经使用版本9.3.0和9.3.4的<span class="application">pg_upgrade</span>的安装中。</p><p>正在讨论的<span class="application">pg_upgrade</span> bug，可以设置<code class="filename">pg_control</code>中的
+<code class="literal">oldestMultiXid</code>为1，即使真值应该更高些。由于在这些版本中引入的修复，
+这样的情况将导致立即紧急清理，直到可以确定一个正确的<code class="literal">oldestMultiXid</code>值。
+如果这会造成困难，用户可以在升级到这个版本<span class="emphasis"><em>之前</em></span>，通过手动清理来避免。详细：
+
+      </p><div class="orderedlist"><ol class="orderedlist" type="1"><li class="listitem"><p>         检查<span class="application">pg_controldata</span>是否报告<span class="quote">“<span class="quote">最近检查点的oldestMultiXid</span>”</span>为1。
+         如果不，则什么都不用做。
+        </p></li><li class="listitem"><p>        查看<code class="filename">PGDATA/pg_multixact/offsets</code>，看看是否有一个名为<code class="filename">0000</code>的文件。
+        如果有，则什么都不用做。
+        </p></li><li class="listitem"><p>         否则，对于每个表都有<code class="structname">pg_class</code>.<code class="structfield">relminmxid</code>等于1，
+         <a class="xref" href="runtime-config-client.html#GUC-VACUUM-MULTIXACT-FREEZE-MIN-AGE">vacuum_multixact_freeze_min_age</a>和
+         <a class="xref" href="runtime-config-client.html#GUC-VACUUM-MULTIXACT-FREEZE-TABLE-AGE">vacuum_multixact_freeze_table_age</a>都设置为零<code class="command">VACUUM</code>该表。
+         （你可以使用<a class="xref" href="runtime-config-resource.html#RUNTIME-CONFIG-RESOURCE-VACUUM-COST" title="19.4.4. 基于代价的清理延迟">第 19.4.4 节</a>
+         中描述的清理开销延迟参数来降低对当前会话的性能影响。）
+        </p></li></ol></div><p>
+     </p></li><li class="listitem"><p>      修复关系缓存初始化文件失效的罕见失败 (Tom Lane)
+     </p><p>      由于并发活动正好发生在错误的时间，在一个系统目录上的<code class="command">VACUUM
+      FULL</code>可能会未能更新用于避免新会话缓存加载工作的<span class="quote">“<span class="quote">初始化文件</span>”</span>。
+      这会导致稍后的会话不能访问该目录。这是一个非常老的bug，
+      但是它非常难以触发，一直没有看到可复制的情况直到最近。
+     </p></li><li class="listitem"><p>      避免传入的会话和<code class="literal">CREATE/DROP DATABASE</code>之间的死锁 (Tom Lane)
+     </p><p>      在数据库中开始的新会话是<code class="command">DROP DATABASE</code>命令的目标，
+      或者是<code class="command">CREATE DATABASE</code>命令的模板，会导致命令等待5秒钟然后失败，
+      即使新的会话在这之前退出。
+     </p></li><li class="listitem"><p>      改善半连接和反连接内部索引扫描的规划器的开销估计 (Tom Lane, Tomas Vondra)
+     </p><p>      当所有连接子句都用作索引扫描条件时，这种类型的规划是相当便宜的，
+      即使内部扫描将名义上获取许多行，因为执行器将在获得一行之后停止。
+      规划器只是部分的解释那个影响，并且因此高估开销，
+      导致它有可能选择一些其他更小影响的规划类型。
+     </p></li></ul></div></div></div><div class="navfooter"><hr /><table width="100%" summary="Navigation footer"><tr><td width="40%" align="left"><a accesskey="p" href="release-9-4-5.html">上一页</a> </td><td width="20%" align="center"><a accesskey="u" href="release.html">上一级</a></td><td width="40%" align="right"> <a accesskey="n" href="release-9-4-3.html">下一页</a></td></tr><tr><td width="40%" align="left" valign="top">E.31. 版本 9.4.5 </td><td width="20%" align="center"><a accesskey="h" href="index.html">起始页</a></td><td width="40%" align="right" valign="top"> E.33. 版本 9.4.3</td></tr></table></div></body></html>

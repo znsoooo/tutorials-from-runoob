@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><title>53.2. 在服务器中报告错误</title><link rel="stylesheet" type="text/css" href="stylesheet.css" /><link rev="made" href="pgsql-docs@postgresql.org" /><meta name="generator" content="DocBook XSL Stylesheets V1.79.1" /><link rel="prev" href="source-format.html" title="53.1. 格式化" /><link rel="next" href="error-style-guide.html" title="53.3. 错误消息风格指导" /></head><body><div xmlns="http://www.w3.org/TR/xhtml1/transitional" class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="5" align="center">53.2. 在服务器中报告错误</th></tr><tr><td width="10%" align="left"><a accesskey="p" href="source-format.html" title="53.1. 格式化">上一页</a> </td><td width="10%" align="left"><a accesskey="u" href="source.html" title="第 53 章 PostgreSQL编码习惯">上一级</a></td><th width="60%" align="center">第 53 章 PostgreSQL编码习惯</th><td width="10%" align="right"><a accesskey="h" href="index.html" title="PostgreSQL 10.1 手册">起始页</a></td><td width="10%" align="right"> <a accesskey="n" href="error-style-guide.html" title="53.3. 错误消息风格指导">下一页</a></td></tr></table><hr></hr></div><div class="sect1" id="ERROR-MESSAGE-REPORTING"><div class="titlepage"><div><div><h2 class="title" style="clear: both">53.2. 在服务器中报告错误</h2></div></div></div><a id="idp58301376" class="indexterm"></a><a id="idp58302032" class="indexterm"></a><p>    服务器代码内产生的错误、警告和日志消息应该使用<code class="function">ereport</code>或者更老的<code class="function">elog</code>生成。这个函数的使用有些复杂，因此有必要做一些解释。
+   </p><p>    对于每一个消息都有两个必要的元素：一个严重性级别（从<code class="literal">DEBUG</code>到<code class="literal">PANIC</code>）和一个主消息文本。此外还有一些可选元素，其中最常见的是一个遵守 SQL 规范中 SQLSTATE 习惯的错误标识符代码。<code class="function">ereport</code>本身只是一个 shell 函数，它的存在主要是为了在语法习惯上让消息的产生更像 C 源代码中的函数调用而已。<code class="function">ereport</code>直接接受的唯一参数是严重性级别。主消息文本和任何其他可选消息元素通过在<code class="function">ereport</code>调用中使用辅助函数产生，例如<code class="function">errmsg</code>。
+   </p><p>    对于<code class="function">ereport</code>的一次典型调用可能看起来像：
+</p><pre class="programlisting">ereport(ERROR,
+        (errcode(ERRCODE_DIVISION_BY_ZERO),
+         errmsg("division by zero")));</pre><p>
+    这会指定错误严重性级别为<code class="literal">ERROR</code>（一个普通错误）。<code class="function">errcode</code>调用使用<code class="filename">src/include/utils/errcodes.h</code>中定义的一个宏指定 SQLSTATE 错误代码。<code class="function">errmsg</code>调用提供主消息文本。注意辅助函数调用周围的额外圆括号 — 它们虽然很烦人但是在语法上是必需的。
+   </p><p>    这里有一个更复杂的例子：
+</p><pre class="programlisting">ereport(ERROR,
+        (errcode(ERRCODE_AMBIGUOUS_FUNCTION),
+         errmsg("function %s is not unique",
+                func_signature_string(funcname, nargs,
+                                      NIL, actual_arg_types)),
+         errhint("Unable to choose a best candidate function. "
+                 "You might need to add explicit typecasts.")));</pre><p>
+    这展示了使用格式代码把运行时值嵌入到一个消息文本中的方法，其中还提供了一个可选的<span class="quote">“<span class="quote">hint</span>”</span>消息。
+   </p><p>    如果严重级别是<code class="literal">ERROR</code>或更高，<code class="function">ereport</code>
+    会中止用户定义函数的执行并且不会返回到调用者。如果严重级别低于
+    <code class="literal">ERROR</code>，<code class="function">ereport</code>会正常返回。
+   </p><p>    <code class="function">ereport</code>可用的辅助例程是：
+  </p><div class="itemizedlist"><ul class="itemizedlist" style="list-style-type: disc; "><li class="listitem"><p>     <code class="function">errcode(sqlerrcode)</code>指定对于该情况的 SQLSTATE 错误标识符代码。如果没有调用这个例程，错误严重性级别是<code class="literal">ERROR</code>或更高时错误标识符会默认成<code class="literal">ERRCODE_INTERNAL_ERROR</code>，错误级别是<code class="literal">WARNING</code>时标识符为<code class="literal">ERRCODE_WARNING</code>，否则（对于<code class="literal">NOTICE</code>及以下的级别）标识符会被设置为<code class="literal">ERRCODE_SUCCESSFUL_COMPLETION</code>。虽然这些默认值常常很方便，在忽略<code class="function">errcode()</code>调用之前请总是思考一下它们是否合适。
+    </p></li><li class="listitem"><p>     <code class="function">errmsg(const char *msg, ...)</code>指定主错误消息文本，以及需要插入其中的运行时值。这种插入以<code class="function">sprintf</code>-风格的格式代码指定。除了<code class="function">sprintf</code>接受的标准格式代码，格式代码<code class="literal">%m</code>可以用来插入由<code class="function">strerror</code>为<code class="literal">errno</code>的当前值返回的错误消息。
+     <a href="#ftn.idp58332784" class="footnote"><sup class="footnote" id="idp58332784">[11]</sup></a>
+     <code class="literal">%m</code>不要求<code class="function">errmsg</code>参数列表中的任何对应项。注意在格式代码被处理之前，消息字符串将通过<code class="function">gettext</code>来进行可能的本地化。
+    </p></li><li class="listitem"><p>     <code class="function">errmsg_internal(const char *msg, ...)</code>与<code class="function">errmsg</code>相同，不过消息串将不会被翻译，也不会被包括在国际化的消息字典中。这不应该被用于<span class="quote">“<span class="quote">不能发生</span>”</span>的情况中，因为那些情况下不值得花费精力去做翻译。
+    </p></li><li class="listitem"><p>     <code class="function">errmsg_plural(const char *fmt_singular, const char *fmt_plural,
+     unsigned long n, ...)</code>很像<code class="function">errmsg</code>，但是支持消息的多种复数形式。<em class="replaceable"><code>fmt_singular</code></em>是英语单数格式，<em class="replaceable"><code>fmt_plural</code></em>是英语复数格式，<em class="replaceable"><code>n</code></em>是决定需要何种复数形式的整数值，剩下的参数会被根据选中的格式字符串进行格式化。详见<a class="xref" href="nls-programmer.html#NLS-GUIDELINES" title="54.2.2. 消息书写指南">第 54.2.2 节</a>。
+    </p></li><li class="listitem"><p>     <code class="function">errdetail(const char *msg, ...)</code>提供了一个可选的<span class="quote">“<span class="quote">详情</span>”</span>消息，如果有额外的信息但不适合放在主消息中时就可以使用这种方式。消息字符串的处理与<code class="function">errmsg</code>相同。
+    </p></li><li class="listitem"><p>     <code class="function">errdetail_internal(const char *msg, ...)</code>与<code class="function">errdetail</code>相同，不过消息串将不会被翻译，也不会被包括在国际化的消息字典中。这应该被用于不值得花费精力翻译的详情消息上，例如它们对大部分用户太过技术化而没什么用处。
+    </p></li><li class="listitem"><p>     <code class="function">errdetail_plural(const char *fmt_singular, const char *fmt_plural,
+     unsigned long n, ...)</code>与<code class="function">errdetail</code>相似，但是支持消息的多种复数形式。详见<a class="xref" href="nls-programmer.html#NLS-GUIDELINES" title="54.2.2. 消息书写指南">第 54.2.2 节</a>。
+    </p></li><li class="listitem"><p>     <code class="function">errdetail_log(const char *msg, ...)</code>与<code class="function">errdetail</code>相同，除了这个字符串只会进入服务器的日志而不会发往客户端。如果同时使用了<code class="function">errdetail</code>（或者上述的一种等效函数）以及<code class="function">errdetail_log</code>，那么一个字符串会被发往客户端而另一个会被发往日志。如果错误细节的安全性过于敏感或者体积过于庞大而不适合于发往客户端，这个函数就非常有用。
+    </p></li><li class="listitem"><p>     <code class="function">errdetail_log_plural(const char *fmt_singular, const char
+     *fmt_plural, unsigned long n, ...)</code>与<code class="function">errdetail_log</code>
+     相似，但是支持多种复数形式的消息。详见<a class="xref" href="nls-programmer.html#NLS-GUIDELINES" title="54.2.2. 消息书写指南">第 54.2.2 节</a>。
+    </p></li><li class="listitem"><p>     <code class="function">errhint(const char *msg, ...)</code>提供一个可选的<span class="quote">“<span class="quote">hint</span>”</span>消息，它被用来提供关于如何修复该问题的建议。该消息字符串以和<code class="function">errmsg</code>相同的方式处理。
+    </p></li><li class="listitem"><p>     <code class="function">errcontext(const char *msg, ...)</code>通常不会被直接从一个<code class="function">ereport</code>消息站点调用，它被用在<code class="literal">error_context_stack</code>回调函数中来提供错误发生的上下文，例如一个 PL 函数中的当前位置。该消息字符串以和<code class="function">errmsg</code>相同的方式处理。不同于其他辅助函数，在每次<code class="function">ereport</code>调用中可以多次调用这个函数，这样提供的连续的字符串将被用单独的新行串接在一起。
+    </p></li><li class="listitem"><p>     <code class="function">errposition(int cursorpos)</code>指定一个查询字符串中错误的文本位置。当前，它只对查询处理的词法和语法分析阶段中检测到的错误有用。
+    </p></li><li class="listitem"><p>     <code class="function">errtable(Relation rel)</code>指定一个关系，它的名称和模式名称应该被包括在错误报告中作为辅助域。
+    </p></li><li class="listitem"><p>     <code class="function">errtablecol(Relation rel, int attnum)</code>指定一个列，它的名称、表名和模式名称应该被包括在错误报告中作为辅助域。
+    </p></li><li class="listitem"><p>     <code class="function">errtableconstraint(Relation rel, const char *conname)</code>指定一个约束，它的名称、表名和模式名称应该被包括在错误报告中作为辅助域。索引应当为考虑成用于这种目的的约束，不管它们有没有一个相关联的<code class="structname">pg_constraint</code>项。要小心地以<code class="literal">rel</code>传递底层堆关系而不是索引本身。
+    </p></li><li class="listitem"><p>     <code class="function">errdatatype(Oid datatypeOid)</code>指定一个数据类型，它的名称和模式名称应该被包括在错误报告中作为辅助域。
+    </p></li><li class="listitem"><p>     <code class="function">errdomainconstraint(Oid datatypeOid, const char *conname)</code>指定一个域约束，它的名称、域名和模式名称应该被包括在错误报告中作为辅助域。
+    </p></li><li class="listitem"><p>     <code class="function">errcode_for_file_access()</code>是一个便捷函数，它可以在一个文件访问相关的系统调用中为一个失败选择一个合适的 SQLSTATE 错误标识符。它使用保存下来的<code class="literal">errno</code>来决定要差生哪种错误代码。通常，应该把它和主错误消息文本中的<code class="literal">%m</code>联合使用。
+    </p></li><li class="listitem"><p>     <code class="function">errcode_for_socket_access()</code>是一个便捷函数，它可以在一个套接字相关的系统调用中为一个失败选择一个合适的 SQLSTATE 错误标识符。
+    </p></li><li class="listitem"><p>     <code class="function">errhidestmt(bool hide_stmt)</code>可以被调用来指定 postmaster 日志中一个消息的<code class="literal">STATEMENT:</code>部分的禁止。通常如果该消息文本已经包括当前语句这就是合适的。
+    </p></li><li class="listitem"><p>     可以调用<code class="function">errhidecontext(bool hide_ctx)</code>来指示抑制 postmaster 日志中消息里的<code class="literal">CONTEXT:</code>部分。这只应该被用于 verbose 模式的调试消息，这类消息中被重复包含的上下文信息会让日志容量膨胀得非常厉害。
+    </p></li></ul></div><p>
+   </p><div class="note"><h3 class="title">注意</h3><p>     在一个<code class="function">ereport</code>调用中，最多可以使用一个<code class="function">errtable</code>、<code class="function">errtablecol</code>、<code class="function">errtableconstraint</code>、<code class="function">errdatatype</code>或者<code class="function">errdomainconstraint</code>函数。这些函数存在是为了允许应用抽取与错误情况相关的数据库对象名，而不需要检查可能已被本地化的错误消息文本。这些函数应该被用在应用需要对其进行自动错误处理的错误报告中。从<span class="productname">PostgreSQL</span> 9.3 开始，完整的覆盖只为 SQLSTATE 类别 23 中的错误存在（完整性约束违背），但是在未来这些很可能会被扩展。
+    </p></div><p>    有一个还在大量使用的旧的函数<code class="function">elog</code>。一个<code class="function">elog</code>调用：
+</p><pre class="programlisting">elog(level, "format string", ...);</pre><p>
+    完全等效于：
+</p><pre class="programlisting">ereport(level, (errmsg_internal("format string", ...)));</pre><p>
+    注意 SQLSTATE 错误代码总是被给予默认值，并且消息字符串不受翻译限制。因此，<code class="function">elog</code>应该只被用于内部错误和低层次的调试日志。任何普通用户感兴趣的消息应该通过<code class="function">ereport</code>。不管怎样，在仍广泛使用<code class="function">elog</code>的系统中，有足够多的内部<span class="quote">“<span class="quote">不可能发生</span>”</span>的错误检查，出于记号简洁的目的这更适合于那些消息。
+   </p><p>    有关编写好的错误消息的建议可见<a class="xref" href="error-style-guide.html" title="53.3. 错误消息风格指导">第 53.3 节</a>。
+   </p><div class="footnotes"><br /><hr style="width:100; text-align:left;margin-left: 0" /><div id="ftn.idp58332784" class="footnote"><p><a href="#idp58332784" class="para"><sup class="para">[11] </sup></a>       也就是说，该值时到达<code class="function">ereport</code>调用时的当前值，在辅助报告例程内<code class="literal">errno</code>的改变不会影响它。但如果你在<code class="function">errmsg</code>的参数列表中显式地写了<code class="literal">strerror(errno)</code>则不是这样，因此不要那样做。
+      </p></div></div></div><div class="navfooter"><hr /><table width="100%" summary="Navigation footer"><tr><td width="40%" align="left"><a accesskey="p" href="source-format.html">上一页</a> </td><td width="20%" align="center"><a accesskey="u" href="source.html">上一级</a></td><td width="40%" align="right"> <a accesskey="n" href="error-style-guide.html">下一页</a></td></tr><tr><td width="40%" align="left" valign="top">53.1. 格式化 </td><td width="20%" align="center"><a accesskey="h" href="index.html">起始页</a></td><td width="40%" align="right" valign="top"> 53.3. 错误消息风格指导</td></tr></table></div></body></html>

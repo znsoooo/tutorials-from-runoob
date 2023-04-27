@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><title>F.33. pg_visibility</title><link rel="stylesheet" type="text/css" href="stylesheet.css" /><link rev="made" href="pgsql-docs@postgresql.org" /><meta name="generator" content="DocBook XSL Stylesheets V1.79.1" /><link rel="prev" href="pgtrgm.html" title="F.32. pg_trgm" /><link rel="next" href="postgres-fdw.html" title="F.34. postgres_fdw" /></head><body><div xmlns="http://www.w3.org/TR/xhtml1/transitional" class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="5" align="center">F.33. pg_visibility</th></tr><tr><td width="10%" align="left"><a accesskey="p" href="pgtrgm.html" title="F.32. pg_trgm">上一页</a> </td><td width="10%" align="left"><a accesskey="u" href="contrib.html" title="附录 F. 额外提供的模块">上一级</a></td><th width="60%" align="center">附录 F. 额外提供的模块</th><td width="10%" align="right"><a accesskey="h" href="index.html" title="PostgreSQL 10.1 手册">起始页</a></td><td width="10%" align="right"> <a accesskey="n" href="postgres-fdw.html" title="F.34. postgres_fdw">下一页</a></td></tr></table><hr></hr></div><div class="sect1" id="PGVISIBILITY"><div class="titlepage"><div><div><h2 class="title" style="clear: both">F.33. pg_visibility</h2></div></div></div><div class="toc"><dl class="toc"><dt><span class="sect2"><a href="pgvisibility.html#idp87373104">F.33.1. 函数</a></span></dt><dt><span class="sect2"><a href="pgvisibility.html#idp87390864">F.33.2. 作者</a></span></dt></dl></div><a id="idp87366480" class="indexterm"></a><p>  <code class="filename">pg_visibility</code>模块提供了一种方式来检查一个表的可见性映射（VM）以及页级别的可见性信息。它还提供了函数来检查可见性映射的完整性以及强制重建可见性映射。
+ </p><p>  有三个不同的位被用来存储有关页级别可见性的信息。
+  可见性映射中的“全部可见”位表示一个关系的对应页面上的所有元组对每一个当前和未来事务都可见。
+  可见性映射中的“全部冻结”位表示该页上的每一个元组都被冻结，
+  也就是说直到在那个页面上对一个元组进行插入、更新、
+  删除或者锁定之前都不需要用 vacuum 对该页面进行修改。
+  页面头部的<code class="literal">PD_ALL_VISIBLE</code>位具有和可见性映射中“全部可见”位相同的含义，
+  但是它存储在数据页面本身中而不是存储在单独的数据结构中。这两个位通常是相互一致的，
+  但是有时在崩溃恢复后会出现页面的“全部可见”位被设置而可见性映射位被清除的情况，
+  由于在<code class="literal">pg_visibility</code>检查了可见性映射之后，
+  且在它检查数据页面之前发生了修改，报告的值也会不一致。
+  任何导致数据损坏的事件也可能导致这些位不一致。
+ </p><p>  显示有关<code class="literal">PD_ALL_VISIBLE</code>的信息的函数代价比那些查看可见性映射的函数要高很多，因为它们必须读取关系的数据块而不是只读取（小很多的）可见性映射。类似地，检查关系的数据块的函数也很昂贵。
+ </p><div class="sect2" id="idp87373104"><div class="titlepage"><div><div><h3 class="title">F.33.1. 函数</h3></div></div></div><div class="variablelist"><dl class="variablelist"><dt><span class="term"><code class="function">pg_visibility_map(relation regclass, blkno bigint, all_visible OUT boolean, all_frozen OUT boolean) returns record</code></span></dt><dd><p>      为给定关系的给定块返回其在可见性映射中的“全部可见”和“全部冻结”位。
+     </p></dd><dt><span class="term"><code class="function">pg_visibility(relation regclass, blkno bigint, all_visible OUT boolean, all_frozen OUT boolean, pd_all_visible OUT boolean) returns record</code></span></dt><dd><p>      为给定关系的给定块返回其在可见性映射中的“全部可见”和“全部冻结”位，外加块的<code class="literal">PD_ALL_VISIBLE</code>位。
+     </p></dd><dt><span class="term"><code class="function">pg_visibility_map(relation regclass, blkno OUT bigint, all_visible OUT boolean, all_frozen OUT boolean) returns setof record</code></span></dt><dd><p>      为给定关系的每一块返回其在可见性映射中的“全部可见”和“全部冻结”位。
+     </p></dd><dt><span class="term"><code class="function">pg_visibility(relation regclass, blkno OUT bigint, all_visible OUT boolean, all_frozen OUT boolean, pd_all_visible OUT boolean) returns setof record</code></span></dt><dd><p>      为给定关系的每一块返回其在可见性映射中的“全部可见”和“全部冻结”位，外加每一块的<code class="literal">PD_ALL_VISIBLE</code>位。
+     </p></dd><dt><span class="term"><code class="function">pg_visibility_map_summary(relation regclass, all_visible OUT bigint, all_frozen OUT bigint) returns record</code></span></dt><dd><p>      根据可见性映射返回关系中“全部可见”页面和“全部冻结”页面的数量。
+     </p></dd><dt><span class="term"><code class="function">pg_check_frozen(relation regclass, t_ctid OUT tid) returns setof tid</code></span></dt><dd><p>      返回存储在可见性映射中被标为“全部冻结”的页面中的非冻结元组的 TID。
+	  如果这个函数返回一个非空的 TID 集合，则可见性映射已经损坏。
+     </p></dd><dt><span class="term"><code class="function">pg_check_visible(relation regclass, t_ctid OUT tid) returns setof tid</code></span></dt><dd><p>      返回存储在可见性映射中标记为全部可见的页面中的非全部可见元组的TID。
+	  如果此函数返回非空的一组TID，则可见性映射已损坏。
+     </p></dd><dt><span class="term"><code class="function">pg_truncate_visibility_map(relation regclass) returns void</code></span></dt><dd><p>      为给定关系截断可见性映射。如果您认为该关系的可见性映射已损坏并希望强制重建它，
+	  则该函数非常有用。在这个函数被执行后，在给定关系上进行的第一次<code class="command">VACUUM</code>
+	  将会扫描关系中的每一个页面并且重建可见性映射。（在完成之前，
+	  查询会将可见性映射看做包含的全是零。）
+     </p></dd></dl></div><p>   默认情况下，这些函数只有超级用户和<code class="literal">pg_stat_scan_tables</code>角色的成员可以执行，
+   除了<code class="function">pg_truncate_visibility_map(relation regclass)</code>只能由超级用户执行之外。
+  </p></div><div class="sect2" id="idp87390864"><div class="titlepage"><div><div><h3 class="title">F.33.2. 作者</h3></div></div></div><p>   Robert Haas <code class="email">&lt;<a class="email" href="mailto:rhaas@postgresql.org">rhaas@postgresql.org</a>&gt;</code>
+  </p></div></div><div class="navfooter"><hr /><table width="100%" summary="Navigation footer"><tr><td width="40%" align="left"><a accesskey="p" href="pgtrgm.html">上一页</a> </td><td width="20%" align="center"><a accesskey="u" href="contrib.html">上一级</a></td><td width="40%" align="right"> <a accesskey="n" href="postgres-fdw.html">下一页</a></td></tr><tr><td width="40%" align="left" valign="top">F.32. pg_trgm </td><td width="20%" align="center"><a accesskey="h" href="index.html">起始页</a></td><td width="40%" align="right" valign="top"> F.34. postgres_fdw</td></tr></table></div></body></html>

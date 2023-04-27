@@ -1,0 +1,184 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><title>42.3. 声明</title><link rel="stylesheet" type="text/css" href="stylesheet.css" /><link rev="made" href="pgsql-docs@postgresql.org" /><meta name="generator" content="DocBook XSL Stylesheets V1.79.1" /><link rel="prev" href="plpgsql-structure.html" title="42.2. PL/pgSQL的结构" /><link rel="next" href="plpgsql-expressions.html" title="42.4. 表达式" /></head><body><div xmlns="http://www.w3.org/TR/xhtml1/transitional" class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="5" align="center">42.3. 声明</th></tr><tr><td width="10%" align="left"><a accesskey="p" href="plpgsql-structure.html" title="42.2. PL/pgSQL的结构">上一页</a> </td><td width="10%" align="left"><a accesskey="u" href="plpgsql.html" title="第 42 章 PL/pgSQL - SQL过程语言">上一级</a></td><th width="60%" align="center">第 42 章 <span xmlns="http://www.w3.org/1999/xhtml" class="application">PL/pgSQL</span> - <acronym xmlns="http://www.w3.org/1999/xhtml" class="acronym">SQL</acronym>过程语言</th><td width="10%" align="right"><a accesskey="h" href="index.html" title="PostgreSQL 10.1 手册">起始页</a></td><td width="10%" align="right"> <a accesskey="n" href="plpgsql-expressions.html" title="42.4. 表达式">下一页</a></td></tr></table><hr></hr></div><div class="sect1" id="PLPGSQL-DECLARATIONS"><div class="titlepage"><div><div><h2 class="title" style="clear: both">42.3. 声明</h2></div></div></div><div class="toc"><dl class="toc"><dt><span class="sect2"><a href="plpgsql-declarations.html#PLPGSQL-DECLARATION-PARAMETERS">42.3.1. 声明函数参数</a></span></dt><dt><span class="sect2"><a href="plpgsql-declarations.html#PLPGSQL-DECLARATION-ALIAS">42.3.2. <code class="literal">ALIAS</code></a></span></dt><dt><span class="sect2"><a href="plpgsql-declarations.html#PLPGSQL-DECLARATION-TYPE">42.3.3. 复制类型</a></span></dt><dt><span class="sect2"><a href="plpgsql-declarations.html#PLPGSQL-DECLARATION-ROWTYPES">42.3.4. 行类型</a></span></dt><dt><span class="sect2"><a href="plpgsql-declarations.html#PLPGSQL-DECLARATION-RECORDS">42.3.5. 记录类型</a></span></dt><dt><span class="sect2"><a href="plpgsql-declarations.html#PLPGSQL-DECLARATION-COLLATION">42.3.6. <span class="application">PL/pgSQL</span>变量的排序规则</a></span></dt></dl></div><p>     在一个块中使用的所有变量必须在该块的声明小节中声明（唯一的例外是在一个整数范围上迭代的<code class="literal">FOR</code>循环变量会被自动声明为一个整数变量，并且相似地在一个游标结果上迭代的<code class="literal">FOR</code>循环变量会被自动地声明为一个记录变量）。
+    </p><p>     <span class="application">PL/pgSQL</span>变量可以是任意 SQL 数据类型，例如<code class="type">integer</code>、<code class="type">varchar</code>和<code class="type">char</code>。
+    </p><p>     这里是变量声明的一些例子：
+</p><pre class="programlisting">user_id integer;
+quantity numeric(5);
+url varchar;
+myrow tablename%ROWTYPE;
+myfield tablename.columnname%TYPE;
+arow RECORD;</pre><p>
+    </p><p>     一个变量声明的一般语法是：
+</p><pre class="synopsis"><em class="replaceable"><code>name</code></em> [<span class="optional"> CONSTANT </span>] <em class="replaceable"><code>type</code></em> [<span class="optional"> COLLATE <em class="replaceable"><code>collation_name</code></em> </span>] [<span class="optional"> NOT NULL </span>] [<span class="optional"> { DEFAULT | := | = } <em class="replaceable"><code>expression</code></em> </span>];</pre><p>
+      如果给定<code class="literal">DEFAULT</code>子句，它会指定进入该块时分
+      配给该变量的初始值。如果没有给出<code class="literal">DEFAULT</code>子句，
+      则该变量被初始化为<acronym class="acronym">SQL</acronym>空值。
+      <code class="literal">CONSTANT</code>选项阻止该变量在初始化之后被赋值，
+      这样它的值在块的持续期内保持不变。<code class="literal">COLLATE</code>
+      选项指定用于该变量的一个排序规则（见
+      <a class="xref" href="plpgsql-declarations.html#PLPGSQL-DECLARATION-COLLATION" title="42.3.6. PL/pgSQL变量的排序规则">第 42.3.6 节</a>）。如果指
+      定了<code class="literal">NOT NULL</code>，对该变量赋值为空值会导致一个
+      运行时错误。所有被声明为<code class="literal">NOT NULL</code>的变量必须
+      被指定一个非空默认值。
+      等号（<code class="literal">=</code>）可以被用来代替 PL/SQL-兼容的
+      <code class="literal">:=</code>。
+     </p><p>      一个变量的默认值会在每次进入该块时被计算并且赋值给该变量（不是每次函数调用只计算一次）。因此，例如将<code class="literal">now()</code>赋值给类型为<code class="type">timestamp</code>的一个变量将会导致该变量具有当前函数调用的时间，而不是该函数被预编译的时间。
+     </p><p>      例子：
+</p><pre class="programlisting">quantity integer DEFAULT 32;
+url varchar := 'http://mysite.com';
+user_id CONSTANT integer := 10;</pre><p>
+     </p><div class="sect2" id="PLPGSQL-DECLARATION-PARAMETERS"><div class="titlepage"><div><div><h3 class="title">42.3.1. 声明函数参数</h3></div></div></div><p>      传递给函数的参数被命名为标识符<code class="literal">$1</code>、<code class="literal">$2</code>等等。可选地，能够为<code class="literal">$<em class="replaceable"><code>n</code></em></code>参数名声明别名来增加可读性。不管是别名还是数字标识符都能用来引用参数值。
+     </p><p>      有两种方式来创建一个别名。比较好的方式是在<code class="command">CREATE FUNCTION</code>命令中为参数给定一个名称。例如：
+</p><pre class="programlisting">CREATE FUNCTION sales_tax(subtotal real) RETURNS real AS $$
+BEGIN
+    RETURN subtotal * 0.06;
+END;
+$$ LANGUAGE plpgsql;</pre><p>
+      另一种方式是显式地使用声明语法声明一个别名。
+
+</p><pre class="synopsis"><em class="replaceable"><code>name</code></em> ALIAS FOR $<em class="replaceable"><code>n</code></em>;</pre><p>
+
+      使用这种风格的同一个例子看起来是：
+</p><pre class="programlisting">CREATE FUNCTION sales_tax(real) RETURNS real AS $$
+DECLARE
+    subtotal ALIAS FOR $1;
+BEGIN
+    RETURN subtotal * 0.06;
+END;
+$$ LANGUAGE plpgsql;</pre><p>
+     </p><div class="note"><h3 class="title">注意</h3><p>      这两个例子并非完全等效。在第一种情况中，<code class="literal">subtotal</code>可以被引用为<code class="literal">sales_tax.subtotal</code>，但在第二种情况中它不能这样引用（如果我们为内层块附加了一个标签，<code class="literal">subtotal</code>则可以用那个标签限定）。
+     </p></div><p>      更多一些例子：
+</p><pre class="programlisting">CREATE FUNCTION instr(varchar, integer) RETURNS integer AS $$
+DECLARE
+    v_string ALIAS FOR $1;
+    index ALIAS FOR $2;
+BEGIN
+    -- 这里是一些使用 v_string 和 index 的计算
+END;
+$$ LANGUAGE plpgsql;
+
+
+CREATE FUNCTION concat_selected_fields(in_t sometablename) RETURNS text AS $$
+BEGIN
+    RETURN in_t.f1 || in_t.f3 || in_t.f5 || in_t.f7;
+END;
+$$ LANGUAGE plpgsql;</pre><p>
+     </p><p>      当一个<span class="application">PL/pgSQL</span>函数被声明为带有输出参数，输出参数可以用普通输入参数相同的方式被给定<code class="literal">$<em class="replaceable"><code>n</code></em></code>名称以及可选的别名。一个输出参数实际上是一个最初为 NULL 的变量，它应当在函数的执行期间被赋值。该参数的最终值就是要被返回的东西。例如，sales-tax 例子也可以用这种方式来做：
+
+</p><pre class="programlisting">CREATE FUNCTION sales_tax(subtotal real, OUT tax real) AS $$
+BEGIN
+    tax := subtotal * 0.06;
+END;
+$$ LANGUAGE plpgsql;</pre><p>
+
+      注意我们忽略了<code class="literal">RETURNS real</code> — 我们也可以包括它，但是那将是冗余。
+     </p><p>      当返回多个值时，输出参数最有用。一个小例子是：
+
+</p><pre class="programlisting">CREATE FUNCTION sum_n_product(x int, y int, OUT sum int, OUT prod int) AS $$
+BEGIN
+    sum := x + y;
+    prod := x * y;
+END;
+$$ LANGUAGE plpgsql;</pre><p>
+
+      如<a class="xref" href="xfunc-sql.html#XFUNC-OUTPUT-PARAMETERS" title="37.4.4. 带有输出参数的SQL函数">第 37.4.4 节</a>中所讨论的，这实际上为该函数的结果创建了一个匿名记录类型。如果给定了一个<code class="literal">RETURNS</code>子句，它必须<code class="literal">RETURNS record</code>。
+     </p><p>      声明一个<span class="application">PL/pgSQL</span>函数的另一种方式是用<code class="literal">RETURNS TABLE</code>，例如：
+
+</p><pre class="programlisting">CREATE FUNCTION extended_sales(p_itemno int)
+RETURNS TABLE(quantity int, total numeric) AS $$
+BEGIN
+    RETURN QUERY SELECT s.quantity, s.quantity * s.price FROM sales AS s
+                 WHERE s.itemno = p_itemno;
+END;
+$$ LANGUAGE plpgsql;</pre><p>
+
+      这和声明一个或多个<code class="literal">OUT</code>参数并且指定<code class="literal">RETURNS SETOF <em class="replaceable"><code>sometype</code></em></code>完全等效。
+     </p><p>      当一个<span class="application">PL/pgSQL</span>函数的返回类型被声明为一个多态类型（<code class="type">anyelement</code>、<code class="type">anyarray</code>、<code class="type">anynonarray</code>、<code class="type">anyenum</code>或<code class="type">anyrange</code>），一个特殊参数<code class="literal">$0</code>会被创建。它的数据类型是该函数的实际返回类型，这是从实际输入类型（<a class="xref" href="extend-type-system.html#EXTEND-TYPES-POLYMORPHIC" title="37.2.5. 多态类型">第 37.2.5 节</a>）推演得来。<code class="literal">$0</code>被初始化为空并且不能被该函数修改，因此它能够被用来保持可能需要的返回值，不过这不是必须的。<code class="literal">$0</code>也可以被给定一个别名。例如，这个函数工作在任何具有一个<code class="literal">+</code>操作符的数据类型上： 
+
+</p><pre class="programlisting">CREATE FUNCTION add_three_values(v1 anyelement, v2 anyelement, v3 anyelement)
+RETURNS anyelement AS $$
+DECLARE
+    result ALIAS FOR $0;
+BEGIN
+    result := v1 + v2 + v3;
+    RETURN result;
+END;
+$$ LANGUAGE plpgsql;</pre><p>
+     </p><p>      通过声明一个或多个输出参数为多态类型可以得到同样的效果。在这种情况下，不使用特殊的<code class="literal">$0</code>参数，输出参数本身就用作相同的目的。例如：
+
+</p><pre class="programlisting">CREATE FUNCTION add_three_values(v1 anyelement, v2 anyelement, v3 anyelement,
+                                 OUT sum anyelement)
+AS $$
+BEGIN
+    sum := v1 + v2 + v3;
+END;
+$$ LANGUAGE plpgsql;</pre><p>
+     </p></div><div class="sect2" id="PLPGSQL-DECLARATION-ALIAS"><div class="titlepage"><div><div><h3 class="title">42.3.2. <code class="literal">ALIAS</code></h3></div></div></div><pre class="synopsis"><em class="replaceable"><code>newname</code></em> ALIAS FOR <em class="replaceable"><code>oldname</code></em>;</pre><p>    <code class="literal">ALIAS</code>语法比前一节中建议的更一般化：你可以为任意变量声明一个别名，而不只是函数参数。其主要实际用途是为预先决定了名称的变量分配一个不同的名称，例如在一个触发器过程中的<code class="varname">NEW</code>或<code class="varname">OLD</code>。
+   </p><p>    例子：
+</p><pre class="programlisting">DECLARE
+  prior ALIAS FOR old;
+  updated ALIAS FOR new;</pre><p>
+   </p><p>    因为<code class="literal">ALIAS</code>创造了两种不同的方式来命名相同的对象，如果对其使用不加限制就会导致混淆。最好只把它用来覆盖预先决定的名称。
+   </p></div><div class="sect2" id="PLPGSQL-DECLARATION-TYPE"><div class="titlepage"><div><div><h3 class="title">42.3.3. 复制类型</h3></div></div></div><pre class="synopsis"><em class="replaceable"><code>variable</code></em>%TYPE</pre><p>    <code class="literal">%TYPE</code>提供了一个变量或表列的数据类型。你可以用它来声明将保持数据库值的变量。例如，如果你在<code class="literal">users</code>中有一个名为<code class="literal">user_id</code>的列。要定义一个与<code class="literal">users.user_id</code>具有相同数据类型的变量：
+</p><pre class="programlisting">user_id users.user_id%TYPE;</pre><p>
+   </p><p>    通过使用<code class="literal">%TYPE</code>，你不需要知道你要引用的结构的实际数据类型，而且最重要地，如果被引用项的数据类型在未来被改变（例如你把<code class="literal">user_id</code>的类型从<code class="type">integer</code>改为<code class="type">real</code>），你不需要改变你的函数定义。
+   </p><p>    <code class="literal">%TYPE</code>在多态函数中特别有价值，因为内部变量所需的数据类型能在两次调用时改变。可以把<code class="literal">%TYPE</code>应用在函数的参数或结果占位符上来创建合适的变量。
+   </p></div><div class="sect2" id="PLPGSQL-DECLARATION-ROWTYPES"><div class="titlepage"><div><div><h3 class="title">42.3.4. 行类型</h3></div></div></div><pre class="synopsis"><em class="replaceable"><code>name</code></em> <em class="replaceable"><code>table_name</code></em><code class="literal">%ROWTYPE</code>;
+<em class="replaceable"><code>name</code></em> <em class="replaceable"><code>composite_type_name</code></em>;</pre><p>    一个组合类型的变量被称为一个<em class="firstterm">行</em>变量（或<em class="firstterm">行类型</em>变量）。这样一个变量可以保持一个<code class="command">SELECT</code>或<code class="command">FOR</code>查询结果的一整行，前提是查询的列集合匹配该变量被声明的类型。该行值的各个域可以使用通常的点号标记访问，例如<code class="literal">rowvar.field</code>。
+   </p><p>    通过使用<em class="replaceable"><code>table_name</code></em><code class="literal">%ROWTYPE</code>标记，一个行变量可以被声明为具有和一个现有表或视图的行相同的类型。它也可以通过给定一个组合类型名称来声明（因为每一个表都有一个相关联的具有相同名称的组合类型，所以在<span class="productname">PostgreSQL</span>中实际上写不写<code class="literal">%ROWTYPE</code>都没有关系。但是带有<code class="literal">%ROWTYPE</code>的形式可移植性更好）。
+   </p><p>    一个函数的参数可以是组合类型（完整的表行）。在这种情况下，相应的标识符<code class="literal">$<em class="replaceable"><code>n</code></em></code>将是一个行变量，并且可以从中选择域，例如<code class="literal">$1.user_id</code>。
+   </p><p>    一个表行中只有用户定义的列是通过行类型变量可以访问的，OID 列或其他系统列是不能通过行类型变量访问的（因为行可能来自于一个视图）。行类型的域继承了表的域尺寸或数据类型的精度，如<code class="type">char(<em class="replaceable"><code>n</code></em>)</code>。
+   </p><p>    这里是一个使用组合类型的例子。<code class="structname">table1</code>和<code class="structname">table2</code>是已有的表，它们至少有以下提到的域：
+
+</p><pre class="programlisting">CREATE FUNCTION merge_fields(t_row table1) RETURNS text AS $$
+DECLARE
+    t2_row table2%ROWTYPE;
+BEGIN
+    SELECT * INTO t2_row FROM table2 WHERE ... ;
+    RETURN t_row.f1 || t2_row.f3 || t_row.f5 || t2_row.f7;
+END;
+$$ LANGUAGE plpgsql;
+
+SELECT merge_fields(t.*) FROM table1 t WHERE ... ;</pre><p>
+   </p></div><div class="sect2" id="PLPGSQL-DECLARATION-RECORDS"><div class="titlepage"><div><div><h3 class="title">42.3.5. 记录类型</h3></div></div></div><pre class="synopsis"><em class="replaceable"><code>name</code></em> RECORD;</pre><p>    记录变量和行类型变量类似，但是它们没有预定义的结构。它们采用在一个<code class="command">SELECT</code>或<code class="command">FOR</code>命令期间为其赋值的行的真实行结构。一个记录变量的子结构能在每次它被赋值时改变。这样的结果是直到一个记录变量第一次被赋值之前，它都没有子结构，并且任何尝试访问其中一个域都会导致一个运行时错误。
+   </p><p>    注意<code class="literal">RECORD</code>并非一个真正的数据类型，只是一个占位符。我们也应该认识到当一个<span class="application">PL/pgSQL</span>函数被声明为返回类型<code class="type">record</code>，这与一个记录变量并不是完全相同的概念，即便这样一个函数可能会用一个记录变量来保持其结果。在两种情况下，编写函数时都不知道真实的行结构，但是对于一个返回<code class="type">record</code>的函数，当调用查询被解析时就已经决定了真正的结构，而一个行变量能够随时改变它的行结构。
+   </p></div><div class="sect2" id="PLPGSQL-DECLARATION-COLLATION"><div class="titlepage"><div><div><h3 class="title">42.3.6. <span class="application">PL/pgSQL</span>变量的排序规则</h3></div></div></div><a id="idp36150704" class="indexterm"></a><p>    当一个<span class="application">PL/pgSQL</span>函数有一个或多个可排序数据类型的参数时，为每一次函数调用都会基于赋值给实参的排序规则来确定出一个排序规则，如<a class="xref" href="collation.html" title="23.2. 排序规则支持">第 23.2 节</a>中所述。如果一个排序规则被成功地确定（即在参数之间隐式排序规则没有冲突），那么所有的可排序参数会被当做隐式具有那个排序规则。这将在函数中影响行为受到排序规则影响的操作。例如，考虑
+
+</p><pre class="programlisting">CREATE FUNCTION less_than(a text, b text) RETURNS boolean AS $$
+BEGIN
+    RETURN a &lt; b;
+END;
+$$ LANGUAGE plpgsql;
+
+SELECT less_than(text_field_1, text_field_2) FROM table1;
+SELECT less_than(text_field_1, text_field_2 COLLATE "C") FROM table1;</pre><p>
+
+    <code class="function">less_than</code>的第一次使用将会采用<code class="structfield">text_field_1</code>和<code class="structfield">text_field_2</code>共同的排序规则进行比较，而第二次使用将采用<code class="literal">C</code>排序规则。
+   </p><p>    此外，被确定的排序规则也被假定为任何可排序数据类型本地变量的排序规则。因此，当这个函数被写为以下形式时，它工作将不会有什么不同
+
+</p><pre class="programlisting">CREATE FUNCTION less_than(a text, b text) RETURNS boolean AS $$
+DECLARE
+    local_a text := a;
+    local_b text := b;
+BEGIN
+    RETURN local_a &lt; local_b;
+END;
+$$ LANGUAGE plpgsql;</pre><p>
+   </p><p>    如果没有可排序数据类型的参数，或者不能为它们确定共同的排序规则，那么参数和本地变量会使用它们数据类型的默认排序规则（通常是数据库的默认排序规则，但是可能不同于域类型的变量）。
+   </p><p>    通过在一个可排序数据类型的本地变量的声明中包括<code class="literal">COLLATE</code>选项，可以为它指定一个不同的排序规则，例如
+
+</p><pre class="programlisting">DECLARE
+    local_a text COLLATE "en_US";</pre><p>
+
+    这个选项会覆盖根据上述规则被给予该变量的排序规则。
+   </p><p>    还有，如果一个函数想要强制在一个特定操作中使用一个特定排序规则，当然可以在该函数内部写一个显式的<code class="literal">COLLATE</code>子句。例如：
+
+</p><pre class="programlisting">CREATE FUNCTION less_than_c(a text, b text) RETURNS boolean AS $$
+BEGIN
+    RETURN a &lt; b COLLATE "C";
+END;
+$$ LANGUAGE plpgsql;</pre><p>
+
+    这会覆盖表达式中使用的表列、参数或本地变量相关的排序规则，就像在纯 SQL 命令中发生的一样。
+   </p></div></div><div class="navfooter"><hr /><table width="100%" summary="Navigation footer"><tr><td width="40%" align="left"><a accesskey="p" href="plpgsql-structure.html">上一页</a> </td><td width="20%" align="center"><a accesskey="u" href="plpgsql.html">上一级</a></td><td width="40%" align="right"> <a accesskey="n" href="plpgsql-expressions.html">下一页</a></td></tr><tr><td width="40%" align="left" valign="top">42.2. <span class="application">PL/pgSQL</span>的结构 </td><td width="20%" align="center"><a accesskey="h" href="index.html">起始页</a></td><td width="40%" align="right" valign="top"> 42.4. 表达式</td></tr></table></div></body></html>

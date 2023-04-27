@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><title>66.4. 可见性映射</title><link rel="stylesheet" type="text/css" href="stylesheet.css" /><link rev="made" href="pgsql-docs@postgresql.org" /><meta name="generator" content="DocBook XSL Stylesheets V1.79.1" /><link rel="prev" href="storage-fsm.html" title="66.3. 空闲空间映射" /><link rel="next" href="storage-init.html" title="66.5. 初始化分支" /></head><body><div xmlns="http://www.w3.org/TR/xhtml1/transitional" class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="5" align="center">66.4. 可见性映射</th></tr><tr><td width="10%" align="left"><a accesskey="p" href="storage-fsm.html" title="66.3. 空闲空间映射">上一页</a> </td><td width="10%" align="left"><a accesskey="u" href="storage.html" title="第 66 章 数据库物理存储">上一级</a></td><th width="60%" align="center">第 66 章 数据库物理存储</th><td width="10%" align="right"><a accesskey="h" href="index.html" title="PostgreSQL 10.1 手册">起始页</a></td><td width="10%" align="right"> <a accesskey="n" href="storage-init.html" title="66.5. 初始化分支">下一页</a></td></tr></table><hr></hr></div><div class="sect1" id="STORAGE-VM"><div class="titlepage"><div><div><h2 class="title" style="clear: both">66.4. 可见性映射</h2></div></div></div><a id="idp60750192" class="indexterm"></a><a id="idp60750880" class="indexterm"></a><p>每一个堆关系都有一个可见性映射（VM）用来跟踪那些
+只包含已知对所有活动事务可见的元组的页面，它也跟踪那些只包含
+冻结元组的页面。它伴随着主关系数据被存储在一个独立的关系分支中，
+以该关系的文件节点号加上一个<code class="literal">_vm</code>后缀来命名。例如，
+如果一个关系的文件节点为12345，其VM被存储在名为<code class="filename">12345_vm</code>的文件中，
+该文件域主关系文件在同一个目录中。注意索引没有VM。</p><p>可见性映射仅为每个堆页面存储两个位。第一位如果被设置，
+表示该页面上的元组都是可见的，或者换句话说该页面不含有
+任何需要被清理的元组。这些信息也可以被<a class="link" href="indexes-index-only-scans.html" title="11.11. 只用索引的扫描"><em class="firstterm">index-only
+scans</em></a>用来只依靠索引元组回答查询。第二位如果
+被设置，表示该页面上的元组都已经被冻结。这也意味着防回卷
+清理操作也不需要重新访问该页面。</p><p>该映射是保守的，我们可以确定不论何时一个位被设置，那就说明条件为真，但是如果一个位没有被设置，它可能为真也可能不为真。可见性映射的位只会被清理操作设置，但是可以被任何在页面上进行的数据修改操作清除。</p><p><a class="xref" href="pgvisibility.html" title="F.33. pg_visibility">pg_visibility</a>模块可以被用来检查存储在可见性
+映射中的信息。</p></div><div class="navfooter"><hr /><table width="100%" summary="Navigation footer"><tr><td width="40%" align="left"><a accesskey="p" href="storage-fsm.html">上一页</a> </td><td width="20%" align="center"><a accesskey="u" href="storage.html">上一级</a></td><td width="40%" align="right"> <a accesskey="n" href="storage-init.html">下一页</a></td></tr><tr><td width="40%" align="left" valign="top">66.3. 空闲空间映射 </td><td width="20%" align="center"><a accesskey="h" href="index.html">起始页</a></td><td width="40%" align="right" valign="top"> 66.5. 初始化分支</td></tr></table></div></body></html>

@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><title>44.8. PL/Perl 下面的东西</title><link rel="stylesheet" type="text/css" href="stylesheet.css" /><link rev="made" href="pgsql-docs@postgresql.org" /><meta name="generator" content="DocBook XSL Stylesheets V1.79.1" /><link rel="prev" href="plperl-event-triggers.html" title="44.7. PL/Perl 事件触发器" /><link rel="next" href="plpython.html" title="第 45 章 PL/Python - Python 过程语言" /></head><body><div xmlns="http://www.w3.org/TR/xhtml1/transitional" class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="5" align="center">44.8. PL/Perl 下面的东西</th></tr><tr><td width="10%" align="left"><a accesskey="p" href="plperl-event-triggers.html" title="44.7. PL/Perl 事件触发器">上一页</a> </td><td width="10%" align="left"><a accesskey="u" href="plperl.html" title="第 44 章 PL/Perl - Perl 过程语言">上一级</a></td><th width="60%" align="center">第 44 章 PL/Perl - Perl 过程语言</th><td width="10%" align="right"><a accesskey="h" href="index.html" title="PostgreSQL 10.1 手册">起始页</a></td><td width="10%" align="right"> <a accesskey="n" href="plpython.html" title="第 45 章 PL/Python - Python 过程语言">下一页</a></td></tr></table><hr></hr></div><div class="sect1" id="PLPERL-UNDER-THE-HOOD"><div class="titlepage"><div><div><h2 class="title" style="clear: both">44.8. PL/Perl 下面的东西</h2></div></div></div><div class="toc"><dl class="toc"><dt><span class="sect2"><a href="plperl-under-the-hood.html#PLPERL-CONFIG">44.8.1. 配置</a></span></dt><dt><span class="sect2"><a href="plperl-under-the-hood.html#PLPERL-MISSING">44.8.2. 限制和缺失的特性</a></span></dt></dl></div><div class="sect2" id="PLPERL-CONFIG"><div class="titlepage"><div><div><h3 class="title">44.8.1. 配置</h3></div></div></div><p>  这一节列出了影响<span class="application">PL/Perl</span>的配置参数。
+  </p><div class="variablelist"><dl class="variablelist"><dt id="GUC-PLPERL-ON-INIT"><span class="term">       <code class="varname">plperl.on_init</code> (<code class="type">string</code>)
+      <a id="idp37960256" class="indexterm"></a>
+      </span></dt><dd><p>        指定当第一次初始化一个 Perl 解释器时要执行的 Perl 代码，这会在
+        具体用于<code class="literal">plperl</code>或<code class="literal">plperlu</code>之前做完。当
+        这段代码被执行时 SPI 函数不可用。如果该代码由于错误失败，它
+        将中止解释器的初始化并且把错误传播到调用查询，最终导致当前
+        事务或者子事务被中止。
+       </p><p>       该 Perl 代码被限制为一个单一的字符串。更长的代码可以放在一个
+       模块中，然后由<code class="literal">on_init</code>字符串载入。例子：
+</p><pre class="programlisting">plperl.on_init = 'require "plperlinit.pl"'
+plperl.on_init = 'use lib "/my/app"; use MyApp::PgInit;'</pre><p>
+       </p><p>       任何被<code class="literal">plperl.on_init</code>载入的模块（不管是直接还是间接）都
+       可以被<code class="literal">plperl</code>使用。这可能会导致安全性风险。要看哪些模块
+       已经被载入，可以使用：
+</p><pre class="programlisting">DO 'elog(WARNING, join ", ", sort keys %INC)' LANGUAGE plperl;</pre><p>
+       </p><p>        如果<code class="literal">plperl</code>库被包括在<a class="xref" href="runtime-config-client.html#GUC-SHARED-PRELOAD-LIBRARIES">shared_preload_libraries</a>
+        中，那么初始化将发生在 postmaster 中，在这种情况下要特别地考虑对
+        postmaster 带来的不稳定风险。使用这种特性的主要原因是，
+        <code class="literal">plperl.on_init</code>载入的 Perl 模块只需要在 postmaster 开始时
+        被载入，并且在数据库会话中不需要任何工作就立刻可用。不过，要记住这
+        只免除了一个数据库会话中使用的第一个 Perl 解释器的负载 — 不管
+        是 PL/PerlU 还是用于第一个 SQL 角色调用 PL/Perl 函数的 PL/Perl。在一个
+        数据库会话中创建的任何额外的 Perl 解释器将不得不重新执行
+        <code class="literal">plperl.on_init</code>。还有，在 Windows 上无论从什么里面进行
+        预先载入，都不会有这种节约，因为在 postmaster 进程中创建的 Perl 解释器
+        不会传播到子进程中。
+       </p><p>       这个参数只能在<code class="filename">postgresql.conf</code>文件或者服务器命令中设置。
+       </p></dd><dt id="GUC-PLPERL-ON-PLPERL-INIT"><span class="term">       <code class="varname">plperl.on_plperl_init</code> (<code class="type">string</code>)
+       <a id="idp37976016" class="indexterm"></a>
+      <br /></span><span class="term">       <code class="varname">plperl.on_plperlu_init</code> (<code class="type">string</code>)
+       <a id="idp37978256" class="indexterm"></a>
+      </span></dt><dd><p>        这些参数分别指定当为<code class="literal">plperl</code>或<code class="literal">plperlu</code>专门准备好
+        一个 Perl 解释器时要执行的 Perl 代码。当一个 PL/Perl 或者 PL/PerlU 函数
+        第一次在一个数据库会话中被执行时会发生这种动作，或者由于调用其他语言
+        或者新的 SQL 角色调用 PL/Perl 函数导致创建额外的解释器时也会发生这种
+        动作。这些初始化跟随着<code class="literal">plperl.on_init</code>所作的初始化。当这段
+        代码被执行时，SPI 函数不可用。<code class="literal">plperl.on_plperl_init</code>中的 Perl
+        代码在<span class="quote">“<span class="quote">锁闭</span>”</span>解释器之后被执行，因此它只能执行可信的操作。
+       </p><p>        如果该代码由于错误失败，它将中止初始化并且把错误传播到调用查询，
+        最终导致当前事务或者子事务被中止。在 Perl 中已经完成的任何动作都
+        不会被撤销。不过，该解释器将不能被再次使用。如果再次使用该语言，
+        将在一个新鲜的 Perl 解释器中再次尝试初始化。
+       </p><p>        只有超级用户能够更改这些设置。尽管这些设置可以在会话中被修改，
+        但是这类更改将不会影响已经被用来执行函数的 Perl 解释器。
+       </p></dd><dt id="GUC-PLPERL-USE-STRICT"><span class="term">       <code class="varname">plperl.use_strict</code> (<code class="type">boolean</code>)
+       <a id="idp37987584" class="indexterm"></a>
+      </span></dt><dd><p>        如果被设置为真，则后续的 PL/Perl 函数编译将会启用
+        <code class="literal">strict</code>编译指示。这个参数不影响当前会话中已编译的函数。
+       </p></dd></dl></div></div><div class="sect2" id="PLPERL-MISSING"><div class="titlepage"><div><div><h3 class="title">44.8.2. 限制和缺失的特性</h3></div></div></div><p>   PL/Perl 中目前缺少下列特性，但是欢迎大家对此作出贡献。
+
+   </p><div class="itemizedlist"><ul class="itemizedlist" style="list-style-type: disc; "><li class="listitem"><p>      PL/Perl 函数不能直接调用彼此。
+     </p></li><li class="listitem"><p>      SPI 还没有被完全实现。
+     </p></li><li class="listitem"><p>      如果正在使用<code class="literal">spi_exec_query</code>取一个非常大的数据集，
+      你应该注意它们都会进入到内存中。可以按先前所述，通过使用
+      <code class="literal">spi_query</code>/<code class="literal">spi_fetchrow</code>来避免发生
+      这类情况。
+     </p><p>        如果一个集合返回函数通过<code class="literal">return</code>把一个大型的行集合
+        返回给 PostgreSQL，同样会发生这种情况。同样如前所述，可以为每一个
+        要返回的行使用<code class="literal">return_next</code>来避免这种问题。
+     </p></li><li class="listitem"><p>        当会话正常结束（而不是由于致命错误结束）时，任何已经定义的
+        <code class="literal">END</code>块将被执行。当前不会执行其他动作。特别地，
+        此时文件句柄不会被自动刷写并且对象不会被自动销毁。
+      </p></li></ul></div><p>
+  </p></div></div><div class="navfooter"><hr /><table width="100%" summary="Navigation footer"><tr><td width="40%" align="left"><a accesskey="p" href="plperl-event-triggers.html">上一页</a> </td><td width="20%" align="center"><a accesskey="u" href="plperl.html">上一级</a></td><td width="40%" align="right"> <a accesskey="n" href="plpython.html">下一页</a></td></tr><tr><td width="40%" align="left" valign="top">44.7. PL/Perl 事件触发器 </td><td width="20%" align="center"><a accesskey="h" href="index.html">起始页</a></td><td width="40%" align="right" valign="top"> 第 45 章 PL/Python - Python 过程语言</td></tr></table></div></body></html>

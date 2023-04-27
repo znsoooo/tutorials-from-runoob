@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><title>9.28. 事件触发器函数</title><link rel="stylesheet" type="text/css" href="stylesheet.css" /><link rev="made" href="pgsql-docs@postgresql.org" /><meta name="generator" content="DocBook XSL Stylesheets V1.79.1" /><link rel="prev" href="functions-trigger.html" title="9.27. 触发器函数" /><link rel="next" href="typeconv.html" title="第 10 章 类型转换" /></head><body><div xmlns="http://www.w3.org/TR/xhtml1/transitional" class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="5" align="center">9.28. 事件触发器函数</th></tr><tr><td width="10%" align="left"><a accesskey="p" href="functions-trigger.html" title="9.27. 触发器函数">上一页</a> </td><td width="10%" align="left"><a accesskey="u" href="functions.html" title="第 9 章 函数和操作符">上一级</a></td><th width="60%" align="center">第 9 章 函数和操作符</th><td width="10%" align="right"><a accesskey="h" href="index.html" title="PostgreSQL 10.1 手册">起始页</a></td><td width="10%" align="right"> <a accesskey="n" href="typeconv.html" title="第 10 章 类型转换">下一页</a></td></tr></table><hr></hr></div><div class="sect1" id="FUNCTIONS-EVENT-TRIGGERS"><div class="titlepage"><div><div><h2 class="title" style="clear: both">9.28. 事件触发器函数</h2></div></div></div><div class="toc"><dl class="toc"><dt><span class="sect2"><a href="functions-event-triggers.html#PG-EVENT-TRIGGER-DDL-COMMAND-END-FUNCTIONS">9.28.1. 捕获命令结尾的改变</a></span></dt><dt><span class="sect2"><a href="functions-event-triggers.html#PG-EVENT-TRIGGER-SQL-DROP-FUNCTIONS">9.28.2. 通过DDL命令删除处理的对象</a></span></dt><dt><span class="sect2"><a href="functions-event-triggers.html#PG-EVENT-TRIGGER-TABLE-REWRITE-FUNCTIONS">9.28.3. 处理表重写事件</a></span></dt></dl></div><p>    <span class="productname">PostgreSQL</span>提供这些帮助函数用以从事件触发器中检索信息。
+   </p><p>    关于事件触发器的更多信息，参见<a class="xref" href="event-triggers.html" title="第 39 章 事件触发器">第 39 章</a>。
+   </p><div class="sect2" id="PG-EVENT-TRIGGER-DDL-COMMAND-END-FUNCTIONS"><div class="titlepage"><div><div><h3 class="title">9.28.1. 捕获命令结尾的改变</h3></div></div></div><a id="idp16229728" class="indexterm"></a><p>    <code class="function">pg_event_trigger_ddl_commands</code>返回通过
+    每个用户操作执行的<acronym class="acronym">DDL</acronym>命令列表，
+    当调用函数中<code class="literal">ddl_command_end</code>事件触发器，
+    如果在任何其它上下文中调用，则抛出一个错误。
+    <code class="function">pg_event_trigger_ddl_commands</code>返回每个基本执行命令的每一行；
+    单独SQL语句的命令可能返回多个行。此函数返回以下列：
+
+    </p><div class="informaltable"><table class="informaltable" border="1"><colgroup><col /><col /><col /></colgroup><thead><tr><th>名称</th><th>类型</th><th>描述</th></tr></thead><tbody><tr><td><code class="literal">classid</code></td><td><code class="type">Oid</code></td><td>对象从属的系统OID</td></tr><tr><td><code class="literal">objid</code></td><td><code class="type">Oid</code></td><td>系统中对象的OID</td></tr><tr><td><code class="literal">objsubid</code></td><td><code class="type">integer</code></td><td>对象子ID(比如列的属性数)</td></tr><tr><td><code class="literal">command_tag</code></td><td><code class="type">text</code></td><td>命令标签</td></tr><tr><td><code class="literal">object_type</code></td><td><code class="type">text</code></td><td>对象类型</td></tr><tr><td><code class="literal">schema_name</code></td><td><code class="type">text</code></td><td>         对象从属模式名，如果没有；否则为<code class="literal">NULL</code>。没有应用引用。
+        </td></tr><tr><td><code class="literal">object_identity</code></td><td><code class="type">text</code></td><td>         对象身份的文本表现，模式限定的。每一个以及所有身份中出现的标识符在必要时加引号。
+        </td></tr><tr><td><code class="literal">in_extension</code></td><td><code class="type">bool</code></td><td>命令是否是扩展脚本的一部分</td></tr><tr><td><code class="literal">command</code></td><td><code class="type">pg_ddl_command</code></td><td>         内部格式中命令的完整表示。这不能直接输出，
+         但它可以传递给其它函数用来获取该命令的不同信息。
+        </td></tr></tbody></table></div><p>
+   </p></div><div class="sect2" id="PG-EVENT-TRIGGER-SQL-DROP-FUNCTIONS"><div class="titlepage"><div><div><h3 class="title">9.28.2. 通过DDL命令删除处理的对象</h3></div></div></div><a id="idp16251392" class="indexterm"></a><p>    <code class="function">pg_event_trigger_dropped_objects</code>返回其<code class="literal">sql_drop</code>事件中命令所删除的所有对象的列表。如果在任何其他环境中被调用，<code class="function">pg_event_trigger_dropped_objects</code>将抛出一个错误。<code class="function">pg_event_trigger_dropped_objects</code>返回下列列：
+
+    </p><div class="informaltable"><table class="informaltable" border="1"><colgroup><col /><col /><col /></colgroup><thead><tr><th>名称</th><th>类型</th><th>描述</th></tr></thead><tbody><tr><td><code class="literal">classid</code></td><td><code class="type">Oid</code></td><td>对象所属的目录的 OID</td></tr><tr><td><code class="literal">objid</code></td><td><code class="type">Oid</code></td><td>在目录中的对象的 OID</td></tr><tr><td><code class="literal">objsubid</code></td><td><code class="type">int32</code></td><td>对象的子ID（如列的属性号）</td></tr><tr><td><code class="literal">original</code></td><td><code class="type">bool</code></td><td>用于标识删除的根对象的标志</td></tr><tr><td><code class="literal">normal</code></td><td><code class="type">bool</code></td><td>         标志表明在导致这个对象的依赖关系图中有一个正常的依赖关系
+        </td></tr><tr><td><code class="literal">is_temporary</code></td><td><code class="type">bool</code></td><td>         标志表明该对象是临时对象。
+        </td></tr><tr><td><code class="literal">object_type</code></td><td><code class="type">text</code></td><td>对象的类型</td></tr><tr><td><code class="literal">schema_name</code></td><td><code class="type">text</code></td><td>         对象所属模式的名称（如果存在）；否则为<code class="literal">NULL</code>。不应用引用。
+        </td></tr><tr><td><code class="literal">object_name</code></td><td><code class="type">text</code></td><td>         如果模式和名称的组合能被用于对象的一个唯一标识符，则是对象的名称；否则是<code class="literal">NULL</code>。不应用引用，并且名称不是模式限定的。
+        </td></tr><tr><td><code class="literal">object_identity</code></td><td><code class="type">text</code></td><td>         对象身份的文本表现，模式限定的。每一个以及所有身份中出现的标识符在必要时加引号。
+        </td></tr><tr><td><code class="literal">address_names</code></td><td><code class="type">text[]</code></td><td>         一个数组，连同<code class="literal">object_type</code>和<code class="literal">address_args</code>，
+         可以用于<code class="function">pg_get_object_address()</code>在包含相同命
+         名对象的远程服务器中重新创建对象地址。
+        </td></tr><tr><td><code class="literal">address_args</code></td><td><code class="type">text[]</code></td><td>         <code class="literal">address_names</code>的补充。
+        </td></tr></tbody></table></div><p>
+   </p><p>    <code class="function">pg_event_trigger_dropped_objects</code>可以被这样用在一个事件触发器中：
+</p><pre class="programlisting">CREATE FUNCTION test_event_trigger_for_drops()
+        RETURNS event_trigger LANGUAGE plpgsql AS $$
+DECLARE
+    obj record;
+BEGIN
+    FOR obj IN SELECT * FROM pg_event_trigger_dropped_objects()
+    LOOP
+        RAISE NOTICE '% dropped object: % %.% %',
+                     tg_tag,
+                     obj.object_type,
+                     obj.schema_name,
+                     obj.object_name, 
+                     obj.object_identity;
+    END LOOP;
+END 
+$$; 
+CREATE EVENT TRIGGER test_event_trigger_for_drops
+   ON sql_drop
+   EXECUTE PROCEDURE test_event_trigger_for_drops();</pre><p>
+    </p></div><div class="sect2" id="PG-EVENT-TRIGGER-TABLE-REWRITE-FUNCTIONS"><div class="titlepage"><div><div><h3 class="title">9.28.3. 处理表重写事件</h3></div></div></div><p>
+   显示在<a class="xref" href="functions-event-triggers.html#FUNCTIONS-EVENT-TRIGGER-TABLE-REWRITE" title="表 9.90. 表重写信息">表 9.90</a>中的函数提供关于表的信息，
+    其中<code class="literal">table_rewrite</code>事件刚刚被调用。如果在任何其它上下文中调用，则抛出错误。
+   </p><div class="table" id="FUNCTIONS-EVENT-TRIGGER-TABLE-REWRITE"><p class="title"><strong>表 9.90. 表重写信息</strong></p><div class="table-contents"><table class="table" summary="表重写信息" border="1"><colgroup><col /><col /><col /></colgroup><thead><tr><th>名称</th><th>返回类型</th><th>描述</th></tr></thead><tbody><tr><td>        <a id="idp16288960" class="indexterm"></a>
+        <code class="literal"><code class="function">pg_event_trigger_table_rewrite_oid()</code></code>
+       </td><td><code class="type">Oid</code></td><td>关于被改写的表的OID。</td></tr><tr><td>        <a id="idp16291920" class="indexterm"></a>
+        <code class="literal"><code class="function">pg_event_trigger_table_rewrite_reason()</code></code>
+       </td><td><code class="type">int</code></td><td>        原因代码解释重写的原因。代码的确切意义是释放依赖。
+       </td></tr></tbody></table></div></div><br class="table-break" /><p>    在下面这样的事件触发器中使用<code class="function">pg_event_trigger_table_rewrite_oid</code>函数：
+</p><pre class="programlisting">CREATE FUNCTION test_event_trigger_table_rewrite_oid()
+ RETURNS event_trigger
+ LANGUAGE plpgsql AS  
+$$ 
+BEGIN 
+  RAISE NOTICE 'rewriting table % for reason %',
+                pg_event_trigger_table_rewrite_oid()::regclass,
+                pg_event_trigger_table_rewrite_reason();
+END;
+$$;
+
+CREATE EVENT TRIGGER test_table_rewrite_oid
+                  ON table_rewrite
+   EXECUTE PROCEDURE test_event_trigger_table_rewrite_oid();</pre><p>
+    </p></div></div><div class="navfooter"><hr /><table width="100%" summary="Navigation footer"><tr><td width="40%" align="left"><a accesskey="p" href="functions-trigger.html">上一页</a> </td><td width="20%" align="center"><a accesskey="u" href="functions.html">上一级</a></td><td width="40%" align="right"> <a accesskey="n" href="typeconv.html">下一页</a></td></tr><tr><td width="40%" align="left" valign="top">9.27. 触发器函数 </td><td width="20%" align="center"><a accesskey="h" href="index.html">起始页</a></td><td width="40%" align="right" valign="top"> 第 10 章 类型转换</td></tr></table></div></body></html>

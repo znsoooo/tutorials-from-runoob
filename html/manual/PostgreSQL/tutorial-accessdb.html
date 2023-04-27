@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><title>1.4. 访问数据库</title><link rel="stylesheet" type="text/css" href="stylesheet.css" /><link rev="made" href="pgsql-docs@postgresql.org" /><meta name="generator" content="DocBook XSL Stylesheets V1.79.1" /><link rel="prev" href="tutorial-createdb.html" title="1.3. 创建一个数据库" /><link rel="next" href="tutorial-sql.html" title="第 2 章 SQL语言" /></head><body><div xmlns="http://www.w3.org/TR/xhtml1/transitional" class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="5" align="center">1.4. 访问数据库</th></tr><tr><td width="10%" align="left"><a accesskey="p" href="tutorial-createdb.html" title="1.3. 创建一个数据库">上一页</a> </td><td width="10%" align="left"><a accesskey="u" href="tutorial-start.html" title="第 1 章 从头开始">上一级</a></td><th width="60%" align="center">第 1 章 从头开始</th><td width="10%" align="right"><a accesskey="h" href="index.html" title="PostgreSQL 10.1 手册">起始页</a></td><td width="10%" align="right"> <a accesskey="n" href="tutorial-sql.html" title="第 2 章 SQL语言">下一页</a></td></tr></table><hr></hr></div><div class="sect1" id="TUTORIAL-ACCESSDB"><div class="titlepage"><div><div><h2 class="title" style="clear: both">1.4. 访问数据库</h2></div></div></div><a id="idp5230128" class="indexterm"></a><p>    一旦你创建了数据库，你就可以通过以下方式访问它：
+
+    </p><div class="itemizedlist"><ul class="itemizedlist compact" style="list-style-type: bullet; "><li class="listitem" style="list-style-type: disc"><p>       运行<span class="productname">PostgreSQL</span>的交互式终端程序，它被称为<span class="application"><em class="firstterm">psql</em></span>， 它允许你交互地输入、编辑和执行<acronym class="acronym">SQL</acronym>命令。
+      </p></li><li class="listitem" style="list-style-type: disc"><p>       使用一种已有的图形化前端工具，比如<span class="application">pgAdmin</span>或者带<acronym class="acronym">ODBC</acronym>或<acronym class="acronym">JDBC</acronym>支持的办公套件来创建和管理数据库。这种方法在这份教程中没有介绍。
+      </p></li><li class="listitem" style="list-style-type: disc"><p>       使用多种绑定发行的语言中的一种写一个自定义的应用。这些可能性在<a class="xref" href="client-interfaces.html" title="部分 IV. 客户端接口">第 IV 部分</a>中将有更深入的讨论。
+      </p></li></ul></div><p>
+
+    你可能需要启动<code class="command">psql</code>来试验本教程中的例子。 你可以用下面的命令为<code class="literal">mydb</code>数据库激活它：
+</p><pre class="screen"><code class="prompt">$</code> <strong class="userinput"><code>psql mydb</code></strong></pre><p>
+    如果你不提供数据库名字，那么它的缺省值就是你的用户账号名字。在前面使用<code class="command">createdb</code>的小节里你应该已经了解了这种方式。
+   </p><p>    在<code class="command">psql</code>中，你将看到下面的欢迎信息：
+</p><pre class="screen">psql (10.1)
+Type "help" for help.
+
+mydb=&gt;</pre><p>
+    <a id="idp5242832" class="indexterm"></a>
+    最后一行也可能是：
+</p><pre class="screen">mydb=#</pre><p>
+    这个提示符意味着你是数据库超级用户，最可能出现在你自己安装了
+    <span class="productname">PostgreSQL</span>实例的情况下。
+    作为超级用户意味着你不受访问控制的限制。 对于本教程的目的而言，
+    是否超级用户并不重要。
+   </p><p>    如果你启动<code class="command">psql</code>时碰到了问题，那么请回到前面的小节。诊断<code class="command">createdb</code>的方法和诊断 <code class="command">psql</code>的方法很类似， 如果前者能运行那么后者也应该能运行。
+   </p><p>    <code class="command">psql</code>打印出的最后一行是提示符，它表示<code class="command">psql</code>正听着你说话，这个时候你就可以敲入 <acronym class="acronym">SQL</acronym>查询到一个<code class="command">psql</code>维护的工作区中。试验一下下面的命令：
+    <a id="idp5250208" class="indexterm"></a>
+</p><pre class="screen"><code class="prompt">mydb=&gt;</code> <strong class="userinput"><code>SELECT version();</code></strong>
+                                         version
+------------------------------------------------------------------------------------------
+ PostgreSQL 10.1 on x86_64-pc-linux-gnu, compiled by gcc (Debian 4.9.2-10) 4.9.2, 64-bit
+(1 row)
+
+<code class="prompt">mydb=&gt;</code> <strong class="userinput"><code>SELECT current_date;</code></strong>
+    date
+------------
+ 2016-01-07
+(1 row)
+
+<code class="prompt">mydb=&gt;</code> <strong class="userinput"><code>SELECT 2 + 2;</code></strong>
+ ?column?
+----------
+        4
+(1 row)</pre><p>
+   </p><p>    <code class="command">psql</code>程序有一些不属于SQL命令的内部命令。它们以反斜线开头，<span class="quote">“<span class="quote"><code class="literal">\</code></span>”</span>。 欢迎信息中列出了一些这种命令。比如，你可以用下面的命令获取各种<span class="productname">PostgreSQL</span>的<acronym class="acronym">SQL</acronym>命令的帮助语法：
+</p><pre class="screen"><code class="prompt">mydb=&gt;</code> <strong class="userinput"><code>\h</code></strong></pre><p>
+   </p><p>    要退出<code class="command">psql</code>，输入：
+</p><pre class="screen"><code class="prompt">mydb=&gt;</code> <strong class="userinput"><code>\q</code></strong></pre><p>
+    <code class="command">psql</code>将会退出并且让你返回到命令行shell。 （要获取更多有关内部命令的信息，你可以在<code class="command">psql</code>提示符上键入<code class="literal">\?</code>。） <code class="command">psql</code>的完整功能在<a class="xref" href="app-psql.html" title="psql"><span class="refentrytitle"><span class="application">psql</span></span></a>中有文档说明。在这份文档里，我们将不会明确使用这些特性，但是你自己可以在需要的时候使用它们。
+   </p></div><div class="navfooter"><hr /><table width="100%" summary="Navigation footer"><tr><td width="40%" align="left"><a accesskey="p" href="tutorial-createdb.html">上一页</a> </td><td width="20%" align="center"><a accesskey="u" href="tutorial-start.html">上一级</a></td><td width="40%" align="right"> <a accesskey="n" href="tutorial-sql.html">下一页</a></td></tr><tr><td width="40%" align="left" valign="top">1.3. 创建一个数据库 </td><td width="20%" align="center"><a accesskey="h" href="index.html">起始页</a></td><td width="40%" align="right" valign="top"> 第 2 章 <acronym class="acronym">SQL</acronym>语言</td></tr></table></div></body></html>

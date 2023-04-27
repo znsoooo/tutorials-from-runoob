@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><title>21.3. 角色成员关系</title><link rel="stylesheet" type="text/css" href="stylesheet.css" /><link rev="made" href="pgsql-docs@postgresql.org" /><meta name="generator" content="DocBook XSL Stylesheets V1.79.1" /><link rel="prev" href="role-attributes.html" title="21.2. 角色属性" /><link rel="next" href="role-removal.html" title="21.4. 删除角色" /></head><body><div xmlns="http://www.w3.org/TR/xhtml1/transitional" class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="5" align="center">21.3. 角色成员关系</th></tr><tr><td width="10%" align="left"><a accesskey="p" href="role-attributes.html" title="21.2. 角色属性">上一页</a> </td><td width="10%" align="left"><a accesskey="u" href="user-manag.html" title="第 21 章 数据库角色">上一级</a></td><th width="60%" align="center">第 21 章 数据库角色</th><td width="10%" align="right"><a accesskey="h" href="index.html" title="PostgreSQL 10.1 手册">起始页</a></td><td width="10%" align="right"> <a accesskey="n" href="role-removal.html" title="21.4. 删除角色">下一页</a></td></tr></table><hr></hr></div><div class="sect1" id="ROLE-MEMBERSHIP"><div class="titlepage"><div><div><h2 class="title" style="clear: both">21.3. 角色成员关系</h2></div></div></div><a id="idp23117968" class="indexterm"></a><p>   把用户分组在一起来便于管理权限常常很方便：那样，权限可以被授予一整个组或从一整个组回收。在<span class="productname">PostgreSQL</span>中通过创建一个表示组的角色来实现，并且然后将在该组角色中的<em class="firstterm">成员关系</em>授予给单独的用户角色。
+  </p><p>   要建立一个组角色，首先创建该角色：
+</p><pre class="synopsis">CREATE ROLE <em class="replaceable"><code>name</code></em>;</pre><p>
+   通常被用作一个组的角色不需要有<code class="literal">LOGIN</code>属性，不过如果你希望你也可以设置它。
+  </p><p>   一旦组角色存在，你可以使用<a class="xref" href="sql-grant.html" title="GRANT"><span class="refentrytitle">GRANT</span></a>和<a class="xref" href="sql-revoke.html" title="REVOKE"><span class="refentrytitle">REVOKE</span></a>命令增加和移除成员：
+</p><pre class="synopsis">GRANT <em class="replaceable"><code>group_role</code></em> TO <em class="replaceable"><code>role1</code></em>, ... ;
+REVOKE <em class="replaceable"><code>group_role</code></em> FROM <em class="replaceable"><code>role1</code></em>, ... ;</pre><p>
+   你也可以为其他组角色授予成员关系（因为组角色和非组角色之间其实没有任何区别）。数据库将不会让你设置环状的成员关系。另外，不允许把一个角色中的成员关系授予给<code class="literal">PUBLIC</code>。
+  </p><p>   组角色的成员可以以两种方式使用角色的权限。第一，一个组的每一个成员可以显式地做<a class="xref" href="sql-set-role.html" title="SET ROLE"><span class="refentrytitle">SET ROLE</span></a>来临时<span class="quote">“<span class="quote">称为</span>”</span>组角色。在这种状态中，数据库会话可以访问组角色而不是原始登录角色的权限，并且任何被创建的数据库对象被认为属于组角色而不是登录角色。第二，有<code class="literal">INHERIT</code>属性的成员角色自动地具有它们所属角色的权限，包括任何组角色继承得到的权限。作为一个例子，假设我们已经有：
+</p><pre class="programlisting">CREATE ROLE joe LOGIN INHERIT;
+CREATE ROLE admin NOINHERIT;
+CREATE ROLE wheel NOINHERIT;
+GRANT admin TO joe;
+GRANT wheel TO admin;</pre><p>
+   在作为角色<code class="literal">joe</code>连接后，一个数据库会话将立即拥有直接授予给<code class="literal">joe</code>的权限，外加任何授予给<code class="literal">admin</code>的权限，因为<code class="literal">joe</code><span class="quote">“<span class="quote">继承了</span>”</span> <code class="literal">admin</code>的权限。然而，授予给<code class="literal">wheel</code>的权限不可用，因为即使<code class="literal">joe</code>是<code class="literal">wheel</code>的一个间接成员，但是该成员关系是通过带<code class="literal">NOINHERIT</code>属性的<code class="literal">admin</code>得到的。在：
+</p><pre class="programlisting">SET ROLE admin;</pre><p>
+   之后，该会话将只拥有授予给<code class="literal">admin</code>的权限，但是没有授予给<code class="literal">joe</code>的权限。在执行：
+</p><pre class="programlisting">SET ROLE wheel;</pre><p>
+   之后，该会话将只拥有授予给<code class="literal">wheel</code>的权限，但是没有授予给<code class="literal">joe</code>或<code class="literal">admin</code>的权限。初始的权限状态可以使用下面命令之一恢复：
+</p><pre class="programlisting">SET ROLE joe;
+SET ROLE NONE;
+RESET ROLE;</pre><p>
+  </p><div class="note"><h3 class="title">注意</h3><p>    <code class="command">SET ROLE</code>命令总是允许选择原始登录角色的直接或间接组角色。因此，在上面的例子中，在成为<code class="literal">wheel</code>之前不必先成为<code class="literal">admin</code>。
+   </p></div><div class="note"><h3 class="title">注意</h3><p>    在 SQL 标准中，用户和角色之间的区别很清楚，并且用户不会自动继承权限而角色会继承。这种行为在<span class="productname">PostgreSQL</span>中也可以实现：为要用作 SQL 角色的角色给予<code class="literal">INHERIT</code>属性，而为要用作 SQL 用户的角色给予<code class="literal">NOINHERIT</code>属性。不过，为了向后兼容 8.1 以前的发布（在其中用户总是拥有它们所在组的权限），<span class="productname">PostgreSQL</span>默认给所有的角色<code class="literal">INHERIT</code>属性。
+   </p></div><p>   角色属性<code class="literal">LOGIN</code>、<code class="literal">SUPERUSER</code>、<code class="literal">CREATEDB</code>和<code class="literal">CREATEROLE</code>可以被认为是一种特殊权限，但是它们从来不会像数据库对象上的普通权限那样被继承。要使用这些属性，你必须实际<code class="command">SET ROLE</code>到一个有这些属性之一的特定角色。继续上述例子，我们可以选择授予<code class="literal">CREATEDB</code>和<code class="literal">CREATEROLE</code>给<code class="literal">admin</code>角色。然后一个以<code class="literal">joe</code>角色连接的会话将不会立即有这些权限，只有在执行了<code class="command">SET ROLE admin</code>之后才会拥有。
+  </p><p>  </p><p>   要销毁一个组角色，使用<a class="xref" href="sql-droprole.html" title="DROP ROLE"><span class="refentrytitle">DROP ROLE</span></a>：
+</p><pre class="synopsis">DROP ROLE <em class="replaceable"><code>name</code></em>;</pre><p>
+   任何在该组角色中的成员关系会被自动撤销（但是成员角色不会受到影响）。
+  </p></div><div class="navfooter"><hr /><table width="100%" summary="Navigation footer"><tr><td width="40%" align="left"><a accesskey="p" href="role-attributes.html">上一页</a> </td><td width="20%" align="center"><a accesskey="u" href="user-manag.html">上一级</a></td><td width="40%" align="right"> <a accesskey="n" href="role-removal.html">下一页</a></td></tr><tr><td width="40%" align="left" valign="top">21.2. 角色属性 </td><td width="20%" align="center"><a accesskey="h" href="index.html">起始页</a></td><td width="40%" align="right" valign="top"> 21.4. 删除角色</td></tr></table></div></body></html>

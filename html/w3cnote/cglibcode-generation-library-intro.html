@@ -1,0 +1,1321 @@
+<!Doctype html>
+<html>
+<head>
+	<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+	<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+	<title>CGLIB(Code Generation Library) 介绍与原理 | 菜鸟教程</title>
+
+  <meta name='robots' content='max-image-preview:large' />
+<link rel='stylesheet' id='classic-theme-styles-css' href='http://www.runoob.com/wp-includes/css/classic-themes.min.css?ver=6.2' type='text/css' media='all' />
+<link rel="canonical" href="http://www.runoob.com/w3cnote/cglibcode-generation-library-intro.html" />
+<meta name="keywords" content="CGLIB(Code Generation Library) 介绍与原理">
+<meta name="description" content="一、什么是 CGLIB?  CGLIB是一个功能强大，高性能的代码生成包。它为没有实现接口的类提供代理，为JDK的动态代理提供了很好的补充。通常可以使用Java的动态代理创建代理，但当要代理的类没有实现接口或者为了更好的性能，CGLIB是一个好的选择。 CGLIB作为一个开源项目，其代码托管在github，地址为：https://github.com/cglib/cglib   二、CGLIB 原理   CGLIB 原理：动态生成一个要..">
+		
+	<link rel="shortcut icon" href="https://static.runoob.com/images/favicon.ico">
+	<link rel="stylesheet" href="/wp-content/themes/runoob/style.css?v=1.170" type="text/css" media="all" />	
+	<link rel="stylesheet" href="https://cdn.staticfile.org/font-awesome/4.7.0/css/font-awesome.min.css" media="all" />	
+  <!--[if gte IE 9]><!-->
+  <script src="https://cdn.staticfile.org/jquery/2.0.3/jquery.min.js"></script>
+  <!--<![endif]-->
+  <!--[if lt IE 9]>
+     <script src="https://cdn.staticfile.org/jquery/1.9.1/jquery.min.js"></script>
+     <script src="https://cdn.staticfile.org/html5shiv/r29/html5.min.js"></script>
+  <![endif]-->
+  <link rel="apple-touch-icon" href="https://static.runoob.com/images/icon/mobile-icon.png"/>
+  <meta name="apple-mobile-web-app-title" content="菜鸟教程">
+</head>
+<body>
+
+<!--  头部 -->
+<div class="container logo-search">
+
+  <div class="col search row-search-mobile">
+    <form action="index.php">
+      <input class="placeholder" placeholder="搜索……" name="s" autocomplete="off">
+      
+    </form>
+  </div>
+
+  <div class="row">
+    <div class="col logo">
+      <h1><a href="/">菜鸟教程 -- 学的不仅是技术，更是梦想！</a></h1>
+    </div>
+        <div class="col right-list"> 
+    <button class="btn btn-responsive-nav btn-inverse" data-toggle="collapse" data-target=".nav-main-collapse" id="pull" style=""> <i class="fa fa-navicon"></i> </button>
+    </div>
+        
+    <div class="col search search-desktop last">
+      <div class="search-input" >
+      <form action="//www.runoob.com/" target="_blank">
+        <input class="placeholder" id="s" name="s" placeholder="搜索……"  autocomplete="off" style="height: 44px;">
+      </form>
+      
+      </div>
+    </div>
+  </div>
+</div>
+
+
+
+<!-- 导航栏 -->
+<div class="container navigation">
+    <div class="row">
+        <div class="col nav">
+            
+
+                        <ul class="pc-nav" id="note-nav">
+                <li><a href="//www.runoob.com/">首页</a></li>
+                <li><a href="/w3cnote">笔记首页</a></li>
+                <li><a href="/w3cnote/android-tutorial-intro.html" title="Android 基础入门教程">Android</a></li>
+                <li><a href="/w3cnote/es6-tutorial.html" title="ES6 教程">ES6 教程</a></li>
+                <li><a href="/w3cnote/ten-sorting-algorithm.html" title="排序算法">排序算法</a></li>
+                <li><a href="/w3cnote/hadoop-tutorial.html" title="Hadoop 教程">Hadoop</a></li>
+                <li><a href="/w3cnote/zookeeper-tutorial.html" title="Zookeeper 教程">Zookeeper</a></li>
+                <li><a href="/w3cnote/verilog-tutorial.html" title="Verilog 教程">Verilog</a></li>
+                <li><a href="/w3cnote_genre/code" title="编程技术">编程技术</a></li> 
+                <li><a href="/w3cnote_genre/coderlife" title="程序员人生">程序员人生</a></li>
+                
+                <!--<li><a href="javascript:;" class="runoob-pop">登录</a></li>
+                
+                
+                        <li>
+                <a style="font-weight:bold;" href="https://www.runoob.com/linux/linux-tutorial.html#yunserver" target="_blank" onclick="_hmt.push(['_trackEvent', 'aliyun', 'click', 'aliyun'])" title="kkb">云服务器</a>
+                </li>
+                <li><a href="http://gk.link/a/104mQ" target="_blank" style="font-weight: bold;"onclick="_hmt.push(['_trackEvent', '极客时间', 'click', 'jike'])" title="我的圈子">极客时间</a></li>
+            
+                
+                <li><a target="_blank" href="/shoppinglist" rel="nofollow">知识店铺</a></li> 
+        -->
+            </ul>
+                        
+              
+            <ul class="mobile-nav">
+                <li><a href="/w3cnote">首页</a></li>
+                <li><a href="/w3cnote_genre/android" target="_blank" title="Android 基础入门教程">Android</a></li>
+                <li><a href="/w3cnote/es6-tutorial.html" target="_blank" title="ES6 教程">ES6</a></li>
+                <li><a href="/w3cnote_genre/joke" target="_blank" title="程序员笑话">逗乐</a></li>
+                
+                <a href="javascript:void(0)" class="search-reveal">Search</a> 
+            </ul>
+            
+        </div>
+    </div>
+</div>
+
+
+<!--  内容  -->
+<div class="container main">
+	<div class="row">
+
+		<div class="col middle-column big-middle-column">
+	 			<div class="article">
+			<div class="article-heading">
+				<h2>CGLIB(Code Generation Library) 介绍与原理</h2>				<h3><em>分类</em> <a href="/w3cnote_genre/code" title="编程技术" >编程技术</a> </h3>
+			</div>
+			<div class="article-body note-body">
+				<div class="article-intro">
+					<h2>
+一、什么是 CGLIB?
+</h2>
+<p>CGLIB是一个功能强大，高性能的代码生成包。它为没有实现接口的类提供代理，为JDK的动态代理提供了很好的补充。通常可以使用Java的动态代理创建代理，但当要代理的类没有实现接口或者为了更好的性能，CGLIB是一个好的选择。</p>
+<p>CGLIB作为一个开源项目，其代码托管在github，地址为：<a href="https://github.com/cglib/cglib" rel="nofollow" target="_blank">https://github.com/cglib/cglib</a></p>
+
+<hr><h2>
+二、CGLIB 原理</h2> 
+
+<p><strong>CGLIB 原理</strong>：动态生成一个要代理类的子类，子类重写要代理的类的所有不是final的方法。在子类中采用方法拦截的技术拦截所有父类方法的调用，顺势织入横切逻辑。它比使用java反射的JDK动态代理要快。</p>
+
+<p><strong>CGLIB 底层</strong>：使用字节码处理框架ASM，来转换字节码并生成新的类。不鼓励直接使用ASM，因为它要求你必须对JVM内部结构包括class文件的格式和指令集都很熟悉。</p>
+
+<p><strong>CGLIB缺点</strong>：对于final方法，无法进行代理。</p>
+<hr><h2>
+三、CGLIB 的应用</h2>
+
+<p>广泛的被许多AOP的框架使用，例如Spring AOP和dynaop。Hibernate使用CGLIB来代理单端single-ended(多对一和一对一)关联。</p>
+<hr><h2>四、为什么使用 CGLIB?</h2>
+<p>CGLIB代理主要通过对字节码的操作，为对象引入间接级别，以控制对象的访问。我们知道Java中有一个动态代理也是做这个事情的，那我们为什么不直接使用Java动态代理，而要使用CGLIB呢？答案是CGLIB相比于JDK动态代理更加强大，JDK动态代理虽然简单易用，但是其有一个致命缺陷是，只能对接口进行代理。如果要代理的类为一个普通类、没有接口，那么Java动态代理就没法使用了。</p>
+
+<hr><h2>五、CGLIB组成结构</h2>
+<p><img decoding="async" src="/wp-content/uploads/2018/11/jnbNov2005-1.png"></p>
+
+<p>CGLIB底层使用了ASM（一个短小精悍的字节码操作框架）来操作字节码生成新的类。除了CGLIB库外，脚本语言（如Groovy何BeanShell）也使用ASM生成字节码。ASM使用类似SAX的解析器来实现高性能。我们不鼓励直接使用ASM，因为它需要对Java字节码的格式足够的了解。</p>
+<hr><h2>六、CGLIB的API</h2>
+<h3>
+1、Jar包：
+</h3><ul><li>
+<strong>cglib-nodep-2.2.jar</strong>：使用nodep包不需要关联asm的jar包,jar包内部包含asm的类.
+</li><li>
+<strong>cglib-2.2.jar</strong>：使用此jar包需要关联asm的jar包,否则运行时报错.
+</li></ul>
+<h3>2、CGLIB类库：</h3>
+
+<p>由于基本代码很少，学起来有一定的困难，主要是缺少文档和示例，这也是CGLIB的一个不足之处。</p>
+
+<p>本系列使用的CGLIB版本是2.2。</p>
+<ul><li>
+<strong>net.sf.cglib.core</strong>: 底层字节码处理类，他们大部分与ASM有关系。
+</li><li>
+<strong>net.sf.cglib.transform</strong>: 编译期或运行期类和类文件的转换
+</li><li>
+<strong>net.sf.cglib.proxy</strong>: 实现创建代理和方法拦截器的类
+</li><li>
+<strong>net.sf.cglib.reflect</strong>: 实现快速反射和C#风格代理的类
+</li><li>
+<strong>net.sf.cglib.util</strong>: 集合排序等工具类
+</li><li>
+<strong>net.sf.cglib.beans</strong>: JavaBean相关的工具类
+</li></ul>
+<p>本篇介绍通过MethodInterceptor和Enhancer实现一个动态代理。</p>
+<h3>
+一、首先说一下JDK中的动态代理：
+</h3>
+<p>JDK中的动态代理是通过反射类Proxy以及InvocationHandler回调接口实现的，但是，JDK中所要进行动态代理的类必须要实现一个接口，也就是说只能对该类所实现接口中定义的方法进行代理，这在实际编程中具有一定的局限性，而且使用反射的效率也并不是很高。</p>
+<h3>
+二、使用CGLib实现：</h3>
+
+<p>使用CGLib实现动态代理，完全不受代理类必须实现接口的限制，而且CGLib底层采用ASM字节码生成框架，使用字节码技术生成代理类，比使用Java反射效率要高。唯一需要注意的是，CGLib不能对声明为final的方法进行代理，因为CGLib原理是动态生成被代理类的子类。</p>
+
+<p>下面，将通过一个实例介绍使用CGLib实现动态代理。</p>
+<p><strong>1、被代理类：</strong></p>
+
+<p>首先，定义一个类，该类没有实现任何接口。</p>
+<div class="example">
+<div class="example_code">
+<div class="hl-main"><span class="hl-reserved">package</span><span class="hl-code"> </span><span class="hl-identifier">com</span><span class="hl-code">.</span><span class="hl-identifier">zghw</span><span class="hl-code">.</span><span class="hl-identifier">cglib</span><span class="hl-code">;
+ 
+</span><span class="hl-comment">/*</span><span class="hl-comment">*
+ * 没有实现接口，需要CGlib动态代理的目标类
+ * 
+ *</span><span class="hl-inlinedoc"> @author </span><span class="hl-comment">zghw
+ *
+ </span><span class="hl-comment">*/</span><span class="hl-code">
+</span><span class="hl-reserved">public</span><span class="hl-code"> </span><span class="hl-reserved">class</span><span class="hl-code"> </span><span class="hl-identifier">TargetObject</span><span class="hl-code"> </span><span class="hl-brackets">{</span><span class="hl-code">
+    </span><span class="hl-reserved">public</span><span class="hl-code"> </span><span class="hl-identifier">String</span><span class="hl-code"> </span><span class="hl-identifier">method1</span><span class="hl-brackets">(</span><span class="hl-identifier">String</span><span class="hl-code"> </span><span class="hl-identifier">paramName</span><span class="hl-brackets">)</span><span class="hl-code"> </span><span class="hl-brackets">{</span><span class="hl-code">
+        </span><span class="hl-reserved">return</span><span class="hl-code"> </span><span class="hl-identifier">paramName</span><span class="hl-code">;
+    </span><span class="hl-brackets">}</span><span class="hl-code">
+ 
+    </span><span class="hl-reserved">public</span><span class="hl-code"> </span><span class="hl-types">int</span><span class="hl-code"> </span><span class="hl-identifier">method2</span><span class="hl-brackets">(</span><span class="hl-types">int</span><span class="hl-code"> </span><span class="hl-identifier">count</span><span class="hl-brackets">)</span><span class="hl-code"> </span><span class="hl-brackets">{</span><span class="hl-code">
+        </span><span class="hl-reserved">return</span><span class="hl-code"> </span><span class="hl-identifier">count</span><span class="hl-code">;
+    </span><span class="hl-brackets">}</span><span class="hl-code">
+ 
+    </span><span class="hl-reserved">public</span><span class="hl-code"> </span><span class="hl-types">int</span><span class="hl-code"> </span><span class="hl-identifier">method3</span><span class="hl-brackets">(</span><span class="hl-types">int</span><span class="hl-code"> </span><span class="hl-identifier">count</span><span class="hl-brackets">)</span><span class="hl-code"> </span><span class="hl-brackets">{</span><span class="hl-code">
+        </span><span class="hl-reserved">return</span><span class="hl-code"> </span><span class="hl-identifier">count</span><span class="hl-code">;
+    </span><span class="hl-brackets">}</span><span class="hl-code">
+ 
+    @</span><span class="hl-identifier">Override</span><span class="hl-code">
+    </span><span class="hl-reserved">public</span><span class="hl-code"> </span><span class="hl-identifier">String</span><span class="hl-code"> </span><span class="hl-identifier">toString</span><span class="hl-brackets">(</span><span class="hl-brackets">)</span><span class="hl-code"> </span><span class="hl-brackets">{</span><span class="hl-code">
+        </span><span class="hl-reserved">return</span><span class="hl-code"> </span><span class="hl-quotes">&quot;</span><span class="hl-string">TargetObject []</span><span class="hl-quotes">&quot;</span><span class="hl-code">+ </span><span class="hl-identifier">getClass</span><span class="hl-brackets">(</span><span class="hl-brackets">)</span><span class="hl-code">;
+    </span><span class="hl-brackets">}</span><span class="hl-code">
+</span><span class="hl-brackets">}</span></div>
+</div></div>
+<p><strong>2、拦截器：</strong></p>
+
+<p>定义一个拦截器。在调用目标方法时，CGLib会回调MethodInterceptor接口方法拦截，来实现你自己的代理逻辑，类似于JDK中的InvocationHandler接口。</p>
+
+<div class="example">
+<div class="example_code">
+<div class="hl-main"><span class="hl-reserved">package</span><span class="hl-code"> </span><span class="hl-identifier">com</span><span class="hl-code">.</span><span class="hl-identifier">zghw</span><span class="hl-code">.</span><span class="hl-identifier">cglib</span><span class="hl-code">;
+ 
+</span><span class="hl-reserved">import</span><span class="hl-code"> </span><span class="hl-identifier">java</span><span class="hl-code">.</span><span class="hl-identifier">lang</span><span class="hl-code">.</span><span class="hl-identifier">reflect</span><span class="hl-code">.</span><span class="hl-identifier">Method</span><span class="hl-code">;
+ 
+</span><span class="hl-reserved">import</span><span class="hl-code"> </span><span class="hl-identifier">net</span><span class="hl-code">.</span><span class="hl-identifier">sf</span><span class="hl-code">.</span><span class="hl-identifier">cglib</span><span class="hl-code">.</span><span class="hl-identifier">proxy</span><span class="hl-code">.</span><span class="hl-identifier">MethodInterceptor</span><span class="hl-code">;
+</span><span class="hl-reserved">import</span><span class="hl-code"> </span><span class="hl-identifier">net</span><span class="hl-code">.</span><span class="hl-identifier">sf</span><span class="hl-code">.</span><span class="hl-identifier">cglib</span><span class="hl-code">.</span><span class="hl-identifier">proxy</span><span class="hl-code">.</span><span class="hl-identifier">MethodProxy</span><span class="hl-code">;
+</span><span class="hl-comment">/*</span><span class="hl-comment">*
+ * 目标对象拦截器，实现MethodInterceptor
+ *</span><span class="hl-inlinedoc"> @author </span><span class="hl-comment">zghw
+ *
+ </span><span class="hl-comment">*/</span><span class="hl-code">
+</span><span class="hl-reserved">public</span><span class="hl-code"> </span><span class="hl-reserved">class</span><span class="hl-code"> </span><span class="hl-identifier">TargetInterceptor</span><span class="hl-code"> </span><span class="hl-reserved">implements</span><span class="hl-code"> </span><span class="hl-identifier">MethodInterceptor</span><span class="hl-brackets">{</span><span class="hl-code">
+ 
+    </span><span class="hl-comment">/*</span><span class="hl-comment">*
+     * 重写方法拦截在方法前和方法后加入业务
+     * Object obj为目标对象
+     * Method method为目标方法
+     * Object[] params 为参数，
+     * MethodProxy proxy CGlib方法代理对象
+     </span><span class="hl-comment">*/</span><span class="hl-code">
+    @</span><span class="hl-identifier">Override</span><span class="hl-code">
+    </span><span class="hl-reserved">public</span><span class="hl-code"> </span><span class="hl-identifier">Object</span><span class="hl-code"> </span><span class="hl-identifier">intercept</span><span class="hl-brackets">(</span><span class="hl-identifier">Object</span><span class="hl-code"> </span><span class="hl-identifier">obj</span><span class="hl-code">, </span><span class="hl-identifier">Method</span><span class="hl-code"> </span><span class="hl-identifier">method</span><span class="hl-code">, </span><span class="hl-identifier">Object</span><span class="hl-brackets">[</span><span class="hl-brackets">]</span><span class="hl-code"> </span><span class="hl-identifier">params</span><span class="hl-code">,
+            </span><span class="hl-identifier">MethodProxy</span><span class="hl-code"> </span><span class="hl-identifier">proxy</span><span class="hl-brackets">)</span><span class="hl-code"> </span><span class="hl-reserved">throws</span><span class="hl-code"> </span><span class="hl-identifier">Throwable</span><span class="hl-code"> </span><span class="hl-brackets">{</span><span class="hl-code">
+        </span><span class="hl-identifier">System</span><span class="hl-code">.</span><span class="hl-identifier">out</span><span class="hl-code">.</span><span class="hl-identifier">println</span><span class="hl-brackets">(</span><span class="hl-quotes">&quot;</span><span class="hl-string">调用前</span><span class="hl-quotes">&quot;</span><span class="hl-brackets">)</span><span class="hl-code">;
+        </span><span class="hl-identifier">Object</span><span class="hl-code"> </span><span class="hl-identifier">result</span><span class="hl-code"> = </span><span class="hl-identifier">proxy</span><span class="hl-code">.</span><span class="hl-identifier">invokeSuper</span><span class="hl-brackets">(</span><span class="hl-identifier">obj</span><span class="hl-code">, </span><span class="hl-identifier">params</span><span class="hl-brackets">)</span><span class="hl-code">;
+        </span><span class="hl-identifier">System</span><span class="hl-code">.</span><span class="hl-identifier">out</span><span class="hl-code">.</span><span class="hl-identifier">println</span><span class="hl-brackets">(</span><span class="hl-quotes">&quot;</span><span class="hl-string"> 调用后</span><span class="hl-quotes">&quot;</span><span class="hl-code">+</span><span class="hl-identifier">result</span><span class="hl-brackets">)</span><span class="hl-code">;
+        </span><span class="hl-reserved">return</span><span class="hl-code"> </span><span class="hl-identifier">result</span><span class="hl-code">;
+    </span><span class="hl-brackets">}</span><span class="hl-code">
+ 
+ 
+</span><span class="hl-brackets">}</span></div>
+</div></div><p>
+参数：Object为由CGLib动态生成的代理类实例，Method为上文中实体类所调用的被代理的方法引用，Object[]为参数值列表，MethodProxy为生成的代理类对方法的代理引用。</p>
+
+<p>返回：从代理实例的方法调用返回的值。</p>
+
+<p>其中，<strong>proxy.invokeSuper(obj,arg)</strong> 调用代理类实例上的proxy方法的父类方法（即实体类TargetObject中对应的方法）</p>
+
+<p>在这个示例中，只在调用被代理类方法前后各打印了一句话，当然实际编程中可以是其它复杂逻辑。</p>
+
+
+<p><strong>3、生成动态代理类：</strong></p>
+
+<div class="example">
+<div class="example_code">
+<div class="hl-main"><span class="hl-reserved">package</span><span class="hl-code"> </span><span class="hl-identifier">com</span><span class="hl-code">.</span><span class="hl-identifier">zghw</span><span class="hl-code">.</span><span class="hl-identifier">cglib</span><span class="hl-code">;
+ 
+</span><span class="hl-reserved">import</span><span class="hl-code"> </span><span class="hl-identifier">net</span><span class="hl-code">.</span><span class="hl-identifier">sf</span><span class="hl-code">.</span><span class="hl-identifier">cglib</span><span class="hl-code">.</span><span class="hl-identifier">proxy</span><span class="hl-code">.</span><span class="hl-identifier">Callback</span><span class="hl-code">;
+</span><span class="hl-reserved">import</span><span class="hl-code"> </span><span class="hl-identifier">net</span><span class="hl-code">.</span><span class="hl-identifier">sf</span><span class="hl-code">.</span><span class="hl-identifier">cglib</span><span class="hl-code">.</span><span class="hl-identifier">proxy</span><span class="hl-code">.</span><span class="hl-identifier">CallbackFilter</span><span class="hl-code">;
+</span><span class="hl-reserved">import</span><span class="hl-code"> </span><span class="hl-identifier">net</span><span class="hl-code">.</span><span class="hl-identifier">sf</span><span class="hl-code">.</span><span class="hl-identifier">cglib</span><span class="hl-code">.</span><span class="hl-identifier">proxy</span><span class="hl-code">.</span><span class="hl-identifier">Enhancer</span><span class="hl-code">;
+</span><span class="hl-reserved">import</span><span class="hl-code"> </span><span class="hl-identifier">net</span><span class="hl-code">.</span><span class="hl-identifier">sf</span><span class="hl-code">.</span><span class="hl-identifier">cglib</span><span class="hl-code">.</span><span class="hl-identifier">proxy</span><span class="hl-code">.</span><span class="hl-identifier">NoOp</span><span class="hl-code">;
+ 
+</span><span class="hl-reserved">public</span><span class="hl-code"> </span><span class="hl-reserved">class</span><span class="hl-code"> </span><span class="hl-identifier">TestCglib</span><span class="hl-code"> </span><span class="hl-brackets">{</span><span class="hl-code">
+    </span><span class="hl-reserved">public</span><span class="hl-code"> </span><span class="hl-types">static</span><span class="hl-code"> </span><span class="hl-types">void</span><span class="hl-code"> </span><span class="hl-identifier">main</span><span class="hl-brackets">(</span><span class="hl-identifier">String</span><span class="hl-code"> </span><span class="hl-identifier">args</span><span class="hl-brackets">[</span><span class="hl-brackets">]</span><span class="hl-brackets">)</span><span class="hl-code"> </span><span class="hl-brackets">{</span><span class="hl-code">
+        </span><span class="hl-identifier">Enhancer</span><span class="hl-code"> </span><span class="hl-identifier">enhancer</span><span class="hl-code"> =</span><span class="hl-reserved">new</span><span class="hl-code"> </span><span class="hl-identifier">Enhancer</span><span class="hl-brackets">(</span><span class="hl-brackets">)</span><span class="hl-code">;
+        </span><span class="hl-identifier">enhancer</span><span class="hl-code">.</span><span class="hl-identifier">setSuperclass</span><span class="hl-brackets">(</span><span class="hl-identifier">TargetObject</span><span class="hl-code">.</span><span class="hl-reserved">class</span><span class="hl-brackets">)</span><span class="hl-code">;
+        </span><span class="hl-identifier">enhancer</span><span class="hl-code">.</span><span class="hl-identifier">setCallback</span><span class="hl-brackets">(</span><span class="hl-reserved">new</span><span class="hl-code"> </span><span class="hl-identifier">TargetInterceptor</span><span class="hl-brackets">(</span><span class="hl-brackets">)</span><span class="hl-brackets">)</span><span class="hl-code">;
+        </span><span class="hl-identifier">TargetObject</span><span class="hl-code"> </span><span class="hl-identifier">targetObject2</span><span class="hl-code">=</span><span class="hl-brackets">(</span><span class="hl-identifier">TargetObject</span><span class="hl-brackets">)</span><span class="hl-identifier">enhancer</span><span class="hl-code">.</span><span class="hl-identifier">create</span><span class="hl-brackets">(</span><span class="hl-brackets">)</span><span class="hl-code">;
+        </span><span class="hl-identifier">System</span><span class="hl-code">.</span><span class="hl-identifier">out</span><span class="hl-code">.</span><span class="hl-identifier">println</span><span class="hl-brackets">(</span><span class="hl-identifier">targetObject2</span><span class="hl-brackets">)</span><span class="hl-code">;
+        </span><span class="hl-identifier">System</span><span class="hl-code">.</span><span class="hl-identifier">out</span><span class="hl-code">.</span><span class="hl-identifier">println</span><span class="hl-brackets">(</span><span class="hl-identifier">targetObject2</span><span class="hl-code">.</span><span class="hl-identifier">method1</span><span class="hl-brackets">(</span><span class="hl-quotes">&quot;</span><span class="hl-string">mmm1</span><span class="hl-quotes">&quot;</span><span class="hl-brackets">)</span><span class="hl-brackets">)</span><span class="hl-code">;
+        </span><span class="hl-identifier">System</span><span class="hl-code">.</span><span class="hl-identifier">out</span><span class="hl-code">.</span><span class="hl-identifier">println</span><span class="hl-brackets">(</span><span class="hl-identifier">targetObject2</span><span class="hl-code">.</span><span class="hl-identifier">method2</span><span class="hl-brackets">(</span><span class="hl-number">100</span><span class="hl-brackets">)</span><span class="hl-brackets">)</span><span class="hl-code">;
+        </span><span class="hl-identifier">System</span><span class="hl-code">.</span><span class="hl-identifier">out</span><span class="hl-code">.</span><span class="hl-identifier">println</span><span class="hl-brackets">(</span><span class="hl-identifier">targetObject2</span><span class="hl-code">.</span><span class="hl-identifier">method3</span><span class="hl-brackets">(</span><span class="hl-number">200</span><span class="hl-brackets">)</span><span class="hl-brackets">)</span><span class="hl-code">;
+    </span><span class="hl-brackets">}</span><span class="hl-code">
+</span><span class="hl-brackets">}</span></div>
+</div></div>
+<p>这里Enhancer类是CGLib中的一个字节码增强器，它可以方便的对你想要处理的类进行扩展，以后会经常看到它。</p>
+
+<p>首先将被代理类TargetObject设置成父类，然后设置拦截器TargetInterceptor，最后执行enhancer.create()动态生成一个代理类，并从Object强制转型成父类型TargetObject。</p>
+
+<p>最后，在代理类上调用方法。</p>
+
+<p><strong>4、回调过滤器CallbackFilter</strong></p>
+
+<p>一、作用</p>
+
+<p>在CGLib回调时可以设置对不同方法执行不同的回调逻辑，或者根本不执行回调。</p>
+
+<p>在JDK动态代理中并没有类似的功能，对InvocationHandler接口方法的调用对代理类内的所以方法都有效。</p>
+
+
+<p>定义实现过滤器CallbackFilter接口的类：</p>
+
+<div class="example">
+<div class="example_code">
+<div class="hl-main"><span class="hl-reserved">package</span><span class="hl-code"> </span><span class="hl-identifier">com</span><span class="hl-code">.</span><span class="hl-identifier">zghw</span><span class="hl-code">.</span><span class="hl-identifier">cglib</span><span class="hl-code">;
+ 
+</span><span class="hl-reserved">import</span><span class="hl-code"> </span><span class="hl-identifier">java</span><span class="hl-code">.</span><span class="hl-identifier">lang</span><span class="hl-code">.</span><span class="hl-identifier">reflect</span><span class="hl-code">.</span><span class="hl-identifier">Method</span><span class="hl-code">;
+ 
+</span><span class="hl-reserved">import</span><span class="hl-code"> </span><span class="hl-identifier">net</span><span class="hl-code">.</span><span class="hl-identifier">sf</span><span class="hl-code">.</span><span class="hl-identifier">cglib</span><span class="hl-code">.</span><span class="hl-identifier">proxy</span><span class="hl-code">.</span><span class="hl-identifier">CallbackFilter</span><span class="hl-code">;
+</span><span class="hl-comment">/*</span><span class="hl-comment">*
+ * 回调方法过滤
+ *</span><span class="hl-inlinedoc"> @author </span><span class="hl-comment">zghw
+ *
+ </span><span class="hl-comment">*/</span><span class="hl-code">
+</span><span class="hl-reserved">public</span><span class="hl-code"> </span><span class="hl-reserved">class</span><span class="hl-code"> </span><span class="hl-identifier">TargetMethodCallbackFilter</span><span class="hl-code"> </span><span class="hl-reserved">implements</span><span class="hl-code"> </span><span class="hl-identifier">CallbackFilter</span><span class="hl-code"> </span><span class="hl-brackets">{</span><span class="hl-code">
+ 
+    </span><span class="hl-comment">/*</span><span class="hl-comment">*
+     * 过滤方法
+     * 返回的值为数字，代表了Callback数组中的索引位置，要到用的Callback
+     </span><span class="hl-comment">*/</span><span class="hl-code">
+    @</span><span class="hl-identifier">Override</span><span class="hl-code">
+    </span><span class="hl-reserved">public</span><span class="hl-code"> </span><span class="hl-types">int</span><span class="hl-code"> </span><span class="hl-identifier">accept</span><span class="hl-brackets">(</span><span class="hl-identifier">Method</span><span class="hl-code"> </span><span class="hl-identifier">method</span><span class="hl-brackets">)</span><span class="hl-code"> </span><span class="hl-brackets">{</span><span class="hl-code">
+        </span><span class="hl-reserved">if</span><span class="hl-brackets">(</span><span class="hl-identifier">method</span><span class="hl-code">.</span><span class="hl-identifier">getName</span><span class="hl-brackets">(</span><span class="hl-brackets">)</span><span class="hl-code">.</span><span class="hl-identifier">equals</span><span class="hl-brackets">(</span><span class="hl-quotes">&quot;</span><span class="hl-string">method1</span><span class="hl-quotes">&quot;</span><span class="hl-brackets">)</span><span class="hl-brackets">)</span><span class="hl-brackets">{</span><span class="hl-code">
+            </span><span class="hl-identifier">System</span><span class="hl-code">.</span><span class="hl-identifier">out</span><span class="hl-code">.</span><span class="hl-identifier">println</span><span class="hl-brackets">(</span><span class="hl-quotes">&quot;</span><span class="hl-string">filter method1 ==0</span><span class="hl-quotes">&quot;</span><span class="hl-brackets">)</span><span class="hl-code">;
+            </span><span class="hl-reserved">return</span><span class="hl-code"> </span><span class="hl-number">0</span><span class="hl-code">;
+        </span><span class="hl-brackets">}</span><span class="hl-code">
+        </span><span class="hl-reserved">if</span><span class="hl-brackets">(</span><span class="hl-identifier">method</span><span class="hl-code">.</span><span class="hl-identifier">getName</span><span class="hl-brackets">(</span><span class="hl-brackets">)</span><span class="hl-code">.</span><span class="hl-identifier">equals</span><span class="hl-brackets">(</span><span class="hl-quotes">&quot;</span><span class="hl-string">method2</span><span class="hl-quotes">&quot;</span><span class="hl-brackets">)</span><span class="hl-brackets">)</span><span class="hl-brackets">{</span><span class="hl-code">
+            </span><span class="hl-identifier">System</span><span class="hl-code">.</span><span class="hl-identifier">out</span><span class="hl-code">.</span><span class="hl-identifier">println</span><span class="hl-brackets">(</span><span class="hl-quotes">&quot;</span><span class="hl-string">filter method2 ==1</span><span class="hl-quotes">&quot;</span><span class="hl-brackets">)</span><span class="hl-code">;
+            </span><span class="hl-reserved">return</span><span class="hl-code"> </span><span class="hl-number">1</span><span class="hl-code">;
+        </span><span class="hl-brackets">}</span><span class="hl-code">
+        </span><span class="hl-reserved">if</span><span class="hl-brackets">(</span><span class="hl-identifier">method</span><span class="hl-code">.</span><span class="hl-identifier">getName</span><span class="hl-brackets">(</span><span class="hl-brackets">)</span><span class="hl-code">.</span><span class="hl-identifier">equals</span><span class="hl-brackets">(</span><span class="hl-quotes">&quot;</span><span class="hl-string">method3</span><span class="hl-quotes">&quot;</span><span class="hl-brackets">)</span><span class="hl-brackets">)</span><span class="hl-brackets">{</span><span class="hl-code">
+            </span><span class="hl-identifier">System</span><span class="hl-code">.</span><span class="hl-identifier">out</span><span class="hl-code">.</span><span class="hl-identifier">println</span><span class="hl-brackets">(</span><span class="hl-quotes">&quot;</span><span class="hl-string">filter method3 ==2</span><span class="hl-quotes">&quot;</span><span class="hl-brackets">)</span><span class="hl-code">;
+            </span><span class="hl-reserved">return</span><span class="hl-code"> </span><span class="hl-number">2</span><span class="hl-code">;
+        </span><span class="hl-brackets">}</span><span class="hl-code">
+        </span><span class="hl-reserved">return</span><span class="hl-code"> </span><span class="hl-number">0</span><span class="hl-code">;
+    </span><span class="hl-brackets">}</span><span class="hl-code">
+ 
+</span><span class="hl-brackets">}</span></div>
+</div></div>
+<p>其中return值为被代理类的各个方法在回调数组Callback[]中的位置索引（见下文）。</p>
+<div class="example">
+<div class="example_code">
+<div class="hl-main"><span class="hl-reserved">package</span><span class="hl-code"> </span><span class="hl-identifier">com</span><span class="hl-code">.</span><span class="hl-identifier">zghw</span><span class="hl-code">.</span><span class="hl-identifier">cglib</span><span class="hl-code">;
+ 
+</span><span class="hl-reserved">import</span><span class="hl-code"> </span><span class="hl-identifier">net</span><span class="hl-code">.</span><span class="hl-identifier">sf</span><span class="hl-code">.</span><span class="hl-identifier">cglib</span><span class="hl-code">.</span><span class="hl-identifier">proxy</span><span class="hl-code">.</span><span class="hl-identifier">Callback</span><span class="hl-code">;
+</span><span class="hl-reserved">import</span><span class="hl-code"> </span><span class="hl-identifier">net</span><span class="hl-code">.</span><span class="hl-identifier">sf</span><span class="hl-code">.</span><span class="hl-identifier">cglib</span><span class="hl-code">.</span><span class="hl-identifier">proxy</span><span class="hl-code">.</span><span class="hl-identifier">CallbackFilter</span><span class="hl-code">;
+</span><span class="hl-reserved">import</span><span class="hl-code"> </span><span class="hl-identifier">net</span><span class="hl-code">.</span><span class="hl-identifier">sf</span><span class="hl-code">.</span><span class="hl-identifier">cglib</span><span class="hl-code">.</span><span class="hl-identifier">proxy</span><span class="hl-code">.</span><span class="hl-identifier">Enhancer</span><span class="hl-code">;
+</span><span class="hl-reserved">import</span><span class="hl-code"> </span><span class="hl-identifier">net</span><span class="hl-code">.</span><span class="hl-identifier">sf</span><span class="hl-code">.</span><span class="hl-identifier">cglib</span><span class="hl-code">.</span><span class="hl-identifier">proxy</span><span class="hl-code">.</span><span class="hl-identifier">NoOp</span><span class="hl-code">;
+ 
+</span><span class="hl-reserved">public</span><span class="hl-code"> </span><span class="hl-reserved">class</span><span class="hl-code"> </span><span class="hl-identifier">TestCglib</span><span class="hl-code"> </span><span class="hl-brackets">{</span><span class="hl-code">
+    </span><span class="hl-reserved">public</span><span class="hl-code"> </span><span class="hl-types">static</span><span class="hl-code"> </span><span class="hl-types">void</span><span class="hl-code"> </span><span class="hl-identifier">main</span><span class="hl-brackets">(</span><span class="hl-identifier">String</span><span class="hl-code"> </span><span class="hl-identifier">args</span><span class="hl-brackets">[</span><span class="hl-brackets">]</span><span class="hl-brackets">)</span><span class="hl-code"> </span><span class="hl-brackets">{</span><span class="hl-code">
+        </span><span class="hl-identifier">Enhancer</span><span class="hl-code"> </span><span class="hl-identifier">enhancer</span><span class="hl-code"> =</span><span class="hl-reserved">new</span><span class="hl-code"> </span><span class="hl-identifier">Enhancer</span><span class="hl-brackets">(</span><span class="hl-brackets">)</span><span class="hl-code">;
+        </span><span class="hl-identifier">enhancer</span><span class="hl-code">.</span><span class="hl-identifier">setSuperclass</span><span class="hl-brackets">(</span><span class="hl-identifier">TargetObject</span><span class="hl-code">.</span><span class="hl-reserved">class</span><span class="hl-brackets">)</span><span class="hl-code">;
+        </span><span class="hl-identifier">CallbackFilter</span><span class="hl-code"> </span><span class="hl-identifier">callbackFilter</span><span class="hl-code"> = </span><span class="hl-reserved">new</span><span class="hl-code"> </span><span class="hl-identifier">TargetMethodCallbackFilter</span><span class="hl-brackets">(</span><span class="hl-brackets">)</span><span class="hl-code">;
+        
+        </span><span class="hl-comment">/*</span><span class="hl-comment">*
+         * (1)callback1：方法拦截器
+           (2)NoOp.INSTANCE：这个NoOp表示no operator，即什么操作也不做，代理类直接调用被代理的方法不进行拦截。
+           (3)FixedValue：表示锁定方法返回值，无论被代理类的方法返回什么值，回调方法都返回固定值。
+         </span><span class="hl-comment">*/</span><span class="hl-code">
+        </span><span class="hl-identifier">Callback</span><span class="hl-code"> </span><span class="hl-identifier">noopCb</span><span class="hl-code">=</span><span class="hl-identifier">NoOp</span><span class="hl-code">.</span><span class="hl-identifier">INSTANCE</span><span class="hl-code">;
+        </span><span class="hl-identifier">Callback</span><span class="hl-code"> </span><span class="hl-identifier">callback1</span><span class="hl-code">=</span><span class="hl-reserved">new</span><span class="hl-code"> </span><span class="hl-identifier">TargetInterceptor</span><span class="hl-brackets">(</span><span class="hl-brackets">)</span><span class="hl-code">;
+        </span><span class="hl-identifier">Callback</span><span class="hl-code"> </span><span class="hl-identifier">fixedValue</span><span class="hl-code">=</span><span class="hl-reserved">new</span><span class="hl-code"> </span><span class="hl-identifier">TargetResultFixed</span><span class="hl-brackets">(</span><span class="hl-brackets">)</span><span class="hl-code">;
+        </span><span class="hl-identifier">Callback</span><span class="hl-brackets">[</span><span class="hl-brackets">]</span><span class="hl-code"> </span><span class="hl-identifier">cbarray</span><span class="hl-code">=</span><span class="hl-reserved">new</span><span class="hl-code"> </span><span class="hl-identifier">Callback</span><span class="hl-brackets">[</span><span class="hl-brackets">]</span><span class="hl-brackets">{</span><span class="hl-identifier">callback1</span><span class="hl-code">,</span><span class="hl-identifier">noopCb</span><span class="hl-code">,</span><span class="hl-identifier">fixedValue</span><span class="hl-brackets">}</span><span class="hl-code">;
+        </span><span class="hl-comment">//</span><span class="hl-comment">enhancer.setCallback(new TargetInterceptor());</span><span class="hl-comment"></span><span class="hl-code">
+        </span><span class="hl-identifier">enhancer</span><span class="hl-code">.</span><span class="hl-identifier">setCallbacks</span><span class="hl-brackets">(</span><span class="hl-identifier">cbarray</span><span class="hl-brackets">)</span><span class="hl-code">;
+        </span><span class="hl-identifier">enhancer</span><span class="hl-code">.</span><span class="hl-identifier">setCallbackFilter</span><span class="hl-brackets">(</span><span class="hl-identifier">callbackFilter</span><span class="hl-brackets">)</span><span class="hl-code">;
+        </span><span class="hl-identifier">TargetObject</span><span class="hl-code"> </span><span class="hl-identifier">targetObject2</span><span class="hl-code">=</span><span class="hl-brackets">(</span><span class="hl-identifier">TargetObject</span><span class="hl-brackets">)</span><span class="hl-identifier">enhancer</span><span class="hl-code">.</span><span class="hl-identifier">create</span><span class="hl-brackets">(</span><span class="hl-brackets">)</span><span class="hl-code">;
+        </span><span class="hl-identifier">System</span><span class="hl-code">.</span><span class="hl-identifier">out</span><span class="hl-code">.</span><span class="hl-identifier">println</span><span class="hl-brackets">(</span><span class="hl-identifier">targetObject2</span><span class="hl-brackets">)</span><span class="hl-code">;
+        </span><span class="hl-identifier">System</span><span class="hl-code">.</span><span class="hl-identifier">out</span><span class="hl-code">.</span><span class="hl-identifier">println</span><span class="hl-brackets">(</span><span class="hl-identifier">targetObject2</span><span class="hl-code">.</span><span class="hl-identifier">method1</span><span class="hl-brackets">(</span><span class="hl-quotes">&quot;</span><span class="hl-string">mmm1</span><span class="hl-quotes">&quot;</span><span class="hl-brackets">)</span><span class="hl-brackets">)</span><span class="hl-code">;
+        </span><span class="hl-identifier">System</span><span class="hl-code">.</span><span class="hl-identifier">out</span><span class="hl-code">.</span><span class="hl-identifier">println</span><span class="hl-brackets">(</span><span class="hl-identifier">targetObject2</span><span class="hl-code">.</span><span class="hl-identifier">method2</span><span class="hl-brackets">(</span><span class="hl-number">100</span><span class="hl-brackets">)</span><span class="hl-brackets">)</span><span class="hl-code">;
+        </span><span class="hl-identifier">System</span><span class="hl-code">.</span><span class="hl-identifier">out</span><span class="hl-code">.</span><span class="hl-identifier">println</span><span class="hl-brackets">(</span><span class="hl-identifier">targetObject2</span><span class="hl-code">.</span><span class="hl-identifier">method3</span><span class="hl-brackets">(</span><span class="hl-number">100</span><span class="hl-brackets">)</span><span class="hl-brackets">)</span><span class="hl-code">;
+        </span><span class="hl-identifier">System</span><span class="hl-code">.</span><span class="hl-identifier">out</span><span class="hl-code">.</span><span class="hl-identifier">println</span><span class="hl-brackets">(</span><span class="hl-identifier">targetObject2</span><span class="hl-code">.</span><span class="hl-identifier">method3</span><span class="hl-brackets">(</span><span class="hl-number">200</span><span class="hl-brackets">)</span><span class="hl-brackets">)</span><span class="hl-code">;
+    </span><span class="hl-brackets">}</span><span class="hl-code">
+</span><span class="hl-brackets">}</span></div>
+</div></div>
+
+
+<div class="example">
+<div class="example_code">
+<div class="hl-main"><span class="hl-reserved">package</span><span class="hl-code"> </span><span class="hl-identifier">com</span><span class="hl-code">.</span><span class="hl-identifier">zghw</span><span class="hl-code">.</span><span class="hl-identifier">cglib</span><span class="hl-code">;
+ 
+</span><span class="hl-reserved">import</span><span class="hl-code"> </span><span class="hl-identifier">net</span><span class="hl-code">.</span><span class="hl-identifier">sf</span><span class="hl-code">.</span><span class="hl-identifier">cglib</span><span class="hl-code">.</span><span class="hl-identifier">proxy</span><span class="hl-code">.</span><span class="hl-identifier">FixedValue</span><span class="hl-code">;
+</span><span class="hl-comment">/*</span><span class="hl-comment">*
+ * 表示锁定方法返回值，无论被代理类的方法返回什么值，回调方法都返回固定值。
+ *</span><span class="hl-inlinedoc"> @author </span><span class="hl-comment">zghw
+ *
+ </span><span class="hl-comment">*/</span><span class="hl-code">
+</span><span class="hl-reserved">public</span><span class="hl-code"> </span><span class="hl-reserved">class</span><span class="hl-code"> </span><span class="hl-identifier">TargetResultFixed</span><span class="hl-code"> </span><span class="hl-reserved">implements</span><span class="hl-code"> </span><span class="hl-identifier">FixedValue</span><span class="hl-brackets">{</span><span class="hl-code">
+ 
+    </span><span class="hl-comment">/*</span><span class="hl-comment">*
+     * 该类实现FixedValue接口，同时锁定回调值为999
+     * (整型，CallbackFilter中定义的使用FixedValue型回调的方法为getConcreteMethodFixedValue，该方法返回值为整型)。
+     </span><span class="hl-comment">*/</span><span class="hl-code">
+    @</span><span class="hl-identifier">Override</span><span class="hl-code">
+    </span><span class="hl-reserved">public</span><span class="hl-code"> </span><span class="hl-identifier">Object</span><span class="hl-code"> </span><span class="hl-identifier">loadObject</span><span class="hl-brackets">(</span><span class="hl-brackets">)</span><span class="hl-code"> </span><span class="hl-reserved">throws</span><span class="hl-code"> </span><span class="hl-identifier">Exception</span><span class="hl-code"> </span><span class="hl-brackets">{</span><span class="hl-code">
+        </span><span class="hl-identifier">System</span><span class="hl-code">.</span><span class="hl-identifier">out</span><span class="hl-code">.</span><span class="hl-identifier">println</span><span class="hl-brackets">(</span><span class="hl-quotes">&quot;</span><span class="hl-string">锁定结果</span><span class="hl-quotes">&quot;</span><span class="hl-brackets">)</span><span class="hl-code">;
+        </span><span class="hl-identifier">Object</span><span class="hl-code"> </span><span class="hl-identifier">obj</span><span class="hl-code"> = </span><span class="hl-number">999</span><span class="hl-code">;
+        </span><span class="hl-reserved">return</span><span class="hl-code"> </span><span class="hl-identifier">obj</span><span class="hl-code">;
+    </span><span class="hl-brackets">}</span><span class="hl-code">
+ 
+</span><span class="hl-brackets">}</span></div>
+</div></div>
+
+<p><strong>5.延迟加载对象</strong></p>
+<p>一、作用：</p>
+<p>说到延迟加载，应该经常接触到，尤其是使用Hibernate的时候，本篇将通过一个实例分析延迟加载的实现方式。
+LazyLoader接口继承了Callback，因此也算是CGLib中的一种Callback类型。</p>
+
+<p>另一种延迟加载接口Dispatcher。</p>
+
+<p>Dispatcher接口同样继承于Callback，也是一种回调类型。</p>
+
+<p>但是Dispatcher和LazyLoader的区别在于：LazyLoader只在第一次访问延迟加载属性时触发代理类回调方法，而Dispatcher在每次访问延迟加载属性时都会触发代理类回调方法。</p>
+
+
+
+<p>二、示例：</p>
+<p>首先定义一个实体类LoaderBean，该Bean内有一个需要延迟加载的属性PropertyBean。</p>
+<div class="example">
+<div class="example_code">
+<div class="hl-main"><span class="hl-reserved">package</span><span class="hl-code"> </span><span class="hl-identifier">com</span><span class="hl-code">.</span><span class="hl-identifier">zghw</span><span class="hl-code">.</span><span class="hl-identifier">cglib</span><span class="hl-code">;
+ 
+</span><span class="hl-reserved">import</span><span class="hl-code"> </span><span class="hl-identifier">net</span><span class="hl-code">.</span><span class="hl-identifier">sf</span><span class="hl-code">.</span><span class="hl-identifier">cglib</span><span class="hl-code">.</span><span class="hl-identifier">proxy</span><span class="hl-code">.</span><span class="hl-identifier">Enhancer</span><span class="hl-code">;
+ 
+</span><span class="hl-reserved">public</span><span class="hl-code"> </span><span class="hl-reserved">class</span><span class="hl-code"> </span><span class="hl-identifier">LazyBean</span><span class="hl-code"> </span><span class="hl-brackets">{</span><span class="hl-code">
+    </span><span class="hl-reserved">private</span><span class="hl-code"> </span><span class="hl-identifier">String</span><span class="hl-code"> </span><span class="hl-identifier">name</span><span class="hl-code">;
+    </span><span class="hl-reserved">private</span><span class="hl-code"> </span><span class="hl-types">int</span><span class="hl-code"> </span><span class="hl-identifier">age</span><span class="hl-code">;
+    </span><span class="hl-reserved">private</span><span class="hl-code"> </span><span class="hl-identifier">PropertyBean</span><span class="hl-code"> </span><span class="hl-identifier">propertyBean</span><span class="hl-code">;
+    </span><span class="hl-reserved">private</span><span class="hl-code"> </span><span class="hl-identifier">PropertyBean</span><span class="hl-code"> </span><span class="hl-identifier">propertyBeanDispatcher</span><span class="hl-code">;
+ 
+    </span><span class="hl-reserved">public</span><span class="hl-code"> </span><span class="hl-identifier">LazyBean</span><span class="hl-brackets">(</span><span class="hl-identifier">String</span><span class="hl-code"> </span><span class="hl-identifier">name</span><span class="hl-code">, </span><span class="hl-types">int</span><span class="hl-code"> </span><span class="hl-identifier">age</span><span class="hl-brackets">)</span><span class="hl-code"> </span><span class="hl-brackets">{</span><span class="hl-code">
+        </span><span class="hl-identifier">System</span><span class="hl-code">.</span><span class="hl-identifier">out</span><span class="hl-code">.</span><span class="hl-identifier">println</span><span class="hl-brackets">(</span><span class="hl-quotes">&quot;</span><span class="hl-string">lazy bean init</span><span class="hl-quotes">&quot;</span><span class="hl-brackets">)</span><span class="hl-code">;
+        </span><span class="hl-reserved">this</span><span class="hl-code">.</span><span class="hl-identifier">name</span><span class="hl-code"> = </span><span class="hl-identifier">name</span><span class="hl-code">;
+        </span><span class="hl-reserved">this</span><span class="hl-code">.</span><span class="hl-identifier">age</span><span class="hl-code"> = </span><span class="hl-identifier">age</span><span class="hl-code">;
+        </span><span class="hl-reserved">this</span><span class="hl-code">.</span><span class="hl-identifier">propertyBean</span><span class="hl-code"> = </span><span class="hl-identifier">createPropertyBean</span><span class="hl-brackets">(</span><span class="hl-brackets">)</span><span class="hl-code">;
+        </span><span class="hl-reserved">this</span><span class="hl-code">.</span><span class="hl-identifier">propertyBeanDispatcher</span><span class="hl-code"> = </span><span class="hl-identifier">createPropertyBeanDispatcher</span><span class="hl-brackets">(</span><span class="hl-brackets">)</span><span class="hl-code">;
+    </span><span class="hl-brackets">}</span><span class="hl-code">
+ 
+    
+ 
+    </span><span class="hl-comment">/*</span><span class="hl-comment">*
+     * 只第一次懒加载
+     *</span><span class="hl-inlinedoc"> @return
+</span><span class="hl-comment">     </span><span class="hl-comment">*/</span><span class="hl-code">
+    </span><span class="hl-reserved">private</span><span class="hl-code"> </span><span class="hl-identifier">PropertyBean</span><span class="hl-code"> </span><span class="hl-identifier">createPropertyBean</span><span class="hl-brackets">(</span><span class="hl-brackets">)</span><span class="hl-code"> </span><span class="hl-brackets">{</span><span class="hl-code">
+        </span><span class="hl-comment">/*</span><span class="hl-comment">*
+         * 使用cglib进行懒加载 对需要延迟加载的对象添加代理，在获取该对象属性时先通过代理类回调方法进行对象初始化。
+         * 在不需要加载该对象时，只要不去获取该对象内属性，该对象就不会被初始化了（在CGLib的实现中只要去访问该对象内属性的getter方法，
+         * 就会自动触发代理类回调）。
+         </span><span class="hl-comment">*/</span><span class="hl-code">
+        </span><span class="hl-identifier">Enhancer</span><span class="hl-code"> </span><span class="hl-identifier">enhancer</span><span class="hl-code"> = </span><span class="hl-reserved">new</span><span class="hl-code"> </span><span class="hl-identifier">Enhancer</span><span class="hl-brackets">(</span><span class="hl-brackets">)</span><span class="hl-code">;
+        </span><span class="hl-identifier">enhancer</span><span class="hl-code">.</span><span class="hl-identifier">setSuperclass</span><span class="hl-brackets">(</span><span class="hl-identifier">PropertyBean</span><span class="hl-code">.</span><span class="hl-reserved">class</span><span class="hl-brackets">)</span><span class="hl-code">;
+        </span><span class="hl-identifier">PropertyBean</span><span class="hl-code"> </span><span class="hl-identifier">pb</span><span class="hl-code"> = </span><span class="hl-brackets">(</span><span class="hl-identifier">PropertyBean</span><span class="hl-brackets">)</span><span class="hl-code"> </span><span class="hl-identifier">enhancer</span><span class="hl-code">.</span><span class="hl-identifier">create</span><span class="hl-brackets">(</span><span class="hl-identifier">PropertyBean</span><span class="hl-code">.</span><span class="hl-reserved">class</span><span class="hl-code">,
+                </span><span class="hl-reserved">new</span><span class="hl-code"> </span><span class="hl-identifier">ConcreteClassLazyLoader</span><span class="hl-brackets">(</span><span class="hl-brackets">)</span><span class="hl-brackets">)</span><span class="hl-code">;
+        </span><span class="hl-reserved">return</span><span class="hl-code"> </span><span class="hl-identifier">pb</span><span class="hl-code">;
+    </span><span class="hl-brackets">}</span><span class="hl-code">
+    </span><span class="hl-comment">/*</span><span class="hl-comment">*
+     * 每次都懒加载
+     *</span><span class="hl-inlinedoc"> @return
+</span><span class="hl-comment">     </span><span class="hl-comment">*/</span><span class="hl-code">
+    </span><span class="hl-reserved">private</span><span class="hl-code"> </span><span class="hl-identifier">PropertyBean</span><span class="hl-code"> </span><span class="hl-identifier">createPropertyBeanDispatcher</span><span class="hl-brackets">(</span><span class="hl-brackets">)</span><span class="hl-code"> </span><span class="hl-brackets">{</span><span class="hl-code">
+        </span><span class="hl-identifier">Enhancer</span><span class="hl-code"> </span><span class="hl-identifier">enhancer</span><span class="hl-code"> = </span><span class="hl-reserved">new</span><span class="hl-code"> </span><span class="hl-identifier">Enhancer</span><span class="hl-brackets">(</span><span class="hl-brackets">)</span><span class="hl-code">;
+        </span><span class="hl-identifier">enhancer</span><span class="hl-code">.</span><span class="hl-identifier">setSuperclass</span><span class="hl-brackets">(</span><span class="hl-identifier">PropertyBean</span><span class="hl-code">.</span><span class="hl-reserved">class</span><span class="hl-brackets">)</span><span class="hl-code">;
+        </span><span class="hl-identifier">PropertyBean</span><span class="hl-code"> </span><span class="hl-identifier">pb</span><span class="hl-code"> = </span><span class="hl-brackets">(</span><span class="hl-identifier">PropertyBean</span><span class="hl-brackets">)</span><span class="hl-code"> </span><span class="hl-identifier">enhancer</span><span class="hl-code">.</span><span class="hl-identifier">create</span><span class="hl-brackets">(</span><span class="hl-identifier">PropertyBean</span><span class="hl-code">.</span><span class="hl-reserved">class</span><span class="hl-code">,
+                </span><span class="hl-reserved">new</span><span class="hl-code"> </span><span class="hl-identifier">ConcreteClassDispatcher</span><span class="hl-brackets">(</span><span class="hl-brackets">)</span><span class="hl-brackets">)</span><span class="hl-code">;
+        </span><span class="hl-reserved">return</span><span class="hl-code"> </span><span class="hl-identifier">pb</span><span class="hl-code">;
+    </span><span class="hl-brackets">}</span><span class="hl-code">
+    </span><span class="hl-reserved">public</span><span class="hl-code"> </span><span class="hl-identifier">String</span><span class="hl-code"> </span><span class="hl-identifier">getName</span><span class="hl-brackets">(</span><span class="hl-brackets">)</span><span class="hl-code"> </span><span class="hl-brackets">{</span><span class="hl-code">
+        </span><span class="hl-reserved">return</span><span class="hl-code"> </span><span class="hl-identifier">name</span><span class="hl-code">;
+    </span><span class="hl-brackets">}</span><span class="hl-code">
+ 
+    </span><span class="hl-reserved">public</span><span class="hl-code"> </span><span class="hl-types">void</span><span class="hl-code"> </span><span class="hl-identifier">setName</span><span class="hl-brackets">(</span><span class="hl-identifier">String</span><span class="hl-code"> </span><span class="hl-identifier">name</span><span class="hl-brackets">)</span><span class="hl-code"> </span><span class="hl-brackets">{</span><span class="hl-code">
+        </span><span class="hl-reserved">this</span><span class="hl-code">.</span><span class="hl-identifier">name</span><span class="hl-code"> = </span><span class="hl-identifier">name</span><span class="hl-code">;
+    </span><span class="hl-brackets">}</span><span class="hl-code">
+ 
+    </span><span class="hl-reserved">public</span><span class="hl-code"> </span><span class="hl-types">int</span><span class="hl-code"> </span><span class="hl-identifier">getAge</span><span class="hl-brackets">(</span><span class="hl-brackets">)</span><span class="hl-code"> </span><span class="hl-brackets">{</span><span class="hl-code">
+        </span><span class="hl-reserved">return</span><span class="hl-code"> </span><span class="hl-identifier">age</span><span class="hl-code">;
+    </span><span class="hl-brackets">}</span><span class="hl-code">
+ 
+    </span><span class="hl-reserved">public</span><span class="hl-code"> </span><span class="hl-types">void</span><span class="hl-code"> </span><span class="hl-identifier">setAge</span><span class="hl-brackets">(</span><span class="hl-types">int</span><span class="hl-code"> </span><span class="hl-identifier">age</span><span class="hl-brackets">)</span><span class="hl-code"> </span><span class="hl-brackets">{</span><span class="hl-code">
+        </span><span class="hl-reserved">this</span><span class="hl-code">.</span><span class="hl-identifier">age</span><span class="hl-code"> = </span><span class="hl-identifier">age</span><span class="hl-code">;
+    </span><span class="hl-brackets">}</span><span class="hl-code">
+ 
+    </span><span class="hl-reserved">public</span><span class="hl-code"> </span><span class="hl-identifier">PropertyBean</span><span class="hl-code"> </span><span class="hl-identifier">getPropertyBean</span><span class="hl-brackets">(</span><span class="hl-brackets">)</span><span class="hl-code"> </span><span class="hl-brackets">{</span><span class="hl-code">
+        </span><span class="hl-reserved">return</span><span class="hl-code"> </span><span class="hl-identifier">propertyBean</span><span class="hl-code">;
+    </span><span class="hl-brackets">}</span><span class="hl-code">
+ 
+    </span><span class="hl-reserved">public</span><span class="hl-code"> </span><span class="hl-types">void</span><span class="hl-code"> </span><span class="hl-identifier">setPropertyBean</span><span class="hl-brackets">(</span><span class="hl-identifier">PropertyBean</span><span class="hl-code"> </span><span class="hl-identifier">propertyBean</span><span class="hl-brackets">)</span><span class="hl-code"> </span><span class="hl-brackets">{</span><span class="hl-code">
+        </span><span class="hl-reserved">this</span><span class="hl-code">.</span><span class="hl-identifier">propertyBean</span><span class="hl-code"> = </span><span class="hl-identifier">propertyBean</span><span class="hl-code">;
+    </span><span class="hl-brackets">}</span><span class="hl-code">
+ 
+    </span><span class="hl-reserved">public</span><span class="hl-code"> </span><span class="hl-identifier">PropertyBean</span><span class="hl-code"> </span><span class="hl-identifier">getPropertyBeanDispatcher</span><span class="hl-brackets">(</span><span class="hl-brackets">)</span><span class="hl-code"> </span><span class="hl-brackets">{</span><span class="hl-code">
+        </span><span class="hl-reserved">return</span><span class="hl-code"> </span><span class="hl-identifier">propertyBeanDispatcher</span><span class="hl-code">;
+    </span><span class="hl-brackets">}</span><span class="hl-code">
+ 
+    </span><span class="hl-reserved">public</span><span class="hl-code"> </span><span class="hl-types">void</span><span class="hl-code"> </span><span class="hl-identifier">setPropertyBeanDispatcher</span><span class="hl-brackets">(</span><span class="hl-identifier">PropertyBean</span><span class="hl-code"> </span><span class="hl-identifier">propertyBeanDispatcher</span><span class="hl-brackets">)</span><span class="hl-code"> </span><span class="hl-brackets">{</span><span class="hl-code">
+        </span><span class="hl-reserved">this</span><span class="hl-code">.</span><span class="hl-identifier">propertyBeanDispatcher</span><span class="hl-code"> = </span><span class="hl-identifier">propertyBeanDispatcher</span><span class="hl-code">;
+    </span><span class="hl-brackets">}</span><span class="hl-code">
+ 
+    @</span><span class="hl-identifier">Override</span><span class="hl-code">
+    </span><span class="hl-reserved">public</span><span class="hl-code"> </span><span class="hl-identifier">String</span><span class="hl-code"> </span><span class="hl-identifier">toString</span><span class="hl-brackets">(</span><span class="hl-brackets">)</span><span class="hl-code"> </span><span class="hl-brackets">{</span><span class="hl-code">
+        </span><span class="hl-reserved">return</span><span class="hl-code"> </span><span class="hl-quotes">&quot;</span><span class="hl-string">LazyBean [name=</span><span class="hl-quotes">&quot;</span><span class="hl-code"> + </span><span class="hl-identifier">name</span><span class="hl-code"> + </span><span class="hl-quotes">&quot;</span><span class="hl-string">, age=</span><span class="hl-quotes">&quot;</span><span class="hl-code"> + </span><span class="hl-identifier">age</span><span class="hl-code"> + </span><span class="hl-quotes">&quot;</span><span class="hl-string">, propertyBean=</span><span class="hl-quotes">&quot;</span><span class="hl-code">
+                + </span><span class="hl-identifier">propertyBean</span><span class="hl-code"> + </span><span class="hl-quotes">&quot;</span><span class="hl-string">]</span><span class="hl-quotes">&quot;</span><span class="hl-code">;
+    </span><span class="hl-brackets">}</span><span class="hl-code">
+</span><span class="hl-brackets">}</span></div>
+</div></div>
+
+<div class="example">
+<div class="example_code">
+<div class="hl-main"><span class="hl-reserved">package</span><span class="hl-code"> </span><span class="hl-identifier">com</span><span class="hl-code">.</span><span class="hl-identifier">zghw</span><span class="hl-code">.</span><span class="hl-identifier">cglib</span><span class="hl-code">;
+ 
+</span><span class="hl-reserved">public</span><span class="hl-code"> </span><span class="hl-reserved">class</span><span class="hl-code"> </span><span class="hl-identifier">PropertyBean</span><span class="hl-code"> </span><span class="hl-brackets">{</span><span class="hl-code">
+    </span><span class="hl-reserved">private</span><span class="hl-code"> </span><span class="hl-identifier">String</span><span class="hl-code"> </span><span class="hl-identifier">key</span><span class="hl-code">;
+    </span><span class="hl-reserved">private</span><span class="hl-code"> </span><span class="hl-identifier">Object</span><span class="hl-code"> </span><span class="hl-identifier">value</span><span class="hl-code">;
+    </span><span class="hl-reserved">public</span><span class="hl-code"> </span><span class="hl-identifier">String</span><span class="hl-code"> </span><span class="hl-identifier">getKey</span><span class="hl-brackets">(</span><span class="hl-brackets">)</span><span class="hl-code"> </span><span class="hl-brackets">{</span><span class="hl-code">
+        </span><span class="hl-reserved">return</span><span class="hl-code"> </span><span class="hl-identifier">key</span><span class="hl-code">;
+    </span><span class="hl-brackets">}</span><span class="hl-code">
+    </span><span class="hl-reserved">public</span><span class="hl-code"> </span><span class="hl-types">void</span><span class="hl-code"> </span><span class="hl-identifier">setKey</span><span class="hl-brackets">(</span><span class="hl-identifier">String</span><span class="hl-code"> </span><span class="hl-identifier">key</span><span class="hl-brackets">)</span><span class="hl-code"> </span><span class="hl-brackets">{</span><span class="hl-code">
+        </span><span class="hl-reserved">this</span><span class="hl-code">.</span><span class="hl-identifier">key</span><span class="hl-code"> = </span><span class="hl-identifier">key</span><span class="hl-code">;
+    </span><span class="hl-brackets">}</span><span class="hl-code">
+    </span><span class="hl-reserved">public</span><span class="hl-code"> </span><span class="hl-identifier">Object</span><span class="hl-code"> </span><span class="hl-identifier">getValue</span><span class="hl-brackets">(</span><span class="hl-brackets">)</span><span class="hl-code"> </span><span class="hl-brackets">{</span><span class="hl-code">
+        </span><span class="hl-reserved">return</span><span class="hl-code"> </span><span class="hl-identifier">value</span><span class="hl-code">;
+    </span><span class="hl-brackets">}</span><span class="hl-code">
+    </span><span class="hl-reserved">public</span><span class="hl-code"> </span><span class="hl-types">void</span><span class="hl-code"> </span><span class="hl-identifier">setValue</span><span class="hl-brackets">(</span><span class="hl-identifier">Object</span><span class="hl-code"> </span><span class="hl-identifier">value</span><span class="hl-brackets">)</span><span class="hl-code"> </span><span class="hl-brackets">{</span><span class="hl-code">
+        </span><span class="hl-reserved">this</span><span class="hl-code">.</span><span class="hl-identifier">value</span><span class="hl-code"> = </span><span class="hl-identifier">value</span><span class="hl-code">;
+    </span><span class="hl-brackets">}</span><span class="hl-code">
+    @</span><span class="hl-identifier">Override</span><span class="hl-code">
+    </span><span class="hl-reserved">public</span><span class="hl-code"> </span><span class="hl-identifier">String</span><span class="hl-code"> </span><span class="hl-identifier">toString</span><span class="hl-brackets">(</span><span class="hl-brackets">)</span><span class="hl-code"> </span><span class="hl-brackets">{</span><span class="hl-code">
+        </span><span class="hl-reserved">return</span><span class="hl-code"> </span><span class="hl-quotes">&quot;</span><span class="hl-string">PropertyBean [key=</span><span class="hl-quotes">&quot;</span><span class="hl-code"> + </span><span class="hl-identifier">key</span><span class="hl-code"> + </span><span class="hl-quotes">&quot;</span><span class="hl-string">, value=</span><span class="hl-quotes">&quot;</span><span class="hl-code"> + </span><span class="hl-identifier">value</span><span class="hl-code"> + </span><span class="hl-quotes">&quot;</span><span class="hl-string">]</span><span class="hl-quotes">&quot;</span><span class="hl-code"> +</span><span class="hl-identifier">getClass</span><span class="hl-brackets">(</span><span class="hl-brackets">)</span><span class="hl-code">;
+    </span><span class="hl-brackets">}</span><span class="hl-code">
+    
+</span><span class="hl-brackets">}</span></div>
+</div></div>
+<div class="example">
+<div class="example_code">
+<div class="hl-main"><span class="hl-reserved">package</span><span class="hl-code"> </span><span class="hl-identifier">com</span><span class="hl-code">.</span><span class="hl-identifier">zghw</span><span class="hl-code">.</span><span class="hl-identifier">cglib</span><span class="hl-code">;
+ 
+</span><span class="hl-reserved">import</span><span class="hl-code"> </span><span class="hl-identifier">net</span><span class="hl-code">.</span><span class="hl-identifier">sf</span><span class="hl-code">.</span><span class="hl-identifier">cglib</span><span class="hl-code">.</span><span class="hl-identifier">proxy</span><span class="hl-code">.</span><span class="hl-identifier">LazyLoader</span><span class="hl-code">;
+ 
+</span><span class="hl-reserved">public</span><span class="hl-code"> </span><span class="hl-reserved">class</span><span class="hl-code"> </span><span class="hl-identifier">ConcreteClassLazyLoader</span><span class="hl-code"> </span><span class="hl-reserved">implements</span><span class="hl-code"> </span><span class="hl-identifier">LazyLoader</span><span class="hl-code"> </span><span class="hl-brackets">{</span><span class="hl-code">
+    </span><span class="hl-comment">/*</span><span class="hl-comment">*
+     * 对需要延迟加载的对象添加代理，在获取该对象属性时先通过代理类回调方法进行对象初始化。
+     * 在不需要加载该对象时，只要不去获取该对象内属性，该对象就不会被初始化了（在CGLib的实现中只要去访问该对象内属性的getter方法，
+     * 就会自动触发代理类回调）。
+     </span><span class="hl-comment">*/</span><span class="hl-code">
+    @</span><span class="hl-identifier">Override</span><span class="hl-code">
+    </span><span class="hl-reserved">public</span><span class="hl-code"> </span><span class="hl-identifier">Object</span><span class="hl-code"> </span><span class="hl-identifier">loadObject</span><span class="hl-brackets">(</span><span class="hl-brackets">)</span><span class="hl-code"> </span><span class="hl-reserved">throws</span><span class="hl-code"> </span><span class="hl-identifier">Exception</span><span class="hl-code"> </span><span class="hl-brackets">{</span><span class="hl-code">
+        </span><span class="hl-identifier">System</span><span class="hl-code">.</span><span class="hl-identifier">out</span><span class="hl-code">.</span><span class="hl-identifier">println</span><span class="hl-brackets">(</span><span class="hl-quotes">&quot;</span><span class="hl-string">before lazyLoader...</span><span class="hl-quotes">&quot;</span><span class="hl-brackets">)</span><span class="hl-code">;
+        </span><span class="hl-identifier">PropertyBean</span><span class="hl-code"> </span><span class="hl-identifier">propertyBean</span><span class="hl-code"> = </span><span class="hl-reserved">new</span><span class="hl-code"> </span><span class="hl-identifier">PropertyBean</span><span class="hl-brackets">(</span><span class="hl-brackets">)</span><span class="hl-code">;
+        </span><span class="hl-identifier">propertyBean</span><span class="hl-code">.</span><span class="hl-identifier">setKey</span><span class="hl-brackets">(</span><span class="hl-quotes">&quot;</span><span class="hl-string">zghw</span><span class="hl-quotes">&quot;</span><span class="hl-brackets">)</span><span class="hl-code">;
+        </span><span class="hl-identifier">propertyBean</span><span class="hl-code">.</span><span class="hl-identifier">setValue</span><span class="hl-brackets">(</span><span class="hl-reserved">new</span><span class="hl-code"> </span><span class="hl-identifier">TargetObject</span><span class="hl-brackets">(</span><span class="hl-brackets">)</span><span class="hl-brackets">)</span><span class="hl-code">;
+        </span><span class="hl-identifier">System</span><span class="hl-code">.</span><span class="hl-identifier">out</span><span class="hl-code">.</span><span class="hl-identifier">println</span><span class="hl-brackets">(</span><span class="hl-quotes">&quot;</span><span class="hl-string">after lazyLoader...</span><span class="hl-quotes">&quot;</span><span class="hl-brackets">)</span><span class="hl-code">;
+        </span><span class="hl-reserved">return</span><span class="hl-code"> </span><span class="hl-identifier">propertyBean</span><span class="hl-code">;
+    </span><span class="hl-brackets">}</span><span class="hl-code">
+ 
+</span><span class="hl-brackets">}</span></div>
+</div></div>
+
+<div class="example">
+<div class="example_code">
+<div class="hl-main"><span class="hl-reserved">package</span><span class="hl-code"> </span><span class="hl-identifier">com</span><span class="hl-code">.</span><span class="hl-identifier">zghw</span><span class="hl-code">.</span><span class="hl-identifier">cglib</span><span class="hl-code">;
+ 
+</span><span class="hl-reserved">import</span><span class="hl-code"> </span><span class="hl-identifier">net</span><span class="hl-code">.</span><span class="hl-identifier">sf</span><span class="hl-code">.</span><span class="hl-identifier">cglib</span><span class="hl-code">.</span><span class="hl-identifier">proxy</span><span class="hl-code">.</span><span class="hl-identifier">Dispatcher</span><span class="hl-code">;
+ 
+</span><span class="hl-reserved">public</span><span class="hl-code"> </span><span class="hl-reserved">class</span><span class="hl-code"> </span><span class="hl-identifier">ConcreteClassDispatcher</span><span class="hl-code"> </span><span class="hl-reserved">implements</span><span class="hl-code"> </span><span class="hl-identifier">Dispatcher</span><span class="hl-brackets">{</span><span class="hl-code">
+ 
+    @</span><span class="hl-identifier">Override</span><span class="hl-code">
+    </span><span class="hl-reserved">public</span><span class="hl-code"> </span><span class="hl-identifier">Object</span><span class="hl-code"> </span><span class="hl-identifier">loadObject</span><span class="hl-brackets">(</span><span class="hl-brackets">)</span><span class="hl-code"> </span><span class="hl-reserved">throws</span><span class="hl-code"> </span><span class="hl-identifier">Exception</span><span class="hl-code"> </span><span class="hl-brackets">{</span><span class="hl-code">
+        </span><span class="hl-identifier">System</span><span class="hl-code">.</span><span class="hl-identifier">out</span><span class="hl-code">.</span><span class="hl-identifier">println</span><span class="hl-brackets">(</span><span class="hl-quotes">&quot;</span><span class="hl-string">before Dispatcher...</span><span class="hl-quotes">&quot;</span><span class="hl-brackets">)</span><span class="hl-code">;
+        </span><span class="hl-identifier">PropertyBean</span><span class="hl-code"> </span><span class="hl-identifier">propertyBean</span><span class="hl-code"> = </span><span class="hl-reserved">new</span><span class="hl-code"> </span><span class="hl-identifier">PropertyBean</span><span class="hl-brackets">(</span><span class="hl-brackets">)</span><span class="hl-code">;
+        </span><span class="hl-identifier">propertyBean</span><span class="hl-code">.</span><span class="hl-identifier">setKey</span><span class="hl-brackets">(</span><span class="hl-quotes">&quot;</span><span class="hl-string">xxx</span><span class="hl-quotes">&quot;</span><span class="hl-brackets">)</span><span class="hl-code">;
+        </span><span class="hl-identifier">propertyBean</span><span class="hl-code">.</span><span class="hl-identifier">setValue</span><span class="hl-brackets">(</span><span class="hl-reserved">new</span><span class="hl-code"> </span><span class="hl-identifier">TargetObject</span><span class="hl-brackets">(</span><span class="hl-brackets">)</span><span class="hl-brackets">)</span><span class="hl-code">;
+        </span><span class="hl-identifier">System</span><span class="hl-code">.</span><span class="hl-identifier">out</span><span class="hl-code">.</span><span class="hl-identifier">println</span><span class="hl-brackets">(</span><span class="hl-quotes">&quot;</span><span class="hl-string">after Dispatcher...</span><span class="hl-quotes">&quot;</span><span class="hl-brackets">)</span><span class="hl-code">;
+        </span><span class="hl-reserved">return</span><span class="hl-code"> </span><span class="hl-identifier">propertyBean</span><span class="hl-code">;
+    </span><span class="hl-brackets">}</span><span class="hl-code">
+ 
+</span><span class="hl-brackets">}</span></div>
+</div></div>
+
+<p><strong>6.接口生成器InterfaceMaker</strong></p>
+<p>一、作用：</p>
+
+<p>InterfaceMaker会动态生成一个接口，该接口包含指定类定义的所有方法。</p>
+
+<p>二、示例：</p>
+<div class="example">
+<div class="example_code">
+<div class="hl-main"><span class="hl-reserved">package</span><span class="hl-code"> </span><span class="hl-identifier">com</span><span class="hl-code">.</span><span class="hl-identifier">zghw</span><span class="hl-code">.</span><span class="hl-identifier">cglib</span><span class="hl-code">;
+ 
+</span><span class="hl-reserved">import</span><span class="hl-code"> </span><span class="hl-identifier">java</span><span class="hl-code">.</span><span class="hl-identifier">lang</span><span class="hl-code">.</span><span class="hl-identifier">reflect</span><span class="hl-code">.</span><span class="hl-identifier">InvocationTargetException</span><span class="hl-code">;
+</span><span class="hl-reserved">import</span><span class="hl-code"> </span><span class="hl-identifier">java</span><span class="hl-code">.</span><span class="hl-identifier">lang</span><span class="hl-code">.</span><span class="hl-identifier">reflect</span><span class="hl-code">.</span><span class="hl-identifier">Method</span><span class="hl-code">;
+ 
+</span><span class="hl-reserved">import</span><span class="hl-code"> </span><span class="hl-identifier">net</span><span class="hl-code">.</span><span class="hl-identifier">sf</span><span class="hl-code">.</span><span class="hl-identifier">cglib</span><span class="hl-code">.</span><span class="hl-identifier">proxy</span><span class="hl-code">.</span><span class="hl-identifier">Enhancer</span><span class="hl-code">;
+</span><span class="hl-reserved">import</span><span class="hl-code"> </span><span class="hl-identifier">net</span><span class="hl-code">.</span><span class="hl-identifier">sf</span><span class="hl-code">.</span><span class="hl-identifier">cglib</span><span class="hl-code">.</span><span class="hl-identifier">proxy</span><span class="hl-code">.</span><span class="hl-identifier">InterfaceMaker</span><span class="hl-code">;
+</span><span class="hl-reserved">import</span><span class="hl-code"> </span><span class="hl-identifier">net</span><span class="hl-code">.</span><span class="hl-identifier">sf</span><span class="hl-code">.</span><span class="hl-identifier">cglib</span><span class="hl-code">.</span><span class="hl-identifier">proxy</span><span class="hl-code">.</span><span class="hl-identifier">MethodInterceptor</span><span class="hl-code">;
+</span><span class="hl-reserved">import</span><span class="hl-code"> </span><span class="hl-identifier">net</span><span class="hl-code">.</span><span class="hl-identifier">sf</span><span class="hl-code">.</span><span class="hl-identifier">cglib</span><span class="hl-code">.</span><span class="hl-identifier">proxy</span><span class="hl-code">.</span><span class="hl-identifier">MethodProxy</span><span class="hl-code">;
+ 
+</span><span class="hl-reserved">public</span><span class="hl-code"> </span><span class="hl-reserved">class</span><span class="hl-code"> </span><span class="hl-identifier">TestInterfaceMaker</span><span class="hl-code"> </span><span class="hl-brackets">{</span><span class="hl-code">
+ 
+    </span><span class="hl-reserved">public</span><span class="hl-code"> </span><span class="hl-types">static</span><span class="hl-code"> </span><span class="hl-types">void</span><span class="hl-code"> </span><span class="hl-identifier">main</span><span class="hl-brackets">(</span><span class="hl-identifier">String</span><span class="hl-brackets">[</span><span class="hl-brackets">]</span><span class="hl-code"> </span><span class="hl-identifier">args</span><span class="hl-brackets">)</span><span class="hl-code"> </span><span class="hl-reserved">throws</span><span class="hl-code"> </span><span class="hl-identifier">NoSuchMethodException</span><span class="hl-code">, </span><span class="hl-identifier">SecurityException</span><span class="hl-code">, </span><span class="hl-identifier">IllegalAccessException</span><span class="hl-code">, </span><span class="hl-identifier">IllegalArgumentException</span><span class="hl-code">, </span><span class="hl-identifier">InvocationTargetException</span><span class="hl-code"> </span><span class="hl-brackets">{</span><span class="hl-code">
+        </span><span class="hl-identifier">InterfaceMaker</span><span class="hl-code"> </span><span class="hl-identifier">interfaceMaker</span><span class="hl-code"> =</span><span class="hl-reserved">new</span><span class="hl-code"> </span><span class="hl-identifier">InterfaceMaker</span><span class="hl-brackets">(</span><span class="hl-brackets">)</span><span class="hl-code">;
+        </span><span class="hl-comment">//</span><span class="hl-comment">抽取某个类的方法生成接口方法</span><span class="hl-comment"></span><span class="hl-code">
+        </span><span class="hl-identifier">interfaceMaker</span><span class="hl-code">.</span><span class="hl-identifier">add</span><span class="hl-brackets">(</span><span class="hl-identifier">TargetObject</span><span class="hl-code">.</span><span class="hl-reserved">class</span><span class="hl-brackets">)</span><span class="hl-code">;
+        </span><span class="hl-identifier">Class</span><span class="hl-code">&lt;?&gt; </span><span class="hl-identifier">targetInterface</span><span class="hl-code">=</span><span class="hl-identifier">interfaceMaker</span><span class="hl-code">.</span><span class="hl-identifier">create</span><span class="hl-brackets">(</span><span class="hl-brackets">)</span><span class="hl-code">;
+        </span><span class="hl-reserved">for</span><span class="hl-brackets">(</span><span class="hl-identifier">Method</span><span class="hl-code"> </span><span class="hl-identifier">method</span><span class="hl-code"> : </span><span class="hl-identifier">targetInterface</span><span class="hl-code">.</span><span class="hl-identifier">getMethods</span><span class="hl-brackets">(</span><span class="hl-brackets">)</span><span class="hl-brackets">)</span><span class="hl-brackets">{</span><span class="hl-code">
+            </span><span class="hl-identifier">System</span><span class="hl-code">.</span><span class="hl-identifier">out</span><span class="hl-code">.</span><span class="hl-identifier">println</span><span class="hl-brackets">(</span><span class="hl-identifier">method</span><span class="hl-code">.</span><span class="hl-identifier">getName</span><span class="hl-brackets">(</span><span class="hl-brackets">)</span><span class="hl-brackets">)</span><span class="hl-code">;
+        </span><span class="hl-brackets">}</span><span class="hl-code">
+        </span><span class="hl-comment">//</span><span class="hl-comment">接口代理并设置代理接口方法拦截</span><span class="hl-comment"></span><span class="hl-code">
+        </span><span class="hl-identifier">Object</span><span class="hl-code"> </span><span class="hl-identifier">object</span><span class="hl-code"> = </span><span class="hl-identifier">Enhancer</span><span class="hl-code">.</span><span class="hl-identifier">create</span><span class="hl-brackets">(</span><span class="hl-identifier">Object</span><span class="hl-code">.</span><span class="hl-reserved">class</span><span class="hl-code">, </span><span class="hl-reserved">new</span><span class="hl-code"> </span><span class="hl-identifier">Class</span><span class="hl-brackets">[</span><span class="hl-brackets">]</span><span class="hl-brackets">{</span><span class="hl-identifier">targetInterface</span><span class="hl-brackets">}</span><span class="hl-code">, </span><span class="hl-reserved">new</span><span class="hl-code"> </span><span class="hl-identifier">MethodInterceptor</span><span class="hl-brackets">(</span><span class="hl-brackets">)</span><span class="hl-brackets">{</span><span class="hl-code">
+            @</span><span class="hl-identifier">Override</span><span class="hl-code">
+            </span><span class="hl-reserved">public</span><span class="hl-code"> </span><span class="hl-identifier">Object</span><span class="hl-code"> </span><span class="hl-identifier">intercept</span><span class="hl-brackets">(</span><span class="hl-identifier">Object</span><span class="hl-code"> </span><span class="hl-identifier">obj</span><span class="hl-code">, </span><span class="hl-identifier">Method</span><span class="hl-code"> </span><span class="hl-identifier">method</span><span class="hl-code">, </span><span class="hl-identifier">Object</span><span class="hl-brackets">[</span><span class="hl-brackets">]</span><span class="hl-code"> </span><span class="hl-identifier">args</span><span class="hl-code">,
+                    </span><span class="hl-identifier">MethodProxy</span><span class="hl-code"> </span><span class="hl-identifier">methodProxy</span><span class="hl-brackets">)</span><span class="hl-code"> </span><span class="hl-reserved">throws</span><span class="hl-code"> </span><span class="hl-identifier">Throwable</span><span class="hl-code"> </span><span class="hl-brackets">{</span><span class="hl-code">
+                </span><span class="hl-reserved">if</span><span class="hl-brackets">(</span><span class="hl-identifier">method</span><span class="hl-code">.</span><span class="hl-identifier">getName</span><span class="hl-brackets">(</span><span class="hl-brackets">)</span><span class="hl-code">.</span><span class="hl-identifier">equals</span><span class="hl-brackets">(</span><span class="hl-quotes">&quot;</span><span class="hl-string">method1</span><span class="hl-quotes">&quot;</span><span class="hl-brackets">)</span><span class="hl-brackets">)</span><span class="hl-brackets">{</span><span class="hl-code">
+                    </span><span class="hl-identifier">System</span><span class="hl-code">.</span><span class="hl-identifier">out</span><span class="hl-code">.</span><span class="hl-identifier">println</span><span class="hl-brackets">(</span><span class="hl-quotes">&quot;</span><span class="hl-string">filter method1 </span><span class="hl-quotes">&quot;</span><span class="hl-brackets">)</span><span class="hl-code">;
+                    </span><span class="hl-reserved">return</span><span class="hl-code"> </span><span class="hl-quotes">&quot;</span><span class="hl-string">mmmmmmmmm</span><span class="hl-quotes">&quot;</span><span class="hl-code">;
+                </span><span class="hl-brackets">}</span><span class="hl-code">
+                </span><span class="hl-reserved">if</span><span class="hl-brackets">(</span><span class="hl-identifier">method</span><span class="hl-code">.</span><span class="hl-identifier">getName</span><span class="hl-brackets">(</span><span class="hl-brackets">)</span><span class="hl-code">.</span><span class="hl-identifier">equals</span><span class="hl-brackets">(</span><span class="hl-quotes">&quot;</span><span class="hl-string">method2</span><span class="hl-quotes">&quot;</span><span class="hl-brackets">)</span><span class="hl-brackets">)</span><span class="hl-brackets">{</span><span class="hl-code">
+                    </span><span class="hl-identifier">System</span><span class="hl-code">.</span><span class="hl-identifier">out</span><span class="hl-code">.</span><span class="hl-identifier">println</span><span class="hl-brackets">(</span><span class="hl-quotes">&quot;</span><span class="hl-string">filter method2 </span><span class="hl-quotes">&quot;</span><span class="hl-brackets">)</span><span class="hl-code">;
+                    </span><span class="hl-reserved">return</span><span class="hl-code"> </span><span class="hl-number">1111111</span><span class="hl-code">;
+                </span><span class="hl-brackets">}</span><span class="hl-code">
+                </span><span class="hl-reserved">if</span><span class="hl-brackets">(</span><span class="hl-identifier">method</span><span class="hl-code">.</span><span class="hl-identifier">getName</span><span class="hl-brackets">(</span><span class="hl-brackets">)</span><span class="hl-code">.</span><span class="hl-identifier">equals</span><span class="hl-brackets">(</span><span class="hl-quotes">&quot;</span><span class="hl-string">method3</span><span class="hl-quotes">&quot;</span><span class="hl-brackets">)</span><span class="hl-brackets">)</span><span class="hl-brackets">{</span><span class="hl-code">
+                    </span><span class="hl-identifier">System</span><span class="hl-code">.</span><span class="hl-identifier">out</span><span class="hl-code">.</span><span class="hl-identifier">println</span><span class="hl-brackets">(</span><span class="hl-quotes">&quot;</span><span class="hl-string">filter method3 </span><span class="hl-quotes">&quot;</span><span class="hl-brackets">)</span><span class="hl-code">;
+                    </span><span class="hl-reserved">return</span><span class="hl-code"> </span><span class="hl-number">3333</span><span class="hl-code">;
+                </span><span class="hl-brackets">}</span><span class="hl-code">
+                </span><span class="hl-reserved">return</span><span class="hl-code"> </span><span class="hl-quotes">&quot;</span><span class="hl-string">default</span><span class="hl-quotes">&quot;</span><span class="hl-code">;
+            </span><span class="hl-brackets">}</span><span class="hl-brackets">}</span><span class="hl-brackets">)</span><span class="hl-code">;
+        </span><span class="hl-identifier">Method</span><span class="hl-code"> </span><span class="hl-identifier">targetMethod1</span><span class="hl-code">=</span><span class="hl-identifier">object</span><span class="hl-code">.</span><span class="hl-identifier">getClass</span><span class="hl-brackets">(</span><span class="hl-brackets">)</span><span class="hl-code">.</span><span class="hl-identifier">getMethod</span><span class="hl-brackets">(</span><span class="hl-quotes">&quot;</span><span class="hl-string">method3</span><span class="hl-quotes">&quot;</span><span class="hl-code">,</span><span class="hl-reserved">new</span><span class="hl-code"> </span><span class="hl-identifier">Class</span><span class="hl-brackets">[</span><span class="hl-brackets">]</span><span class="hl-brackets">{</span><span class="hl-types">int</span><span class="hl-code">.</span><span class="hl-reserved">class</span><span class="hl-brackets">}</span><span class="hl-brackets">)</span><span class="hl-code">;
+        </span><span class="hl-types">int</span><span class="hl-code"> </span><span class="hl-identifier">i</span><span class="hl-code">=</span><span class="hl-brackets">(</span><span class="hl-types">int</span><span class="hl-brackets">)</span><span class="hl-identifier">targetMethod1</span><span class="hl-code">.</span><span class="hl-identifier">invoke</span><span class="hl-brackets">(</span><span class="hl-identifier">object</span><span class="hl-code">, </span><span class="hl-reserved">new</span><span class="hl-code"> </span><span class="hl-identifier">Object</span><span class="hl-brackets">[</span><span class="hl-brackets">]</span><span class="hl-brackets">{</span><span class="hl-number">33</span><span class="hl-brackets">}</span><span class="hl-brackets">)</span><span class="hl-code">;
+        </span><span class="hl-identifier">Method</span><span class="hl-code"> </span><span class="hl-identifier">targetMethod</span><span class="hl-code">=</span><span class="hl-identifier">object</span><span class="hl-code">.</span><span class="hl-identifier">getClass</span><span class="hl-brackets">(</span><span class="hl-brackets">)</span><span class="hl-code">.</span><span class="hl-identifier">getMethod</span><span class="hl-brackets">(</span><span class="hl-quotes">&quot;</span><span class="hl-string">method1</span><span class="hl-quotes">&quot;</span><span class="hl-code">,</span><span class="hl-reserved">new</span><span class="hl-code"> </span><span class="hl-identifier">Class</span><span class="hl-brackets">[</span><span class="hl-brackets">]</span><span class="hl-brackets">{</span><span class="hl-identifier">String</span><span class="hl-code">.</span><span class="hl-reserved">class</span><span class="hl-brackets">}</span><span class="hl-brackets">)</span><span class="hl-code">;
+        </span><span class="hl-identifier">System</span><span class="hl-code">.</span><span class="hl-identifier">out</span><span class="hl-code">.</span><span class="hl-identifier">println</span><span class="hl-brackets">(</span><span class="hl-identifier">targetMethod</span><span class="hl-code">.</span><span class="hl-identifier">invoke</span><span class="hl-brackets">(</span><span class="hl-identifier">object</span><span class="hl-code">, </span><span class="hl-reserved">new</span><span class="hl-code"> </span><span class="hl-identifier">Object</span><span class="hl-brackets">[</span><span class="hl-brackets">]</span><span class="hl-brackets">{</span><span class="hl-quotes">&quot;</span><span class="hl-string">sdfs</span><span class="hl-quotes">&quot;</span><span class="hl-brackets">}</span><span class="hl-brackets">)</span><span class="hl-brackets">)</span><span class="hl-code">;
+    </span><span class="hl-brackets">}</span><span class="hl-code">
+</span><span class="hl-brackets">}</span></div>
+</div></div>
+
+
+
+<blockquote><p>原文地址：</p>
+<p>https://blog.csdn.net/zghwaicsdn/article/details/50957474</p>
+<p>https://blog.csdn.net/danchu/article/details/70238002</p></blockquote>
+
+				</div>
+			</div>
+			<div class="previous-next-links">
+			<div class="previous-design-link">← <a href="http://www.runoob.com/w3cnote/redis-external-network.html" rel="prev"> 配置 redis 外网可访问</a> </div>
+			<div class="next-design-link"><a href="http://www.runoob.com/w3cnote/nodejs-callback-func.html" rel="next"> 彻底理解 Node.js 中的回调(Callback)函数</a> →</div>
+			</div>
+			<style>
+.wrapper {
+  /*text-transform: uppercase; */
+  background: #ececec;
+  color: #555;
+  cursor: help;
+  font-family: "Gill Sans", Impact, sans-serif;
+  font-size: 20px;
+  position: relative;
+  text-align: center;
+  width: 200px;
+  -webkit-transform: translateZ(0); /* webkit flicker fix */
+  -webkit-font-smoothing: antialiased; /* webkit text rendering fix */
+}
+
+.wrapper .tooltip {
+  white-space: nowrap;
+  font-size: 14px;
+  text-align: left;
+  background: #96b97d;
+  bottom: 100%;
+  color: #fff;
+  display: block;
+  left: -25px;
+  margin-bottom: 15px;
+  opacity: 0;
+  padding: 14px;
+  pointer-events: none;
+  position: absolute;
+  
+  -webkit-transform: translateY(10px);
+     -moz-transform: translateY(10px);
+      -ms-transform: translateY(10px);
+       -o-transform: translateY(10px);
+          transform: translateY(10px);
+  -webkit-transition: all .25s ease-out;
+     -moz-transition: all .25s ease-out;
+      -ms-transition: all .25s ease-out;
+       -o-transition: all .25s ease-out;
+          transition: all .25s ease-out;
+  -webkit-box-shadow: 2px 2px 6px rgba(0, 0, 0, 0.28);
+     -moz-box-shadow: 2px 2px 6px rgba(0, 0, 0, 0.28);
+      -ms-box-shadow: 2px 2px 6px rgba(0, 0, 0, 0.28);
+       -o-box-shadow: 2px 2px 6px rgba(0, 0, 0, 0.28);
+          box-shadow: 2px 2px 6px rgba(0, 0, 0, 0.28);
+}
+.tooltip a {
+	color:#fff;
+}
+/* This bridges the gap so you can mouse into the tooltip without it disappearing */
+.wrapper .tooltip:before {
+  bottom: -20px;
+  content: " ";
+  display: block;
+  height: 20px;
+  left: 0;
+  position: absolute;
+  width: 100%;
+}  
+
+/* CSS Triangles - see Trevor's post */
+.wrapper .tooltip:after {
+  border-left: solid transparent 10px;
+  border-right: solid transparent 10px;
+  border-top: solid #96b97d 10px;
+  bottom: -10px;
+  content: " ";
+  height: 0;
+  left: 20%;
+  margin-left: -13px;
+  position: absolute;
+  width: 0;
+}
+.wrapper .tooltip1 {
+	margin-left: 50px;
+	padding-top: 0px;
+}
+/*
+.wrapper:hover .tooltip {
+  opacity: 1;
+  pointer-events: auto;
+  -webkit-transform: translateY(0px);
+     -moz-transform: translateY(0px);
+      -ms-transform: translateY(0px);
+       -o-transform: translateY(0px);
+          transform: translateY(0px);
+}
+*/
+/* IE can just show/hide with no transition */
+.lte8 .wrapper .tooltip {
+  display: none;
+}
+
+.lte8 .wrapper:hover .tooltip {
+  display: block;
+}
+
+</style>
+
+<link rel="stylesheet" href="https://static.runoob.com/assets/upvotejs/dist/upvotejs/upvotejs.css">
+<script src="https://static.runoob.com/assets/upvotejs/dist/upvotejs/upvotejs.vanilla.js"></script>
+<script src="https://static.runoob.com/assets/upvotejs/dist/upvotejs/upvotejs.jquery.js"></script>
+<div id="respond" class="no_webshot"> 
+		<div class="comment-signarea" style=" padding: 20px 20px;"> 
+	<h3 class="text-muted" id="share_code" style="color: #799961;"><i class="fa fa-pencil-square-o" aria-hidden="true"></i> 点我分享笔记</h3>
+	<!--
+	<p style="font-size:14px;">笔记需要是本篇文章的内容扩展！</p><br>
+	<p style="font-size:12px;"><a href="//www.runoob.com/tougao" target="_blank">文章投稿，可点击这里</a></p>
+	<p style="font-size:14px;"><a href="/w3cnote/runoob-user-test-intro.html#invite" target="_blank">注册邀请码获取方式</a></p>
+		<h3 class="text-muted"><i class="fa fa-info-circle" aria-hidden="true"></i> 分享笔记前必须<a href="javascript:;" class="runoob-pop">登录</a>！</h3>
+		<p><a href="/w3cnote/runoob-user-test-intro.html#invite" target="_blank">注册邀请码获取方式</a></p>-->
+	</div>
+		
+	<form action="/wp-content/themes/runoob/option/addnote.php" method="post" id="commentform" style="display:none;">
+		<div class="comt">
+			<div class="comt-title">
+				<i style="font-size:36px;" class="fa fa-user-circle" aria-hidden="true"></i>				<p><a id="cancel-comment-reply-link" href="javascript:;">取消</a></p>
+			</div>
+			<div class="comt-box">
+			<div id="mded"></div>
+			
+				<div class="comt-ctrl">
+					<div class="comt-tips"><input type='hidden' name='comment_post_ID' value='21059' id='comment_post_ID' />
+<input type='hidden' name='comment_parent' id='comment_parent' value='0' />
+</div>
+					<button type="submit" name="submit" id="submit" tabindex="5"><i class="fa fa-pencil" aria-hidden="true"></i> 分享笔记</button>
+				</div>
+			</div>
+		
+				
+					<div class="comt-comterinfo"> 
+						<ul id="comment-author-info">
+							<li class="form-inline"><label class="hide" for="author">昵称</label><input class="ipt" type="text" name="author" id="author" value="" tabindex="2" placeholder="昵称"><span class="text-muted">昵称 (必填)</span></li>
+							<li class="form-inline"><label class="hide" for="email">邮箱</label><input class="ipt" type="text" name="email" id="email" value="" tabindex="3" placeholder="邮箱"><span class="text-muted">邮箱 (必填)</span></li>
+							<li class="form-inline"><label class="hide" for="url">引用地址</label><input class="ipt" type="text" name="url" id="url" value="" tabindex="4" placeholder="引用地址"><span class="text-muted">引用地址</span></li>
+						</ul>
+					</div>
+				
+			
+		</div>
+
+	</form>
+	</div>
+<script type="text/javascript">
+$(function() {
+	//初始化编辑器
+	
+	var editor = new Simditor({
+	  textarea: $('#mded'),
+	  placeholder: '写笔记...',
+	  upload:false,
+	 // upload: {url:'/api/comment_upload_file.php',params: null,fileKey: 'upload_file',connectionCount: 1,leaveConfirm: '文件正在上传，您确定离开?'},
+	  defaultImage: 'https://www.runoob.com/images/logo.png',
+	  codeLanguages: '',
+	  autosave: 'editor-content',
+	  toolbar: [  'bold','code','ul','ol','image' ]
+	});
+	editor.on('selectionchanged', function() {
+		$(".code-popover").hide();
+	});
+
+	// 提交数据
+	$("#share_code").click(function() {
+		$(".comment-signarea").hide();
+		$("#commentform").show();
+		
+	});
+	$("#user_add_note").click(function() {
+		$(".comment-signarea").hide();
+		$("#commentform").show();
+		$('html, body').animate({
+       	    scrollTop: $("#respond").offset().top
+    	}, 200);
+	});
+
+	// 提交笔记
+	var commentform=$('#commentform');
+	commentform.prepend('<div id="comment-status" style="display:none;" ></div>');
+	var statusdiv=$('#comment-status');
+	
+	commentform.submit(function(e){
+		e.preventDefault();
+		var noteContent = editor.getValue();
+		// console.log(noteContent);
+		noteContent = noteContent.replace(/<pre><code>/g,"<pre>");
+		noteContent = noteContent.replace(/<\/code><\/pre>/g,"</pre>");
+		
+		// 系列化表单数据
+		var comment_parent = 0;
+		var is_user_logged_in = $("#is_user_logged_in").val();
+		var comment_post_ID =  21059;
+		var _wp_unfiltered_html_comment = $("#_wp_unfiltered_html_comment").val();
+		var comment = noteContent;
+		var author = $("#author").val();
+		var url = $("#url").val();
+		var email = $("#email").val();
+		if(isBlank(author) && is_user_logged_in==0) {
+			statusdiv.html('<p  class="ajax-error">请输入昵称！</p>').show();
+		} else if(isBlank(email)  && is_user_logged_in==0) {
+			statusdiv.html('<p  class="ajax-error">请输入邮箱！</p>').show();
+		} else {
+			// var formdata=commentform.serialize() + "&comment=" + noteContent ;
+			// 添加状态信息
+			statusdiv.html('<p>Processing...</p>').show();
+			// 获取表单提交地址
+			var formurl=commentform.attr('action');
+			
+			// 异步提交
+			$.ajax({
+					type: 'post',
+					url: formurl,
+					dataType:'json',
+					data: {"comment_parent":comment_parent,"comment_post_ID":comment_post_ID, "_wp_unfiltered_html_comment":_wp_unfiltered_html_comment,"comment":comment,"url":url, "email":email,"author":author},
+					error: function(XMLHttpRequest, textStatus, errorThrown){
+					statusdiv.html('<p class="ajax-error" >数据不完整或表单提交太快了！</p>').show();
+				},
+				success: function(data, textStatus){
+					if(data.errorno=="0") {
+						$("#submit").prop('disabled', true);
+						statusdiv.html('<p class="ajax-success" >笔记已提交审核，感谢分享笔记！</p>').show();
+						alert('笔记已提交审核，感谢分享笔记！');
+					}else{
+						statusdiv.html('<p class="ajax-error" >'+data.msg+'</p>').show();
+					}
+					commentform.find('textarea[name=comment]').val('');
+				}
+			});
+			setTimeout(function(){
+		        $("#submit").prop('disabled', false);
+		    }, 10*1000);
+		}
+		return false;
+
+	});
+	$(".comt-author").click(function() {
+		href = $(this).children("a").attr("href");
+		if(href.indexOf("/note/")!=-1) {
+			var win = window.open(href, '_blank');
+  			win.focus();
+		}
+	});
+	$(".comt-meta span").hover(function(){
+		$(this).children(".tooltip").css({ "opacity": 1, "pointer-events": "auto"});
+	},function(){
+		$(this).children(".tooltip").removeAttr("style");
+	});
+	/*
+	$(".wrapper i").hover(function(){
+		$(this).siblings(".tooltip").css({ "opacity": 1, "pointer-events": "auto"});
+	},function(){
+		$(this).siblings(".tooltip").css({ "opacity": 0, "pointer-events": "auto"});
+	});
+	*/
+	//Upvote.create('runoobvote-id', {callback: vote_callback});
+	var ajaxurl = 'https://www.runoob.com/wp-admin/admin-ajax.php';
+	var callback = function(data) {
+		//console.log($('#runoobvote-id').upvote('upvoted'));
+		//console.log($('#runoobvote-id').upvote('downvoted'));
+		//console.log(data);
+		_vote_action = data.action;
+		id_arr = data.id.split('-');
+		um_id= id_arr[2];
+		//console.log(um_id);
+		
+		var re = /^[1-9]+/;
+		if (re.test(um_id)) { 
+			var ajax_data = {
+				_vote_action: _vote_action,
+				action: "pinglun_zan",
+				um_id: um_id,
+				um_action: "ding"
+			};
+			//console.log(ajax_data);
+			$.post(ajaxurl,ajax_data,function(status){
+				//if(status.vote_num>999) {
+				//	_voteHtml = '<span style="display: block; text-align: center;font-size: 20px; color: #6a737c; margin: 8px 0;">'+kFormatter(status.vote_num) +'</span>';
+				//	$("#runoobvote-id-" + um_id + " .count").hide().after(_voteHtml);
+				//}
+				
+			});
+		}
+	};
+	if($('#comments').length && $('.upvotejs').length){
+		$('.upvotejs').upvote({id: 21059, callback: callback});
+	
+		$.post(ajaxurl,{"action":"pinglun_zan","postid":21059},function(data){  
+			$(data).each(function(key,value) {
+				$("#runoobvote-id-" + value.commid + " .upvote").addClass(value.upvotejs_class);
+				$("#runoobvote-id-" + value.commid + " .downvote").addClass(value.downvote_class);
+				$("#runoobvote-id-" + value.commid + " .count").text(value.upvote_count);
+			})
+		},'json');
+		
+	}
+	
+	
+});
+function isBlank(str) {
+    return (!str || /^\s*$/.test(str));
+}
+function kFormatter(num) {
+	// return num;
+    return Math.abs(num) > 999 ? Math.sign(num)*((Math.abs(num)/1000).toFixed(1)) + 'k' : Math.sign(num)*Math.abs(num)
+}
+
+</script>
+
+<link rel="stylesheet" href="/wp-content/themes/runoob/assets/css/qa.css?1.44">
+<link rel="stylesheet" type="text/css" href="https://cdn.staticfile.org/simditor/2.3.6/styles/simditor.min.css" />
+<script type="text/javascript" src="https://static.runoob.com/assets/simditor/2.3.6/scripts/module.js"></script>
+<script type="text/javascript" src="//static.runoob.com/assets/simditor/2.3.6/scripts/hotkeys.js"></script>
+<script type="text/javascript" src="//static.runoob.com/assets/simditor/2.3.6/scripts/uploader.js"></script>
+<script type="text/javascript" src="https://cdn.staticfile.org/simditor/2.3.6/lib/simditor.min.js"></script>
+<script type="text/javascript" src="https://static.runoob.com/assets/simditor/2.3.6/scripts/simditor-autosave.js"></script>
+			<div class="article-heading-ad" id="w3cnote-ad728">
+			<script async src="//pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script>
+			<!-- 移动版 自动调整 -->
+			<ins class="adsbygoogle"
+			     style="display:inline-block;min-width:300px;max-width:970px;width:100%;height:90px"
+			     data-ad-client="ca-pub-5751451760833794"
+			     data-ad-slot="1691338467"
+			     data-ad-format="horizontal"></ins>
+			<script>
+			(adsbygoogle = window.adsbygoogle || []).push({});
+			</script>
+			</div>
+			<style>
+@media screen and (max-width: 768px) {
+	#w3cnote-ad728 {
+		display: none;
+	}
+}
+p.note-author {
+    border-bottom: 1px solid #ddd;
+    font-size: 18px;
+    font-weight: bold;
+    color: #78a15a;
+    padding-bottom: 2px;
+    margin-bottom: 4px;
+}
+</style>
+<script>
+var aid = 21059;
+</script>
+	</div>
+		
+	</div>
+	<div class="listcol last right-column">
+
+
+
+
+<!--
+	<div class="tab tab-light-blue"> 订阅</div>
+	<div class="sidebar-box">
+		<div class="socialicons">
+			<a href="//www.runoob.com/feed" class="rss">RSS 订阅</a>
+		
+			<form action="//list.qq.com/cgi-bin/qf_compose_send" method="post">
+			<input type="hidden" value="qf_booked_feedback" name="t">
+			<input type="hidden" value="4b67b6b6c1f5e792559940cab4aebb8f1126fba880bff1a8" name="id">
+			<input class="placeholder" id="feed_email" name="to" value="输入邮箱 订阅笔记" autocomplete="off">
+			<input type="submit" value="订阅" class="btn btn-primary">
+			</form>
+		
+		</div>
+ 
+	</div>
+-->	
+
+
+
+<!--
+	<div class="sidebar-box cate-list">
+	<div class="sidebar-box recommend-here list-link">
+			<a href="javascript:void(0);" style="font-size: 16px; color:#64854c;font-weight:bold;">笔记列表</a>
+		</div>
+
+ 
+
+</div>
+-->
+
+	 <div class="sidebar-box cate-list">
+		 		
+
+	 	<div class="sidebar-box recommend-here list-link">
+			<a href="javascript:void(0);" style="font-size: 16px; color:#64854c;font-weight:bold;">教程列表</a>
+		</div>
+		
+		<div class="cate-items"> 
+				<a href="http://www.runoob.com/ado">ADO 教程</a>
+	<a href="http://www.runoob.com/ajax">Ajax 教程</a>
+	<a href="http://www.runoob.com/android">Android 教程</a>
+	<a href="http://www.runoob.com/angularjs2">Angular2 教程</a>
+	<a href="http://www.runoob.com/angularjs">AngularJS 教程</a>
+	<a href="http://www.runoob.com/appml">AppML 教程</a>
+	<a href="http://www.runoob.com/asp">ASP 教程</a>
+	<a href="http://www.runoob.com/aspnet">ASP.NET 教程</a>
+	<a href="http://www.runoob.com/bootstrap">Bootstrap 教程</a>
+	<a href="http://www.runoob.com/bootstrap4">Bootstrap4 教程</a>
+	<a href="http://www.runoob.com/bootstrap5">Bootstrap5 教程</a>
+	<a href="http://www.runoob.com/cprogramming">C 教程</a>
+	<a href="http://www.runoob.com/csharp">C# 教程</a>
+	<a href="http://www.runoob.com/cplusplus">C++ 教程</a>
+	<a href="http://www.runoob.com/chartjs">Chart.js 教程</a>
+	<a href="http://www.runoob.com/cssref">CSS 参考手册</a>
+	<a href="http://www.runoob.com/css">CSS 教程</a>
+	<a href="http://www.runoob.com/css3">CSS3 教程</a>
+	<a href="http://www.runoob.com/django">Django 教程</a>
+	<a href="http://www.runoob.com/docker">Docker 教程</a>
+	<a href="http://www.runoob.com/dtd">DTD 教程</a>
+	<a href="http://www.runoob.com/echarts">ECharts 教程</a>
+	<a href="http://www.runoob.com/eclipse">Eclipse 教程</a>
+	<a href="http://www.runoob.com/firebug">Firebug 教程</a>
+	<a href="http://www.runoob.com/font-awesome">Font Awesome 图标</a>
+	<a href="http://www.runoob.com/foundation">Foundation 教程</a>
+	<a href="http://www.runoob.com/git">Git 教程</a>
+	<a href="http://www.runoob.com/go">Go 语言教程</a>
+	<a href="http://www.runoob.com/googleapi">Google 地图 API 教程</a>
+	<a href="http://www.runoob.com/highcharts">Highcharts 教程</a>
+	<a href="http://www.runoob.com/htmldom">HTML DOM 教程</a>
+	<a href="http://www.runoob.com/tags">HTML 参考手册</a>
+	<a href="http://www.runoob.com/charsets">HTML 字符集</a>
+	<a href="http://www.runoob.com/html">HTML 教程</a>
+	<a href="http://www.runoob.com/http">HTTP 教程</a>
+	<a href="http://www.runoob.com/ionic">ionic 教程</a>
+	<a href="http://www.runoob.com/ios">iOS 教程</a>
+	<a href="http://www.runoob.com/java">Java 教程</a>
+	<a href="http://www.runoob.com/jsref">JavaScript 参考手册</a>
+	<a href="http://www.runoob.com/js">Javascript 教程</a>
+	<a href="http://www.runoob.com/jeasyui">jQuery EasyUI 教程</a>
+	<a href="http://www.runoob.com/jquerymobile">jQuery Mobile 教程</a>
+	<a href="http://www.runoob.com/jqueryui">jQuery UI 教程</a>
+	<a href="http://www.runoob.com/jquery">jQuery 教程</a>
+	<a href="http://www.runoob.com/json">JSON 教程</a>
+	<a href="http://www.runoob.com/jsp">JSP 教程</a>
+	<a href="http://www.runoob.com/julia">Julia 教程</a>
+	<a href="http://www.runoob.com/kotlin">Kotlin 教程</a>
+	<a href="http://www.runoob.com/linux">Linux 教程</a>
+	<a href="http://www.runoob.com/lua">Lua 教程</a>
+	<a href="http://www.runoob.com/markdown">Markdown 教程</a>
+	<a href="http://www.runoob.com/matplotlib">Matplotlib 教程</a>
+	<a href="http://www.runoob.com/maven">Maven 教程</a>
+	<a href="http://www.runoob.com/memcached">Memcached 教程</a>
+	<a href="http://www.runoob.com/mongodb">MongoDB 教程</a>
+	<a href="http://www.runoob.com/mysql">MySQL 教程</a>
+	<a href="http://www.runoob.com/nodejs">Node.js 教程</a>
+	<a href="http://www.runoob.com/numpy">NumPy 教程</a>
+	<a href="http://www.runoob.com/pandas">Pandas 教程</a>
+	<a href="http://www.runoob.com/perl">Perl 教程</a>
+	<a href="http://www.runoob.com/php">PHP 教程</a>
+	<a href="http://www.runoob.com/postgresql">PostgreSQL 教程</a>
+	<a href="http://www.runoob.com/python3">Python 3 教程</a>
+	<a href="http://www.runoob.com/python">Python 基础教程</a>
+	<a href="http://www.runoob.com/r">R 教程</a>
+	<a href="http://www.runoob.com/rdf">RDF 教程</a>
+	<a href="http://www.runoob.com/react">React 教程</a>
+	<a href="http://www.runoob.com/redis">Redis 教程</a>
+	<a href="http://www.runoob.com/rss">RSS 教程</a>
+	<a href="http://www.runoob.com/ruby">Ruby 教程</a>
+	<a href="http://www.runoob.com/rust">Rust 教程</a>
+	<a href="http://www.runoob.com/sass">Sass 教程</a>
+	<a href="http://www.runoob.com/scala">Scala 教程</a>
+	<a href="http://www.runoob.com/scipy">SciPy 教程</a>
+	<a href="http://www.runoob.com/servlet">Servlet 教程</a>
+	<a href="http://www.runoob.com/soap">SOAP 教程</a>
+	<a href="http://www.runoob.com/sql">SQL 教程</a>
+	<a href="http://www.runoob.com/sqlite">SQLite 教程</a>
+	<a href="http://www.runoob.com/svg">SVG 教程</a>
+	<a href="http://www.runoob.com/svn">SVN 教程</a>
+	<a href="http://www.runoob.com/swift">Swift 教程</a>
+	<a href="http://www.runoob.com/tcpip">TCP/IP 教程</a>
+	<a href="http://www.runoob.com/typescript">TypeScript 教程</a>
+	<a href="http://www.runoob.com/vbscript">VBScript 教程</a>
+	<a href="http://www.runoob.com/vue2">Vue.js 教程</a>
+	<a href="http://www.runoob.com/vue3">Vue3 教程</a>
+	<a href="http://www.runoob.com/w3c">W3C 教程</a>
+	<a href="http://www.runoob.com/webservices">Web Service 教程</a>
+	<a href="http://www.runoob.com/wsdl">WSDL 教程</a>
+	<a href="http://www.runoob.com/xlink">XLink 教程</a>
+	<a href="http://www.runoob.com/dom">XML DOM 教程</a>
+	<a href="http://www.runoob.com/schema">XML Schema 教程</a>
+	<a href="http://www.runoob.com/xml">XML 教程</a>
+	<a href="http://www.runoob.com/xpath">XPath 教程</a>
+	<a href="http://www.runoob.com/xquery">XQuery 教程</a>
+	<a href="http://www.runoob.com/xslfo">XSLFO 教程</a>
+	<a href="http://www.runoob.com/xsl">XSLT 教程</a>
+	<a href="http://www.runoob.com/data-structures">数据结构</a>
+	<a href="http://www.runoob.com/regexp">正则表达式</a>
+	<a href="http://www.runoob.com/quiz">测验</a>
+	<a href="http://www.runoob.com/browsers">浏览器</a>
+	<a href="http://www.runoob.com/quality">网站品质</a>
+	<a href="http://www.runoob.com/web">网站建设指南</a>
+	<a href="http://www.runoob.com/hosting">网站服务器教程</a>
+	<a href="http://www.runoob.com/design-pattern">设计模式</a>
+			
+		</div> 
+		 	 </div>
+</div>
+	</div>
+</div>
+
+
+<!-- 底部 -->
+<div id="footer" class="mar-t50">
+   <div class="runoob-block">
+    <div class="runoob cf">
+     <dl>
+      <dt>
+       在线实例
+      </dt>
+      <dd>
+       &middot;<a target="_blank" href="/html/html-examples.html">HTML 实例</a>
+      </dd>
+      <dd>
+       &middot;<a target="_blank" href="/css/css-examples.html">CSS 实例</a>
+      </dd>
+      <dd>
+       &middot;<a target="_blank" href="/js/js-examples.html">JavaScript 实例</a>
+      </dd>
+      <dd>
+       &middot;<a target="_blank" href="/ajx/ajax-examples.html">Ajax 实例</a>
+      </dd>
+       <dd>
+       &middot;<a target="_blank" href="/jquery/jquery-examples.html">jQuery 实例</a>
+      </dd>
+      <dd>
+       &middot;<a target="_blank" href="/xml/xml-examples.html">XML 实例</a>
+      </dd>
+      <dd>
+       &middot;<a target="_blank" href="/java/java-examples.html">Java 实例</a>
+      </dd>
+     
+     </dl>
+     <dl>
+      <dt>
+      字符集&工具
+      </dt>
+      <dd>
+       &middot; <a target="_blank" href="/charsets/html-charsets.html">HTML 字符集设置</a>
+      </dd>
+      <dd>
+       &middot; <a target="_blank" href="/tags/html-ascii.html">HTML ASCII 字符集</a>
+      </dd>
+     <dd>
+       &middot; <a target="_blank" href="https://c.runoob.com/front-end/6939/">JS 混淆/加密</a>
+      </dd> 
+      <dd>
+       &middot; <a target="_blank" href="https://c.runoob.com/front-end/6232/">PNG/JPEG 图片压缩</a>
+      </dd>
+      <dd>
+       &middot; <a target="_blank" href="/tags/html-colorpicker.html">HTML 拾色器</a>
+      </dd>
+      <dd>
+       &middot; <a target="_blank" href="//c.runoob.com/front-end/53">JSON 格式化工具</a>
+      </dd>
+      <dd>
+       &middot; <a target="_blank" href="//c.runoob.com/front-end/6680/">随机数生成器</a>
+      </dd>
+     </dl>
+     <dl>
+      <dt>
+       最新更新
+      </dt>
+                   <dd>
+       &middot;
+      <a href="http://www.runoob.com/matplotlib/matplotlib-imread.html" title="Matplotlib imread() 方法">Matplotlib imre...</a>
+      </dd>
+              <dd>
+       &middot;
+      <a href="http://www.runoob.com/matplotlib/matplotlib-imsave.html" title="Matplotlib imsave() 方法">Matplotlib imsa...</a>
+      </dd>
+              <dd>
+       &middot;
+      <a href="http://www.runoob.com/matplotlib/matplotlib-imshow.html" title="Matplotlib imshow() 方法">Matplotlib imsh...</a>
+      </dd>
+              <dd>
+       &middot;
+      <a href="http://www.runoob.com/matplotlib/matplotlib-hist.html" title="Matplotlib 直方图">Matplotlib 直方图</a>
+      </dd>
+              <dd>
+       &middot;
+      <a href="http://www.runoob.com/python3/python-func-object.html" title="Python object() 函数">Python object()...</a>
+      </dd>
+              <dd>
+       &middot;
+      <a href="http://www.runoob.com/python3/python-ai-draw.html" title="Python AI 绘画">Python AI 绘画</a>
+      </dd>
+              <dd>
+       &middot;
+      <a href="http://www.runoob.com/w3cnote/cursor-editor.html" title="神辅助 Cursor 编辑器，加入 GPT-4 让编码更轻松！">神辅助 Cursor ...</a>
+      </dd>
+             </dl>
+     <dl>
+      <dt>
+       站点信息
+      </dt>
+      <dd>
+       &middot;
+       <a target="_blank" href="mailto:admin@runoob.com" rel="external nofollow">意见反馈</a>
+       </dd>
+      <dd>
+       &middot;
+      <a target="_blank" href="/disclaimer">免责声明</a>
+       </dd>
+      <dd>
+       &middot;
+       <a target="_blank" href="/aboutus">关于我们</a>
+       </dd>
+      <dd>
+       &middot;
+      <a target="_blank" href="/archives">文章归档</a>
+      </dd>
+    
+     </dl>
+    
+     <div class="search-share">
+      <div class="app-download">
+        <div>
+         <strong>关注微信</strong>
+        </div>
+      </div>
+      <div class="share">
+      <img width="128" height="128" src="/wp-content/themes/runoob/assets/images/qrcode.png" />
+       </div>
+     </div>
+     
+    </div>
+   </div>
+   <div class="w-1000 copyright">
+     Copyright &copy; 2013-2023    <strong><a href="//www.runoob.com/" target="_blank">菜鸟教程</a></strong>&nbsp;
+    <strong><a href="//www.runoob.com/" target="_blank">runoob.com</a></strong> All Rights Reserved. 备案号：<a target="_blank" rel="nofollow" href="https://beian.miit.gov.cn/">闽ICP备15012807号-1</a>
+   </div>
+  </div>
+  <div class="fixed-btn">
+    <a class="go-top" href="javascript:void(0)" title="返回顶部"> <i class="fa fa-angle-up"></i></a>
+    <a class="qrcode"  href="javascript:void(0)" title="关注我们"><i class="fa fa-qrcode"></i></a>
+    <a class="writer" style="display:none" href="javascript:void(0)"   title="标记/收藏"><i class="fa fa-star" aria-hidden="true"></i></a>
+    <!-- qrcode modal -->
+    <div id="bottom-qrcode" class="modal panel-modal hide fade in">
+      <h4>微信关注</h4>
+      <div class="panel-body"><img alt="微信关注" width="128" height="128" src="/wp-content/themes/runoob/assets/images/qrcode.png"></div> 
+    </div>
+  </div>
+
+ <div style="display:none;">
+<script async src="https://www.googletagmanager.com/gtag/js?id=UA-84264393-2"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+
+  gtag('config', 'UA-84264393-2');
+</script>
+<script>
+var _hmt = _hmt || [];
+(function() {
+  var hm = document.createElement("script");
+  hm.src = "https://hm.baidu.com/hm.js?3eec0b7da6548cf07db3bc477ea905ee";
+  var s = document.getElementsByTagName("script")[0]; 
+  s.parentNode.insertBefore(hm, s);
+})();
+</script>
+
+</div>
+<script>
+window.jsui={
+    www: 'https://www.runoob.com',
+    uri: 'https://www.runoob.com/wp-content/themes/runoob'
+};
+</script>
+
+<script src="https://static.runoob.com/assets/libs/hl/run_prettify.js"></script>
+<script src="/wp-content/themes/runoob/assets/js/main.min.js?v=1.156"></script>
+
+</body>
+</html>

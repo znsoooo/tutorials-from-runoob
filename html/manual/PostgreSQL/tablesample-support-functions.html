@@ -1,0 +1,108 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><title>57.1. 采样方法支持函数</title><link rel="stylesheet" type="text/css" href="stylesheet.css" /><link rev="made" href="pgsql-docs@postgresql.org" /><meta name="generator" content="DocBook XSL Stylesheets V1.79.1" /><link rel="prev" href="tablesample-method.html" title="第 57 章 编写一种表采样方法" /><link rel="next" href="custom-scan.html" title="第 58 章 编写一个自定义扫描提供者" /></head><body><div xmlns="http://www.w3.org/TR/xhtml1/transitional" class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="5" align="center">57.1. 采样方法支持函数</th></tr><tr><td width="10%" align="left"><a accesskey="p" href="tablesample-method.html" title="第 57 章 编写一种表采样方法">上一页</a> </td><td width="10%" align="left"><a accesskey="u" href="tablesample-method.html" title="第 57 章 编写一种表采样方法">上一级</a></td><th width="60%" align="center">第 57 章 编写一种表采样方法</th><td width="10%" align="right"><a accesskey="h" href="index.html" title="PostgreSQL 10.1 手册">起始页</a></td><td width="10%" align="right"> <a accesskey="n" href="custom-scan.html" title="第 58 章 编写一个自定义扫描提供者">下一页</a></td></tr></table><hr></hr></div><div class="sect1" id="TABLESAMPLE-SUPPORT-FUNCTIONS"><div class="titlepage"><div><div><h2 class="title" style="clear: both">57.1. 采样方法支持函数</h2></div></div></div><p>   TSM 处理器函数返回一个 palloc 好的<code class="type">TsmRoutine</code>结构，其中包含
+   了下文所述的支持函数的指针。大部分函数是必须的，但是有些是可选的（它们
+   的指针可以为 NULL）。
+  </p><pre class="programlisting">void
+SampleScanGetSampleSize (PlannerInfo *root,
+                         RelOptInfo *baserel,
+                         List *paramexprs,
+                         BlockNumber *pages,
+                         double *tuples);</pre><p>
+
+   这个函数在规划期间被掉欧勇。它必须估计在一次采样扫描中会被读到的关系
+   页面数，以及将被该扫描所选择的元组数（例如，可以先估计采样分数，
+   乘上<code class="literal">baserel-&gt;pages</code>和<code class="literal">baserel-&gt;tuples</code>
+   数，并且把结果圆整）。<code class="literal">paramexprs</code>列表保存作为
+   <code class="literal">TABLESAMPLE</code>子句的参数的表达式。如果出于优化的目的需要
+   这些表达式的值，我们推荐使用<code class="function">estimate_expression_value()</code>
+   来尝试将这些表达式变成常量。但是即便这些表达不能被简化，该函数必须提供
+   估计的尺寸，并且即使出现不合法的值它也不应该失败（记住它们只是运行时值
+   的估计）。<code class="literal">pages</code>和<code class="literal">tuples</code>参数是输出。
+  </p><pre class="programlisting">void
+InitSampleScan (SampleScanState *node,
+                int eflags);</pre><p>
+
+   为 SampleScan 计划节点的执行进行初始化。这会在执行器启动时被调用。
+   它应该执行执行处理启动所需的任何初始化工作。
+   <code class="structname">SampleScanState</code>节点已经被创建，但是它的
+   <code class="structfield">tsm_state</code>域为 NULL。
+   <code class="function">InitSampleScan</code>函数可以 palloc 任何采样方法需要的内部
+   状态数据，并且把它的一个指针存储在<code class="literal">node-&gt;tsm_state</code>
+   中。有关要扫描的表的信息可以通过<code class="structname">SampleScanState</code>
+   节点的其他域访问（但是要注意
+   <code class="literal">node-&gt;ss.ss_currentScanDesc</code>扫描描述符还没有被设置）。
+   <code class="literal">eflags</code>包含描述这个计划节点的执行器操作模式的标志位。
+  </p><p>   当<code class="literal">(eflags &amp; EXEC_FLAG_EXPLAIN_ONLY)</code>为真时，该
+   扫描将不会被真正执行，因此这个函数应该只做最少的事情，让该节点状态对
+   <code class="command">EXPLAIN</code>和<code class="function">EndSampleScan</code>可用。
+  </p><p>   这个函数可以被省略（把指针设置为 NULL），在那种情况下
+   <code class="function">BeginSampleScan</code>必须执行采样方法所需的所有初始化工作。
+  </p><pre class="programlisting">void
+BeginSampleScan (SampleScanState *node,
+                 Datum *params,
+                 int nparams,
+                 uint32 seed);</pre><p>
+
+   开始执行一次采样扫描。就在第一次尝试取得一个元组时就会调用这个函数，
+   如果该扫描需要被重启可能还要再次调用它。有关要扫描的表的信息可以通过
+   <code class="structname">SampleScanState</code>节点的其他域访问（但是要注意
+   <code class="literal">node-&gt;ss.ss_currentScanDesc</code>扫描描述符还没有被设置）。
+   长度为<code class="literal">nparams</code>的<code class="literal">params</code>数组包含在
+   <code class="literal">TABLESAMPLE</code>子句中提供的参数的值。这些参数的编号和类型
+   在采样方法的<code class="literal">parameterTypes</code>列表中指定，并且已经被
+   检查过不为空。<code class="literal">seed</code>包含用于在采样方法中生成任何随机数的
+   种子。如果给定了<code class="literal">REPEATABLE</code>值，种子将是该值的哈希。如果
+   没有指定<code class="literal">REPEATABLE</code>值，种子将是<code class="literal">random()</code>的
+   结果。
+  </p><p>   这个函数可能会调整域<code class="literal">node-&gt;use_bulkread</code>
+   以及<code class="literal">node-&gt;use_pagemode</code>。
+   如果<code class="literal">node-&gt;use_bulkread</code>为<code class="literal">true</code>（默认），
+   该扫描将使用一种鼓励重用缓冲区的缓冲区访问策略。如果该扫描只访问
+   该表的页面的一小部分，将这个域设置为<code class="literal">false</code>比较合理。
+   如果<code class="literal">node-&gt;use_pagemode</code>为<code class="literal">true</code>（默认），
+   那么对于每一个被访问的页面上的所有元组，该扫描将会在一趟中执行它们
+   的可见性检查。如果该扫描只选择每个被访问页面上的一小部分，将这个域
+   设置为<code class="literal">false</code>比较合理。这将导致执行较少次的元组可见性检查，
+   但是每一次都会代价更大，因为需要更多锁定。
+  </p><p>   如果采样方法被标记为<code class="literal">repeatable_across_scans</code>，在重
+   新扫描时，它必须能够选择和第一次扫描相同的元组集合，也就是说对
+   <code class="function">BeginSampleScan</code>的一次新调用必须选择和之前相同的元组
+   （如果<code class="literal">TABLESAMPLE</code>参数和种子没有变化）。
+  </p><pre class="programlisting">BlockNumber
+NextSampleBlock (SampleScanState *node);</pre><p>
+
+   返回下一个要扫描的页面的块号，如果没有剩余的页面需要扫描则返回
+   <code class="literal">InvalidBlockNumber</code>。
+  </p><p>   这个函数可以被省略（设置指针为 NULL），在那种情况下核心代码将
+   执行整个关系的一次顺序扫描。这样一个扫描可以使用同步扫描，这样
+   采样方法不能假定每一次扫描都用同样的顺序访问关系页面。
+  </p><pre class="programlisting">OffsetNumber
+NextSampleTuple (SampleScanState *node,
+                 BlockNumber blockno,
+                 OffsetNumber maxoffset);</pre><p>
+
+   返回指定页面上下一个要被采样的元组的偏移量，如果没有剩余元组需要被采样，
+   则返回<code class="literal">InvalidOffsetNumber</code>。<code class="literal">maxoffset</code>是页面上
+   使用的最大偏移量。
+  </p><div class="note"><h3 class="title">注意</h3><p>    <code class="function">NextSampleTuple</code>没有被显式地告知范围
+    <code class="literal">1 .. maxoffset</code>中的哪些偏移量真正包含了合法的元组。这通常不
+    成问题，因为核心代码会忽略采样丢失或者不可见元组的请求。这不会导致采样
+    中的任何偏差。不过，如果必要，该函数可以检查
+    <code class="literal">node-&gt;ss.ss_currentScanDesc-&gt;rs_vistuples[]</code>来判断哪些
+    元组合法并且可见（这要求<code class="literal">node-&gt;use_pagemode</code>为
+    <code class="literal">true</code>）。
+   </p></div><div class="note"><h3 class="title">注意</h3><p>    <code class="function">NextSampleTuple</code><span class="emphasis"><em>不能</em></span>假定
+    <code class="literal">blockno</code>是最近一次<code class="function">NextSampleBlock</code>调用返回的
+    同一个页面号。它由之前某次<code class="function">NextSampleBlock</code>调用所返回，
+    但是核心代码被允许在真正扫描页面之前调用<code class="function">NextSampleBlock</code>，
+    以便支持预取。假定一旦一个给定页面的采样开始，连续的
+    <code class="function">NextSampleTuple</code>调用都将引用同一个页面（直到返回
+    <code class="literal">InvalidOffsetNumber</code>）。
+   </p></div><pre class="programlisting">void
+EndSampleScan (SampleScanState *node);</pre><p>
+
+   结束扫描并且释放资源。释放 palloc 过的内存通常并不重要，但是任何外部
+   可见的资源应该被清除。在没有这类资源存在的通常情况下，这个函数可以被
+   省略（设置指针为 NULL）。
+  </p></div><div class="navfooter"><hr /><table width="100%" summary="Navigation footer"><tr><td width="40%" align="left"><a accesskey="p" href="tablesample-method.html">上一页</a> </td><td width="20%" align="center"><a accesskey="u" href="tablesample-method.html">上一级</a></td><td width="40%" align="right"> <a accesskey="n" href="custom-scan.html">下一页</a></td></tr><tr><td width="40%" align="left" valign="top">第 57 章 编写一种表采样方法 </td><td width="20%" align="center"><a accesskey="h" href="index.html">起始页</a></td><td width="40%" align="right" valign="top"> 第 58 章 编写一个自定义扫描提供者</td></tr></table></div></body></html>

@@ -1,0 +1,143 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><title>E.87. 版本 9.1.20</title><link rel="stylesheet" type="text/css" href="stylesheet.css" /><link rev="made" href="pgsql-docs@postgresql.org" /><meta name="generator" content="DocBook XSL Stylesheets V1.79.1" /><link rel="prev" href="release-9-1-21.html" title="E.86. 版本 9.1.21" /><link rel="next" href="release-9-1-19.html" title="E.88. 版本 9.1.19" /></head><body><div xmlns="http://www.w3.org/TR/xhtml1/transitional" class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="5" align="center">E.87. 版本 9.1.20</th></tr><tr><td width="10%" align="left"><a accesskey="p" href="release-9-1-21.html" title="E.86. 版本 9.1.21">上一页</a> </td><td width="10%" align="left"><a accesskey="u" href="release.html" title="附录 E. 版本说明">上一级</a></td><th width="60%" align="center">附录 E. 版本说明</th><td width="10%" align="right"><a accesskey="h" href="index.html" title="PostgreSQL 10.1 手册">起始页</a></td><td width="10%" align="right"> <a accesskey="n" href="release-9-1-19.html" title="E.88. 版本 9.1.19">下一页</a></td></tr></table><hr></hr></div><div class="sect1" id="RELEASE-9-1-20"><div class="titlepage"><div><div><h2 class="title" style="clear: both">E.87. 版本 9.1.20</h2></div></div></div><div class="toc"><dl class="toc"><dt><span class="sect2"><a href="release-9-1-20.html#idp72438896">E.87.1. 迁移到版本9.1.20</a></span></dt><dt><span class="sect2"><a href="release-9-1-20.html#idp72440800">E.87.2. 修改列表</a></span></dt></dl></div><p><strong>发布日期：. </strong>2016-02-11</p><p>   这个版本包含各种自9.1.19以来的修复。关于9.1主版本的新特性信息，
+   请查看<a class="xref" href="release-9-1.html" title="E.107. 版本9.1">第 E.107 节</a>。
+  </p><div class="sect2" id="idp72438896"><div class="titlepage"><div><div><h3 class="title">E.87.1. 迁移到版本9.1.20</h3></div></div></div><p>    运行9.1.X版本的用户不需要转储/恢复。
+   </p><p>    还有，如果您是从一个早于9.1.16的版本升级而来，请查看<a class="xref" href="release-9-1-16.html" title="E.91. 版本 9.1.16">第 E.91 节</a>。
+   </p></div><div class="sect2" id="idp72440800"><div class="titlepage"><div><div><h3 class="title">E.87.2. 修改列表</h3></div></div></div><div class="itemizedlist"><ul class="itemizedlist" style="list-style-type: disc; "><li class="listitem"><p>      修复正则表达式中无限循环和缓冲区溢出问题
+      (Tom Lane)
+     </p><p>      在某些情况下，括号表达式中非常大的字符范围可能会导致无限循环，
+      并且在其他情况下内存会覆盖。 (CVE-2016-0773)
+     </p></li><li class="listitem"><p>      如果删除了<code class="filename">postmaster.pid</code>文件，执行立即关闭 (Tom Lane)
+     </p><p>      postmaster现在每一分钟都检查，查看<code class="filename">postmaster.pid</code>仍然存在，
+      仍然包含它自己的PID。如果没有，它会立即关闭，就像收到了<span class="systemitem">SIGQUIT</span>一样。
+      这种变化的主要动机是确保在没有手动干预的情况下，失败的构建运行得到清理；
+      但是如果DBA强制删除<code class="filename">postmaster.pid</code>，然后启动一个新的postmaster，
+      它也可以限制不良影响。
+     </p></li><li class="listitem"><p>      在<code class="literal">SERIALIZABLE</code>事务隔离模式下，
+      串行化异常可能由于插入过程中的竞争条件而丢失
+      (Kevin Grittner, Thomas Munro)
+     </p></li><li class="listitem"><p>      修复在为未记录的关系执行<code class="literal">ALTER TABLE ... SET TABLESPACE</code>时，
+      未能发出合适的WAL记录 (Michael Paquier, Andres Freund)
+     </p><p>      即使关系的数据未被记录，移动必须被记录否则在备用被提升为主服务器之后关系将无法访问。
+     </p></li><li class="listitem"><p>      修复在崩溃恢复结束时可能的未记录关系的错误初始化 (Andres Freund, Michael Paquier)
+     </p></li><li class="listitem"><p>      修复<code class="command">ALTER COLUMN TYPE</code>以正确重构造继承的检查约束 (Tom Lane)
+     </p></li><li class="listitem"><p>      修复<code class="command">REASSIGN OWNED</code>以正确改变复合类型的所有者 (Álvaro Herrera)
+     </p></li><li class="listitem"><p>      在更改数据类型、外部数据封装器或外部服务器的所有者时，
+      修复<code class="command">REASSIGN OWNED</code>和<code class="command">ALTER OWNER</code>
+      来正确更新授权权限列表 (Bruce Momjian,
+      Álvaro Herrera)
+     </p></li><li class="listitem"><p>      修复<code class="command">REASSIGN OWNED</code>，忽略外部用户映射而不是失败 (Álvaro Herrera)
+     </p></li><li class="listitem"><p>      当索引的内部统计数据非常过时时，为GIN索引扫描的错误规划成本估算增加更多的防御
+      (Tom Lane)
+     </p></li><li class="listitem"><p>      使规划器处理索引建议插件建议的假设GIN索引 (Julien Rouhaud)
+     </p></li><li class="listitem"><p>      修复<code class="literal">ROW()</code>和<code class="literal">VALUES()</code>列表中整行变量的转储 (Tom Lane)
+     </p></li><li class="listitem"><p>      修复<code class="type">numeric</code>除法中可能的内部溢出
+      (Dean Rasheed)
+     </p></li><li class="listitem"><p>      修正正则表达式前瞻性约束内的括号内的强制限制 (Tom Lane)
+     </p><p>      前瞻性约束不允许包含后向引用，根据手册，它们中的括号总是被认为是非捕获。
+      但是，代码无法在括号内的子表达式中正确处理这些情况，并会产生意想不到的结果。
+     </p></li><li class="listitem"><p>      将正则表达式转换为索引扫描边界可能会产生包含前瞻约束的正则表达式的不正确边界
+      (Tom Lane)
+     </p></li><li class="listitem"><p>      修正正则表达式编译器来处理约束弧的循环
+      (Tom Lane)
+     </p><p>      为CVE-2007-4772添加的代码是不完整的，因为它不处理涉及多个状态的循环，
+      并且不正确，因为它可能导致断言失败（尽管在非断言构建中似乎没有不良后果）。
+      多状态循环将导致编译器运行，直到查询被取消或达到太多状态的错误状态。
+     </p></li><li class="listitem"><p>      改进正则表达式编译器中的内存使用量计算
+      (Tom Lane)
+     </p><p>      这导致代码在某些以前使用了不合理的时间和内存的情况下发出
+      <span class="quote">“<span class="quote">regular expression is too complex</span>”</span>的错误。
+     </p></li><li class="listitem"><p>      提高正则表达式编译器的性能 (Tom Lane)
+     </p></li><li class="listitem"><p>      让<code class="varname">log_line_prefix</code>中的<code class="literal">%h</code>
+      和<code class="literal">%r</code>转义可用于<code class="varname">log_connections</code>
+      发出的消息 (Tom Lane)
+     </p><p>      以前，<code class="literal">%h</code>/<code class="literal">%r</code>仅在新会话发出<span class="quote">“<span class="quote">connection received</span>”</span>
+      日志消息后开始工作；现在它们也用于该消息。
+     </p></li><li class="listitem"><p>      在Windows上，确保共享内存映射句柄在不需要它的子进程中关闭 (Tom Lane, Amit Kapila)
+     </p><p>      这个疏忽导致<code class="varname">logging_collector</code>打开时，
+      无法从崩溃中恢复。
+     </p></li><li class="listitem"><p>      修复Windows上在非阻塞模式下检测套接字EOF的可能失败 (Tom Lane)
+     </p><p>      还不完全清楚这个问题是否会在9.5之前的分支中发生，但如果发生，
+      那么症状就是一个walsender进程会无限期地等待，而不是注意到连接丢失。
+     </p></li><li class="listitem"><p>      避免在SSPI认证期间泄露令牌句柄
+      (Christian Ullrich)
+     </p></li><li class="listitem"><p>      在<span class="application">psql</span>中，确保当终端窗口大小更改时，
+      <span class="application">libreadline</span>的屏幕大小也更新 (Merlin Moncure)
+     </p><p>      以前，<span class="application">libreadline</span>没有注意到在查询输出期间是否调整了窗口的大小，
+      导致在以后输入多行查询时出现了奇怪的行为。
+     </p></li><li class="listitem"><p>      修复<span class="application">psql</span>的<code class="literal">\det</code>命令，
+      与其他<code class="literal">\d</code>命令潜在模式限定模式相同的方式解释其模式参数 (Reece Hart)
+     </p></li><li class="listitem"><p>      当前一次连接是通过Unix套接字和命令指定新的主机名和相同用户名时，
+      避免<span class="application">psql</span>的<code class="literal">\c</code>命令中可能的崩溃 (Tom Lane)
+     </p></li><li class="listitem"><p>      在<code class="literal">pg_ctl start -w</code>中，直接测试子进程状态，而不是依赖于启发 (Tom Lane, Michael Paquier)
+     </p><p>      以前，<span class="application">pg_ctl</span>依赖于一个假设，
+      即新的postmaster将始终在五秒钟内创建<code class="filename">postmaster.pid</code>。但是，
+      在重负载系统上可能会失败，导致<span class="application">pg_ctl</span>
+      不正确地报告postmaster无法启动。
+     </p><p>      除了在Windows上，这种改变也意味着在另一个这样的命令之后立即执行的一个
+      <code class="literal">pg_ctl start -w</code>将可靠地失败，
+      而之前如果它在第一个命令的两秒内完成会报告成功。
+     </p></li><li class="listitem"><p>      在<code class="literal">pg_ctl start -w</code>中，不要尝试使用通配符监听地址连接到postmaster (Kondo Yuta)
+     </p><p>      在Windows上，如果<code class="varname">listen_addresses</code>设置为<code class="literal">0.0.0.0</code>
+      或者<code class="literal">::</code>，则<span class="application">pg_ctl</span>将无法检测到postmaster启动，
+      因为它将尝试逐字使用该值作为要连接到的地址。正确的做法是分别假设使用
+      <code class="literal">127.0.0.1</code>或<code class="literal">::1</code>。
+     </p></li><li class="listitem"><p>      在Windows上的<span class="application">pg_ctl</span>中，检查服务器状态以决定输出发送到哪里，
+      而不是检查标准输出是否是终端 (Michael Paquier)
+     </p></li><li class="listitem"><p>      在<span class="application">pg_dump</span>和<span class="application">pg_basebackup</span>中，
+      采用GNU约定来处理超过8GB的tar档案成员
+      (Tom Lane)
+     </p><p>      <code class="literal">tar</code>文件格式的POSIX标准不允许归档超过8GB的成员文件，
+      但是大多数现代化的<span class="application">tar</span>实现支持一个扩展，修复了此问题。
+      采取这个扩展，以便在具有超过8GB数据的表上使用<code class="option">-Ft</code>的
+      <span class="application">pg_dump</span>不再失败，因此<span class="application">pg_basebackup</span> 
+      可以处理大于8GB的文件。此外，修复了一些可能导致在某些平台上4GB到8GB
+      之间的成员失败出现故障的可移植性问题。
+      潜在的这些问题可能会由于不可读的备份文件而导致无法恢复的数据丢失。
+     </p></li><li class="listitem"><p>      修复<span class="application">pg_dump</span>处理扩展成员对象中的各种极端错误 (Tom Lane)
+     </p></li><li class="listitem"><p>      让<span class="application">pg_dump</span>标记一个视图的触发器需要在其规则之后处理，
+      以阻止并行<span class="application">pg_restore</span>期间可能的失败 (Tom Lane)
+     </p></li><li class="listitem"><p>      确保关系选项值在<span class="application">pg_dump</span>中正确的引用了 (Kouhei Sutou, Tom Lane)
+     </p><p>      由于<span class="application">pg_dump</span>发出的CREATE语句中的语法错误，
+      不是简单的标识符或数字的关系选项值可能导致转储/重新加载失败。
+      核心<span class="productname">PostgreSQL</span>目前支持的任何关系选项都不是问题，
+      但扩展可能会允许导致问题的关系选项。
+     </p></li><li class="listitem"><p>      修复<span class="application">pg_upgrade</span>的文件拷贝代码，以在Windows上正确的处理错误 (Bruce Momjian)
+     </p></li><li class="listitem"><p>      在评估脚本指定的除法或模运算符期间，在<span class="application">pgbench</span>
+      中安装保护防止极端溢出条件 (Fabien Coelho, Michael Paquier)
+     </p></li><li class="listitem"><p>      阻止某些<span class="application">PL/Java</span>参数被非超级用户设置 (Noah Misch)
+     </p><p>      此更改缓解<span class="application">PL/Java</span>安全性错误(CVE-2016-0766)，
+      该错误在<span class="application">PL/Java</span>中已通过将这些参数标记为仅限超级用户修复。
+      为了修复<span class="productname">PostgreSQL</span>比<span class="application">PL/Java</span>
+      更频繁更新的站点安全隐患，让核心代码也知道它们。
+     </p></li><li class="listitem"><p>      改进<span class="application">libpq</span>对内存不足情况的处理
+      (Michael Paquier, Amit Kapila, Heikki Linnakangas)
+     </p></li><li class="listitem"><p>      修复<span class="application">ecpg</span>产生的<code class="literal">typedef</code>语句中参数的顺序
+      (Michael Meskes)
+     </p></li><li class="listitem"><p>      在<span class="application">ecpg</span>的<code class="function">PGTYPESnumeric_from_double()</code>
+      中使用<code class="literal">%g</code>而不是<code class="literal">%f</code>格式
+      (Tom Lane)
+     </p></li><li class="listitem"><p>      修复<span class="application">ecpg</span>提供的头文件，不包含从预处理器指令行继续到下一行的注释
+      (Michael Meskes)
+     </p><p>      这样的注释被<span class="application">ecpg</span>拒绝。目前还不清楚是否应该更改
+      <span class="application">ecpg</span>本身。
+     </p></li><li class="listitem"><p>      确保<code class="filename">contrib/pgcrypto</code>的<code class="function">crypt()</code>
+      函数可以通过查询取消中断 (Andreas Karlsson)
+     </p></li><li class="listitem"><p>      接受<span class="application">flex</span> 2.5.x 之后的版本
+      (Tom Lane, Michael Paquier)
+     </p><p>      现在，flex 2.6.0已经发布，我们的构建脚本中的版本检查需要调整。
+     </p></li><li class="listitem"><p>      在PGXS构建可以找到<code class="filename">缺少</code>脚本的地方安装它
+      (Jim Nasby)
+     </p><p>      这允许在缺少构建工具（例如<span class="application">bison</span>）
+      的机器上完成PGXS构建中的正常行为。
+     </p></li><li class="listitem"><p>      确保<code class="filename">dynloader.h</code>包含在MSVC构建中安装的头文件中 
+      (Bruce Momjian, Michael Paquier)
+     </p></li><li class="listitem"><p>      添加变体回归测试预期的输出文件以匹配当前<span class="application">libxml2</span>行为 (Tom Lane)
+     </p><p>      对<span class="application">libxml2</span>的CVE-2015-7499
+      的修复导致它在某些应该报告错误内容的情况下不输出错误内容。
+      这似乎是一个错误，但是我们可能要忍受一段时间，所以绕开它。
+     </p></li><li class="listitem"><p>      更新时区数据文件到<span class="application">tzdata</span>版本2016a，
+      因为DST规律在开曼群岛、Metlakatla和Trans-Baikal Territory (Zabaykalsky Krai)
+      发生了改变，加上巴基斯坦的历史修正。
+     </p></li></ul></div></div></div><div class="navfooter"><hr /><table width="100%" summary="Navigation footer"><tr><td width="40%" align="left"><a accesskey="p" href="release-9-1-21.html">上一页</a> </td><td width="20%" align="center"><a accesskey="u" href="release.html">上一级</a></td><td width="40%" align="right"> <a accesskey="n" href="release-9-1-19.html">下一页</a></td></tr><tr><td width="40%" align="left" valign="top">E.86. 版本 9.1.21 </td><td width="20%" align="center"><a accesskey="h" href="index.html">起始页</a></td><td width="40%" align="right" valign="top"> E.88. 版本 9.1.19</td></tr></table></div></body></html>

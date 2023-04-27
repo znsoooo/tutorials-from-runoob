@@ -1,0 +1,217 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><title>5.3. 约束</title><link rel="stylesheet" type="text/css" href="stylesheet.css" /><link rev="made" href="pgsql-docs@postgresql.org" /><meta name="generator" content="DocBook XSL Stylesheets V1.79.1" /><link rel="prev" href="ddl-default.html" title="5.2. 默认值" /><link rel="next" href="ddl-system-columns.html" title="5.4. 系统列" /></head><body><div xmlns="http://www.w3.org/TR/xhtml1/transitional" class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="5" align="center">5.3. 约束</th></tr><tr><td width="10%" align="left"><a accesskey="p" href="ddl-default.html" title="5.2. 默认值">上一页</a> </td><td width="10%" align="left"><a accesskey="u" href="ddl.html" title="第 5 章 数据定义">上一级</a></td><th width="60%" align="center">第 5 章 数据定义</th><td width="10%" align="right"><a accesskey="h" href="index.html" title="PostgreSQL 10.1 手册">起始页</a></td><td width="10%" align="right"> <a accesskey="n" href="ddl-system-columns.html" title="5.4. 系统列">下一页</a></td></tr></table><hr></hr></div><div class="sect1" id="DDL-CONSTRAINTS"><div class="titlepage"><div><div><h2 class="title" style="clear: both">5.3. 约束</h2></div></div></div><div class="toc"><dl class="toc"><dt><span class="sect2"><a href="ddl-constraints.html#DDL-CONSTRAINTS-CHECK-CONSTRAINTS">5.3.1. 检查约束</a></span></dt><dt><span class="sect2"><a href="ddl-constraints.html#idp6249760">5.3.2. 非空约束</a></span></dt><dt><span class="sect2"><a href="ddl-constraints.html#DDL-CONSTRAINTS-UNIQUE-CONSTRAINTS">5.3.3. 唯一约束</a></span></dt><dt><span class="sect2"><a href="ddl-constraints.html#DDL-CONSTRAINTS-PRIMARY-KEYS">5.3.4. 主键</a></span></dt><dt><span class="sect2"><a href="ddl-constraints.html#DDL-CONSTRAINTS-FK">5.3.5. 外键</a></span></dt><dt><span class="sect2"><a href="ddl-constraints.html#DDL-CONSTRAINTS-EXCLUSION">5.3.6. 排他约束</a></span></dt></dl></div><a id="idp6226416" class="indexterm"></a><p>   数据类型是一种限制能够存储在表中数据类别的方法。但是对于很多应用来说，它们提供的约束太粗糙。例如，一个包含产品价格的列应该只接受正值。但是没有任何一种标准数据类型只接受正值。另一个问题是我们可能需要根据其他列或行来约束一个列中的数据。例如，在一个包含产品信息的表中，对于每个产品编号应该只有一行。
+  </p><p>   到目前为止，SQL允许我们在列和表上定义约束。约束让我们能够根据我们的愿望来控制表中的数据。如果一个用户试图在一个列中保存违反一个约束的数据，一个错误会被抛出。即便是这个值来自于默认值定义，这个规则也同样适用。
+  </p><div class="sect2" id="DDL-CONSTRAINTS-CHECK-CONSTRAINTS"><div class="titlepage"><div><div><h3 class="title">5.3.1. 检查约束</h3></div></div></div><a id="idp6230224" class="indexterm"></a><a id="idp6230912" class="indexterm"></a><p>    一个检查约束是最普通的约束类型。它允许我们指定一个特定列中的值必须要满足一个布尔表达式。例如，为了要求正值的产品价格，我们可以使用：
+</p><pre class="programlisting">CREATE TABLE products (
+    product_no integer,
+    name text,
+    price numeric <span class="emphasis"><strong>CHECK (price &gt; 0)</strong></span>
+);</pre><p>
+   </p><p>    如你所见，约束定义就和默认值定义一样跟在数据类型之后。默认值和约束之间的顺序没有影响。一个检查约束有关键字<code class="literal">CHECK</code>以及其后的包围在圆括号中的表达式组成。检查约束表达式应该涉及到被约束的列，否则该约束也没什么实际意义。
+   </p><a id="idp6235200" class="indexterm"></a><p>    我们也可以给与约束一个独立的名称。这会使得错误消息更为清晰，同时也允许我们在需要更改约束时能引用它。语法为：
+</p><pre class="programlisting">CREATE TABLE products (
+    product_no integer,
+    name text,
+    price numeric <span class="emphasis"><strong>CONSTRAINT positive_price</strong></span> CHECK (price &gt; 0)
+);</pre><p>
+    要指定一个命名的约束，请在约束名称标识符前使用关键词<code class="literal">CONSTRAINT</code>，然后把约束定义放在标识符之后（如果没有以这种方式指定一个约束名称，系统将会为我们选择一个）。
+   </p><p>    一个检查约束也可以引用多个列。例如我们存储一个普通价格和一个打折后的价格，而我们希望保证打折后的价格低于普通价格：
+</p><pre class="programlisting">CREATE TABLE products (
+    product_no integer,
+    name text,
+    price numeric CHECK (price &gt; 0),
+    discounted_price numeric CHECK (discounted_price &gt; 0),
+    <span class="emphasis"><strong>CHECK (price &gt; discounted_price)</strong></span>
+);</pre><p>
+   </p><p>    前两个约束看起来很相似。第三个则使用了一种新语法。它并没有依附在一个特定的列，而是作为一个独立的项出现在逗号分隔的列列表中。列定义和这种约束定义可以以混合的顺序出现在列表中。
+   </p><p>    我们将前两个约束称为列约束，而第三个约束为表约束，因为它独立于任何一个列定义。列约束也可以写成表约束，但反过来不行，因为一个列约束只能引用它所依附的那一个列（<span class="productname">PostgreSQL</span>并不强制要求这个规则，但是如果我们希望表定义能够在其他数据库系统中工作，那就应该遵循它）。上述例子也可以写成：
+</p><pre class="programlisting">CREATE TABLE products (
+    product_no integer,
+    name text,
+    price numeric,
+    CHECK (price &gt; 0),
+    discounted_price numeric,
+    CHECK (discounted_price &gt; 0),
+    CHECK (price &gt; discounted_price)
+);</pre><p>
+    甚至是：
+</p><pre class="programlisting">CREATE TABLE products (
+    product_no integer,
+    name text,
+    price numeric CHECK (price &gt; 0),
+    discounted_price numeric,
+    CHECK (discounted_price &gt; 0 AND price &gt; discounted_price)
+);</pre><p>
+    这只是个人偏好的问题。
+   </p><p>    表约束也可以用列约束相同的方法来指定名称：
+</p><pre class="programlisting">CREATE TABLE products (
+    product_no integer,
+    name text,
+    price numeric,
+    CHECK (price &gt; 0),
+    discounted_price numeric,
+    CHECK (discounted_price &gt; 0),
+    <span class="emphasis"><strong>CONSTRAINT valid_discount</strong></span> CHECK (price &gt; discounted_price)
+);</pre><p>
+   </p><a id="idp6247632" class="indexterm"></a><p>    需要注意的是，一个检查约束在其检查表达式值为真或空值时被满足。因为当任何操作数为空时大部分表达式将计算为空值，所以它们不会阻止被约束列中的控制。为了保证一个列不包含控制，可以使用下一节中的非空约束。
+   </p></div><div class="sect2" id="idp6249760"><div class="titlepage"><div><div><h3 class="title">5.3.2. 非空约束</h3></div></div></div><a id="idp6250176" class="indexterm"></a><a id="idp6250864" class="indexterm"></a><p>    一个非空约束仅仅指定一个列中不会有空值。语法例子：
+</p><pre class="programlisting">CREATE TABLE products (
+    product_no integer <span class="emphasis"><strong>NOT NULL</strong></span>,
+    name text <span class="emphasis"><strong>NOT NULL</strong></span>,
+    price numeric
+);</pre><p>
+   </p><p>    一个非空约束总是被写成一个列约束。一个非空约束等价于创建一个检查约束<code class="literal">CHECK (<em class="replaceable"><code>column_name</code></em>
+    IS NOT NULL)</code>，但在<span class="productname">PostgreSQL</span>中创建一个显式的非空约束更高效。这种方式创建的非空约束的缺点是我们无法为它给予一个显式的名称。
+   </p><p>    当然，一个列可以有多于一个的约束，只需要将这些约束一个接一个写出：
+</p><pre class="programlisting">CREATE TABLE products (
+    product_no integer NOT NULL,
+    name text NOT NULL,
+    price numeric NOT NULL CHECK (price &gt; 0)
+);</pre><p>
+    约束的顺序没有关系，因为并不需要决定约束被检查的顺序。
+   </p><p>    <code class="literal">NOT NULL</code>约束有一个相反的情况：<code class="literal">NULL</code>约束。这并不意味着该列必须为空，进而肯定是无用的。相反，它仅仅选择了列可能为空的默认行为。SQL标准中并不存在<code class="literal">NULL</code>约束，因此它不能被用于可移植的应用中（<span class="productname">PostgreSQL</span>中加入它是为了和某些其他数据库系统兼容）。但是某些用户喜欢它，因为它使得在一个脚本文件中可以很容易的进行约束切换。例如，初始时我们可以：
+</p><pre class="programlisting">CREATE TABLE products (
+    product_no integer NULL,
+    name text NULL,
+    price numeric NULL
+);</pre><p>
+    然后可以在需要的地方插入<code class="literal">NOT</code>关键词。
+   </p><div class="tip"><h3 class="title">提示</h3><p>     在大部分数据库中多数列应该被标记为非空。
+    </p></div></div><div class="sect2" id="DDL-CONSTRAINTS-UNIQUE-CONSTRAINTS"><div class="titlepage"><div><div><h3 class="title">5.3.3. 唯一约束</h3></div></div></div><a id="idp6264512" class="indexterm"></a><a id="idp6265200" class="indexterm"></a><p>    唯一约束保证\在一列中或者一组列中保存的数据在表中所有行间是唯一的。写成一个列约束的语法是：
+</p><pre class="programlisting">CREATE TABLE products (
+    product_no integer <span class="emphasis"><strong>UNIQUE</strong></span>,
+    name text,
+    price numeric
+);</pre><p>
+    写成一个表约束的语法是：
+</p><pre class="programlisting">CREATE TABLE products (
+    product_no integer,
+    name text,
+    price numeric,
+    <span class="emphasis"><strong>UNIQUE (product_no)</strong></span>
+);</pre><p>
+   </p><p>    要为一组列定义一个唯一约束，把它写作一个表级约束，列名用逗号分隔：
+</p><pre class="programlisting">CREATE TABLE example (
+    a integer,
+    b integer,
+    c integer,
+    <span class="emphasis"><strong>UNIQUE (a, c)</strong></span>
+);</pre><p>
+    这指定这些列的组合值在整个表的范围内是唯一的，但其中任意一列的值并不需要是（一般也不是）唯一的。
+   </p><p>    我们可以通常的方式为一个唯一索引命名：
+</p><pre class="programlisting">CREATE TABLE products (
+    product_no integer <span class="emphasis"><strong>CONSTRAINT must_be_different</strong></span> UNIQUE,
+    name text,
+    price numeric
+);</pre><p>
+   </p><p>    增加一个唯一约束会在约束中列出的列或列组上自动创建一个唯一B-tree索引。只覆盖某些行的唯一性限制不能被写为一个唯一约束，但可以通过创建一个唯一的<a class="link" href="indexes-partial.html" title="11.8. 部分索引">部分索引</a>来强制这种限制。
+   </p><a id="idp6274448" class="indexterm"></a><p>    通常，如果表中有超过一行在约束所包括列上的值相同，将会违反唯一约束。但是在这种比较中，两个空值被认为是不同的。这意味着即便存在一个唯一约束，也可以存储多个在至少一个被约束列中包含空值的行。这种行为符合SQL标准，但我们听说一些其他SQL数据库可能不遵循这个规则。所以在开发需要可移植的应用时应注意这一点。
+   </p></div><div class="sect2" id="DDL-CONSTRAINTS-PRIMARY-KEYS"><div class="titlepage"><div><div><h3 class="title">5.3.4. 主键</h3></div></div></div><a id="idp6277504" class="indexterm"></a><a id="idp6278192" class="indexterm"></a><p>    一个主键约束表示可以用作表中行的唯一标识符的一个列或者一组列。这要求那些值都是唯一的并且非空。因此，下面的两个表定义接受相同的数据：
+</p><pre class="programlisting">CREATE TABLE products (
+    product_no integer UNIQUE NOT NULL,
+    name text,
+    price numeric
+);</pre><p>
+
+</p><pre class="programlisting">CREATE TABLE products (
+    product_no integer <span class="emphasis"><strong>PRIMARY KEY</strong></span>,
+    name text,
+    price numeric
+);</pre><p>
+   </p><p>    主键也可以包含多于一个列，其语法和唯一约束相似：
+</p><pre class="programlisting">CREATE TABLE example (
+    a integer,
+    b integer,
+    c integer,
+    <span class="emphasis"><strong>PRIMARY KEY (a, c)</strong></span>
+);</pre><p>
+   </p><p>    增加一个主键将自动在主键中列出的列或列组上创建一个唯一B-tree索引。并且会强制这些列被标记为<code class="literal">NOT NULL</code>。
+   </p><p>    一个表最多只能有一个主键（可以有任意数量的唯一和非空约束，它们可以达到和主键几乎一样的功能，但只能有一个被标识为主键）。关系数据库理论要求每一个表都要有一个主键。但<span class="productname">PostgreSQL</span>中并未强制要求这一点，但是最好能够遵循它。
+   </p><p>    主键对于文档和客户端应用都是有用的。例如，一个允许修改行值的 GUI 应用可能需要知道一个表的主键，以便能唯一地标识行。如果定义了主键，数据库系统也有多种方法来利用主键。例如，主键定义了外键要引用的默认目标列。
+   </p></div><div class="sect2" id="DDL-CONSTRAINTS-FK"><div class="titlepage"><div><div><h3 class="title">5.3.5. 外键</h3></div></div></div><a id="idp6287920" class="indexterm"></a><a id="idp6288608" class="indexterm"></a><a id="idp6289584" class="indexterm"></a><p>    一个外键约束指定一列（或一组列）中的值必须匹配出现在另一个表中某些行的值。我们说这维持了两个关联表之间的<em class="firstterm">引用完整性</em>。
+   </p><p>    例如我们有一个使用过多次的产品表：
+</p><pre class="programlisting">CREATE TABLE products (
+    product_no integer PRIMARY KEY,
+    name text,
+    price numeric
+);</pre><p>
+    让我们假设我们还有一个存储这些产品订单的表。我们希望保证订单表中只包含真正存在的产品的订单。因此我们在订单表中定义一个引用产品表的外键约束：
+</p><pre class="programlisting">CREATE TABLE orders (
+    order_id integer PRIMARY KEY,
+    product_no integer <span class="emphasis"><strong>REFERENCES products (product_no)</strong></span>,
+    quantity integer
+);</pre><p>
+    现在就不可能创建包含不存在于产品表中的<code class="structfield">product_no</code>值（非空）的订单。
+   </p><p>    我们说在这种情况下，订单表是<em class="firstterm">引用</em>表而产品表是<em class="firstterm">被引用</em>表。相应地，也有引用和被引用列的说法。
+   </p><p>    我们也可以把上述命令简写为：
+</p><pre class="programlisting">CREATE TABLE orders (
+    order_id integer PRIMARY KEY,
+    product_no integer <span class="emphasis"><strong>REFERENCES products</strong></span>,
+    quantity integer
+);</pre><p>
+    因为如果缺少列的列表，则被引用表的主键将被用作被引用列。
+   </p><p>    一个外键也可以约束和引用一组列。照例，它需要被写成表约束的形式。下面是一个例子：
+</p><pre class="programlisting">CREATE TABLE t1 (
+  a integer PRIMARY KEY,
+  b integer,
+  c integer,
+  <span class="emphasis"><strong>FOREIGN KEY (b, c) REFERENCES other_table (c1, c2)</strong></span>
+);</pre><p>
+    当然，被约束列的数量和类型应该匹配被引用列的数量和类型。
+   </p><p>    按照前面的方式，我们可以为一个外键约束命名。
+   </p><p>    一个表可以有超过一个的外键约束。这被用于实现表之间的多对多关系。例如我们有关于产品和订单的表，但我们现在希望一个订单能包含多种产品（这在上面的结构中是不允许的）。我们可以使用这种表结构：
+</p><pre class="programlisting">CREATE TABLE products (
+    product_no integer PRIMARY KEY,
+    name text,
+    price numeric
+);
+
+CREATE TABLE orders (
+    order_id integer PRIMARY KEY,
+    shipping_address text,
+    ...
+);
+
+CREATE TABLE order_items (
+    product_no integer REFERENCES products,
+    order_id integer REFERENCES orders,
+    quantity integer,
+    PRIMARY KEY (product_no, order_id)
+);</pre><p>
+    注意在最后一个表中主键和外键之间有重叠。
+   </p><a id="idp6302240" class="indexterm"></a><a id="idp6303216" class="indexterm"></a><p>    我们知道外键不允许创建与任何产品都不相关的订单。但如果一个产品在一个引用它的订单创建之后被移除会发生什么？SQL允许我们处理这种情况。直观上，我们有几种选项：
+    </p><div class="itemizedlist"><ul class="itemizedlist compact" style="list-style-type: disc; "><li class="listitem"><p>不允许删除一个被引用的产品</p></li><li class="listitem"><p>同时也删除引用产品的订单</p></li><li class="listitem"><p>其他？</p></li></ul></div><p>
+   </p><p>    为了说明这些，让我们在上面的多对多关系例子中实现下面的策略：当某人希望移除一个仍然被一个订单引用（通过<code class="literal">order_items</code>）的产品时 ，我们组织它。如果某人移除一个订单，订单项也同时被移除：
+</p><pre class="programlisting">CREATE TABLE products (
+    product_no integer PRIMARY KEY,
+    name text,
+    price numeric
+);
+
+CREATE TABLE orders (
+    order_id integer PRIMARY KEY,
+    shipping_address text,
+    ...
+);
+
+CREATE TABLE order_items (
+    product_no integer REFERENCES products <span class="emphasis"><strong>ON DELETE RESTRICT</strong></span>,
+    order_id integer REFERENCES orders <span class="emphasis"><strong>ON DELETE CASCADE</strong></span>,
+    quantity integer,
+    PRIMARY KEY (product_no, order_id)
+);</pre><p>
+   </p><p>    限制删除或者级联删除是两种最常见的选项。<code class="literal">RESTRICT</code>阻止删除一个被引用的行。<code class="literal">NO ACTION</code>表示在约束被检察时如果有任何引用行存在，则会抛出一个错误，这是我们没有指定任何东西时的默认行为（这两种选择的本质不同在于<code class="literal">NO ACTION</code>允许检查被推迟到事务的最后，而<code class="literal">RESTRICT</code>则不会）。<code class="literal">CASCADE</code>指定当一个被引用行被删除后，引用它的行也应该被自动删除。还有其他两种选项：<code class="literal">SET NULL</code>和<code class="literal">SET DEFAULT</code>。这些将导致在被引用行被删除后，引用行中的引用列被置为空值或它们的默认值。注意这些并不会是我们免于遵守任何约束。例如，如果一个动作指定了<code class="literal">SET DEFAULT</code>，但是默认值不满足外键约束，操作将会失败。
+   </p><p>    与<code class="literal">ON DELETE</code>相似，同样有<code class="literal">ON UPDATE</code>可以用在一个被引用列被修改（更新）的情况，可选的动作相同。在这种情况下，<code class="literal">CASCADE</code>意味着被引用列的更新值应该被复制到引用行中。
+   </p><p>    正常情况下，如果一个引用行的任意一个引用列都为空，则它不需要满足外键约束。如果在外键定义中加入了<code class="literal">MATCH FULL</code>，一个引用行只有在它的所有引用列为空时才不需要满足外键约束（因此空和非空值的混合肯定会导致<code class="literal">MATCH FULL</code>约束失败）。如果不希望引用行能够避开外键约束，将引用行声明为<code class="literal">NOT NULL</code>。
+   </p><p>    一个外键所引用的列必须是一个主键或者被唯一约束所限制。这意味着被引用列总是拥有一个索引（位于主键或唯一约束之下的索引），因此在其上进行的一个引用行是否匹配的检查将会很高效。由于从被引用表中<code class="command">DELETE</code>一行或者<code class="command">UPDATE</code>一个被引用列将要求对引用表进行扫描以得到匹配旧值的行，在引用列上建立合适的索引也会大有益处。由于这种做法并不是必须的，而且创建索引也有很多种选择，所以外键约束的定义并不会自动在引用列上创建索引。
+   </p><p>    更多关于更新和删除数据的信息请见<a class="xref" href="dml.html" title="第 6 章 数据操纵">第 6 章</a>。外键约束的语法描述请参考<a class="xref" href="sql-createtable.html" title="CREATE TABLE"><span class="refentrytitle">CREATE TABLE</span></a>。
+   </p></div><div class="sect2" id="DDL-CONSTRAINTS-EXCLUSION"><div class="titlepage"><div><div><h3 class="title">5.3.6. 排他约束</h3></div></div></div><a id="idp6327408" class="indexterm"></a><a id="idp6328096" class="indexterm"></a><p>    排他约束保证如果将任何两行的指定列或表达式使用指定操作符进行比较，至少其中一个操作符比较将会返回否或空值。语法是：
+</p><pre class="programlisting">CREATE TABLE circles (
+    c circle,
+    EXCLUDE USING gist (c WITH &amp;&amp;)
+);</pre><p>
+   </p><p>    详见<a class="link" href="sql-createtable.html#SQL-CREATETABLE-EXCLUDE"><code class="command">CREATE
+    TABLE ... CONSTRAINT ... EXCLUDE</code></a>。
+   </p><p>    增加一个排他约束将在约束声明所指定的类型上自动创建索引。
+   </p></div></div><div class="navfooter"><hr /><table width="100%" summary="Navigation footer"><tr><td width="40%" align="left"><a accesskey="p" href="ddl-default.html">上一页</a> </td><td width="20%" align="center"><a accesskey="u" href="ddl.html">上一级</a></td><td width="40%" align="right"> <a accesskey="n" href="ddl-system-columns.html">下一页</a></td></tr><tr><td width="40%" align="left" valign="top">5.2. 默认值 </td><td width="20%" align="center"><a accesskey="h" href="index.html">起始页</a></td><td width="40%" align="right" valign="top"> 5.4. 系统列</td></tr></table></div></body></html>

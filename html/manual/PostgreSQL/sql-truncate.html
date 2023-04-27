@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><title>TRUNCATE</title><link rel="stylesheet" type="text/css" href="stylesheet.css" /><link rev="made" href="pgsql-docs@postgresql.org" /><meta name="generator" content="DocBook XSL Stylesheets V1.79.1" /><link rel="prev" href="sql-start-transaction.html" title="START TRANSACTION" /><link rel="next" href="sql-unlisten.html" title="UNLISTEN" /></head><body><div xmlns="http://www.w3.org/TR/xhtml1/transitional" class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="5" align="center">TRUNCATE</th></tr><tr><td width="10%" align="left"><a accesskey="p" href="sql-start-transaction.html" title="START TRANSACTION">上一页</a> </td><td width="10%" align="left"><a accesskey="u" href="sql-commands.html" title="SQL 命令">上一级</a></td><th width="60%" align="center">SQL 命令</th><td width="10%" align="right"><a accesskey="h" href="index.html" title="PostgreSQL 10.1 手册">起始页</a></td><td width="10%" align="right"> <a accesskey="n" href="sql-unlisten.html" title="UNLISTEN">下一页</a></td></tr></table><hr></hr></div><div class="refentry" id="SQL-TRUNCATE"><div class="titlepage"></div><a id="idp49579040" class="indexterm"></a><div class="refnamediv"><h2><span class="refentrytitle">TRUNCATE</span></h2><p>TRUNCATE — 清空一个表或者一组表</p></div><div class="refsynopsisdiv"><h2>大纲</h2><pre class="synopsis">TRUNCATE [ TABLE ] [ ONLY ] <em class="replaceable"><code>name</code></em> [ * ] [, ... ]
+    [ RESTART IDENTITY | CONTINUE IDENTITY ] [ CASCADE | RESTRICT ]</pre></div><div class="refsect1" id="idp49583264"><h2>描述</h2><p>   <code class="command">TRUNCATE</code>可以从一组表中快速地移除所有行。
+   它具有和在每个表上执行无条件<code class="command">DELETE</code>相同的
+   效果，不过它会更快，因为它没有实际扫描表。此外，它会立刻回收磁盘空间，
+   而不是要求一个后续的<code class="command">VACUUM</code>操作。在大表上
+   它最有用。
+  </p></div><div class="refsect1" id="idp49586352"><h2>参数</h2><div class="variablelist"><dl class="variablelist"><dt><span class="term"><em class="replaceable"><code>name</code></em></span></dt><dd><p>      要截断的表的名字（可以是模式限定的）。如果在表名前指定了
+      <code class="literal">ONLY</code>，则只会截断该表。如果没有指定<code class="literal">ONLY</code>，
+      该表及其所有后代表（如果有）都会被截断。可选地，可以在表名后指定
+      <code class="literal">*</code>来显式地包括后代表。
+     </p></dd><dt><span class="term"><code class="literal">RESTART IDENTITY</code></span></dt><dd><p>      自动重新开始被截断表的列所拥有的序列。
+     </p></dd><dt><span class="term"><code class="literal">CONTINUE IDENTITY</code></span></dt><dd><p>      不更改序列值。这是默认值。
+     </p></dd><dt><span class="term"><code class="literal">CASCADE</code></span></dt><dd><p>      自动截断所有对任一所提及表有外键引用的表以及任何由于
+      <code class="literal">CASCADE</code>被加入到组中的表。
+     </p></dd><dt><span class="term"><code class="literal">RESTRICT</code></span></dt><dd><p>      如果任一表上具有来自命令中没有列出的表的外键引用，则拒绝截断。这是默认值。
+     </p></dd></dl></div></div><div class="refsect1" id="idp49596832"><h2>注解</h2><p>   要截断一个表，你必须具有其上的<code class="literal">TRUNCATE</code>特权。
+  </p><p>   <code class="command">TRUNCATE</code>在要操作的表上要求一个
+   <code class="literal">ACCESS EXCLUSIVE</code>锁，这会阻塞所有其他在该表上的
+   并发操作。当指定<code class="literal">RESTART IDENTITY</code>时，任何需要被
+   重新开始的序列也会被排他地锁住。如果要求表上的并发访问，那么
+   应该使用<code class="command">DELETE</code>命令。
+  </p><p>   <code class="command">TRUNCATE</code>不能被用在被其他表外键引用的表上，
+   除非那些表也在同一个命令中被阶段。这些情况中的可行性检查将会
+   要求表扫描，并且重点不是为了做扫描。<code class="literal">CASCADE</code>
+   选项可以被用来自动地包括所有依赖表 — 但使用它时要非常
+   小心，否则你可能丢失数据！
+  </p><p>   <code class="command">TRUNCATE</code>将不会引发表上可能存在的任何
+   <code class="literal">ON DELETE</code>触发器。但是它将会引发
+   <code class="literal">ON TRUNCATE</code>触发器。如果在这些表的任意一个
+   上定义了<code class="literal">ON TRUNCATE</code>触发器，那么所有的
+   <code class="literal">BEFORE TRUNCATE</code>触发器将在任何截断发生之前
+   被引发，而所有<code class="literal">AFTER TRUNCATE</code>触发器将在最后
+   一次截断完成并且所有序列被重置之后引发。触发器将以表被处理的顺
+   序被引发（首先是那些被列在命令中的，然后是由于级联被加入的）。
+  </p><p>    <code class="command">TRUNCATE</code>不是 MVCC 安全的。截断之后，
+    如果并发事务使用的是一个在截断发生前取得的快照，
+    表将对这些并发事务呈现为空。详见<a class="xref" href="mvcc-caveats.html" title="13.5. 提醒">第 13.5 节</a>。
+   </p><p>   从表中数据的角度来说，<code class="command">TRUNCATE</code>是事务安全的：
+   如果所在的事务没有提交，阶段将会被安全地回滚。
+  </p><p>   在指定了<code class="literal">RESTART IDENTITY</code>时，隐含的
+   <code class="command">ALTER SEQUENCE RESTART</code>操作也会被事务性地完成。
+   也就是说，如果所在事务没有提交，它们也将被回滚。这和
+   <code class="command">ALTER SEQUENCE RESTART</code>的通常行为不同。注意如果
+   事务回滚前在被重启序列上还做了额外的序列操作，这些操作在序列上的效果
+   也将被回滚，但是它们在<code class="function">currval()</code>上的效果不会被回滚。也就
+   是说，在事务之后，<code class="function">currval()</code>将继续反映在失败事务内得到的
+   最后一个序列值，即使序列本身可能已经不再与此一致。这和失败事务之后
+   <code class="function">currval()</code>的通常行为类似。
+  </p><p>   <code class="command">TRUNCATE</code>当前不支持外部表。
+   这表示如果一个指定的表具有任何外部的后代表，这个命令将会失败。
+  </p></div><div class="refsect1" id="idp49617872"><h2>示例</h2><p>   截断表<code class="literal">bigtable</code>和
+   <code class="literal">fattable</code>：
+
+</p><pre class="programlisting">TRUNCATE bigtable, fattable;</pre><p>
+  </p><p>   做同样的事情，并且还重置任何相关联的序列发生器：
+
+</p><pre class="programlisting">TRUNCATE bigtable, fattable RESTART IDENTITY;</pre><p>
+  </p><p>   截断表<code class="literal">othertable</code>，并且级联地截断任何通过
+   外键约束引用<code class="literal">othertable</code>的表：
+
+</p><pre class="programlisting">TRUNCATE othertable CASCADE;</pre></div><div class="refsect1" id="idp49624256"><h2>兼容性</h2><p>   SQL:2008 标准包括了一个<code class="command">TRUNCATE</code>命令，
+   语法是<code class="literal">TRUNCATE TABLE
+   <em class="replaceable"><code>tablename</code></em></code>。子句
+   <code class="literal">CONTINUE IDENTITY</code>/<code class="literal">RESTART IDENTITY</code>
+   也出现在了该标准中，但是含义有些不同。这个命令的一些并发行为被标准
+   留给实现来定义，因此如果必要应该考虑上述注解并且与其他实现进行比较。
+  </p></div><div class="refsect1" id="idp49628560"><h2>参见</h2><span class="simplelist"><a class="xref" href="sql-delete.html" title="DELETE"><span class="refentrytitle">DELETE</span></a></span></div></div><div class="navfooter"><hr /><table width="100%" summary="Navigation footer"><tr><td width="40%" align="left"><a accesskey="p" href="sql-start-transaction.html">上一页</a> </td><td width="20%" align="center"><a accesskey="u" href="sql-commands.html">上一级</a></td><td width="40%" align="right"> <a accesskey="n" href="sql-unlisten.html">下一页</a></td></tr><tr><td width="40%" align="left" valign="top">START TRANSACTION </td><td width="20%" align="center"><a accesskey="h" href="index.html">起始页</a></td><td width="40%" align="right" valign="top"> UNLISTEN</td></tr></table></div></body></html>

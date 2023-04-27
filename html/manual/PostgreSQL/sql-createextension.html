@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><title>CREATE EXTENSION</title><link rel="stylesheet" type="text/css" href="stylesheet.css" /><link rev="made" href="pgsql-docs@postgresql.org" /><meta name="generator" content="DocBook XSL Stylesheets V1.79.1" /><link rel="prev" href="sql-createeventtrigger.html" title="CREATE EVENT TRIGGER" /><link rel="next" href="sql-createforeigndatawrapper.html" title="CREATE FOREIGN DATA WRAPPER" /></head><body><div xmlns="http://www.w3.org/TR/xhtml1/transitional" class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="5" align="center">CREATE EXTENSION</th></tr><tr><td width="10%" align="left"><a accesskey="p" href="sql-createeventtrigger.html" title="CREATE EVENT TRIGGER">上一页</a> </td><td width="10%" align="left"><a accesskey="u" href="sql-commands.html" title="SQL 命令">上一级</a></td><th width="60%" align="center">SQL 命令</th><td width="10%" align="right"><a accesskey="h" href="index.html" title="PostgreSQL 10.1 手册">起始页</a></td><td width="10%" align="right"> <a accesskey="n" href="sql-createforeigndatawrapper.html" title="CREATE FOREIGN DATA WRAPPER">下一页</a></td></tr></table><hr></hr></div><div class="refentry" id="SQL-CREATEEXTENSION"><div class="titlepage"></div><a id="idp43002128" class="indexterm"></a><div class="refnamediv"><h2><span class="refentrytitle">CREATE EXTENSION</span></h2><p>CREATE EXTENSION — 安装一个扩展</p></div><div class="refsynopsisdiv"><h2>大纲</h2><pre class="synopsis">CREATE EXTENSION [ IF NOT EXISTS ] <em class="replaceable"><code>extension_name</code></em>
+    [ WITH ] [ SCHEMA <em class="replaceable"><code>schema_name</code></em> ]
+             [ VERSION <em class="replaceable"><code>version</code></em> ]
+             [ FROM <em class="replaceable"><code>old_version</code></em> ]
+             [ CASCADE ]</pre></div><div class="refsect1" id="idp43008464"><h2>描述</h2><p>   <code class="command">CREATE EXTENSION</code>把一个新的扩展载入到
+   当前数据库中。不能有同名扩展已经被载入。
+  </p><p>   载入一个扩展本质上是运行该扩展的脚本文件。该脚本通常将创建新的
+   <acronym class="acronym">SQL</acronym>对象，例如函数、数据类型、操作符以及索引支持
+   方法。<code class="command">CREATE EXTENSION</code>会额外地记录
+   所有被创建对象的标识，这样发出
+   <code class="command">DROP EXTENSION</code>时可以删除它们。
+  </p><p>   载入一个扩展要求创建其组件对象所要求的特权。对于大部分扩展这意味
+   这需要超级用户或者数据库拥有者的特权。为了以后特权检察的目的，运行
+   <code class="command">CREATE EXTENSION</code>的用户会成为该扩展的
+   拥有者以及由该扩展的脚本创建的任何对象的拥有者。
+  </p></div><div class="refsect1" id="idp43013904"><h2>参数</h2><div class="variablelist"><dl class="variablelist"><dt><span class="term"><code class="literal">IF NOT EXISTS</code></span></dt><dd><p>        已有同名扩展存在时不要抛出错误。这种情况下会发出一个提示。
+        注意，不保证现有的扩展与将要从当前可用的脚本文件创建的脚本
+        有任何相似。
+       </p></dd><dt><span class="term"><em class="replaceable"><code>extension_name</code></em></span></dt><dd><p>        要安装的扩展的名称。<span class="productname">PostgreSQL</span>
+        将使用文件
+        <code class="literal">SHAREDIR/extension/</code><em class="replaceable"><code>extension_name</code></em><code class="literal">.control</code>
+        中的指令来创建该扩展。
+       </p></dd><dt><span class="term"><em class="replaceable"><code>schema_name</code></em></span></dt><dd><p>        假定该扩展允许其内容被重定位，这是要在其中安装该扩展的对象的
+        模式名称。被提到的模式必须已经存在。如果没有指定并且该扩展的
+        控制文件也没有指定一个模式，将使用当前的默认对象创建模式。
+       </p><p>        如果该扩展在其控制文件中指定了一个<code class="literal">schema</code>参数，
+        那么不能用<code class="literal">SCHEMA</code>子句覆盖该模式。通常，如果
+        给出了一个<code class="literal">SCHEMA</code>子句并且它与扩展的
+        <code class="literal">schema</code>参数冲突，则会发生错误。不过，如果也给
+        出了<code class="literal">CASCADE</code>子句，则schema冲突时会忽略
+        <em class="replaceable"><code>schema_name</code></em>。
+        给定的<em class="replaceable"><code>schema_name</code></em>
+        将被用来安装任何需要的并且没有在其控制文件中指定
+        <code class="literal">schema</code>的扩展。
+       </p><p>        记住扩展本身被认为不在任何模式中：扩展具有无限定的名称，并且
+        要在整个数据库范围内唯一。但是属于扩展的对象可以在模式中。
+       </p></dd><dt><span class="term"><em class="replaceable"><code>version</code></em></span></dt><dd><p>        要安装的扩展的版本。这可以写成一个标识符或者一个字符串。
+        默认版本在该扩展的控制文件中指定。
+       </p></dd><dt><span class="term"><em class="replaceable"><code>old_version</code></em></span></dt><dd><p>        当且仅当尝试要安装一个扩展来替代一个<span class="quote">“<span class="quote">老式</span>”</span>
+        的模块（它只是一组没有被打包成扩展的对象的集合）时，
+        才必须指定
+        <code class="literal">FROM</code> <em class="replaceable"><code>old_version</code></em>。
+        这个选项导致<code class="command">CREATE EXTENSION</code>运行
+        另一个安装脚本把现有的对象吸收到该扩展中，而不是创建
+        新对象。当心<code class="literal">SCHEMA</code>指定的是包含已经存在
+        对象的模式。
+       </p><p>        用于<em class="replaceable"><code>old_version</code></em>的值由扩展的作者决定，
+        且如果有多于一种版本的老式模块可以被升级到扩展，该值还可能变化。
+        对于 9.1 之前的<span class="productname">PostgreSQL</span>提供的
+        标准附加模块，在升级模块到扩展风格时要为
+        <em class="replaceable"><code>old_version</code></em>使用
+        <code class="literal">unpackaged</code>。
+       </p></dd><dt><span class="term"><code class="literal">CASCADE</code></span></dt><dd><p>        自动安装这个扩展所依赖的任何还未安装的扩展。它们的依赖也会同样
+        被自动安装。如果给出<code class="literal">SCHEMA</code>子句，它会应用于这种方式
+        下安装的所有扩展。这个语句的其他选项不会被应用于自动安装的扩展。
+        特别地，这些自动安装的扩展的默认版本将被选中。
+       </p></dd></dl></div></div><div class="refsect1" id="idp43041472"><h2>注解</h2><p>   在使用<code class="command">CREATE EXTENSION</code>载入扩展到数据库中之前，
+   必须先安装好该扩展的支持文件。关于安装
+   <span class="productname">PostgreSQL</span>提供的扩展的信息可以在
+   <a class="link" href="contrib.html" title="附录 F. 额外提供的模块">额外提供的模块</a>中找到。
+  </p><p>   当前可以用于载入的扩展可以在系统视图
+   <a class="link" href="view-pg-available-extensions.html" title="51.65. pg_available_extensions"><code class="structname">pg_available_extensions</code></a>
+   或者
+   <a class="link" href="view-pg-available-extension-versions.html" title="51.66. pg_available_extension_versions"><code class="structname">pg_available_extension_versions</code></a>
+   中看到。
+  </p><p>   更多有关编写新扩展的内容请见<a class="xref" href="extend-extensions.html" title="37.15. 打包相关对象到一个扩展中">第 37.15 节</a>。
+  </p></div><div class="refsect1" id="idp43048224"><h2>示例</h2><p>   安装<a class="link" href="hstore.html" title="F.17. hstore">hstore</a>扩展到当前数据库中：
+</p><pre class="programlisting">CREATE EXTENSION hstore;</pre><p>
+  </p><p>   升级一个 9.1 之前的<code class="literal">hstore</code>安装成为扩展：
+</p><pre class="programlisting">CREATE EXTENSION hstore SCHEMA public FROM unpackaged;</pre><p>
+   要小心地指定安装现有<code class="literal">hstore</code>对象的模式。
+  </p></div><div class="refsect1" id="idp43053056"><h2>兼容性</h2><p>   <code class="command">CREATE EXTENSION</code>是一种
+   <span class="productname">PostgreSQL</span>扩展。
+  </p></div><div class="refsect1" id="idp43055168"><h2>另见</h2><span class="simplelist"><a class="xref" href="sql-alterextension.html" title="ALTER EXTENSION"><span class="refentrytitle">ALTER EXTENSION</span></a>, <a class="xref" href="sql-dropextension.html" title="DROP EXTENSION"><span class="refentrytitle">DROP EXTENSION</span></a></span></div></div><div class="navfooter"><hr /><table width="100%" summary="Navigation footer"><tr><td width="40%" align="left"><a accesskey="p" href="sql-createeventtrigger.html">上一页</a> </td><td width="20%" align="center"><a accesskey="u" href="sql-commands.html">上一级</a></td><td width="40%" align="right"> <a accesskey="n" href="sql-createforeigndatawrapper.html">下一页</a></td></tr><tr><td width="40%" align="left" valign="top">CREATE EVENT TRIGGER </td><td width="20%" align="center"><a accesskey="h" href="index.html">起始页</a></td><td width="40%" align="right" valign="top"> CREATE FOREIGN DATA WRAPPER</td></tr></table></div></body></html>

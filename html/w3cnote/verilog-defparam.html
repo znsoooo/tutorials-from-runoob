@@ -1,0 +1,734 @@
+<!Doctype html>
+<html>
+<head>
+	<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+	<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+	<title>5.3 Verilog 带参数例化 | 菜鸟教程</title>
+
+  <meta name='robots' content='max-image-preview:large' />
+<link rel='stylesheet' id='classic-theme-styles-css' href='http://www.runoob.com/wp-includes/css/classic-themes.min.css?ver=6.2' type='text/css' media='all' />
+<link rel="canonical" href="http://www.runoob.com/w3cnote/verilog-defparam.html" />
+<meta name="keywords" content="5.3 Verilog 带参数例化">
+<meta name="description" content="关键词： defparam，参数，例化，ram 当一个模块被另一个模块引用例化时，高层模块可以对低层模块的参数值进行改写。这样就允许在编译时将不同的参数传递给多个相同名字的模块，而不用单独为只有参数不同的多个模块再新建文件。 参数覆盖有 2 种方式：1）使用关键字 defparam，2）带参数值模块例化。  defparam 语句 可以用关键字 defparam 通过模块层次调用的方法，来改写低层次模块的参数值。 例如对一个单口地址线和..">
+		
+	<link rel="shortcut icon" href="https://static.runoob.com/images/favicon.ico">
+	<link rel="stylesheet" href="/wp-content/themes/runoob/style.css?v=1.170" type="text/css" media="all" />	
+	<link rel="stylesheet" href="https://cdn.staticfile.org/font-awesome/4.7.0/css/font-awesome.min.css" media="all" />	
+  <!--[if gte IE 9]><!-->
+  <script src="https://cdn.staticfile.org/jquery/2.0.3/jquery.min.js"></script>
+  <!--<![endif]-->
+  <!--[if lt IE 9]>
+     <script src="https://cdn.staticfile.org/jquery/1.9.1/jquery.min.js"></script>
+     <script src="https://cdn.staticfile.org/html5shiv/r29/html5.min.js"></script>
+  <![endif]-->
+  <link rel="apple-touch-icon" href="https://static.runoob.com/images/icon/mobile-icon.png"/>
+  <meta name="apple-mobile-web-app-title" content="菜鸟教程">
+</head>
+<body>
+
+<!--  头部 -->
+<div class="container logo-search">
+
+  <div class="col search row-search-mobile">
+    <form action="index.php">
+      <input class="placeholder" placeholder="搜索……" name="s" autocomplete="off">
+      
+    </form>
+  </div>
+
+  <div class="row">
+    <div class="col logo">
+      <h1><a href="/">菜鸟教程 -- 学的不仅是技术，更是梦想！</a></h1>
+    </div>
+        <div class="col right-list"> 
+    <button class="btn btn-responsive-nav btn-inverse" data-toggle="collapse" data-target=".nav-main-collapse" id="pull" style=""> <i class="fa fa-navicon"></i> </button>
+    </div>
+        
+    <div class="col search search-desktop last">
+      <div class="search-input" >
+      <form action="//www.runoob.com/" target="_blank">
+        <input class="placeholder" id="s" name="s" placeholder="搜索……"  autocomplete="off" style="height: 44px;">
+      </form>
+      
+      </div>
+    </div>
+  </div>
+</div>
+
+
+
+<!-- 导航栏 -->
+<div class="container navigation">
+    <div class="row">
+        <div class="col nav">
+            
+
+                        <ul class="pc-nav" id="note-nav">
+                <li><a href="//www.runoob.com/">首页</a></li>
+                <li><a href="/w3cnote">笔记首页</a></li>
+                <li><a href="/w3cnote/android-tutorial-intro.html" title="Android 基础入门教程">Android</a></li>
+                <li><a href="/w3cnote/es6-tutorial.html" title="ES6 教程">ES6 教程</a></li>
+                <li><a href="/w3cnote/ten-sorting-algorithm.html" title="排序算法">排序算法</a></li>
+                <li><a href="/w3cnote/hadoop-tutorial.html" title="Hadoop 教程">Hadoop</a></li>
+                <li><a href="/w3cnote/zookeeper-tutorial.html" title="Zookeeper 教程">Zookeeper</a></li>
+                <li><a href="/w3cnote/verilog-tutorial.html" title="Verilog 教程">Verilog</a></li>
+                <li><a href="/w3cnote_genre/code" title="编程技术">编程技术</a></li> 
+                <li><a href="/w3cnote_genre/coderlife" title="程序员人生">程序员人生</a></li>
+                
+                <!--<li><a href="javascript:;" class="runoob-pop">登录</a></li>
+                
+                
+                        <li>
+                <a style="font-weight:bold;" href="https://www.runoob.com/linux/linux-tutorial.html#yunserver" target="_blank" onclick="_hmt.push(['_trackEvent', 'aliyun', 'click', 'aliyun'])" title="kkb">云服务器</a>
+                </li>
+                <li><a href="http://gk.link/a/104mQ" target="_blank" style="font-weight: bold;"onclick="_hmt.push(['_trackEvent', '极客时间', 'click', 'jike'])" title="我的圈子">极客时间</a></li>
+            
+                
+                <li><a target="_blank" href="/shoppinglist" rel="nofollow">知识店铺</a></li> 
+        -->
+            </ul>
+                        
+              
+            <ul class="mobile-nav">
+                <li><a href="/w3cnote">首页</a></li>
+                <li><a href="/w3cnote_genre/android" target="_blank" title="Android 基础入门教程">Android</a></li>
+                <li><a href="/w3cnote/es6-tutorial.html" target="_blank" title="ES6 教程">ES6</a></li>
+                <li><a href="/w3cnote_genre/joke" target="_blank" title="程序员笑话">逗乐</a></li>
+                
+                <a href="javascript:void(0)" class="search-reveal">Search</a> 
+            </ul>
+            
+        </div>
+    </div>
+</div>
+
+
+<!--  内容  -->
+<div class="container main">
+	<div class="row">
+
+		<!--  Android 基础入门教程 start  -->
+	<div class="col left-column" style="display:none;">
+		<div class="tab">Verilog 教程</div>
+		<div class="sidebar-box gallery-list">
+			<div class="design" id="leftcolumn">  
+			</div> 
+		</div> 
+	</div>
+	<!--  Android 基础入门教程 end  -->
+		<div class="col middle-column big-middle-column">
+	 			<div class="article">
+			<div class="article-heading">
+				<h2>5.3 Verilog 带参数例化</h2>				<h3><em>分类</em> <a href="/w3cnote_genre/verilog" title="Verilog 教程" >Verilog 教程</a> </h3>
+			</div>
+			<div class="article-body note-body">
+				<div class="article-intro">
+					<h3>关键词： defparam，参数，例化，ram</h3><p>
+当一个模块被另一个模块引用例化时，高层模块可以对低层模块的参数值进行改写。这样就允许在编译时将不同的参数传递给多个相同名字的模块，而不用单独为只有参数不同的多个模块再新建文件。</p><p>
+参数覆盖有 2 种方式：1）使用关键字 defparam，2）带参数值模块例化。 </p>
+<h3>defparam 语句</h3><p>
+可以用关键字 defparam 通过模块层次调用的方法，来改写低层次模块的参数值。</p>
+<p>例如对一个单口地址线和数据线都是 4bit 宽度的 ram 模块的 MASK 参数进行改写：</p>
+<div class="example"><h2 class="example">实例</h2> <div class="example_code">
+<span style="color: #00008B; font-style: italic;">//instantiation</span><br />
+<span style="color: #A52A2A; font-weight: bold;">defparam</span> &nbsp; &nbsp; u_ram_4x4.MASK <span style="color: #5D478B;">=</span> <span style="color: #ff0055;">7</span> <span style="color: #5D478B;">;</span><br />
+ram_4x4 &nbsp; &nbsp;u_ram_4x4<br />
+&nbsp; &nbsp; <span style="color: #9F79EE;">&#40;</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; .CLK &nbsp; &nbsp;<span style="color: #9F79EE;">&#40;</span>clk<span style="color: #9F79EE;">&#41;</span><span style="color: #5D478B;">,</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; .A &nbsp; &nbsp; &nbsp;<span style="color: #9F79EE;">&#40;</span>a<span style="color: #9F79EE;">&#91;</span><span style="color: #ff0055;">4</span><span style="color: #5D478B;">-</span><span style="color: #ff0055;">1</span><span style="color: #5D478B;">:</span><span style="color: #ff0055;">0</span><span style="color: #9F79EE;">&#93;</span><span style="color: #9F79EE;">&#41;</span><span style="color: #5D478B;">,</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; .D &nbsp; &nbsp; &nbsp;<span style="color: #9F79EE;">&#40;</span>d<span style="color: #9F79EE;">&#41;</span><span style="color: #5D478B;">,</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; .EN &nbsp; &nbsp; <span style="color: #9F79EE;">&#40;</span>en<span style="color: #9F79EE;">&#41;</span><span style="color: #5D478B;">,</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; .WR &nbsp; &nbsp; <span style="color: #9F79EE;">&#40;</span>wr<span style="color: #9F79EE;">&#41;</span><span style="color: #5D478B;">,</span> &nbsp; &nbsp;<span style="color: #00008B; font-style: italic;">//1 for write and 0 for read</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; .Q &nbsp; &nbsp; &nbsp;<span style="color: #9F79EE;">&#40;</span>q<span style="color: #9F79EE;">&#41;</span> &nbsp; &nbsp;<span style="color: #9F79EE;">&#41;</span><span style="color: #5D478B;">;</span><br />
+</div></div>
+<p>ram_4x4 的模型如下：</p>
+<div class="example"><h2 class="example">实例</h2> <div class="example_code">
+<span style="color: #A52A2A; font-weight: bold;">module</span> &nbsp;ram_4x4<br />
+&nbsp; &nbsp; <span style="color: #9F79EE;">&#40;</span><br />
+&nbsp; &nbsp; &nbsp;<span style="color: #A52A2A; font-weight: bold;">input</span> &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; CLK <span style="color: #5D478B;">,</span><br />
+&nbsp; &nbsp; &nbsp;<span style="color: #A52A2A; font-weight: bold;">input</span> <span style="color: #9F79EE;">&#91;</span><span style="color: #ff0055;">4</span><span style="color: #5D478B;">-</span><span style="color: #ff0055;">1</span><span style="color: #5D478B;">:</span><span style="color: #ff0055;">0</span><span style="color: #9F79EE;">&#93;</span> &nbsp; &nbsp; &nbsp; A <span style="color: #5D478B;">,</span><br />
+&nbsp; &nbsp; &nbsp;<span style="color: #A52A2A; font-weight: bold;">input</span> <span style="color: #9F79EE;">&#91;</span><span style="color: #ff0055;">4</span><span style="color: #5D478B;">-</span><span style="color: #ff0055;">1</span><span style="color: #5D478B;">:</span><span style="color: #ff0055;">0</span><span style="color: #9F79EE;">&#93;</span> &nbsp; &nbsp; &nbsp; D <span style="color: #5D478B;">,</span><br />
+&nbsp; &nbsp; &nbsp;<span style="color: #A52A2A; font-weight: bold;">input</span> &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; EN <span style="color: #5D478B;">,</span><br />
+&nbsp; &nbsp; &nbsp;<span style="color: #A52A2A; font-weight: bold;">input</span> &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; WR <span style="color: #5D478B;">,</span> &nbsp; &nbsp;<span style="color: #00008B; font-style: italic;">//1 for write and 0 for read</span><br />
+&nbsp; &nbsp; &nbsp;<span style="color: #A52A2A; font-weight: bold;">output</span> <span style="color: #A52A2A; font-weight: bold;">reg</span> <span style="color: #9F79EE;">&#91;</span><span style="color: #ff0055;">4</span><span style="color: #5D478B;">-</span><span style="color: #ff0055;">1</span><span style="color: #5D478B;">:</span><span style="color: #ff0055;">0</span><span style="color: #9F79EE;">&#93;</span> &nbsp;Q &nbsp; &nbsp;<span style="color: #9F79EE;">&#41;</span><span style="color: #5D478B;">;</span><br />
+&nbsp;<br />
+&nbsp; &nbsp; <span style="color: #A52A2A; font-weight: bold;">parameter</span> &nbsp; &nbsp; &nbsp; &nbsp;MASK <span style="color: #5D478B;">=</span> <span style="color: #ff0055;">3</span> <span style="color: #5D478B;">;</span><br />
+&nbsp;<br />
+&nbsp; &nbsp; <span style="color: #A52A2A; font-weight: bold;">reg</span> <span style="color: #9F79EE;">&#91;</span><span style="color: #ff0055;">4</span><span style="color: #5D478B;">-</span><span style="color: #ff0055;">1</span><span style="color: #5D478B;">:</span><span style="color: #ff0055;">0</span><span style="color: #9F79EE;">&#93;</span> &nbsp; &nbsp; mem <span style="color: #9F79EE;">&#91;</span><span style="color: #ff0055;">0</span><span style="color: #5D478B;">:</span><span style="color: #9F79EE;">&#40;</span><span style="color: #ff0055;">1</span><span style="color: #5D478B;">&lt;&lt;</span><span style="color: #ff0055;">4</span><span style="color: #9F79EE;">&#41;</span><span style="color: #5D478B;">-</span><span style="color: #ff0055;">1</span><span style="color: #9F79EE;">&#93;</span> <span style="color: #5D478B;">;</span><br />
+&nbsp; &nbsp; <span style="color: #A52A2A; font-weight: bold;">always</span> <span style="color: #5D478B;">@</span><span style="color: #9F79EE;">&#40;</span><span style="color: #A52A2A; font-weight: bold;">posedge</span> CLK<span style="color: #9F79EE;">&#41;</span> <span style="color: #A52A2A; font-weight: bold;">begin</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; <span style="color: #A52A2A; font-weight: bold;">if</span> <span style="color: #9F79EE;">&#40;</span>EN <span style="color: #5D478B;">&amp;&amp;</span> WR<span style="color: #9F79EE;">&#41;</span> <span style="color: #A52A2A; font-weight: bold;">begin</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; mem<span style="color: #9F79EE;">&#91;</span>A<span style="color: #9F79EE;">&#93;</span> &nbsp;<span style="color: #5D478B;">&lt;=</span> D <span style="color: #5D478B;">&amp;</span> MASK<span style="color: #5D478B;">;</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; <span style="color: #A52A2A; font-weight: bold;">end</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; <span style="color: #A52A2A; font-weight: bold;">else</span> <span style="color: #A52A2A; font-weight: bold;">if</span> <span style="color: #9F79EE;">&#40;</span>EN <span style="color: #5D478B;">&amp;&amp;</span> <span style="color: #5D478B;">!</span>WR<span style="color: #9F79EE;">&#41;</span> <span style="color: #A52A2A; font-weight: bold;">begin</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; Q &nbsp; &nbsp; &nbsp; <span style="color: #5D478B;">&lt;=</span> mem<span style="color: #9F79EE;">&#91;</span>A<span style="color: #9F79EE;">&#93;</span> <span style="color: #5D478B;">&amp;</span> MASK<span style="color: #5D478B;">;</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; <span style="color: #A52A2A; font-weight: bold;">end</span><br />
+&nbsp; &nbsp; <span style="color: #A52A2A; font-weight: bold;">end</span><br />
+&nbsp;<br />
+<span style="color: #A52A2A; font-weight: bold;">endmodule</span><br />
+</div></div>
+<p>对此进行一个简单的仿真，testbench 编写如下：</p>
+<div class="example"><h2 class="example">实例</h2> <div class="example_code">
+<span style="color: #008800;">`timescale</span> <span style="color: #ff0055;">1ns</span><span style="color: #5D478B;">/</span><span style="color: #ff0055;">1ns</span><br />
+&nbsp;<br />
+<span style="color: #A52A2A; font-weight: bold;">module</span> test <span style="color: #5D478B;">;</span><br />
+&nbsp; &nbsp; <span style="color: #A52A2A; font-weight: bold;">parameter</span> &nbsp; &nbsp;AW <span style="color: #5D478B;">=</span> <span style="color: #ff0055;">4</span> <span style="color: #5D478B;">;</span><br />
+&nbsp; &nbsp; <span style="color: #A52A2A; font-weight: bold;">parameter</span> &nbsp; &nbsp;DW <span style="color: #5D478B;">=</span> <span style="color: #ff0055;">4</span> <span style="color: #5D478B;">;</span><br />
+&nbsp;<br />
+&nbsp; &nbsp; <span style="color: #A52A2A; font-weight: bold;">reg</span> &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;clk <span style="color: #5D478B;">;</span><br />
+&nbsp; &nbsp; <span style="color: #A52A2A; font-weight: bold;">reg</span> <span style="color: #9F79EE;">&#91;</span>AW<span style="color: #5D478B;">:</span><span style="color: #ff0055;">0</span><span style="color: #9F79EE;">&#93;</span> &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; a <span style="color: #5D478B;">;</span><br />
+&nbsp; &nbsp; <span style="color: #A52A2A; font-weight: bold;">reg</span> <span style="color: #9F79EE;">&#91;</span>DW<span style="color: #5D478B;">-</span><span style="color: #ff0055;">1</span><span style="color: #5D478B;">:</span><span style="color: #ff0055;">0</span><span style="color: #9F79EE;">&#93;</span> &nbsp; &nbsp; &nbsp; &nbsp; d <span style="color: #5D478B;">;</span><br />
+&nbsp; &nbsp; <span style="color: #A52A2A; font-weight: bold;">reg</span> &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;en <span style="color: #5D478B;">;</span><br />
+&nbsp; &nbsp; <span style="color: #A52A2A; font-weight: bold;">reg</span> &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;wr <span style="color: #5D478B;">;</span><br />
+&nbsp; &nbsp; <span style="color: #A52A2A; font-weight: bold;">wire</span> <span style="color: #9F79EE;">&#91;</span>DW<span style="color: #5D478B;">-</span><span style="color: #ff0055;">1</span><span style="color: #5D478B;">:</span><span style="color: #ff0055;">0</span><span style="color: #9F79EE;">&#93;</span> &nbsp; &nbsp; &nbsp; &nbsp;q <span style="color: #5D478B;">;</span><br />
+&nbsp;<br />
+&nbsp; &nbsp; <span style="color: #00008B; font-style: italic;">//clock generating</span><br />
+&nbsp; &nbsp; <span style="color: #A52A2A; font-weight: bold;">always</span> <span style="color: #A52A2A; font-weight: bold;">begin</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; <span style="color: #5D478B;">#</span><span style="color: #ff0055;">15</span> <span style="color: #5D478B;">;</span> &nbsp; &nbsp; clk <span style="color: #5D478B;">=</span> <span style="color: #ff0055;">0</span> <span style="color: #5D478B;">;</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; <span style="color: #5D478B;">#</span><span style="color: #ff0055;">15</span> <span style="color: #5D478B;">;</span> &nbsp; &nbsp; clk <span style="color: #5D478B;">=</span> <span style="color: #ff0055;">1</span> <span style="color: #5D478B;">;</span><br />
+&nbsp; &nbsp; <span style="color: #A52A2A; font-weight: bold;">end</span><br />
+&nbsp;<br />
+&nbsp; &nbsp; <span style="color: #A52A2A; font-weight: bold;">initial</span> <span style="color: #A52A2A; font-weight: bold;">begin</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; a &nbsp; &nbsp; &nbsp; &nbsp; <span style="color: #5D478B;">=</span> <span style="color: #ff0055;">10</span> <span style="color: #5D478B;">;</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; d &nbsp; &nbsp; &nbsp; &nbsp; <span style="color: #5D478B;">=</span> <span style="color: #ff0055;">2</span> <span style="color: #5D478B;">;</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; en &nbsp; &nbsp; &nbsp; &nbsp;<span style="color: #5D478B;">=</span> 'b0 <span style="color: #5D478B;">;</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; wr &nbsp; &nbsp; &nbsp; &nbsp;<span style="color: #5D478B;">=</span> 'b0 <span style="color: #5D478B;">;</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; <span style="color: #A52A2A; font-weight: bold;">repeat</span><span style="color: #9F79EE;">&#40;</span><span style="color: #ff0055;">10</span><span style="color: #9F79EE;">&#41;</span> <span style="color: #A52A2A; font-weight: bold;">begin</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; <span style="color: #5D478B;">@</span><span style="color: #9F79EE;">&#40;</span><span style="color: #A52A2A; font-weight: bold;">negedge</span> clk<span style="color: #9F79EE;">&#41;</span> <span style="color: #5D478B;">;</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; en &nbsp; &nbsp; <span style="color: #5D478B;">=</span> <span style="color: #ff0055;">1'b1</span><span style="color: #5D478B;">;</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; a &nbsp; &nbsp; &nbsp;<span style="color: #5D478B;">=</span> a <span style="color: #5D478B;">+</span> <span style="color: #ff0055;">1</span> <span style="color: #5D478B;">;</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; wr &nbsp; &nbsp; <span style="color: #5D478B;">=</span> <span style="color: #ff0055;">1'b1</span> <span style="color: #5D478B;">;</span> &nbsp;<span style="color: #00008B; font-style: italic;">//write command</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; d &nbsp; &nbsp; &nbsp;<span style="color: #5D478B;">=</span> d <span style="color: #5D478B;">+</span> <span style="color: #ff0055;">1</span> <span style="color: #5D478B;">;</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; <span style="color: #A52A2A; font-weight: bold;">end</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; a &nbsp; &nbsp; &nbsp; &nbsp; <span style="color: #5D478B;">=</span> <span style="color: #ff0055;">10</span> <span style="color: #5D478B;">;</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; <span style="color: #A52A2A; font-weight: bold;">repeat</span><span style="color: #9F79EE;">&#40;</span><span style="color: #ff0055;">10</span><span style="color: #9F79EE;">&#41;</span> <span style="color: #A52A2A; font-weight: bold;">begin</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; <span style="color: #5D478B;">@</span><span style="color: #9F79EE;">&#40;</span><span style="color: #A52A2A; font-weight: bold;">negedge</span> clk<span style="color: #9F79EE;">&#41;</span> <span style="color: #5D478B;">;</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; a &nbsp; &nbsp; &nbsp;<span style="color: #5D478B;">=</span> a <span style="color: #5D478B;">+</span> <span style="color: #ff0055;">1</span> <span style="color: #5D478B;">;</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; wr &nbsp; &nbsp; <span style="color: #5D478B;">=</span> <span style="color: #ff0055;">1'b0</span> <span style="color: #5D478B;">;</span> &nbsp;<span style="color: #00008B; font-style: italic;">//read command</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; <span style="color: #A52A2A; font-weight: bold;">end</span><br />
+&nbsp; &nbsp; <span style="color: #A52A2A; font-weight: bold;">end</span> <span style="color: #00008B; font-style: italic;">// initial begin</span><br />
+&nbsp;<br />
+&nbsp; &nbsp; <span style="color: #00008B; font-style: italic;">//instantiation</span><br />
+&nbsp; &nbsp; <span style="color: #A52A2A; font-weight: bold;">defparam</span> &nbsp; &nbsp; u_ram_4x4.MASK <span style="color: #5D478B;">=</span> <span style="color: #ff0055;">7</span> <span style="color: #5D478B;">;</span><br />
+&nbsp; &nbsp; ram_4x4 &nbsp; &nbsp;u_ram_4x4<br />
+&nbsp; &nbsp; <span style="color: #9F79EE;">&#40;</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; .CLK &nbsp; &nbsp;<span style="color: #9F79EE;">&#40;</span>clk<span style="color: #9F79EE;">&#41;</span><span style="color: #5D478B;">,</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; .A &nbsp; &nbsp; &nbsp;<span style="color: #9F79EE;">&#40;</span>a<span style="color: #9F79EE;">&#91;</span>AW<span style="color: #5D478B;">-</span><span style="color: #ff0055;">1</span><span style="color: #5D478B;">:</span><span style="color: #ff0055;">0</span><span style="color: #9F79EE;">&#93;</span><span style="color: #9F79EE;">&#41;</span><span style="color: #5D478B;">,</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; .D &nbsp; &nbsp; &nbsp;<span style="color: #9F79EE;">&#40;</span>d<span style="color: #9F79EE;">&#41;</span><span style="color: #5D478B;">,</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; .EN &nbsp; &nbsp; <span style="color: #9F79EE;">&#40;</span>en<span style="color: #9F79EE;">&#41;</span><span style="color: #5D478B;">,</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; .WR &nbsp; &nbsp; <span style="color: #9F79EE;">&#40;</span>wr<span style="color: #9F79EE;">&#41;</span><span style="color: #5D478B;">,</span> &nbsp; &nbsp;<span style="color: #00008B; font-style: italic;">//1 for write and 0 for read</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; .Q &nbsp; &nbsp; &nbsp;<span style="color: #9F79EE;">&#40;</span>q<span style="color: #9F79EE;">&#41;</span><br />
+&nbsp; &nbsp; &nbsp;<span style="color: #9F79EE;">&#41;</span><span style="color: #5D478B;">;</span><br />
+&nbsp;<br />
+&nbsp; &nbsp; <span style="color: #00008B; font-style: italic;">//stop simulation</span><br />
+&nbsp; &nbsp; <span style="color: #A52A2A; font-weight: bold;">initial</span> <span style="color: #A52A2A; font-weight: bold;">begin</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; <span style="color: #A52A2A; font-weight: bold;">forever</span> <span style="color: #A52A2A; font-weight: bold;">begin</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; <span style="color: #5D478B;">#</span><span style="color: #ff0055;">100</span><span style="color: #5D478B;">;</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; <span style="color: #A52A2A; font-weight: bold;">if</span> <span style="color: #9F79EE;">&#40;</span><span style="color: #9932CC;">$time</span> <span style="color: #5D478B;">&gt;=</span> <span style="color: #ff0055;">1000</span><span style="color: #9F79EE;">&#41;</span> &nbsp;<span style="color: #9932CC;">$finish</span> <span style="color: #5D478B;">;</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; <span style="color: #A52A2A; font-weight: bold;">end</span><br />
+&nbsp; &nbsp; <span style="color: #A52A2A; font-weight: bold;">end</span><br />
+&nbsp;<br />
+<span style="color: #A52A2A; font-weight: bold;">endmodule</span> <span style="color: #00008B; font-style: italic;">// test</span><br />
+</div></div>
+<p>仿真结果如下：</p><p>
+图中黄色部分，当地址第一次为 c 时写入数据 4， 当第二次地址为 c 时读出数据为 4；可知此时 ram 行为正确，且 MASK 不为 3。 因为 ram 的 Q 端 bit2 没有被屏蔽。</p><p>
+当第一次地址为 1 时写入数据为 9，第二次地址为 1 时读出的数据却是 1，因为此时 MASK 为 7，ram 的 Q 端信号 bit3 被屏蔽。由此可知，MASK 参数被正确改写。</p>
+
+<a href="https://www.runoob.com/wp-content/uploads/2020/09/tnlPObwYSjF2Y5Qj.png" target="_blank" rel="noopener noreferrer"><img decoding="async" src="https://www.runoob.com/wp-content/uploads/2020/09/tnlPObwYSjF2Y5Qj.png" /></a>
+
+<h3>带参数模块例化</h3><p>
+第二种方法就是例化模块时，将新的参数值写入模块例化语句，以此来改写原有 module 的参数值。</p>
+<p>例如对一个地址和数据位宽都可变的 ram 模块进行带参数的模块例化：</p>
+<div class="example"><h2 class="example">实例</h2> <div class="example_code">
+ram <span style="color: #5D478B;">#</span><span style="color: #9F79EE;">&#40;</span>.AW<span style="color: #9F79EE;">&#40;</span><span style="color: #ff0055;">4</span><span style="color: #9F79EE;">&#41;</span><span style="color: #5D478B;">,</span> .DW<span style="color: #9F79EE;">&#40;</span><span style="color: #ff0055;">4</span><span style="color: #9F79EE;">&#41;</span><span style="color: #9F79EE;">&#41;</span><br />
+&nbsp; &nbsp; u_ram<br />
+&nbsp; &nbsp; <span style="color: #9F79EE;">&#40;</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; .CLK &nbsp; &nbsp;<span style="color: #9F79EE;">&#40;</span>clk<span style="color: #9F79EE;">&#41;</span><span style="color: #5D478B;">,</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; .A &nbsp; &nbsp; &nbsp;<span style="color: #9F79EE;">&#40;</span>a<span style="color: #9F79EE;">&#91;</span>AW<span style="color: #5D478B;">-</span><span style="color: #ff0055;">1</span><span style="color: #5D478B;">:</span><span style="color: #ff0055;">0</span><span style="color: #9F79EE;">&#93;</span><span style="color: #9F79EE;">&#41;</span><span style="color: #5D478B;">,</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; .D &nbsp; &nbsp; &nbsp;<span style="color: #9F79EE;">&#40;</span>d<span style="color: #9F79EE;">&#41;</span><span style="color: #5D478B;">,</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; .EN &nbsp; &nbsp; <span style="color: #9F79EE;">&#40;</span>en<span style="color: #9F79EE;">&#41;</span><span style="color: #5D478B;">,</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; .WR &nbsp; &nbsp; <span style="color: #9F79EE;">&#40;</span>wr<span style="color: #9F79EE;">&#41;</span><span style="color: #5D478B;">,</span> &nbsp; &nbsp;<span style="color: #00008B; font-style: italic;">//1 for write and 0 for read</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; .Q &nbsp; &nbsp; &nbsp;<span style="color: #9F79EE;">&#40;</span>q<span style="color: #9F79EE;">&#41;</span><br />
+&nbsp; &nbsp; &nbsp;<span style="color: #9F79EE;">&#41;</span><span style="color: #5D478B;">;</span><br />
+</div></div>
+<p>ram 模型如下：</p>
+<div class="example"><h2 class="example">实例</h2> <div class="example_code">
+<span style="color: #A52A2A; font-weight: bold;">module</span> &nbsp;ram<br />
+&nbsp; &nbsp; <span style="color: #5D478B;">#</span><span style="color: #9F79EE;">&#40;</span> &nbsp;<span style="color: #A52A2A; font-weight: bold;">parameter</span> &nbsp; &nbsp; &nbsp; AW <span style="color: #5D478B;">=</span> <span style="color: #ff0055;">2</span> <span style="color: #5D478B;">,</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; <span style="color: #A52A2A; font-weight: bold;">parameter</span> &nbsp; &nbsp; &nbsp; DW <span style="color: #5D478B;">=</span> <span style="color: #ff0055;">3</span> <span style="color: #9F79EE;">&#41;</span><br />
+&nbsp; &nbsp; <span style="color: #9F79EE;">&#40;</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; <span style="color: #A52A2A; font-weight: bold;">input</span> &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; CLK <span style="color: #5D478B;">,</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; <span style="color: #A52A2A; font-weight: bold;">input</span> <span style="color: #9F79EE;">&#91;</span>AW<span style="color: #5D478B;">-</span><span style="color: #ff0055;">1</span><span style="color: #5D478B;">:</span><span style="color: #ff0055;">0</span><span style="color: #9F79EE;">&#93;</span> &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;A <span style="color: #5D478B;">,</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; <span style="color: #A52A2A; font-weight: bold;">input</span> <span style="color: #9F79EE;">&#91;</span>DW<span style="color: #5D478B;">-</span><span style="color: #ff0055;">1</span><span style="color: #5D478B;">:</span><span style="color: #ff0055;">0</span><span style="color: #9F79EE;">&#93;</span> &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;D <span style="color: #5D478B;">,</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; <span style="color: #A52A2A; font-weight: bold;">input</span> &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; EN <span style="color: #5D478B;">,</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; <span style="color: #A52A2A; font-weight: bold;">input</span> &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; WR <span style="color: #5D478B;">,</span> &nbsp; &nbsp;<span style="color: #00008B; font-style: italic;">//1 for write and 0 for read</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; <span style="color: #A52A2A; font-weight: bold;">output</span> <span style="color: #A52A2A; font-weight: bold;">reg</span> <span style="color: #9F79EE;">&#91;</span>DW<span style="color: #5D478B;">-</span><span style="color: #ff0055;">1</span><span style="color: #5D478B;">:</span><span style="color: #ff0055;">0</span><span style="color: #9F79EE;">&#93;</span> &nbsp; &nbsp; Q<br />
+&nbsp; &nbsp; &nbsp;<span style="color: #9F79EE;">&#41;</span><span style="color: #5D478B;">;</span><br />
+&nbsp;<br />
+&nbsp; &nbsp; <span style="color: #A52A2A; font-weight: bold;">reg</span> <span style="color: #9F79EE;">&#91;</span>DW<span style="color: #5D478B;">-</span><span style="color: #ff0055;">1</span><span style="color: #5D478B;">:</span><span style="color: #ff0055;">0</span><span style="color: #9F79EE;">&#93;</span> &nbsp; &nbsp; &nbsp; &nbsp; mem <span style="color: #9F79EE;">&#91;</span><span style="color: #ff0055;">0</span><span style="color: #5D478B;">:</span><span style="color: #9F79EE;">&#40;</span><span style="color: #ff0055;">1</span><span style="color: #5D478B;">&lt;&lt;</span>AW<span style="color: #9F79EE;">&#41;</span><span style="color: #5D478B;">-</span><span style="color: #ff0055;">1</span><span style="color: #9F79EE;">&#93;</span> <span style="color: #5D478B;">;</span><br />
+&nbsp; &nbsp; <span style="color: #A52A2A; font-weight: bold;">always</span> <span style="color: #5D478B;">@</span><span style="color: #9F79EE;">&#40;</span><span style="color: #A52A2A; font-weight: bold;">posedge</span> CLK<span style="color: #9F79EE;">&#41;</span> <span style="color: #A52A2A; font-weight: bold;">begin</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; <span style="color: #A52A2A; font-weight: bold;">if</span> <span style="color: #9F79EE;">&#40;</span>EN <span style="color: #5D478B;">&amp;&amp;</span> WR<span style="color: #9F79EE;">&#41;</span> <span style="color: #A52A2A; font-weight: bold;">begin</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; mem<span style="color: #9F79EE;">&#91;</span>A<span style="color: #9F79EE;">&#93;</span> &nbsp;<span style="color: #5D478B;">&lt;=</span> D <span style="color: #5D478B;">;</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; <span style="color: #A52A2A; font-weight: bold;">end</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; <span style="color: #A52A2A; font-weight: bold;">else</span> <span style="color: #A52A2A; font-weight: bold;">if</span> <span style="color: #9F79EE;">&#40;</span>EN <span style="color: #5D478B;">&amp;&amp;</span> <span style="color: #5D478B;">!</span>WR<span style="color: #9F79EE;">&#41;</span> <span style="color: #A52A2A; font-weight: bold;">begin</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; Q &nbsp; &nbsp; &nbsp; <span style="color: #5D478B;">&lt;=</span> mem<span style="color: #9F79EE;">&#91;</span>A<span style="color: #9F79EE;">&#93;</span> <span style="color: #5D478B;">;</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; <span style="color: #A52A2A; font-weight: bold;">end</span><br />
+&nbsp; &nbsp; <span style="color: #A52A2A; font-weight: bold;">end</span><br />
+&nbsp;<br />
+<span style="color: #A52A2A; font-weight: bold;">endmodule</span><br />
+</div></div>
+<p>仿真时，只需在上一例的 testbench 中，将本次例化的模块 u_ram 覆盖掉 u_ram_4x4, 或重新添加之即可。</p><p>
+仿真结果如下。由图可知，ram 模块的参数 AW 与 DW 均被改写为 4， 且 ram 行为正确。</p>
+<a href="https://www.runoob.com/wp-content/uploads/2020/09/ffkMeqEwZhiGqvPc.png" target="_blank" rel="noopener noreferrer"><img decoding="async" src="https://www.runoob.com/wp-content/uploads/2020/09/ffkMeqEwZhiGqvPc.png"  /></a>
+
+<h3>区别与建议</h3><p>
+(1) 和模块端口实例化一样，带参数例化时，也可以不指定原有参数名字，按顺序进行参数例化，例如 u_ram 的例化可以描述为：</p>
+<pre>ram #(4, 4)   u_ram (......) ;</pre>
+
+<p>(2) 当然，利用 defparam 也可以改写模块在端口声明时声明的参数，利用带参数例化也可以改写模块实体中声明的参数。例如 u_ram 和 u_ram_4x4 的例化分别可以描述为：</p>
+<div class="example"><h2 class="example">实例</h2> <div class="example_code">
+<span style="color: #A52A2A; font-weight: bold;">defparam</span> &nbsp; &nbsp; u_ram.AW <span style="color: #5D478B;">=</span> <span style="color: #ff0055;">4</span> <span style="color: #5D478B;">;</span><br />
+<span style="color: #A52A2A; font-weight: bold;">defparam</span> &nbsp; &nbsp; u_ram.DW <span style="color: #5D478B;">=</span> <span style="color: #ff0055;">4</span> <span style="color: #5D478B;">;</span><br />
+ram &nbsp; u_ram<span style="color: #9F79EE;">&#40;</span>......<span style="color: #9F79EE;">&#41;</span><span style="color: #5D478B;">;</span><br />
+ram_4x4 &nbsp;<span style="color: #5D478B;">#</span><span style="color: #9F79EE;">&#40;</span>.MASK<span style="color: #9F79EE;">&#40;</span><span style="color: #ff0055;">7</span><span style="color: #9F79EE;">&#41;</span><span style="color: #9F79EE;">&#41;</span> &nbsp; &nbsp;u_ram_4x4<span style="color: #9F79EE;">&#40;</span>......<span style="color: #9F79EE;">&#41;</span><span style="color: #5D478B;">;</span><br />
+</div></div>
+
+<p> (3) 那能不能混合使用这两种模块参数改写的方式呢？当然能！前提是所有参数都是模块在端口声明时声明的参数或参数都是模块实体中声明的参数，例如 u_ram 的声明还可以表示为（模块实体中参数可自行实验验证）：</p>
+<div class="example"><h2 class="example">实例</h2> <div class="example_code">
+<span style="color: #A52A2A; font-weight: bold;">defparam</span> &nbsp; &nbsp; u_ram.AW <span style="color: #5D478B;">=</span> <span style="color: #ff0055;">4</span> <span style="color: #5D478B;">;</span><br />
+ram <span style="color: #5D478B;">#</span><span style="color: #9F79EE;">&#40;</span>.DW<span style="color: #9F79EE;">&#40;</span><span style="color: #ff0055;">4</span><span style="color: #9F79EE;">&#41;</span><span style="color: #9F79EE;">&#41;</span> u_ram <span style="color: #9F79EE;">&#40;</span>......<span style="color: #9F79EE;">&#41;</span><span style="color: #5D478B;">;</span> &nbsp;<span style="color: #00008B; font-style: italic;">//也只有我这么无聊才会实验这种写法</span><br />
+</div></div>
+
+<p>(4) 那如果一个模块中既有在模块在端口声明时声明的参数，又有在模块实体中声明的参数，那这两种参数还能同时改写么？例如在 ram 模块中加入 MASK 参数，模型如下：</p>
+<div class="example"><h2 class="example">实例</h2> <div class="example_code">
+<span style="color: #A52A2A; font-weight: bold;">module</span> &nbsp;ram<br />
+&nbsp; &nbsp; <span style="color: #5D478B;">#</span><span style="color: #9F79EE;">&#40;</span> &nbsp;<span style="color: #A52A2A; font-weight: bold;">parameter</span> &nbsp; &nbsp; &nbsp; AW <span style="color: #5D478B;">=</span> <span style="color: #ff0055;">2</span> <span style="color: #5D478B;">,</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; <span style="color: #A52A2A; font-weight: bold;">parameter</span> &nbsp; &nbsp; &nbsp; DW <span style="color: #5D478B;">=</span> <span style="color: #ff0055;">3</span> <span style="color: #9F79EE;">&#41;</span><br />
+&nbsp; &nbsp; <span style="color: #9F79EE;">&#40;</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; <span style="color: #A52A2A; font-weight: bold;">input</span> &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; CLK <span style="color: #5D478B;">,</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; <span style="color: #A52A2A; font-weight: bold;">input</span> <span style="color: #9F79EE;">&#91;</span>AW<span style="color: #5D478B;">-</span><span style="color: #ff0055;">1</span><span style="color: #5D478B;">:</span><span style="color: #ff0055;">0</span><span style="color: #9F79EE;">&#93;</span> &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;A <span style="color: #5D478B;">,</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; <span style="color: #A52A2A; font-weight: bold;">input</span> <span style="color: #9F79EE;">&#91;</span>DW<span style="color: #5D478B;">-</span><span style="color: #ff0055;">1</span><span style="color: #5D478B;">:</span><span style="color: #ff0055;">0</span><span style="color: #9F79EE;">&#93;</span> &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;D <span style="color: #5D478B;">,</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; <span style="color: #A52A2A; font-weight: bold;">input</span> &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; EN <span style="color: #5D478B;">,</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; <span style="color: #A52A2A; font-weight: bold;">input</span> &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; WR <span style="color: #5D478B;">,</span> &nbsp; &nbsp;<span style="color: #00008B; font-style: italic;">//1 for write and 0 for read</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; <span style="color: #A52A2A; font-weight: bold;">output</span> <span style="color: #A52A2A; font-weight: bold;">reg</span> <span style="color: #9F79EE;">&#91;</span>DW<span style="color: #5D478B;">-</span><span style="color: #ff0055;">1</span><span style="color: #5D478B;">:</span><span style="color: #ff0055;">0</span><span style="color: #9F79EE;">&#93;</span> &nbsp; &nbsp; Q &nbsp; &nbsp;<span style="color: #9F79EE;">&#41;</span><span style="color: #5D478B;">;</span><br />
+&nbsp;<br />
+&nbsp; &nbsp; <span style="color: #A52A2A; font-weight: bold;">parameter</span> &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;MASK <span style="color: #5D478B;">=</span> <span style="color: #ff0055;">3</span> <span style="color: #5D478B;">;</span><br />
+&nbsp;<br />
+&nbsp; &nbsp; <span style="color: #A52A2A; font-weight: bold;">reg</span> <span style="color: #9F79EE;">&#91;</span>DW<span style="color: #5D478B;">-</span><span style="color: #ff0055;">1</span><span style="color: #5D478B;">:</span><span style="color: #ff0055;">0</span><span style="color: #9F79EE;">&#93;</span> &nbsp; &nbsp; &nbsp; &nbsp; mem <span style="color: #9F79EE;">&#91;</span><span style="color: #ff0055;">0</span><span style="color: #5D478B;">:</span><span style="color: #9F79EE;">&#40;</span><span style="color: #ff0055;">1</span><span style="color: #5D478B;">&lt;&lt;</span>AW<span style="color: #9F79EE;">&#41;</span><span style="color: #5D478B;">-</span><span style="color: #ff0055;">1</span><span style="color: #9F79EE;">&#93;</span> <span style="color: #5D478B;">;</span><br />
+&nbsp; &nbsp; <span style="color: #A52A2A; font-weight: bold;">always</span> <span style="color: #5D478B;">@</span><span style="color: #9F79EE;">&#40;</span><span style="color: #A52A2A; font-weight: bold;">posedge</span> CLK<span style="color: #9F79EE;">&#41;</span> <span style="color: #A52A2A; font-weight: bold;">begin</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; <span style="color: #A52A2A; font-weight: bold;">if</span> <span style="color: #9F79EE;">&#40;</span>EN <span style="color: #5D478B;">&amp;&amp;</span> WR<span style="color: #9F79EE;">&#41;</span> <span style="color: #A52A2A; font-weight: bold;">begin</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; mem<span style="color: #9F79EE;">&#91;</span>A<span style="color: #9F79EE;">&#93;</span> &nbsp;<span style="color: #5D478B;">&lt;=</span> D <span style="color: #5D478B;">;</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; <span style="color: #A52A2A; font-weight: bold;">end</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; <span style="color: #A52A2A; font-weight: bold;">else</span> <span style="color: #A52A2A; font-weight: bold;">if</span> <span style="color: #9F79EE;">&#40;</span>EN <span style="color: #5D478B;">&amp;&amp;</span> <span style="color: #5D478B;">!</span>WR<span style="color: #9F79EE;">&#41;</span> <span style="color: #A52A2A; font-weight: bold;">begin</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; Q &nbsp; &nbsp; &nbsp; <span style="color: #5D478B;">&lt;=</span> mem<span style="color: #9F79EE;">&#91;</span>A<span style="color: #9F79EE;">&#93;</span> <span style="color: #5D478B;">;</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; <span style="color: #A52A2A; font-weight: bold;">end</span><br />
+&nbsp; &nbsp; <span style="color: #A52A2A; font-weight: bold;">end</span><br />
+&nbsp;<br />
+<span style="color: #A52A2A; font-weight: bold;">endmodule</span><br />
+</div></div><p>
+此时再用 defparam 改写参数 MASK 值时，编译报 Error：</p>
+<div class="example"><h2 class="example">实例</h2> <div class="example_code">
+<span style="color: #00008B; font-style: italic;">//都采用defparam时会报Error</span><br />
+<span style="color: #A52A2A; font-weight: bold;">defparam</span> &nbsp; &nbsp; u_ram.AW <span style="color: #5D478B;">=</span> <span style="color: #ff0055;">4</span> <span style="color: #5D478B;">;</span><br />
+<span style="color: #A52A2A; font-weight: bold;">defparam</span> &nbsp; &nbsp; u_ram.DW <span style="color: #5D478B;">=</span> <span style="color: #ff0055;">4</span> <span style="color: #5D478B;">;</span><br />
+<span style="color: #A52A2A; font-weight: bold;">defparam</span> &nbsp; &nbsp; u_ram.MASK <span style="color: #5D478B;">=</span> <span style="color: #ff0055;">7</span> <span style="color: #5D478B;">;</span><br />
+ram &nbsp; u_ram &nbsp;<span style="color: #9F79EE;">&#40;</span>......<span style="color: #9F79EE;">&#41;</span><span style="color: #5D478B;">;</span><br />
+&nbsp;<br />
+<span style="color: #00008B; font-style: italic;">//模块实体中parameter用defparam改写也会报Error</span><br />
+<span style="color: #A52A2A; font-weight: bold;">defparam</span> &nbsp; &nbsp; u_ram.MASK <span style="color: #5D478B;">=</span> <span style="color: #ff0055;">7</span> <span style="color: #5D478B;">;</span><br />
+ram <span style="color: #5D478B;">#</span><span style="color: #9F79EE;">&#40;</span>.AW<span style="color: #9F79EE;">&#40;</span><span style="color: #ff0055;">4</span><span style="color: #9F79EE;">&#41;</span><span style="color: #5D478B;">,</span> .DW<span style="color: #9F79EE;">&#40;</span><span style="color: #ff0055;">4</span><span style="color: #9F79EE;">&#41;</span><span style="color: #9F79EE;">&#41;</span> &nbsp; u_ram <span style="color: #9F79EE;">&#40;</span>......<span style="color: #9F79EE;">&#41;</span><span style="color: #5D478B;">;</span><br />
+</div></div>
+
+<p>重点来了！！！如果你用带参数模块例化的方法去改写参数 MASK 的值，编译不会报错，MASK 也将被成功改写！</p>
+<pre>ram #(.AW(4), .DW(4), .MASK(7)) u_ram (......);</pre><p>
+可能的解释为，在编译器看来，如果有模块在端口声明时的参数，那么实体中的参数将视为 localparam 类型，使用 defparam 将不能改写模块实体中声明的参数。</p><p>
+也可能和编译器有关系，大家也可以在其他编译器上实验。</p>
+
+<p>（5）建议，对已有模块进行例化并将其相关参数进行改写时，不要采用 defparam 的方法。除了上述缺点外，defparam 一般也不可综合。
+ </p>
+<p>（6）而且建议，模块在编写时，如果预知将被例化且有需要改写的参数，都将这些参数写入到模块端口声明之前的地方（用关键字井号 <span class="marked">#</span> 表示）。这样的代码格式不仅有很好的可读性，而且方便调试。</p>
+<h3>源码下载</h3>
+<p><a href="https://www.runoob.com/wp-content/uploads/2020/09/5.3module_parameter.zip" download class="download">Download</a></p>
+<h3>阶段总结</h3><p>
+其实，介绍到这里，大家完全可以用前面学习到的 Verilog 语言知识，去搭建硬件电路的小茅草屋。对，是小茅草屋。因为硬件语言对应实际硬件电路的这种特殊性，在用 Verilog 建立各种模型时必须考虑实际生成的电路是什么样子的，是否符合实际要求。有时候 rtl 仿真能通过，但是最后生成的实际电路可能会工作异常。</p><p>
+所以，要为你的小茅草屋添砖盖瓦，还需要再学习下进阶部分。当然，进阶部分也只能让你的小茅草屋变成硬朗的砖瓦房，能抵挡风雪交加，可能遇到地震还是会垮塌。</p><p>
+如果你想巩固下你的砖瓦房，去建一套别墅，那你需要再学习下 Verilog 高级篇知识，例如 PLI（编程语言接口）、UDP（用户自定义原语），时序约束和时序分析等，还需要多参与项目工程积累经验，特别注意一些设计技巧，例如低功耗设计、异步设计等。当然学会用 SystemVerilog 去全面验证，又会让你的建筑增加一层防护盾。</p><p>
+但是如果你想把数字电路、Verilog 所有的知识学完，去筑一套防炮弹的总统府，那真的是爱莫能助。因为，学海无涯，回头没岸哪。</p><p>
+限于篇幅，这里只介绍下进阶篇。有机会，高级篇，技巧篇，也一并补上。</p>
+				</div>
+			</div>
+			<div class="previous-next-links">
+			<div class="previous-design-link">← <a href="http://www.runoob.com/w3cnote/verilog-generate.html" rel="prev"> 5.2 Verilog 模块例化</a> </div>
+			<div class="next-design-link"><a href="http://www.runoob.com/w3cnote/verilog-function.html" rel="next"> 6.1 Verilog 函数</a> →</div>
+			</div>
+						<div class="article-heading-ad" id="w3cnote-ad728">
+			<script async src="//pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script>
+			<!-- 移动版 自动调整 -->
+			<ins class="adsbygoogle"
+			     style="display:inline-block;min-width:300px;max-width:970px;width:100%;height:90px"
+			     data-ad-client="ca-pub-5751451760833794"
+			     data-ad-slot="1691338467"
+			     data-ad-format="horizontal"></ins>
+			<script>
+			(adsbygoogle = window.adsbygoogle || []).push({});
+			</script>
+			</div>
+			<style>
+@media screen and (max-width: 768px) {
+	#w3cnote-ad728 {
+		display: none;
+	}
+}
+p.note-author {
+    border-bottom: 1px solid #ddd;
+    font-size: 18px;
+    font-weight: bold;
+    color: #78a15a;
+    padding-bottom: 2px;
+    margin-bottom: 4px;
+}
+</style>
+<script>
+var aid = 22972;
+</script>
+	</div>
+		
+	</div>
+	<div class="listcol last right-column">
+
+	<script type="text/javascript">
+jQuery(document).ready(function ($){
+	var total = $(".membership li").length;
+	var left_list = '';
+	href = window.location.href;
+	
+	$(".membership li").each(function(index, value){
+
+		left_list += $(this).html();
+
+		cur_href = $(this).find("a").attr("href");
+		cur_obj = $(this);
+		
+		if(href.match(cur_href) != null) {
+			if(index==0) {
+				$(".previous-design-link").hide();
+			}
+			if(index==(total-1)) {
+				$(".next-design-link").hide();
+			}
+			prev_href = cur_obj.prev("li").find("a").attr("href");
+			prev_title = cur_obj.prev("li").find("a").attr("title");
+
+			next_href = cur_obj.next("li").find("a").attr("href");
+			next_title = cur_obj.next("li").find("a").attr("title");
+			if(prev_title) {
+				$(".previous-design-link a").attr("href", prev_href);
+				$(".previous-design-link a").attr("title", prev_title);
+				$(".previous-design-link a").text(prev_title);
+			} else {
+				$(".previous-design-link").html("");
+			}
+
+			if(next_title) {
+				$(".next-design-link a").attr("href", next_href);
+				$(".next-design-link a").attr("title", next_title);
+				$(".next-design-link a").text(next_title);
+			} else {
+				$(".next-design-link").html("");
+			}
+		}
+	});
+
+	$("#leftcolumn").html(left_list);
+});
+	</script>
+	<div class="sidebar-box cate-list">
+	<div class="sidebar-box recommend-here list-link">
+	<a href="javascript:void(0);">Verilog 教程</a>	</div>
+	
+	<ul class="membership">
+		
+	<li><a target="_top" data-id="22850" title="1.1 Verilog 教程" href="http://www.runoob.com/w3cnote/verilog-tutorial.html" >1.1 Verilog 教程</a></li>
+	
+		
+	<li><a target="_top" data-id="22851" title="1.2 Verilog 简介" href="http://www.runoob.com/w3cnote/verilog-intro.html" >1.2 Verilog 简介</a></li>
+	
+		
+	<li><a target="_top" data-id="22852" title="1.3 Verilog 环境搭建" href="http://www.runoob.com/w3cnote/verilog-install.html" >1.3 Verilog 环境搭建</a></li>
+	
+		
+	<li><a target="_top" data-id="22866" title="1.4 Verilog 设计方法" href="http://www.runoob.com/w3cnote/verilog-design-method.html" >1.4 Verilog 设计方法</a></li>
+	
+		
+	<li><a target="_top" data-id="22869" title="2.1 Verilog 基础语法" href="http://www.runoob.com/w3cnote/verilog-basic-syntax.html" >2.1 Verilog 基础语法</a></li>
+	
+		
+	<li><a target="_top" data-id="22870" title="2.2 Verilog 数值表示" href="http://www.runoob.com/w3cnote/verilog-number.html" >2.2 Verilog 数值表示</a></li>
+	
+		
+	<li><a target="_top" data-id="22871" title="2.3 Verilog 数据类型" href="http://www.runoob.com/w3cnote/verilog-data-type.html" >2.3 Verilog 数据类型</a></li>
+	
+		
+	<li><a target="_top" data-id="22872" title="2.4 Verilog 表达式" href="http://www.runoob.com/w3cnote/verilog-expression.html" >2.4 Verilog 表达式</a></li>
+	
+		
+	<li><a target="_top" data-id="22935" title="2.5 Verilog 编译指令" href="http://www.runoob.com/w3cnote/verilog-compile-instruction.html" >2.5 Verilog 编译指令</a></li>
+	
+		
+	<li><a target="_top" data-id="22931" title="3.1 Verilog 连续赋值" href="http://www.runoob.com/w3cnote/verilog-assign.html" >3.1 Verilog 连续赋值</a></li>
+	
+		
+	<li><a target="_top" data-id="22933" title="3.2 Verilog 时延" href="http://www.runoob.com/w3cnote/verilog-time-delay.html" >3.2 Verilog 时延</a></li>
+	
+		
+	<li><a target="_top" data-id="22936" title="4.1 Verilog 过程结构" href="http://www.runoob.com/w3cnote/verilog-process-structure.html" >4.1 Verilog 过程结构</a></li>
+	
+		
+	<li><a target="_top" data-id="22939" title="4.2 Verilog 过程赋值" href="http://www.runoob.com/w3cnote/verilog-process-assign.html" >4.2 Verilog 过程赋值</a></li>
+	
+		
+	<li><a target="_top" data-id="22941" title="4.3 Verilog 时序控制" href="http://www.runoob.com/w3cnote/verilog-timing-control.html" >4.3 Verilog 时序控制</a></li>
+	
+		
+	<li><a target="_top" data-id="22943" title="4.4 Verilog 语句块" href="http://www.runoob.com/w3cnote/verilog-statements-block.html" >4.4 Verilog 语句块</a></li>
+	
+		
+	<li><a target="_top" data-id="22948" title="4.5 Verilog 条件语句" href="http://www.runoob.com/w3cnote/verilog-condition-statement.html" >4.5 Verilog 条件语句</a></li>
+	
+		
+	<li><a target="_top" data-id="22950" title="4.6 Verilog 多路分支语句" href="http://www.runoob.com/w3cnote/verilog-case.html" >4.6 Verilog 多路分支语句</a></li>
+	
+		
+	<li><a target="_top" data-id="22951" title="4.7 Verilog 循环语句" href="http://www.runoob.com/w3cnote/verilog-loop.html" >4.7 Verilog 循环语句</a></li>
+	
+		
+	<li><a target="_top" data-id="22954" title="4.8 Verilog 过程连续赋值" href="http://www.runoob.com/w3cnote/verilog-deassign.html" >4.8 Verilog 过程连续赋值</a></li>
+	
+		
+	<li><a target="_top" data-id="22966" title="5.1 Verilog 模块与端口" href="http://www.runoob.com/w3cnote/verilog-module-port.html" >5.1 Verilog 模块与端口</a></li>
+	
+		
+	<li><a target="_top" data-id="22969" title="5.2 Verilog 模块例化" href="http://www.runoob.com/w3cnote/verilog-generate.html" >5.2 Verilog 模块例化</a></li>
+	
+		<li>
+	5.3 Verilog 带参数例化	</li>
+	
+		
+	<li><a target="_top" data-id="22975" title="6.1 Verilog 函数" href="http://www.runoob.com/w3cnote/verilog-function.html" >6.1 Verilog 函数</a></li>
+	
+		
+	<li><a target="_top" data-id="22982" title="6.2 Verilog 任务" href="http://www.runoob.com/w3cnote/verilog-task.html" >6.2 Verilog 任务</a></li>
+	
+		
+	<li><a target="_top" data-id="22990" title="6.3 Verilog 状态机" href="http://www.runoob.com/w3cnote/verilog-fsm.html" >6.3 Verilog 状态机</a></li>
+	
+		
+	<li><a target="_top" data-id="22999" title="6.4 Verilog 竞争与冒险" href="http://www.runoob.com/w3cnote/verilog-competition-hazard.html" >6.4 Verilog 竞争与冒险</a></li>
+	
+		
+	<li><a target="_top" data-id="23008" title="6.5 Verilog 避免 Latch" href="http://www.runoob.com/w3cnote/verilog-latch.html" >6.5 Verilog 避免 Latch</a></li>
+	
+		
+	<li><a target="_top" data-id="23011" title="6.6 Verilog 仿真激励" href="http://www.runoob.com/w3cnote/verilog-testbench.html" >6.6 Verilog 仿真激励</a></li>
+	
+		
+	<li><a target="_top" data-id="23015" title="6.7 Verilog 流水线" href="http://www.runoob.com/w3cnote/verilog-pipeline-design.html" >6.7 Verilog 流水线</a></li>
+	
+		
+	<li><a target="_top" data-id="23021" title="7.1 Verilog 除法器设计" href="http://www.runoob.com/w3cnote/verilog-dividend.html" >7.1 Verilog 除法器设计</a></li>
+	
+		
+	<li><a target="_top" data-id="23222" title="7.2 Verilog 并行 FIR 滤波器设计" href="http://www.runoob.com/w3cnote/verilog-fir.html" >7.2 Verilog 并行 FIR 滤波器设计</a></li>
+	
+		
+	<li><a target="_top" data-id="23230" title="7.3 Verilog 串行 FIR 滤波器设计" href="http://www.runoob.com/w3cnote/verilog-serial-fir.html" >7.3 Verilog 串行 FIR 滤波器设计</a></li>
+	
+		
+	<li><a target="_top" data-id="23236" title="7.4 Verilog CIC 滤波器设计" href="http://www.runoob.com/w3cnote/verilog-cic.html" >7.4 Verilog CIC 滤波器设计</a></li>
+	
+		
+	<li><a target="_top" data-id="23260" title="7.5 Verilog FFT 设计" href="http://www.runoob.com/w3cnote/verilog-fft.html" >7.5 Verilog FFT 设计</a></li>
+	
+		
+	<li><a target="_top" data-id="23309" title="7.6 Verilog DDS 设计" href="http://www.runoob.com/w3cnote/verilog-dds.html" >7.6 Verilog DDS 设计</a></li>
+	
+		
+	<li><a target="_top" data-id="23281" title="8.1 Verilog 数值转换" href="http://www.runoob.com/w3cnote/verilog-numerical-conversion.html" >8.1 Verilog 数值转换</a></li>
+	
+	<li><a target="_top" title="Verilog 教程高级篇" href="/w3cnote/verilog2-tutorial.html" >Verilog 教程高级篇</a></li></ul></div>	</div>
+</div>
+
+
+<!-- 底部 -->
+<div id="footer" class="mar-t50">
+   <div class="runoob-block">
+    <div class="runoob cf">
+     <dl>
+      <dt>
+       在线实例
+      </dt>
+      <dd>
+       &middot;<a target="_blank" href="/html/html-examples.html">HTML 实例</a>
+      </dd>
+      <dd>
+       &middot;<a target="_blank" href="/css/css-examples.html">CSS 实例</a>
+      </dd>
+      <dd>
+       &middot;<a target="_blank" href="/js/js-examples.html">JavaScript 实例</a>
+      </dd>
+      <dd>
+       &middot;<a target="_blank" href="/ajx/ajax-examples.html">Ajax 实例</a>
+      </dd>
+       <dd>
+       &middot;<a target="_blank" href="/jquery/jquery-examples.html">jQuery 实例</a>
+      </dd>
+      <dd>
+       &middot;<a target="_blank" href="/xml/xml-examples.html">XML 实例</a>
+      </dd>
+      <dd>
+       &middot;<a target="_blank" href="/java/java-examples.html">Java 实例</a>
+      </dd>
+     
+     </dl>
+     <dl>
+      <dt>
+      字符集&工具
+      </dt>
+      <dd>
+       &middot; <a target="_blank" href="/charsets/html-charsets.html">HTML 字符集设置</a>
+      </dd>
+      <dd>
+       &middot; <a target="_blank" href="/tags/html-ascii.html">HTML ASCII 字符集</a>
+      </dd>
+     <dd>
+       &middot; <a target="_blank" href="https://c.runoob.com/front-end/6939/">JS 混淆/加密</a>
+      </dd> 
+      <dd>
+       &middot; <a target="_blank" href="https://c.runoob.com/front-end/6232/">PNG/JPEG 图片压缩</a>
+      </dd>
+      <dd>
+       &middot; <a target="_blank" href="/tags/html-colorpicker.html">HTML 拾色器</a>
+      </dd>
+      <dd>
+       &middot; <a target="_blank" href="//c.runoob.com/front-end/53">JSON 格式化工具</a>
+      </dd>
+      <dd>
+       &middot; <a target="_blank" href="//c.runoob.com/front-end/6680/">随机数生成器</a>
+      </dd>
+     </dl>
+     <dl>
+      <dt>
+       最新更新
+      </dt>
+                   <dd>
+       &middot;
+      <a href="http://www.runoob.com/matplotlib/matplotlib-imread.html" title="Matplotlib imread() 方法">Matplotlib imre...</a>
+      </dd>
+              <dd>
+       &middot;
+      <a href="http://www.runoob.com/matplotlib/matplotlib-imsave.html" title="Matplotlib imsave() 方法">Matplotlib imsa...</a>
+      </dd>
+              <dd>
+       &middot;
+      <a href="http://www.runoob.com/matplotlib/matplotlib-imshow.html" title="Matplotlib imshow() 方法">Matplotlib imsh...</a>
+      </dd>
+              <dd>
+       &middot;
+      <a href="http://www.runoob.com/matplotlib/matplotlib-hist.html" title="Matplotlib 直方图">Matplotlib 直方图</a>
+      </dd>
+              <dd>
+       &middot;
+      <a href="http://www.runoob.com/python3/python-func-object.html" title="Python object() 函数">Python object()...</a>
+      </dd>
+              <dd>
+       &middot;
+      <a href="http://www.runoob.com/python3/python-ai-draw.html" title="Python AI 绘画">Python AI 绘画</a>
+      </dd>
+              <dd>
+       &middot;
+      <a href="http://www.runoob.com/w3cnote/cursor-editor.html" title="神辅助 Cursor 编辑器，加入 GPT-4 让编码更轻松！">神辅助 Cursor ...</a>
+      </dd>
+             </dl>
+     <dl>
+      <dt>
+       站点信息
+      </dt>
+      <dd>
+       &middot;
+       <a target="_blank" href="mailto:admin@runoob.com" rel="external nofollow">意见反馈</a>
+       </dd>
+      <dd>
+       &middot;
+      <a target="_blank" href="/disclaimer">免责声明</a>
+       </dd>
+      <dd>
+       &middot;
+       <a target="_blank" href="/aboutus">关于我们</a>
+       </dd>
+      <dd>
+       &middot;
+      <a target="_blank" href="/archives">文章归档</a>
+      </dd>
+    
+     </dl>
+    
+     <div class="search-share">
+      <div class="app-download">
+        <div>
+         <strong>关注微信</strong>
+        </div>
+      </div>
+      <div class="share">
+      <img width="128" height="128" src="/wp-content/themes/runoob/assets/images/qrcode.png" />
+       </div>
+     </div>
+     
+    </div>
+   </div>
+   <div class="w-1000 copyright">
+     Copyright &copy; 2013-2023    <strong><a href="//www.runoob.com/" target="_blank">菜鸟教程</a></strong>&nbsp;
+    <strong><a href="//www.runoob.com/" target="_blank">runoob.com</a></strong> All Rights Reserved. 备案号：<a target="_blank" rel="nofollow" href="https://beian.miit.gov.cn/">闽ICP备15012807号-1</a>
+   </div>
+  </div>
+  <div class="fixed-btn">
+    <a class="go-top" href="javascript:void(0)" title="返回顶部"> <i class="fa fa-angle-up"></i></a>
+    <a class="qrcode"  href="javascript:void(0)" title="关注我们"><i class="fa fa-qrcode"></i></a>
+    <a class="writer" style="display:none" href="javascript:void(0)"   title="标记/收藏"><i class="fa fa-star" aria-hidden="true"></i></a>
+    <!-- qrcode modal -->
+    <div id="bottom-qrcode" class="modal panel-modal hide fade in">
+      <h4>微信关注</h4>
+      <div class="panel-body"><img alt="微信关注" width="128" height="128" src="/wp-content/themes/runoob/assets/images/qrcode.png"></div> 
+    </div>
+  </div>
+
+ <div style="display:none;">
+<script async src="https://www.googletagmanager.com/gtag/js?id=UA-84264393-2"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+
+  gtag('config', 'UA-84264393-2');
+</script>
+<script>
+var _hmt = _hmt || [];
+(function() {
+  var hm = document.createElement("script");
+  hm.src = "https://hm.baidu.com/hm.js?3eec0b7da6548cf07db3bc477ea905ee";
+  var s = document.getElementsByTagName("script")[0]; 
+  s.parentNode.insertBefore(hm, s);
+})();
+</script>
+
+</div>
+<script>
+window.jsui={
+    www: 'https://www.runoob.com',
+    uri: 'https://www.runoob.com/wp-content/themes/runoob'
+};
+</script>
+
+<script src="https://static.runoob.com/assets/libs/hl/run_prettify.js"></script>
+<script src="/wp-content/themes/runoob/assets/js/main.min.js?v=1.156"></script>
+
+</body>
+</html>

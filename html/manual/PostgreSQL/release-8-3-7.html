@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><title>E.171. 版本8.3.7</title><link rel="stylesheet" type="text/css" href="stylesheet.css" /><link rev="made" href="pgsql-docs@postgresql.org" /><meta name="generator" content="DocBook XSL Stylesheets V1.79.1" /><link rel="prev" href="release-8-3-8.html" title="E.170. 版本8.3.8" /><link rel="next" href="release-8-3-6.html" title="E.172. 版本8.3.6" /></head><body><div xmlns="http://www.w3.org/TR/xhtml1/transitional" class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="5" align="center">E.171. 版本8.3.7</th></tr><tr><td width="10%" align="left"><a accesskey="p" href="release-8-3-8.html" title="E.170. 版本8.3.8">上一页</a> </td><td width="10%" align="left"><a accesskey="u" href="release.html" title="附录 E. 版本说明">上一级</a></td><th width="60%" align="center">附录 E. 版本说明</th><td width="10%" align="right"><a accesskey="h" href="index.html" title="PostgreSQL 10.1 手册">起始页</a></td><td width="10%" align="right"> <a accesskey="n" href="release-8-3-6.html" title="E.172. 版本8.3.6">下一页</a></td></tr></table><hr></hr></div><div class="sect1" id="RELEASE-8-3-7"><div class="titlepage"><div><div><h2 class="title" style="clear: both">E.171. 版本8.3.7</h2></div></div></div><div class="toc"><dl class="toc"><dt><span class="sect2"><a href="release-8-3-7.html#idp78601184">E.171.1. 迁移到版本8.3.7</a></span></dt><dt><span class="sect2"><a href="release-8-3-7.html#idp78602096">E.171.2. 变化</a></span></dt></dl></div><p><strong>发布日期：. </strong>2009-03-16</p><p>   该发布包含来自8.3.6中各种修复。关于8.3主要发布中新特性信息，
+   参阅<a class="xref" href="release-8-3.html" title="E.178. 版本8.3">第 E.178 节</a>。</p><div class="sect2" id="idp78601184"><div class="titlepage"><div><div><h3 class="title">E.171.1. 迁移到版本8.3.7</h3></div></div></div><p>   运行8.3.X不需要备份/恢复。然而，如果从8.3.5更早版本更新，参阅8.3.5发布说明。</p></div><div class="sect2" id="idp78602096"><div class="titlepage"><div><div><h3 class="title">E.171.2. 变化</h3></div></div></div><div class="itemizedlist"><ul class="itemizedlist" style="list-style-type: disc; "><li class="listitem"><p>    当编码转换失败的时候，避免错误递归崩溃(Tom)</p><p>      该变化为相关错误情况在最后两个次要版本中扩展修复。
+之前修复程序为最初问题报告进行了细化，
+但我们现在已经认识到通过编码转换函数抛出的<span class="emphasis"><em>任何</em></span>错误   
+可能潜在地导致无限递归，而试图报告错误。
+如果我们发现已经卷入了一个递归错误报告的情况时，
+解决的办法是禁用转换以及编码转换并报告任何纯ASCII格式错误消息。
+</p></li><li class="listitem"><p>   不允许为指定转换函数带有错误编码的<code class="command">CREATE CONVERSION</code>(Heikki)</p><p>   这可以防止编码转换失败的情况。之前变化是预防同一区域其它类型错误的手段。
+   </p></li><li class="listitem"><p>     修复<code class="function">xpath()</code>不会修改路径表达式除非必要，并且当必要时做出理智尝试(Andrew)</p><p>      SQL标准表明<code class="function">xpath</code>致力于数据是一个文档片段，
+但<span class="application">libxml</span>不支持这一点，
+其实这是不明确的，按照XPath标准是明智的。
+<code class="function">xpath</code>试图通过修改数据和路径表达式解决这个错误匹配，
+但是修改是古怪的，并可能导致有效的搜索失败。现在，
+<code class="function">xpath</code>检查数据是否实际上是一个良好的文档，
+并且如果是这样调用不改变数据或路径表达式的<span class="application">libxml</span>。
+否则，一个不太可能失败的不同修改方法被使用。
+
+</p><div class="note"><h3 class="title">注意</h3><p>       新的修改方法仍然不是100%令人满意，并且它
+似乎没有真正的解决方案是可能的。
+这个补丁因此被看作是一个短期有效的防止不必要的破坏现有应用程序。
+<span class="productname">PostgreSQL</span> 8.4直接拒绝在不是一个良好文档的数据上使用<code class="function">xpath</code>。</p></div></li><li class="listitem"><p>   当<code class="function">to_char()</code>指定格式代码对于数据参数类型不合适的时候，修复核心转储(Tom)</p></li><li class="listitem"><p>   当C语言环境用于多字节编码的时候，修复文本搜索中可能失败(Teodor)</p><p>    在平台上有可能崩溃，即<code class="type">wchar_t</code>比<code class="type">int</code>更窄的时候，尤其Windows上。</p></li><li class="listitem"><p>    修复文本搜索解析器的处理类似电子邮件包含多个<code class="literal">@</code>字符串效率低下的情况(Heikki)</p></li><li class="listitem"><p>    修复较大子查询输出列表中子<code class="command">SELECT</code>规划器问题(Tom)</p><p>     这个错误已知现象是<span class="quote">“<span class="quote">未能定位分组列</span>”</span>依赖于涉及的数据类型错误；
+ 但是也有可能是其它问题。 </p></li><li class="listitem"><p>    修复隐式强制<code class="literal">CASE WHEN</code>的反编译(Tom)</p><p>    当尝试检查或者备份视图的时候，这个错误可能导致断言启动编译中断言错误，或者是其它情况中
+<span class="quote">“<span class="quote">意外的CASE WHEN 子句</span>”</span>错误消息。</p></li><li class="listitem"><p>     修复TOAST表的行类型拥有者可能错误分配(Tom)</p><p>     如果<code class="command">CLUSTER</code>或者<code class="command">ALTER TABLE</code>的重写形式通过某人而不是表的所有者被执行，
+ <code class="structname">pg_type</code>项为表的TOAST表将最终标记为由别人所拥有。
+ 这没有造成直接的问题，
+因为普通的数据库操作不会检查TOAST rowtype的权限。
+然而，它可能会导致意外故障，如果之后尝试删除发出该命令的角色（在8.1或者8.2中），
+或者已经这样做之后（在8.3中）来自<span class="application">pg_dump</span>中的<span class="quote">“<span class="quote">数据类型所有者似乎无效</span>”</span>警告。
+</p></li><li class="listitem"><p>    如果当前会话从来没有执行任何<code class="command">LISTEN</code>命令，那么改变<code class="command">UNLISTEN</code>迅速退出(Tom)</p><p>      多数情况下这不是一个特别有用的优化，
+但因为<code class="command">DISCARD ALL</code>调用<code class="command">UNLISTEN</code>， 
+之前编码导致为大量使用<code class="command">DISCARD ALL</code>的应用程序带来巨大的性能问题。</p></li><li class="listitem"><p>      修复PL/pgSQL没有把<code class="literal">INTO</code>在<code class="command">INSERT</code>之后看作字符串任意位置的一个INTO变量子句，
+不仅在开始；尤其是，不会在<code class="command">CREATE RULE</code>中<code class="command">INSERT INTO</code>中失败(Tom)</p></li><li class="listitem"><p>   在块退出时完全清理PL/pgSQL错误状态变量(Ashesh Vashi和Dave Page)</p><p>     这不是PL/pgSQL本身存在的问题，但当检查一个函数的状态的时候，该疏忽可能导致PL/pgSQL调试器崩溃。</p></li><li class="listitem"><p>    在Windows上重新尝试失败调用到<code class="function">CallNamedPipe()</code>(Steve Marshall, Magnus) </p><p>      看起来这个函数有时可能会暂时失效;
+我们之前将任何故障看作是严重的错误，
+这可能混淆<code class="command">LISTEN</code>/<code class="command">NOTIFY</code>以及其它操作。</p></li><li class="listitem"><p>   添加<code class="literal">MUST</code> (Mauritius Island Summer Time)到已知的时区缩写缺省列表中(Xavier Bugaud)</p></li></ul></div></div></div><div class="navfooter"><hr /><table width="100%" summary="Navigation footer"><tr><td width="40%" align="left"><a accesskey="p" href="release-8-3-8.html">上一页</a> </td><td width="20%" align="center"><a accesskey="u" href="release.html">上一级</a></td><td width="40%" align="right"> <a accesskey="n" href="release-8-3-6.html">下一页</a></td></tr><tr><td width="40%" align="left" valign="top">E.170. 版本8.3.8 </td><td width="20%" align="center"><a accesskey="h" href="index.html">起始页</a></td><td width="40%" align="right" valign="top"> E.172. 版本8.3.6</td></tr></table></div></body></html>

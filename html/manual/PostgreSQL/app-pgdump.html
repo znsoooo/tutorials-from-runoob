@@ -1,0 +1,182 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><title>pg_dump</title><link rel="stylesheet" type="text/css" href="stylesheet.css" /><link rev="made" href="pgsql-docs@postgresql.org" /><meta name="generator" content="DocBook XSL Stylesheets V1.79.1" /><link rel="prev" href="app-pgconfig.html" title="pg_config" /><link rel="next" href="app-pg-dumpall.html" title="pg_dumpall" /></head><body><div xmlns="http://www.w3.org/TR/xhtml1/transitional" class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="5" align="center">pg_dump</th></tr><tr><td width="10%" align="left"><a accesskey="p" href="app-pgconfig.html" title="pg_config">上一页</a> </td><td width="10%" align="left"><a accesskey="u" href="reference-client.html" title="PostgreSQL 客户端应用">上一级</a></td><th width="60%" align="center">PostgreSQL 客户端应用</th><td width="10%" align="right"><a accesskey="h" href="index.html" title="PostgreSQL 10.1 手册">起始页</a></td><td width="10%" align="right"> <a accesskey="n" href="app-pg-dumpall.html" title="pg_dumpall">下一页</a></td></tr></table><hr></hr></div><div class="refentry" id="APP-PGDUMP"><div class="titlepage"></div><a id="idp50954240" class="indexterm"></a><div class="refnamediv"><h2><span class="refentrytitle">pg_dump</span></h2><p>pg_dump —    把<span class="productname">PostgreSQL</span>数据库抽取为一个脚本文件或其他归档文件
+  </p></div><div class="refsynopsisdiv"><h2>大纲</h2><div class="cmdsynopsis"><p id="idp50957840"><code class="command">pg_dump</code> [<em class="replaceable"><code>connection-option</code></em>...] [<em class="replaceable"><code>option</code></em>...] [<em class="replaceable"><code>dbname</code></em>]</p></div></div><div class="refsect1" id="PG-DUMP-DESCRIPTION"><h2>   描述
+  </h2><p>   <span class="application">pg_dump</span>是用于备份一种<span class="productname">PostgreSQL</span>数据库的工具。即使数据库正在被并发使用，它也能创建一致的备份。<span class="application">pg_dump</span>不阻塞其他用户访问数据库（读取或写入）。
+  </p><p>   <span class="application">pg_dump</span>只转储单个数据库。要备份一个集簇中
+   对于所有数据库公共的全局对象（例如角色和表空间），应使用
+   <a class="xref" href="app-pg-dumpall.html" title="pg_dumpall"><span class="refentrytitle"><span class="application">pg_dumpall</span></span></a>。
+  </p><p>   转储可以被输出到脚本或归档文件格式。脚本转储是包含 SQL 命令的纯文本文件，它们可以用来重构数据库到它被转储时的状态。要从这样一个脚本恢复，将它喂给<a class="xref" href="app-psql.html" title="psql"><span class="refentrytitle"><span class="application">psql</span></span></a>。脚本文件甚至可以被用来在其他机器和其他架构上重构数据库。在经过一些修改后，甚至可以在其他 SQL 数据库产品上重构数据库。
+  </p><p>   另一种可选的归档文件格式必须与<a class="xref" href="app-pgrestore.html" title="pg_restore"><span class="refentrytitle">pg_restore</span></a>配合使用来重建数据库。它们允许<span class="application">pg_restore</span>能选择恢复什么，或者甚至在恢复之前对条目重排序。归档文件格式被设计为在架构之间可移植。
+  </p><p>   当使用归档文件格式之一并与<span class="application">pg_restore</span>组合时，<span class="application">pg_dump</span>提供了一种灵活的归档和传输机制。<span class="application">pg_dump</span>可以被用来备份整个数据库，然后<span class="application">pg_restore</span>可以被用来检查归档并/或选择数据库的哪些部分要被恢复。最灵活的输出文件格式是<span class="quote">“<span class="quote">自定义</span>”</span>格式（<code class="option">-Fc</code>）和<span class="quote">“<span class="quote">目录</span>”</span>格式（<code class="option">-Fd</code>）。它们允许选择和重排序所有已归档项、支持并行恢复并且默认是压缩的。<span class="quote">“<span class="quote">目录</span>”</span>格式是唯一一种支持并行转储的格式。
+  </p><p>   当运行<span class="application">pg_dump</span>时，我们应该检查输出中有没有任何警告（打印在标准错误上），特别是考虑到下面列出的限制。
+  </p></div><div class="refsect1" id="PG-DUMP-OPTIONS"><h2>选项</h2><p>    下列命令选项控制输出的内容和格式。
+
+    </p><div class="variablelist"><dl class="variablelist"><dt><span class="term"><em class="replaceable"><code>dbname</code></em></span></dt><dd><p>        指定要被转储的数据库名。如果没有指定，将使用环境变量<code class="envar">PGDATABASE</code>。如果环境变量也没有设置，则使用指定给该连接的用户名。
+       </p></dd><dt><span class="term"><code class="option">-a</code><br /></span><span class="term"><code class="option">--data-only</code></span></dt><dd><p>        只转储数据，而不转储模式（数据定义）。表数据、大对象和序列值都会被转储。
+       </p><p>        这个选项类似于指定<code class="option">--section=data</code>，但是由于历史原因又不完全相同。
+       </p></dd><dt><span class="term"><code class="option">-b</code><br /></span><span class="term"><code class="option">--blobs</code></span></dt><dd><p>        在转储中包括大对象。这是当<code class="option">--schema</code>、<code class="option">--table</code>或
+		<code class="option">--schema-only</code>被指定时的默认行为，因此<code class="option">-b</code>
+		开关仅对于将大对象添加到已请求特定模式或表的转储中时有用。
+		请注意，blob被视为数据，因此仅在使用--data-only时才会包含，
+		但在--schema-only时不会包含。
+       </p></dd><dt><span class="term"><code class="option">-B</code><br /></span><span class="term"><code class="option">--no-blobs</code></span></dt><dd><p>        排除转储中的大对象。
+       </p><p>        当给定<code class="option">-b</code>和<code class="option">-B</code>时，行为是当数据被转储时输出大对象，
+		请参阅<code class="option">-b</code>文档。
+       </p></dd><dt><span class="term"><code class="option">-c</code><br /></span><span class="term"><code class="option">--clean</code></span></dt><dd><p>        在输出创建数据库对象的命令之前输出清除（删除）它们的命令
+        （除非也指定了<code class="option">--if-exists</code>，如果任何对象不存在于
+        目的数据库中，恢复可能会产生一些伤害性的错误消息）。
+       </p><p>        这个选项只对纯文本格式有意义。对于归档格式，你可以在调用<code class="command">pg_restore</code>时指定该选项。
+       </p></dd><dt><span class="term"><code class="option">-C</code><br /></span><span class="term"><code class="option">--create</code></span></dt><dd><p>        使得在输出的开始是一个创建数据库本身并且重新连接到被创建的数据库的命令（通过这种形式的一个脚本，在运行脚本之前你连接的是目标安装中的哪个数据库都没有关系）。如果也指定了<code class="option">--clean</code>，脚本会在重新连接到目标数据库之前先删除它然后再重建。
+       </p><p>        这个选项只对纯文本格式有意义。对于归档格式，你可以在你调用<code class="command">pg_restore</code>时指定这个选项。
+       </p></dd><dt><span class="term"><code class="option">-E <em class="replaceable"><code>encoding</code></em></code><br /></span><span class="term"><code class="option">--encoding=<em class="replaceable"><code>encoding</code></em></code></span></dt><dd><p>        以指定的字符集编码创建转储。在默认情况下，该转储会以该数据库的编码创建（另一种得到相同结果的方式是将<code class="envar">PGCLIENTENCODING</code>环境变量设置成想要的转储编码）。
+       </p></dd><dt><span class="term"><code class="option">-f <em class="replaceable"><code>file</code></em></code><br /></span><span class="term"><code class="option">--file=<em class="replaceable"><code>file</code></em></code></span></dt><dd><p>        将输出发送到指定文件。对于基于输出格式的文件这个参数可以被忽略，在那种情况下将使用标准输出。不过对于目录输出格式必须给定这个参数，在目录输出格式中指定的是一个目录而不是一个文件。在这种情况中，该目录会由<code class="command">pg_dump</code>创建并且不需要以前就存在。
+       </p></dd><dt><span class="term"><code class="option">-F <em class="replaceable"><code>format</code></em></code><br /></span><span class="term"><code class="option">--format=<em class="replaceable"><code>format</code></em></code></span></dt><dd><p>        选择输出的格式。<em class="replaceable"><code>format</code></em>可以是下列之一：
+
+       </p><div class="variablelist"><dl class="variablelist"><dt><span class="term"><code class="literal">p</code><br /></span><span class="term"><code class="literal">plain</code></span></dt><dd><p>           输出一个纯文本形式的<acronym class="acronym">SQL</acronym>脚本文件（默认值）。
+          </p></dd><dt><span class="term"><code class="literal">c</code><br /></span><span class="term"><code class="literal">custom</code></span></dt><dd><p>           输出一个适合于作为<span class="application">pg_restore</span>输入的自定义格式归档。和目录输出格式一起，这是最灵活的输出格式，它允许在恢复时手动选择和排序已归档的项。这种格式在默认情况还会被压缩。
+          </p></dd><dt><span class="term"><code class="literal">d</code><br /></span><span class="term"><code class="literal">directory</code></span></dt><dd><p>           输出一个适合作为<span class="application">pg_restore</span>输入的目录格式归档。这将创建一个目录，其中每个被转储的表和大对象都有一个文件，外加一个所谓的目录文件，该文件以一种<span class="application">pg_restore</span>能读取的机器可读格式描述被转储的对象。一个目录格式归档能用标准 Unix 工具操纵，例如一个未压缩归档中的文件可以使用<span class="application">gzip</span>工具压缩。这种格式默认情况下是被压缩的并且也支持并行转储。
+          </p></dd><dt><span class="term"><code class="literal">t</code><br /></span><span class="term"><code class="literal">tar</code></span></dt><dd><p>           输出一个适合于输入到<span class="application">pg_restore</span>中的<code class="command">tar</code>-格式归档。tar 格式可以兼容目录格式，抽取一个 tar 格式的归档会产生一个合法的目录格式归档。不过，tar 格式不支持压缩。还有，在使用 tar 格式时，表数据项的相对顺序不能在恢复过程中被更改。
+          </p></dd></dl></div></dd><dt><span class="term"><code class="option">-j <em class="replaceable"><code>njobs</code></em></code><br /></span><span class="term"><code class="option">--jobs=<em class="replaceable"><code>njobs</code></em></code></span></dt><dd><p>        通过同时归档<em class="replaceable"><code>njobs</code></em>个表来运行并行转储。这个选项缩减了转储的时间，但是它也增加了数据库服务器上的负载。你只能和目录输出格式一起使用这个选项，因为这是唯一一种让多个进程能在同一时间写其数据的输出格式。
+       </p><p><span class="application">pg_dump</span>将打开<em class="replaceable"><code>njobs</code></em> + 1 个到该数据库的连接，因此确保你的<a class="xref" href="runtime-config-connection.html#GUC-MAX-CONNECTIONS">max_connections</a>设置足够高以容纳所有的连接。
+       </p><p>        在运行一次并行转储时请求数据库对象上的排他锁可能导致转储失败。其原因是，<span class="application">pg_dump</span>主控进程会在工作者进程将要稍后转储的对象上请求共享锁，以便确保在转储运行时不会有人删除它们并让它们出错。如果另一个客户端接着请求一个表上的排他锁，那个锁将不会被授予但是会被排入队列等待主控进程的共享锁被释放。因此，任何其他对该表的访问将不会被授予或者将排在排他锁请求之后。这包括尝试转储该表的工作者进程。如果没有任何防范措施，这可能会是一种经典的死锁情况。要检测这种冲突，<span class="application">pg_dump</span>工作者进程使用<code class="literal">NOWAIT</code>选项请求另一个共享锁。 如果该工作者进程没有被授予这个共享锁，其他某人必定已经在同时请求了一个排他锁并且没有办法继续转储，因此<span class="application">pg_dump</span>除了中止转储之外别无选择。
+       </p><p>        对于一个一致的备份，数据库服务器需要支持同步的快照，在<span class="productname">PostgreSQL</span> 9.2中引入了一种针对主服务器特性和10个针对备用服务器的特性。有了这种特性，即便数据库客户端使用不同的连接，也可以保证他们看到相同的数据集。<code class="command">pg_dump -j</code>使用多个数据库连接，它用主控进程连接到数据一次，并且为每一个工作者任务再一次连接数据库。如果没有同步快照特征，在每一个连接中不同的工作者任务将不能被保证看到相同的数据，这可能导致一个不一致的备份。
+       </p><p>        如果你希望运行一个 9.2 之前服务器的并行转储，你需要确保数据库内容从主控进程连接到数据库一直到最后一个工作者任务连接到数据库之间不会改变。做这些最简单的方法是在开始备份之前停止任何访问数据库的数据修改进程（DDL 以及 DML）。当对一个 9.2 之前的<span class="productname">PostgreSQL</span>服务器运行<code class="command">pg_dump -j</code>时，你还需要指定<code class="option">--no-synchronized-snapshots</code>参数。
+       </p></dd><dt><span class="term"><code class="option">-n <em class="replaceable"><code>schema</code></em></code><br /></span><span class="term"><code class="option">--schema=<em class="replaceable"><code>schema</code></em></code></span></dt><dd><p>        只转储匹配<em class="replaceable"><code>schema</code></em>的模式，这会选择模式本身以及它所包含的所有对象。当没有指定这个选项时，目标数据库中所有非系统模式都将被转储。多个模式可以通过书写多个<code class="option">-n</code>开关来选择。另外，<em class="replaceable"><code>schema</code></em>参数可以被解释为一种根据<span class="application">psql</span>'s <code class="literal">\d</code>命令所用的相同规则（见<a class="xref" href="app-psql.html#APP-PSQL-PATTERNS" title="模式（Pattern）">模式（Pattern）</a>）编写的模式，这样多个模式也可以通过在该模式中书写通配字符来选择。在使用通配符时，如果需要阻止 shell 展开通配符需要小心引用该模式，见<a class="xref" href="app-pgdump.html#PG-DUMP-EXAMPLES" title="实例">实例</a>。
+       </p><div class="note"><h3 class="title">注意</h3><p>         当<code class="option">-n</code>被指定时，<span class="application">pg_dump</span>不会尝试转储所选模式可能依赖的任何其他数据库对象。因此，无法保证一次指定模式转储的结果能够仅凭其本身被成功地恢复到一个干净的数据库中。
+        </p></div><div class="note"><h3 class="title">注意</h3><p>         当<code class="option">-n</code>被指定时，非模式对象（如二进制大对象）不会被转储。你可以使用<code class="option">--blobs</code>开关将二进制大对象加回到该转储中。
+        </p></div></dd><dt><span class="term"><code class="option">-N <em class="replaceable"><code>schema</code></em></code><br /></span><span class="term"><code class="option">--exclude-schema=<em class="replaceable"><code>schema</code></em></code></span></dt><dd><p>        不转储匹配<em class="replaceable"><code>schema</code></em>模式的任何模式。该模式被根据<code class="option">-n</code>所用的相同规则被解释。<code class="option">-N</code>可以被给定多次来排除匹配几个模式中任意一个的模式。
+       </p><p>        当<code class="option">-n</code>和<code class="option">-N</code>都被给定时，该行为是只转储匹配至少一个<code class="option">-n</code>开关但是不匹配<code class="option">-N</code>开关的模式。如果只有<code class="option">-N</code>而没有<code class="option">-n</code>，那么匹配<code class="option">-N</code>的模式会被从一个正常转储中排除。
+       </p></dd><dt><span class="term"><code class="option">-o</code><br /></span><span class="term"><code class="option">--oids</code></span></dt><dd><p>        转储对象标识符（<acronym class="acronym">OID</acronym>）作为每个表数据的一部分。如果你的应用以某种方式引用<acronym class="acronym">OID</acronym>列（例如在一个外键约束中），应使用这个选项。否则，这个选项不应该被使用。
+       </p></dd><dt><span class="term"><code class="option">-O</code><br /></span><span class="term"><code class="option">--no-owner</code></span></dt><dd><p>        不输出设置对象拥有关系来匹配原始数据库的命令。默认情况下，<span class="application">pg_dump</span>会发出<code class="command">ALTER OWNER</code>或<code class="command">SET SESSION AUTHORIZATION</code>语句来设置被创建的数据库对象的拥有关系。除非该脚本被一个超级用户（或是拥有脚本中所有对象的同一个用户）启动，这些语句都将会失败。要使一个脚本能够被任意用户恢复，但把所有对象的拥有关系都给这个用户，可指定<code class="option">-O</code>。
+       </p><p>        这个选项只对纯文本格式有意义。对于归档格式，你可以在调用<code class="command">pg_restore</code>时指定该选项。
+       </p></dd><dt><span class="term"><code class="option">-R</code><br /></span><span class="term"><code class="option">--no-reconnect</code></span></dt><dd><p>        这个选项已经废弃，但是为了向后兼容仍然能被接受。
+       </p></dd><dt><span class="term"><code class="option">-s</code><br /></span><span class="term"><code class="option">--schema-only</code></span></dt><dd><p>        只转储对象定义（模式），而非数据。
+       </p><p>        这个选项是<code class="option">--data-only</code>的逆选项。它和指定<code class="option">--section=pre-data --section=post-data</code>相似，但是由于历史原因又不完全相同。
+       </p><p>        （不要把这个选项和<code class="option">--schema</code>选项混淆，后者在<span class="quote">“<span class="quote">schema</span>”</span>的使用上有不同的含义）。
+       </p><p>        要为数据库中表的一个子集排除表数据，见<code class="option">--exclude-table-data</code>。
+       </p></dd><dt><span class="term"><code class="option">-S <em class="replaceable"><code>username</code></em></code><br /></span><span class="term"><code class="option">--superuser=<em class="replaceable"><code>username</code></em></code></span></dt><dd><p>        指定要在禁用触发器时使用的超级用户的用户名。只有使用<code class="option">--disable-triggers</code>时，这个选项才相关（通常，最好省去这个选项，而作为超级用户来启动结果脚本来取而代之）。
+       </p></dd><dt><span class="term"><code class="option">-t <em class="replaceable"><code>table</code></em></code><br /></span><span class="term"><code class="option">--table=<em class="replaceable"><code>table</code></em></code></span></dt><dd><p>        只转储名字匹配<em class="replaceable"><code>table</code></em>的表，<span class="quote">“<span class="quote">table</span>”</span>还可以包括视图、物化视图、序列和外部表。通过写多个<code class="option">-t</code>开关可以选择多个表。另外，<em class="replaceable"><code>table</code></em>参数可以被解释为一种根据<span class="application">psql</span>'s <code class="literal">\d</code>命令所用的相同规则（见<a class="xref" href="app-psql.html#APP-PSQL-PATTERNS" title="模式（Pattern）">模式（Pattern）</a>）编写的模式，这样多个表也可以通过在该模式中书写通配字符来选择。在使用通配符时，如果需要阻止 shell 展开通配符需要小心引用该模式，见<a class="xref" href="app-pgdump.html#PG-DUMP-EXAMPLES" title="实例">实例</a>。
+       </p><p>        当<code class="option">-t</code>被使用时，<code class="option">-n</code>和<code class="option">-N</code>开关不会有效果，因为被<code class="option">-t</code>选择的表将被转储而无视那些开关，并且非表对象将不会被转储。
+       </p><div class="note"><h3 class="title">注意</h3><p>         
+         当<code class="option">-t</code>被指定时，<span class="application">pg_dump</span>不会尝试转储所选表可能依赖的任何其他数据库对象。因此，无法保证一次指定表转储的结果能够仅凭其本身被成功地恢复到一个干净的数据库中。
+        </p></div><div class="note"><h3 class="title">注意</h3><p>         <code class="option">-t</code>开关的行为不完全向前兼容 8.2 之前的<span class="productname">PostgreSQL</span>版本。以前，写<code class="literal">-t tab</code>将转储所有命名为<code class="literal">tab</code>的表，但现在它仅仅转储在你默认搜索路径中可见的那一个。要得到旧的行为，你可以写成<code class="literal">-t '*.tab'</code>。还有，你必须写类似<code class="literal">-t sch.tab</code>的东西来选择一个特定模式中的一个表，而不是用老的惯用语<code class="literal">-n sch -t tab</code>。
+        </p></div></dd><dt><span class="term"><code class="option">-T <em class="replaceable"><code>table</code></em></code><br /></span><span class="term"><code class="option">--exclude-table=<em class="replaceable"><code>table</code></em></code></span></dt><dd><p>        不转储匹配<em class="replaceable"><code>table</code></em>模式的任何表。该模式被根据<code class="option">-t</code>所用的相同规则被解释。<code class="option">-T</code>可以被给定多次来排除匹配几个模式中任意一个的模式。
+       </p><p>        当<code class="option">-t</code>和<code class="option">-T</code>都被给定时，该行为是只转储匹配至少一个<code class="option">-t</code>开关但是不匹配<code class="option">-T</code>开关的表。如果只有<code class="option">-T</code>而没有<code class="option">-t</code>，那么匹配<code class="option">-T</code>的表会被从一个正常转储中排除。
+       </p></dd><dt><span class="term"><code class="option">-v</code><br /></span><span class="term"><code class="option">--verbose</code></span></dt><dd><p>        指定冗长模式。这将导致<span class="application">pg_dump</span>向标准错误输出详细的对象注释以及转储文件的开始/停止时间，还有进度消息。
+       </p></dd><dt><span class="term"><code class="option">-V</code><br /></span><span class="term"><code class="option">--version</code></span></dt><dd><p>       <span class="application">pg_dump</span>版本并退出。
+       </p></dd><dt><span class="term"><code class="option">-x</code><br /></span><span class="term"><code class="option">--no-privileges</code><br /></span><span class="term"><code class="option">--no-acl</code></span></dt><dd><p>        防止转储访问特权（授予/收回命令）。
+       </p></dd><dt><span class="term"><code class="option">-Z <em class="replaceable"><code>0..9</code></em></code><br /></span><span class="term"><code class="option">--compress=<em class="replaceable"><code>0..9</code></em></code></span></dt><dd><p>        指定要使用的压缩级别。零意味着不压缩。对于自定义归档格式，这会指定个体表数据段的压缩，并且默认是进行中等级别的压缩。对于纯文本输出，设置一个非零压缩级别会导致整个输出文件被压缩，就好像它被<span class="application">gzip</span>处理过一样，但是默认是不压缩。tar 归档格式当前完全不支持压缩。
+       </p></dd><dt><span class="term"><code class="option">--binary-upgrade</code></span></dt><dd><p>        这个选项用于就地升级功能。我们不推荐也不支持把它用于其他目的。这个选项在未来的发行中可能被改变而不做通知。
+       </p></dd><dt><span class="term"><code class="option">--column-inserts</code><br /></span><span class="term"><code class="option">--attribute-inserts</code></span></dt><dd><p>        将数据转储为带有显式列名的<code class="command">INSERT</code>命令（<code class="literal">INSERT INTO
+        <em class="replaceable"><code>table</code></em>
+        (<em class="replaceable"><code>column</code></em>, ...) VALUES
+        ...</code>）。这将使得恢复过程非常慢，这主要用于使转储能够被载入到非<span class="productname">PostgreSQL</span>数据库中。不过，由于这个选项为每一行都产生一个单独的命令，重载一行时的一个错误只会导致那一行被丢失而不是整个表内容丢失。
+       </p></dd><dt><span class="term"><code class="option">--disable-dollar-quoting</code></span></dt><dd><p>        这个选项禁止在函数体中使用美元符号引用，并且强制它们使用 SQL 标准字符串语法被引用。
+       </p></dd><dt><span class="term"><code class="option">--disable-triggers</code></span></dt><dd><p>        只有在创建一个只转储数据的转储时，这个选项才相关。它指示<span class="application">pg_dump</span>包括在数据被重新载入时能够临时禁用目标表上的触发器的命令。如果你在表上有引用完整性检查或其他触发器，并且你在数据重新载入期间不想调用它们，请使用这个选项。
+       </p><p>        当前，为<code class="option">--disable-triggers</code>发出的命令必须作为超级用户来执行。因此，你还应当使用<code class="option">-S</code>指定一个超级用户名，或者宁可作为一个超级用户启动结果脚本。
+       </p><p>        这个选项只对纯文本格式有意义。对于归档格式，你可以在调用<code class="command">pg_restore</code>时指定这个选项。
+       </p></dd><dt><span class="term"><code class="option">--enable-row-security</code></span></dt><dd><p>        只有在转储具有行安全性的表的内容时，这个选项才相关。默认情况下，
+        <span class="application">pg_dump</span>将把
+        <a class="xref" href="runtime-config-client.html#GUC-ROW-SECURITY">row_security</a>设置为 off 来确保从该表中转储
+        出所有的数据。如果用户不具有足够能绕过行安全性的特权，那么会抛出
+        一个错误这个参数指示<span class="application">pg_dump</span>将
+        <a class="xref" href="runtime-config-client.html#GUC-ROW-SECURITY">row_security</a>设置为 on，允许用户只转储该表中
+        它们能够访问到的部分内容。
+       </p><p>        请注意，如果您当前使用此选项，则可能还需要以<code class="command">INSERT</code>格式转储，
+		因为还原期间的<code class="command">COPY FROM</code>不支持行安全性。
+       </p></dd><dt><span class="term"><code class="option">--exclude-table-data=<em class="replaceable"><code>table</code></em></code></span></dt><dd><p>        不转储匹配<em class="replaceable"><code>table</code></em>模式的任何表中的数据。该模式根据<code class="option">-t</code>的相同规则被解释。<code class="option">--exclude-table-data</code>可以被给定多次来排除匹配多个模式的表。当你需要一个特定表的定义但不想要其中的数据时，这个选项就有用了。
+       </p><p>        要排除数据库中所有表的数据，见<code class="option">--schema-only</code>。
+       </p></dd><dt><span class="term"><code class="option">--if-exists</code></span></dt><dd><p>        时间条件性命令（即增加一个<code class="literal">IF EXISTS</code>子句）来清除数据库和其他对象。
+        只有同时指定了<code class="option">--clean</code>时，这个选项才可用。
+       </p></dd><dt><span class="term"><code class="option">--inserts</code></span></dt><dd><p>        将数据转储为<code class="command">INSERT</code>命令（而不是<code class="command">COPY</code>）。这将使得恢复非常慢，这主要用于使转储能够被载入到非<span class="productname">PostgreSQL</span>数据库中。不过，由于这个选项为每一行都产生一个单独的命令，重载一行时的一个错误只会导致那一行被丢失而不是整个表内容丢失。注意如果你已经重新安排了列序，该恢复可能会一起失败。<code class="option">--column-inserts</code>选项对于列序改变是安全的，但是会更慢。
+       </p></dd><dt><span class="term"><code class="option">--lock-wait-timeout=<em class="replaceable"><code>timeout</code></em></code></span></dt><dd><p>        在转储的开始从不等待共享表锁的获得。而是在指定的<em class="replaceable"><code>timeout</code></em>内不能锁定一个表时失败。超时时长可以用<code class="command">SET statement_timeout</code>接受的任何格式指定（允许的格式根据你从其转出的服务器版本变化，但是所有版本都接受一个整数表示的毫秒数。）。
+       </p></dd><dt><span class="term"><code class="option">--no-publications</code></span></dt><dd><p>        不转储发布。
+       </p></dd><dt><span class="term"><code class="option">--no-security-labels</code></span></dt><dd><p>        不转储安全标签。
+       </p></dd><dt><span class="term"><code class="option">--no-subscriptions</code></span></dt><dd><p>        不转储订阅。
+       </p></dd><dt><span class="term"><code class="option">--no-sync</code></span></dt><dd><p>        默认情况下，<code class="command">pg_dump</code>将等待所有文件安全写入磁盘。
+		这个选项会导致<code class="command">pg_dump</code>无需等待而返回，这更快，
+		但意味着后续的操作系统崩溃可能会导致转储损坏。通常，
+		此选项对于测试非常有用，但在从生产安装中转储数据时不应使用此选项。
+       </p></dd><dt><span class="term"><code class="option">--no-synchronized-snapshots</code></span></dt><dd><p>        这个选项允许对 9.2 以前的服务器运行<code class="command">pg_dump -j</code>，详见<code class="option">-j</code>参数的文档。
+       </p></dd><dt><span class="term"><code class="option">--no-tablespaces</code></span></dt><dd><p>        不要输出选择表空间的命令。通过这个选项，在恢复期间所有的对象都会被创建在任何作为默认的表空间中。
+       </p><p>        这个选项只对纯文本格式有意义。对于归档格式，你可以在调用<code class="command">pg_restore</code>时指定该选项。
+       </p></dd><dt><span class="term"><code class="option">--no-unlogged-table-data</code></span></dt><dd><p>        不转储非日志记录表的内容。这个选项对于表定义（模式）是否被转储没有影响，它只会限制转储表数据。当从一个后备服务器转储时，在非日志记录表中的数据总是会被排除。
+       </p></dd><dt><span class="term"><code class="option">--quote-all-identifiers</code></span></dt><dd><p>        强制引用所有标识符。当从<span class="productname">PostgreSQL</span>主版本与<span class="application">pg_dump</span>不同的服务器上转储一个数据库时或者当输出准备载入到一个具有不同主版本的服务器时，推荐使用这个选项。默认情况下，<span class="application">pg_dump</span>只对在其主版本中是被保留词的标识符加上引号。在转储其他版本服务器时，这种默认行为有时会导致兼容性问题，因为那些版本可能具有些许不同的被保留词集合。使用<code class="option">--quote-all-identifiers</code>能阻止这种问题，但代价是转储脚本更难阅读。
+       </p></dd><dt><span class="term"><code class="option">--section=<em class="replaceable"><code>sectionname</code></em></code></span></dt><dd><p>          只转储命名节。节的名称可以是<code class="option">pre-data</code>、<code class="option">data</code>或<code class="option">post-data</code>。这个选项可以被指定多次来选择多个节。默认是转储所有节。
+         </p><p>          数据节包含真正的表数据、大对象内容和序列值。数据后项包括索引、触发器、规则和除了已验证检查约束之外的约束的定义。数据前项包括所有其他数据定义项。
+         </p></dd><dt><span class="term"><code class="option">--serializable-deferrable</code></span></dt><dd><p>        为转储使用一个<code class="literal">可序列化</code>事务，以保证所使用的快照与后来的数据库状态是一致的。但是这样做是在事务流中等待一个点，在该点上不能存在异常，这样就不会有转储失败或者导致其他事务带着<code class="literal">serialization_failure</code>回滚的风险。关于事务隔离和并发控制详见<a class="xref" href="mvcc.html" title="第 13 章 并发控制">第 13 章</a>。
+       </p><p>        对于一个只为灾难恢复存在的转储，这个选项没什么益处。如果一个转储被用来在原始数据库持续被更新期间载入一份用于报表或其他只读负载的数据库拷贝时，这个选项就有所帮助。如果没有这个选项，转储可能会反映一个与最终提交事务的任何执行序列都不一致的状态。例如，如果使用了批处理技术，一个批处理在转储中可以显示为关闭，而其中的所有项都不出现。
+       </p><p>        如果 pg_dump 被启动时没有读写事务在活动，则这个选项没有什么不同。如果有读写事务在活动，该转储的启动可能会被延迟一段不确定的时间。一旦开始运行，有没有这个开关的表现是相同的。
+       </p></dd><dt><span class="term"><code class="option">--snapshot=<em class="replaceable"><code>snapshotname</code></em></code></span></dt><dd><p>          在做一个数据库的转储时指定一个同步的快照（详见
+          <a class="xref" href="functions-admin.html#FUNCTIONS-SNAPSHOT-SYNCHRONIZATION-TABLE" title="表 9.82. 快照同步函数">表 9.82</a>）。
+         </p><p>          在需要把转储和一个逻辑复制槽（见<a class="xref" href="logicaldecoding.html" title="第 48 章 逻辑解码">第 48 章</a>）
+          或者一个并发会话同步时可以用上这个选项。
+         </p><p>          在并行转储的情况下，将使用这个选项指定的快照名而不是取一个新快照。
+         </p></dd><dt><span class="term"><code class="option">--strict-names</code></span></dt><dd><p>        要求每一个模式（<code class="option">-n</code>/<code class="option">--schema</code>）和表（<code class="option">-t</code>/<code class="option">--table</code>）限定符匹配要转储的数据库中至少一个模式/表。注意，如果没有找到有这样的模式/表限定符匹配，即便没有<code class="option">--strict-names</code>，<span class="application">pg_dump</span>也将生成一个错误。
+       </p><p>        这个选项对<code class="option">-N</code>/<code class="option">--exclude-schema</code>、<code class="option">-T</code>/<code class="option">--exclude-table</code>或者<code class="option">--exclude-table-data</code>没有效果。无法匹配任何对象的排除模式不会被当作错误。
+       </p></dd><dt><span class="term"><code class="option">--use-set-session-authorization</code></span></dt><dd><p>        输出 SQL-标准的<code class="command">SET SESSION AUTHORIZATION</code>命令取代<code class="command">ALTER OWNER</code>命令来确定对象的所有关系。这让该转储更加兼容标准，但是取决于该转储中对象的历史，该转储可能无法正常恢复。而且，一个使用<code class="command">SET SESSION AUTHORIZATION</code>的转储将一定会要求超级用户特权来正确地恢复，而<code class="command">ALTER OWNER</code>要求更少的特权。
+       </p></dd><dt><span class="term"><code class="option">-?</code><br /></span><span class="term"><code class="option">--help</code></span></dt><dd><p>       显示有关<span class="application">pg_dump</span>命令行参数的帮助并退出。
+       </p></dd></dl></div><p>
+   </p><p>    下列命令行选项控制数据库连接参数。
+
+    </p><div class="variablelist"><dl class="variablelist"><dt><span class="term"><code class="option">-d <em class="replaceable"><code>dbname</code></em></code><br /></span><span class="term"><code class="option">--dbname=<em class="replaceable"><code>dbname</code></em></code></span></dt><dd><p>       指定要连接到的数据库名。这等效于指定<em class="replaceable"><code>dbname</code></em>为命令行上的第一个非选项参数。
+      </p><p>       如果这个参数包含一个<code class="symbol">=</code>符号或者以一个合法的<acronym class="acronym">URI</acronym>前缀（<code class="literal">postgresql://</code>或<code class="literal">postgres://</code>）开始，它将被视作一个<em class="parameter"><code>conninfo</code></em>字符串。详见<a class="xref" href="libpq-connect.html" title="33.1. 数据库连接控制函数">第 33.1 节</a>。
+      </p></dd><dt><span class="term"><code class="option">-h <em class="replaceable"><code>host</code></em></code><br /></span><span class="term"><code class="option">--host=<em class="replaceable"><code>host</code></em></code></span></dt><dd><p>        指定服务器正在运行的机器的主机名。如果该值开始于一个斜线，它被用作一个 Unix 域套接字的目录。默认是从<code class="envar">PGHOST</code>环境变量中取得（如果被设置），否则将尝试一次 Unix 域套接字连接。
+       </p></dd><dt><span class="term"><code class="option">-p <em class="replaceable"><code>port</code></em></code><br /></span><span class="term"><code class="option">--port=<em class="replaceable"><code>port</code></em></code></span></dt><dd><p>        指定服务器正在监听连接的 TCP 端口或本地 Unix 域套接字文件扩展名。默认是放在<code class="envar">PGPORT</code>环境变量中（如果被设置），否则使用编译在程序中的默认值。
+       </p></dd><dt><span class="term"><code class="option">-U <em class="replaceable"><code>username</code></em></code><br /></span><span class="term"><code class="option">--username=<em class="replaceable"><code>username</code></em></code></span></dt><dd><p>        要作为哪个用户连接。
+       </p></dd><dt><span class="term"><code class="option">-w</code><br /></span><span class="term"><code class="option">--no-password</code></span></dt><dd><p>        从不发出一个口令提示。如果服务器要求口令认证并且没有其他方式提供口令（例如一个<code class="filename">.pgpass</code>文件），那么连接尝试将失败。这个选项对于批处理任务和脚本有用，因为在其中没有一个用户来输入口令。
+       </p></dd><dt><span class="term"><code class="option">-W</code><br /></span><span class="term"><code class="option">--password</code></span></dt><dd><p>        强制<span class="application">pg_dump</span>在连接到一个数据库之前提示要求一个口令。
+       </p><p>        这个选项从来不是必须的，因为如果服务器要求口令认证，<span class="application">pg_dump</span>将自动提示要求一个口令。但是，<span class="application">pg_dump</span>将浪费一次连接尝试来发现服务器想要一个口令。在某些情况下，值得键入<code class="option">-W</code>来避免额外的连接尝试。
+       </p></dd><dt><span class="term"><code class="option">--role=<em class="replaceable"><code>rolename</code></em></code></span></dt><dd><p>        指定一个用来创建该转储的角色名。这个选项导致<span class="application">pg_dump</span>在连接到数据库后发出一个<code class="command">SET ROLE</code> <em class="replaceable"><code>rolename</code></em>命令。当已认证用户（由<code class="option">-U</code>指定）缺少<span class="application">pg_dump</span>所需的特权但是能够切换到一个具有所需权利的角色时，这个选项很有用。一些安装有针对直接作为超级用户登录的策略，使用这个选项可以让转储在不违反该策略的前提下完成。
+       </p></dd></dl></div><p>
+   </p></div><div class="refsect1" id="idp51211568"><h2>环境</h2><div class="variablelist"><dl class="variablelist"><dt><span class="term"><code class="envar">PGDATABASE</code><br /></span><span class="term"><code class="envar">PGHOST</code><br /></span><span class="term"><code class="envar">PGOPTIONS</code><br /></span><span class="term"><code class="envar">PGPORT</code><br /></span><span class="term"><code class="envar">PGUSER</code></span></dt><dd><p>      默认连接参数
+     </p></dd></dl></div><p>   和大部分其他<span class="productname">PostgreSQL</span>工具相似，这个工具也使用<span class="application">libpq</span>（见<a class="xref" href="libpq-envars.html" title="33.14. 环境变量">第 33.14 节</a>）支持的环境变量。
+  </p></div><div class="refsect1" id="APP-PGDUMP-DIAGNOSTICS"><h2>诊断</h2><p>   <span class="application">pg_dump</span>在内部执行<code class="command">SELECT</code>语句。如果你运行<span class="application">pg_dump</span>时出现问题，确定你能够从正在使用的数据库中选择信息，例如<a class="xref" href="app-psql.html" title="psql"><span class="refentrytitle"><span class="application">psql</span></span></a>。此外，<span class="application">libpq</span>前端-后端库所使用的任何默认连接设置和环境变量都将适用。
+  </p><p>   <span class="application">pg_dump</span>的数据库活动会被统计收集器正常地收集。如果不想这样，你可以通过<code class="envar">PGOPTIONS</code>或<code class="literal">ALTER USER</code>命令设置参数<code class="varname">track_counts</code>为假。
+  </p></div><div class="refsect1" id="PG-DUMP-NOTES"><h2>注解</h2><p>   如果你的数据库集簇对于<code class="literal">template1</code>数据库有任何本地添加，要注意将<span class="application">pg_dump</span>的输出恢复到一个真正的空数据库。否则你很可能由于以增加对象的重复定义而得到错误。要创建一个不带任何本地添加的空数据库，从<code class="literal">template0</code>而不是<code class="literal">template1</code>复制它，例如：
+</p><pre class="programlisting">CREATE DATABASE foo WITH TEMPLATE template0;</pre><p>
+  </p><p>   当一个只含数据的转储被选中并且使用了选项<code class="option">--disable-triggers</code>时，<span class="application">pg_dump</span>在开始插入数据之前会发出命令禁用用户表上的触发器，并且接着在数据被插入之后发出命令重新启用它们。如果恢复中途被停止，系统目录可能会停留在一种错误状态。
+  </p><p>   <span class="application">pg_dump</span>产生的转储文件不包含优化器用来做出查询计划决定的统计信息。因此，在从一个转储文件恢复后运行<code class="command">ANALYZE</code>来确保最优性能是明智的，详见<a class="xref" href="routine-vacuuming.html#VACUUM-FOR-STATISTICS" title="24.1.3. 更新规划器统计信息">第 24.1.3 节</a>和<a class="xref" href="routine-vacuuming.html#AUTOVACUUM" title="24.1.6. 自动清理后台进程">第 24.1.6 节</a>。转储文件也不包含任何<code class="command">ALTER DATABASE ... SET</code>命令，这些设置会与数据库用户及其他安装设置一起被<a class="xref" href="app-pg-dumpall.html" title="pg_dumpall"><span class="refentrytitle"><span class="application">pg_dumpall</span></span></a>转储。
+  </p><p>   因为<span class="application">pg_dump</span>被用来传输数据到更新版本的<span class="productname">PostgreSQL</span>，<span class="application">pg_dump</span>的输出被认为可以载入到比<span class="application">pg_dump</span>版本更新的<span class="productname">PostgreSQL</span>服务器中。<span class="application">pg_dump</span>也能够从比其版本更旧的<span class="productname">PostgreSQL</span>服务器中转储（当前支持回退到版本 8.0）。不过，<span class="application">pg_dump</span>无法从比起主版本号更新的<span class="productname">PostgreSQL</span>服务器中转储，它甚至将拒绝冒着创建一个非法转储的风险尝试。还有，不保证<span class="application">pg_dump</span>的输出能被载入到一个更旧主版本的服务器 — 即使该转储是从该版本的服务器中被取得也不行。将一个转储文件载入到一个更旧的服务器可能需要手工编辑该转储文件来移除旧服务器无法理解的语法。在跨版本的情况下，推荐使用<code class="option">--quote-all-identifiers</code>选项，因为它可以避免因为不同<span class="productname">PostgreSQL</span>版本间的保留词列表变化而发生问题。
+  </p><p>   在转储逻辑复制订阅时，<span class="application">pg_dump</span>将生成使用
+   <code class="literal">NOCONNECT</code>选项的<code class="command">CREATE SUBSCRIPTION</code>命令，
+   以便恢复订阅不会创建远程连接复制插槽或初始表副本。这样，可以恢复转储，
+   而不需要网络访问远程服务器。然后由用户以合适的方式重新激活订阅。
+   如果涉及的主机已更改，则可能必须更改连接信息。
+   在启动新的全表副本之前截断目标表也许是适当的。
+  </p></div><div class="refsect1" id="PG-DUMP-EXAMPLES"><h2>实例</h2><p>   要把一个数据库<code class="literal">mydb</code>转储到一个 SQL 脚本文件：
+</p><pre class="screen"><code class="prompt">$</code> <strong class="userinput"><code>pg_dump mydb &gt; db.sql</code></strong></pre><p>
+  </p><p>   要把这样一个脚本重新载入到一个（新创建的）名为<code class="literal">newdb</code>的数据库中：
+
+</p><pre class="screen"><code class="prompt">$</code> <strong class="userinput"><code>psql -d newdb -f db.sql</code></strong></pre><p>
+  </p><p>   要转储一个数据库到一个自定义格式归档文件：
+
+</p><pre class="screen"><code class="prompt">$</code> <strong class="userinput"><code>pg_dump -Fc mydb &gt; db.dump</code></strong></pre><p>
+  </p><p>   要转储一个数据库到一个目录格式的归档：
+
+</p><pre class="screen"><code class="prompt">$</code> <strong class="userinput"><code>pg_dump -Fd mydb -f dumpdir</code></strong></pre><p>
+  </p><p>   要用 5 个并行的工作者任务转储一个数据库到一个目录格式的归档：
+
+</p><pre class="screen"><code class="prompt">$</code> <strong class="userinput"><code>pg_dump -Fd mydb -j 5 -f dumpdir</code></strong></pre><p>
+  </p><p>   要把一个归档文件重新载入到一个（新创建的）名为<code class="literal">newdb</code>的数据库：
+
+</p><pre class="screen"><code class="prompt">$</code> <strong class="userinput"><code>pg_restore -d newdb db.dump</code></strong></pre><p>
+  </p><p>   要转储一个名为<code class="literal">mytab</code>的表：
+
+</p><pre class="screen"><code class="prompt">$</code> <strong class="userinput"><code>pg_dump -t mytab mydb &gt; db.sql</code></strong></pre><p>
+  </p><p>   要转储<code class="literal">detroit</code>模式中名称以<code class="literal">emp</code>开始的所有表，排除名为<code class="literal">employee_log</code>的表：
+
+</p><pre class="screen"><code class="prompt">$</code> <strong class="userinput"><code>pg_dump -t 'detroit.emp*' -T detroit.employee_log mydb &gt; db.sql</code></strong></pre><p>
+  </p><p>   要转储名称以<code class="literal">east</code>或者<code class="literal">west</code>开始并且以<code class="literal">gsm</code>结束的所有模式，排除名称包含词<code class="literal">test</code>的任何模式：
+
+</p><pre class="screen"><code class="prompt">$</code> <strong class="userinput"><code>pg_dump -n 'east*gsm' -n 'west*gsm' -N '*test*' mydb &gt; db.sql</code></strong></pre><p>
+  </p><p>   同样，用正则表达式记号法来合并开关：
+
+</p><pre class="screen"><code class="prompt">$</code> <strong class="userinput"><code>pg_dump -n '(east|west)*gsm' -N '*test*' mydb &gt; db.sql</code></strong></pre><p>
+  </p><p>   要转储除了名称以<code class="literal">ts_</code>开头的表之外的所有数据库对象：
+
+</p><pre class="screen"><code class="prompt">$</code> <strong class="userinput"><code>pg_dump -T 'ts_*' mydb &gt; db.sql</code></strong></pre><p>
+  </p><p>   要在<code class="option">-t</code>和相关开关中指定一个大写形式或混合大小写形式的名称，你需要双引用该名称，否则它会被折叠到小写形式（见<a class="xref" href="app-psql.html#APP-PSQL-PATTERNS" title="模式（Pattern）">模式（Pattern）</a>）。但是双引号对于 shell 是特殊的，所以反过来它们必须被引用。因此，要转储一个有混合大小写名称的表，你需要类似这样的东西：
+
+</p><pre class="screen"><code class="prompt">$</code> <strong class="userinput"><code>pg_dump -t "\"MixedCaseName\"" mydb &gt; mytab.sql</code></strong></pre></div><div class="refsect1" id="idp51286336"><h2>参见</h2><span class="simplelist"><a class="xref" href="app-pg-dumpall.html" title="pg_dumpall"><span class="refentrytitle"><span class="application">pg_dumpall</span></span></a>, <a class="xref" href="app-pgrestore.html" title="pg_restore"><span class="refentrytitle">pg_restore</span></a>, <a class="xref" href="app-psql.html" title="psql"><span class="refentrytitle"><span class="application">psql</span></span></a></span></div></div><div class="navfooter"><hr /><table width="100%" summary="Navigation footer"><tr><td width="40%" align="left"><a accesskey="p" href="app-pgconfig.html">上一页</a> </td><td width="20%" align="center"><a accesskey="u" href="reference-client.html">上一级</a></td><td width="40%" align="right"> <a accesskey="n" href="app-pg-dumpall.html">下一页</a></td></tr><tr><td width="40%" align="left" valign="top">pg_config </td><td width="20%" align="center"><a accesskey="h" href="index.html">起始页</a></td><td width="40%" align="right" valign="top"> <span class="application">pg_dumpall</span></td></tr></table></div></body></html>

@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><title>11.10. 索引和排序规则</title><link rel="stylesheet" type="text/css" href="stylesheet.css" /><link rev="made" href="pgsql-docs@postgresql.org" /><meta name="generator" content="DocBook XSL Stylesheets V1.79.1" /><link rel="prev" href="indexes-opclass.html" title="11.9. 操作符类和操作符族" /><link rel="next" href="indexes-index-only-scans.html" title="11.11. 只用索引的扫描" /></head><body><div xmlns="http://www.w3.org/TR/xhtml1/transitional" class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="5" align="center">11.10. 索引和排序规则</th></tr><tr><td width="10%" align="left"><a accesskey="p" href="indexes-opclass.html" title="11.9. 操作符类和操作符族">上一页</a> </td><td width="10%" align="left"><a accesskey="u" href="indexes.html" title="第 11 章 索引">上一级</a></td><th width="60%" align="center">第 11 章 索引</th><td width="10%" align="right"><a accesskey="h" href="index.html" title="PostgreSQL 10.1 手册">起始页</a></td><td width="10%" align="right"> <a accesskey="n" href="indexes-index-only-scans.html" title="11.11. 只用索引的扫描">下一页</a></td></tr></table><hr></hr></div><div class="sect1" id="INDEXES-COLLATIONS"><div class="titlepage"><div><div><h2 class="title" style="clear: both">11.10. 索引和排序规则</h2></div></div></div><p>   一个索引在每一个索引列上只能支持一种排序规则。如果需要多种排序规则，你可能需要多个索引。
+  </p><p>   考虑这些语句：
+</p><pre class="programlisting">CREATE TABLE test1c (
+    id integer,
+    content varchar COLLATE "x"
+);
+
+CREATE INDEX test1c_content_index ON test1c (content);</pre><p>
+   该索引自动使用下层列的排序规则。因此一个如下形式的查询：
+</p><pre class="programlisting">SELECT * FROM test1c WHERE content &gt; <em class="replaceable"><code>constant</code></em>;</pre><p>
+   可以使用该索引，因为比较会默认使用列的排序规则。但是，这个索引无法加速涉及到某些其他排序规则的查询。因此对于下面形式的查询：
+</p><pre class="programlisting">SELECT * FROM test1c WHERE content &gt; <em class="replaceable"><code>constant</code></em> COLLATE "y";</pre><p>
+   可以创建一个额外的支持<code class="literal">"y"</code>排序规则的索引，例如：
+</p><pre class="programlisting">CREATE INDEX test1c_content_y_index ON test1c (content COLLATE "y");</pre><p>
+  </p></div><div class="navfooter"><hr /><table width="100%" summary="Navigation footer"><tr><td width="40%" align="left"><a accesskey="p" href="indexes-opclass.html">上一页</a> </td><td width="20%" align="center"><a accesskey="u" href="indexes.html">上一级</a></td><td width="40%" align="right"> <a accesskey="n" href="indexes-index-only-scans.html">下一页</a></td></tr><tr><td width="40%" align="left" valign="top">11.9. 操作符类和操作符族 </td><td width="20%" align="center"><a accesskey="h" href="index.html">起始页</a></td><td width="40%" align="right" valign="top"> 11.11. 只用索引的扫描</td></tr></table></div></body></html>

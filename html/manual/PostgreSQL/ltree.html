@@ -1,0 +1,163 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><title>F.22. ltree</title><link rel="stylesheet" type="text/css" href="stylesheet.css" /><link rev="made" href="pgsql-docs@postgresql.org" /><meta name="generator" content="DocBook XSL Stylesheets V1.79.1" /><link rel="prev" href="lo.html" title="F.21. lo" /><link rel="next" href="pageinspect.html" title="F.23. pageinspect" /></head><body><div xmlns="http://www.w3.org/TR/xhtml1/transitional" class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="5" align="center">F.22. ltree</th></tr><tr><td width="10%" align="left"><a accesskey="p" href="lo.html" title="F.21. lo">上一页</a> </td><td width="10%" align="left"><a accesskey="u" href="contrib.html" title="附录 F. 额外提供的模块">上一级</a></td><th width="60%" align="center">附录 F. 额外提供的模块</th><td width="10%" align="right"><a accesskey="h" href="index.html" title="PostgreSQL 10.1 手册">起始页</a></td><td width="10%" align="right"> <a accesskey="n" href="pageinspect.html" title="F.23. pageinspect">下一页</a></td></tr></table><hr></hr></div><div class="sect1" id="LTREE"><div class="titlepage"><div><div><h2 class="title" style="clear: both">F.22. ltree</h2></div></div></div><div class="toc"><dl class="toc"><dt><span class="sect2"><a href="ltree.html#idp86223040">F.22.1. 定义</a></span></dt><dt><span class="sect2"><a href="ltree.html#idp86281184">F.22.2. 操作符和函数</a></span></dt><dt><span class="sect2"><a href="ltree.html#idp86418256">F.22.3. 索引</a></span></dt><dt><span class="sect2"><a href="ltree.html#idp86438736">F.22.4. 例子</a></span></dt><dt><span class="sect2"><a href="ltree.html#idp86452960">F.22.5. 转换</a></span></dt><dt><span class="sect2"><a href="ltree.html#idp86457648">F.22.6. 作者</a></span></dt></dl></div><a id="idp86221056" class="indexterm"></a><p>  这个模块实现了一种数据类型<code class="type">ltree</code>用于表示存储在一个层次树状结构中的数据的标签。还提供了在标签树中搜索的扩展功能。
+ </p><div class="sect2" id="idp86223040"><div class="titlepage"><div><div><h3 class="title">F.22.1. 定义</h3></div></div></div><p>   一个<em class="firstterm">标签</em>是一个字母数字字符和下划线的序列（例如，在 C 区域中允许字符<code class="literal">A-Za-z0-9_</code>）。标签长度必须少于 256 字节。
+  </p><p>   例子： <code class="literal">42</code>, <code class="literal">Personal_Services</code>
+  </p><p>   一个<em class="firstterm">标签路径</em>是由点号分隔的零个或者更多个标签的序列，例如<code class="literal">L1.L2.L3</code>，它表示一个从层次树的根到一个特定节点的路径。一个标签路径的长度必须小于 65kB，但是最好将它保持在 2kB 以下。实际上这不是一个主要限制，例如在 DMOZ 目录（<a class="ulink" href="http://www.dmoz.org" target="_top">http://www.dmoz.org</a>）中最长的标签路径大约是 240 字节。
+  </p><p>   例子：<code class="literal">Top.Countries.Europe.Russia</code>
+  </p><p>   <code class="filename">ltree</code>模块提供多种数据类型：
+  </p><div class="itemizedlist"><ul class="itemizedlist" style="list-style-type: disc; "><li class="listitem"><p>     <code class="type">ltree</code>存储一个标签路径。
+    </p></li><li class="listitem"><p>     <code class="type">lquery</code>表示一个用于匹配<code class="type">ltree</code>值的类正则表达式的模式。一个简单词匹配一个路径中的那个标签。一个星号（<code class="literal">*</code>）匹配零个或更多个标签。例如：
+</p><pre class="synopsis">foo         <em class="lineannotation"><span class="lineannotation">正好匹配标签路径<code class="literal">foo</code></span></em>
+*.foo.*     <em class="lineannotation"><span class="lineannotation">匹配任何包含标签<code class="literal">foo</code>的标签路径</span></em>
+*.foo       <em class="lineannotation"><span class="lineannotation">匹配任何最后一个标签是<code class="literal">foo</code>的标签路径</span></em></pre><p>
+    </p><p>     星号也可以被限定来限制它能匹配多少标签：
+</p><pre class="synopsis">*{<em class="replaceable"><code>n</code></em>}        <em class="lineannotation"><span class="lineannotation">匹配正好<em class="replaceable"><code>n</code></em>个标签</span></em>
+*{<em class="replaceable"><code>n</code></em>,}       <em class="lineannotation"><span class="lineannotation">匹配至少<em class="replaceable"><code>n</code></em>个标签</span></em>
+*{<em class="replaceable"><code>n</code></em>,<em class="replaceable"><code>m</code></em>}      <em class="lineannotation"><span class="lineannotation">匹配至少<em class="replaceable"><code>n</code></em>个但是最多<em class="replaceable"><code>m</code></em>个标签</span></em>
+*{,<em class="replaceable"><code>m</code></em>}       <em class="lineannotation"><span class="lineannotation">匹配最多<em class="replaceable"><code>m</code></em>个标签 — 与*{0,<em class="replaceable"><code>m</code></em>}相同</span></em> </pre><p>
+    </p><p>     在<code class="type">lquery</code>中，有多种修饰符可以被放在一个非星号标签的末尾来让它不仅仅能准确匹配：
+</p><pre class="synopsis">@           <em class="lineannotation"><span class="lineannotation">不区分大小写匹配，例如<code class="literal">a@</code>匹配<code class="literal">A</code></span></em>
+*           <em class="lineannotation"><span class="lineannotation">匹配带此前缀的任何标签，例如<code class="literal">foo*</code>匹配<code class="literal">foobar</code></span></em>
+%           <em class="lineannotation"><span class="lineannotation">匹配开头以下划线分隔的词</span></em></pre><p>
+     <code class="literal">%</code>的行为有点复杂。它尝试匹配词而不是整个标签。例如，<code class="literal">foo_bar%</code>匹配<code class="literal">foo_bar_baz</code>但是不匹配<code class="literal">foo_barbaz</code>。如果和<code class="literal">*</code>组合，前缀匹配可以单独应用于每一个词，例如<code class="literal">foo_bar%*</code>匹配<code class="literal">foo1_bar2_baz</code>但不匹配<code class="literal">foo1_br2_baz</code>。
+    </p><p>     此外，你可以写多个带有<code class="literal">|</code>（OR）的可能改过的标签来匹配那些标签中的任何一个（或几个），并且你可以在最前面放上<code class="literal">!</code>（NOT）来匹配任何不匹配那些分支的标签。
+    </p><p>     这里是一个<code class="type">lquery</code>的例子：
+</p><pre class="programlisting">Top.*{0,2}.sport*@.!football|tennis.Russ*|Spain
+a.  b.     c.      d.               e.</pre><p>
+     这个查询将匹配任何这样的标签路径：
+    </p><div class="orderedlist"><ol class="orderedlist" type="a"><li class="listitem"><p>       开始于标签<code class="literal">Top</code>
+      </p></li><li class="listitem"><p>       并且接着具有 0 到 2 个标签
+      </p></li><li class="listitem"><p>       之后是一个开始于大小写无关的前缀<code class="literal">sport</code>的标签
+      </p></li><li class="listitem"><p>       再后是一个不匹配<code class="literal">football</code>和<code class="literal">tennis</code>的标签
+      </p></li><li class="listitem"><p>       并且结尾是一个开始于<code class="literal">Russ</code>的标签，或者完全匹配<code class="literal">Spain</code>的标签。
+      </p></li></ol></div></li><li class="listitem"><p><code class="type">ltxtquery</code>表示一种用于匹配<code class="type">ltree</code>值的类全文搜索的模式。一个<code class="type">ltxtquery</code>值包含词，也可能在末尾带有修饰符<code class="literal">@</code>、<code class="literal">*</code>、<code class="literal">%</code>，修饰符具有和<code class="type">lquery</code>中相同的含义。词可以用<code class="literal">&amp;</code>（AND）、<code class="literal">|</code>（OR）、<code class="literal">!</code>（NOT）以及圆括号组合。<code class="type">lquery</code>和<code class="type">ltxtquery</code>的关键区别是前者匹配词时不考虑它们在标签路径中的位置。
+    </p><p>     这是一个<code class="type">ltxtquery</code>的例子：
+</p><pre class="programlisting">Europe &amp; Russia*@ &amp; !Transportation</pre><p>
+     这将匹配包含标签<code class="literal">Europe</code>以及任何以<code class="literal">Russia</code>开始（大小写不敏感）的标签的路径，但是不匹配包含标签<code class="literal">Transportation</code>的路径。这些词在路径中的位置并不重要。还有，当使用<code class="literal">%</code>时，该次可以与一个标签中任何下划线分隔的词匹配，而不管它们的位置如何。
+    </p></li></ul></div><p>   注意：<code class="type">ltxtquery</code>允许符号之间的空白，但是<code class="type">ltree</code>和<code class="type">lquery</code>不允许。
+  </p></div><div class="sect2" id="idp86281184"><div class="titlepage"><div><div><h3 class="title">F.22.2. 操作符和函数</h3></div></div></div><p>   类型<code class="type">ltree</code>有普通比较操作符
+   <code class="literal">=</code>、<code class="literal">&lt;&gt;</code>、
+   <code class="literal">&lt;</code>、<code class="literal">&gt;</code>、<code class="literal">&lt;=</code>、<code class="literal">&gt;=</code>。
+   比较会按照树遍历的顺序排序，一个节点的子女按照标签文本排序。另外，还有<a class="xref" href="ltree.html#LTREE-OP-TABLE" title="表 F.14. ltree 操作符">表 F.14</a>中显示的特殊操作符。
+  </p><div class="table" id="LTREE-OP-TABLE"><p class="title"><strong>表 F.14. <code class="type">ltree</code> 操作符</strong></p><div class="table-contents"><table class="table" summary="ltree 操作符" border="1"><colgroup><col /><col /><col /></colgroup><thead><tr><th>操作符</th><th>返回值</th><th>描述</th></tr></thead><tbody><tr><td><code class="type">ltree</code> <code class="literal">@&gt;</code> <code class="type">ltree</code></td><td><code class="type">boolean</code></td><td>左参数是不是右参数的一个祖先（或者相等）？</td></tr><tr><td><code class="type">ltree</code> <code class="literal">&lt;@</code> <code class="type">ltree</code></td><td><code class="type">boolean</code></td><td>左参数是不是右参数的一个后代（或者相等）？</td></tr><tr><td><code class="type">ltree</code> <code class="literal">~</code> <code class="type">lquery</code></td><td><code class="type">boolean</code></td><td><code class="type">ltree</code>匹配<code class="type">lquery</code>吗？</td></tr><tr><td><code class="type">lquery</code> <code class="literal">~</code> <code class="type">ltree</code></td><td><code class="type">boolean</code></td><td><code class="type">ltree</code>匹配<code class="type">lquery</code>吗？</td></tr><tr><td><code class="type">ltree</code> <code class="literal">?</code> <code class="type">lquery[]</code></td><td><code class="type">boolean</code></td><td><code class="type">ltree</code>匹配数组中的任意<code class="type">lquery</code>吗？</td></tr><tr><td><code class="type">lquery[]</code> <code class="literal">?</code> <code class="type">ltree</code></td><td><code class="type">boolean</code></td><td><code class="type">ltree</code>匹配数组中的任意<code class="type">lquery</code>吗？</td></tr><tr><td><code class="type">ltree</code> <code class="literal">@</code> <code class="type">ltxtquery</code></td><td><code class="type">boolean</code></td><td><code class="type">ltree</code>匹配<code class="type">ltxtquery</code>吗？</td></tr><tr><td><code class="type">ltxtquery</code> <code class="literal">@</code> <code class="type">ltree</code></td><td><code class="type">boolean</code></td><td><code class="type">ltree</code>匹配<code class="type">ltxtquery</code>吗？</td></tr><tr><td><code class="type">ltree</code> <code class="literal">||</code> <code class="type">ltree</code></td><td><code class="type">ltree</code></td><td>串接<code class="type">ltree</code>路径</td></tr><tr><td><code class="type">ltree</code> <code class="literal">||</code> <code class="type">text</code></td><td><code class="type">ltree</code></td><td>把文本转换成<code class="type">ltree</code>并且串接</td></tr><tr><td><code class="type">text</code> <code class="literal">||</code> <code class="type">ltree</code></td><td><code class="type">ltree</code></td><td>把文本转换成<code class="type">ltree</code>并且串接</td></tr><tr><td><code class="type">ltree[]</code> <code class="literal">@&gt;</code> <code class="type">ltree</code></td><td><code class="type">boolean</code></td><td>数组是否包含<code class="type">ltree</code>的一个祖先？</td></tr><tr><td><code class="type">ltree</code> <code class="literal">&lt;@</code> <code class="type">ltree[]</code></td><td><code class="type">boolean</code></td><td>数组是否包含<code class="type">ltree</code>的一个祖先？</td></tr><tr><td><code class="type">ltree[]</code> <code class="literal">&lt;@</code> <code class="type">ltree</code></td><td><code class="type">boolean</code></td><td>数组是否包含<code class="type">ltree</code>的一个后代？</td></tr><tr><td><code class="type">ltree</code> <code class="literal">@&gt;</code> <code class="type">ltree[]</code></td><td><code class="type">boolean</code></td><td>数组是否包含<code class="type">ltree</code>的一个后代？</td></tr><tr><td><code class="type">ltree[]</code> <code class="literal">~</code> <code class="type">lquery</code></td><td><code class="type">boolean</code></td><td>数组是否包含匹配<code class="type">lquery</code>的路径？</td></tr><tr><td><code class="type">lquery</code> <code class="literal">~</code> <code class="type">ltree[]</code></td><td><code class="type">boolean</code></td><td>数组是否包含匹配<code class="type">lquery</code>的路径？</td></tr><tr><td><code class="type">ltree[]</code> <code class="literal">?</code> <code class="type">lquery[]</code></td><td><code class="type">boolean</code></td><td><code class="type">ltree</code>数组是否包含匹配任意<code class="type">lquery</code>的路径？</td></tr><tr><td><code class="type">lquery[]</code> <code class="literal">?</code> <code class="type">ltree[]</code></td><td><code class="type">boolean</code></td><td><code class="type">ltree</code>数组是否包含匹配任意<code class="type">lquery</code>的路径？</td></tr><tr><td><code class="type">ltree[]</code> <code class="literal">@</code> <code class="type">ltxtquery</code></td><td><code class="type">boolean</code></td><td>数组是否包含匹配<code class="type">ltxtquery</code>的路径？</td></tr><tr><td><code class="type">ltxtquery</code> <code class="literal">@</code> <code class="type">ltree[]</code></td><td><code class="type">boolean</code></td><td>数组是否包含匹配<code class="type">ltxtquery</code>的路径？</td></tr><tr><td><code class="type">ltree[]</code> <code class="literal">?@&gt;</code> <code class="type">ltree</code></td><td><code class="type">ltree</code></td><td>是<code class="type">ltree</code>祖先的第一个数组项；如果没有则是 NULL</td></tr><tr><td><code class="type">ltree[]</code> <code class="literal">?&lt;@</code> <code class="type">ltree</code></td><td><code class="type">ltree</code></td><td>是<code class="type">ltree</code>祖先的第一个数组项；如果没有则是 NULL</td></tr><tr><td><code class="type">ltree[]</code> <code class="literal">?~</code> <code class="type">lquery</code></td><td><code class="type">ltree</code></td><td>匹配<code class="type">lquery</code>的第一个数组项；如果没有则是 NULL</td></tr><tr><td><code class="type">ltree[]</code> <code class="literal">?@</code> <code class="type">ltxtquery</code></td><td><code class="type">ltree</code></td><td>匹配<code class="type">lquery</code>的第一个数组项；如果没有则是 NULL</td></tr></tbody></table></div></div><br class="table-break" /><p>   操作符<code class="literal">&lt;@</code>、<code class="literal">@&gt;</code>、
+   <code class="literal">@</code>以及<code class="literal">~</code>有类似的、
+   <code class="literal">^&lt;@</code>、<code class="literal">^@&gt;</code>、<code class="literal">^@</code>、
+   <code class="literal">^~</code>，只是它们不适用索引。它们只对测试目的有用。
+  </p><p>   可用的函数在<a class="xref" href="ltree.html#LTREE-FUNC-TABLE" title="表 F.15. ltree 函数">表 F.15</a>中。
+  </p><div class="table" id="LTREE-FUNC-TABLE"><p class="title"><strong>表 F.15. <code class="type">ltree</code> 函数</strong></p><div class="table-contents"><table class="table" summary="ltree 函数" border="1"><colgroup><col /><col /><col /><col /><col /></colgroup><thead><tr><th>函数</th><th>返回类型</th><th>描述</th><th>例子</th><th>结果</th></tr></thead><tbody><tr><td><code class="function">subltree(ltree, int start, int end)</code><a id="idp86372896" class="indexterm"></a></td><td><code class="type">ltree</code></td><td><code class="type">ltree</code>的从位置<em class="parameter"><code>start</code></em>到位置<em class="parameter"><code>end</code></em>-1（从 0 开始计）的子路径</td><td><code class="literal">subltree('Top.Child1.Child2',1,2)</code></td><td><code class="literal">Child1</code></td></tr><tr><td><code class="function">subpath(ltree, int offset, int len)</code><a id="idp86378256" class="indexterm"></a></td><td><code class="type">ltree</code></td><td><code class="type">ltree</code>从位置<em class="parameter"><code>offset</code></em>开始长度为<em class="parameter"><code>len</code></em>的子路径。如果<em class="parameter"><code>offset</code></em>为负，则子路径开始于距离路径尾部那么远的位置。如果<em class="parameter"><code>len</code></em>为负，则从路径的尾部开始丢掉那么多个标签。</td><td><code class="literal">subpath('Top.Child1.Child2',0,2)</code></td><td><code class="literal">Top.Child1</code></td></tr><tr><td><code class="function">subpath(ltree, int offset)</code></td><td><code class="type">ltree</code></td><td><code class="type">ltree</code>从位置<em class="parameter"><code>offset</code></em>开始一直延伸到路径末尾的子路径。如果<em class="parameter"><code>offset</code></em>为负，则子路径开始于距离路径尾部那么远的位置。</td><td><code class="literal">subpath('Top.Child1.Child2',1)</code></td><td><code class="literal">Child1.Child2</code></td></tr><tr><td><code class="function">nlevel(ltree)</code><a id="idp86389808" class="indexterm"></a></td><td><code class="type">integer</code></td><td>路径中标签的数量</td><td><code class="literal">nlevel('Top.Child1.Child2')</code></td><td><code class="literal">3</code></td></tr><tr><td><code class="function">index(ltree a, ltree b)</code><a id="idp86393392" class="indexterm"></a></td><td><code class="type">integer</code></td><td><em class="parameter"><code>a</code></em>中第一次出现<em class="parameter"><code>b</code></em>的位置，如果没有找到则为 -1</td><td><code class="literal">index('0.1.2.3.5.4.5.6.8.5.6.8','5.6')</code></td><td><code class="literal">6</code></td></tr><tr><td><code class="function">index(ltree a, ltree b, int offset)</code></td><td><code class="type">integer</code></td><td><em class="parameter"><code>a</code></em>中第一次出现<em class="parameter"><code>b</code></em>的位置，搜索从<em class="parameter"><code>offset</code></em>开始。负的<em class="parameter"><code>offset</code></em>表示从距路径尾部<em class="parameter"><code>-offset</code></em>个标签的位置开始</td><td><code class="literal">index('0.1.2.3.5.4.5.6.8.5.6.8','5.6',-4)</code></td><td><code class="literal">9</code></td></tr><tr><td><code class="function">text2ltree(text)</code><a id="idp86404512" class="indexterm"></a></td><td><code class="type">ltree</code></td><td>把<code class="type">text</code>转换成<code class="type">ltree</code></td><td><code class="literal"></code></td><td><code class="literal"></code></td></tr><tr><td><code class="function">ltree2text(ltree)</code><a id="idp86408512" class="indexterm"></a></td><td><code class="type">text</code></td><td>把<code class="type">ltree</code>转换成<code class="type">text</code></td><td><code class="literal"></code></td><td><code class="literal"></code></td></tr><tr><td><code class="function">lca(ltree, ltree, ...)</code><a id="idp86412512" class="indexterm"></a></td><td><code class="type">ltree</code></td><td>最低公共祖先，即最长的公共路径前缀（最多支持 8 个参数）</td><td><code class="literal">lca('1.2.2.3','1.2.3.4.5.6')</code></td><td><code class="literal">1.2</code></td></tr><tr><td><code class="function">lca(ltree[])</code></td><td><code class="type">ltree</code></td><td>最低公共祖先，即最长的公共路径前缀</td><td><code class="literal">lca(array['1.2.2.3'::ltree,'1.2.3'])</code></td><td><code class="literal">1.2</code></td></tr></tbody></table></div></div><br class="table-break" /></div><div class="sect2" id="idp86418256"><div class="titlepage"><div><div><h3 class="title">F.22.3. 索引</h3></div></div></div><p>   <code class="filename">ltree</code>支持一些能加速上述操作符的索引类型：
+  </p><div class="itemizedlist"><ul class="itemizedlist" style="list-style-type: disc; "><li class="listitem"><p>     <code class="type">ltree</code>上的 B-树索引：
+     <code class="literal">&lt;</code>、<code class="literal">&lt;=</code>、<code class="literal">=</code>、
+     <code class="literal">&gt;=</code>、<code class="literal">&gt;</code>
+    </p></li><li class="listitem"><p>     <code class="type">ltree</code>上的 GiST 索引：
+     <code class="literal">&lt;</code>、<code class="literal">&lt;=</code>、<code class="literal">=</code>、
+     <code class="literal">&gt;=</code>、<code class="literal">&gt;</code>、
+     <code class="literal">@&gt;</code>、<code class="literal">&lt;@</code>、
+     <code class="literal">@</code>、<code class="literal">~</code>、<code class="literal">?</code>
+    </p><p>     创建这样一个索引的例子：
+    </p><pre class="programlisting">CREATE INDEX path_gist_idx ON test USING GIST (path);</pre></li><li class="listitem"><p>     <code class="type">ltree[]</code>上的 GiST 索引：
+     <code class="literal">ltree[] &lt;@ ltree</code>、<code class="literal">ltree @&gt; ltree[]</code>、
+     <code class="literal">@</code>、<code class="literal">~</code>、<code class="literal">?</code>
+    </p><p>     创建这样一个索引的例子：
+    </p><pre class="programlisting">CREATE INDEX path_gist_idx ON test USING GIST (array_path);</pre><p>     注意：这种索引类型是有损的。
+    </p></li></ul></div></div><div class="sect2" id="idp86438736"><div class="titlepage"><div><div><h3 class="title">F.22.4. 例子</h3></div></div></div><p>   这个例子使用下列数据（在源代码发布的<code class="filename">contrib/ltree/ltreetest.sql</code>文件中也有）：
+  </p><pre class="programlisting">CREATE TABLE test (path ltree);
+INSERT INTO test VALUES ('Top');
+INSERT INTO test VALUES ('Top.Science');
+INSERT INTO test VALUES ('Top.Science.Astronomy');
+INSERT INTO test VALUES ('Top.Science.Astronomy.Astrophysics');
+INSERT INTO test VALUES ('Top.Science.Astronomy.Cosmology');
+INSERT INTO test VALUES ('Top.Hobbies');
+INSERT INTO test VALUES ('Top.Hobbies.Amateurs_Astronomy');
+INSERT INTO test VALUES ('Top.Collections');
+INSERT INTO test VALUES ('Top.Collections.Pictures');
+INSERT INTO test VALUES ('Top.Collections.Pictures.Astronomy');
+INSERT INTO test VALUES ('Top.Collections.Pictures.Astronomy.Stars');
+INSERT INTO test VALUES ('Top.Collections.Pictures.Astronomy.Galaxies');
+INSERT INTO test VALUES ('Top.Collections.Pictures.Astronomy.Astronauts');
+CREATE INDEX path_gist_idx ON test USING GIST (path);
+CREATE INDEX path_idx ON test USING BTREE (path);</pre><p>   现在，我们有一个表<code class="structname">test</code>，它被填充了描述下列层次的数据：
+  </p><pre class="literallayout">                        Top
+                     /   |  \
+             Science Hobbies Collections
+                 /       |              \
+        Astronomy   Amateurs_Astronomy Pictures
+           /  \                            |
+Astrophysics  Cosmology                Astronomy
+                                        /  |    \
+                                 Galaxies Stars Astronauts</pre><p>   我们可以做继承：
+</p><pre class="screen">ltreetest=&gt; SELECT path FROM test WHERE path &lt;@ 'Top.Science';
+                path
+------------------------------------
+ Top.Science
+ Top.Science.Astronomy
+ Top.Science.Astronomy.Astrophysics
+ Top.Science.Astronomy.Cosmology
+(4 rows)</pre><p>
+  </p><p>   这里是一些路径匹配的例子：
+</p><pre class="screen">ltreetest=&gt; SELECT path FROM test WHERE path ~ '*.Astronomy.*';
+                     path
+-----------------------------------------------
+ Top.Science.Astronomy
+ Top.Science.Astronomy.Astrophysics
+ Top.Science.Astronomy.Cosmology
+ Top.Collections.Pictures.Astronomy
+ Top.Collections.Pictures.Astronomy.Stars
+ Top.Collections.Pictures.Astronomy.Galaxies
+ Top.Collections.Pictures.Astronomy.Astronauts
+(7 rows)
+
+ltreetest=&gt; SELECT path FROM test WHERE path ~ '*.!pictures@.*.Astronomy.*';
+                path
+------------------------------------
+ Top.Science.Astronomy
+ Top.Science.Astronomy.Astrophysics
+ Top.Science.Astronomy.Cosmology
+(3 rows)</pre><p>
+  </p><p>   这里是一些全文搜索的例子：
+</p><pre class="screen">ltreetest=&gt; SELECT path FROM test WHERE path @ 'Astro*% &amp; !pictures@';
+                path
+------------------------------------
+ Top.Science.Astronomy
+ Top.Science.Astronomy.Astrophysics
+ Top.Science.Astronomy.Cosmology
+ Top.Hobbies.Amateurs_Astronomy
+(4 rows)
+
+ltreetest=&gt; SELECT path FROM test WHERE path @ 'Astro* &amp; !pictures@';
+                path
+------------------------------------
+ Top.Science.Astronomy
+ Top.Science.Astronomy.Astrophysics
+ Top.Science.Astronomy.Cosmology
+(3 rows)</pre><p>
+  </p><p>   使用函数的路径构建：
+</p><pre class="screen">ltreetest=&gt; SELECT subpath(path,0,2)||'Space'||subpath(path,2) FROM test WHERE path &lt;@ 'Top.Science.Astronomy';
+                 ?column?
+------------------------------------------
+ Top.Science.Space.Astronomy
+ Top.Science.Space.Astronomy.Astrophysics
+ Top.Science.Space.Astronomy.Cosmology
+(3 rows)</pre><p>
+  </p><p>   我们可以通过常见一个在路径中指定位置插入标签的 SQL 函数来简化：
+</p><pre class="screen">CREATE FUNCTION ins_label(ltree, int, text) RETURNS ltree
+    AS 'select subpath($1,0,$2) || $3 || subpath($1,$2);'
+    LANGUAGE SQL IMMUTABLE;
+
+ltreetest=&gt; SELECT ins_label(path,2,'Space') FROM test WHERE path &lt;@ 'Top.Science.Astronomy';
+                ins_label
+------------------------------------------
+ Top.Science.Space.Astronomy
+ Top.Science.Space.Astronomy.Astrophysics
+ Top.Science.Space.Astronomy.Cosmology
+(3 rows)</pre><p>
+  </p></div><div class="sect2" id="idp86452960"><div class="titlepage"><div><div><h3 class="title">F.22.5. 转换</h3></div></div></div><p>   有一些额外的扩展为 PL/Python 实现了<code class="type">ltree</code>类型的转换。
+   这些扩展是<code class="literal">ltree_plpythonu</code>、<code class="literal">ltree_plpython2u</code>
+   以及<code class="literal">ltree_plpython3u</code>（PL/Python 命名习惯请见
+   <a class="xref" href="plpython-python23.html" title="45.1. Python 2 vs. Python 3">第 45.1 节</a>）。如果安装了这些转换并且在
+   创建函数时指定了它们，<code class="type">ltree</code>值会被映射为 Python 列表（
+   不过，当前并不支持逆向的转换）。
+  </p></div><div class="sect2" id="idp86457648"><div class="titlepage"><div><div><h3 class="title">F.22.6. 作者</h3></div></div></div><p>   所有工作都是 Teodor Sigaev（<code class="email">&lt;<a class="email" href="mailto:teodor@stack.net">teodor@stack.net</a>&gt;</code>）和
+   Oleg Bartunov（<code class="email">&lt;<a class="email" href="mailto:oleg@sai.msu.su">oleg@sai.msu.su</a>&gt;</code>）完成的。额外信息可见
+   <a class="ulink" href="http://www.sai.msu.su/~megera/postgres/gist/" target="_top">http://www.sai.msu.su/~megera/postgres/gist/</a>。作者还要感谢 Eugeny Rodichev 参与讨论。欢迎评论和缺陷报告。
+  </p></div></div><div class="navfooter"><hr /><table width="100%" summary="Navigation footer"><tr><td width="40%" align="left"><a accesskey="p" href="lo.html">上一页</a> </td><td width="20%" align="center"><a accesskey="u" href="contrib.html">上一级</a></td><td width="40%" align="right"> <a accesskey="n" href="pageinspect.html">下一页</a></td></tr><tr><td width="40%" align="left" valign="top">F.21. lo </td><td width="20%" align="center"><a accesskey="h" href="index.html">起始页</a></td><td width="40%" align="right" valign="top"> F.23. pageinspect</td></tr></table></div></body></html>

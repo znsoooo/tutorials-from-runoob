@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><title>REFRESH MATERIALIZED VIEW</title><link rel="stylesheet" type="text/css" href="stylesheet.css" /><link rev="made" href="pgsql-docs@postgresql.org" /><meta name="generator" content="DocBook XSL Stylesheets V1.79.1" /><link rel="prev" href="sql-reassign-owned.html" title="REASSIGN OWNED" /><link rel="next" href="sql-reindex.html" title="REINDEX" /></head><body><div xmlns="http://www.w3.org/TR/xhtml1/transitional" class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="5" align="center">REFRESH MATERIALIZED VIEW</th></tr><tr><td width="10%" align="left"><a accesskey="p" href="sql-reassign-owned.html" title="REASSIGN OWNED">上一页</a> </td><td width="10%" align="left"><a accesskey="u" href="sql-commands.html" title="SQL 命令">上一级</a></td><th width="60%" align="center">SQL 命令</th><td width="10%" align="right"><a accesskey="h" href="index.html" title="PostgreSQL 10.1 手册">起始页</a></td><td width="10%" align="right"> <a accesskey="n" href="sql-reindex.html" title="REINDEX">下一页</a></td></tr></table><hr></hr></div><div class="refentry" id="SQL-REFRESHMATERIALIZEDVIEW"><div class="titlepage"></div><a id="idp48082832" class="indexterm"></a><div class="refnamediv"><h2><span class="refentrytitle">REFRESH MATERIALIZED VIEW</span></h2><p>REFRESH MATERIALIZED VIEW — 替换一个物化视图的内容</p></div><div class="refsynopsisdiv"><h2>大纲</h2><pre class="synopsis">REFRESH MATERIALIZED VIEW [ CONCURRENTLY ] <em class="replaceable"><code>name</code></em>
+    [ WITH [ NO ] DATA ]</pre></div><div class="refsect1" id="idp48087056"><h2>描述</h2><p>   <code class="command">REFRESH MATERIALIZED VIEW</code>完全替换一个
+   物化视图的内容。旧的内容会被抛弃。如果指定了
+   <code class="literal">WITH DATA</code>（或者作为默认值），支持查询将被执行以
+   提供新的数据，并且会让物化视图将处于可扫描的状态。如果指定了
+   <code class="literal">WITH NO DATA</code>，则不会生成新数据并且会让物化视图
+   处于一种不可扫描的状态。
+  </p><p>   <code class="literal">CONCURRENTLY</code>和<code class="literal">WITH NO DATA</code>
+   不能被一起指定。
+  </p></div><div class="refsect1" id="idp48091952"><h2>参数</h2><div class="variablelist"><dl class="variablelist"><dt><span class="term"><code class="literal">CONCURRENTLY</code></span></dt><dd><p>      对物化视图的刷新不阻塞在该物化视图上的并发选择。如果没有这个选项，
+      一次影响很多行的刷新将使用更少的资源并且更快结束，但是可能会阻塞
+      其他尝试从物化视图中读取的连接。这个选项在只有少量行被影响的情况
+      下可能会更快。
+     </p><p>      只有当物化视图上有至少一个<code class="literal">UNIQUE</code>索引（只用列名
+      并且包括所有行）时，才允许这个选项。也就是说，该索引不能建立在任何
+      表达式上或者包括<code class="literal">WHERE</code>子句。
+     </p><p>      当物化视图还未被填充时，这个选项不能被使用。
+     </p><p>      即使带有这个选项，对于任意一个物化视图一次也只能运行一个
+      <code class="literal">REFRESH</code>。
+     </p></dd><dt><span class="term"><em class="replaceable"><code>name</code></em></span></dt><dd><p>      要刷新的物化视图的名称（可以被模式限定）。
+     </p></dd></dl></div></div><div class="refsect1" id="idp48099264"><h2>注解</h2><p>   虽然用于未来的<a class="xref" href="sql-cluster.html" title="CLUSTER"><span class="refentrytitle">CLUSTER</span></a>操作的默认索引会被保持，
+   <code class="command">REFRESH MATERIALIZED VIEW</code>不会基于这个属性排序产生
+   的行。如果希望数据在产生时排序，必须在支持查询中使用
+   <code class="literal">ORDER BY</code>子句。
+  </p></div><div class="refsect1" id="idp48102272"><h2>示例</h2><p>   这个命令将使用物化视图<code class="literal">order_summary</code>定义中的查询
+   来替换该物化视图的内容，并且让它处于一种可扫描的状态：
+</p><pre class="programlisting">REFRESH MATERIALIZED VIEW order_summary;</pre><p>
+  </p><p>   这个命令将释放与物化视图<code class="literal">annual_statistics_basis</code>相关
+   的存储并且让它变成一种不可扫描的状态：
+</p><pre class="programlisting">REFRESH MATERIALIZED VIEW annual_statistics_basis WITH NO DATA;</pre></div><div class="refsect1" id="idp48106304"><h2>兼容性</h2><p>   <code class="command">REFRESH MATERIALIZED VIEW</code>是一种
+   <span class="productname">PostgreSQL</span>扩展。
+  </p></div><div class="refsect1" id="idp48108432"><h2>另见</h2><span class="simplelist"><a class="xref" href="sql-creatematerializedview.html" title="CREATE MATERIALIZED VIEW"><span class="refentrytitle">CREATE MATERIALIZED VIEW</span></a>, <a class="xref" href="sql-altermaterializedview.html" title="ALTER MATERIALIZED VIEW"><span class="refentrytitle">ALTER MATERIALIZED VIEW</span></a>, <a class="xref" href="sql-dropmaterializedview.html" title="DROP MATERIALIZED VIEW"><span class="refentrytitle">DROP MATERIALIZED VIEW</span></a></span></div></div><div class="navfooter"><hr /><table width="100%" summary="Navigation footer"><tr><td width="40%" align="left"><a accesskey="p" href="sql-reassign-owned.html">上一页</a> </td><td width="20%" align="center"><a accesskey="u" href="sql-commands.html">上一级</a></td><td width="40%" align="right"> <a accesskey="n" href="sql-reindex.html">下一页</a></td></tr><tr><td width="40%" align="left" valign="top">REASSIGN OWNED </td><td width="20%" align="center"><a accesskey="h" href="index.html">起始页</a></td><td width="40%" align="right" valign="top"> REINDEX</td></tr></table></div></body></html>

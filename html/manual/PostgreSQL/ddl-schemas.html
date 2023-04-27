@@ -1,0 +1,79 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><title>5.8. 模式</title><link rel="stylesheet" type="text/css" href="stylesheet.css" /><link rev="made" href="pgsql-docs@postgresql.org" /><meta name="generator" content="DocBook XSL Stylesheets V1.79.1" /><link rel="prev" href="ddl-rowsecurity.html" title="5.7. 行安全性策略" /><link rel="next" href="ddl-inherit.html" title="5.9. 继承" /></head><body><div xmlns="http://www.w3.org/TR/xhtml1/transitional" class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="5" align="center">5.8. 模式</th></tr><tr><td width="10%" align="left"><a accesskey="p" href="ddl-rowsecurity.html" title="5.7. 行安全性策略">上一页</a> </td><td width="10%" align="left"><a accesskey="u" href="ddl.html" title="第 5 章 数据定义">上一级</a></td><th width="60%" align="center">第 5 章 数据定义</th><td width="10%" align="right"><a accesskey="h" href="index.html" title="PostgreSQL 10.1 手册">起始页</a></td><td width="10%" align="right"> <a accesskey="n" href="ddl-inherit.html" title="5.9. 继承">下一页</a></td></tr></table><hr></hr></div><div class="sect1" id="DDL-SCHEMAS"><div class="titlepage"><div><div><h2 class="title" style="clear: both">5.8. 模式</h2></div></div></div><div class="toc"><dl class="toc"><dt><span class="sect2"><a href="ddl-schemas.html#DDL-SCHEMAS-CREATE">5.8.1. 创建模式</a></span></dt><dt><span class="sect2"><a href="ddl-schemas.html#DDL-SCHEMAS-PUBLIC">5.8.2. 公共模式</a></span></dt><dt><span class="sect2"><a href="ddl-schemas.html#DDL-SCHEMAS-PATH">5.8.3. 模式搜索路径</a></span></dt><dt><span class="sect2"><a href="ddl-schemas.html#DDL-SCHEMAS-PRIV">5.8.4. 模式和权限</a></span></dt><dt><span class="sect2"><a href="ddl-schemas.html#DDL-SCHEMAS-CATALOG">5.8.5. 系统目录模式</a></span></dt><dt><span class="sect2"><a href="ddl-schemas.html#DDL-SCHEMAS-PATTERNS">5.8.6. 惯用法</a></span></dt><dt><span class="sect2"><a href="ddl-schemas.html#DDL-SCHEMAS-PORTABILITY">5.8.7. 可移植性</a></span></dt></dl></div><a id="idp6530416" class="indexterm"></a><p>   一个<span class="productname">PostgreSQL</span>数据库集簇中包含一个或更多命名的数据库。用户和用户组被整个集簇共享，但没有其他数据在数据库之间共享。任何给定客户端连接只能访问在连接中指定的数据库中的数据。
+  </p><div class="note"><h3 class="title">注意</h3><p>    一个集簇的用户并不必拥有访问集簇中每一个数据库的权限。用户名的共享意味着不可能在同一个集簇中出现重名的不同用户，例如两个数据库中都有叫<code class="literal">joe</code>的用户。但系统可以被配置为只允许<code class="literal">joe</code>访问某些数据库。
+   </p></div><p>   一个数据库包含一个或多个命名<em class="firstterm">模式</em>，模式中包含着表。模式还包含其他类型的命名对象，包括数据类型、函数和操作符。相同的对象名称可以被用于不同的模式中而不会出现冲突，例如<code class="literal">schema1</code>和<code class="literal">myschema</code>都可以包含名为<code class="literal">mytable</code>的表。和数据库不同，模式并不是被严格地隔离：一个用户可以访问他们所连接的数据库中的所有模式内的对象，只要他们有足够的权限。
+  </p><p>   下面是一些使用模式的原因：
+
+   </p><div class="itemizedlist"><ul class="itemizedlist" style="list-style-type: disc; "><li class="listitem"><p>      允许多个用户使用一个数据库并且不会互相干扰。
+     </p></li><li class="listitem"><p>      将数据库对象组织成逻辑组以便更容易管理。
+     </p></li><li class="listitem"><p>      第三方应用的对象可以放在独立的模式中，这样它们就不会与其他对象的名称发生冲突。     </p></li></ul></div><p>
+
+   模式类似于操作系统层的目录，但是模式不能嵌套。
+  </p><div class="sect2" id="DDL-SCHEMAS-CREATE"><div class="titlepage"><div><div><h3 class="title">5.8.1. 创建模式</h3></div></div></div><a id="idp6541824" class="indexterm"></a><p>    要创建一个模式，可使用<a class="xref" href="sql-createschema.html" title="CREATE SCHEMA"><span class="refentrytitle">CREATE SCHEMA</span></a>命令，并且给出选择的模式名称。例如：
+</p><pre class="programlisting">CREATE SCHEMA myschema;</pre><p>
+   </p><a id="idp6545104" class="indexterm"></a><a id="idp6545792" class="indexterm"></a><p>    在一个模式中创建或访问对象，需要使用由模式名和表名构成的<em class="firstterm">限定名</em>，模式名和表名之间以点号分隔：
+</p><pre class="synopsis"><em class="replaceable"><code>模式</code></em><code class="literal">.</code><em class="replaceable"><code>表</code></em></pre><p>
+    在任何需要一个表名的地方都可以这样用，包括表修改命令和后续章节要讨论的数据访问命令（为了简洁我们在这里只谈到表，但是这种方式对其他类型的命名对象同样有效，例如类型和函数）。
+   </p><p>    事实上，还有更加通用的语法：
+</p><pre class="synopsis"><em class="replaceable"><code>数据库</code></em><code class="literal">.</code><em class="replaceable"><code>模式</code></em><code class="literal">.</code><em class="replaceable"><code>表</code></em></pre><p>
+    也可以使用，但是目前它只是在<span class="foreignphrase"><em class="foreignphrase">形式上</em></span>与SQL标准兼容。如果我们写一个数据库名称，它必须是我们正在连接的数据库。
+   </p><p>    因此，如果要在一个新模式中创建一个表，可用：
+</p><pre class="programlisting">CREATE TABLE myschema.mytable (
+ ...
+);</pre><p>
+   </p><a id="idp6554464" class="indexterm"></a><p>    要删除一个为空的模式（其中的所有对象已经被删除），可用：
+</p><pre class="programlisting">DROP SCHEMA myschema;</pre><p>
+    要删除一个模式以及其中包含的所有对象，可用：
+</p><pre class="programlisting">DROP SCHEMA myschema CASCADE;</pre><p>
+    有关于此的更一般的机制请参见<a class="xref" href="ddl-depend.html" title="5.13. 依赖跟踪">第 5.13 节</a>。
+   </p><p>    我们常常希望创建一个由其他人所拥有的模式（因为这是将用户动作限制在良定义的名字空间中的方法之一）。其语法是：
+</p><pre class="programlisting">CREATE SCHEMA <em class="replaceable"><code>schema_name</code></em> AUTHORIZATION <em class="replaceable"><code>user_name</code></em>;</pre><p>
+    我们甚至可以省略模式名称，在此种情况下模式名称将会使用用户名，参见<a class="xref" href="ddl-schemas.html#DDL-SCHEMAS-PATTERNS" title="5.8.6. 惯用法">第 5.8.6 节</a>。
+   </p><p>    以<code class="literal">pg_</code>开头的模式名被保留用于系统目的，所以不能被用户所创建。
+   </p></div><div class="sect2" id="DDL-SCHEMAS-PUBLIC"><div class="titlepage"><div><div><h3 class="title">5.8.2. 公共模式</h3></div></div></div><a id="idp6563328" class="indexterm"></a><p>    在前面的小节中，我们创建的表都没有指定任何模式名称。默认情况下这些表（以及其他对象）会自动的被放入一个名为<span class="quote">“<span class="quote">public</span>”</span>的模式中。任何新数据库都包含这样一个模式。因此，下面的命令是等效的：
+</p><pre class="programlisting">CREATE TABLE products ( ... );</pre><p>
+    以及：
+</p><pre class="programlisting">CREATE TABLE public.products ( ... );</pre><p>
+   </p></div><div class="sect2" id="DDL-SCHEMAS-PATH"><div class="titlepage"><div><div><h3 class="title">5.8.3. 模式搜索路径</h3></div></div></div><a id="idp6568224" class="indexterm"></a><a id="idp6568912" class="indexterm"></a><a id="idp6569600" class="indexterm"></a><p>    限定名写起来很冗长，通常最好不要把一个特定模式名拉到应用中。因此，表名通常被使用<em class="firstterm">非限定名</em>来引用，它只由表名构成。系统将沿着一条<em class="firstterm">搜索路径</em>来决定该名称指的是哪个表，搜索路径是一个进行查看的模式列表。 搜索路径中第一个匹配的表将被认为是所需要的。如果在搜索路径中没有任何匹配，即使在数据库的其他模式中存在匹配的表名也将会报告一个错误。
+   </p><a id="idp6572320" class="indexterm"></a><p>    搜索路径中的第一个模式被称为当前模式。除了是第一个被搜索的模式外，如果<code class="command">CREATE TABLE</code>命令没有指定模式名，它将是新创建表所在的模式。
+   </p><a id="idp6574576" class="indexterm"></a><p>    要显示当前搜索路径，使用下面的命令：
+</p><pre class="programlisting">SHOW search_path;</pre><p>
+    在默认设置下这将返回：
+</p><pre class="screen"> search_path
+--------------
+ "$user",public</pre><p>
+    第一个元素说明一个和当前用户同名的模式会被搜索。如果不存在这个模式，该项将被忽略。第二个元素指向我们已经见过的公共模式。
+   </p><p>    搜索路径中的第一个模式是创建新对象的默认存储位置。这就是默认情况下对象会被创建在公共模式中的原因。当对象在任何其他没有模式限定的环境中被引用（表修改、数据修改或查询命令）时，搜索路径将被遍历直到一个匹配对象被找到。因此，在默认配置中，任何非限定访问将只能指向公共模式。
+   </p><p>    要把新模式放在搜索路径中，我们可以使用：
+</p><pre class="programlisting">SET search_path TO myschema,public;</pre><p>
+    （我们在这里省略了<code class="literal">$user</code>，因为我们并不立即需要它）。然后我们可以该表而无需使用模式限定：
+</p><pre class="programlisting">DROP TABLE mytable;</pre><p>
+    同样，由于<code class="literal">myschema</code>是路径中的第一个元素，新对象会被默认创建在其中。
+   </p><p>    我们也可以这样写：
+</p><pre class="programlisting">SET search_path TO myschema;</pre><p>
+    这样我们在没有显式限定时再也不必去访问公共模式了。公共模式没有什么特别之处，它只是默认存在而已，它也可以被删除。
+   </p><p>    其他操作模式搜索路径的方法请见<a class="xref" href="functions-info.html" title="9.25. 系统信息函数">第 9.25 节</a>。
+   </p><p>    搜索路径对于数据类型名称、函数名称和操作符名称的作用与表名一样。数据类型和函数名称可以使用和表名完全相同的限定方式。如果我们需要在一个表达式中写一个限定的操作符名称，我们必须写成一种特殊的形式：
+</p><pre class="synopsis"><code class="literal">OPERATOR(</code><em class="replaceable"><code>schema</code></em><code class="literal">.</code><em class="replaceable"><code>operator</code></em><code class="literal">)</code></pre><p>
+    这是为了避免句法歧义。例如：
+</p><pre class="programlisting">SELECT 3 OPERATOR(pg_catalog.+) 4;</pre><p>
+    实际上我们通常都会依赖于搜索路径来查找操作符，因此没有必要去写如此“丑陋”的东西。
+   </p></div><div class="sect2" id="DDL-SCHEMAS-PRIV"><div class="titlepage"><div><div><h3 class="title">5.8.4. 模式和权限</h3></div></div></div><a id="idp6590272" class="indexterm"></a><p>    默认情况下，用户不能访问不属于他们的模式中的任何对象。要允许这种行为，模式的拥有者必须在该模式上授予<code class="literal">USAGE</code>权限。为了允许用户使用模式中的对象，可能还需要根据对象授予额外的权限。
+   </p><p>    一个用户也可以被允许在其他某人的模式中创建对象。要允许这种行为，模式上的<code class="literal">CREATE</code>权限必须被授予。注意在默认情况下，所有人都拥有在<code class="literal">public</code>模式上的<code class="literal">CREATE</code>和<code class="literal">USAGE</code>权限。这使得用户能够连接到一个给定数据库并在它的<code class="literal">public</code>模式中创建对象。如果不希望允许这样，可以撤销该权限：
+</p><pre class="programlisting">REVOKE CREATE ON SCHEMA public FROM PUBLIC;</pre><p>
+    （第一个<span class="quote">“<span class="quote">public</span>”</span>是模式，第二个<span class="quote">“<span class="quote">public</span>”</span>指的是 <span class="quote">“<span class="quote">每一个用户</span>”</span>。第一种是一个标识符，第二种是一个关键词，所以两者的大小写不同。请回想<a class="xref" href="sql-syntax-lexical.html#SQL-SYNTAX-IDENTIFIERS" title="4.1.1. 标识符和关键词">第 4.1.1 节</a>中的指导方针。）
+   </p></div><div class="sect2" id="DDL-SCHEMAS-CATALOG"><div class="titlepage"><div><div><h3 class="title">5.8.5. 系统目录模式</h3></div></div></div><a id="idp6601376" class="indexterm"></a><p>    除<code class="literal">public</code>和用户创建的模式之外，每一个数据库还包括一个<code class="literal">pg_catalog</code>模式，它包含了系统表和所有内建的数据类型、函数以及操作符。<code class="literal">pg_catalog</code>总是搜索路径的一个有效部分。如果没有在路径中显式地包括该模式，它将在路径中的模式<span class="emphasis"><em>之前</em></span>被搜索。这保证了内建的名称总是能被找到。然而，如果我们希望用用户定义的名称重载内建的名称，可以显式的将<code class="literal">pg_catalog</code>放在搜索路径的末尾。
+   </p><p>    由于系统表名称以<code class="literal">pg_</code>开头，最好还是避免使用这样的名称，以避免和未来新版本中
+    可能出现的系统表名发生冲突。系统表将继续采用以<code class="literal">pg_</code>开头的方式，这样它们不会
+    与非限制的用户表名称冲突。
+   </p></div><div class="sect2" id="DDL-SCHEMAS-PATTERNS"><div class="titlepage"><div><div><h3 class="title">5.8.6. 惯用法</h3></div></div></div><p>    模式可以被用来以多种方式组织我们的数据。在默认配置下，一些常见的用法是：
+    </p><div class="itemizedlist"><ul class="itemizedlist" style="list-style-type: disc; "><li class="listitem"><p>       如果我们不创建任何模式则所有用户会隐式地访问公共模式。这就像根本不存在模式一样。当数据库中只有一个用户或者少量合作用户时，推荐使用这种配置。这种配置使得我们很容易从没有模式的环境中转换过来。
+      </p></li><li class="listitem"><p>       我们可以为每一个用户创建与它同名的模式。回想一下，默认的搜索路径以<code class="literal">$user</code>开始，它将会被解析成用户名。因此，如果每一个用户有一个独立的模式，它们将会默认访问自己的模式。
+      </p><p>       如果我们使用这种配置，则我们可能也希望撤销到公共模式的访问（或者把它也一起删除），这样用户被真正地限制在他们自己的模式中。
+      </p></li><li class="listitem"><p>       要安装共享的应用（任何人都可以用的表、由第三方提供的附加函数等），将它们放在独立的模式中。记住要授予适当的权限以允许其他用户访问它们。然后用户就可以使用带模式名的限定名称来引用这些附加对象，或者他们可以把附加模式放入到他们的搜索路径中。
+      </p></li></ul></div><p>
+   </p></div><div class="sect2" id="DDL-SCHEMAS-PORTABILITY"><div class="titlepage"><div><div><h3 class="title">5.8.7. 可移植性</h3></div></div></div><p>    在SQL标准中，在由不同用户拥有的同一个模式中的对象是不存在的。此外，某些实现不允许创建与拥有者名称不同名的模式。事实上，在那些仅实现了标准中基本模式支持的数据库中，模式和用户的概念是等同的。因此，很多用户认为限定名称实际上是由<code class="literal"><em class="replaceable"><code>user_name</code></em>.<em class="replaceable"><code>table_name</code></em></code>组成的。如果我们为每一个用户都创建了一个模式，<span class="productname">PostgreSQL</span>实际也是这样认为的。
+   </p><p>    同样，在SQL标准中也没有<code class="literal">public</code>模式的概念。为了最大限度的与标准一致，我们不应使用（甚至是删除）<code class="literal">public</code>模式。
+   </p><p>    当然，某些SQL数据库系统可能根本没有实现模式，或者提供允许跨数据库访问的名字空间。如果需要使用这样一些系统，最好不要使用模式。
+   </p></div></div><div class="navfooter"><hr /><table width="100%" summary="Navigation footer"><tr><td width="40%" align="left"><a accesskey="p" href="ddl-rowsecurity.html">上一页</a> </td><td width="20%" align="center"><a accesskey="u" href="ddl.html">上一级</a></td><td width="40%" align="right"> <a accesskey="n" href="ddl-inherit.html">下一页</a></td></tr><tr><td width="40%" align="left" valign="top">5.7. 行安全性策略 </td><td width="20%" align="center"><a accesskey="h" href="index.html">起始页</a></td><td width="40%" align="right" valign="top"> 5.9. 继承</td></tr></table></div></body></html>

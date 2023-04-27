@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><title>pg_waldump</title><link rel="stylesheet" type="text/css" href="stylesheet.css" /><link rev="made" href="pgsql-docs@postgresql.org" /><meta name="generator" content="DocBook XSL Stylesheets V1.79.1" /><link rel="prev" href="pgupgrade.html" title="pg_upgrade" /><link rel="next" href="app-postgres.html" title="postgres" /></head><body><div xmlns="http://www.w3.org/TR/xhtml1/transitional" class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="5" align="center"><span xmlns="http://www.w3.org/1999/xhtml" class="application">pg_waldump</span></th></tr><tr><td width="10%" align="left"><a accesskey="p" href="pgupgrade.html" title="pg_upgrade">上一页</a> </td><td width="10%" align="left"><a accesskey="u" href="reference-server.html" title="PostgreSQL 服务器应用">上一级</a></td><th width="60%" align="center">PostgreSQL 服务器应用</th><td width="10%" align="right"><a accesskey="h" href="index.html" title="PostgreSQL 10.1 手册">起始页</a></td><td width="10%" align="right"> <a accesskey="n" href="app-postgres.html" title="postgres">下一页</a></td></tr></table><hr></hr></div><div class="refentry" id="PGWALDUMP"><div class="titlepage"></div><a id="idp54225632" class="indexterm"></a><div class="refnamediv"><h2><span class="refentrytitle"><span class="application">pg_waldump</span></span></h2><p>pg_waldump — 以人类可读的形式显示一个<span class="productname">PostgreSQL</span>
+  数据库集簇的预写式日志</p></div><div class="refsynopsisdiv"><h2>大纲</h2><div class="cmdsynopsis"><p id="idp54229792"><code class="command">pg_waldump</code> [<code class="option">option</code>...] [<code class="option">startseg</code>
+     [<code class="option">endseg</code>]
+   ]</p></div></div><div class="refsect1" id="R1-APP-PGWALDUMP-1"><h2>简介</h2><p>   <code class="command">pg_waldump</code>显示预写式日志（WAL），它主要
+   用于调试或者教育目的。
+  </p><p>   这个工具只能由安装该服务器的用户运行，因为它要求对数据目录的只读访问。
+  </p></div><div class="refsect1" id="idp54236192"><h2>选项</h2><p>    下列命令行选项控制输出的位置和格式：
+
+    </p><div class="variablelist"><dl class="variablelist"><dt><span class="term"><em class="replaceable"><code>startseg</code></em></span></dt><dd><p>        从指定的日志段文件开始读取。这也隐含地决定了要搜索文件的路径以及
+        要使用的时间线。
+       </p></dd><dt><span class="term"><em class="replaceable"><code>endseg</code></em></span></dt><dd><p>        在读取指定的日志段文件后停止。
+       </p></dd><dt><span class="term"><code class="option">-b</code><br /></span><span class="term"><code class="option">--bkp-details</code></span></dt><dd><p>        输出有关备份块的细节。
+       </p></dd><dt><span class="term"><code class="option">-e <em class="replaceable"><code>end</code></em></code><br /></span><span class="term"><code class="option">--end=<em class="replaceable"><code>end</code></em></code></span></dt><dd><p>        在指定的WAL位置停止读取，而不是一直读取到日志流的末尾。
+       </p></dd><dt><span class="term"><code class="option">-f</code><br /></span><span class="term"><code class="option">--follow</code></span></dt><dd><p>        在到达可用 WAL 的末尾之后，保持每秒轮询一次是否有新的 WAL 出现。
+       </p></dd><dt><span class="term"><code class="option">-n <em class="replaceable"><code>limit</code></em></code><br /></span><span class="term"><code class="option">--limit=<em class="replaceable"><code>limit</code></em></code></span></dt><dd><p>        显示指定数量的记录，然后停止。
+       </p></dd><dt><span class="term"><code class="option">-p <em class="replaceable"><code>path</code></em></code><br /></span><span class="term"><code class="option">--path=<em class="replaceable"><code>path</code></em></code></span></dt><dd><p>        指定搜索日志段文件的目录或包含这些文件的包含<code class="literal">pg_wal</code>子目录的目录。
+		缺省值是在当前目录中搜索，当前目录的<code class="literal">pg_wal</code>子目录和
+		<code class="envar">PGDATA</code>的<code class="literal">pg_wal</code>子目录。
+       </p></dd><dt><span class="term"><code class="option">-r <em class="replaceable"><code>rmgr</code></em></code><br /></span><span class="term"><code class="option">--rmgr=<em class="replaceable"><code>rmgr</code></em></code></span></dt><dd><p>        只显示由指定资源管理器生成的记录。如果把<code class="literal">list</code>作为资源管理器名称
+        传递给这个选项，则打印出可用资源管理器名称的列表然后退出。
+       </p></dd><dt><span class="term"><code class="option">-s <em class="replaceable"><code>start</code></em></code><br /></span><span class="term"><code class="option">--start=<em class="replaceable"><code>start</code></em></code></span></dt><dd><p>        要从哪个WAL位置开始读取。默认是从找到的最早的文件的第一个可用日志记录开始。
+       </p></dd><dt><span class="term"><code class="option">-t <em class="replaceable"><code>timeline</code></em></code><br /></span><span class="term"><code class="option">--timeline=<em class="replaceable"><code>timeline</code></em></code></span></dt><dd><p>        要从哪个时间线读取日志记录。默认是使用<em class="replaceable"><code>startseg</code></em>（如果指定）
+        中的值，否则默认为 1。
+       </p></dd><dt><span class="term"><code class="option">-V</code><br /></span><span class="term"><code class="option">--version</code></span></dt><dd><p>       打印<span class="application">pg_waldump</span>版本并且退出。
+       </p></dd><dt><span class="term"><code class="option">-x <em class="replaceable"><code>xid</code></em></code><br /></span><span class="term"><code class="option">--xid=<em class="replaceable"><code>xid</code></em></code></span></dt><dd><p>        只显示用给定事务 ID 标记的记录。
+       </p></dd><dt><span class="term"><code class="option">-z</code><br /></span><span class="term"><code class="option">--stats[=record]</code></span></dt><dd><p>        显示概括统计信息（记录的数量和尺寸以及全页镜像）而不是显示
+        每个记录。可以选择针对每个记录生成统计信息，而不是针对每个
+        资源管理器生成。
+       </p></dd><dt><span class="term"><code class="option">-?</code><br /></span><span class="term"><code class="option">--help</code></span></dt><dd><p>         显示有关<span class="application">pg_waldump</span>命令行参数的帮助并且退出。
+        </p></dd></dl></div><p>
+   </p></div><div class="refsect1" id="idp54267456"><h2>注解</h2><p>    当服务器正在运行时可能会给出错误的结果。
+  </p><p>    只有指定的时间线 会被显示（如果没有指定，则显示默认时间线）。
+    其他时间线上的记录会被忽略。
+  </p><p>    <span class="application">pg_waldump</span>不能读取具有后缀<code class="literal">.partial</code>
+    的 WAL 文件。如果需要读取那些文件，需要从文件名中移除
+    <code class="literal">.partial</code>后缀。
+  </p></div><div class="refsect1" id="idp54271424"><h2>另见</h2><span class="simplelist"><a class="xref" href="wal-internals.html" title="30.5. WAL内部">第 30.5 节</a></span></div></div><div class="navfooter"><hr /><table width="100%" summary="Navigation footer"><tr><td width="40%" align="left"><a accesskey="p" href="pgupgrade.html">上一页</a> </td><td width="20%" align="center"><a accesskey="u" href="reference-server.html">上一级</a></td><td width="40%" align="right"> <a accesskey="n" href="app-postgres.html">下一页</a></td></tr><tr><td width="40%" align="left" valign="top"><span class="application">pg_upgrade</span> </td><td width="20%" align="center"><a accesskey="h" href="index.html">起始页</a></td><td width="40%" align="right" valign="top"> <span class="application">postgres</span></td></tr></table></div></body></html>

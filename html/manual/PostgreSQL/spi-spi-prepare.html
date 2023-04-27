@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><title>SPI_prepare</title><link rel="stylesheet" type="text/css" href="stylesheet.css" /><link rev="made" href="pgsql-docs@postgresql.org" /><meta name="generator" content="DocBook XSL Stylesheets V1.79.1" /><link rel="prev" href="spi-spi-execute-with-args.html" title="SPI_execute_with_args" /><link rel="next" href="spi-spi-prepare-cursor.html" title="SPI_prepare_cursor" /></head><body><div xmlns="http://www.w3.org/TR/xhtml1/transitional" class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="5" align="center">SPI_prepare</th></tr><tr><td width="10%" align="left"><a accesskey="p" href="spi-spi-execute-with-args.html" title="SPI_execute_with_args">上一页</a> </td><td width="10%" align="left"><a accesskey="u" href="spi-interface.html" title="46.1. 接口函数">上一级</a></td><th width="60%" align="center">46.1. 接口函数</th><td width="10%" align="right"><a accesskey="h" href="index.html" title="PostgreSQL 10.1 手册">起始页</a></td><td width="10%" align="right"> <a accesskey="n" href="spi-spi-prepare-cursor.html" title="SPI_prepare_cursor">下一页</a></td></tr></table><hr></hr></div><div class="refentry" id="SPI-SPI-PREPARE"><div class="titlepage"></div><a id="idp38496256" class="indexterm"></a><div class="refnamediv"><h2><span class="refentrytitle">SPI_prepare</span></h2><p>SPI_prepare — 准备一个语句，但不执行它</p></div><div class="refsynopsisdiv"><h2>大纲</h2><pre class="synopsis">SPIPlanPtr SPI_prepare(const char * <em class="parameter"><code>command</code></em>, int <em class="parameter"><code>nargs</code></em>, Oid * <em class="parameter"><code>argtypes</code></em>)</pre></div><div class="refsect1" id="idp38501136"><h2>描述</h2><p>   <code class="function">SPI_prepare</code>为指定的命令创建并且返回一个
+   预备语句，但是并不执行该命令。该预备语句会在稍后使用
+   <code class="function">SPI_execute_plan</code>重复执行。
+  </p><p>   当相同的或者相似的命令要被重复执行时，通常来说只执行一次解析分
+   析是有利的，并且更有利的是重用该命令的执行计划。
+   <code class="function">SPI_prepare</code>把一个命令字符串转换成一个预
+   备语句，它包装了解析分析的结果。如果发现为每一次执行都生成一个
+   定制计划没有帮助，该预备语句也提供了一个地方缓存执行计划。
+  </p><p>   一个预备命令可以被一般化为在一个普通命令中应该出现常量的地方写
+   上参数（<code class="literal">$1</code>、<code class="literal">$2</code>等等）。参数的实际值在
+   <code class="function">SPI_execute_plan</code>被调用时指定。这让该预备
+   语句可以比没有参数的形式用户与更广泛的情况。
+  </p><p>   <code class="function">SPI_prepare</code>返回的语句只能在当前过程调用
+   中使用，因为<code class="function">SPI_finish</code>会释放为这样一个语句
+   分配的内存。但是可以使用函数<code class="function">SPI_keepplan</code>
+   或<code class="function">SPI_saveplan</code>把该语句保存更久。
+  </p></div><div class="refsect1" id="idp38510896"><h2>参数</h2><div class="variablelist"><dl class="variablelist"><dt><span class="term"><code class="literal">const char * <em class="parameter"><code>command</code></em></code></span></dt><dd><p>      命令字符串
+     </p></dd><dt><span class="term"><code class="literal">int <em class="parameter"><code>nargs</code></em></code></span></dt><dd><p>      输入参数（<code class="literal">$1</code>、<code class="literal">$2</code>等等）的数量
+     </p></dd><dt><span class="term"><code class="literal">Oid * <em class="parameter"><code>argtypes</code></em></code></span></dt><dd><p>      一个数组指针，它指向的数组包含参数的数据类型的
+      <acronym class="acronym">OID</acronym>
+     </p></dd></dl></div></div><div class="refsect1" id="idp38518800"><h2>返回值</h2><p>   <code class="function">SPI_prepare</code>返回一个指向<code class="type">SPIPlan</code>
+   的非空指针，它是一个表示一个预备语句的不透明结构。发生错误时，
+   将会返回<code class="symbol">NULL</code>，并且
+   <code class="varname">SPI_result</code>将被设置为一个也被
+   <code class="function">SPI_execute</code>使用的错误码，不过当
+   <em class="parameter"><code>command</code></em>为<code class="symbol">NULL</code>、
+   或者<em class="parameter"><code>nargs</code></em>小于零、或者<em class="parameter"><code>nargs</code></em>大于
+   零但是<em class="parameter"><code>argtypes</code></em>为<code class="symbol">NULL</code>
+   时它会被设置为<code class="symbol">SPI_ERROR_ARGUMENT</code>。
+  </p></div><div class="refsect1" id="idp38526752"><h2>注解</h2><p>   如果没有定义参数，在第一次使用<code class="function">SPI_execute_plan</code>
+   时将会创建一个一般的计划，并且把它用于所有的后续执行。如果有参数，
+   <code class="function">SPI_execute_plan</code>的前几次使用将根据提供的参数值
+   产生定制计划。在使用同一个预备语句足够多次后，
+   <code class="function">SPI_execute_plan</code>将构建一个一般计划，并且如果它
+   并不比定制计划昂贵太多， <code class="function">SPI_execute_plan</code>将开始
+   使用一般计划来取代每次都进行重新规划。如果这种默认的行为不合适，你可以
+   通过传递<code class="literal">CURSOR_OPT_GENERIC_PLAN</code>或
+   <code class="literal">CURSOR_OPT_CUSTOM_PLAN</code>标志给
+   <code class="function">SPI_prepare_cursor</code>，以分别强制使用一般或者定制
+   计划。
+  </p><p>   尽管一个预备语句的要点是避免对语句的重复解析分析以及规划，只要语句中
+   用到的数据库对象从上一次使用该预备语句以来经历过定义性（DDL）改变，
+   <span class="productname">PostgreSQL</span>将会强制重新分析和重新规划该语句。还有，
+   如果<a class="xref" href="runtime-config-client.html#GUC-SEARCH-PATH">search_path</a>的值从一个改变成下一个，该语句将
+   会使用新的<code class="varname">search_path</code>进行重新解析（后一种行为是从
+   <span class="productname">PostgreSQL</span> 9.3 开始的新行为）。更多
+   有关预备语句行为的信息请见<a class="xref" href="sql-prepare.html" title="PREPARE"><span class="refentrytitle">PREPARE</span></a>。
+  </p><p>   这个函数只能从一个已连接的过程调用。
+  </p><p>   <code class="type">SPIPlanPtr</code>被声明为<code class="filename">spi.h</code>中的一种不透明结构类型
+   的指针。尝试直接访问其内容是不明智的，因为那会让你的代码更有可能会在未
+   来版本的<span class="productname">PostgreSQL</span>中崩溃。
+  </p><p>   <code class="type">SPIPlanPtr</code>这个名字多少有点历史原因，因为该数据结构不再需要包
+   含一个执行计划。
+  </p></div></div><div class="navfooter"><hr /><table width="100%" summary="Navigation footer"><tr><td width="40%" align="left"><a accesskey="p" href="spi-spi-execute-with-args.html">上一页</a> </td><td width="20%" align="center"><a accesskey="u" href="spi-interface.html">上一级</a></td><td width="40%" align="right"> <a accesskey="n" href="spi-spi-prepare-cursor.html">下一页</a></td></tr><tr><td width="40%" align="left" valign="top">SPI_execute_with_args </td><td width="20%" align="center"><a accesskey="h" href="index.html">起始页</a></td><td width="40%" align="right" valign="top"> SPI_prepare_cursor</td></tr></table></div></body></html>

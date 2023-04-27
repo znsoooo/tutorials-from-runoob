@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><title>37.12. 用户定义的操作符</title><link rel="stylesheet" type="text/css" href="stylesheet.css" /><link rev="made" href="pgsql-docs@postgresql.org" /><meta name="generator" content="DocBook XSL Stylesheets V1.79.1" /><link rel="prev" href="xtypes.html" title="37.11. 用户定义的类型" /><link rel="next" href="xoper-optimization.html" title="37.13. 操作符优化信息" /></head><body><div xmlns="http://www.w3.org/TR/xhtml1/transitional" class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="5" align="center">37.12. 用户定义的操作符</th></tr><tr><td width="10%" align="left"><a accesskey="p" href="xtypes.html" title="37.11. 用户定义的类型">上一页</a> </td><td width="10%" align="left"><a accesskey="u" href="extend.html" title="第 37 章 扩展 SQL">上一级</a></td><th width="60%" align="center">第 37 章 扩展 <acronym xmlns="http://www.w3.org/1999/xhtml" class="acronym">SQL</acronym></th><td width="10%" align="right"><a accesskey="h" href="index.html" title="PostgreSQL 10.1 手册">起始页</a></td><td width="10%" align="right"> <a accesskey="n" href="xoper-optimization.html" title="37.13. 操作符优化信息">下一页</a></td></tr></table><hr></hr></div><div class="sect1" id="XOPER"><div class="titlepage"><div><div><h2 class="title" style="clear: both">37.12. 用户定义的操作符</h2></div></div></div><a id="idp34008944" class="indexterm"></a><p>   对于一个完成实际工作的底层函数的调用来说，每一个操作符都是<span class="quote">“<span class="quote">语法糖</span>”</span>，因此在创建操作符之前你必须先创建底层函数。不过，一个操作符<span class="emphasis"><em>不只</em></span>是语法糖，因为它携带了额外的信息来帮助查询规划器优化使用该操作符的查询。下一节将致力于解释这些额外信息。
+  </p><p>   <span class="productname">PostgreSQL</span>支持左一元、右一元和二元操作符。操作符可以被重载<a id="idp34012880" class="indexterm"></a>，也就是说相同的操作符名称可以被用于具有不同操作数数量和类型的操作符。在执行一个查询时，系统会根据提供的操作数的数量和类型决定要调用的操作符。
+  </p><p>   这里有一个创建用于对两个复数做加法的操作符的例子。我们假设我们已经创建了类型<code class="type">complex</code>（见<a class="xref" href="xtypes.html" title="37.11. 用户定义的类型">第 37.11 节</a>）的定义。首先我们需要一个函数做这个加法，然后我们可以定义该操作符：
+
+</p><pre class="programlisting">CREATE FUNCTION complex_add(complex, complex)
+    RETURNS complex
+    AS '<em class="replaceable"><code>filename</code></em>', 'complex_add'
+    LANGUAGE C IMMUTABLE STRICT;
+
+CREATE OPERATOR + (
+    leftarg = complex,
+    rightarg = complex,
+    procedure = complex_add,
+    commutator = +
+);</pre><p>
+  </p><p>   现在我们可以执行一个这样的查询：
+
+</p><pre class="screen">SELECT (a + b) AS c FROM test_complex;
+
+        c
+-----------------
+ (5.2,6.05)
+ (133.42,144.95)</pre><p>
+  </p><p>   这里我们已经展示了如何创建一个二元操作符。要创建一元操作符，只要忽略<code class="literal">leftarg</code>（左一元）和<code class="literal">rightarg</code>（右一元）之一即可。在<code class="command">CREATE OPERATOR</code>中只要求<code class="literal">procedure</code>子句和参数子句。例子中展示的<code class="literal">commutator</code>子句是一个可选的子句，它被用作一个查询优化器使用的提示。有关<code class="literal">commutator</code>以及其他优化器提示的细节出现在下一小节中。
+  </p></div><div class="navfooter"><hr /><table width="100%" summary="Navigation footer"><tr><td width="40%" align="left"><a accesskey="p" href="xtypes.html">上一页</a> </td><td width="20%" align="center"><a accesskey="u" href="extend.html">上一级</a></td><td width="40%" align="right"> <a accesskey="n" href="xoper-optimization.html">下一页</a></td></tr><tr><td width="40%" align="left" valign="top">37.11. 用户定义的类型 </td><td width="20%" align="center"><a accesskey="h" href="index.html">起始页</a></td><td width="40%" align="right" valign="top"> 37.13. 操作符优化信息</td></tr></table></div></body></html>

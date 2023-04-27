@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><title>E.44. 版本 9.3.13</title><link rel="stylesheet" type="text/css" href="stylesheet.css" /><link rev="made" href="pgsql-docs@postgresql.org" /><meta name="generator" content="DocBook XSL Stylesheets V1.79.1" /><link rel="prev" href="release-9-3-14.html" title="E.43. 版本 9.3.14" /><link rel="next" href="release-9-3-12.html" title="E.45. 版本 9.3.12" /></head><body><div xmlns="http://www.w3.org/TR/xhtml1/transitional" class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="5" align="center">E.44. 版本 9.3.13</th></tr><tr><td width="10%" align="left"><a accesskey="p" href="release-9-3-14.html" title="E.43. 版本 9.3.14">上一页</a> </td><td width="10%" align="left"><a accesskey="u" href="release.html" title="附录 E. 版本说明">上一级</a></td><th width="60%" align="center">附录 E. 版本说明</th><td width="10%" align="right"><a accesskey="h" href="index.html" title="PostgreSQL 10.1 手册">起始页</a></td><td width="10%" align="right"> <a accesskey="n" href="release-9-3-12.html" title="E.45. 版本 9.3.12">下一页</a></td></tr></table><hr></hr></div><div class="sect1" id="RELEASE-9-3-13"><div class="titlepage"><div><div><h2 class="title" style="clear: both">E.44. 版本 9.3.13</h2></div></div></div><div class="toc"><dl class="toc"><dt><span class="sect2"><a href="release-9-3-13.html#idp68733264">E.44.1. 迁移到版本 9.3.13</a></span></dt><dt><span class="sect2"><a href="release-9-3-13.html#idp68735184">E.44.2. 修改列表</a></span></dt></dl></div><p><strong>发布日期：. </strong>2016-05-12</p><p>   这个版本包含各种自9.3.12以来的修复。关于9.3主版本的新特性信息，
+   请查看<a class="xref" href="release-9-3.html" title="E.57. 版本 9.3">第 E.57 节</a>。
+  </p><div class="sect2" id="idp68733264"><div class="titlepage"><div><div><h3 class="title">E.44.1. 迁移到版本 9.3.13</h3></div></div></div><p>    运行9.3.X版本的用户不需要转储/恢复。
+   </p><p>    不过，如果您是从一个早于9.3.9的版本升级而来，那么请查看
+    <a class="xref" href="release-9-3-9.html" title="E.48. 版本 9.3.9">第 E.48 节</a>。
+   </p></div><div class="sect2" id="idp68735184"><div class="titlepage"><div><div><h3 class="title">E.44.2. 修改列表</h3></div></div></div><div class="itemizedlist"><ul class="itemizedlist" style="list-style-type: disc; "><li class="listitem"><p>      在OpenSSL调用之前清理OpenSSL错误队列，而不是假设它早已经清理了；
+      并且确保我们以后清除它 (Peter Geoghegan, Dave Vitek, Peter Eisentraut)
+     </p><p>      这个修改阻止了多个连接在一个进程中使用OpenSSL，
+      并且并非所有包含的代码都遵循何时清理错误序列的规则时的问题。
+      当一个客户端应用在<span class="application">libpq</span>中使用了SSL连接并同时
+      SSL连接为OpenSSL使用了PHP、Python或Ruby封装器时，
+      明确的报告错误。如果一个扩展模块建立了一个外向SSL连接，
+      那么服务器也有可能出现相似的问题。
+     </p></li><li class="listitem"><p>      使用一个封闭在left join右侧的full join，修复
+      <span class="quote">“<span class="quote">failed to build any <em class="replaceable"><code>N</code></em>-way joins</span>”</span>
+      规划器错误 (Tom Lane)
+     </p></li><li class="listitem"><p>      修复等价类测试在多级嵌套循环规划中的错误处理 (Tom Lane)
+     </p><p>      给出三个或更多个等价类变量，比如<code class="literal">X.X = Y.Y = Z.Z</code>，
+      规划器有可能忽略一些强制所有变量实际上相等所需的测试，
+      导致输出的连接行不满足<code class="literal">WHERE</code>子句。由于各种原因，
+      实际上很少选择错误的规划，所以这个bug很长时间都没检测出来。
+     </p></li><li class="listitem"><p>      修复<code class="function">to_timestamp()</code>中<code class="literal">TH</code>、<code class="literal">th</code>
+      和<code class="literal">Y,YYY</code>格式代码可能的错误行为 (Tom Lane)
+     </p><p>      这些可能超出输入字符串的末尾，导致后续格式代码读取垃圾。
+     </p></li><li class="listitem"><p>      修复<em class="replaceable"><code>array</code></em>中规则和视图的转储，该<em class="replaceable"><code>array</code></em>
+      参数是<code class="literal"><em class="replaceable"><code>value</code></em> <em class="replaceable"><code>operator</code></em>
+      ANY (<em class="replaceable"><code>array</code></em>)</code>构造中的子SELECT (Tom Lane)
+     </p></li><li class="listitem"><p>      使<span class="application">pg_regress</span>使用来自<code class="envar">PGCTLTIMEOUT</code>
+      环境变量的启动超时，如果设置了的话 (Tom Lane)
+     </p><p>      这是为了与最近添加到<span class="application">pg_ctl</span>的行为一致；
+      它简化了慢速机器上的自动测试。
+     </p></li><li class="listitem"><p>      修复<span class="application">pg_upgrade</span>，
+      以正确恢复仅包含一个操作符类的操作符族的扩展成员
+      (Tom Lane)
+     </p><p>      在这样的情况下，操作符族被恢复到一个新的数据库，
+      但是它不再标记为该扩展的一部分。这没有立即的不良影响，
+      但是会导致稍后的<span class="application">pg_dump</span>运行发出会导致恢复时（无害）
+      错误的输出。
+     </p></li><li class="listitem"><p>      修复<span class="application">pg_upgrade</span>在新集群TOAST规则与旧规则不同时不会失败
+      (Tom Lane)
+     </p><p>      <span class="application">pg_upgrade</span>有特殊情况代码来处理<span class="productname">PostgreSQL</span>
+      新版本认为一个表应该有一个TOAST表而旧版本没有的特殊情况。
+      该代码是破损的，所以删除它，而不是在这种情况下什么都不做;
+      似乎没有理由相信，如果根据旧版本的规则这是可以的，
+      没有TOAST表我们就不能运行的很好。
+     </p></li><li class="listitem"><p>      向后打补丁9.4时的内存故障代码修改到9.2和9.3 (Tom Lane)
+     </p><p>      这些更改在9.4之前的分支中并不是最初需要的，
+      但是我们最近已经修复了一个预期故障代码正常工作的修复。
+      只有IA64（使用icc时）、HPPA和Alpha平台受到影响。
+     </p></li><li class="listitem"><p>      减少使用<code class="option">--disable-spinlocks</code>配置的构建使用的SysV信号量数
+      (Tom Lane)
+     </p></li><li class="listitem"><p>      将内部函数<code class="function">strtoi()</code>重命名为<code class="function">strtoint()</code>，
+      以避免与NetBSD库函数冲突 (Thomas Munro)
+     </p></li><li class="listitem"><p>      修复来自Windows上<code class="function">bind()</code>和<code class="function">listen()</code>
+      系统调用的报告错误 (Tom Lane)
+     </p></li><li class="listitem"><p>      减少用Microsoft Visual Studio构建时编译器的冗长输出 (Christian Ullrich)
+     </p></li><li class="listitem"><p>      修复<code class="function">putenv()</code>，使其能与Visual Studio 2013正常工作
+      (Michael Paquier)
+     </p></li><li class="listitem"><p>      避免Windows的<code class="function">FormatMessage()</code>函数可能的不安全使用
+      (Christian Ullrich)
+     </p><p>      适当时使用<code class="literal">FORMAT_MESSAGE_IGNORE_INSERTS</code>标识。
+      已知没有bug存在于这里，但是小心总是没错的。
+     </p></li><li class="listitem"><p>      将时区数据文件更新为<span class="application">tzdata</span>版本2016d，
+      用于俄罗斯和委内瑞拉的DST法律变更。有新的区域名称
+      <code class="literal">Europe/Kirov</code>和<code class="literal">Asia/Tomsk</code>，
+      反映这些区域现在具有与相邻区域有不同的时区历史的事实。
+     </p></li></ul></div></div></div><div class="navfooter"><hr /><table width="100%" summary="Navigation footer"><tr><td width="40%" align="left"><a accesskey="p" href="release-9-3-14.html">上一页</a> </td><td width="20%" align="center"><a accesskey="u" href="release.html">上一级</a></td><td width="40%" align="right"> <a accesskey="n" href="release-9-3-12.html">下一页</a></td></tr><tr><td width="40%" align="left" valign="top">E.43. 版本 9.3.14 </td><td width="20%" align="center"><a accesskey="h" href="index.html">起始页</a></td><td width="40%" align="right" valign="top"> E.45. 版本 9.3.12</td></tr></table></div></body></html>

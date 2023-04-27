@@ -1,0 +1,136 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><title>E.26. 版本 9.4.10</title><link rel="stylesheet" type="text/css" href="stylesheet.css" /><link rev="made" href="pgsql-docs@postgresql.org" /><meta name="generator" content="DocBook XSL Stylesheets V1.79.1" /><link rel="prev" href="release-9-4-11.html" title="E.25. 版本 9.4.11" /><link rel="next" href="release-9-4-9.html" title="E.27. 版本 9.4.9" /></head><body><div xmlns="http://www.w3.org/TR/xhtml1/transitional" class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="5" align="center">E.26. 版本 9.4.10</th></tr><tr><td width="10%" align="left"><a accesskey="p" href="release-9-4-11.html" title="E.25. 版本 9.4.11">上一页</a> </td><td width="10%" align="left"><a accesskey="u" href="release.html" title="附录 E. 版本说明">上一级</a></td><th width="60%" align="center">附录 E. 版本说明</th><td width="10%" align="right"><a accesskey="h" href="index.html" title="PostgreSQL 10.1 手册">起始页</a></td><td width="10%" align="right"> <a accesskey="n" href="release-9-4-9.html" title="E.27. 版本 9.4.9">下一页</a></td></tr></table><hr></hr></div><div class="sect1" id="RELEASE-9-4-10"><div class="titlepage"><div><div><h2 class="title" style="clear: both">E.26. 版本 9.4.10</h2></div></div></div><div class="toc"><dl class="toc"><dt><span class="sect2"><a href="release-9-4-10.html#idp66974272">E.26.1. 迁移到版本 9.4.10</a></span></dt><dt><span class="sect2"><a href="release-9-4-10.html#idp66976976">E.26.2. 修改列表</a></span></dt></dl></div><p><strong>发布日期: </strong>2016-10-27</p><p>   此版本包含9.4.9的各种修补程序。有关9.4主要版本中的新功能的信息，请查看
+   <a class="xref" href="release-9-4.html" title="E.36. 版本 9.4">第 E.36 节</a>。
+  </p><div class="sect2" id="idp66974272"><div class="titlepage"><div><div><h3 class="title">E.26.1. 迁移到版本 9.4.10</h3></div></div></div><p>    运行9.4.X的用户不需要转储/恢复。
+   </p><p>    但是，如果您的安装受到以下修改列表中第一条描述的错误的影响，
+	那么在更新之后，您可能需要采取措施修复损坏的可用空间映射。
+   </p><p>    另外，如果您从早于9.4.6的版本进行升级，
+	请查看<a class="xref" href="release-9-4-6.html" title="E.30. 版本 9.4.6">第 E.30 节</a>。
+   </p></div><div class="sect2" id="idp66976976"><div class="titlepage"><div><div><h3 class="title">E.26.2. 修改列表</h3></div></div></div><div class="itemizedlist"><ul class="itemizedlist" style="list-style-type: disc; "><li class="listitem"><p>      修复关系自由空间映射和可见性映射截断的WAL日志记录
+	  (Pavan Deolasee, Heikki Linnakangas)
+     </p><p>      在故障恢复期间可能无法正确恢复这些文件，或者在备用服务器上写入不正确。
+	  自由空间映射中的伪造条目可能导致尝试访问已从关系本身截断的页面，
+	  通常会产生像<span class="quote">“<span class="quote">could not read block <em class="replaceable"><code>XXX</code></em>：
+	  read only 0 of 8192 bytes</span>”</span>这样的错误。如果启用校验和，
+	  则可见性映射中的校验和失败也是可能的。
+     </p><p>      在<a class="ulink" href="https://wiki.postgresql.org/wiki/Free_Space_Map_Problems" target="_top">https://wiki.postgresql.org/wiki/Free_Space_Map_Problems</a>
+	  中讨论确定这是否存在问题和修复它的步骤。
+     </p></li><li class="listitem"><p>      修复在big-endian机器上创建GIN索引WAL记录的错误
+      (Tom Lane)
+     </p><p>      典型的症状是在WAL重播期间出现<span class="quote">“<span class="quote">unexpected GIN leaf action</span>”</span>错误。
+     </p></li><li class="listitem"><p>      修复<code class="command">SELECT FOR UPDATE/SHARE</code>
+	  以正确锁定已由随后中止的事务更新的元组
+      (Álvaro Herrera)
+     </p><p>      在9.5及更高版本中，<code class="command">SELECT</code>有时根本无法返回这些元组。
+	  在早期版本中未发生故障，但并发更新可能会发生。
+     </p></li><li class="listitem"><p>      修复涉及CTE扫描的EvalPlanQual重新检查 (Tom Lane)
+     </p><p>      重新检查总是会将CTE视为不返回行，通常会导致无法更新最近更新的行。
+     </p></li><li class="listitem"><p>      修复子查询中散列聚合的先前结果的不正确重复 (Andrew Gierth)
+     </p><p>      测试以查看我们是否可以重用先前计算的聚合状态值的散列表，
+	  忽略了外部查询引用出现在聚合参数表达式中的可能性。
+	  这种引用的值的改变应该导致重新计算散列表，但是没有。
+     </p></li><li class="listitem"><p>      修复具有<code class="literal">PRIMARY KEY</code>或<code class="literal">REPLICA IDENTITY</code>
+	  索引的表上批量<code class="command">UPDATE</code>中的查询寿命内存泄漏
+      (Tom Lane)
+     </p></li><li class="listitem"><p>      当<a class="xref" href="runtime-config-statistics.html#GUC-TRACK-IO-TIMING">track_io_timing</a>打开时，修复
+	  <code class="command">EXPLAIN</code>发出有效的XML (Markus Winand)
+     </p><p>      以前，XML输出格式选项会产生语法上无效的标签，例如<code class="literal">&lt;I/O-Read-Time&gt;</code>。
+	  现在这呈现为<code class="literal">&lt;I-O-Read-Time&gt;</code>。
+     </p></li><li class="listitem"><p>      在<code class="command">EXPLAIN</code>中禁止将无法测量的时间打印为零
+	  (Maksim Milyutin)
+     </p><p>      某些选项组合导致实际上并未在该组合中进行测量的时间打印零值。我们在
+	  <code class="command">EXPLAIN</code>中的一般策略是不打印这些字段，
+	  所以在所有情况下都要一致。
+     </p></li><li class="listitem"><p>      修复<code class="command">VACUUM</code>等待独占表锁定时的超时长度，以便它可以截断表 (Simon Riggs)
+     </p><p>      超时时间应该是50毫秒，但实际上它只有50微秒，导致<code class="command">VACUUM</code>
+	  比预期更容易放弃截断。将其设置为预期值。
+     </p></li><li class="listitem"><p>      修复在创建或更改表时合并继承的<code class="literal">CHECK</code>约束中的错误
+	  (Tom Lane, Amit Langote)
+     </p><p>      允许按照任意顺序将相同的<code class="literal">CHECK</code>约束添加到父表和子表中。
+	  阻止合并父表中的有效约束与子节点上的<code class="literal">NOT VALID</code>约束。
+	  同样，阻止将<code class="literal">NOT INHERIT</code>子约束与继承约束合并。
+     </p></li><li class="listitem"><p>      删除对<code class="function">numeric_in()</code>和<code class="function">numeric_recv()</code>
+	  接受的值的人为限制
+	  (Tom Lane)
+     </p><p>      我们允许数值达到存储格式的限制（超过<code class="literal">1e100000</code>），
+	  所以看起来毫无意义的是<code class="function">numeric_in()</code>拒绝了高于1000的科学记数法指数。
+	  同样，很愚蠢的是<code class="function">numeric_recv()</code>在输入值中拒绝超过1000位。
+     </p></li><li class="listitem"><p>      避免由于在不保留缓冲区锁定的情况下测试元组可见性而造成非常低概率的数据损坏 (Thomas Munro, Peter Geoghegan,
+      Tom Lane)
+     </p></li><li class="listitem"><p>      当一个子事务的WAL输出足够大以至于溢出到磁盘时，修复逻辑WAL解码以正常工作
+	  (Andres Freund)
+     </p></li><li class="listitem"><p>      修复逻辑WAL解码中的缓冲区溢出 (Tom Lane)
+     </p><p>      元组更新记录的逻辑解码读取23个字节太多了，这通常是无害的，
+	  但运气不好可能会导致崩溃。
+     </p></li><li class="listitem"><p>      修复截断大于1GB的临时关系时的文件描述符泄漏 (Andres Freund)
+     </p></li><li class="listitem"><p>      在开启了<code class="literal">standby_mode</code>时，不允许启动一个独立的后端
+	  (Michael Paquier)
+     </p><p>      这不能做任何有用的事情，因为没有WAL接收器过程来获取更多的WAL数据；
+	  这可能会导致代码中的错误行为，而这些代码在设计时并未考虑到这种情况。
+     </p></li><li class="listitem"><p>      在回收先前使用的插槽时正确地初始化复制插槽状态 (Michael Paquier)
+     </p><p>      无法重置插槽的所有字段可能会阻止<code class="command">VACUUM</code>删除无用的元组。
+     </p></li><li class="listitem"><p>      当试图在Linux上使用大页面时，将共享内存分配请求四舍五入为实际巨大页面大小的倍数
+	  (Tom Lane)
+     </p><p>      这避免了在具有非典型默认巨大页面大小的系统上的<code class="function">munmap()</code>期间可能的失败。
+	  除了在故障恢复情况下，除了日志消息外，没有任何不良影响。
+     </p></li><li class="listitem"><p>      对动态共享内存控制段的ID使用更随机的值 (Robert Haas, Tom Lane)
+     </p><p>      以前，每次都会选择相同的值，因为它是从<code class="function">random()</code>派生的，
+	  但是尚未调用<code class="function">srandom()</code>。虽然相对无害，但这不是预期的行为。
+     </p></li><li class="listitem"><p>      在Windows上，在拒绝访问错误之后重新尝试创建动态共享内存控制段
+	  (Kyotaro Horiguchi, Amit Kapila)
+     </p><p>      当已经有一个段时，Windows有时会返回<code class="literal">ERROR_ACCESS_DENIED</code>
+	  而不是<code class="literal">ERROR_ALREADY_EXISTS</code>。这导致postmaster启动失败，
+	  因为他们认为前者是一个不可恢复的错误。
+     </p></li><li class="listitem"><p>      不要尝试在<span class="application">libpq</span>中的多个连接之间共享SSL上下文
+	  (Heikki Linnakangas)
+     </p><p>      这导致了各种各样的极端情况错误，尤其是在尝试为不同的连接使用不同的SSL参数时。
+     </p></li><li class="listitem"><p>      避免<span class="application">libpq</span>中极端情况内存泄露 (Tom Lane)
+     </p><p>      所报告的问题涉及在<code class="function">PQreset()</code>期间泄漏错误报告，但可能存在相关情况。
+     </p></li><li class="listitem"><p>      让<span class="application">ecpg</span>的<code class="option">--help</code>和<code class="option">--version</code>
+      选项与我们的其他可执行文件保持一致 (Haribabu Kommi)
+     </p></li><li class="listitem"><p>      修复<span class="application">pgbench</span>的平均延迟计算
+      (Fabien Coelho)
+     </p><p>      当脚本中存在<code class="literal">\sleep</code>命令时，
+	  或者测试持续时间是以事务数而不是总时间指定时，计算结果不正确。
+     </p></li><li class="listitem"><p>      在<span class="application">pg_dump</span>中，从不转储范围构造函数
+      (Tom Lane)
+     </p><p>      由于构造函数的重复创建，这种忽略导致<span class="application">pg_upgrade</span>
+	  扩展包含范围类型失败。
+     </p></li><li class="listitem"><p>      在<span class="application">pg_xlogdump</span>中，使用
+	  <code class="option">--follow</code>选项时重试打开新的WAL段
+	  (Magnus Hagander)
+     </p><p>      这可以使服务器创建下一个段时可能出现延迟。
+     </p></li><li class="listitem"><p>      修复<span class="application">pg_xlogdump</span>
+	  以处理以跨越多个页面的延续记录开头的WAL文件 (Pavan
+      Deolasee)
+     </p></li><li class="listitem"><p>      当<code class="varname">shared_buffers</code>超过256GB时，
+	  修复<code class="filename">contrib/pg_buffercache</code>正常工作 (KaiGai Kohei)
+     </p></li><li class="listitem"><p>      修复<code class="filename">contrib/intarray/bench/bench.pl</code>以打印
+      <code class="command">EXPLAIN</code>在给出<code class="option">-e</code>选项时的结果
+      (Daniel Gustafsson)
+     </p></li><li class="listitem"><p>      安装TAP测试基础架构，以便它可用于扩展测试 (Craig Ringer)
+     </p><p>      使用<code class="option">--enable-tap-tests</code>配置<span class="productname">PostgreSQL</span>时，
+	  <span class="quote">“<span class="quote">make install</span>”</span>现在将安装用于TAP测试的Perl支持文件，
+	  其中PGXS可以找到他们。这允许非核心扩展使用<code class="literal">$(prove_check)</code>
+	  而无需额外的测试。
+     </p></li><li class="listitem"><p>      在MSVC构建中，在仅客户端安装中包含<span class="application">pg_recvlogical</span> (MauMau)
+     </p></li><li class="listitem"><p>	更新Windows时区映射以识别最近Windows版本中添加的一些时区名称 (Michael Paquier)
+     </p></li><li class="listitem"><p>      防止过时的动态时区缩写失效 (Tom Lane)
+     </p><p>      如果动态时区缩写与参考时区中的任何条目都不匹配，请将其视为等同于时区名称。
+	  这避免了IANA从他们的时区数据库中删除缩写时的意外失败，就像他们在
+	  <span class="application">tzdata</span> release 2016f中所做的一样，并且似乎未来可能再次发生。
+	  后果不限于不承认个人缩写；任何不匹配都会导致<code class="structname">pg_timezone_abbrevs</code>
+	  视图完全失败。
+     </p></li><li class="listitem"><p>	  将时区数据文件更新为<span class="application">tzdata</span> release 2016h，
+	  用于巴勒斯坦和土耳其的DST法律变更，以及对土耳其和俄罗斯一些地区的历史更正。
+	  切换到南极洲、前苏联和斯里兰卡的一些时区的数字缩写。
+     </p><p>      IANA时区数据库以前为所有时区提供了文本缩写，
+	  有时会提供当地人口中流通很少或没有流通的缩写。他们正在推翻该政策，
+	  赞成在没有现实世界中使用英文缩写的地区使用数字UTC偏移量。至少目前来说，
+	  <span class="productname">PostgreSQL</span>将继续接受此类删除的时间戳输入缩写。
+	  但它们不会显示在<code class="structname">pg_timezone_names</code>视图中，也不会用于输出。
+     </p><p>      在此更新中，<code class="literal">AMT</code>不再显示为用于表示亚美尼亚时间。因此，
+	  我们已将<code class="literal">Default</code>缩写集更改为将其解释为Amazon Time，
+	  因此是UTC-4而不是UTC+4。
+     </p></li></ul></div></div></div><div class="navfooter"><hr /><table width="100%" summary="Navigation footer"><tr><td width="40%" align="left"><a accesskey="p" href="release-9-4-11.html">上一页</a> </td><td width="20%" align="center"><a accesskey="u" href="release.html">上一级</a></td><td width="40%" align="right"> <a accesskey="n" href="release-9-4-9.html">下一页</a></td></tr><tr><td width="40%" align="left" valign="top">E.25. 版本 9.4.11 </td><td width="20%" align="center"><a accesskey="h" href="index.html">起始页</a></td><td width="40%" align="right" valign="top"> E.27. 版本 9.4.9</td></tr></table></div></body></html>

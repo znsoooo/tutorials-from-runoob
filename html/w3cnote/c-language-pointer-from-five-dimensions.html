@@ -1,0 +1,999 @@
+<!Doctype html>
+<html>
+<head>
+	<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+	<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+	<title>从5个维度来看C语言指针(指针就是个纸老虎) | 菜鸟教程</title>
+
+  <meta name='robots' content='max-image-preview:large' />
+<link rel='stylesheet' id='classic-theme-styles-css' href='http://www.runoob.com/wp-includes/css/classic-themes.min.css?ver=6.2' type='text/css' media='all' />
+<link rel="canonical" href="http://www.runoob.com/w3cnote/c-language-pointer-from-five-dimensions.html" />
+<meta name="keywords" content="从5个维度来看C语言指针(指针就是个纸老虎)">
+<meta name="description" content="本文中，我对指针总结的维度，用四个字来概括，就是：“两己三他”！是不是读起来一点都不顺口，一点都不押韵啊，什么个玩意儿。这“两己三他”，展开来说，就是：己址、己值、他值、他址、他型。  我觉得可以从这5个维度再来聊聊指针。不过在聊之前，我写了个程序，把指针的“两己三他”维度都包含进来，然后再来一个一个解释每个维度的意思，你看看是不是这回事儿。  在大部分的使用指针的场景下，这5个维度应该足够帮你去理解了。不过在一些使用指针特殊的场景下，..">
+		
+	<link rel="shortcut icon" href="https://static.runoob.com/images/favicon.ico">
+	<link rel="stylesheet" href="/wp-content/themes/runoob/style.css?v=1.170" type="text/css" media="all" />	
+	<link rel="stylesheet" href="https://cdn.staticfile.org/font-awesome/4.7.0/css/font-awesome.min.css" media="all" />	
+  <!--[if gte IE 9]><!-->
+  <script src="https://cdn.staticfile.org/jquery/2.0.3/jquery.min.js"></script>
+  <!--<![endif]-->
+  <!--[if lt IE 9]>
+     <script src="https://cdn.staticfile.org/jquery/1.9.1/jquery.min.js"></script>
+     <script src="https://cdn.staticfile.org/html5shiv/r29/html5.min.js"></script>
+  <![endif]-->
+  <link rel="apple-touch-icon" href="https://static.runoob.com/images/icon/mobile-icon.png"/>
+  <meta name="apple-mobile-web-app-title" content="菜鸟教程">
+</head>
+<body>
+
+<!--  头部 -->
+<div class="container logo-search">
+
+  <div class="col search row-search-mobile">
+    <form action="index.php">
+      <input class="placeholder" placeholder="搜索……" name="s" autocomplete="off">
+      
+    </form>
+  </div>
+
+  <div class="row">
+    <div class="col logo">
+      <h1><a href="/">菜鸟教程 -- 学的不仅是技术，更是梦想！</a></h1>
+    </div>
+        <div class="col right-list"> 
+    <button class="btn btn-responsive-nav btn-inverse" data-toggle="collapse" data-target=".nav-main-collapse" id="pull" style=""> <i class="fa fa-navicon"></i> </button>
+    </div>
+        
+    <div class="col search search-desktop last">
+      <div class="search-input" >
+      <form action="//www.runoob.com/" target="_blank">
+        <input class="placeholder" id="s" name="s" placeholder="搜索……"  autocomplete="off" style="height: 44px;">
+      </form>
+      
+      </div>
+    </div>
+  </div>
+</div>
+
+
+
+<!-- 导航栏 -->
+<div class="container navigation">
+    <div class="row">
+        <div class="col nav">
+            
+
+                        <ul class="pc-nav" id="note-nav">
+                <li><a href="//www.runoob.com/">首页</a></li>
+                <li><a href="/w3cnote">笔记首页</a></li>
+                <li><a href="/w3cnote/android-tutorial-intro.html" title="Android 基础入门教程">Android</a></li>
+                <li><a href="/w3cnote/es6-tutorial.html" title="ES6 教程">ES6 教程</a></li>
+                <li><a href="/w3cnote/ten-sorting-algorithm.html" title="排序算法">排序算法</a></li>
+                <li><a href="/w3cnote/hadoop-tutorial.html" title="Hadoop 教程">Hadoop</a></li>
+                <li><a href="/w3cnote/zookeeper-tutorial.html" title="Zookeeper 教程">Zookeeper</a></li>
+                <li><a href="/w3cnote/verilog-tutorial.html" title="Verilog 教程">Verilog</a></li>
+                <li><a href="/w3cnote_genre/code" title="编程技术">编程技术</a></li> 
+                <li><a href="/w3cnote_genre/coderlife" title="程序员人生">程序员人生</a></li>
+                
+                <!--<li><a href="javascript:;" class="runoob-pop">登录</a></li>
+                
+                
+                        <li>
+                <a style="font-weight:bold;" href="https://www.runoob.com/linux/linux-tutorial.html#yunserver" target="_blank" onclick="_hmt.push(['_trackEvent', 'aliyun', 'click', 'aliyun'])" title="kkb">云服务器</a>
+                </li>
+                <li><a href="http://gk.link/a/104mQ" target="_blank" style="font-weight: bold;"onclick="_hmt.push(['_trackEvent', '极客时间', 'click', 'jike'])" title="我的圈子">极客时间</a></li>
+            
+                
+                <li><a target="_blank" href="/shoppinglist" rel="nofollow">知识店铺</a></li> 
+        -->
+            </ul>
+                        
+              
+            <ul class="mobile-nav">
+                <li><a href="/w3cnote">首页</a></li>
+                <li><a href="/w3cnote_genre/android" target="_blank" title="Android 基础入门教程">Android</a></li>
+                <li><a href="/w3cnote/es6-tutorial.html" target="_blank" title="ES6 教程">ES6</a></li>
+                <li><a href="/w3cnote_genre/joke" target="_blank" title="程序员笑话">逗乐</a></li>
+                
+                <a href="javascript:void(0)" class="search-reveal">Search</a> 
+            </ul>
+            
+        </div>
+    </div>
+</div>
+
+
+<!--  内容  -->
+<div class="container main">
+	<div class="row">
+
+		<div class="col middle-column big-middle-column">
+	 			<div class="article">
+			<div class="article-heading">
+				<h2>从5个维度来看C语言指针(指针就是个纸老虎)</h2>				<h3><em>分类</em> <a href="/w3cnote_genre/code" title="编程技术" >编程技术</a> </h3>
+			</div>
+			<div class="article-body note-body">
+				<div class="article-intro">
+					
+
+
+<p>本文中，我对指针总结的维度，用四个字来概括，就是："两己三他"！是不是读起来一点都不顺口，一点都不押韵啊，什么个玩意儿。这"两己三他"，展开来说，就是：己址、己值、他值、他址、他型。</p>
+
+<p>我觉得可以从这5个维度再来聊聊指针。不过在聊之前，我写了个程序，把指针的"两己三他"维度都包含进来，然后再来一个一个解释每个维度的意思，你看看是不是这回事儿。</p>
+
+<p>在大部分的使用指针的场景下，这5个维度应该足够帮你去理解了。不过在一些使用指针特殊的场景下，可能5维度法帮助不了你。</p>
+
+<p>前方长文预警，若看的不耐烦了，可以收藏本文，有时间了接着看。</p>
+
+<h2>
+一、程序代码
+</h2>
+<h3>
+1.1. 代码
+</h3>
+<div class="example">
+<h2 class="example">实例</h2>
+<div class="example_code">
+<div class="hl-main"><span class="hl-prepro">#include</span><span class="hl-prepro"> </span><span class="hl-quotes">&lt;</span><span class="hl-string">stdio.h</span><span class="hl-quotes">&gt;</span><span class="hl-prepro"></span><span class="hl-code">
+ 
+</span><span class="hl-types">int</span><span class="hl-code"> </span><span class="hl-identifier">main</span><span class="hl-brackets">(</span><span class="hl-types">void</span><span class="hl-brackets">)</span><span class="hl-code">
+</span><span class="hl-brackets">{</span><span class="hl-code">
+    </span><span class="hl-types">int</span><span class="hl-code"> *</span><span class="hl-identifier">pInt</span><span class="hl-code"> = </span><span class="hl-prepro">NULL</span><span class="hl-code">;
+    </span><span class="hl-identifier">printf</span><span class="hl-brackets">(</span><span class="hl-quotes">&quot;</span><span class="hl-string">指针变量pInt自己的地址是:  0X%x</span><span class="hl-special">\</span><span class="hl-string">n</span><span class="hl-quotes">&quot;</span><span class="hl-code">, &amp;</span><span class="hl-identifier">pInt</span><span class="hl-brackets">)</span><span class="hl-code">;
+    </span><span class="hl-comment">//printf(&quot;指针变量pInt自己的值是:  0X%x\n&quot;, pInt);</span><span class="hl-comment"></span><span class="hl-code">
+    
+    </span><span class="hl-types">int</span><span class="hl-code"> </span><span class="hl-identifier">para</span><span class="hl-code"> = </span><span class="hl-number">1</span><span class="hl-code">;
+    </span><span class="hl-identifier">printf</span><span class="hl-brackets">(</span><span class="hl-quotes">&quot;</span><span class="hl-string">变量para自己的地址是:  0X%x</span><span class="hl-special">\</span><span class="hl-string">n</span><span class="hl-quotes">&quot;</span><span class="hl-code">, &amp;</span><span class="hl-identifier">para</span><span class="hl-brackets">)</span><span class="hl-code">;
+    </span><span class="hl-identifier">printf</span><span class="hl-brackets">(</span><span class="hl-quotes">&quot;</span><span class="hl-string">变量para自己的值是:  0X%x</span><span class="hl-special">\</span><span class="hl-string">n</span><span class="hl-quotes">&quot;</span><span class="hl-code">, </span><span class="hl-identifier">para</span><span class="hl-brackets">)</span><span class="hl-code">;
+    
+    </span><span class="hl-identifier">pInt</span><span class="hl-code"> = &amp;</span><span class="hl-identifier">para</span><span class="hl-code">;
+    </span><span class="hl-identifier">printf</span><span class="hl-brackets">(</span><span class="hl-quotes">&quot;</span><span class="hl-string">指针变量pInt自己的值是:  0X%x</span><span class="hl-special">\</span><span class="hl-string">n</span><span class="hl-quotes">&quot;</span><span class="hl-code">, </span><span class="hl-identifier">pInt</span><span class="hl-brackets">)</span><span class="hl-code">;
+    </span><span class="hl-identifier">printf</span><span class="hl-brackets">(</span><span class="hl-quotes">&quot;</span><span class="hl-string">指针变量pInt的他值是:  0X%x</span><span class="hl-special">\</span><span class="hl-string">n</span><span class="hl-quotes">&quot;</span><span class="hl-code">, *</span><span class="hl-identifier">pInt</span><span class="hl-brackets">)</span><span class="hl-code">;
+ 
+    </span><span class="hl-types">int</span><span class="hl-code"> </span><span class="hl-identifier">arr_int</span><span class="hl-brackets">[</span><span class="hl-number">2</span><span class="hl-brackets">]</span><span class="hl-code"> = </span><span class="hl-brackets">{</span><span class="hl-number">1</span><span class="hl-code">, </span><span class="hl-number">2</span><span class="hl-brackets">}</span><span class="hl-code">;    
+    </span><span class="hl-identifier">pInt</span><span class="hl-code"> = </span><span class="hl-identifier">arr_int</span><span class="hl-code">;
+    </span><span class="hl-identifier">printf</span><span class="hl-brackets">(</span><span class="hl-quotes">&quot;</span><span class="hl-string">arr_int第一个元素arr_int[0]的地址是:  0X%x</span><span class="hl-special">\</span><span class="hl-string">n</span><span class="hl-quotes">&quot;</span><span class="hl-code">, </span><span class="hl-identifier">pInt</span><span class="hl-brackets">)</span><span class="hl-code">;
+    </span><span class="hl-identifier">printf</span><span class="hl-brackets">(</span><span class="hl-quotes">&quot;</span><span class="hl-string">arr_int第二个元素arr_int[1]的地址是:  0X%x</span><span class="hl-special">\</span><span class="hl-string">n</span><span class="hl-quotes">&quot;</span><span class="hl-code">, </span><span class="hl-identifier">pInt</span><span class="hl-code"> + </span><span class="hl-number">1</span><span class="hl-brackets">)</span><span class="hl-code">;
+    
+    </span><span class="hl-types">double</span><span class="hl-code"> *</span><span class="hl-identifier">pDouble</span><span class="hl-code"> = </span><span class="hl-prepro">NULL</span><span class="hl-code">;
+    </span><span class="hl-types">double</span><span class="hl-code"> </span><span class="hl-identifier">arr_double</span><span class="hl-brackets">[</span><span class="hl-number">2</span><span class="hl-brackets">]</span><span class="hl-code"> = </span><span class="hl-brackets">{</span><span class="hl-number">1</span><span class="hl-number">.1</span><span class="hl-code">, </span><span class="hl-number">2</span><span class="hl-number">.2</span><span class="hl-brackets">}</span><span class="hl-code">;
+    </span><span class="hl-identifier">pDouble</span><span class="hl-code"> = </span><span class="hl-identifier">arr_double</span><span class="hl-code">;
+    </span><span class="hl-identifier">printf</span><span class="hl-brackets">(</span><span class="hl-quotes">&quot;</span><span class="hl-string">arr_double第一个元素arr_double[0]的地址是:  0X%x</span><span class="hl-special">\</span><span class="hl-string">n</span><span class="hl-quotes">&quot;</span><span class="hl-code">, </span><span class="hl-identifier">pDouble</span><span class="hl-brackets">)</span><span class="hl-code">;
+    </span><span class="hl-identifier">printf</span><span class="hl-brackets">(</span><span class="hl-quotes">&quot;</span><span class="hl-string">arr_double第二个元素arr_double[1]的地址是:  0X%x</span><span class="hl-special">\</span><span class="hl-string">n</span><span class="hl-quotes">&quot;</span><span class="hl-code">, </span><span class="hl-identifier">pDouble</span><span class="hl-code"> + </span><span class="hl-number">1</span><span class="hl-brackets">)</span><span class="hl-code">;
+    
+    </span><span class="hl-reserved">return</span><span class="hl-code"> </span><span class="hl-number">0</span><span class="hl-code">;
+</span><span class="hl-brackets">}</span></div>
+</div></div>
+
+<p>运行的结果如下：</p>
+
+<p><img decoding="async" src="//www.runoob.com/wp-content/uploads/2018/01/v2-25383b95ca2689820e0f080f0a555c79_hd.jpg"></p>
+
+<p>我在自己的文章里讲我自己理解的一些东西时，我很喜欢用非常简单的程序来阐明。所以那些认为要用天书般的程序来阐明观点的，或者鄙视低水平程序的大牛们，请忽略我^_^。</p>
+<h3>
+2.2. int型变量para
+</h3>
+<p><strong>程序中：</strong></p>
+
+<pre>int para = 1;
+printf("变量para自己的地址是:  0X%x\n", &amp;para);
+printf("变量para自己的值是:  0X%x\n", para);</pre>
+
+<p>定义了变量para，它有自己的数据值，也有自己的存储地址，这些个都很好理解。从运行结果来看，变量para自己的数据值是16进制的"0X1"，地址是16进制的"0X22feb4"。换句话说，在内存中，地址为"0X22feb4"开始的存储空间，有4个字节存储了一个数据值"0X1"。在我的机器上，一个int型变量占用4个字节，在你的机器上可能与我不一样。</p>
+
+<p>关于int型变量para大家都好理解。下面，我来画一个示意图，来指明变量para在内存中存储的情况，如下：</p>
+
+<p><img decoding="async" src="//www.runoob.com/wp-content/uploads/2018/01/v2-dc257a1ea4804322ea4e42f04cc2ef91_hd.jpg"></p>
+
+<p>下面开始说说"两己三他"的概念。</p>
+
+<h2>二、两己三他</h2>
+
+<p>"两己三他"，展开来说，就是：己址、己值、他值、他址、他型。</p>
+<h3>
+2.1. 己址
+</h3>
+<p><strong>2.1.1 "己址"的概念</strong></p>
+
+<p>"己址"，就是"自己的地址"的简称。指针pInt作为一个变量，与int变量para一样，也需要存储在内存中的一段存储空间，这段存储空间也会有一个开始地址，也就是说，指针变量pInt也会有自己的地址。上面说了，变量para的地址是 " 0X22feb4"，那么，指针变量pInt的地址是啥呢？</p>
+
+<p><strong>2.1.2 "己址"的获取</strong></p>
+
+<p>我们都学过，"&"是一个取地址的运算符，在程序中：</p>
+
+
+<pre>printf("指针变量pInt自己的地址是:  0X%x\n", &amp;pInt);</pre>
+
+
+<p>就是通过"&"来获取指针变量pInt的地址。从运行结果来看，指针变量pInt的地址是"0X22feb8"。在我的机器上，指针变量pInt也是占用4个字节，因此，指针变量pInt存储在开始地址是"0X22feb8"开始的4个字节空间。</p>
+
+<p><strong>2.1.3 "己址"的代码写法</strong></p>
+
+<p>在代码中，表示指针变量pInt的"己址"的代码写法，常见的是：</p>
+<pre>
+&amp;pInt;
+</pre>
+
+<p>现在，我们来完善那个示意图，图中加入指针变量pInt的"己址"，指出指针变量pInt在内存中是怎么个存储形式。</p>
+
+<p><img decoding="async" src="//www.runoob.com/wp-content/uploads/2018/01/v2-e4884b45870809fe5177f31c378a3be8_hd.jpg"></p>
+<p>"己址"，就是这个意思。你看，没什么特别难的吧！</p>
+<h3>
+2.2 己值
+</h3>
+<p><strong>2.2.1 "己值"的概念</strong></p>
+
+<p>"己值"，就是"自己的数据值"的简称。指针pInt作为一个变量，跟变量para一样，也有着自己的数据值。</p>
+
+<p><strong>2.2.2 "己值"的获取</strong></p>
+
+<p>上面提到，变量para自己的数据值是"1"，那么指针变量pInt自己的数据值是多少。在程序中：</p>
+<pre>
+pInt = &amp;para;
+printf("指针变量pInt自己的值是:  0X%x\n", pInt);
+</pre>
+
+<p>我通过"&"运算符，将变量para的地址值赋给了指针变量pInt，通过printf来输出指针变量pInt的数据值。从运行结果中来看，指针变量pInt自己的数据值是"0X22feb4"。我们再看，变量para的地址也是"0X22feb4"，所以，</p>
+
+<pre>pInt = &amp;para;</pre>
+
+<p>这个语句的本质，就是将变量para的地址，给了指针变量pInt的己值，这样就将指针变量pInt与变量para绑定在一起了。</p>
+
+<p>在"己址"中提到了，指针pInt的数据值存储在地址为"0X22feb8"开始的4个字节的内存上，那么也就是说，地址为"0X22feb8"开始的内存，后面的4个字节都用来存储着一个数据值"0X22feb4"。</p>
+<p><strong>
+2.2.3 "己值"的代码写法</strong></p>
+
+<p>在代码中，表示指针变量pInt的"己值"的代码写法，常见的有</p>
+
+
+
+<pre>
+pInt;</pre>
+
+<p>也有的代码写法是：</p>
+<pre>
+pInt + N;
+pInt - N;
+</pre>
+
+<p>这种写法的意思是用pInt的"己值"加上一个数字N或者减去一个数字N，这个等讲到"他型"这个属性时会提到。也有的写法是：</p>
+
+<pre>
+pIntA - pIntB;
+</pre>
+
+<p>这种写法表示的是两个指针变量用"己值"做减法。</p>
+
+<p><strong>2.2.4 示意图</strong></p>
+
+<p>现在，继续来完善上面的示意图，加入指针变量pInt的己值。</p>
+
+
+<p><img decoding="async" src="//www.runoob.com/wp-content/uploads/2018/01/v2-0b727b28d0b0b1057a5568fefa43accd_hd.jpg"></p>
+
+<p>所以，一般而言，"己值"对于指针变量pInt来讲，是自己的数据值；对其它的int类型的变量来讲，就是它们的地址。</p>
+
+
+<h3>
+2.3 他址
+</h3>
+<p><strong>2.3.1 "他址"的概念</strong></p>
+
+<p>"他址"的概念就是"他人的地址"的意思。其实在上面提到己值时，就已经不那么明显地提到了"他址"的概念。</p>
+<p><strong>
+2.3.2 "他址"的获取</strong></p>
+
+<p>整型变量para存储在内存地址为"0X22feb4"开始的4个字节。在程序中，我通过</p>
+
+<pre>pInt = &amp;para;</pre>
+<p>将变量para的地址给了指针变量pInt，这样就将指针变量pInt与变量para绑定在一起了。更为本质的说，是把"他人的地址"赋值给了指针变量pInt的"己值"，这里，"他人的地址"的"他"，指的就是变量para，"他人地址的址"的"址"，指的就是变量para的地址。注意，你看，"他址"和"己值"在数据值上是一样的，所以，你领悟出了什么东西来了没？</p>
+
+<p>很多教材所谓的"指针是一个地址变量，存储的是其它变量的地址"，说白了，就是在说"他址"这个维度的数据值等于"己值"这个维度的数据值，只是教材没说的那么明白。</p>
+
+<p><strong>2.3.3 示意图</strong></p>
+
+<p>再来完善那个示意图，这次加入"他址"的概念。</p>
+
+<p><img decoding="async" src="//www.runoob.com/wp-content/uploads/2018/01/v2-6259b67a8df9b9bfc3ee3c5e9d0eddd7_hd.jpg"></p>
+
+
+
+<h3>
+2.4 他值
+</h3>
+<p><strong>2.4.1 "他值"的概念</strong></p>
+
+<p>"他值"，就是"他人的数据值"的意思。</p>
+
+<p><strong>2.4.2 "他值"的获取</strong></p>
+
+<p>在程序中，我通过</p>
+
+<pre>pInt = &amp;para;</pre>
+<p>将变量para的地址给了指针变量pInt的"己值"，这样就将指针变量pInt与变量para绑定在一起了。这个时候，"他人的数据值"的"他"，指的就是变量para，"他人的数据值"的"数据值"，指的就是变量para的数据值"1"。在程序中，我通过</p>
+
+<pre>printf("指针变量pInt的他值是:  0X%x\n", *pInt);</pre>
+<p>也就是指针变量pInt前面加上" * "，来输出指针变量的"他值"，从运行结果来看，是"0X1"。 注意，你看，指针变量pInt的"他值"，与变量para的数据值是一样的，你又领悟到了什么？想不出来吗？继续看！</p>
+
+<p><strong>2.4.3 "他值"的代码写法</strong></p>
+
+<p>你经常在代码中看到的那些个代码写法，比如什么*pInt写法，是在表达什么意思啊，其实就是在计算指针变量pInt的"他值"啊！</p>
+
+<p>这些个写法呢：*(pInt + 1)、*pInt + 1、pInt[1]？</p>
+
+<p>*(pInt + 1)：如果把pInt + 1 看成是另外一个指针，比如</p>
+
+<pre>int *pTemp = pInt + 1；</pre>
+<p>那么*(pInt + 1)计算的本质上就是指针变量pTemp的"他值"；</p>
+
+<p>*pInt + 1：这个就是用pInt的"他值"加1；</p>
+
+<p>pInt[1]：这个呢？其实就是*(pInt + 1)。</p>
+
+<p><strong>2.4.4 示意图</strong></p>
+
+<p>继续完善上面的示意图，这次加入"他值"的概念：</p>
+
+
+
+<p><img decoding="async" src="//www.runoob.com/wp-content/uploads/2018/01/v2-6a638da59da288b60cba6d16a9fdcefb_hd.jpg"></p>
+<h3>
+2.5 他型</h3>
+<p><strong>2.5.1 "他型"的概念</strong></p>
+
+<p>"他型"，就是"他人的类型"的简称。在程序中，我们看到，声明指针变量pInt时这样写的：</p>
+
+<pre>int *pInt = NULL;</pre>
+<p>指针变量pInt前面的" int "并不是说指针变量pInt的"己值"是一个int类型的数据值；而是说，指针变量pInt的"他值"是一个" int "类型的数据值，此处指针变量pInt的"他值"是变量para的数据值"0X1"，因此，指针变量pInt前面的"int"指的就是数据值"0X1"是一个"int"型。</p>
+
+<p>总之一句话，声明指针时的类型是用来修饰"他值"的，而不是"己值"。</p>
+
+<p>你再看，在声明变量para的时候：</p>
+
+<pre>int para = 1;</pre>
+<p>变量para前面的"int"就是指变量para的类型是一个整型，此时的"int"对para来说是一个"自型"，也就是"自己的类型"的意思，只有指针在声明时的类型是"他型"，是"他人的类型"。</p>
+
+<p>既然"他型"是来修饰"他值"，那么在声明指针时还要加上这个"他型"有什么意义呢？继续看！</p>
+
+<p>在程序中，如下代码片段：</p>
+
+<pre>int arr_int[2] = {1, 2};&nbsp;&nbsp;&nbsp;&nbsp;
+pInt = arr_int;
+printf("arr_int第一个元素arr_int[0]的地址是:  0X%x\n", pInt);
+printf("arr_int第二个元素arr_int[1]的地址是:  0X%x\n", pInt + 1);</pre>
+<p>我把一个整型数组arr_int的地址赋给了指针变量pInt，那么pInt的"己址"没有变化，还是 0X22feb8，但是"己值"却变了。</p>
+
+<p>刚才指针变量pInt的"己值"还是" 0X22feb4"，也就是变量para的地址，现在变成了"0X22feac"，这个可是数组arr_int第一个元素的地址。也就是说，指针变量pInt的"己址"不会改变，但是"己值"是可以被改变的。</p>
+
+<p>现在我们来看看"pInt"与"pInt + 1"的区别，这是在用pInt的"己值"在做运算。从运行结果来看，pInt的"己值"此时是"0X22feac"，而pInt + 1的"己值"是" 0X22feb0"，你发现了吗，两者正好相差4个字节，而一个"int"类型的数据也正好占用了4个字节。</p>
+
+<p>你可能会认为，既然pInt + 1是用"己值"加1，那么应该是"0X22feac + 1" = "0X22fead"才对啊，为什么不是这样呢？这就是指针变量pInt的"他型"搞的鬼。</p>
+
+<p>"他型"的意思，用大白话来说，就是："我说 pInt 大兄弟啊，你的他值是个int型的数据值，你今后要是用你的己值 +1，+2，或者 -1，-2，可千万别傻乎乎的就真的加1个字节，加2个字节， 或者就真的减1个字节、减2个字节。人家int类型占4个字节，你就得按照4个字节为一个单位，去加 1* 4个字节 、2 * 4个字节，或者减去1 * 4个字节、2 * 4个字节，知道不？哦，顺便说下，pInt + N的N，可以为正数也可以为负数"。</p>
+
+<p>当然啦，如果你的机器上"int"型数据占8个字节，那么pInt + 1就是在"己值"上加8个字节，pInt + 2就是在"己值"上加 8 *2 = 16个字节，就这么个意思。</p>
+
+<p>我在程序中又举了个例子来说明这个"他型"。程序如下：</p>
+
+<pre>double *pDouble = NULL;
+double arr_double[2] = {1.1, 2.2};
+pDouble = arr_double;
+printf("arr_double第一个元素arr_double[0]的地址是:  0X%x\n", pDouble);
+printf("arr_double第二个元素arr_double[1]的地址是:  0X%x\n", pDouble + 1);</pre>
+<p>这次声明一个指针变量pDouble，它的"他型"是个"double"型，它的"己值"是数组arr_double的地址，它的"他值"是数组arr_double[0]这个元素的数据值" 1.1 "。在我的机器上，一个double型占用8个字节，那么pDouble + 1就是用pDouble 的"己值"加 1 * 8个字节，pDouble + 2就是用pDouble 的"己值" 加 2 * 8= 16个字节，pDouble - 1就是pDouble 的"己值"减去 1 * 8个字节，pDouble - 2就是pDouble 的"己值"减去 2 * 8 = 16个字节，我滴个乖乖！朋友们可以对着运行结果自己计算对不对！</p>
+
+
+<h2>
+3. 总结</h2>
+<p>是时候来总结下了。</p>
+
+<p>我声明一个指针变量：</p>
+
+<pre>type *pType = NULL;</pre>
+<p>pType有5个维度，分别是：</p>
+
+<p>pType = (己址，己值，他址，他值，他型)；</p>
+<h3>
+3.1 己址：即"自己的地址"
+</h3>
+<p>指针变量pType作为一个变量，也有自己的地址，常见的代码写法是"&pType "。</p>
+
+<p>己址在一般的程序中不会被频繁地用到，如果要用的话，就涉及到"指针的指针"，这又是另外一个话题了，本文不讨论；</p>
+<h3>
+3.2 己值：即"自己的数据值"</h3>
+
+<p>指针变量pType 作为一个变量，也有自己的数据值，代码的写法是"pType "。</p>
+
+<p>也可以在己值上做加减法运算，常见的代码写法有"pType + N"、"pType - N"、"pType2 - pType1"等。</p>
+<h3>
+3.3 他址：即"他人的地址"</h3>
+
+<p>指针变量pType的己值，意义除了表示自己的数据值外，还表示了与pType绑定在一起的"type"类型的变量的地址。一般而言，指针变量pType的"己值"与"他址"在数据值上是一样的。</p>
+
+<p>将一个type类型的变量与pType绑定在一起的常见方式是：pType = &变量；</p>
+
+<h3>3.4 他值：即"他人的数据值"</h3>
+
+<p>一旦type类型的变量与pType绑定在一起，指针变量pType可以通过一些代码写法，来获取type类型变量的值，也就是"他值"。常见的代码写法有：" *pType "、" pType-> "等。</p>
+
+<p>而这些代码的写法：" *(pType + N) "、" *(pType - N) "、" pType[N]"也是获取的"他值"，不过需要特别说明一下：</p>
+
+<p>pType + N 你可以看成是：</p>
+<pre>
+type *pTemp = pType + N;</pre>
+<p>" *(pType + N) "其实计算的就是指针变量pTemp的"他值"。</p>
+
+<p>" *(pType - N) " 你就好理解了吧；</p>
+
+<p>" pType[N]"其实就是" *(pType + N) "，你就死记硬背吧。</p>
+
+<h3>
+
+3.5 他型：即"他人的类型"
+</h3><p>
+声明指针变量pType时，前面的"type"不是用来修饰pType 的"己值"的，而是用来修饰"他值"的，也就是说，"type"不是说pType的"己值"是一个type类型的数据值，而是指pType 的"他值"是一个type类型的数据值。</p>
+
+<p>"他型"在代码中的作用，主要是计算"pType + N"、"pType - N"时，pType要加上或者减去 ( N * sizeof(type) )个字节。</p>
+
+
+
+<p>指针总是让人晕晕的，很可能就是让你晕在这5个维度里的一个或者几个上。把这5个维度好好理解透，指针啊，只是个纸老虎。</p>
+
+
+
+<h2>4. 习题讲解</h2>
+<p>讲完了5个维度，不来点上手习题怎么行。下面列举几个习题，都是跟指针有关的，都是让初学者晕的歇菜的。我用这5个维度来解读这些题，你看看是不是要轻松一点！</p>
+<h3>
+4.1 数组元素求和
+</h3>
+<p><strong>4.1.1 程序</strong></p>
+
+<p>第一个例题是很常见的程序，就是求一个数组元素的和，程序如下：</p>
+
+<div class="example">
+<h2 class="example">实例</h2>
+<div class="example_code">
+<div class="hl-main"><span class="hl-prepro">#include</span><span class="hl-prepro"> </span><span class="hl-quotes">&lt;</span><span class="hl-string">stdio.h</span><span class="hl-quotes">&gt;</span><span class="hl-prepro"></span><span class="hl-code">
+ 
+</span><span class="hl-types">int</span><span class="hl-code"> </span><span class="hl-identifier">main</span><span class="hl-brackets">(</span><span class="hl-types">void</span><span class="hl-brackets">)</span><span class="hl-code">
+</span><span class="hl-brackets">{</span><span class="hl-code">
+    </span><span class="hl-types">int</span><span class="hl-code"> *</span><span class="hl-identifier">pArr</span><span class="hl-code"> = </span><span class="hl-prepro">NULL</span><span class="hl-code">;
+    </span><span class="hl-types">int</span><span class="hl-code"> </span><span class="hl-identifier">sum</span><span class="hl-code"> = </span><span class="hl-number">0</span><span class="hl-code">;
+    </span><span class="hl-types">int</span><span class="hl-code"> </span><span class="hl-identifier">arr</span><span class="hl-brackets">[</span><span class="hl-number">3</span><span class="hl-brackets">]</span><span class="hl-code">= </span><span class="hl-brackets">{</span><span class="hl-number">1</span><span class="hl-code">, </span><span class="hl-number">2</span><span class="hl-code">, </span><span class="hl-number">3</span><span class="hl-brackets">}</span><span class="hl-code">;
+    </span><span class="hl-identifier">pArr</span><span class="hl-code"> = </span><span class="hl-identifier">arr</span><span class="hl-code">;
+    
+    </span><span class="hl-identifier">printf</span><span class="hl-brackets">(</span><span class="hl-quotes">&quot;</span><span class="hl-string">数组元素是:  </span><span class="hl-quotes">&quot;</span><span class="hl-brackets">)</span><span class="hl-code">;
+    </span><span class="hl-reserved">for</span><span class="hl-brackets">(</span><span class="hl-types">int</span><span class="hl-code"> </span><span class="hl-identifier">index</span><span class="hl-code"> = </span><span class="hl-number">0</span><span class="hl-code">; </span><span class="hl-identifier">index</span><span class="hl-code"> &lt; </span><span class="hl-number">3</span><span class="hl-code">; </span><span class="hl-identifier">index</span><span class="hl-code">++</span><span class="hl-brackets">)</span><span class="hl-code">
+    </span><span class="hl-brackets">{</span><span class="hl-code">
+        </span><span class="hl-identifier">printf</span><span class="hl-brackets">(</span><span class="hl-quotes">&quot;</span><span class="hl-string">%d </span><span class="hl-quotes">&quot;</span><span class="hl-code">, </span><span class="hl-identifier">pArr</span><span class="hl-brackets">[</span><span class="hl-identifier">index</span><span class="hl-brackets">]</span><span class="hl-brackets">)</span><span class="hl-code">;
+    </span><span class="hl-brackets">}</span><span class="hl-code">
+    
+    </span><span class="hl-identifier">printf</span><span class="hl-brackets">(</span><span class="hl-quotes">&quot;</span><span class="hl-special">\</span><span class="hl-string">n</span><span class="hl-quotes">&quot;</span><span class="hl-brackets">)</span><span class="hl-code">;
+    
+    </span><span class="hl-reserved">for</span><span class="hl-brackets">(</span><span class="hl-types">int</span><span class="hl-code"> </span><span class="hl-identifier">index</span><span class="hl-code"> = </span><span class="hl-number">0</span><span class="hl-code">; </span><span class="hl-identifier">index</span><span class="hl-code"> &lt; </span><span class="hl-number">3</span><span class="hl-code">; </span><span class="hl-identifier">index</span><span class="hl-code">++</span><span class="hl-brackets">)</span><span class="hl-code">
+    </span><span class="hl-brackets">{</span><span class="hl-code">
+        </span><span class="hl-identifier">sum</span><span class="hl-code"> = </span><span class="hl-identifier">sum</span><span class="hl-code"> + *</span><span class="hl-brackets">(</span><span class="hl-identifier">pArr</span><span class="hl-code"> + </span><span class="hl-identifier">index</span><span class="hl-brackets">)</span><span class="hl-code">;
+    </span><span class="hl-brackets">}</span><span class="hl-code">
+    
+    </span><span class="hl-identifier">printf</span><span class="hl-brackets">(</span><span class="hl-quotes">&quot;</span><span class="hl-string">数组元素和是:  %d</span><span class="hl-special">\</span><span class="hl-string">n</span><span class="hl-quotes">&quot;</span><span class="hl-code">, </span><span class="hl-identifier">sum</span><span class="hl-brackets">)</span><span class="hl-code">;
+    
+    </span><span class="hl-reserved">return</span><span class="hl-code"> </span><span class="hl-number">0</span><span class="hl-code">;
+</span><span class="hl-brackets">}</span></div>
+</div></div>
+<p>程序很简单，先是输出数组的所有元素，然后计算出数组所有元素的和。运行结果如下：</p>
+
+<p><img decoding="async" src="//www.runoob.com/wp-content/uploads/2018/01/v2-066768df2b079a2d8aba8c96871d742d_hd.jpg"></p>
+
+<p><strong>4.1.2 "两己三他"的解读</strong></p>
+
+<p>4.1.2.1 输出数组元素</p>
+
+<p>在输出数组元素时，代码如下：</p>
+
+<pre>pArr = arr;
+printf("%d ", pArr[index]);</pre>
+<p>这句代码等同于</p>
+
+<pre>pArr = arr;
+printf("%d ", *( pArr + index));</pre>
+<p>这里面使用了"己值"、"他型"做了加法运算，使用了"他值"获取数组元素。</p>
+
+<p>"己值"：代码先是将数组名 arr的数据值赋值给了pArr的"己值"。而数组名arr的数据值是啥啊，是arr[0]元素的地址，对吧！那么pArr的己值，也是arr[0]的地址，对吧！这样一来，pArr就和arr[0]绑定起来了。</p>
+
+<p>至于( pArr + index)的意思呢，你就看成有一个间接的、临时的指针变量pTemp：</p>
+
+<pre>int *pTemp = pArr + index;</pre>
+<p>也就是说，pArr + index其实也是一个指针pTemp，只不过这个pTemp的己值是pArr的己值加上 index * sizeof(int) 个字节数。</p>
+
+<p>"他型"：pArr的他型是"int"型，pArr + index，是在pArr己值的基础上，加多少个字节呢？pArr的他型是int型，那么pArr + index，是不是意味着pArr的己值加上 index * sizeof(int) 个字节啊！</p>
+
+<p>pArr：可以写成pArr + 0，就是加上 0 * 4 = 0个字节，此时pTemp的己值是arr[0]的地址；</p>
+
+<p>pArr + 1：就是加上1 * 4 = 4 个字节，此时pTemp的己值是arr[1]的地址；</p>
+
+<p>pArr + 2：就是加上2 * 4 = 8 个字节，此时pTemp的己值是arr[2]的地址；</p>
+
+<p>这样，pArr + index就遍历到了数组所有元素的地址了。</p>
+
+<p>你会发现，pTemp的己值，一直在发生变化；pArr的己值和己址，一直未变。</p>
+
+<p>"他值"：既然pArr + index能够遍历到数组所有元素的地址，再使用 *(pArr + index) ，也就是*pTemp，是不是就能获取到pTemp的他值了，这样也就变量到数组所有元素的值了！</p>
+
+<p>4.1.2.2 数组元素求和</p>
+
+<p>求数组元素的和时，使用的代码如下：</p>
+
+<pre>sum = sum + *(pArr + index);</pre>
+<p>根据刚才我对输出数组元素的分析，这句代码中pArr是怎么玩的，大家也清楚了吧！</p>
+
+<p>pArr + index依然是在用pArr的己值做加法运算，获取到一个临时指针pTemp的己值，这个pTemp的己值是每个数组元素的地址；</p>
+
+<p>再用 *(pArr + inedx)，也就是*pTemp， 获取临时指针pTemp的他值，也就是每个元素的值。</p>
+
+<p>最后将pTemp的每一个他值，叠加起来，算出数组元素的和。</p>
+<p>
+4.1.2.3 总结</p>
+
+<p>大家试着用"两己三他"的维度去理解pArr、pArr + index、*(pArr + index)、pArr[index]、*pArr + index等常见的代码写法！</p>
+
+
+<h3>
+4.2 指针数组
+</h3>
+<p>指针数组是将指针与数组结合起来的东东，对于初学者朋友而言，会比较难理解。指针数组是一个比较大的话题，相关概念请参见一般的C语言教材，这里只是用"两己三他"的概念来解释程序中的指针部分概念。</p>
+
+<p><strong>4.2.1 程序</strong></p>
+
+<p>指针数组，我举了一个例子如下：</p>
+
+<div class="example">
+<h2 class="example">实例</h2>
+<div class="example_code">
+<div class="hl-main"><span class="hl-prepro">#include</span><span class="hl-prepro"> </span><span class="hl-quotes">&lt;</span><span class="hl-string">stdio.h</span><span class="hl-quotes">&gt;</span><span class="hl-prepro"></span><span class="hl-code">
+ 
+</span><span class="hl-types">int</span><span class="hl-code"> </span><span class="hl-identifier">main</span><span class="hl-brackets">(</span><span class="hl-types">void</span><span class="hl-brackets">)</span><span class="hl-code">
+</span><span class="hl-brackets">{</span><span class="hl-code">
+    </span><span class="hl-types">char</span><span class="hl-code"> *</span><span class="hl-identifier">arr</span><span class="hl-brackets">[</span><span class="hl-number">3</span><span class="hl-brackets">]</span><span class="hl-code"> = </span><span class="hl-brackets">{</span><span class="hl-quotes">&quot;</span><span class="hl-string">abc</span><span class="hl-quotes">&quot;</span><span class="hl-code">, </span><span class="hl-quotes">&quot;</span><span class="hl-string">def</span><span class="hl-quotes">&quot;</span><span class="hl-code">, </span><span class="hl-quotes">&quot;</span><span class="hl-string">ghi</span><span class="hl-quotes">&quot;</span><span class="hl-brackets">}</span><span class="hl-code">;
+    </span><span class="hl-types">char</span><span class="hl-code"> *</span><span class="hl-identifier">pArr</span><span class="hl-code"> = </span><span class="hl-identifier">arr</span><span class="hl-brackets">[</span><span class="hl-number">0</span><span class="hl-brackets">]</span><span class="hl-code">;
+        
+    </span><span class="hl-identifier">printf</span><span class="hl-brackets">(</span><span class="hl-quotes">&quot;</span><span class="hl-string">字符串数组arr的每个字符串元素是:  </span><span class="hl-quotes">&quot;</span><span class="hl-brackets">)</span><span class="hl-code">;
+    </span><span class="hl-reserved">for</span><span class="hl-brackets">(</span><span class="hl-types">int</span><span class="hl-code"> </span><span class="hl-identifier">index</span><span class="hl-code"> = </span><span class="hl-number">0</span><span class="hl-code">; </span><span class="hl-identifier">index</span><span class="hl-code"> &lt; </span><span class="hl-number">3</span><span class="hl-code">; </span><span class="hl-identifier">index</span><span class="hl-code">++</span><span class="hl-brackets">)</span><span class="hl-code">
+    </span><span class="hl-brackets">{</span><span class="hl-code">
+        </span><span class="hl-identifier">printf</span><span class="hl-brackets">(</span><span class="hl-quotes">&quot;</span><span class="hl-string">%s </span><span class="hl-quotes">&quot;</span><span class="hl-code">, </span><span class="hl-identifier">arr</span><span class="hl-brackets">[</span><span class="hl-identifier">index</span><span class="hl-brackets">]</span><span class="hl-brackets">)</span><span class="hl-code">;
+    </span><span class="hl-brackets">}</span><span class="hl-code">
+    
+    </span><span class="hl-identifier">printf</span><span class="hl-brackets">(</span><span class="hl-quotes">&quot;</span><span class="hl-special">\</span><span class="hl-string">n</span><span class="hl-quotes">&quot;</span><span class="hl-brackets">)</span><span class="hl-code">;
+    </span><span class="hl-identifier">printf</span><span class="hl-brackets">(</span><span class="hl-quotes">&quot;</span><span class="hl-string">字符串数组arr第一个字符串的每个元素是:  </span><span class="hl-quotes">&quot;</span><span class="hl-brackets">)</span><span class="hl-code">;
+    </span><span class="hl-reserved">for</span><span class="hl-brackets">(</span><span class="hl-types">int</span><span class="hl-code"> </span><span class="hl-identifier">index</span><span class="hl-code"> = </span><span class="hl-number">0</span><span class="hl-code">; </span><span class="hl-identifier">index</span><span class="hl-code"> &lt; </span><span class="hl-number">3</span><span class="hl-code">; </span><span class="hl-identifier">index</span><span class="hl-code">++</span><span class="hl-brackets">)</span><span class="hl-code">
+    </span><span class="hl-brackets">{</span><span class="hl-code">
+        </span><span class="hl-identifier">printf</span><span class="hl-brackets">(</span><span class="hl-quotes">&quot;</span><span class="hl-string">%c </span><span class="hl-quotes">&quot;</span><span class="hl-code">, *</span><span class="hl-brackets">(</span><span class="hl-identifier">pArr</span><span class="hl-code"> + </span><span class="hl-identifier">index</span><span class="hl-brackets">)</span><span class="hl-code"> </span><span class="hl-brackets">)</span><span class="hl-code">;
+    </span><span class="hl-brackets">}</span><span class="hl-code">
+    
+    </span><span class="hl-identifier">printf</span><span class="hl-brackets">(</span><span class="hl-quotes">&quot;</span><span class="hl-special">\</span><span class="hl-string">n</span><span class="hl-quotes">&quot;</span><span class="hl-brackets">)</span><span class="hl-code">;
+    
+    </span><span class="hl-reserved">return</span><span class="hl-code"> </span><span class="hl-number">0</span><span class="hl-code">;
+</span><span class="hl-brackets">}</span></div>
+</div></div>
+<p>运行结果如下：</p>
+
+
+<p><img decoding="async" src="//www.runoob.com/wp-content/uploads/2018/01/v2-1902f5d6682294548d4eafa3c4eeb11b_hd.jpg"></p>
+
+<p><strong>4.2.2 "两己三他"的解读</strong></p>
+
+<p>4.2.2.1 输出所有的字符串</p>
+
+<p>先看指针数组的定义：</p>
+
+<pre>char *arr[3] = {"abc", "def", "ghi"};</pre>
+<p>你看到的这个数组的每个元素好像是一个字符串，其实本质上是这样的：</p>
+
+<pre>char *pChar1 = "abc", *pChar2 = "def", *pChar3 = "ghi";
+char *arr[3] = {pChar1, pChar2, pChar3};</pre>
+<p>数组arr的每个元素其实是一个"他型"是"char"的指针。</p>
+
+<p>arr[0]就是pChar1这个指针，那么pChar1的己值或者他址是啥，当然是字符串"abc"的字符'a'的地址，那么：</p>
+
+<pre>printf("%s ", arr[0]);</pre>
+<p>本质上是：</p>
+
+<pre>printf("%s ", pChar1);</pre>
+<p>使用pChar1的己值或者他址，从字符'a'的地址开始，一个一个地输出后面的'b'和'c'。</p>
+
+<p>对于pChar2和pChar3也是一样地理解。</p>
+
+<p>4.2.2.2 输出第一个字符串"abc"的每个字符</p>
+
+<p>代码如下：</p>
+
+<pre>char *pArr = arr[0];
+printf("%c ", *(pArr + index) );</pre>
+<p>将arr[0]，也就是pChar1的己值给了pArr的己值，那么pArr的己值和他址都是字符'a'的地址。</p>
+
+<p>pArr + index 是在pArr的己值上，加上 index * sizeof(char) 个字节，给了一个临时指针变量pTemp：</p>
+
+<pre>char *pTemp = pArr + index;</pre>
+<p>这个指针pTemp的己值或者他址，会依次为字符'a', 'b', 'c'的地址，也就是pTemp的他值也会依次为字符'a', 'b','c'，这样指针pTemp就会依次遍历到字符串"abc"的每一个字符了。</p>
+
+
+<h3>
+4.3 链表
+</h3>
+<p>链表是使用指针最为频繁的，什么插入节点、删除节点等，都会遇到如下的代码写法：</p>
+
+<pre>p2 = p1-&gt;next;
+p1-&gt;next = p3-&gt;next;
+...... </pre>
+<p>这TM什么玩意儿，晕的一腿啊！这个next指针，那个next指针，跳来跳去的，我了个去，头脑已经充满浆糊了。呵呵，指针5维度分析法来了！不过，关于链表，我觉得还是另外开辟一个文章讲吧。等把链表讲完，回头再讲这些个next指针，我跟你讲，链表的本质也就那样，你懂了之后，链表比指针还要纸老虎。</p>
+<blockquote><p>作者：石家的鱼</p>
+<p>来源：https://zhuanlan.zhihu.com/p/27974028</p></blockquote>
+				</div>
+			</div>
+			<div class="previous-next-links">
+			<div class="previous-design-link">← <a href="http://www.runoob.com/w3cnote/cpp11-inheritance-constructor.html" rel="prev"> C++11 中的继承构造函数</a> </div>
+			<div class="next-design-link"><a href="http://www.runoob.com/w3cnote/8-awesome-awk-built-in-variables.html" rel="next"> 8 个有力的 Awk 内建变量</a> →</div>
+			</div>
+						<div class="article-heading-ad" id="w3cnote-ad728">
+			<script async src="//pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script>
+			<!-- 移动版 自动调整 -->
+			<ins class="adsbygoogle"
+			     style="display:inline-block;min-width:300px;max-width:970px;width:100%;height:90px"
+			     data-ad-client="ca-pub-5751451760833794"
+			     data-ad-slot="1691338467"
+			     data-ad-format="horizontal"></ins>
+			<script>
+			(adsbygoogle = window.adsbygoogle || []).push({});
+			</script>
+			</div>
+			<style>
+@media screen and (max-width: 768px) {
+	#w3cnote-ad728 {
+		display: none;
+	}
+}
+p.note-author {
+    border-bottom: 1px solid #ddd;
+    font-size: 18px;
+    font-weight: bold;
+    color: #78a15a;
+    padding-bottom: 2px;
+    margin-bottom: 4px;
+}
+</style>
+<script>
+var aid = 19464;
+</script>
+	</div>
+		
+	</div>
+	<div class="listcol last right-column">
+
+
+
+
+<!--
+	<div class="tab tab-light-blue"> 订阅</div>
+	<div class="sidebar-box">
+		<div class="socialicons">
+			<a href="//www.runoob.com/feed" class="rss">RSS 订阅</a>
+		
+			<form action="//list.qq.com/cgi-bin/qf_compose_send" method="post">
+			<input type="hidden" value="qf_booked_feedback" name="t">
+			<input type="hidden" value="4b67b6b6c1f5e792559940cab4aebb8f1126fba880bff1a8" name="id">
+			<input class="placeholder" id="feed_email" name="to" value="输入邮箱 订阅笔记" autocomplete="off">
+			<input type="submit" value="订阅" class="btn btn-primary">
+			</form>
+		
+		</div>
+ 
+	</div>
+-->	
+
+
+
+<!--
+	<div class="sidebar-box cate-list">
+	<div class="sidebar-box recommend-here list-link">
+			<a href="javascript:void(0);" style="font-size: 16px; color:#64854c;font-weight:bold;">笔记列表</a>
+		</div>
+
+ 
+
+</div>
+-->
+
+	 <div class="sidebar-box cate-list">
+		 		
+
+	 	<div class="sidebar-box recommend-here list-link">
+			<a href="javascript:void(0);" style="font-size: 16px; color:#64854c;font-weight:bold;">教程列表</a>
+		</div>
+		
+		<div class="cate-items"> 
+				<a href="http://www.runoob.com/ado">ADO 教程</a>
+	<a href="http://www.runoob.com/ajax">Ajax 教程</a>
+	<a href="http://www.runoob.com/android">Android 教程</a>
+	<a href="http://www.runoob.com/angularjs2">Angular2 教程</a>
+	<a href="http://www.runoob.com/angularjs">AngularJS 教程</a>
+	<a href="http://www.runoob.com/appml">AppML 教程</a>
+	<a href="http://www.runoob.com/asp">ASP 教程</a>
+	<a href="http://www.runoob.com/aspnet">ASP.NET 教程</a>
+	<a href="http://www.runoob.com/bootstrap">Bootstrap 教程</a>
+	<a href="http://www.runoob.com/bootstrap4">Bootstrap4 教程</a>
+	<a href="http://www.runoob.com/bootstrap5">Bootstrap5 教程</a>
+	<a href="http://www.runoob.com/cprogramming">C 教程</a>
+	<a href="http://www.runoob.com/csharp">C# 教程</a>
+	<a href="http://www.runoob.com/cplusplus">C++ 教程</a>
+	<a href="http://www.runoob.com/chartjs">Chart.js 教程</a>
+	<a href="http://www.runoob.com/cssref">CSS 参考手册</a>
+	<a href="http://www.runoob.com/css">CSS 教程</a>
+	<a href="http://www.runoob.com/css3">CSS3 教程</a>
+	<a href="http://www.runoob.com/django">Django 教程</a>
+	<a href="http://www.runoob.com/docker">Docker 教程</a>
+	<a href="http://www.runoob.com/dtd">DTD 教程</a>
+	<a href="http://www.runoob.com/echarts">ECharts 教程</a>
+	<a href="http://www.runoob.com/eclipse">Eclipse 教程</a>
+	<a href="http://www.runoob.com/firebug">Firebug 教程</a>
+	<a href="http://www.runoob.com/font-awesome">Font Awesome 图标</a>
+	<a href="http://www.runoob.com/foundation">Foundation 教程</a>
+	<a href="http://www.runoob.com/git">Git 教程</a>
+	<a href="http://www.runoob.com/go">Go 语言教程</a>
+	<a href="http://www.runoob.com/googleapi">Google 地图 API 教程</a>
+	<a href="http://www.runoob.com/highcharts">Highcharts 教程</a>
+	<a href="http://www.runoob.com/htmldom">HTML DOM 教程</a>
+	<a href="http://www.runoob.com/tags">HTML 参考手册</a>
+	<a href="http://www.runoob.com/charsets">HTML 字符集</a>
+	<a href="http://www.runoob.com/html">HTML 教程</a>
+	<a href="http://www.runoob.com/http">HTTP 教程</a>
+	<a href="http://www.runoob.com/ionic">ionic 教程</a>
+	<a href="http://www.runoob.com/ios">iOS 教程</a>
+	<a href="http://www.runoob.com/java">Java 教程</a>
+	<a href="http://www.runoob.com/jsref">JavaScript 参考手册</a>
+	<a href="http://www.runoob.com/js">Javascript 教程</a>
+	<a href="http://www.runoob.com/jeasyui">jQuery EasyUI 教程</a>
+	<a href="http://www.runoob.com/jquerymobile">jQuery Mobile 教程</a>
+	<a href="http://www.runoob.com/jqueryui">jQuery UI 教程</a>
+	<a href="http://www.runoob.com/jquery">jQuery 教程</a>
+	<a href="http://www.runoob.com/json">JSON 教程</a>
+	<a href="http://www.runoob.com/jsp">JSP 教程</a>
+	<a href="http://www.runoob.com/julia">Julia 教程</a>
+	<a href="http://www.runoob.com/kotlin">Kotlin 教程</a>
+	<a href="http://www.runoob.com/linux">Linux 教程</a>
+	<a href="http://www.runoob.com/lua">Lua 教程</a>
+	<a href="http://www.runoob.com/markdown">Markdown 教程</a>
+	<a href="http://www.runoob.com/matplotlib">Matplotlib 教程</a>
+	<a href="http://www.runoob.com/maven">Maven 教程</a>
+	<a href="http://www.runoob.com/memcached">Memcached 教程</a>
+	<a href="http://www.runoob.com/mongodb">MongoDB 教程</a>
+	<a href="http://www.runoob.com/mysql">MySQL 教程</a>
+	<a href="http://www.runoob.com/nodejs">Node.js 教程</a>
+	<a href="http://www.runoob.com/numpy">NumPy 教程</a>
+	<a href="http://www.runoob.com/pandas">Pandas 教程</a>
+	<a href="http://www.runoob.com/perl">Perl 教程</a>
+	<a href="http://www.runoob.com/php">PHP 教程</a>
+	<a href="http://www.runoob.com/postgresql">PostgreSQL 教程</a>
+	<a href="http://www.runoob.com/python3">Python 3 教程</a>
+	<a href="http://www.runoob.com/python">Python 基础教程</a>
+	<a href="http://www.runoob.com/r">R 教程</a>
+	<a href="http://www.runoob.com/rdf">RDF 教程</a>
+	<a href="http://www.runoob.com/react">React 教程</a>
+	<a href="http://www.runoob.com/redis">Redis 教程</a>
+	<a href="http://www.runoob.com/rss">RSS 教程</a>
+	<a href="http://www.runoob.com/ruby">Ruby 教程</a>
+	<a href="http://www.runoob.com/rust">Rust 教程</a>
+	<a href="http://www.runoob.com/sass">Sass 教程</a>
+	<a href="http://www.runoob.com/scala">Scala 教程</a>
+	<a href="http://www.runoob.com/scipy">SciPy 教程</a>
+	<a href="http://www.runoob.com/servlet">Servlet 教程</a>
+	<a href="http://www.runoob.com/soap">SOAP 教程</a>
+	<a href="http://www.runoob.com/sql">SQL 教程</a>
+	<a href="http://www.runoob.com/sqlite">SQLite 教程</a>
+	<a href="http://www.runoob.com/svg">SVG 教程</a>
+	<a href="http://www.runoob.com/svn">SVN 教程</a>
+	<a href="http://www.runoob.com/swift">Swift 教程</a>
+	<a href="http://www.runoob.com/tcpip">TCP/IP 教程</a>
+	<a href="http://www.runoob.com/typescript">TypeScript 教程</a>
+	<a href="http://www.runoob.com/vbscript">VBScript 教程</a>
+	<a href="http://www.runoob.com/vue2">Vue.js 教程</a>
+	<a href="http://www.runoob.com/vue3">Vue3 教程</a>
+	<a href="http://www.runoob.com/w3c">W3C 教程</a>
+	<a href="http://www.runoob.com/webservices">Web Service 教程</a>
+	<a href="http://www.runoob.com/wsdl">WSDL 教程</a>
+	<a href="http://www.runoob.com/xlink">XLink 教程</a>
+	<a href="http://www.runoob.com/dom">XML DOM 教程</a>
+	<a href="http://www.runoob.com/schema">XML Schema 教程</a>
+	<a href="http://www.runoob.com/xml">XML 教程</a>
+	<a href="http://www.runoob.com/xpath">XPath 教程</a>
+	<a href="http://www.runoob.com/xquery">XQuery 教程</a>
+	<a href="http://www.runoob.com/xslfo">XSLFO 教程</a>
+	<a href="http://www.runoob.com/xsl">XSLT 教程</a>
+	<a href="http://www.runoob.com/data-structures">数据结构</a>
+	<a href="http://www.runoob.com/regexp">正则表达式</a>
+	<a href="http://www.runoob.com/quiz">测验</a>
+	<a href="http://www.runoob.com/browsers">浏览器</a>
+	<a href="http://www.runoob.com/quality">网站品质</a>
+	<a href="http://www.runoob.com/web">网站建设指南</a>
+	<a href="http://www.runoob.com/hosting">网站服务器教程</a>
+	<a href="http://www.runoob.com/design-pattern">设计模式</a>
+			
+		</div> 
+		 	 </div>
+</div>
+	</div>
+</div>
+
+
+<!-- 底部 -->
+<div id="footer" class="mar-t50">
+   <div class="runoob-block">
+    <div class="runoob cf">
+     <dl>
+      <dt>
+       在线实例
+      </dt>
+      <dd>
+       &middot;<a target="_blank" href="/html/html-examples.html">HTML 实例</a>
+      </dd>
+      <dd>
+       &middot;<a target="_blank" href="/css/css-examples.html">CSS 实例</a>
+      </dd>
+      <dd>
+       &middot;<a target="_blank" href="/js/js-examples.html">JavaScript 实例</a>
+      </dd>
+      <dd>
+       &middot;<a target="_blank" href="/ajx/ajax-examples.html">Ajax 实例</a>
+      </dd>
+       <dd>
+       &middot;<a target="_blank" href="/jquery/jquery-examples.html">jQuery 实例</a>
+      </dd>
+      <dd>
+       &middot;<a target="_blank" href="/xml/xml-examples.html">XML 实例</a>
+      </dd>
+      <dd>
+       &middot;<a target="_blank" href="/java/java-examples.html">Java 实例</a>
+      </dd>
+     
+     </dl>
+     <dl>
+      <dt>
+      字符集&工具
+      </dt>
+      <dd>
+       &middot; <a target="_blank" href="/charsets/html-charsets.html">HTML 字符集设置</a>
+      </dd>
+      <dd>
+       &middot; <a target="_blank" href="/tags/html-ascii.html">HTML ASCII 字符集</a>
+      </dd>
+     <dd>
+       &middot; <a target="_blank" href="https://c.runoob.com/front-end/6939/">JS 混淆/加密</a>
+      </dd> 
+      <dd>
+       &middot; <a target="_blank" href="https://c.runoob.com/front-end/6232/">PNG/JPEG 图片压缩</a>
+      </dd>
+      <dd>
+       &middot; <a target="_blank" href="/tags/html-colorpicker.html">HTML 拾色器</a>
+      </dd>
+      <dd>
+       &middot; <a target="_blank" href="//c.runoob.com/front-end/53">JSON 格式化工具</a>
+      </dd>
+      <dd>
+       &middot; <a target="_blank" href="//c.runoob.com/front-end/6680/">随机数生成器</a>
+      </dd>
+     </dl>
+     <dl>
+      <dt>
+       最新更新
+      </dt>
+                   <dd>
+       &middot;
+      <a href="http://www.runoob.com/matplotlib/matplotlib-imread.html" title="Matplotlib imread() 方法">Matplotlib imre...</a>
+      </dd>
+              <dd>
+       &middot;
+      <a href="http://www.runoob.com/matplotlib/matplotlib-imsave.html" title="Matplotlib imsave() 方法">Matplotlib imsa...</a>
+      </dd>
+              <dd>
+       &middot;
+      <a href="http://www.runoob.com/matplotlib/matplotlib-imshow.html" title="Matplotlib imshow() 方法">Matplotlib imsh...</a>
+      </dd>
+              <dd>
+       &middot;
+      <a href="http://www.runoob.com/matplotlib/matplotlib-hist.html" title="Matplotlib 直方图">Matplotlib 直方图</a>
+      </dd>
+              <dd>
+       &middot;
+      <a href="http://www.runoob.com/python3/python-func-object.html" title="Python object() 函数">Python object()...</a>
+      </dd>
+              <dd>
+       &middot;
+      <a href="http://www.runoob.com/python3/python-ai-draw.html" title="Python AI 绘画">Python AI 绘画</a>
+      </dd>
+              <dd>
+       &middot;
+      <a href="http://www.runoob.com/w3cnote/cursor-editor.html" title="神辅助 Cursor 编辑器，加入 GPT-4 让编码更轻松！">神辅助 Cursor ...</a>
+      </dd>
+             </dl>
+     <dl>
+      <dt>
+       站点信息
+      </dt>
+      <dd>
+       &middot;
+       <a target="_blank" href="mailto:admin@runoob.com" rel="external nofollow">意见反馈</a>
+       </dd>
+      <dd>
+       &middot;
+      <a target="_blank" href="/disclaimer">免责声明</a>
+       </dd>
+      <dd>
+       &middot;
+       <a target="_blank" href="/aboutus">关于我们</a>
+       </dd>
+      <dd>
+       &middot;
+      <a target="_blank" href="/archives">文章归档</a>
+      </dd>
+    
+     </dl>
+    
+     <div class="search-share">
+      <div class="app-download">
+        <div>
+         <strong>关注微信</strong>
+        </div>
+      </div>
+      <div class="share">
+      <img width="128" height="128" src="/wp-content/themes/runoob/assets/images/qrcode.png" />
+       </div>
+     </div>
+     
+    </div>
+   </div>
+   <div class="w-1000 copyright">
+     Copyright &copy; 2013-2023    <strong><a href="//www.runoob.com/" target="_blank">菜鸟教程</a></strong>&nbsp;
+    <strong><a href="//www.runoob.com/" target="_blank">runoob.com</a></strong> All Rights Reserved. 备案号：<a target="_blank" rel="nofollow" href="https://beian.miit.gov.cn/">闽ICP备15012807号-1</a>
+   </div>
+  </div>
+  <div class="fixed-btn">
+    <a class="go-top" href="javascript:void(0)" title="返回顶部"> <i class="fa fa-angle-up"></i></a>
+    <a class="qrcode"  href="javascript:void(0)" title="关注我们"><i class="fa fa-qrcode"></i></a>
+    <a class="writer" style="display:none" href="javascript:void(0)"   title="标记/收藏"><i class="fa fa-star" aria-hidden="true"></i></a>
+    <!-- qrcode modal -->
+    <div id="bottom-qrcode" class="modal panel-modal hide fade in">
+      <h4>微信关注</h4>
+      <div class="panel-body"><img alt="微信关注" width="128" height="128" src="/wp-content/themes/runoob/assets/images/qrcode.png"></div> 
+    </div>
+  </div>
+
+ <div style="display:none;">
+<script async src="https://www.googletagmanager.com/gtag/js?id=UA-84264393-2"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+
+  gtag('config', 'UA-84264393-2');
+</script>
+<script>
+var _hmt = _hmt || [];
+(function() {
+  var hm = document.createElement("script");
+  hm.src = "https://hm.baidu.com/hm.js?3eec0b7da6548cf07db3bc477ea905ee";
+  var s = document.getElementsByTagName("script")[0]; 
+  s.parentNode.insertBefore(hm, s);
+})();
+</script>
+
+</div>
+<script>
+window.jsui={
+    www: 'https://www.runoob.com',
+    uri: 'https://www.runoob.com/wp-content/themes/runoob'
+};
+</script>
+
+<script src="https://static.runoob.com/assets/libs/hl/run_prettify.js"></script>
+<script src="/wp-content/themes/runoob/assets/js/main.min.js?v=1.156"></script>
+
+</body>
+</html>

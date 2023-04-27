@@ -1,0 +1,229 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><title>E.7. 版本 9.6.2</title><link rel="stylesheet" type="text/css" href="stylesheet.css" /><link rev="made" href="pgsql-docs@postgresql.org" /><meta name="generator" content="DocBook XSL Stylesheets V1.79.1" /><link rel="prev" href="release-9-6-3.html" title="E.6. 版本 9.6.3" /><link rel="next" href="release-9-6-1.html" title="E.8. 版本 9.6.1" /></head><body><div xmlns="http://www.w3.org/TR/xhtml1/transitional" class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="5" align="center">E.7. 版本 9.6.2</th></tr><tr><td width="10%" align="left"><a accesskey="p" href="release-9-6-3.html" title="E.6. 版本 9.6.3">上一页</a> </td><td width="10%" align="left"><a accesskey="u" href="release.html" title="附录 E. 版本说明">上一级</a></td><th width="60%" align="center">附录 E. 版本说明</th><td width="10%" align="right"><a accesskey="h" href="index.html" title="PostgreSQL 10.1 手册">起始页</a></td><td width="10%" align="right"> <a accesskey="n" href="release-9-6-1.html" title="E.8. 版本 9.6.1">下一页</a></td></tr></table><hr></hr></div><div class="sect1" id="RELEASE-9-6-2"><div class="titlepage"><div><div><h2 class="title" style="clear: both">E.7. 版本 9.6.2</h2></div></div></div><div class="toc"><dl class="toc"><dt><span class="sect2"><a href="release-9-6-2.html#idp64449616">E.7.1. 迁移到版本 9.6.2</a></span></dt><dt><span class="sect2"><a href="release-9-6-2.html#idp64452288">E.7.2. 修改列表</a></span></dt></dl></div><p><strong>发布日期: </strong>2017-02-09</p><p>   此版本包含9.6.1的各种修复程序。有关9.6主要版本中的新功能的信息，请查看
+   <a class="xref" href="release-9-6.html" title="E.9. 版本 9.6">第 E.9 节</a>.
+  </p><div class="sect2" id="idp64449616"><div class="titlepage"><div><div><h3 class="title">E.7.1. 迁移到版本 9.6.2</h3></div></div></div><p>    运行9.6.X的用户不需要转储/恢复。
+	</p><p>    但是，如果您的安装受到以下修改列表第一项中描述的错误的影响，
+	那么在更新之后，您可能需要采取措施修复损坏的索引。
+   </p><p>    另外，如果您是从9.6.1之前的版本升级，请查阅
+    <a class="xref" href="release-9-6-1.html" title="E.8. 版本 9.6.1">第 E.8 节</a>。
+   </p></div><div class="sect2" id="idp64452288"><div class="titlepage"><div><div><h3 class="title">E.7.2. 修改列表</h3></div></div></div><div class="itemizedlist"><ul class="itemizedlist" style="list-style-type: disc; "><li class="listitem"><p>      修复可能会导致使用<code class="command">CREATE INDEX CONCURRENTLY</code>构建的索引损坏的争用条件
+	  (Pavan Deolasee, Tom Lane)
+     </p><p>      如果使用<code class="command">CREATE INDEX CONCURRENTLY</code>构建一个索引，
+	  该索引依赖于先前未编制索引的列，那么通过与<code class="command">CREATE INDEX</code>
+	  命令同时运行的事务更新的行可能收到不正确索引条目。如果您怀疑可能发生了这种情况，
+	  最可靠的解决方案是在安装此更新后重建受影响的索引。
+     </p></li><li class="listitem"><p>      确保用于目录扫描的特殊快照不会因过早的数据修剪而失效 (Tom Lane)
+     </p><p>      发布最旧的xmin时后端无法解释此快照，可能允许并发清理操作删除仍然需要的数据。
+	  这会导致短暂的故障伴随行<span class="quote">“<span class="quote">cache lookup failed for relation 1255</span>”</span>。
+     </p></li><li class="listitem"><p>      修复BRIN索引不正确的WAL日志记录 (Kuntal Ghosh)
+     </p><p>      将索引元组移动到其他页面时，为BRIN <span class="quote">“<span class="quote">revmap</span>”</span>页面发出的WAL记录是不正确的。
+	  重放会使索引的相关部分无用，迫使它重新计算。
+     </p></li><li class="listitem"><p>      无条件的WAL记录unlog表的<span class="quote">“<span class="quote">init fork</span>”</span>创建 (Michael Paquier)
+     </p><p>      以前，当<a class="xref" href="runtime-config-wal.html#GUC-WAL-LEVEL">wal_level</a> = <code class="literal">minimal</code>时会跳过它，
+	  但实际上，即使在这种情况下也需要确保在崩溃后将未记录的表正确地重置为空。
+     </p></li><li class="listitem"><p>      如果状态收集器在热备用期间死亡，请重新启动它 (Takayuki
+      Tsunakawa)
+     </p></li><li class="listitem"><p>      在备用服务器启动时启用热备用反馈时，确保它能正常工作
+	  (Ants Aasma, Craig Ringer)
+     </p></li><li class="listitem"><p>      在热备用等待冲突查询时检查中断 (Simon Riggs)
+     </p></li><li class="listitem"><p>      避免在极端的情况下不断重新启动自动清理加载进程
+      (Amit Khandekar)
+     </p><p>      该修复避免了在名义关闭autovacuum并且有一些表需要冻结，
+	  但所有此类表已由autovacuum工作进程处理的情况下出现问题。
+     </p></li><li class="listitem"><p>      不允许在<a class="xref" href="runtime-config-replication.html#GUC-SYNCHRONOUS-STANDBY-NAMES">synchronous_standby_names</a>中设置
+	  <em class="replaceable"><code>num_sync</code></em>字段为零 (Fujii Masao)
+     </p><p>      禁用同步备机的正确方法是将整个值设置为空字符串。
+     </p></li><li class="listitem"><p>      不要根据用户的连接限制计算后台工作进程 (David Rowley)
+     </p></li><li class="listitem"><p>      修复对何时可以删除扩展成员对象的检查 (Tom Lane)
+     </p><p>      扩展升级脚本应该能够删除成员对象，
+	  但是这对于串行列序列以及可能的其他情况是不允许的。
+     </p></li><li class="listitem"><p>      修复跟踪扩展成员对象的初始权限，使其可以正常使用
+	  <code class="command">ALTER EXTENSION ... ADD/DROP</code>
+      (Stephen Frost)
+     </p><p>      在添加到扩展中时，对象的当前特权将被视为其默认特权；
+	  只有随后的<span class="application">pg_dump</span>运行才会转储其权限更改。
+     </p></li><li class="listitem"><p>      确保当重建索引时，<code class="command">ALTER TABLE</code>保留索引表空间分配
+	  (Tom Lane, Michael Paquier)
+     </p><p>      以前<a class="xref" href="runtime-config-client.html#GUC-DEFAULT-TABLESPACE">default_tablespace</a>的非默认设置会导致索引损坏。
+     </p></li><li class="listitem"><p>      修改使用<code class="command">ALTER TABLE ... ALTER CONSTRAINT</code>
+	  更改外键约束的延迟属性时触发器函数属性的更新不正确 (Tom Lane)
+     </p><p>      这在后来的外键操作中导致了奇怪的失败，因为触发器在错误的时间被触发。
+     </p></li><li class="listitem"><p>      如果引用的关系存在挂起的触发事件，则防止丢弃外键约束 (Tom Lane)
+     </p><p>      这避免了<span class="quote">“<span class="quote">could not find trigger <em class="replaceable"><code>NNN</code></em></span>”</span>
+      或<span class="quote">“<span class="quote">relation <em class="replaceable"><code>NNN</code></em> has no triggers</span>”</span>错误。
+     </p></li><li class="listitem"><p>      当子表与父表的列顺序不同时，修复
+	  <code class="command">ALTER TABLE ... SET DATA TYPE ... USING</code>
+      (Álvaro Herrera)
+     </p><p>      在<code class="literal">USING</code>表达式中未能调整列编号导致错误，
+	  通常是<span class="quote">“<span class="quote">attribute <em class="replaceable"><code>N</code></em> has wrong type</span>”</span>。
+     </p></li><li class="listitem"><p>      当通过<code class="command">ALTER TABLE ... INHERIT</code>将具有OID的表关联到具有OID的父项时，
+	  修复OID列的处理 (Amit Langote)
+     </p><p>      在这种情况下，OID列应该与普通用户列相同，但它不是，
+	  导致在稍后的继承更改中出现奇怪的行为。
+     </p></li><li class="listitem"><p>      确保<code class="command">CREATE TABLE ... LIKE ... WITH OIDS</code>
+	  创建一个带有OID的表，无论<code class="literal">LIKE</code>引用的表是否具有OID (Tom Lane)
+     </p></li><li class="listitem"><p>      修复<code class="command">CREATE OR REPLACE VIEW</code>
+	  在尝试应用新的视图选项之前更新视图查询 (Dean Rasheed)
+     </p><p>      如果新选项与旧视图定义不一致，以前命令会失败。
+     </p></li><li class="listitem"><p>      在<code class="command">ALTER TEXT SEARCH CONFIGURATION</code>中报告正确的对象标识
+	  (Artur Zakirov)
+     </p><p>      将错误的目录OID报告给诸如逻辑解码之类的扩展。
+     </p></li><li class="listitem"><p>      修复提交时间戳机制在查询特殊XID <code class="literal">FrozenTransactionId</code>
+	  和<code class="literal">BootstrapTransactionId</code>时不会失败 (Craig Ringer)
+     </p></li><li class="listitem"><p>      修正将视图重定向的不正确的用作常规表重置选项 (Tom
+      Lane)
+     </p><p>      当<code class="command">INSERT ... ON CONFLICT</code>的目标是带有级联选项的视图时，
+	  出现的症状是虚假的<span class="quote">“<span class="quote">ON CONFLICT is not supported on table
+      ... used as a catalog table</span>”</span>错误。
+     </p></li><li class="listitem"><p>      当在宽表上使用<code class="literal">ON CONFLICT</code>时，
+	  修复不正确的 <span class="quote">“<span class="quote">target lists can have at most <em class="replaceable"><code>N</code></em>
+      entries</span>”</span>投诉 (Tom Lane)
+     </p></li><li class="listitem"><p>      修复在具有删除列的表上<code class="command">INSERT</code>或<code class="command">UPDATE</code>
+	  期间虚假的<span class="quote">“<span class="quote">query provides a value for a dropped column</span>”</span>错误 (Tom Lane)
+     </p></li><li class="listitem"><p>      在<code class="command">UPDATE</code>源表达式中防止
+	  <em class="replaceable"><code>foo</code></em><code class="literal">.*</code>的多列扩展
+	   (Tom Lane)
+     </p><p>      这导致<span class="quote">“<span class="quote">UPDATE target count mismatch --- internal
+      error</span>”</span>。现在，语法被理解为整行变量，就像在其他上下文中一样。
+     </p></li><li class="listitem"><p>      确保为多行<code class="literal">VALUES</code>构造准确确定了列typmods (Tom Lane)
+     </p><p>      这解决了当列中第一个值具有可确定的typmod（例如，<code class="type">varchar</code>值的长度）
+	  但后面的值不共享相同限制时发生的问题。
+     </p></li><li class="listitem"><p>      在Unicode字符串的末尾抛出未完成的Unicode代理对错误 (Tom Lane)
+     </p><p>      通常，Unicode代理前导字符必须跟随一个Unicode代理尾随字符，
+	  但如果前导字符是Unicode字符串文字(<code class="literal">U&amp;'...'</code>)
+	  或Unicode标识符(<code class="literal">U&amp;"..."</code>)中的最后一个字符，
+	  会丢失此检查。
+     </p></li><li class="listitem"><p>      修复<code class="literal">DISTINCT</code>的执行，
+	  并在多个此类聚合能够共享相同的转换状态时排序聚合
+      (Heikki Linnakangas)
+     </p></li><li class="listitem"><p>      修复<code class="type">tsquery</code>中短语搜索运算符的实现
+      (Tom Lane)
+     </p><p>      删除尝试转换掉PHRASE运算符下出现的AND/OR/NOT运算符的错误和不一致应用的重写规则；
+	  而是升级执行引擎以正确处理这些情况。这修复了包含此类组合的文本搜索查询的各种奇怪行为和可能的崩溃。
+	  还修复嵌套的PHRASE运算符以简单的左深树以外的组合方式工作，纠正从短语搜索子句中删除停用词时的行为，
+	  并确保索引搜索的行为与此类查询的简单顺序扫描应用程序一致。
+     </p></li><li class="listitem"><p>      确保一个纯粹否定的文本搜索查询（如<code class="literal">!foo</code>）
+	  匹配空的<code class="type">tsvector</code> (Tom Dunstan)
+     </p><p>      这种匹配是通过GIN索引搜索找到的，但不是通过顺序扫描或GiST索引搜索。
+     </p></li><li class="listitem"><p>      当<code class="function">ts_rewrite()</code>用一个空查询替换一个非顶级子树时防止崩溃 (Artur Zakirov)
+     </p></li><li class="listitem"><p>      修复<code class="function">ts_rewrite()</code>中的性能问题 (Tom Lane)
+     </p></li><li class="listitem"><p>      修复<code class="function">ts_rewrite()</code>对嵌套的NOT运算符的处理
+      (Tom Lane)
+     </p></li><li class="listitem"><p>      提高使用<code class="function">array_append()</code>
+	  作为转换函数的用户定义聚合的速度 (Tom Lane)
+     </p></li><li class="listitem"><p>      修复<code class="function">array_fill()</code>以正确处理空数组 (Tom Lane)
+     </p></li><li class="listitem"><p>      修复处理记录的数组时，<code class="function">array_position()</code>
+      或<code class="function">array_positions()</code>中可能的崩溃
+      (Junseok Yang)
+     </p></li><li class="listitem"><p>      修复<code class="function">quote_literal_cstr()</code>中一个字节的缓冲区溢出
+      (Heikki Linnakangas)
+     </p><p>      只有当输入完全由单引号和/或反斜杠组成时才会发生溢出。
+     </p></li><li class="listitem"><p>      防止<code class="function">pg_start_backup()</code>
+      和<code class="function">pg_stop_backup()</code>的多个调用同时运行 (Michael
+      Paquier)
+     </p><p>      这可以避免断言失败，并且如果有人试图并行运行这些功能，可能会更糟糕。
+     </p></li><li class="listitem"><p>      禁用尝试删除无操作<code class="literal">AT TIME ZONE</code>转换的转换 (Tom Lane)
+     </p><p>      当在索引条件中使用简化表达式时，这会导致错误的答案。
+     </p></li><li class="listitem"><p>      避免丢弃并不是真的没有操作的<code class="type">interval</code>到<code class="type">interval</code>强制转换
+	  (Tom Lane)
+     </p><p>      在某些情况下，应该导致低位<code class="type">interval</code>
+	  字段清零的强制转换被错误地视为没有操作并丢弃。
+	  例如，从<code class="type">INTERVAL MONTH</code>转换为<code class="type">INTERVAL YEAR</code>
+	  无法清除月份字段。
+     </p></li><li class="listitem"><p>      修复在重新扫描期间可用于并行查询的工作进程数量减少时的崩溃
+	  (Andreas Seltenreich)
+     </p></li><li class="listitem"><p>      修复将GUC参数值传输给并行工作进程的错误
+      (Michael Paquier, Tom Lane)
+     </p></li><li class="listitem"><p>      允许使用<code class="command">PREPARE</code>准备的语句得到并行计划
+	  (Amit Kapila, Tobias Bussmann)
+     </p></li><li class="listitem"><p>      修复半连接并行计划的错误生成 (Tom Lane)
+     </p></li><li class="listitem"><p>      修复规划器对并行连接的基数估计 (Robert Haas)
+     </p><p>      确保这些估计值反映了每个工作人员进程预测可以看到的行数，而不是总数。
+     </p></li><li class="listitem"><p>      修复规划器以避免尝试对包含初始计划或子计划的计划节点进行并行化
+	  (Tom Lane, Amit Kapila)
+     </p></li><li class="listitem"><p>      确保缓存的计划通过更改外部表选项而失效 (Amit Langote, Etsuro Fujita, Ashutosh Bapat)
+     </p></li><li class="listitem"><p>      使用常量<code class="literal">GROUP BY</code>子句修复为排序的部分聚合生成的计划
+	  (Tom Lane)
+     </p></li><li class="listitem"><p>      在处理包含CTE引用的<code class="literal">UNION ALL</code> 时，
+	  修复<span class="quote">“<span class="quote">could not find plan for CTE</span>”</span>规划器错误 (Tom Lane)
+     </p></li><li class="listitem"><p>      修复在强制将Material节点添加到子计划时错误处理initplans
+	  (Tom Lane)
+     </p><p>      这个错误的典型后果是<span class="quote">“<span class="quote">plan should not
+      reference subplan's variable</span>”</span>错误。
+     </p></li><li class="listitem"><p>      修复半连接和反连接以及继承情况的基于外键的连接选择性估计 (Tom Lane)
+     </p><p>      考虑到外键关系存在的新代码在这些情况下做了错误的事情，
+	  这使得估计值比9.6之前的代码差。
+     </p></li><li class="listitem"><p>      修复<span class="application">pg_dump</span>以发出标记为扩展配置表的序列的数据
+	  (Michael Paquier)
+     </p></li><li class="listitem"><p>      修复在<span class="application">pg_dump</span>错误处理
+	  <code class="command">ALTER DEFAULT PRIVILEGES ... REVOKE</code> (Stephen Frost)
+     </p><p>      <span class="application">pg_dump</span>在使用<code class="command">ALTER DEFAULT PRIVILEGES</code>
+	  来减少权限的情况下，错过了发出所需的<code class="literal">REVOKE</code>命令。
+     </p></li><li class="listitem"><p>      修复<span class="application">pg_dump</span>以转储使用内置函数的用户定义的强制转换
+	  （cast）和转换（transform） (Stephen Frost)
+     </p></li><li class="listitem"><p>      如果归档包含无法识别的<code class="command">DROP</code>命令，
+	  修复使用<code class="option">--create --if-exists</code>的<span class="application">pg_restore</span>
+	  使其表现得更加理智 (Tom Lane)
+     </p><p>      这不会修复任何活动错误，但如果将<span class="application">pg_restore</span>
+	  用于由稍后的<span class="application">pg_dump</span>版本生成的归档，它可能会改善此行为。
+     </p></li><li class="listitem"><p>      修复<span class="application">pg_basebackup</span>在存在缓慢I/O时的速率限制 (Antonin Houska)
+     </p><p>      如果磁盘I/O暂时远低于指定的速率限制，则计算溢出，从而有效禁用剩余运行的速率限制。
+     </p></li><li class="listitem"><p>      修复<span class="application">pg_basebackup</span>处理符号链接的<code class="filename">pg_stat_tmp</code>
+	  和<code class="filename">pg_replslot</code>子目录 (Magnus Hagander, Michael Paquier)
+     </p></li><li class="listitem"><p>      包含WAL文件时，修复备用服务器上可能的<span class="application">pg_basebackup</span>故障
+	  (Amit Kapila, Robert Haas)
+     </p></li><li class="listitem"><p>      改进<span class="application">initdb</span>以将
+	  <em class="replaceable"><code>xxx</code></em><code class="literal">_flush_after</code>
+	  参数的特定于平台的默认值插入到<code class="filename">postgresql.conf</code>中
+	  (Fabien Coelho, Tom Lane)
+     </p><p>      这种记录默认值的方式比以前使用的方式更加整洁。
+     </p></li><li class="listitem"><p>      修复可能对域检查约束和<code class="literal">CASE</code>执行中扩展数组的错误处理
+	  (Tom Lane)
+     </p><p>      在这些上下文中调用PL/pgSQL函数可能会修改甚至删除需要为其他操作保留的数组值。
+     </p></li><li class="listitem"><p>      修复在PL/pgSQL变量赋值期间评估的域检查约束等上下文中PL/pgSQL函数的嵌套用法
+      (Tom Lane)
+     </p></li><li class="listitem"><p>      确保我们为PL/Python创建的Python异常对象被正确引用计数 (Rafa de la Torre, Tom Lane)
+     </p><p>      这样可以避免在Python垃圾回收循环发生后使用对象时出现故障。
+     </p></li><li class="listitem"><p>      修复PL/Tcl以支持将<code class="literal">.tupno</code>作为列名的表的触发器 (Tom Lane)
+     </p><p>      这与PL/Tcl的<code class="command">spi_exec</code>和<code class="command">spi_execp</code>
+	  命令的（以前未记录的）行为相匹配，即只有在没有真正的列名称时才插入
+	  <code class="literal">.tupno</code>列。
+     </p></li><li class="listitem"><p>      在<code class="filename">~/.pgpass</code>文件中允许DOS风格的行结尾，即使在Unix上也是如此
+	  (Vik Fearing)
+     </p><p>      这一更改简化了Unix和Windows机器上相同密码文件的使用。
+     </p></li><li class="listitem"><p>      如果给<span class="application">ecpg</span>指定了一个以点结尾的文件名，
+	  则修复一个字节的缓冲区溢出 (Takayuki Tsunakawa)
+     </p></li><li class="listitem"><p>      修复<span class="application">psql</span>的<code class="command">\crosstabview</code>
+	  中重复数据的错误报告 (Tom Lane)
+     </p><p>      当抱怨同一个交叉表单元格的多个条目时，<span class="application">psql</span>
+	  有时会引用错误的行和/或列值。
+     </p></li><li class="listitem"><p>      修复<span class="application">psql</span>对<code class="command">ALTER DEFAULT PRIVILEGES</code>的
+	  tab完成 (Gilles Darold, Stephen Frost)
+     </p></li><li class="listitem"><p>      修复<span class="application">psql</span>对<code class="command">ALTER TABLE t
+      ALTER c DROP ...</code>的tab完成 (Kyotaro Horiguchi)
+     </p></li><li class="listitem"><p>      在<span class="application">psql</span>中，将<code class="envar">PAGER</code>
+	  环境变量的空白或全空白设置视为<span class="quote">“<span class="quote">no pager</span>”</span> (Tom Lane)
+     </p><p>      以前，这样的设置导致用于分页的输出完全消失。
+     </p></li><li class="listitem"><p>      改进<code class="filename">contrib/dblink</code>对低级
+	  <span class="application">libpq</span>错误的报告，比如内存不足
+      (Joe Conway)
+     </p></li><li class="listitem"><p>      当使用<code class="filename">contrib/postgres_fdw</code>外部服务器作为连接选项的来源时，
+	  让<code class="filename">contrib/dblink</code>忽略不相关的服务器选项
+	  (Corey Huinker)
+     </p><p>      以前，如果外部服务器对象的选项不是<span class="application">libpq</span>连接选项，
+     </p></li><li class="listitem"><p>      修复GIN索引的<code class="filename">contrib/pageinspect</code>函数中的可移植性问题
+	  (Peter Eisentraut, Tom Lane)
+     </p></li><li class="listitem"><p>      修复在Windows上等待时可能遗漏套接字读取事件
+      (Amit Kapila)
+     </p><p>      这个错误对大多数用途都是无害的，但是在尝试使用pldebugger扩展时会导致挂起。
+     </p></li><li class="listitem"><p>      在Windows上，确保将环境变量更改传播到使用调试选项构建的DLL (Christian Ullrich)
+     </p></li><li class="listitem"><p>      将我们的时区库副本与IANA发行版tzcode2016j同步
+      (Tom Lane)
+     </p><p>      这解决了各种问题，尤其是如果目标目录不支持硬链接，时区数据安装失败。
+     </p></li><li class="listitem"><p>      将时区数据文件更新为<span class="application">tzdata</span> release 2016j。
+	  用于北塞浦路斯（增加一个新区域Asia/Famagusta）、俄罗斯
+	  （增加一个新区域Europe/Saratov）、汤加和南极洲/凯西的DST法律变更。
+	  对意大利、哈萨克斯坦、马耳他和巴勒斯坦的历史性更正。
+	  为汤加切换至更受欢迎的数字区域缩写。
+     </p></li></ul></div></div></div><div class="navfooter"><hr /><table width="100%" summary="Navigation footer"><tr><td width="40%" align="left"><a accesskey="p" href="release-9-6-3.html">上一页</a> </td><td width="20%" align="center"><a accesskey="u" href="release.html">上一级</a></td><td width="40%" align="right"> <a accesskey="n" href="release-9-6-1.html">下一页</a></td></tr><tr><td width="40%" align="left" valign="top">E.6. 版本 9.6.3 </td><td width="20%" align="center"><a accesskey="h" href="index.html">起始页</a></td><td width="40%" align="right" valign="top"> E.8. 版本 9.6.1</td></tr></table></div></body></html>

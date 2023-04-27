@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><title>F.18. intagg</title><link rel="stylesheet" type="text/css" href="stylesheet.css" /><link rev="made" href="pgsql-docs@postgresql.org" /><meta name="generator" content="DocBook XSL Stylesheets V1.79.1" /><link rel="prev" href="hstore.html" title="F.17. hstore" /><link rel="next" href="intarray.html" title="F.19. intarray" /></head><body><div xmlns="http://www.w3.org/TR/xhtml1/transitional" class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="5" align="center">F.18. intagg</th></tr><tr><td width="10%" align="left"><a accesskey="p" href="hstore.html" title="F.17. hstore">上一页</a> </td><td width="10%" align="left"><a accesskey="u" href="contrib.html" title="附录 F. 额外提供的模块">上一级</a></td><th width="60%" align="center">附录 F. 额外提供的模块</th><td width="10%" align="right"><a accesskey="h" href="index.html" title="PostgreSQL 10.1 手册">起始页</a></td><td width="10%" align="right"> <a accesskey="n" href="intarray.html" title="F.19. intarray">下一页</a></td></tr></table><hr></hr></div><div class="sect1" id="INTAGG"><div class="titlepage"><div><div><h2 class="title" style="clear: both">F.18. intagg</h2></div></div></div><div class="toc"><dl class="toc"><dt><span class="sect2"><a href="intagg.html#idp85999152">F.18.1. 函数</a></span></dt><dt><span class="sect2"><a href="intagg.html#idp86005904">F.18.2. 使用示例</a></span></dt></dl></div><a id="idp85996064" class="indexterm"></a><p>  <code class="filename">intagg</code>模块提供了一个整数聚集器以及一个枚举器。<code class="filename">intagg</code>现在已被弃用，因为有内建的函数能提供其功能的超集。不过，该模块仍然作为内建函数的一个兼容性包装器被提供。
+ </p><div class="sect2" id="idp85999152"><div class="titlepage"><div><div><h3 class="title">F.18.1. 函数</h3></div></div></div><a id="idp85999568" class="indexterm"></a><a id="idp86000256" class="indexterm"></a><p>  聚集器是一个聚集函数<code class="function">int_array_aggregate(integer)</code>，它产生一个完全包含输入整数的整数数组。这是一个<code class="function">array_agg</code>的包装器，它对任何数组类型做同样的事情。
+ </p><a id="idp86002848" class="indexterm"></a><p>  枚举器是一个函数<code class="function">int_array_enum(integer[])</code>，它返回<code class="type">setof integer</code>。它本质上是聚集器的一个逆操作：给定一个整数数组，将它展开成行的集合。这是<code class="function">unnest</code>的一个包装器，它对任何数组类型做相同的事情。
+ </p></div><div class="sect2" id="idp86005904"><div class="titlepage"><div><div><h3 class="title">F.18.2. 使用示例</h3></div></div></div><p>   很多数据库系统都有一对多表的概念这样一个表通常位于两个被索引表之间，例如：
+
+</p><pre class="programlisting">CREATE TABLE left (id INT PRIMARY KEY, ...);
+CREATE TABLE right (id INT PRIMARY KEY, ...);
+CREATE TABLE one_to_many(left INT REFERENCES left, right INT REFERENCES right);</pre><p>
+
+  通常这样用它：
+
+</p><pre class="programlisting">SELECT right.* from right JOIN one_to_many ON (right.id = one_to_many.right)
+  WHERE one_to_many.left = <em class="replaceable"><code>item</code></em>;</pre><p>
+
+  这将为左手表中的一个项返回右手表中的所有项。这在 SQL 中是很常见的结构。
+ </p><p>  现在，这种方法对于具有非常多项的<code class="structname">one_to_many</code>表会有麻烦。通常，这样的一次连接将为一个特定的左手项导致一次索引扫描以及为每一个右手项导致一次取出。如果你有一个非常动态的系统，你没什么可做的。但是，如果你的数据相对比较静态，你可以使用聚集器创建一个汇总表。
+
+</p><pre class="programlisting">CREATE TABLE summary AS
+  SELECT left, int_array_aggregate(right) AS right
+  FROM one_to_many
+  GROUP BY left;</pre><p>
+
+  这将创建一个表，其中对每一个左项都有一行，并且有一个右项的数组。现在如果没有某种方法来使用该数组，这样做是没有任何用处的。这时数组枚举器就派上用场了，你可以
+
+</p><pre class="programlisting">SELECT left, int_array_enum(right) FROM summary WHERE left = <em class="replaceable"><code>item</code></em>;</pre><p>
+
+  上述使用<code class="function">int_array_enum</code>的查询产生与以下语句相同的结果
+
+</p><pre class="programlisting">SELECT left, right FROM one_to_many WHERE left = <em class="replaceable"><code>item</code></em>;</pre><p>
+
+  区别是针对汇总表的查询必须只从表中得到一行，而针对<code class="structname">one_to_many</code>的直接查询必须索引扫描并且为每项都获取一行。
+ </p><p>  在一个系统上，一个<code class="command">EXPLAIN</code>显示一个查询的代价从 8488 降低到了 329。原始查询是一个涉及到<code class="structname">one_to_many</code>表的连接，它被替换为：
+
+</p><pre class="programlisting">SELECT right, count(right) FROM
+  ( SELECT left, int_array_enum(right) AS right
+    FROM summary JOIN (SELECT left FROM left_table WHERE left = <em class="replaceable"><code>item</code></em>) AS lefts
+         ON (summary.left = lefts.left)
+  ) AS list
+  GROUP BY right
+  ORDER BY count DESC;</pre><p>
+ </p></div></div><div class="navfooter"><hr /><table width="100%" summary="Navigation footer"><tr><td width="40%" align="left"><a accesskey="p" href="hstore.html">上一页</a> </td><td width="20%" align="center"><a accesskey="u" href="contrib.html">上一级</a></td><td width="40%" align="right"> <a accesskey="n" href="intarray.html">下一页</a></td></tr><tr><td width="40%" align="left" valign="top">F.17. hstore </td><td width="20%" align="center"><a accesskey="h" href="index.html">起始页</a></td><td width="40%" align="right" valign="top"> F.19. intarray</td></tr></table></div></body></html>

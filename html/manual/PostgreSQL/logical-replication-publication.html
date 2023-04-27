@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><title>31.1. 发布</title><link rel="stylesheet" type="text/css" href="stylesheet.css" /><link rev="made" href="pgsql-docs@postgresql.org" /><meta name="generator" content="DocBook XSL Stylesheets V1.79.1" /><link rel="prev" href="logical-replication.html" title="第 31 章 逻辑复制" /><link rel="next" href="logical-replication-subscription.html" title="31.2. 订阅" /></head><body><div xmlns="http://www.w3.org/TR/xhtml1/transitional" class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="5" align="center">31.1. 发布</th></tr><tr><td width="10%" align="left"><a accesskey="p" href="logical-replication.html" title="第 31 章 逻辑复制">上一页</a> </td><td width="10%" align="left"><a accesskey="u" href="logical-replication.html" title="第 31 章 逻辑复制">上一级</a></td><th width="60%" align="center">第 31 章 逻辑复制</th><td width="10%" align="right"><a accesskey="h" href="index.html" title="PostgreSQL 10.1 手册">起始页</a></td><td width="10%" align="right"> <a accesskey="n" href="logical-replication-subscription.html" title="31.2. 订阅">下一页</a></td></tr></table><hr></hr></div><div class="sect1" id="LOGICAL-REPLICATION-PUBLICATION"><div class="titlepage"><div><div><h2 class="title" style="clear: both">31.1. 发布</h2></div></div></div><p>   可以在任何物理复制主机上定义<em class="firstterm">发布</em>。
+   定义发布的节点称为<em class="firstterm">发布者</em>。
+   发布是从一个表或一组表中生成的一组更改，也可能被描述为更改集或复制集。
+   每个发布只存在于一个数据库中。
+  </p><p>   发布与模式不同，不影响表格的访问方式。如果需要，每张表可以添加到多个发布。
+   发布目前可能只包含表。对象必须显式添加，
+   除非为<code class="literal">ALL TABLES</code>创建了一个发布。
+  </p><p>   发布可以选择将它们所产生的改变限制在<code class="command">INSERT</code>，
+   <code class="command">UPDATE</code>和<code class="command">DELETE</code>的任意组合上，
+   类似于触发器被特定事件类型触发。默认情况下，复制所有操作类型。
+  </p><p>   已发布的表格必须配置一个<span class="quote">“<span class="quote">副本标识</span>”</span>以便能够复制
+   <code class="command">UPDATE</code>和<code class="command">DELETE</code>操作，
+   这样可以在订阅者端识别适当的行来更新或删除。默认情况下，这是主键，
+   如果有的话。另外唯一的索引（有一些额外的要求）也可以被设置为副本标识。
+   如果表没有任何合适的键，那么它可以设置为复制标识<span class="quote">“<span class="quote">full</span>”</span>，
+   这意味着整个行成为键。但是，这是非常低效的，
+   并且只能在没有其他可能的解决方案时用作后备。
+   如果发布者端设置了除<span class="quote">“<span class="quote">full</span>”</span>之外的副本标识，
+   则还必须在订阅者端设置包含相同或更少列的副本标识。
+   有关如何设置副本标识的详细信息，请参见<a class="xref" href="sql-altertable.html#SQL-CREATETABLE-REPLICA-IDENTITY"><code class="literal">REPLICA IDENTITY</code></a>。
+   如果没有副本标识的表被添加到复制<code class="command">UPDATE</code>或<code class="command">DELETE</code>
+   操作的发布中，则后续的<code class="command">UPDATE</code>或<code class="command">DELETE</code>
+   操作会在发布者上造成错误。无视副本标识，<code class="command">INSERT</code>操作都可以进行。
+  </p><p>   每个发布可以有多个订阅者。
+  </p><p>   使用<a class="xref" href="sql-createpublication.html" title="CREATE PUBLICATION"><span class="refentrytitle">CREATE PUBLICATION</span></a>命令创建发布，稍后可以使用对应的命令修改或删除。
+  </p><p>   使用<a class="xref" href="sql-alterpublication.html" title="ALTER PUBLICATION"><span class="refentrytitle">ALTER PUBLICATION</span></a>可以动态的添加或删除单个表。
+   <code class="literal">ADD TABLE</code>和<code class="literal">DROP TABLE</code>操作都是事务型的；
+   所以一旦事务提交，表就会启动或停止在正确的快照上复制。
+  </p></div><div class="navfooter"><hr /><table width="100%" summary="Navigation footer"><tr><td width="40%" align="left"><a accesskey="p" href="logical-replication.html">上一页</a> </td><td width="20%" align="center"><a accesskey="u" href="logical-replication.html">上一级</a></td><td width="40%" align="right"> <a accesskey="n" href="logical-replication-subscription.html">下一页</a></td></tr><tr><td width="40%" align="left" valign="top">第 31 章 逻辑复制 </td><td width="20%" align="center"><a accesskey="h" href="index.html">起始页</a></td><td width="40%" align="right" valign="top"> 31.2. 订阅</td></tr></table></div></body></html>

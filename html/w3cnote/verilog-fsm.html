@@ -1,0 +1,991 @@
+<!Doctype html>
+<html>
+<head>
+	<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+	<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+	<title>6.3 Verilog 状态机 | 菜鸟教程</title>
+
+  <meta name='robots' content='max-image-preview:large' />
+<link rel='stylesheet' id='classic-theme-styles-css' href='http://www.runoob.com/wp-includes/css/classic-themes.min.css?ver=6.2' type='text/css' media='all' />
+<link rel="canonical" href="http://www.runoob.com/w3cnote/verilog-fsm.html" />
+<meta name="keywords" content="6.3 Verilog 状态机">
+<meta name="description" content="关键词：状态机，售卖机 有限状态机（Finite-State Machine，FSM），简称状态机，是表示有限个状态以及在这些状态之间的转移和动作等行为的数学模型。状态机不仅是一种电路的描述工具，而且也是一种思想方法，在电路设计的系统级和 RTL 级有着广泛的应用。  状态机类型 Verilog 中状态机主要用于同步时序逻辑的设计，能够在有限个状态之间按一定要求和规律切换时序电路的状态。状态的切换方向不但取决于各个输入值，还取决于当前所..">
+		
+	<link rel="shortcut icon" href="https://static.runoob.com/images/favicon.ico">
+	<link rel="stylesheet" href="/wp-content/themes/runoob/style.css?v=1.170" type="text/css" media="all" />	
+	<link rel="stylesheet" href="https://cdn.staticfile.org/font-awesome/4.7.0/css/font-awesome.min.css" media="all" />	
+  <!--[if gte IE 9]><!-->
+  <script src="https://cdn.staticfile.org/jquery/2.0.3/jquery.min.js"></script>
+  <!--<![endif]-->
+  <!--[if lt IE 9]>
+     <script src="https://cdn.staticfile.org/jquery/1.9.1/jquery.min.js"></script>
+     <script src="https://cdn.staticfile.org/html5shiv/r29/html5.min.js"></script>
+  <![endif]-->
+  <link rel="apple-touch-icon" href="https://static.runoob.com/images/icon/mobile-icon.png"/>
+  <meta name="apple-mobile-web-app-title" content="菜鸟教程">
+</head>
+<body>
+
+<!--  头部 -->
+<div class="container logo-search">
+
+  <div class="col search row-search-mobile">
+    <form action="index.php">
+      <input class="placeholder" placeholder="搜索……" name="s" autocomplete="off">
+      
+    </form>
+  </div>
+
+  <div class="row">
+    <div class="col logo">
+      <h1><a href="/">菜鸟教程 -- 学的不仅是技术，更是梦想！</a></h1>
+    </div>
+        <div class="col right-list"> 
+    <button class="btn btn-responsive-nav btn-inverse" data-toggle="collapse" data-target=".nav-main-collapse" id="pull" style=""> <i class="fa fa-navicon"></i> </button>
+    </div>
+        
+    <div class="col search search-desktop last">
+      <div class="search-input" >
+      <form action="//www.runoob.com/" target="_blank">
+        <input class="placeholder" id="s" name="s" placeholder="搜索……"  autocomplete="off" style="height: 44px;">
+      </form>
+      
+      </div>
+    </div>
+  </div>
+</div>
+
+
+
+<!-- 导航栏 -->
+<div class="container navigation">
+    <div class="row">
+        <div class="col nav">
+            
+
+                        <ul class="pc-nav" id="note-nav">
+                <li><a href="//www.runoob.com/">首页</a></li>
+                <li><a href="/w3cnote">笔记首页</a></li>
+                <li><a href="/w3cnote/android-tutorial-intro.html" title="Android 基础入门教程">Android</a></li>
+                <li><a href="/w3cnote/es6-tutorial.html" title="ES6 教程">ES6 教程</a></li>
+                <li><a href="/w3cnote/ten-sorting-algorithm.html" title="排序算法">排序算法</a></li>
+                <li><a href="/w3cnote/hadoop-tutorial.html" title="Hadoop 教程">Hadoop</a></li>
+                <li><a href="/w3cnote/zookeeper-tutorial.html" title="Zookeeper 教程">Zookeeper</a></li>
+                <li><a href="/w3cnote/verilog-tutorial.html" title="Verilog 教程">Verilog</a></li>
+                <li><a href="/w3cnote_genre/code" title="编程技术">编程技术</a></li> 
+                <li><a href="/w3cnote_genre/coderlife" title="程序员人生">程序员人生</a></li>
+                
+                <!--<li><a href="javascript:;" class="runoob-pop">登录</a></li>
+                
+                
+                        <li>
+                <a style="font-weight:bold;" href="https://www.runoob.com/linux/linux-tutorial.html#yunserver" target="_blank" onclick="_hmt.push(['_trackEvent', 'aliyun', 'click', 'aliyun'])" title="kkb">云服务器</a>
+                </li>
+                <li><a href="http://gk.link/a/104mQ" target="_blank" style="font-weight: bold;"onclick="_hmt.push(['_trackEvent', '极客时间', 'click', 'jike'])" title="我的圈子">极客时间</a></li>
+            
+                
+                <li><a target="_blank" href="/shoppinglist" rel="nofollow">知识店铺</a></li> 
+        -->
+            </ul>
+                        
+              
+            <ul class="mobile-nav">
+                <li><a href="/w3cnote">首页</a></li>
+                <li><a href="/w3cnote_genre/android" target="_blank" title="Android 基础入门教程">Android</a></li>
+                <li><a href="/w3cnote/es6-tutorial.html" target="_blank" title="ES6 教程">ES6</a></li>
+                <li><a href="/w3cnote_genre/joke" target="_blank" title="程序员笑话">逗乐</a></li>
+                
+                <a href="javascript:void(0)" class="search-reveal">Search</a> 
+            </ul>
+            
+        </div>
+    </div>
+</div>
+
+
+<!--  内容  -->
+<div class="container main">
+	<div class="row">
+
+		<!--  Android 基础入门教程 start  -->
+	<div class="col left-column" style="display:none;">
+		<div class="tab">Verilog 教程</div>
+		<div class="sidebar-box gallery-list">
+			<div class="design" id="leftcolumn">  
+			</div> 
+		</div> 
+	</div>
+	<!--  Android 基础入门教程 end  -->
+		<div class="col middle-column big-middle-column">
+	 			<div class="article">
+			<div class="article-heading">
+				<h2>6.3 Verilog 状态机</h2>				<h3><em>分类</em> <a href="/w3cnote_genre/verilog" title="Verilog 教程" >Verilog 教程</a> </h3>
+			</div>
+			<div class="article-body note-body">
+				<div class="article-intro">
+					<h3>关键词：状态机，售卖机</h3><p>
+有限状态机（Finite-State Machine，FSM），简称状态机，是表示有限个状态以及在这些状态之间的转移和动作等行为的数学模型。状态机不仅是一种电路的描述工具，而且也是一种思想方法，在电路设计的系统级和 RTL 级有着广泛的应用。</p>
+<h3>
+状态机类型</h3><p>
+Verilog 中状态机主要用于同步时序逻辑的设计，能够在有限个状态之间按一定要求和规律切换时序电路的状态。状态的切换方向不但取决于各个输入值，还取决于当前所在状态。
+状态机可分为 2 类：Moore 状态机和 Mealy 状态机。</p>
+
+<p><strong>Moore 型状态机</strong></p><p>
+Moore 型状态机的输出只与当前状态有关，与当前输入无关。</p><p>
+输出会在一个完整的时钟周期内保持稳定，即使此时输入信号有变化，输出也不会变化。输入对输出的影响要到下一个时钟周期才能反映出来。这也是 Moore 型状态机的一个重要特点：输入与输出是隔离开来的。</p><p><img decoding="async" src="https://www.runoob.com/wp-content/uploads/2020/09/drIsJ2XFh6mt4t5D.png"></p>
+<p><strong>Mealy 型状态机</strong></p><p>
+Mealy 型状态机的输出，不仅与当前状态有关，还取决于当前的输入信号。</p><p>
+Mealy 型状态机的输出是在输入信号变化以后立刻发生变化，且输入变化可能出现在任何状态的时钟周期内。因此，同种逻辑下，Mealy 型状态机输出对输入的响应会比 Moore 型状态机早一个时钟周期。</p>
+<p><img decoding="async" src="https://www.runoob.com/wp-content/uploads/2020/09/4xc5VfpojsJMoZX5.png"></p>
+<p><strong>状态机设计流程</strong></p><p>
+根据设计需求画出状态转移图，确定使用状态机类型，并标注出各种输入输出信号，更有助于编程。一般使用最多的是 Mealy 型 3 段式状态机，下面用通过设计一个自动售卖机的具体实例来说明状态机的设计过程。</p>
+<h3>
+自动售卖机</h3>
+<p><strong>自动售卖机的功能描述如下：</strong></p>
+<p>饮料单价 2 元，该售卖机只能接受 0.5 元、1 元的硬币。考虑找零和出货。投币和出货过程都是一次一次的进行，不会出现一次性投入多币或一次性出货多瓶饮料的现象。每一轮售卖机接受投币、出货、找零完成后，才能进入到新的自动售卖状态。</p>
+<p><strong>该售卖机的工作状态转移图如下所示，包含了输入、输出信号状态。</strong></p>
+<p>其中，coin = 1 代表投入了 0.5 元硬币，coin = 2 代表投入了 1 元硬币。</p>
+<p><img decoding="async" src="https://www.runoob.com/wp-content/uploads/2020/09/Uep0FDU5QLlSBjKZ.png" ></p>
+
+<h3>
+状态机设计：3 段式（推荐）</h3>
+<p><strong>状态机设计如下：</strong></p>
+<ul><li>
+(0) 首先，根据状态机的个数确定状态机编码。利用编码给状态寄存器赋值，代码可读性更好。</li><li>
+(1) 状态机第一段，时序逻辑，非阻塞赋值，传递寄存器的状态。</li><li>
+(2) 状态机第二段，组合逻辑，阻塞赋值，根据当前状态和当前输入，确定下一个状态机的状态。</li><li>
+(3) 状态机第三代，时序逻辑，非阻塞赋值，因为是 Mealy 型状态机，根据当前状态和当前输入，确定输出信号。</li></ul>
+<div class="example"><h2 class="example">实例</h2> <div class="example_code">
+<span style="color: #00008B; font-style: italic;">// vending-machine</span><br />
+<span style="color: #00008B; font-style: italic;">// 2 yuan for a bottle of drink</span><br />
+<span style="color: #00008B; font-style: italic;">// only 2 coins supported: 5 jiao and 1 yuan</span><br />
+<span style="color: #00008B; font-style: italic;">// finish the function of selling and changing</span><br />
+<br />
+<span style="color: #A52A2A; font-weight: bold;">module</span> &nbsp;vending_machine_p3 &nbsp;<span style="color: #9F79EE;">&#40;</span><br />
+&nbsp; &nbsp; <span style="color: #A52A2A; font-weight: bold;">input</span> &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; clk <span style="color: #5D478B;">,</span><br />
+&nbsp; &nbsp; <span style="color: #A52A2A; font-weight: bold;">input</span> &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; rstn <span style="color: #5D478B;">,</span><br />
+&nbsp; &nbsp; <span style="color: #A52A2A; font-weight: bold;">input</span> <span style="color: #9F79EE;">&#91;</span><span style="color: #ff0055;">1</span><span style="color: #5D478B;">:</span><span style="color: #ff0055;">0</span><span style="color: #9F79EE;">&#93;</span> &nbsp; &nbsp; coin <span style="color: #5D478B;">,</span> &nbsp; &nbsp; <span style="color: #00008B; font-style: italic;">//01 for 0.5 jiao, 10 for 1 yuan</span><br />
+<br />
+&nbsp; &nbsp; <span style="color: #A52A2A; font-weight: bold;">output</span> <span style="color: #9F79EE;">&#91;</span><span style="color: #ff0055;">1</span><span style="color: #5D478B;">:</span><span style="color: #ff0055;">0</span><span style="color: #9F79EE;">&#93;</span> &nbsp; &nbsp;change <span style="color: #5D478B;">,</span><br />
+&nbsp; &nbsp; <span style="color: #A52A2A; font-weight: bold;">output</span> &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;sell &nbsp; &nbsp;<span style="color: #00008B; font-style: italic;">//output the drink</span><br />
+&nbsp; &nbsp; <span style="color: #9F79EE;">&#41;</span><span style="color: #5D478B;">;</span><br />
+<br />
+&nbsp; &nbsp; <span style="color: #00008B; font-style: italic;">//machine state decode</span><br />
+&nbsp; &nbsp; <span style="color: #A52A2A; font-weight: bold;">parameter</span> &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;IDLE &nbsp; <span style="color: #5D478B;">=</span> <span style="color: #ff0055;">3'd0</span> <span style="color: #5D478B;">;</span><br />
+&nbsp; &nbsp; <span style="color: #A52A2A; font-weight: bold;">parameter</span> &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;GET05 &nbsp;<span style="color: #5D478B;">=</span> <span style="color: #ff0055;">3'd1</span> <span style="color: #5D478B;">;</span><br />
+&nbsp; &nbsp; <span style="color: #A52A2A; font-weight: bold;">parameter</span> &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;GET10 &nbsp;<span style="color: #5D478B;">=</span> <span style="color: #ff0055;">3'd2</span> <span style="color: #5D478B;">;</span><br />
+&nbsp; &nbsp; <span style="color: #A52A2A; font-weight: bold;">parameter</span> &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;GET15 &nbsp;<span style="color: #5D478B;">=</span> <span style="color: #ff0055;">3'd3</span> <span style="color: #5D478B;">;</span><br />
+<br />
+&nbsp; &nbsp; <span style="color: #00008B; font-style: italic;">//machine variable</span><br />
+&nbsp; &nbsp; <span style="color: #A52A2A; font-weight: bold;">reg</span> <span style="color: #9F79EE;">&#91;</span><span style="color: #ff0055;">2</span><span style="color: #5D478B;">:</span><span style="color: #ff0055;">0</span><span style="color: #9F79EE;">&#93;</span> &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;st_next <span style="color: #5D478B;">;</span><br />
+&nbsp; &nbsp; <span style="color: #A52A2A; font-weight: bold;">reg</span> <span style="color: #9F79EE;">&#91;</span><span style="color: #ff0055;">2</span><span style="color: #5D478B;">:</span><span style="color: #ff0055;">0</span><span style="color: #9F79EE;">&#93;</span> &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;st_cur <span style="color: #5D478B;">;</span><br />
+<br />
+&nbsp; &nbsp; <span style="color: #00008B; font-style: italic;">//(1) state transfer</span><br />
+&nbsp; &nbsp; <span style="color: #A52A2A; font-weight: bold;">always</span> <span style="color: #5D478B;">@</span><span style="color: #9F79EE;">&#40;</span><span style="color: #A52A2A; font-weight: bold;">posedge</span> clk <span style="color: #A52A2A; font-weight: bold;">or</span> <span style="color: #A52A2A; font-weight: bold;">negedge</span> rstn<span style="color: #9F79EE;">&#41;</span> <span style="color: #A52A2A; font-weight: bold;">begin</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; <span style="color: #A52A2A; font-weight: bold;">if</span> <span style="color: #9F79EE;">&#40;</span><span style="color: #5D478B;">!</span>rstn<span style="color: #9F79EE;">&#41;</span> <span style="color: #A52A2A; font-weight: bold;">begin</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; st_cur &nbsp; &nbsp; &nbsp;<span style="color: #5D478B;">&lt;=</span> 'b0 <span style="color: #5D478B;">;</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; <span style="color: #A52A2A; font-weight: bold;">end</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; <span style="color: #A52A2A; font-weight: bold;">else</span> <span style="color: #A52A2A; font-weight: bold;">begin</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; st_cur &nbsp; &nbsp; &nbsp;<span style="color: #5D478B;">&lt;=</span> st_next <span style="color: #5D478B;">;</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; <span style="color: #A52A2A; font-weight: bold;">end</span><br />
+&nbsp; &nbsp; <span style="color: #A52A2A; font-weight: bold;">end</span><br />
+<br />
+&nbsp; &nbsp; <span style="color: #00008B; font-style: italic;">//(2) state switch, using block assignment for combination-logic</span><br />
+&nbsp; &nbsp; <span style="color: #00008B; font-style: italic;">//all case items need to be displayed completely &nbsp; &nbsp;</span><br />
+&nbsp; &nbsp; <span style="color: #A52A2A; font-weight: bold;">always</span> <span style="color: #5D478B;">@</span><span style="color: #9F79EE;">&#40;</span><span style="color: #5D478B;">*</span><span style="color: #9F79EE;">&#41;</span> <span style="color: #A52A2A; font-weight: bold;">begin</span> <br />
+&nbsp; &nbsp; &nbsp; &nbsp; <span style="color: #00008B; font-style: italic;">//st_next = st_cur ;//如果条件选项考虑不全，可以赋初值消除latch</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; <span style="color: #A52A2A; font-weight: bold;">case</span><span style="color: #9F79EE;">&#40;</span>st_cur<span style="color: #9F79EE;">&#41;</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; IDLE<span style="color: #5D478B;">:</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; <span style="color: #A52A2A; font-weight: bold;">case</span> <span style="color: #9F79EE;">&#40;</span>coin<span style="color: #9F79EE;">&#41;</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; <span style="color: #ff0055;">2'b01</span><span style="color: #5D478B;">:</span> &nbsp; &nbsp; st_next <span style="color: #5D478B;">=</span> GET05 <span style="color: #5D478B;">;</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; <span style="color: #ff0055;">2'b10</span><span style="color: #5D478B;">:</span> &nbsp; &nbsp; st_next <span style="color: #5D478B;">=</span> GET10 <span style="color: #5D478B;">;</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; <span style="color: #A52A2A; font-weight: bold;">default</span><span style="color: #5D478B;">:</span> &nbsp; st_next <span style="color: #5D478B;">=</span> IDLE <span style="color: #5D478B;">;</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; <span style="color: #A52A2A; font-weight: bold;">endcase</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; GET05<span style="color: #5D478B;">:</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; <span style="color: #A52A2A; font-weight: bold;">case</span> <span style="color: #9F79EE;">&#40;</span>coin<span style="color: #9F79EE;">&#41;</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; <span style="color: #ff0055;">2'b01</span><span style="color: #5D478B;">:</span> &nbsp; &nbsp; st_next <span style="color: #5D478B;">=</span> GET10 <span style="color: #5D478B;">;</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; <span style="color: #ff0055;">2'b10</span><span style="color: #5D478B;">:</span> &nbsp; &nbsp; st_next <span style="color: #5D478B;">=</span> GET15 <span style="color: #5D478B;">;</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; <span style="color: #A52A2A; font-weight: bold;">default</span><span style="color: #5D478B;">:</span> &nbsp; st_next <span style="color: #5D478B;">=</span> GET05 <span style="color: #5D478B;">;</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; <span style="color: #A52A2A; font-weight: bold;">endcase</span><br />
+<br />
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; GET10<span style="color: #5D478B;">:</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; <span style="color: #A52A2A; font-weight: bold;">case</span> <span style="color: #9F79EE;">&#40;</span>coin<span style="color: #9F79EE;">&#41;</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; <span style="color: #ff0055;">2'b01</span><span style="color: #5D478B;">:</span> &nbsp; &nbsp; st_next <span style="color: #5D478B;">=</span> GET15 <span style="color: #5D478B;">;</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; <span style="color: #ff0055;">2'b10</span><span style="color: #5D478B;">:</span> &nbsp; &nbsp; st_next <span style="color: #5D478B;">=</span> IDLE <span style="color: #5D478B;">;</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; <span style="color: #A52A2A; font-weight: bold;">default</span><span style="color: #5D478B;">:</span> &nbsp; st_next <span style="color: #5D478B;">=</span> GET10 <span style="color: #5D478B;">;</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; <span style="color: #A52A2A; font-weight: bold;">endcase</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; GET15<span style="color: #5D478B;">:</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; <span style="color: #A52A2A; font-weight: bold;">case</span> <span style="color: #9F79EE;">&#40;</span>coin<span style="color: #9F79EE;">&#41;</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; <span style="color: #ff0055;">2'b01</span><span style="color: #5D478B;">,</span><span style="color: #ff0055;">2'b10</span><span style="color: #5D478B;">:</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;st_next <span style="color: #5D478B;">=</span> IDLE <span style="color: #5D478B;">;</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; <span style="color: #A52A2A; font-weight: bold;">default</span><span style="color: #5D478B;">:</span> &nbsp; st_next <span style="color: #5D478B;">=</span> GET15 <span style="color: #5D478B;">;</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; <span style="color: #A52A2A; font-weight: bold;">endcase</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; <span style="color: #A52A2A; font-weight: bold;">default</span><span style="color: #5D478B;">:</span> &nbsp; &nbsp;st_next <span style="color: #5D478B;">=</span> IDLE <span style="color: #5D478B;">;</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; <span style="color: #A52A2A; font-weight: bold;">endcase</span><br />
+&nbsp; &nbsp; <span style="color: #A52A2A; font-weight: bold;">end</span><br />
+<br />
+&nbsp; &nbsp; <span style="color: #00008B; font-style: italic;">//(3) output logic, using non-block assignment</span><br />
+&nbsp; &nbsp; <span style="color: #A52A2A; font-weight: bold;">reg</span> &nbsp;<span style="color: #9F79EE;">&#91;</span><span style="color: #ff0055;">1</span><span style="color: #5D478B;">:</span><span style="color: #ff0055;">0</span><span style="color: #9F79EE;">&#93;</span> &nbsp; change_r <span style="color: #5D478B;">;</span><br />
+&nbsp; &nbsp; <span style="color: #A52A2A; font-weight: bold;">reg</span> &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;sell_r <span style="color: #5D478B;">;</span><br />
+&nbsp; &nbsp; <span style="color: #A52A2A; font-weight: bold;">always</span> <span style="color: #5D478B;">@</span><span style="color: #9F79EE;">&#40;</span><span style="color: #A52A2A; font-weight: bold;">posedge</span> clk <span style="color: #A52A2A; font-weight: bold;">or</span> <span style="color: #A52A2A; font-weight: bold;">negedge</span> rstn<span style="color: #9F79EE;">&#41;</span> <span style="color: #A52A2A; font-weight: bold;">begin</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; <span style="color: #A52A2A; font-weight: bold;">if</span> <span style="color: #9F79EE;">&#40;</span><span style="color: #5D478B;">!</span>rstn<span style="color: #9F79EE;">&#41;</span> <span style="color: #A52A2A; font-weight: bold;">begin</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; change_r &nbsp; &nbsp; &nbsp; <span style="color: #5D478B;">&lt;=</span> <span style="color: #ff0055;">2'b0</span> <span style="color: #5D478B;">;</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; sell_r &nbsp; &nbsp; &nbsp; &nbsp; <span style="color: #5D478B;">&lt;=</span> <span style="color: #ff0055;">1'b0</span> <span style="color: #5D478B;">;</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; <span style="color: #A52A2A; font-weight: bold;">end</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; <span style="color: #A52A2A; font-weight: bold;">else</span> <span style="color: #A52A2A; font-weight: bold;">if</span> <span style="color: #9F79EE;">&#40;</span><span style="color: #9F79EE;">&#40;</span>st_cur <span style="color: #5D478B;">==</span> GET15 <span style="color: #5D478B;">&amp;&amp;</span> coin <span style="color: #5D478B;">==</span><span style="color: #ff0055;">2'h1</span><span style="color: #9F79EE;">&#41;</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;<span style="color: #5D478B;">||</span> <span style="color: #9F79EE;">&#40;</span>st_cur <span style="color: #5D478B;">==</span> GET10 <span style="color: #5D478B;">&amp;&amp;</span> coin <span style="color: #5D478B;">==</span><span style="color: #ff0055;">2'd2</span><span style="color: #9F79EE;">&#41;</span><span style="color: #9F79EE;">&#41;</span> <span style="color: #A52A2A; font-weight: bold;">begin</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; change_r &nbsp; &nbsp; &nbsp; <span style="color: #5D478B;">&lt;=</span> <span style="color: #ff0055;">2'b0</span> <span style="color: #5D478B;">;</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; sell_r &nbsp; &nbsp; &nbsp; &nbsp; <span style="color: #5D478B;">&lt;=</span> <span style="color: #ff0055;">1'b1</span> <span style="color: #5D478B;">;</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; <span style="color: #A52A2A; font-weight: bold;">end</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; <span style="color: #A52A2A; font-weight: bold;">else</span> <span style="color: #A52A2A; font-weight: bold;">if</span> <span style="color: #9F79EE;">&#40;</span>st_cur <span style="color: #5D478B;">==</span> GET15 <span style="color: #5D478B;">&amp;&amp;</span> coin <span style="color: #5D478B;">==</span> <span style="color: #ff0055;">2'h2</span><span style="color: #9F79EE;">&#41;</span> <span style="color: #A52A2A; font-weight: bold;">begin</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; change_r &nbsp; &nbsp; &nbsp; <span style="color: #5D478B;">&lt;=</span> <span style="color: #ff0055;">2'b1</span> <span style="color: #5D478B;">;</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; sell_r &nbsp; &nbsp; &nbsp; &nbsp; <span style="color: #5D478B;">&lt;=</span> <span style="color: #ff0055;">1'b1</span> <span style="color: #5D478B;">;</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; <span style="color: #A52A2A; font-weight: bold;">end</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; <span style="color: #A52A2A; font-weight: bold;">else</span> <span style="color: #A52A2A; font-weight: bold;">begin</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; change_r &nbsp; &nbsp; &nbsp; <span style="color: #5D478B;">&lt;=</span> <span style="color: #ff0055;">2'b0</span> <span style="color: #5D478B;">;</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; sell_r &nbsp; &nbsp; &nbsp; &nbsp; <span style="color: #5D478B;">&lt;=</span> <span style="color: #ff0055;">1'b0</span> <span style="color: #5D478B;">;</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; <span style="color: #A52A2A; font-weight: bold;">end</span><br />
+&nbsp; &nbsp; <span style="color: #A52A2A; font-weight: bold;">end</span><br />
+&nbsp; &nbsp; <span style="color: #A52A2A; font-weight: bold;">assign</span> &nbsp; &nbsp; &nbsp; sell &nbsp; &nbsp;<span style="color: #5D478B;">=</span> sell_r <span style="color: #5D478B;">;</span><br />
+&nbsp; &nbsp; <span style="color: #A52A2A; font-weight: bold;">assign</span> &nbsp; &nbsp; &nbsp; change &nbsp;<span style="color: #5D478B;">=</span> change_r <span style="color: #5D478B;">;</span><br />
+<br />
+<span style="color: #A52A2A; font-weight: bold;">endmodule</span><br />
+</div></div>
+<p><strong>testbench 设计如下。仿真中模拟了 4 种情景，分别是：</strong></p>
+<p>case1 对应连续输入 4 个 5 角硬币；case2 对应 1 元 - 5 角 - 1 元的投币顺序；case3 对应 5 角 - 1 元 - 5 角的投币顺序；case4 对应连续 3 个 5 角然后一个 1 元的投币顺序。</p>
+<div class="example"><h2 class="example">实例</h2> <div class="example_code">
+<span style="color: #008800;">`timescale</span> <span style="color: #ff0055;">1ns</span><span style="color: #5D478B;">/</span><span style="color: #ff0055;">1ps</span><br />
+<br />
+<span style="color: #A52A2A; font-weight: bold;">module</span> test <span style="color: #5D478B;">;</span><br />
+&nbsp; &nbsp; <span style="color: #A52A2A; font-weight: bold;">reg</span> &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;clk<span style="color: #5D478B;">;</span><br />
+&nbsp; &nbsp; <span style="color: #A52A2A; font-weight: bold;">reg</span> &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;rstn <span style="color: #5D478B;">;</span><br />
+&nbsp; &nbsp; <span style="color: #A52A2A; font-weight: bold;">reg</span> <span style="color: #9F79EE;">&#91;</span><span style="color: #ff0055;">1</span><span style="color: #5D478B;">:</span><span style="color: #ff0055;">0</span><span style="color: #9F79EE;">&#93;</span> &nbsp; &nbsp;coin <span style="color: #5D478B;">;</span><br />
+&nbsp; &nbsp; <span style="color: #A52A2A; font-weight: bold;">wire</span> <span style="color: #9F79EE;">&#91;</span><span style="color: #ff0055;">1</span><span style="color: #5D478B;">:</span><span style="color: #ff0055;">0</span><span style="color: #9F79EE;">&#93;</span> &nbsp; change <span style="color: #5D478B;">;</span><br />
+&nbsp; &nbsp; <span style="color: #A52A2A; font-weight: bold;">wire</span> &nbsp; &nbsp; &nbsp; &nbsp; sell <span style="color: #5D478B;">;</span><br />
+<br />
+&nbsp; &nbsp; <span style="color: #00008B; font-style: italic;">//clock generating</span><br />
+&nbsp; &nbsp; <span style="color: #A52A2A; font-weight: bold;">parameter</span> &nbsp; &nbsp;CYCLE_200MHz <span style="color: #5D478B;">=</span> <span style="color: #ff0055;">10</span> <span style="color: #5D478B;">;</span> <span style="color: #00008B; font-style: italic;">//</span><br />
+&nbsp; &nbsp; <span style="color: #A52A2A; font-weight: bold;">always</span> <span style="color: #A52A2A; font-weight: bold;">begin</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; clk <span style="color: #5D478B;">=</span> <span style="color: #ff0055;">0</span> <span style="color: #5D478B;">;</span> <span style="color: #5D478B;">#</span><span style="color: #9F79EE;">&#40;</span>CYCLE_200MHz<span style="color: #5D478B;">/</span><span style="color: #ff0055;">2</span><span style="color: #9F79EE;">&#41;</span> <span style="color: #5D478B;">;</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; clk <span style="color: #5D478B;">=</span> <span style="color: #ff0055;">1</span> <span style="color: #5D478B;">;</span> <span style="color: #5D478B;">#</span><span style="color: #9F79EE;">&#40;</span>CYCLE_200MHz<span style="color: #5D478B;">/</span><span style="color: #ff0055;">2</span><span style="color: #9F79EE;">&#41;</span> <span style="color: #5D478B;">;</span><br />
+&nbsp; &nbsp; <span style="color: #A52A2A; font-weight: bold;">end</span><br />
+<br />
+&nbsp; &nbsp; <span style="color: #00008B; font-style: italic;">//motivation generating</span><br />
+&nbsp; &nbsp; <span style="color: #A52A2A; font-weight: bold;">reg</span> <span style="color: #9F79EE;">&#91;</span><span style="color: #ff0055;">9</span><span style="color: #5D478B;">:</span><span style="color: #ff0055;">0</span><span style="color: #9F79EE;">&#93;</span> &nbsp; &nbsp;buy_oper <span style="color: #5D478B;">;</span> <span style="color: #00008B; font-style: italic;">//store state of the buy operation</span><br />
+&nbsp; &nbsp; <span style="color: #A52A2A; font-weight: bold;">initial</span> <span style="color: #A52A2A; font-weight: bold;">begin</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; buy_oper &nbsp;<span style="color: #5D478B;">=</span> 'h0 <span style="color: #5D478B;">;</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; coin &nbsp; &nbsp; &nbsp;<span style="color: #5D478B;">=</span> <span style="color: #ff0055;">2'h0</span> <span style="color: #5D478B;">;</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; rstn &nbsp; &nbsp; &nbsp;<span style="color: #5D478B;">=</span> <span style="color: #ff0055;">1'b0</span> <span style="color: #5D478B;">;</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; <span style="color: #5D478B;">#</span><span style="color: #ff0055;">8</span> rstn &nbsp; <span style="color: #5D478B;">=</span> <span style="color: #ff0055;">1'b1</span> <span style="color: #5D478B;">;</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; <span style="color: #5D478B;">@</span><span style="color: #9F79EE;">&#40;</span><span style="color: #A52A2A; font-weight: bold;">negedge</span> clk<span style="color: #9F79EE;">&#41;</span> <span style="color: #5D478B;">;</span><br />
+<br />
+&nbsp; &nbsp; &nbsp; &nbsp; <span style="color: #00008B; font-style: italic;">//case(1) 0.5 -&gt; 0.5 -&gt; 0.5 -&gt; 0.5</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; <span style="color: #5D478B;">#</span><span style="color: #ff0055;">16</span> <span style="color: #5D478B;">;</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; buy_oper &nbsp;<span style="color: #5D478B;">=</span> <span style="color: #ff0055;">1</span><span style="color: #ff0055;">0'b00_0101_0101</span> <span style="color: #5D478B;">;</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; <span style="color: #A52A2A; font-weight: bold;">repeat</span><span style="color: #9F79EE;">&#40;</span><span style="color: #ff0055;">5</span><span style="color: #9F79EE;">&#41;</span> <span style="color: #A52A2A; font-weight: bold;">begin</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; <span style="color: #5D478B;">@</span><span style="color: #9F79EE;">&#40;</span><span style="color: #A52A2A; font-weight: bold;">negedge</span> clk<span style="color: #9F79EE;">&#41;</span> <span style="color: #5D478B;">;</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; coin &nbsp; &nbsp; &nbsp;<span style="color: #5D478B;">=</span> buy_oper<span style="color: #9F79EE;">&#91;</span><span style="color: #ff0055;">1</span><span style="color: #5D478B;">:</span><span style="color: #ff0055;">0</span><span style="color: #9F79EE;">&#93;</span> <span style="color: #5D478B;">;</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; buy_oper &nbsp;<span style="color: #5D478B;">=</span> buy_oper <span style="color: #5D478B;">&gt;&gt;</span> <span style="color: #ff0055;">2</span> <span style="color: #5D478B;">;</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; <span style="color: #A52A2A; font-weight: bold;">end</span><br />
+<br />
+&nbsp; &nbsp; &nbsp; &nbsp; <span style="color: #00008B; font-style: italic;">//case(2) 1 -&gt; 0.5 -&gt; 1, taking change</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; <span style="color: #5D478B;">#</span><span style="color: #ff0055;">16</span> <span style="color: #5D478B;">;</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; buy_oper &nbsp;<span style="color: #5D478B;">=</span> <span style="color: #ff0055;">1</span><span style="color: #ff0055;">0'b00_0010_0110</span> <span style="color: #5D478B;">;</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; <span style="color: #A52A2A; font-weight: bold;">repeat</span><span style="color: #9F79EE;">&#40;</span><span style="color: #ff0055;">5</span><span style="color: #9F79EE;">&#41;</span> <span style="color: #A52A2A; font-weight: bold;">begin</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; <span style="color: #5D478B;">@</span><span style="color: #9F79EE;">&#40;</span><span style="color: #A52A2A; font-weight: bold;">negedge</span> clk<span style="color: #9F79EE;">&#41;</span> <span style="color: #5D478B;">;</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; coin &nbsp; &nbsp; &nbsp;<span style="color: #5D478B;">=</span> buy_oper<span style="color: #9F79EE;">&#91;</span><span style="color: #ff0055;">1</span><span style="color: #5D478B;">:</span><span style="color: #ff0055;">0</span><span style="color: #9F79EE;">&#93;</span> <span style="color: #5D478B;">;</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; buy_oper &nbsp;<span style="color: #5D478B;">=</span> buy_oper <span style="color: #5D478B;">&gt;&gt;</span> <span style="color: #ff0055;">2</span> <span style="color: #5D478B;">;</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; <span style="color: #A52A2A; font-weight: bold;">end</span><br />
+<br />
+&nbsp; &nbsp; &nbsp; &nbsp; <span style="color: #00008B; font-style: italic;">//case(3) 0.5 -&gt; 1 -&gt; 0.5</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; <span style="color: #5D478B;">#</span><span style="color: #ff0055;">16</span> <span style="color: #5D478B;">;</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; buy_oper &nbsp;<span style="color: #5D478B;">=</span> <span style="color: #ff0055;">1</span><span style="color: #ff0055;">0'b00_0001_1001</span> <span style="color: #5D478B;">;</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; <span style="color: #A52A2A; font-weight: bold;">repeat</span><span style="color: #9F79EE;">&#40;</span><span style="color: #ff0055;">5</span><span style="color: #9F79EE;">&#41;</span> <span style="color: #A52A2A; font-weight: bold;">begin</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; <span style="color: #5D478B;">@</span><span style="color: #9F79EE;">&#40;</span><span style="color: #A52A2A; font-weight: bold;">negedge</span> clk<span style="color: #9F79EE;">&#41;</span> <span style="color: #5D478B;">;</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; coin &nbsp; &nbsp; &nbsp;<span style="color: #5D478B;">=</span> buy_oper<span style="color: #9F79EE;">&#91;</span><span style="color: #ff0055;">1</span><span style="color: #5D478B;">:</span><span style="color: #ff0055;">0</span><span style="color: #9F79EE;">&#93;</span> <span style="color: #5D478B;">;</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; buy_oper &nbsp;<span style="color: #5D478B;">=</span> buy_oper <span style="color: #5D478B;">&gt;&gt;</span> <span style="color: #ff0055;">2</span> <span style="color: #5D478B;">;</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; <span style="color: #A52A2A; font-weight: bold;">end</span><br />
+<br />
+&nbsp; &nbsp; &nbsp; &nbsp; <span style="color: #00008B; font-style: italic;">//case(4) 0.5 -&gt; 0.5 -&gt; 0.5 -&gt; 1, taking change</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; <span style="color: #5D478B;">#</span><span style="color: #ff0055;">16</span> <span style="color: #5D478B;">;</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; buy_oper &nbsp;<span style="color: #5D478B;">=</span> <span style="color: #ff0055;">1</span><span style="color: #ff0055;">0'b00_1001_0101</span> <span style="color: #5D478B;">;</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; <span style="color: #A52A2A; font-weight: bold;">repeat</span><span style="color: #9F79EE;">&#40;</span><span style="color: #ff0055;">5</span><span style="color: #9F79EE;">&#41;</span> <span style="color: #A52A2A; font-weight: bold;">begin</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; <span style="color: #5D478B;">@</span><span style="color: #9F79EE;">&#40;</span><span style="color: #A52A2A; font-weight: bold;">negedge</span> clk<span style="color: #9F79EE;">&#41;</span> <span style="color: #5D478B;">;</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; coin &nbsp; &nbsp; &nbsp;<span style="color: #5D478B;">=</span> buy_oper<span style="color: #9F79EE;">&#91;</span><span style="color: #ff0055;">1</span><span style="color: #5D478B;">:</span><span style="color: #ff0055;">0</span><span style="color: #9F79EE;">&#93;</span> <span style="color: #5D478B;">;</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; buy_oper &nbsp;<span style="color: #5D478B;">=</span> buy_oper <span style="color: #5D478B;">&gt;&gt;</span> <span style="color: #ff0055;">2</span> <span style="color: #5D478B;">;</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; <span style="color: #A52A2A; font-weight: bold;">end</span><br />
+&nbsp; &nbsp; <span style="color: #A52A2A; font-weight: bold;">end</span><br />
+<br />
+&nbsp; &nbsp;<span style="color: #00008B; font-style: italic;">//(1) mealy state with 3-stage</span><br />
+&nbsp; &nbsp; vending_machine_p3 &nbsp; &nbsp;u_mealy_p3 &nbsp; &nbsp; <span style="color: #9F79EE;">&#40;</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; .clk &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;<span style="color: #9F79EE;">&#40;</span>clk<span style="color: #9F79EE;">&#41;</span><span style="color: #5D478B;">,</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; .rstn &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; <span style="color: #9F79EE;">&#40;</span>rstn<span style="color: #9F79EE;">&#41;</span><span style="color: #5D478B;">,</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; .coin &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; <span style="color: #9F79EE;">&#40;</span>coin<span style="color: #9F79EE;">&#41;</span><span style="color: #5D478B;">,</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; .change &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; <span style="color: #9F79EE;">&#40;</span>change<span style="color: #9F79EE;">&#41;</span><span style="color: #5D478B;">,</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; .sell &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; <span style="color: #9F79EE;">&#40;</span>sell<span style="color: #9F79EE;">&#41;</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; <span style="color: #9F79EE;">&#41;</span><span style="color: #5D478B;">;</span><br />
+<br />
+&nbsp; &nbsp;<span style="color: #00008B; font-style: italic;">//simulation finish</span><br />
+&nbsp; &nbsp;<span style="color: #A52A2A; font-weight: bold;">always</span> <span style="color: #A52A2A; font-weight: bold;">begin</span><br />
+&nbsp; &nbsp; &nbsp; <span style="color: #5D478B;">#</span><span style="color: #ff0055;">100</span><span style="color: #5D478B;">;</span><br />
+&nbsp; &nbsp; &nbsp; <span style="color: #A52A2A; font-weight: bold;">if</span> <span style="color: #9F79EE;">&#40;</span><span style="color: #9932CC;">$time</span> <span style="color: #5D478B;">&gt;=</span> <span style="color: #ff0055;">10000</span><span style="color: #9F79EE;">&#41;</span> &nbsp;<span style="color: #9932CC;">$finish</span> <span style="color: #5D478B;">;</span><br />
+&nbsp; &nbsp;<span style="color: #A52A2A; font-weight: bold;">end</span><br />
+<br />
+<span style="color: #A52A2A; font-weight: bold;">endmodule</span> <span style="color: #00008B; font-style: italic;">// test</span><br />
+</div></div>
+<p>仿真结果如下:</p>
+<p>由图可知，代表出货动作的信号 sell 都能在投币完毕后正常的拉高，而代表找零动作的信号 change 也都能根据输入的硬币场景输出正确的是否找零信号。</p>
+<p>
+<a href="https://www.runoob.com/wp-content/uploads/2020/09/ymJcSH14aenfZbDR.png" target="_blank" rel="noopener noreferrer"><img decoding="async" src="https://www.runoob.com/wp-content/uploads/2020/09/ymJcSH14aenfZbDR.png"  /></a></p>
+<h3>
+状态机修改：2 段式</h3>
+<p><strong>将 3 段式状态机 2、3 段描述合并，其他部分保持不变，状态机就变成了 2 段式描述。</strong></p>
+<p>修改部分如下：</p>
+<div class="example"><h2 class="example">实例</h2> <div class="example_code">
+<span style="color: #00008B; font-style: italic;">//(2) state switch, and output logic</span><br />
+<span style="color: #00008B; font-style: italic;">//all using block assignment for combination-logic</span><br />
+<span style="color: #A52A2A; font-weight: bold;">reg</span> &nbsp;<span style="color: #9F79EE;">&#91;</span><span style="color: #ff0055;">1</span><span style="color: #5D478B;">:</span><span style="color: #ff0055;">0</span><span style="color: #9F79EE;">&#93;</span> &nbsp; change_r <span style="color: #5D478B;">;</span><br />
+<span style="color: #A52A2A; font-weight: bold;">reg</span> &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;sell_r <span style="color: #5D478B;">;</span><br />
+<span style="color: #A52A2A; font-weight: bold;">always</span> <span style="color: #5D478B;">@</span><span style="color: #9F79EE;">&#40;</span><span style="color: #5D478B;">*</span><span style="color: #9F79EE;">&#41;</span> <span style="color: #A52A2A; font-weight: bold;">begin</span> <span style="color: #00008B; font-style: italic;">//all case items need to be displayed completely</span><br />
+&nbsp; &nbsp; <span style="color: #A52A2A; font-weight: bold;">case</span><span style="color: #9F79EE;">&#40;</span>st_cur<span style="color: #9F79EE;">&#41;</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; IDLE<span style="color: #5D478B;">:</span> <span style="color: #A52A2A; font-weight: bold;">begin</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; change_r &nbsp; &nbsp; <span style="color: #5D478B;">=</span> <span style="color: #ff0055;">2'b0</span> <span style="color: #5D478B;">;</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; sell_r &nbsp; &nbsp; &nbsp; <span style="color: #5D478B;">=</span> <span style="color: #ff0055;">1'b0</span> <span style="color: #5D478B;">;</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; <span style="color: #A52A2A; font-weight: bold;">case</span> <span style="color: #9F79EE;">&#40;</span>coin<span style="color: #9F79EE;">&#41;</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; <span style="color: #ff0055;">2'b01</span><span style="color: #5D478B;">:</span> &nbsp; &nbsp; st_next <span style="color: #5D478B;">=</span> GET05 <span style="color: #5D478B;">;</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; <span style="color: #ff0055;">2'b10</span><span style="color: #5D478B;">:</span> &nbsp; &nbsp; st_next <span style="color: #5D478B;">=</span> GET10 <span style="color: #5D478B;">;</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; <span style="color: #A52A2A; font-weight: bold;">default</span><span style="color: #5D478B;">:</span> &nbsp; st_next <span style="color: #5D478B;">=</span> IDLE <span style="color: #5D478B;">;</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; <span style="color: #A52A2A; font-weight: bold;">endcase</span> <span style="color: #00008B; font-style: italic;">// case (coin)</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; <span style="color: #A52A2A; font-weight: bold;">end</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; GET05<span style="color: #5D478B;">:</span> <span style="color: #A52A2A; font-weight: bold;">begin</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; change_r &nbsp; &nbsp; <span style="color: #5D478B;">=</span> <span style="color: #ff0055;">2'b0</span> <span style="color: #5D478B;">;</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; sell_r &nbsp; &nbsp; &nbsp; <span style="color: #5D478B;">=</span> <span style="color: #ff0055;">1'b0</span> <span style="color: #5D478B;">;</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; <span style="color: #A52A2A; font-weight: bold;">case</span> <span style="color: #9F79EE;">&#40;</span>coin<span style="color: #9F79EE;">&#41;</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; <span style="color: #ff0055;">2'b01</span><span style="color: #5D478B;">:</span> &nbsp; &nbsp; st_next <span style="color: #5D478B;">=</span> GET10 <span style="color: #5D478B;">;</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; <span style="color: #ff0055;">2'b10</span><span style="color: #5D478B;">:</span> &nbsp; &nbsp; st_next <span style="color: #5D478B;">=</span> GET15 <span style="color: #5D478B;">;</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; <span style="color: #A52A2A; font-weight: bold;">default</span><span style="color: #5D478B;">:</span> &nbsp; st_next <span style="color: #5D478B;">=</span> GET05 <span style="color: #5D478B;">;</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; <span style="color: #A52A2A; font-weight: bold;">endcase</span> <span style="color: #00008B; font-style: italic;">// case (coin)</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; <span style="color: #A52A2A; font-weight: bold;">end</span><br />
+<br />
+&nbsp; &nbsp; &nbsp; &nbsp; GET10<span style="color: #5D478B;">:</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; <span style="color: #A52A2A; font-weight: bold;">case</span> <span style="color: #9F79EE;">&#40;</span>coin<span style="color: #9F79EE;">&#41;</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; <span style="color: #ff0055;">2'b01</span><span style="color: #5D478B;">:</span> &nbsp; &nbsp; <span style="color: #A52A2A; font-weight: bold;">begin</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; st_next &nbsp; &nbsp; &nbsp;<span style="color: #5D478B;">=</span> GET15 <span style="color: #5D478B;">;</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; change_r &nbsp; &nbsp; <span style="color: #5D478B;">=</span> <span style="color: #ff0055;">2'b0</span> <span style="color: #5D478B;">;</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; sell_r &nbsp; &nbsp; &nbsp; <span style="color: #5D478B;">=</span> <span style="color: #ff0055;">1'b0</span> <span style="color: #5D478B;">;</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; <span style="color: #A52A2A; font-weight: bold;">end</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; <span style="color: #ff0055;">2'b10</span><span style="color: #5D478B;">:</span> &nbsp; &nbsp; <span style="color: #A52A2A; font-weight: bold;">begin</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; st_next &nbsp; &nbsp; &nbsp;<span style="color: #5D478B;">=</span> IDLE <span style="color: #5D478B;">;</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; change_r &nbsp; &nbsp; <span style="color: #5D478B;">=</span> <span style="color: #ff0055;">2'b0</span> <span style="color: #5D478B;">;</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; sell_r &nbsp; &nbsp; &nbsp; <span style="color: #5D478B;">=</span> <span style="color: #ff0055;">1'b1</span> <span style="color: #5D478B;">;</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; <span style="color: #A52A2A; font-weight: bold;">end</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; <span style="color: #A52A2A; font-weight: bold;">default</span><span style="color: #5D478B;">:</span> &nbsp; <span style="color: #A52A2A; font-weight: bold;">begin</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; st_next &nbsp; &nbsp; &nbsp;<span style="color: #5D478B;">=</span> GET10 <span style="color: #5D478B;">;</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; change_r &nbsp; &nbsp; <span style="color: #5D478B;">=</span> <span style="color: #ff0055;">2'b0</span> <span style="color: #5D478B;">;</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; sell_r &nbsp; &nbsp; &nbsp; <span style="color: #5D478B;">=</span> <span style="color: #ff0055;">1'b0</span> <span style="color: #5D478B;">;</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; <span style="color: #A52A2A; font-weight: bold;">end</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; <span style="color: #A52A2A; font-weight: bold;">endcase</span> <span style="color: #00008B; font-style: italic;">// case (coin)</span><br />
+<br />
+&nbsp; &nbsp; &nbsp; &nbsp; GET15<span style="color: #5D478B;">:</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; <span style="color: #A52A2A; font-weight: bold;">case</span> <span style="color: #9F79EE;">&#40;</span>coin<span style="color: #9F79EE;">&#41;</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; <span style="color: #ff0055;">2'b01</span><span style="color: #5D478B;">:</span> <span style="color: #A52A2A; font-weight: bold;">begin</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; st_next &nbsp; &nbsp; <span style="color: #5D478B;">=</span> IDLE <span style="color: #5D478B;">;</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; change_r &nbsp; &nbsp;<span style="color: #5D478B;">=</span> <span style="color: #ff0055;">2'b0</span> <span style="color: #5D478B;">;</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; sell_r &nbsp; &nbsp; &nbsp;<span style="color: #5D478B;">=</span> <span style="color: #ff0055;">1'b1</span> <span style="color: #5D478B;">;</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; <span style="color: #A52A2A; font-weight: bold;">end</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; <span style="color: #ff0055;">2'b10</span><span style="color: #5D478B;">:</span> &nbsp; &nbsp; <span style="color: #A52A2A; font-weight: bold;">begin</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; st_next &nbsp; &nbsp; <span style="color: #5D478B;">=</span> IDLE <span style="color: #5D478B;">;</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; change_r &nbsp; &nbsp;<span style="color: #5D478B;">=</span> <span style="color: #ff0055;">2'b1</span> <span style="color: #5D478B;">;</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; sell_r &nbsp; &nbsp; &nbsp;<span style="color: #5D478B;">=</span> <span style="color: #ff0055;">1'b1</span> <span style="color: #5D478B;">;</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; <span style="color: #A52A2A; font-weight: bold;">end</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; <span style="color: #A52A2A; font-weight: bold;">default</span><span style="color: #5D478B;">:</span> &nbsp; <span style="color: #A52A2A; font-weight: bold;">begin</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; st_next &nbsp; &nbsp; <span style="color: #5D478B;">=</span> GET15 <span style="color: #5D478B;">;</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; change_r &nbsp; &nbsp;<span style="color: #5D478B;">=</span> <span style="color: #ff0055;">2'b0</span> <span style="color: #5D478B;">;</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; sell_r &nbsp; &nbsp; &nbsp;<span style="color: #5D478B;">=</span> <span style="color: #ff0055;">1'b0</span> <span style="color: #5D478B;">;</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; <span style="color: #A52A2A; font-weight: bold;">end</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; <span style="color: #A52A2A; font-weight: bold;">endcase</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; <span style="color: #A52A2A; font-weight: bold;">default</span><span style="color: #5D478B;">:</span> &nbsp;<span style="color: #A52A2A; font-weight: bold;">begin</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; st_next &nbsp; &nbsp; <span style="color: #5D478B;">=</span> IDLE <span style="color: #5D478B;">;</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; change_r &nbsp; &nbsp;<span style="color: #5D478B;">=</span> <span style="color: #ff0055;">2'b0</span> <span style="color: #5D478B;">;</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; sell_r &nbsp; &nbsp; &nbsp;<span style="color: #5D478B;">=</span> <span style="color: #ff0055;">1'b0</span> <span style="color: #5D478B;">;</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; <span style="color: #A52A2A; font-weight: bold;">end</span><br />
+<br />
+&nbsp; &nbsp; <span style="color: #A52A2A; font-weight: bold;">endcase</span><br />
+<span style="color: #A52A2A; font-weight: bold;">end</span><br />
+</div></div>
+<p><strong>将上述修改的新模块例化到 3 段式的 testbench 中即可进行仿真，结果如下:</strong></p><p>
+由图可知，出货信号 sell 和 找零信号 change 相对于 3 段式状态机输出提前了一个时钟周期，这是因为输出信号都是阻塞赋值导致的。</p><p>
+如图中红色圆圈部分，输出信号都出现了干扰脉冲，这是因为输入信号都是异步的，而且输出信号是组合逻辑输出，没有时钟驱动。</p><p>
+实际中，如果输入信号都是与时钟同步的，这种干扰脉冲是不会出现的。如果是异步输入信号，首先应当对信号进行同步。</p>
+<p>
+<a href="https://www.runoob.com/wp-content/uploads/2020/09/mLTvRsiPSEgpti4Y.png" target="_blank" rel="noopener noreferrer"><img decoding="async" src="https://www.runoob.com/wp-content/uploads/2020/09/mLTvRsiPSEgpti4Y.png" /></a></p>
+<h3>
+状态机修改：1 段式（慎用）</h3>
+<p><strong>将 3 段式状态机 1、 2、3 段描述合并，状态机就变成了 1 段式描述。</strong></p>
+<p>修改部分如下：</p>
+<div class="example"><h2 class="example">实例</h2> <div class="example_code">
+<br />
+&nbsp; &nbsp; <span style="color: #00008B; font-style: italic;">//(1) using one state-variable do describe</span><br />
+&nbsp; &nbsp; <span style="color: #A52A2A; font-weight: bold;">reg</span> &nbsp;<span style="color: #9F79EE;">&#91;</span><span style="color: #ff0055;">1</span><span style="color: #5D478B;">:</span><span style="color: #ff0055;">0</span><span style="color: #9F79EE;">&#93;</span> &nbsp; change_r <span style="color: #5D478B;">;</span><br />
+&nbsp; &nbsp; <span style="color: #A52A2A; font-weight: bold;">reg</span> &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;sell_r <span style="color: #5D478B;">;</span><br />
+&nbsp; &nbsp; <span style="color: #A52A2A; font-weight: bold;">always</span> <span style="color: #5D478B;">@</span><span style="color: #9F79EE;">&#40;</span><span style="color: #A52A2A; font-weight: bold;">posedge</span> clk <span style="color: #A52A2A; font-weight: bold;">or</span> <span style="color: #A52A2A; font-weight: bold;">negedge</span> rstn<span style="color: #9F79EE;">&#41;</span> <span style="color: #A52A2A; font-weight: bold;">begin</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; <span style="color: #A52A2A; font-weight: bold;">if</span> <span style="color: #9F79EE;">&#40;</span><span style="color: #5D478B;">!</span>rstn<span style="color: #9F79EE;">&#41;</span> <span style="color: #A52A2A; font-weight: bold;">begin</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; st_cur &nbsp; &nbsp; <span style="color: #5D478B;">&lt;=</span> 'b0 <span style="color: #5D478B;">;</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; change_r &nbsp; <span style="color: #5D478B;">&lt;=</span> <span style="color: #ff0055;">2'b0</span> <span style="color: #5D478B;">;</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; sell_r &nbsp; &nbsp; <span style="color: #5D478B;">&lt;=</span> <span style="color: #ff0055;">1'b0</span> <span style="color: #5D478B;">;</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; <span style="color: #A52A2A; font-weight: bold;">end</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; <span style="color: #A52A2A; font-weight: bold;">else</span> <span style="color: #A52A2A; font-weight: bold;">begin</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; <span style="color: #A52A2A; font-weight: bold;">case</span><span style="color: #9F79EE;">&#40;</span>st_cur<span style="color: #9F79EE;">&#41;</span><br />
+<br />
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; IDLE<span style="color: #5D478B;">:</span> <span style="color: #A52A2A; font-weight: bold;">begin</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; change_r &nbsp;<span style="color: #5D478B;">&lt;=</span> <span style="color: #ff0055;">2'b0</span> <span style="color: #5D478B;">;</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; sell_r &nbsp; &nbsp;<span style="color: #5D478B;">&lt;=</span> <span style="color: #ff0055;">1'b0</span> <span style="color: #5D478B;">;</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; <span style="color: #A52A2A; font-weight: bold;">case</span> <span style="color: #9F79EE;">&#40;</span>coin<span style="color: #9F79EE;">&#41;</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; <span style="color: #ff0055;">2'b01</span><span style="color: #5D478B;">:</span> &nbsp; &nbsp; st_cur <span style="color: #5D478B;">&lt;=</span> GET05 <span style="color: #5D478B;">;</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; <span style="color: #ff0055;">2'b10</span><span style="color: #5D478B;">:</span> &nbsp; &nbsp; st_cur <span style="color: #5D478B;">&lt;=</span> GET10 <span style="color: #5D478B;">;</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; <span style="color: #A52A2A; font-weight: bold;">endcase</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; <span style="color: #A52A2A; font-weight: bold;">end</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; GET05<span style="color: #5D478B;">:</span> <span style="color: #A52A2A; font-weight: bold;">begin</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; <span style="color: #A52A2A; font-weight: bold;">case</span> <span style="color: #9F79EE;">&#40;</span>coin<span style="color: #9F79EE;">&#41;</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; <span style="color: #ff0055;">2'b01</span><span style="color: #5D478B;">:</span> &nbsp; &nbsp; st_cur <span style="color: #5D478B;">&lt;=</span> GET10 <span style="color: #5D478B;">;</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; <span style="color: #ff0055;">2'b10</span><span style="color: #5D478B;">:</span> &nbsp; &nbsp; st_cur <span style="color: #5D478B;">&lt;=</span> GET15 <span style="color: #5D478B;">;</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; <span style="color: #A52A2A; font-weight: bold;">endcase</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; <span style="color: #A52A2A; font-weight: bold;">end</span><br />
+<br />
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; GET10<span style="color: #5D478B;">:</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; <span style="color: #A52A2A; font-weight: bold;">case</span> <span style="color: #9F79EE;">&#40;</span>coin<span style="color: #9F79EE;">&#41;</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; <span style="color: #ff0055;">2'b01</span><span style="color: #5D478B;">:</span> &nbsp; &nbsp; st_cur &nbsp; <span style="color: #5D478B;">&lt;=</span> &nbsp;GET15 <span style="color: #5D478B;">;</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; <span style="color: #ff0055;">2'b10</span><span style="color: #5D478B;">:</span> &nbsp; &nbsp; <span style="color: #A52A2A; font-weight: bold;">begin</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; st_cur &nbsp; <span style="color: #5D478B;">&lt;=</span> IDLE <span style="color: #5D478B;">;</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; sell_r &nbsp; <span style="color: #5D478B;">&lt;=</span> <span style="color: #ff0055;">1'b1</span> <span style="color: #5D478B;">;</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; <span style="color: #A52A2A; font-weight: bold;">end</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; <span style="color: #A52A2A; font-weight: bold;">endcase</span><br />
+<br />
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; GET15<span style="color: #5D478B;">:</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; <span style="color: #A52A2A; font-weight: bold;">case</span> <span style="color: #9F79EE;">&#40;</span>coin<span style="color: #9F79EE;">&#41;</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; <span style="color: #ff0055;">2'b01</span><span style="color: #5D478B;">:</span> &nbsp; &nbsp; <span style="color: #A52A2A; font-weight: bold;">begin</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; st_cur &nbsp; <span style="color: #5D478B;">&lt;=</span> IDLE <span style="color: #5D478B;">;</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; sell_r &nbsp; <span style="color: #5D478B;">&lt;=</span> <span style="color: #ff0055;">1'b1</span> <span style="color: #5D478B;">;</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; <span style="color: #A52A2A; font-weight: bold;">end</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; <span style="color: #ff0055;">2'b10</span><span style="color: #5D478B;">:</span> &nbsp; &nbsp; <span style="color: #A52A2A; font-weight: bold;">begin</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; st_cur &nbsp; <span style="color: #5D478B;">&lt;=</span> IDLE <span style="color: #5D478B;">;</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; change_r <span style="color: #5D478B;">&lt;=</span> <span style="color: #ff0055;">2'b1</span> <span style="color: #5D478B;">;</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; sell_r &nbsp; <span style="color: #5D478B;">&lt;=</span> <span style="color: #ff0055;">1'b1</span> <span style="color: #5D478B;">;</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; <span style="color: #A52A2A; font-weight: bold;">end</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; <span style="color: #A52A2A; font-weight: bold;">endcase</span><br />
+<br />
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; <span style="color: #A52A2A; font-weight: bold;">default</span><span style="color: #5D478B;">:</span> &nbsp;<span style="color: #A52A2A; font-weight: bold;">begin</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; st_cur &nbsp; &nbsp;<span style="color: #5D478B;">&lt;=</span> IDLE <span style="color: #5D478B;">;</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; <span style="color: #A52A2A; font-weight: bold;">end</span><br />
+<br />
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; <span style="color: #A52A2A; font-weight: bold;">endcase</span> <span style="color: #00008B; font-style: italic;">// case (st_cur)</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; <span style="color: #A52A2A; font-weight: bold;">end</span> <span style="color: #00008B; font-style: italic;">// else: !if(!rstn)</span><br />
+&nbsp; &nbsp; <span style="color: #A52A2A; font-weight: bold;">end</span><br />
+</div></div>
+<p><strong>将上述修改的新模块例化到 3 段式的 testbench 中即可进行仿真，结果如下:</strong></p>
+<p>由图可知，输出信号与 3 段式状态机完全一致。</p>
+<p>1 段式状态机的缺点就是许多种逻辑糅合在一起，不易后期的维护。当状态机和输出信号较少时，可以尝试此种描述方式。</p>
+<p>
+<a href="https://www.runoob.com/wp-content/uploads/2020/09/DCvzwVT7h58iH0aN.png" target="_blank" rel="noopener noreferrer"><img decoding="async" src="https://www.runoob.com/wp-content/uploads/2020/09/DCvzwVT7h58iH0aN.png"/></a></p>
+<h3>
+状态机修改：Moore 型</h3><p>
+如果使用 Moore 型状态机描述售卖机的工作流程，那么还需要再增加 2 个状态编码，用以描述 Mealy 状态机输出时的输入信号和状态机状态。</p><p>
+3 段式 Moore 型状态机描述的自动售卖机 Verilog 代码如下：</p>
+<div class="example"><h2 class="example">实例</h2> <div class="example_code">
+<span style="color: #A52A2A; font-weight: bold;">module</span> &nbsp;vending_machine_moore &nbsp; &nbsp;<span style="color: #9F79EE;">&#40;</span><br />
+&nbsp; &nbsp; <span style="color: #A52A2A; font-weight: bold;">input</span> &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; clk <span style="color: #5D478B;">,</span><br />
+&nbsp; &nbsp; <span style="color: #A52A2A; font-weight: bold;">input</span> &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; rstn <span style="color: #5D478B;">,</span><br />
+&nbsp; &nbsp; <span style="color: #A52A2A; font-weight: bold;">input</span> <span style="color: #9F79EE;">&#91;</span><span style="color: #ff0055;">1</span><span style="color: #5D478B;">:</span><span style="color: #ff0055;">0</span><span style="color: #9F79EE;">&#93;</span> &nbsp; &nbsp; coin <span style="color: #5D478B;">,</span> &nbsp; &nbsp; <span style="color: #00008B; font-style: italic;">//01 for 0.5 jiao, 10 for 1 yuan</span><br />
+<br />
+&nbsp; &nbsp; <span style="color: #A52A2A; font-weight: bold;">output</span> <span style="color: #9F79EE;">&#91;</span><span style="color: #ff0055;">1</span><span style="color: #5D478B;">:</span><span style="color: #ff0055;">0</span><span style="color: #9F79EE;">&#93;</span> &nbsp; &nbsp;change <span style="color: #5D478B;">,</span><br />
+&nbsp; &nbsp; <span style="color: #A52A2A; font-weight: bold;">output</span> &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;sell &nbsp; &nbsp;<span style="color: #00008B; font-style: italic;">//output the drink</span><br />
+&nbsp; &nbsp; <span style="color: #9F79EE;">&#41;</span><span style="color: #5D478B;">;</span><br />
+<br />
+&nbsp; &nbsp; <span style="color: #00008B; font-style: italic;">//machine state decode</span><br />
+&nbsp; &nbsp; <span style="color: #A52A2A; font-weight: bold;">parameter</span> &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;IDLE &nbsp; <span style="color: #5D478B;">=</span> <span style="color: #ff0055;">3'd0</span> <span style="color: #5D478B;">;</span><br />
+&nbsp; &nbsp; <span style="color: #A52A2A; font-weight: bold;">parameter</span> &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;GET05 &nbsp;<span style="color: #5D478B;">=</span> <span style="color: #ff0055;">3'd1</span> <span style="color: #5D478B;">;</span><br />
+&nbsp; &nbsp; <span style="color: #A52A2A; font-weight: bold;">parameter</span> &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;GET10 &nbsp;<span style="color: #5D478B;">=</span> <span style="color: #ff0055;">3'd2</span> <span style="color: #5D478B;">;</span><br />
+&nbsp; &nbsp; <span style="color: #A52A2A; font-weight: bold;">parameter</span> &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;GET15 &nbsp;<span style="color: #5D478B;">=</span> <span style="color: #ff0055;">3'd3</span> <span style="color: #5D478B;">;</span><br />
+&nbsp; &nbsp; <span style="color: #00008B; font-style: italic;">// new state for moore state-machine</span><br />
+&nbsp; &nbsp; <span style="color: #A52A2A; font-weight: bold;">parameter</span> &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;GET20 &nbsp;<span style="color: #5D478B;">=</span> <span style="color: #ff0055;">3'd4</span> <span style="color: #5D478B;">;</span><br />
+&nbsp; &nbsp; <span style="color: #A52A2A; font-weight: bold;">parameter</span> &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;GET25 &nbsp;<span style="color: #5D478B;">=</span> <span style="color: #ff0055;">3'd5</span> <span style="color: #5D478B;">;</span><br />
+<br />
+&nbsp; &nbsp; <span style="color: #00008B; font-style: italic;">//machine variable</span><br />
+&nbsp; &nbsp; <span style="color: #A52A2A; font-weight: bold;">reg</span> <span style="color: #9F79EE;">&#91;</span><span style="color: #ff0055;">2</span><span style="color: #5D478B;">:</span><span style="color: #ff0055;">0</span><span style="color: #9F79EE;">&#93;</span> &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;st_next <span style="color: #5D478B;">;</span><br />
+&nbsp; &nbsp; <span style="color: #A52A2A; font-weight: bold;">reg</span> <span style="color: #9F79EE;">&#91;</span><span style="color: #ff0055;">2</span><span style="color: #5D478B;">:</span><span style="color: #ff0055;">0</span><span style="color: #9F79EE;">&#93;</span> &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;st_cur <span style="color: #5D478B;">;</span><br />
+<br />
+&nbsp; &nbsp; <span style="color: #00008B; font-style: italic;">//(1) state transfer</span><br />
+&nbsp; &nbsp; <span style="color: #A52A2A; font-weight: bold;">always</span> <span style="color: #5D478B;">@</span><span style="color: #9F79EE;">&#40;</span><span style="color: #A52A2A; font-weight: bold;">posedge</span> clk <span style="color: #A52A2A; font-weight: bold;">or</span> <span style="color: #A52A2A; font-weight: bold;">negedge</span> rstn<span style="color: #9F79EE;">&#41;</span> <span style="color: #A52A2A; font-weight: bold;">begin</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; <span style="color: #A52A2A; font-weight: bold;">if</span> <span style="color: #9F79EE;">&#40;</span><span style="color: #5D478B;">!</span>rstn<span style="color: #9F79EE;">&#41;</span> <span style="color: #A52A2A; font-weight: bold;">begin</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; st_cur &nbsp; &nbsp; &nbsp;<span style="color: #5D478B;">&lt;=</span> 'b0 <span style="color: #5D478B;">;</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; <span style="color: #A52A2A; font-weight: bold;">end</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; <span style="color: #A52A2A; font-weight: bold;">else</span> <span style="color: #A52A2A; font-weight: bold;">begin</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; st_cur &nbsp; &nbsp; &nbsp;<span style="color: #5D478B;">&lt;=</span> st_next <span style="color: #5D478B;">;</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; <span style="color: #A52A2A; font-weight: bold;">end</span><br />
+&nbsp; &nbsp; <span style="color: #A52A2A; font-weight: bold;">end</span><br />
+<br />
+&nbsp; &nbsp; <span style="color: #00008B; font-style: italic;">//(2) state switch, using block assignment for combination-logic</span><br />
+&nbsp; &nbsp; <span style="color: #A52A2A; font-weight: bold;">always</span> <span style="color: #5D478B;">@</span><span style="color: #9F79EE;">&#40;</span><span style="color: #5D478B;">*</span><span style="color: #9F79EE;">&#41;</span> <span style="color: #A52A2A; font-weight: bold;">begin</span> <span style="color: #00008B; font-style: italic;">//all case items need to be displayed completely</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; <span style="color: #A52A2A; font-weight: bold;">case</span><span style="color: #9F79EE;">&#40;</span>st_cur<span style="color: #9F79EE;">&#41;</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; IDLE<span style="color: #5D478B;">:</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; <span style="color: #A52A2A; font-weight: bold;">case</span> <span style="color: #9F79EE;">&#40;</span>coin<span style="color: #9F79EE;">&#41;</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; <span style="color: #ff0055;">2'b01</span><span style="color: #5D478B;">:</span> &nbsp; &nbsp; st_next <span style="color: #5D478B;">=</span> GET05 <span style="color: #5D478B;">;</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; <span style="color: #ff0055;">2'b10</span><span style="color: #5D478B;">:</span> &nbsp; &nbsp; st_next <span style="color: #5D478B;">=</span> GET10 <span style="color: #5D478B;">;</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; <span style="color: #A52A2A; font-weight: bold;">default</span><span style="color: #5D478B;">:</span> &nbsp; st_next <span style="color: #5D478B;">=</span> IDLE <span style="color: #5D478B;">;</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; <span style="color: #A52A2A; font-weight: bold;">endcase</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; GET05<span style="color: #5D478B;">:</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; <span style="color: #A52A2A; font-weight: bold;">case</span> <span style="color: #9F79EE;">&#40;</span>coin<span style="color: #9F79EE;">&#41;</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; <span style="color: #ff0055;">2'b01</span><span style="color: #5D478B;">:</span> &nbsp; &nbsp; st_next <span style="color: #5D478B;">=</span> GET10 <span style="color: #5D478B;">;</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; <span style="color: #ff0055;">2'b10</span><span style="color: #5D478B;">:</span> &nbsp; &nbsp; st_next <span style="color: #5D478B;">=</span> GET15 <span style="color: #5D478B;">;</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; <span style="color: #A52A2A; font-weight: bold;">default</span><span style="color: #5D478B;">:</span> &nbsp; st_next <span style="color: #5D478B;">=</span> GET05 <span style="color: #5D478B;">;</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; <span style="color: #A52A2A; font-weight: bold;">endcase</span><br />
+<br />
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; GET10<span style="color: #5D478B;">:</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; <span style="color: #A52A2A; font-weight: bold;">case</span> <span style="color: #9F79EE;">&#40;</span>coin<span style="color: #9F79EE;">&#41;</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; <span style="color: #ff0055;">2'b01</span><span style="color: #5D478B;">:</span> &nbsp; &nbsp; st_next <span style="color: #5D478B;">=</span> GET15 <span style="color: #5D478B;">;</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; <span style="color: #ff0055;">2'b10</span><span style="color: #5D478B;">:</span> &nbsp; &nbsp; st_next <span style="color: #5D478B;">=</span> GET20 <span style="color: #5D478B;">;</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; <span style="color: #A52A2A; font-weight: bold;">default</span><span style="color: #5D478B;">:</span> &nbsp; st_next <span style="color: #5D478B;">=</span> GET10 <span style="color: #5D478B;">;</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; <span style="color: #A52A2A; font-weight: bold;">endcase</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; GET15<span style="color: #5D478B;">:</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; <span style="color: #A52A2A; font-weight: bold;">case</span> <span style="color: #9F79EE;">&#40;</span>coin<span style="color: #9F79EE;">&#41;</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; <span style="color: #ff0055;">2'b01</span><span style="color: #5D478B;">:</span> &nbsp; &nbsp; st_next <span style="color: #5D478B;">=</span> GET20 <span style="color: #5D478B;">;</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; <span style="color: #ff0055;">2'b10</span><span style="color: #5D478B;">:</span> &nbsp; &nbsp; st_next <span style="color: #5D478B;">=</span> GET25 <span style="color: #5D478B;">;</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; <span style="color: #A52A2A; font-weight: bold;">default</span><span style="color: #5D478B;">:</span> &nbsp; st_next <span style="color: #5D478B;">=</span> GET15 <span style="color: #5D478B;">;</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; <span style="color: #A52A2A; font-weight: bold;">endcase</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; GET20<span style="color: #5D478B;">:</span> &nbsp; &nbsp; &nbsp; &nbsp; st_next <span style="color: #5D478B;">=</span> IDLE <span style="color: #5D478B;">;</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; GET25<span style="color: #5D478B;">:</span> &nbsp; &nbsp; &nbsp; &nbsp; st_next <span style="color: #5D478B;">=</span> IDLE <span style="color: #5D478B;">;</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; <span style="color: #A52A2A; font-weight: bold;">default</span><span style="color: #5D478B;">:</span> &nbsp; &nbsp; &nbsp; st_next <span style="color: #5D478B;">=</span> IDLE <span style="color: #5D478B;">;</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; <span style="color: #A52A2A; font-weight: bold;">endcase</span> <span style="color: #00008B; font-style: italic;">// case (st_cur)</span><br />
+&nbsp; &nbsp; <span style="color: #A52A2A; font-weight: bold;">end</span> <span style="color: #00008B; font-style: italic;">// always @ (*)</span><br />
+<br />
+&nbsp; &nbsp;<span style="color: #00008B; font-style: italic;">// (3) output logic,</span><br />
+&nbsp; &nbsp;<span style="color: #00008B; font-style: italic;">// one cycle delayed when using non-block assignment</span><br />
+&nbsp; &nbsp; <span style="color: #A52A2A; font-weight: bold;">reg</span> &nbsp;<span style="color: #9F79EE;">&#91;</span><span style="color: #ff0055;">1</span><span style="color: #5D478B;">:</span><span style="color: #ff0055;">0</span><span style="color: #9F79EE;">&#93;</span> &nbsp; change_r <span style="color: #5D478B;">;</span><br />
+&nbsp; &nbsp; <span style="color: #A52A2A; font-weight: bold;">reg</span> &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;sell_r <span style="color: #5D478B;">;</span><br />
+&nbsp; &nbsp; <span style="color: #A52A2A; font-weight: bold;">always</span> <span style="color: #5D478B;">@</span><span style="color: #9F79EE;">&#40;</span><span style="color: #A52A2A; font-weight: bold;">posedge</span> clk <span style="color: #A52A2A; font-weight: bold;">or</span> <span style="color: #A52A2A; font-weight: bold;">negedge</span> rstn<span style="color: #9F79EE;">&#41;</span> <span style="color: #A52A2A; font-weight: bold;">begin</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; <span style="color: #A52A2A; font-weight: bold;">if</span> <span style="color: #9F79EE;">&#40;</span><span style="color: #5D478B;">!</span>rstn<span style="color: #9F79EE;">&#41;</span> <span style="color: #A52A2A; font-weight: bold;">begin</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; change_r &nbsp; &nbsp; &nbsp; <span style="color: #5D478B;">&lt;=</span> <span style="color: #ff0055;">2'b0</span> <span style="color: #5D478B;">;</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; sell_r &nbsp; &nbsp; &nbsp; &nbsp; <span style="color: #5D478B;">&lt;=</span> <span style="color: #ff0055;">1'b0</span> <span style="color: #5D478B;">;</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; <span style="color: #A52A2A; font-weight: bold;">end</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; <span style="color: #A52A2A; font-weight: bold;">else</span> <span style="color: #A52A2A; font-weight: bold;">if</span> <span style="color: #9F79EE;">&#40;</span>st_cur <span style="color: #5D478B;">==</span> GET20 <span style="color: #9F79EE;">&#41;</span> <span style="color: #A52A2A; font-weight: bold;">begin</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; sell_r &nbsp; &nbsp; &nbsp; &nbsp; <span style="color: #5D478B;">&lt;=</span> <span style="color: #ff0055;">1'b1</span> <span style="color: #5D478B;">;</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; <span style="color: #A52A2A; font-weight: bold;">end</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; <span style="color: #A52A2A; font-weight: bold;">else</span> <span style="color: #A52A2A; font-weight: bold;">if</span> <span style="color: #9F79EE;">&#40;</span>st_cur <span style="color: #5D478B;">==</span> GET25<span style="color: #9F79EE;">&#41;</span> <span style="color: #A52A2A; font-weight: bold;">begin</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; change_r &nbsp; &nbsp; &nbsp; <span style="color: #5D478B;">&lt;=</span> <span style="color: #ff0055;">2'b1</span> <span style="color: #5D478B;">;</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; sell_r &nbsp; &nbsp; &nbsp; &nbsp; <span style="color: #5D478B;">&lt;=</span> <span style="color: #ff0055;">1'b1</span> <span style="color: #5D478B;">;</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; <span style="color: #A52A2A; font-weight: bold;">end</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; <span style="color: #A52A2A; font-weight: bold;">else</span> <span style="color: #A52A2A; font-weight: bold;">begin</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; change_r &nbsp; &nbsp; &nbsp; <span style="color: #5D478B;">&lt;=</span> <span style="color: #ff0055;">2'b0</span> <span style="color: #5D478B;">;</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; sell_r &nbsp; &nbsp; &nbsp; &nbsp; <span style="color: #5D478B;">&lt;=</span> <span style="color: #ff0055;">1'b0</span> <span style="color: #5D478B;">;</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; <span style="color: #A52A2A; font-weight: bold;">end</span><br />
+&nbsp; &nbsp; <span style="color: #A52A2A; font-weight: bold;">end</span><br />
+&nbsp; &nbsp; <span style="color: #A52A2A; font-weight: bold;">assign</span> &nbsp; &nbsp; &nbsp; sell &nbsp; &nbsp;<span style="color: #5D478B;">=</span> sell_r <span style="color: #5D478B;">;</span><br />
+&nbsp; &nbsp; <span style="color: #A52A2A; font-weight: bold;">assign</span> &nbsp; &nbsp; &nbsp; change &nbsp;<span style="color: #5D478B;">=</span> change_r <span style="color: #5D478B;">;</span><br />
+<br />
+<span style="color: #A52A2A; font-weight: bold;">endmodule</span><br />
+</div></div>
+<p><strong>将上述修改的 Moore 状态机例化到 3 段式的 testbench 中即可进行仿真，结果如下:</strong></p>
+<p>由图可知，输出信号与 Mealy 型 3 段式状态机相比延迟了一个时钟周期，这是因为进入到新增加的编码状态机时需要一个时钟周期的时延。此时，输出再用非阻塞赋值就会导致最终的输出信号延迟一个时钟周期。这也属于 Moore 型状态机的特点。</p>
+
+<a href="https://www.runoob.com/wp-content/uploads/2020/09/yEY0bJksZAfFA7ob.png" target="_blank" rel="noopener noreferrer"><img decoding="async" src="https://www.runoob.com/wp-content/uploads/2020/09/yEY0bJksZAfFA7ob.png" /></a>
+<p><strong>输出信号赋值时，用阻塞赋值，则可以提前一个时钟周期。</strong></p>
+<p>输出逻辑修改如下。</p>
+<div class="example"><h2 class="example">实例</h2> <div class="example_code">
+<br />
+&nbsp; &nbsp; <span style="color: #00008B; font-style: italic;">// (3.2) output logic, using block assignment</span><br />
+&nbsp; &nbsp; <span style="color: #A52A2A; font-weight: bold;">reg</span> &nbsp;<span style="color: #9F79EE;">&#91;</span><span style="color: #ff0055;">1</span><span style="color: #5D478B;">:</span><span style="color: #ff0055;">0</span><span style="color: #9F79EE;">&#93;</span> &nbsp; change_r <span style="color: #5D478B;">;</span><br />
+&nbsp; &nbsp; <span style="color: #A52A2A; font-weight: bold;">reg</span> &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;sell_r <span style="color: #5D478B;">;</span><br />
+&nbsp; &nbsp; <span style="color: #A52A2A; font-weight: bold;">always</span> <span style="color: #5D478B;">@</span><span style="color: #9F79EE;">&#40;</span><span style="color: #5D478B;">*</span><span style="color: #9F79EE;">&#41;</span> <span style="color: #A52A2A; font-weight: bold;">begin</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; change_r &nbsp;<span style="color: #5D478B;">=</span> 'b0 <span style="color: #5D478B;">;</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; sell_r &nbsp; &nbsp;<span style="color: #5D478B;">=</span> 'b0 <span style="color: #5D478B;">;</span> <span style="color: #00008B; font-style: italic;">//not list all condition, initializing them</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; <span style="color: #A52A2A; font-weight: bold;">if</span> <span style="color: #9F79EE;">&#40;</span>st_cur <span style="color: #5D478B;">==</span> GET20 <span style="color: #9F79EE;">&#41;</span> <span style="color: #A52A2A; font-weight: bold;">begin</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; sell_r &nbsp; &nbsp; &nbsp; &nbsp; <span style="color: #5D478B;">=</span> <span style="color: #ff0055;">1'b1</span> <span style="color: #5D478B;">;</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; <span style="color: #A52A2A; font-weight: bold;">end</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; <span style="color: #A52A2A; font-weight: bold;">else</span> <span style="color: #A52A2A; font-weight: bold;">if</span> <span style="color: #9F79EE;">&#40;</span>st_cur <span style="color: #5D478B;">==</span> GET25<span style="color: #9F79EE;">&#41;</span> <span style="color: #A52A2A; font-weight: bold;">begin</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; change_r &nbsp; &nbsp; &nbsp; <span style="color: #5D478B;">=</span> <span style="color: #ff0055;">2'b1</span> <span style="color: #5D478B;">;</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; sell_r &nbsp; &nbsp; &nbsp; &nbsp; <span style="color: #5D478B;">=</span> <span style="color: #ff0055;">1'b1</span> <span style="color: #5D478B;">;</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; <span style="color: #A52A2A; font-weight: bold;">end</span><br />
+&nbsp; &nbsp; <span style="color: #A52A2A; font-weight: bold;">end</span><br />
+</div></div>
+<p><strong>输出信号阻塞赋值的仿真结果如下:</strong></p>
+<p>由图可知，输出信号已经和 3 段式 Mealy 型状态机一致。</p>
+<a href="https://www.runoob.com/wp-content/uploads/2020/09/gpEFw1qJbdvRLDhS.png" target="_blank" rel="noopener noreferrer"><img decoding="async" src="https://www.runoob.com/wp-content/uploads/2020/09/gpEFw1qJbdvRLDhS.png"/></a>
+<h3>源码下载</h3>
+<p><a href="https://www.runoob.com/wp-content/uploads/2020/09/6.3state-machine.zip" download class="download">Download</a></p>				</div>
+			</div>
+			<div class="previous-next-links">
+			<div class="previous-design-link">← <a href="http://www.runoob.com/w3cnote/verilog-task.html" rel="prev"> 6.2 Verilog 任务</a> </div>
+			<div class="next-design-link"><a href="http://www.runoob.com/w3cnote/verilog-competition-hazard.html" rel="next"> 6.4 Verilog 竞争与冒险</a> →</div>
+			</div>
+						<div class="article-heading-ad" id="w3cnote-ad728">
+			<script async src="//pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script>
+			<!-- 移动版 自动调整 -->
+			<ins class="adsbygoogle"
+			     style="display:inline-block;min-width:300px;max-width:970px;width:100%;height:90px"
+			     data-ad-client="ca-pub-5751451760833794"
+			     data-ad-slot="1691338467"
+			     data-ad-format="horizontal"></ins>
+			<script>
+			(adsbygoogle = window.adsbygoogle || []).push({});
+			</script>
+			</div>
+			<style>
+@media screen and (max-width: 768px) {
+	#w3cnote-ad728 {
+		display: none;
+	}
+}
+p.note-author {
+    border-bottom: 1px solid #ddd;
+    font-size: 18px;
+    font-weight: bold;
+    color: #78a15a;
+    padding-bottom: 2px;
+    margin-bottom: 4px;
+}
+</style>
+<script>
+var aid = 22990;
+</script>
+	</div>
+		
+	</div>
+	<div class="listcol last right-column">
+
+	<script type="text/javascript">
+jQuery(document).ready(function ($){
+	var total = $(".membership li").length;
+	var left_list = '';
+	href = window.location.href;
+	
+	$(".membership li").each(function(index, value){
+
+		left_list += $(this).html();
+
+		cur_href = $(this).find("a").attr("href");
+		cur_obj = $(this);
+		
+		if(href.match(cur_href) != null) {
+			if(index==0) {
+				$(".previous-design-link").hide();
+			}
+			if(index==(total-1)) {
+				$(".next-design-link").hide();
+			}
+			prev_href = cur_obj.prev("li").find("a").attr("href");
+			prev_title = cur_obj.prev("li").find("a").attr("title");
+
+			next_href = cur_obj.next("li").find("a").attr("href");
+			next_title = cur_obj.next("li").find("a").attr("title");
+			if(prev_title) {
+				$(".previous-design-link a").attr("href", prev_href);
+				$(".previous-design-link a").attr("title", prev_title);
+				$(".previous-design-link a").text(prev_title);
+			} else {
+				$(".previous-design-link").html("");
+			}
+
+			if(next_title) {
+				$(".next-design-link a").attr("href", next_href);
+				$(".next-design-link a").attr("title", next_title);
+				$(".next-design-link a").text(next_title);
+			} else {
+				$(".next-design-link").html("");
+			}
+		}
+	});
+
+	$("#leftcolumn").html(left_list);
+});
+	</script>
+	<div class="sidebar-box cate-list">
+	<div class="sidebar-box recommend-here list-link">
+	<a href="javascript:void(0);">Verilog 教程</a>	</div>
+	
+	<ul class="membership">
+		
+	<li><a target="_top" data-id="22850" title="1.1 Verilog 教程" href="http://www.runoob.com/w3cnote/verilog-tutorial.html" >1.1 Verilog 教程</a></li>
+	
+		
+	<li><a target="_top" data-id="22851" title="1.2 Verilog 简介" href="http://www.runoob.com/w3cnote/verilog-intro.html" >1.2 Verilog 简介</a></li>
+	
+		
+	<li><a target="_top" data-id="22852" title="1.3 Verilog 环境搭建" href="http://www.runoob.com/w3cnote/verilog-install.html" >1.3 Verilog 环境搭建</a></li>
+	
+		
+	<li><a target="_top" data-id="22866" title="1.4 Verilog 设计方法" href="http://www.runoob.com/w3cnote/verilog-design-method.html" >1.4 Verilog 设计方法</a></li>
+	
+		
+	<li><a target="_top" data-id="22869" title="2.1 Verilog 基础语法" href="http://www.runoob.com/w3cnote/verilog-basic-syntax.html" >2.1 Verilog 基础语法</a></li>
+	
+		
+	<li><a target="_top" data-id="22870" title="2.2 Verilog 数值表示" href="http://www.runoob.com/w3cnote/verilog-number.html" >2.2 Verilog 数值表示</a></li>
+	
+		
+	<li><a target="_top" data-id="22871" title="2.3 Verilog 数据类型" href="http://www.runoob.com/w3cnote/verilog-data-type.html" >2.3 Verilog 数据类型</a></li>
+	
+		
+	<li><a target="_top" data-id="22872" title="2.4 Verilog 表达式" href="http://www.runoob.com/w3cnote/verilog-expression.html" >2.4 Verilog 表达式</a></li>
+	
+		
+	<li><a target="_top" data-id="22935" title="2.5 Verilog 编译指令" href="http://www.runoob.com/w3cnote/verilog-compile-instruction.html" >2.5 Verilog 编译指令</a></li>
+	
+		
+	<li><a target="_top" data-id="22931" title="3.1 Verilog 连续赋值" href="http://www.runoob.com/w3cnote/verilog-assign.html" >3.1 Verilog 连续赋值</a></li>
+	
+		
+	<li><a target="_top" data-id="22933" title="3.2 Verilog 时延" href="http://www.runoob.com/w3cnote/verilog-time-delay.html" >3.2 Verilog 时延</a></li>
+	
+		
+	<li><a target="_top" data-id="22936" title="4.1 Verilog 过程结构" href="http://www.runoob.com/w3cnote/verilog-process-structure.html" >4.1 Verilog 过程结构</a></li>
+	
+		
+	<li><a target="_top" data-id="22939" title="4.2 Verilog 过程赋值" href="http://www.runoob.com/w3cnote/verilog-process-assign.html" >4.2 Verilog 过程赋值</a></li>
+	
+		
+	<li><a target="_top" data-id="22941" title="4.3 Verilog 时序控制" href="http://www.runoob.com/w3cnote/verilog-timing-control.html" >4.3 Verilog 时序控制</a></li>
+	
+		
+	<li><a target="_top" data-id="22943" title="4.4 Verilog 语句块" href="http://www.runoob.com/w3cnote/verilog-statements-block.html" >4.4 Verilog 语句块</a></li>
+	
+		
+	<li><a target="_top" data-id="22948" title="4.5 Verilog 条件语句" href="http://www.runoob.com/w3cnote/verilog-condition-statement.html" >4.5 Verilog 条件语句</a></li>
+	
+		
+	<li><a target="_top" data-id="22950" title="4.6 Verilog 多路分支语句" href="http://www.runoob.com/w3cnote/verilog-case.html" >4.6 Verilog 多路分支语句</a></li>
+	
+		
+	<li><a target="_top" data-id="22951" title="4.7 Verilog 循环语句" href="http://www.runoob.com/w3cnote/verilog-loop.html" >4.7 Verilog 循环语句</a></li>
+	
+		
+	<li><a target="_top" data-id="22954" title="4.8 Verilog 过程连续赋值" href="http://www.runoob.com/w3cnote/verilog-deassign.html" >4.8 Verilog 过程连续赋值</a></li>
+	
+		
+	<li><a target="_top" data-id="22966" title="5.1 Verilog 模块与端口" href="http://www.runoob.com/w3cnote/verilog-module-port.html" >5.1 Verilog 模块与端口</a></li>
+	
+		
+	<li><a target="_top" data-id="22969" title="5.2 Verilog 模块例化" href="http://www.runoob.com/w3cnote/verilog-generate.html" >5.2 Verilog 模块例化</a></li>
+	
+		
+	<li><a target="_top" data-id="22972" title="5.3 Verilog 带参数例化" href="http://www.runoob.com/w3cnote/verilog-defparam.html" >5.3 Verilog 带参数例化</a></li>
+	
+		
+	<li><a target="_top" data-id="22975" title="6.1 Verilog 函数" href="http://www.runoob.com/w3cnote/verilog-function.html" >6.1 Verilog 函数</a></li>
+	
+		
+	<li><a target="_top" data-id="22982" title="6.2 Verilog 任务" href="http://www.runoob.com/w3cnote/verilog-task.html" >6.2 Verilog 任务</a></li>
+	
+		<li>
+	6.3 Verilog 状态机	</li>
+	
+		
+	<li><a target="_top" data-id="22999" title="6.4 Verilog 竞争与冒险" href="http://www.runoob.com/w3cnote/verilog-competition-hazard.html" >6.4 Verilog 竞争与冒险</a></li>
+	
+		
+	<li><a target="_top" data-id="23008" title="6.5 Verilog 避免 Latch" href="http://www.runoob.com/w3cnote/verilog-latch.html" >6.5 Verilog 避免 Latch</a></li>
+	
+		
+	<li><a target="_top" data-id="23011" title="6.6 Verilog 仿真激励" href="http://www.runoob.com/w3cnote/verilog-testbench.html" >6.6 Verilog 仿真激励</a></li>
+	
+		
+	<li><a target="_top" data-id="23015" title="6.7 Verilog 流水线" href="http://www.runoob.com/w3cnote/verilog-pipeline-design.html" >6.7 Verilog 流水线</a></li>
+	
+		
+	<li><a target="_top" data-id="23021" title="7.1 Verilog 除法器设计" href="http://www.runoob.com/w3cnote/verilog-dividend.html" >7.1 Verilog 除法器设计</a></li>
+	
+		
+	<li><a target="_top" data-id="23222" title="7.2 Verilog 并行 FIR 滤波器设计" href="http://www.runoob.com/w3cnote/verilog-fir.html" >7.2 Verilog 并行 FIR 滤波器设计</a></li>
+	
+		
+	<li><a target="_top" data-id="23230" title="7.3 Verilog 串行 FIR 滤波器设计" href="http://www.runoob.com/w3cnote/verilog-serial-fir.html" >7.3 Verilog 串行 FIR 滤波器设计</a></li>
+	
+		
+	<li><a target="_top" data-id="23236" title="7.4 Verilog CIC 滤波器设计" href="http://www.runoob.com/w3cnote/verilog-cic.html" >7.4 Verilog CIC 滤波器设计</a></li>
+	
+		
+	<li><a target="_top" data-id="23260" title="7.5 Verilog FFT 设计" href="http://www.runoob.com/w3cnote/verilog-fft.html" >7.5 Verilog FFT 设计</a></li>
+	
+		
+	<li><a target="_top" data-id="23309" title="7.6 Verilog DDS 设计" href="http://www.runoob.com/w3cnote/verilog-dds.html" >7.6 Verilog DDS 设计</a></li>
+	
+		
+	<li><a target="_top" data-id="23281" title="8.1 Verilog 数值转换" href="http://www.runoob.com/w3cnote/verilog-numerical-conversion.html" >8.1 Verilog 数值转换</a></li>
+	
+	<li><a target="_top" title="Verilog 教程高级篇" href="/w3cnote/verilog2-tutorial.html" >Verilog 教程高级篇</a></li></ul></div>	</div>
+</div>
+
+
+<!-- 底部 -->
+<div id="footer" class="mar-t50">
+   <div class="runoob-block">
+    <div class="runoob cf">
+     <dl>
+      <dt>
+       在线实例
+      </dt>
+      <dd>
+       &middot;<a target="_blank" href="/html/html-examples.html">HTML 实例</a>
+      </dd>
+      <dd>
+       &middot;<a target="_blank" href="/css/css-examples.html">CSS 实例</a>
+      </dd>
+      <dd>
+       &middot;<a target="_blank" href="/js/js-examples.html">JavaScript 实例</a>
+      </dd>
+      <dd>
+       &middot;<a target="_blank" href="/ajx/ajax-examples.html">Ajax 实例</a>
+      </dd>
+       <dd>
+       &middot;<a target="_blank" href="/jquery/jquery-examples.html">jQuery 实例</a>
+      </dd>
+      <dd>
+       &middot;<a target="_blank" href="/xml/xml-examples.html">XML 实例</a>
+      </dd>
+      <dd>
+       &middot;<a target="_blank" href="/java/java-examples.html">Java 实例</a>
+      </dd>
+     
+     </dl>
+     <dl>
+      <dt>
+      字符集&工具
+      </dt>
+      <dd>
+       &middot; <a target="_blank" href="/charsets/html-charsets.html">HTML 字符集设置</a>
+      </dd>
+      <dd>
+       &middot; <a target="_blank" href="/tags/html-ascii.html">HTML ASCII 字符集</a>
+      </dd>
+     <dd>
+       &middot; <a target="_blank" href="https://c.runoob.com/front-end/6939/">JS 混淆/加密</a>
+      </dd> 
+      <dd>
+       &middot; <a target="_blank" href="https://c.runoob.com/front-end/6232/">PNG/JPEG 图片压缩</a>
+      </dd>
+      <dd>
+       &middot; <a target="_blank" href="/tags/html-colorpicker.html">HTML 拾色器</a>
+      </dd>
+      <dd>
+       &middot; <a target="_blank" href="//c.runoob.com/front-end/53">JSON 格式化工具</a>
+      </dd>
+      <dd>
+       &middot; <a target="_blank" href="//c.runoob.com/front-end/6680/">随机数生成器</a>
+      </dd>
+     </dl>
+     <dl>
+      <dt>
+       最新更新
+      </dt>
+                   <dd>
+       &middot;
+      <a href="http://www.runoob.com/matplotlib/matplotlib-imread.html" title="Matplotlib imread() 方法">Matplotlib imre...</a>
+      </dd>
+              <dd>
+       &middot;
+      <a href="http://www.runoob.com/matplotlib/matplotlib-imsave.html" title="Matplotlib imsave() 方法">Matplotlib imsa...</a>
+      </dd>
+              <dd>
+       &middot;
+      <a href="http://www.runoob.com/matplotlib/matplotlib-imshow.html" title="Matplotlib imshow() 方法">Matplotlib imsh...</a>
+      </dd>
+              <dd>
+       &middot;
+      <a href="http://www.runoob.com/matplotlib/matplotlib-hist.html" title="Matplotlib 直方图">Matplotlib 直方图</a>
+      </dd>
+              <dd>
+       &middot;
+      <a href="http://www.runoob.com/python3/python-func-object.html" title="Python object() 函数">Python object()...</a>
+      </dd>
+              <dd>
+       &middot;
+      <a href="http://www.runoob.com/python3/python-ai-draw.html" title="Python AI 绘画">Python AI 绘画</a>
+      </dd>
+              <dd>
+       &middot;
+      <a href="http://www.runoob.com/w3cnote/cursor-editor.html" title="神辅助 Cursor 编辑器，加入 GPT-4 让编码更轻松！">神辅助 Cursor ...</a>
+      </dd>
+             </dl>
+     <dl>
+      <dt>
+       站点信息
+      </dt>
+      <dd>
+       &middot;
+       <a target="_blank" href="mailto:admin@runoob.com" rel="external nofollow">意见反馈</a>
+       </dd>
+      <dd>
+       &middot;
+      <a target="_blank" href="/disclaimer">免责声明</a>
+       </dd>
+      <dd>
+       &middot;
+       <a target="_blank" href="/aboutus">关于我们</a>
+       </dd>
+      <dd>
+       &middot;
+      <a target="_blank" href="/archives">文章归档</a>
+      </dd>
+    
+     </dl>
+    
+     <div class="search-share">
+      <div class="app-download">
+        <div>
+         <strong>关注微信</strong>
+        </div>
+      </div>
+      <div class="share">
+      <img width="128" height="128" src="/wp-content/themes/runoob/assets/images/qrcode.png" />
+       </div>
+     </div>
+     
+    </div>
+   </div>
+   <div class="w-1000 copyright">
+     Copyright &copy; 2013-2023    <strong><a href="//www.runoob.com/" target="_blank">菜鸟教程</a></strong>&nbsp;
+    <strong><a href="//www.runoob.com/" target="_blank">runoob.com</a></strong> All Rights Reserved. 备案号：<a target="_blank" rel="nofollow" href="https://beian.miit.gov.cn/">闽ICP备15012807号-1</a>
+   </div>
+  </div>
+  <div class="fixed-btn">
+    <a class="go-top" href="javascript:void(0)" title="返回顶部"> <i class="fa fa-angle-up"></i></a>
+    <a class="qrcode"  href="javascript:void(0)" title="关注我们"><i class="fa fa-qrcode"></i></a>
+    <a class="writer" style="display:none" href="javascript:void(0)"   title="标记/收藏"><i class="fa fa-star" aria-hidden="true"></i></a>
+    <!-- qrcode modal -->
+    <div id="bottom-qrcode" class="modal panel-modal hide fade in">
+      <h4>微信关注</h4>
+      <div class="panel-body"><img alt="微信关注" width="128" height="128" src="/wp-content/themes/runoob/assets/images/qrcode.png"></div> 
+    </div>
+  </div>
+
+ <div style="display:none;">
+<script async src="https://www.googletagmanager.com/gtag/js?id=UA-84264393-2"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+
+  gtag('config', 'UA-84264393-2');
+</script>
+<script>
+var _hmt = _hmt || [];
+(function() {
+  var hm = document.createElement("script");
+  hm.src = "https://hm.baidu.com/hm.js?3eec0b7da6548cf07db3bc477ea905ee";
+  var s = document.getElementsByTagName("script")[0]; 
+  s.parentNode.insertBefore(hm, s);
+})();
+</script>
+
+</div>
+<script>
+window.jsui={
+    www: 'https://www.runoob.com',
+    uri: 'https://www.runoob.com/wp-content/themes/runoob'
+};
+</script>
+
+<script src="https://static.runoob.com/assets/libs/hl/run_prettify.js"></script>
+<script src="/wp-content/themes/runoob/assets/js/main.min.js?v=1.156"></script>
+
+</body>
+</html>

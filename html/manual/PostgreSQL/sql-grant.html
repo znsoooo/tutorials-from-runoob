@@ -1,0 +1,186 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><title>GRANT</title><link rel="stylesheet" type="text/css" href="stylesheet.css" /><link rev="made" href="pgsql-docs@postgresql.org" /><meta name="generator" content="DocBook XSL Stylesheets V1.79.1" /><link rel="prev" href="sql-fetch.html" title="FETCH" /><link rel="next" href="sql-importforeignschema.html" title="IMPORT FOREIGN SCHEMA" /></head><body><div xmlns="http://www.w3.org/TR/xhtml1/transitional" class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="5" align="center">GRANT</th></tr><tr><td width="10%" align="left"><a accesskey="p" href="sql-fetch.html" title="FETCH">上一页</a> </td><td width="10%" align="left"><a accesskey="u" href="sql-commands.html" title="SQL 命令">上一级</a></td><th width="60%" align="center">SQL 命令</th><td width="10%" align="right"><a accesskey="h" href="index.html" title="PostgreSQL 10.1 手册">起始页</a></td><td width="10%" align="right"> <a accesskey="n" href="sql-importforeignschema.html" title="IMPORT FOREIGN SCHEMA">下一页</a></td></tr></table><hr></hr></div><div class="refentry" id="SQL-GRANT"><div class="titlepage"></div><a id="idp47338208" class="indexterm"></a><div class="refnamediv"><h2><span class="refentrytitle">GRANT</span></h2><p>GRANT — 定义访问特权</p></div><div class="refsynopsisdiv"><h2>大纲</h2><pre class="synopsis">GRANT { { SELECT | INSERT | UPDATE | DELETE | TRUNCATE | REFERENCES | TRIGGER }
+    [, ...] | ALL [ PRIVILEGES ] }
+    ON { [ TABLE ] <em class="replaceable"><code>table_name</code></em> [, ...]
+         | ALL TABLES IN SCHEMA <em class="replaceable"><code>schema_name</code></em> [, ...] }
+    TO <em class="replaceable"><code>role_specification</code></em> [, ...] [ WITH GRANT OPTION ]
+
+GRANT { { SELECT | INSERT | UPDATE | REFERENCES } ( <em class="replaceable"><code>column_name</code></em> [, ...] )
+    [, ...] | ALL [ PRIVILEGES ] ( <em class="replaceable"><code>column_name</code></em> [, ...] ) }
+    ON [ TABLE ] <em class="replaceable"><code>table_name</code></em> [, ...]
+    TO <em class="replaceable"><code>role_specification</code></em> [, ...] [ WITH GRANT OPTION ]
+
+GRANT { { USAGE | SELECT | UPDATE }
+    [, ...] | ALL [ PRIVILEGES ] }
+    ON { SEQUENCE <em class="replaceable"><code>sequence_name</code></em> [, ...]
+         | ALL SEQUENCES IN SCHEMA <em class="replaceable"><code>schema_name</code></em> [, ...] }
+    TO <em class="replaceable"><code>role_specification</code></em> [, ...] [ WITH GRANT OPTION ]
+
+GRANT { { CREATE | CONNECT | TEMPORARY | TEMP } [, ...] | ALL [ PRIVILEGES ] }
+    ON DATABASE <em class="replaceable"><code>database_name</code></em> [, ...]
+    TO <em class="replaceable"><code>role_specification</code></em> [, ...] [ WITH GRANT OPTION ]
+
+GRANT { USAGE | ALL [ PRIVILEGES ] }
+    ON DOMAIN <em class="replaceable"><code>domain_name</code></em> [, ...]
+    TO <em class="replaceable"><code>role_specification</code></em> [, ...] [ WITH GRANT OPTION ]
+
+GRANT { USAGE | ALL [ PRIVILEGES ] }
+    ON FOREIGN DATA WRAPPER <em class="replaceable"><code>fdw_name</code></em> [, ...]
+    TO <em class="replaceable"><code>role_specification</code></em> [, ...] [ WITH GRANT OPTION ]
+
+GRANT { USAGE | ALL [ PRIVILEGES ] }
+    ON FOREIGN SERVER <em class="replaceable"><code>server_name</code></em> [, ...]
+    TO <em class="replaceable"><code>role_specification</code></em> [, ...] [ WITH GRANT OPTION ]
+
+GRANT { EXECUTE | ALL [ PRIVILEGES ] }
+    ON { FUNCTION <em class="replaceable"><code>function_name</code></em> [ ( [ [ <em class="replaceable"><code>argmode</code></em> ] [ <em class="replaceable"><code>arg_name</code></em> ] <em class="replaceable"><code>arg_type</code></em> [, ...] ] ) ] [, ...]
+         | ALL FUNCTIONS IN SCHEMA <em class="replaceable"><code>schema_name</code></em> [, ...] }
+    TO <em class="replaceable"><code>role_specification</code></em> [, ...] [ WITH GRANT OPTION ]
+
+GRANT { USAGE | ALL [ PRIVILEGES ] }
+    ON LANGUAGE <em class="replaceable"><code>lang_name</code></em> [, ...]
+    TO <em class="replaceable"><code>role_specification</code></em> [, ...] [ WITH GRANT OPTION ]
+
+GRANT { { SELECT | UPDATE } [, ...] | ALL [ PRIVILEGES ] }
+    ON LARGE OBJECT <em class="replaceable"><code>loid</code></em> [, ...]
+    TO <em class="replaceable"><code>role_specification</code></em> [, ...] [ WITH GRANT OPTION ]
+
+GRANT { { CREATE | USAGE } [, ...] | ALL [ PRIVILEGES ] }
+    ON SCHEMA <em class="replaceable"><code>schema_name</code></em> [, ...]
+    TO <em class="replaceable"><code>role_specification</code></em> [, ...] [ WITH GRANT OPTION ]
+
+GRANT { CREATE | ALL [ PRIVILEGES ] }
+    ON TABLESPACE <em class="replaceable"><code>tablespace_name</code></em> [, ...]
+    TO <em class="replaceable"><code>role_specification</code></em> [, ...] [ WITH GRANT OPTION ]
+
+GRANT { USAGE | ALL [ PRIVILEGES ] }
+    ON TYPE <em class="replaceable"><code>type_name</code></em> [, ...]
+    TO <em class="replaceable"><code>role_specification</code></em> [, ...] [ WITH GRANT OPTION ]
+
+<span class="phrase">where <em class="replaceable"><code>role_specification</code></em> can be:</span>
+
+    [ GROUP ] <em class="replaceable"><code>role_name</code></em>
+  | PUBLIC
+  | CURRENT_USER
+  | SESSION_USER
+
+GRANT <em class="replaceable"><code>role_name</code></em> [, ...] TO <em class="replaceable"><code>role_name</code></em> [, ...] [ WITH ADMIN OPTION ]</pre></div><div class="refsect1" id="SQL-GRANT-DESCRIPTION"><h2>描述</h2><p>   <code class="command">GRANT</code>命令由两种基本的变体：一种授予在一个数据库对象（表、列、视图、外部表、序列、数据库、外部数据包装器、外部服务器、函数、过程语言、模式或表空间）上的特权，另一个授予一个角色中的成员关系。这些变体在很多方面都相似，但是也有很多不同，所以还是得分别描述它们。
+  </p><div class="refsect2" id="SQL-GRANT-DESCRIPTION-OBJECTS"><h3>在数据库对象上 GRANT</h3><p>   这种<code class="command">GRANT</code>命令的变体将一个数据库对象上的指定特权交给一个或多个角色。如果有一些已经被授予，这些特权会被加入到它们之中。
+  </p><p>   还有一个选项可以授予一个或多个模式中同种类型的所有对象上的特权。这种功能当前只对表、序列和函数支持（但是注意<code class="literal">ALL TABLES</code>会被认为是包括视图和外部表）。
+  </p><p>   关键词<code class="literal">PUBLIC</code>指示特权要被授予给所有角色，包括那些可能稍后会被创建的角色。<code class="literal">PUBLIC</code>可以被认为是一个被隐式定义的总是包含所有角色的组。任何特定角色都将具有直接授予给它的特权、授予给它作为成员所在的任何角色的特权以及被授予给<code class="literal">PUBLIC</code>的特权。
+  </p><p>   如果指定了<code class="literal">WITH GRANT OPTION</code>，特权的接收者可以接着把它授予给其他人。如果没有授权选项，接收者就不能这样做。授权选项不能被授予给<code class="literal">PUBLIC</code>。
+  </p><p>   没有必要把权限授予给一个对象的拥有者（通常就是创建该对象的用户），
+   因为拥有者默认具有所有的特权（不过拥有者可能为了安全选择撤回一些
+   它们自己的特权）。
+  </p><p>   删除一个对象或者以任何方式修改其定义的权力是不被当作一个可授予特权的，它被固化在拥有者中，并且不能被授予和撤回（不过，相似地效果可以通过授予或者撤回在拥有该对象的角色中的成员关系来实现，见下文）。拥有者也隐式地拥有该对象的所有授权选项。
+  </p><p>   PostgreSQL 会把某些类型的对象上的默认特权授予给<code class="literal">PUBLIC</code>。
+   默认在表、表列、序列、外部数据封装器、外部服务器、大对象、
+   模式或表空间上不会有特权会被授予给<code class="literal">PUBLIC</code>。对于其他对象的类型，
+   被授予给<code class="literal">PUBLIC</code>的默认特权是下面这些：数据库上的
+   <code class="literal">CONNECT</code>以及<code class="literal">TEMPORARY</code>（创建临时表）权限；
+   函数上的<code class="literal">EXECUTE</code>特权；语言和数据类型（包括域）的<code class="literal">USAGE</code>特权。当然，对象拥有者可以<code class="command">REVOKE</code>默认和专门授予的特权（为了最好的安全性，应该在创建该对象的同一个事务中发出<code class="command">REVOKE</code>，这样其他用户就没有时间窗口使用该对象）。还有，这些初始的默认特权设置可以使用<a class="xref" href="sql-alterdefaultprivileges.html" title="ALTER DEFAULT PRIVILEGES"><span class="refentrytitle">ALTER DEFAULT PRIVILEGES</span></a>命令修改。
+  </p><p>   可能的特权是：
+
+   </p><div class="variablelist"><dl class="variablelist"><dt><span class="term"><code class="literal">SELECT</code></span></dt><dd><p>       允许从指定表、视图或序列的任何列或者列出的特定列进行<a class="xref" href="sql-select.html" title="SELECT"><span class="refentrytitle">SELECT</span></a>。还允许使用<a class="xref" href="sql-copy.html" title="COPY"><span class="refentrytitle">COPY</span></a> TO。在<a class="xref" href="sql-update.html" title="UPDATE"><span class="refentrytitle">UPDATE</span></a>或<a class="xref" href="sql-delete.html" title="DELETE"><span class="refentrytitle">DELETE</span></a>中引用已有列值时也需要这个特权。对于序列，这个特权也允许使用<code class="function">currval</code>函数。对于大对象，这个特权允许读取对象。
+      </p></dd><dt><span class="term"><code class="literal">INSERT</code></span></dt><dd><p>       允许<a class="xref" href="sql-insert.html" title="INSERT"><span class="refentrytitle">INSERT</span></a>一个新行到指定表中。如果列出了特定的列，只有这些列能在<code class="command">INSERT</code>命令中被赋值（其他列将因此收到默认值）。还允许<a class="xref" href="sql-copy.html" title="COPY"><span class="refentrytitle">COPY</span></a> FROM。
+      </p></dd><dt><span class="term"><code class="literal">UPDATE</code></span></dt><dd><p>       允许对指定表、视图或序列的任何列或者列出的特定列进行<a class="xref" href="sql-update.html" title="UPDATE"><span class="refentrytitle">UPDATE</span></a>（实际上，任何非平凡的<code class="command">UPDATE</code>命令也会要求<code class="literal">SELECT</code>特权，因为它必须引用表列来判断哪些行要被更新或者为列计算新值）。除<code class="literal">SELECT</code>特权之外，<code class="literal">SELECT ... FOR UPDATE</code>以及<code class="literal">SELECT ... FOR SHARE</code>也要求至少一列上的这个特权。对于序列，这个特权允许使用<code class="function">nextval</code>和<code class="function">setval</code>函数。对于大对象，这个特权允许写入或者截断对象。
+      </p></dd><dt><span class="term"><code class="literal">DELETE</code></span></dt><dd><p>       允许从指定的表中<a class="xref" href="sql-delete.html" title="DELETE"><span class="refentrytitle">DELETE</span></a>一行（实际上，任何非平凡的<code class="command">DELETE</code>命令也将要求<code class="literal">SELECT</code>特权，因为它必须引用表列来判断要删除哪些行）。
+      </p></dd><dt><span class="term"><code class="literal">TRUNCATE</code></span></dt><dd><p>       允许在指定的表上<a class="xref" href="sql-truncate.html" title="TRUNCATE"><span class="refentrytitle">TRUNCATE</span></a>。
+      </p></dd><dt><span class="term"><code class="literal">REFERENCES</code></span></dt><dd><p>       允许创建引用指定表或指定表列的外键约束。（请参阅<a class="xref" href="sql-createtable.html" title="CREATE TABLE"><span class="refentrytitle">CREATE TABLE</span></a>语句。）
+      </p></dd><dt><span class="term"><code class="literal">TRIGGER</code></span></dt><dd><p>       允许在指定的表上创建触发器（见<a class="xref" href="sql-createtrigger.html" title="CREATE TRIGGER"><span class="refentrytitle">CREATE TRIGGER</span></a>语句）。
+      </p></dd><dt><span class="term"><code class="literal">CREATE</code></span></dt><dd><p>       对于数据库，允许在其中创建新模式或发布。
+      </p><p>       对于模式，允许在其中创建新的对象。要重命名一个已有对象，你必须拥有该对象<span class="emphasis"><em>并且</em></span>具有所在模式的这个特权。
+      </p><p>       对于表空间，允许在其中创建表、索引和临时文件，并且允许创建使用该表空间作为默认表空间的数据库（注意撤回这个特权将不会更改现有对象的放置位置）。
+      </p></dd><dt><span class="term"><code class="literal">CONNECT</code></span></dt><dd><p>       允许用户连接到指定数据库。在连接开始时会检查这个特权（除了检查由<code class="filename">pg_hba.conf</code>施加的任何限制之外）。
+      </p></dd><dt><span class="term"><code class="literal">TEMPORARY</code><br /></span><span class="term"><code class="literal">TEMP</code></span></dt><dd><p>       允许在使用指定数据库时创建临时表。
+      </p></dd><dt><span class="term"><code class="literal">EXECUTE</code></span></dt><dd><p>       允许使用指定的函数以及使用在该函数之上实现的任何操作符。这是适用于函数的唯一一种特权类型（这种语法也可用于聚集函数）。
+      </p></dd><dt><span class="term"><code class="literal">USAGE</code></span></dt><dd><p>       对于过程语言，允许使用指定的语言创建函数。这是适用于过程语言的唯一一种特权类型。
+      </p><p>       对于模式，允许访问包含在指定模式中的对象（假定这些对象的拥有特权要求也满足）。本质上这允许被授权者在模式中<span class="quote">“<span class="quote">查阅</span>”</span>对象。如果没有这个权限，还是有可能看到对象名称，例如通过查询系统表。还有，在撤回这个权限之后，现有后端可能有语句之前已经执行过这种查阅，因此这不是一种阻止对象访问的完全安全的方法。
+      </p><p>       对于序列，这种特权允许使用<code class="function">currval</code>和<code class="function">nextval</code>函数。
+      </p><p>       对于类型和域，这种特权允许用该类型或域来创建表、函数和其他模式对象（注意这不能控制类型的一般<span class="quote">“<span class="quote">用法</span>”</span>，例如出现在查询中的该类型的值。它只阻止基于该类型创建对象。该特权的主要目的是控制哪些用户在一个类型上创建了依赖，这能够阻止拥有者以后更改该类型）。
+      </p><p>       对于外部数据包装器，这个特权允许使用该外部数据包装器创建新服务器。
+      </p><p>       对于服务器，这个特权允许使用该服务器创建外部表，
+       被授权者还可以创建、修改或删除与该服务器相关的他们自己的用户映射。
+      </p></dd><dt><span class="term"><code class="literal">ALL PRIVILEGES</code></span></dt><dd><p>       一次授予所有的可用特权。在<span class="productname">PostgreSQL</span>中，<code class="literal">PRIVILEGES</code>关键词是可选的，但是在严格的 SQL 中是要求它的。
+      </p></dd></dl></div><p>
+
+   其他命令所要求的特权会被列在相应命令的参考页中。
+  </p></div><div class="refsect2" id="SQL-GRANT-DESCRIPTION-ROLES"><h3>角色上的 GRANT</h3><p>   <code class="command">GRANT</code>命令的这种变体把一个角色中的成员关系授予一个或者多个其他角色。一个角色中的成员关系是有意义的，因为它会把授予给一个角色的特权带给该角色的每一个成员。
+  </p><p>   如果指定了<code class="literal">WITH ADMIN OPTION</code>，成员接着可以把该角色中的成员关系授予给其他用户，也可以撤回该角色中的成员关系。如果没有管理选项，普通用户就不能做这些工作。一个角色不被认为持有自身的<code class="literal">WITH ADMIN OPTION</code>，但是它可以从一个会话用户匹配该角色的数据库会话中授予或撤回自身中的成员关系。数据库超级用户能够授予或撤回任何角色中任何人的成员关系。具有<code class="literal">CREATEROLE</code>特权的角色能够授予或者撤回任何非超级用户角色中的成员关系。
+  </p><p>   和特权的情况不同，一个角色中的成员关系不能被授予<code class="literal">PUBLIC</code>。还要注意这种形式的命令不允许噪声词<code class="literal">GROUP</code>。
+  </p></div></div><div class="refsect1" id="SQL-GRANT-NOTES"><h2>注解</h2><p>    <a class="xref" href="sql-revoke.html" title="REVOKE"><span class="refentrytitle">REVOKE</span></a>命令被用来撤回访问特权。
+   </p><p>    从<span class="productname">PostgreSQL</span> 8.1 开始，用户和组的概念已经被统一到一种单一类型的实体（被称为一个角色）。因此不再需要使用关键词<code class="literal">GROUP</code>来标识一个被授权者是一个用户或者一个组。在该命令中仍然允许<code class="literal">GROUP</code>，但是它只是一个噪音词而已。
+   </p><p>    如果一个用户持有特定列或者其所在的整个表的特权，
+    该用户可以在该列上执行<code class="command">SELECT</code>、
+    <code class="command">INSERT</code>等命令。在表层面上授予特权
+    然后对一列撤回该特权将不会按照你希望的运作：
+    表级别的授权不会受到列级别操作的影响。
+   </p><p>    当一个对象的非拥有者尝试<code class="command">GRANT</code>该对象上的特权，如果该用户在该对象上什么特权都不拥有，该命令将立刻失败。只要有一些特权可用，该命令将继续，但是它将只授予那些用户具有授权选项的特权。如果不持有授权选项，<code class="command">GRANT ALL PRIVILEGES</code>形式将发出一个警告消息。而如果不持有命令中特别提到的任何特权的授权选项，其他形式将会发出一个警告（原则上这些语句也适用于对象拥有者，但是由于拥有者总是被视为持有所有授权选项，因此这种情况不会发生）。
+   </p><p>    需要注意的是，数据库超级用户可以访问所有对象而不管对象特权的设置。这可与 Unix 系统中的<code class="literal">root</code>权力相提并论。对于<code class="literal">root</code>来说，除非绝对必要，使用一个超级用户来操作是不明智的。
+   </p><p>    如果一个超级用户选择发出一个<code class="command">GRANT</code>或者<code class="command">REVOKE</code>命令，该命令将被执行，好像它是由被影响对象的拥有者发出的一样。特别地，通过这样一个命令授予的特权将好像是由对象拥有者授予的一样（对于角色成员关系，该成员关系好像是由该角色本身授予的一样）。
+   </p><p>    <code class="command">GRANT</code>以及<code class="command">REVOKE</code>也可以由一个不是受影响对象拥有者的角色完成，不过该角色是拥有该对象的角色的一个成员，或者是在该对象上持有特权的<code class="literal">WITH GRANT OPTION</code>的角色的一个成员。在这种情况下，特权将被记录为由实际拥有该对象的角色授予或者是由持有特权的<code class="literal">WITH GRANT OPTION</code>的角色授予。例如，如果表<code class="literal">t1</code>被角色<code class="literal">g1</code>拥有，<code class="literal">u1</code>是它的一个成员，那么<code class="literal">u1</code>可以把<code class="literal">t1</code>上的特权授予给<code class="literal">u2</code>，但是那些特权将好像是直接由<code class="literal">g1</code>授予的。角色<code class="literal">g1</code>的任何其他成员可以稍后撤回它们。
+   </p><p>    如果执行<code class="command">GRANT</code>的角色间接地通过多于一条角色成员关系路径持有所需的特权，将不会指定哪一个包含它的角色将被记录为完成了该授权。在这样的情况中，最好使用<code class="command">SET ROLE</code>来成为你想用其做<code class="command">GRANT</code>的特定角色。
+   </p><p>    授予一个表上的权限不会自动地扩展权限给该表使用的任何序列，包括绑定在<code class="type">SERIAL</code>列上的序列。序列上的权限必须被独立设置。
+   </p><p>    使用<a class="xref" href="app-psql.html" title="psql"><span class="refentrytitle"><span class="application">psql</span></span></a>的<code class="command">\dp</code>命令可获得表和列上现有的特权的信息。例如：
+</p><pre class="programlisting">=&gt; \dp mytable
+                              Access privileges
+ Schema |  Name   | Type  |   Access privileges   | Column access privileges 
+--------+---------+-------+-----------------------+--------------------------
+ public | mytable | table | miriam=arwdDxt/miriam | col1:
+                          : =r/miriam             :   miriam_rw=rw/miriam
+                          : admin=arw/miriam        
+(1 row)</pre><p>
+    <code class="command">\dp</code>显示的项解释如下：
+</p><pre class="literallayout">角色名=xxxx -- 被授予给一个角色的特权
+        =xxxx -- 被授予给 PUBLIC 的特权
+
+            r -- SELECT ("读")
+            w -- UPDATE ("写")
+            a -- INSERT ("追加")
+            d -- DELETE
+            D -- TRUNCATE
+            x -- REFERENCES
+            t -- TRIGGER
+            X -- EXECUTE
+            U -- USAGE
+            C -- CREATE
+            c -- CONNECT
+            T -- TEMPORARY
+      arwdDxt -- ALL PRIVILEGES （对于表，对其他对象会变化）
+            * -- 用于前述特权的授权选项
+
+        /yyyy -- 授予该特权的角色</pre><p>
+
+    用户<code class="literal">miriam</code>在创建了表<code class="literal">mytable</code>并且执行了下面的操作后会看到上述例子的显示：
+
+</p><pre class="programlisting">GRANT SELECT ON mytable TO PUBLIC;
+GRANT SELECT, UPDATE, INSERT ON mytable TO admin;
+GRANT SELECT (col1), UPDATE (col1) ON mytable TO miriam_rw;</pre><p>
+   </p><p>    对于非表对象，有其他的<code class="command">\d</code>命令可显示它们的特权。
+   </p><p>    如果一个给定对象的<span class="quote">“<span class="quote">Access privileges</span>”</span>列为空，表示该对象具有默认的特权（也就是，它的特权列为空）。默认特权总是包括拥有者的所有特权，并且如前所述根据对象类型可以包括一些<code class="literal">PUBLIC</code>的特权。一个对象上的第一个<code class="command">GRANT</code>或者<code class="command">REVOKE</code>将实例化默认特权（例如，产生<code class="literal">{miriam=arwdDxt/miriam}</code>）并且接着为每一个指定请求修改它们。类似地，显示在<span class="quote">“<span class="quote">Column access privileges</span>”</span>列中的项只用于带有非默认特权的列（注意，为了这个目的<span class="quote">“<span class="quote">default privileges</span>”</span>总是表示该对象类型的内建默认特权）。一个特权已经被一个<code class="command">ALTER DEFAULT PRIVILEGES</code>命令影响的对象将与一个显式特权项一起显示，该项包括<code class="command">ALTER</code>的效果）。
+   </p><p>    注意拥有者的隐式授权选项没有在访问特权显示中被标出。当授权选项被显式地授予给某人时，只会出现一个<code class="literal">*</code>。
+   </p></div><div class="refsect1" id="SQL-GRANT-EXAMPLES"><h2>例子</h2><p>   把表<code class="literal">films</code>上的插入特权授予给所有用户：
+
+</p><pre class="programlisting">GRANT INSERT ON films TO PUBLIC;</pre><p>
+  </p><p>   把视图<code class="literal">kinds</code>上的所有可用特权授予给用户<code class="literal">manuel</code>：
+
+</p><pre class="programlisting">GRANT ALL PRIVILEGES ON kinds TO manuel;</pre><p>
+
+   注意虽然上述语句被一个超级用户或者<code class="literal">kinds</code>的拥有者执行时确实会授予所有特权，但是当由其他人执行时将只会授予那些执行者拥有授权选项的权限。
+  </p><p>   把角色<code class="literal">admins</code>中的成员关系授予给用户<code class="literal">joe</code>：
+
+</p><pre class="programlisting">GRANT admins TO joe;</pre></div><div class="refsect1" id="SQL-GRANT-COMPATIBILITY"><h2>兼容性</h2><p>    根据 SQL 标准，<code class="literal">ALL PRIVILEGES</code>中的<code class="literal">PRIVILEGES</code>关键词是必须的。SQL 标准不支持在每个命令中设置超过一个对象上的特权。
+   </p><p>    <span class="productname">PostgreSQL</span>允许一个对象拥有者
+    撤回它们拥有的普通特权：例如，一个表拥有者可以通过撤回其自身拥有
+    的<code class="literal">INSERT</code>、<code class="literal">UPDATE</code>、<code class="literal">DELETE</code>
+    和<code class="literal">TRUNCATE</code>特权让该表对它们自己只读。根据 SQL 标准
+    这是不可能发生的。原因在于<span class="productname">PostgreSQL</span>
+    认为拥有者的特权是由拥有者授予给它们自己的，因此它们也能够撤回它们。
+    在 SQL 标准中，拥有者的特权是有一个假设的实体<span class="quote">“<span class="quote">_SYSTEM</span>”</span>所授予。
+    由于不是<span class="quote">“<span class="quote">_SYSTEM</span>”</span>，拥有者就不能撤回这些权力。
+   </p><p>    根据 SQL 标准，授权选项可以被授予给<code class="literal">PUBLIC</code>， PostgreSQL 只支持把授权选项授予给角色。
+   </p><p>    SQL 标准提供了其他对象类型上的<code class="literal">USAGE</code>特权：字符集、排序规则、翻译。
+   </p><p>    在 SQL 标准中，序列只有一个<code class="literal">USAGE</code>特权，它控制<code class="literal">NEXT VALUE FOR</code>表达式的使用，该表达式等效于 PostgreSQL 中的函数<code class="function">nextval</code>。序列的特权<code class="literal">SELECT</code>和<code class="literal">UPDATE</code>是 PostgreSQL 扩展。应用序列的<code class="literal">USAGE</code>特权到<code class="literal">currval</code>函数也是一个 PostgreSQL 扩展（该函数本身也是）。
+   </p><p>    数据库、表空间、模式和语言上的特权都是<span class="productname">PostgreSQL</span>扩展。
+   </p></div><div class="refsect1" id="idp47509664"><h2>参见</h2><span class="simplelist"><a class="xref" href="sql-revoke.html" title="REVOKE"><span class="refentrytitle">REVOKE</span></a>, <a class="xref" href="sql-alterdefaultprivileges.html" title="ALTER DEFAULT PRIVILEGES"><span class="refentrytitle">ALTER DEFAULT PRIVILEGES</span></a></span></div></div><div class="navfooter"><hr /><table width="100%" summary="Navigation footer"><tr><td width="40%" align="left"><a accesskey="p" href="sql-fetch.html">上一页</a> </td><td width="20%" align="center"><a accesskey="u" href="sql-commands.html">上一级</a></td><td width="40%" align="right"> <a accesskey="n" href="sql-importforeignschema.html">下一页</a></td></tr><tr><td width="40%" align="left" valign="top">FETCH </td><td width="20%" align="center"><a accesskey="h" href="index.html">起始页</a></td><td width="40%" align="right" valign="top"> IMPORT FOREIGN SCHEMA</td></tr></table></div></body></html>

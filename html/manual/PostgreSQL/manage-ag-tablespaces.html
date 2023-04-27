@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><title>22.6. 表空间</title><link rel="stylesheet" type="text/css" href="stylesheet.css" /><link rev="made" href="pgsql-docs@postgresql.org" /><meta name="generator" content="DocBook XSL Stylesheets V1.79.1" /><link rel="prev" href="manage-ag-dropdb.html" title="22.5. 销毁一个数据库" /><link rel="next" href="charset.html" title="第 23 章 本地化" /></head><body><div xmlns="http://www.w3.org/TR/xhtml1/transitional" class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="5" align="center">22.6. 表空间</th></tr><tr><td width="10%" align="left"><a accesskey="p" href="manage-ag-dropdb.html" title="22.5. 销毁一个数据库">上一页</a> </td><td width="10%" align="left"><a accesskey="u" href="managing-databases.html" title="第 22 章 管理数据库">上一级</a></td><th width="60%" align="center">第 22 章 管理数据库</th><td width="10%" align="right"><a accesskey="h" href="index.html" title="PostgreSQL 10.1 手册">起始页</a></td><td width="10%" align="right"> <a accesskey="n" href="charset.html" title="第 23 章 本地化">下一页</a></td></tr></table><hr></hr></div><div class="sect1" id="MANAGE-AG-TABLESPACES"><div class="titlepage"><div><div><h2 class="title" style="clear: both">22.6. 表空间</h2></div></div></div><a id="idp23317200" class="indexterm"></a><p>   <span class="productname">PostgreSQL</span>中的表空间允许数据库管理员在文件系统中定义用来存放表示数据库对象的文件的位置。一旦被创建，表空间就可以在创建数据库对象时通过名称引用。
+  </p><p>   通过使用表空间，管理员可以控制一个<span class="productname">PostgreSQL</span>安装的磁盘布局。 这么做至少有两个用处。首先，如果初始化集簇所在的分区或者卷用光了空间，而又不能在逻辑上扩展或者做别的什么操作，那么表空间可以被创建在一个不同的分区上，直到系统可以被重新配置。
+  </p><p>  其次，表空间允许管理员根据数据库对象的使用模式来优化性能。例如，一个很频繁使用的索引可以被放在非常快并且非常可靠的磁盘上，如一种非常贵的固态设备。同时，一个很少使用的或者对性能要求不高的存储归档数据的表可以存储在一个便宜但比较慢的磁盘系统上。
+  </p><div class="warning"><h3 class="title">警告</h3><p>     即便是位于主要的 PostgreSQL 数据目录之外，表空间也是数据库集簇的一部分
+     并且<span class="emphasis"><em>不能</em></span>被视作数据文件的一个自治集合。
+     它们依赖于包含在主数据目录中的元数据，并且因此不能被附加到一个
+     不同的数据库集簇或者单独备份。类似地，如果丢失一个表空间（文件删除、磁盘失效等），
+     数据库集簇可能会变成不可读或者无法启动。把一个表空间放在一个临时文件系统
+     （如一个内存虚拟盘）上会带来整个集簇的可靠性风险。
+   </p></div><p>   要定义一个表空间，使用<a class="xref" href="sql-createtablespace.html" title="CREATE TABLESPACE"><span class="refentrytitle">CREATE TABLESPACE</span></a>命令，例如：<a id="idp23324912" class="indexterm"></a>
+</p><pre class="programlisting">CREATE TABLESPACE fastspace LOCATION '/ssd1/postgresql/data';</pre><p>
+   这个位置必须是一个已有的空目录，并且属于<span class="productname">PostgreSQL</span>操作系统用户。
+    所有后续在该表空间中创建的对象都将被存放在这个目录下的文件中。该位置不能放在可移动
+    或者瞬时存储上，因为如果表空间丢失会导致集簇无法工作。
+  </p><div class="note"><h3 class="title">注意</h3><p>    通常在每个逻辑文件系统上创建多于一个表空间没有什么意义，因为你无法控制在一个逻辑文件系统中特定文件的位置。不过，<span class="productname">PostgreSQL</span>不强制任何这样的限制，并且事实上它不会注意你的系统上的文件系统边界。它只是在你告诉它要使用的目录中存储文件。
+   </p></div><p>   表空间的创建本身必须作为一个数据库超级用户完成，但在创建完之后之后你可以允许普通数据库用户来使用它。要这样做，给数据库普通用户授予表空间上的<code class="literal">CREATE</code>权限。
+  </p><p>   表、索引和整个数据库都可以被分配到特定的表空间。想这么做，在给定表空间上有 <code class="literal">CREATE</code>权限的用户必须把表空间的名字以一个参数的形式传递给相关的命令。例如，下面的命令在表空间<code class="literal">space1</code>中创建一个表：
+</p><pre class="programlisting">CREATE TABLE foo(i int) TABLESPACE space1;</pre><p>
+  </p><p>   另外，还可以使用<a class="xref" href="runtime-config-client.html#GUC-DEFAULT-TABLESPACE">default_tablespace</a>参数：
+</p><pre class="programlisting">SET default_tablespace = space1;
+CREATE TABLE foo(i int);</pre><p>
+   当<code class="varname">default_tablespace</code>被设置为非空字符串，那么它就为没有显式<code class="literal">TABLESPACE</code>子句的<code class="command">CREATE TABLE</code>和<code class="command">CREATE INDEX</code>命令提供一个隐式<code class="literal">TABLESPACE</code>子句。
+  </p><p>   还有一个<a class="xref" href="runtime-config-client.html#GUC-TEMP-TABLESPACES">temp_tablespaces</a>参数，它决定临时表和索引的位置，以及用于大数据集排序等目的的临时文件的位置。 这可以是一个表空间名的列表，而不是只有一个。因此，与临时对象有关的负载可以散布在多个表空间上。每次要创建一个临时对象时，将从列表中随机取一个成员来存放它。
+  </p><p>   与一个数据库相关联的表空间用来存储该数据库的系统目录。此外，如果没有给出<code class="literal">TABLESPACE</code>子句并且没有在<code class="varname">default_tablespace</code>或<code class="varname">temp_tablespaces</code>（如适用）中指定其他选择，它还是在该数据库中创建的表、索引和临时文件的默认表空间。如果一个数据库被创建时没有指定表空间，它会使用其模板数据库相同的表空间。
+  </p><p>   当初始化数据库集簇时，会自动创建两个表空间。<code class="literal">pg_global</code>表空间被用于共享系统目录。<code class="literal">pg_default</code>表空间是<code class="literal">template1</code>和<code class="literal">template0</code>数据库的默认表空间（并且，因此也将是所有其他数据库的默认表空间，除非被一个<code class="command">CREATE DATABASE</code>中的<code class="literal">TABLESPACE</code>子句覆盖）。
+  </p><p>   表空间一旦被创建，就可以被任何数据库使用，前提是请求的用户具有足够的权限。这也意味着，一个表空间只有在所有使用它的数据库中所有对象都被删除掉之后才可以被删掉。
+  </p><p>   要删除一个空的表空间，使用<a class="xref" href="sql-droptablespace.html" title="DROP TABLESPACE"><span class="refentrytitle">DROP TABLESPACE</span></a>命令。
+  </p><p>   要确定现有表空间的集合，可检查<a class="link" href="catalog-pg-tablespace.html" title="51.54. pg_tablespace"><code class="structname">pg_tablespace</code>
+   </a>系统目录，例如
+</p><pre class="synopsis">SELECT spcname FROM pg_tablespace;</pre><p>
+   <a class="xref" href="app-psql.html" title="psql"><span class="refentrytitle"><span class="application">psql</span></span></a>程序的<code class="literal">\db</code>元命令也可以用来列出现有的表空间。
+  </p><p>   <span class="productname">PostgreSQL</span>使用符号连接来简化表空间的实现。这就意味着表空间<span class="emphasis"><em>只能</em></span>在支持符号连接的系统上使用。
+  </p><p>   <code class="filename">$PGDATA/pg_tblspc</code>目录包含指向集簇中定义的每个非内建表空间的符号连接。 尽管我们不推荐，但还是可以通过手工重定义这些连接来调整表空间布局。在服务器运行时，绝不要这样做。注意在 PostgreSQL 9.1 及更早的版本中，你将还需要用新位置更新<code class="structname">pg_tablespace</code>目录（如果你不更新，<code class="literal">pg_dump</code>将继续输出旧的表空间位置）。
+  </p></div><div class="navfooter"><hr /><table width="100%" summary="Navigation footer"><tr><td width="40%" align="left"><a accesskey="p" href="manage-ag-dropdb.html">上一页</a> </td><td width="20%" align="center"><a accesskey="u" href="managing-databases.html">上一级</a></td><td width="40%" align="right"> <a accesskey="n" href="charset.html">下一页</a></td></tr><tr><td width="40%" align="left" valign="top">22.5. 销毁一个数据库 </td><td width="20%" align="center"><a accesskey="h" href="index.html">起始页</a></td><td width="40%" align="right" valign="top"> 第 23 章 本地化</td></tr></table></div></body></html>

@@ -1,0 +1,141 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><title>48.6. 逻辑解码输出插件</title><link rel="stylesheet" type="text/css" href="stylesheet.css" /><link rev="made" href="pgsql-docs@postgresql.org" /><meta name="generator" content="DocBook XSL Stylesheets V1.79.1" /><link rel="prev" href="logicaldecoding-catalogs.html" title="48.5. 与逻辑解码相关的系统目录" /><link rel="next" href="logicaldecoding-writer.html" title="48.7. 逻辑解码输出写入器" /></head><body><div xmlns="http://www.w3.org/TR/xhtml1/transitional" class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="5" align="center">48.6. 逻辑解码输出插件</th></tr><tr><td width="10%" align="left"><a accesskey="p" href="logicaldecoding-catalogs.html" title="48.5. 与逻辑解码相关的系统目录">上一页</a> </td><td width="10%" align="left"><a accesskey="u" href="logicaldecoding.html" title="第 48 章 逻辑解码">上一级</a></td><th width="60%" align="center">第 48 章 逻辑解码</th><td width="10%" align="right"><a accesskey="h" href="index.html" title="PostgreSQL 10.1 手册">起始页</a></td><td width="10%" align="right"> <a accesskey="n" href="logicaldecoding-writer.html" title="48.7. 逻辑解码输出写入器">下一页</a></td></tr></table><hr></hr></div><div class="sect1" id="LOGICALDECODING-OUTPUT-PLUGIN"><div class="titlepage"><div><div><h2 class="title" style="clear: both">48.6. 逻辑解码输出插件</h2></div></div></div><div class="toc"><dl class="toc"><dt><span class="sect2"><a href="logicaldecoding-output-plugin.html#LOGICALDECODING-OUTPUT-INIT">48.6.1. 初始化函数</a></span></dt><dt><span class="sect2"><a href="logicaldecoding-output-plugin.html#LOGICALDECODING-CAPABILITIES">48.6.2. 能力</a></span></dt><dt><span class="sect2"><a href="logicaldecoding-output-plugin.html#LOGICALDECODING-OUTPUT-MODE">48.6.3. 输出模式</a></span></dt><dt><span class="sect2"><a href="logicaldecoding-output-plugin.html#LOGICALDECODING-OUTPUT-PLUGIN-CALLBACKS">48.6.4. 输出插件回调</a></span></dt><dt><span class="sect2"><a href="logicaldecoding-output-plugin.html#LOGICALDECODING-OUTPUT-PLUGIN-OUTPUT">48.6.5. 用于产生输出的函数</a></span></dt></dl></div><p>    可以在 PostgreSQL 源码树的
+    <a class="link" href="test-decoding.html" title="F.41. test_decoding">     <code class="filename">contrib/test_decoding</code>
+    </a>子目录中找到一个输出插件的例子。
+   </p><div class="sect2" id="LOGICALDECODING-OUTPUT-INIT"><div class="titlepage"><div><div><h3 class="title">48.6.1. 初始化函数</h3></div></div></div><a id="idp39470160" class="indexterm"></a><p>     一个输出插件是通过动态载入一个以输出插件名称作为基础名称的共享库来载入的。
+     将使用普通的库搜索路径来定位该库。为了提供所要求的输出插件回调并且指示该
+     库确实是一个输出插件，需要提供一个名为
+     <code class="function">_PG_output_plugin_init</code>的函数。这个函数会被传入一个
+     结构，其中被填充了各个动作的回调函数指针。
+</p><pre class="programlisting">typedef struct OutputPluginCallbacks
+{
+    LogicalDecodeStartupCB startup_cb;
+    LogicalDecodeBeginCB begin_cb;
+    LogicalDecodeChangeCB change_cb;
+    LogicalDecodeCommitCB commit_cb;
+    LogicalDecodeMessageCB message_cb;
+    LogicalDecodeFilterByOriginCB filter_by_origin_cb;
+    LogicalDecodeShutdownCB shutdown_cb;
+} OutputPluginCallbacks;
+
+typedef void (*LogicalOutputPluginInit) (struct OutputPluginCallbacks *cb);</pre><p>
+     回调函数<code class="function">begin_cb</code>、<code class="function">change_cb</code>
+     以及<code class="function">commit_cb</code>是必需的，而
+     <code class="function">startup_cb</code>、<code class="function">filter_by_origin_cb</code>
+     和<code class="function">shutdown_cb</code>是可选的。
+    </p></div><div class="sect2" id="LOGICALDECODING-CAPABILITIES"><div class="titlepage"><div><div><h3 class="title">48.6.2. 能力</h3></div></div></div><p>     要解码、格式化并且输出更改，输出插件可以使用大部分后端的标准功能，包括调用
+     输出函数。只要访问的关系是<code class="command">initdb</code>在
+     <code class="literal">pg_catalog</code>模式中创建的或者被使用
+</p><pre class="programlisting">ALTER TABLE user_catalog_table SET (user_catalog_table = true);
+CREATE TABLE another_catalog_table(data text) WITH (user_catalog_table = true);</pre><p>
+     标记为用户提供的系统表，就允许对关系的只读访问。任何导致事务 ID 分配的动作
+     都被禁止。其中包括写表、执行 DDL 更改以及调用<code class="literal">txid_current()</code>。
+    </p></div><div class="sect2" id="LOGICALDECODING-OUTPUT-MODE"><div class="titlepage"><div><div><h3 class="title">48.6.3. 输出模式</h3></div></div></div><p>     输出插件回调可以以近乎任意格式向消费者传递数据。对于某些用例，例如通过 SQL 
+     查看更改，以可能包含任何数据的数据类型（例如<code class="type">bytea</code>）返回数据
+     可能会很麻烦。如果输出插件只输出服务器编码的文本数据，它可以在
+     <a class="link" href="logicaldecoding-output-plugin.html#LOGICALDECODING-OUTPUT-PLUGIN-STARTUP" title="48.6.4.1. 启动回调">启动回调</a>
+	 中通过将<code class="literal">OutputPluginOptions.output_type</code>设
+     置为<code class="literal">OUTPUT_PLUGIN_TEXTUAL_OUTPUT</code>而不是
+     <code class="literal">OUTPUT_PLUGIN_BINARY_OUTPUT</code>来声明这一点。在这种情况下，
+     所有的数据必须是属于服务器的编码，这样一个<code class="type">text</code>数据就能包含它。在
+     启用了断言的编译中会检查这一点。
+    </p></div><div class="sect2" id="LOGICALDECODING-OUTPUT-PLUGIN-CALLBACKS"><div class="titlepage"><div><div><h3 class="title">48.6.4. 输出插件回调</h3></div></div></div><p>     一个输出插件需要提供一些回调，它通过它们得到有关更改发生的通知。
+    </p><p>     并发事务以提交顺序被解码，并且只有属于特定事务的更改会在
+     <code class="literal">begin</code>和<code class="literal">commit</code>回调之间被解码。被显式
+     或隐式回滚的事务不会被解码。成功的检查点被折叠到包含它们的事务中，并且
+     保持它们在该事务中被执行的顺序。
+    </p><div class="note"><h3 class="title">注意</h3><p>      只有已经被安全地刷入磁盘的事务将会被解码。当
+      <code class="varname">synchronous_commit</code>被设置为<code class="literal">off</code>
+      时，这会导致一个<code class="command">COMMIT</code>在随后的
+      <code class="literal">pg_logical_slot_get_changes()</code>中不会立即被解码。
+     </p></div><div class="sect3" id="LOGICALDECODING-OUTPUT-PLUGIN-STARTUP"><div class="titlepage"><div><div><h4 class="title">48.6.4.1. 启动回调</h4></div></div></div><p>      只要一个复制槽被创建或者被要求流式传送更改，可选的
+      <code class="function">startup_cb</code>回调就会被调用，不管有多少更改准备输出。
+</p><pre class="programlisting">typedef void (*LogicalDecodeStartupCB) (struct LogicalDecodingContext *ctx,
+                                        OutputPluginOptions *options,
+                                        bool is_init);</pre><p>
+      当复制槽被创建时，<code class="literal">is_init</code>参数将为真，否则为假。
+      <em class="parameter"><code>options</code></em>指向一个输出插件可以设置的选项
+      的结构：
+</p><pre class="programlisting">typedef struct OutputPluginOptions
+{
+    OutputPluginOutputType output_type;
+} OutputPluginOptions;</pre><p>
+      <code class="literal">output_type</code>必须被设置为
+      <code class="literal">OUTPUT_PLUGIN_TEXTUAL_OUTPUT</code>
+      或者<code class="literal">OUTPUT_PLUGIN_BINARY_OUTPUT</code>。另见
+      <a class="xref" href="logicaldecoding-output-plugin.html#LOGICALDECODING-OUTPUT-MODE" title="48.6.3. 输出模式">第 48.6.3 节</a>.
+     </p><p>      启动回调应该验证出现在
+      <code class="literal">ctx-&gt;output_plugin_options</code>中的选项。如果输出插件
+      需要有一个状态，它可以使用
+      <code class="literal">ctx-&gt;output_plugin_private</code>来存储之。
+     </p></div><div class="sect3" id="LOGICALDECODING-OUTPUT-PLUGIN-SHUTDOWN"><div class="titlepage"><div><div><h4 class="title">48.6.4.2. 关闭回调</h4></div></div></div><p>      只要一个之前活跃的复制槽不再使用，就会调用可选的
+      <code class="function">shutdown_cb</code>回调，它可以被用来释放输出插件
+      私有的资源。该槽并不一定需要被删除，只要其中的流被停止即可。
+</p><pre class="programlisting">typedef void (*LogicalDecodeShutdownCB) (struct LogicalDecodingContext *ctx);</pre><p>
+     </p></div><div class="sect3" id="LOGICALDECODING-OUTPUT-PLUGIN-BEGIN"><div class="titlepage"><div><div><h4 class="title">48.6.4.3. 事务开始回调</h4></div></div></div><p>      只要一个已提交事务的开始动作被解码，就会调用必须提供的
+      <code class="function">begin_cb</code>回调。被中止的事务及其内容不会被解码。
+</p><pre class="programlisting">typedef void (*LogicalDecodeBeginCB) (struct LogicalDecodingContext *ctx,
+                                      ReorderBufferTXN *txn);</pre><p>
+      <em class="parameter"><code>txn</code></em>参数包含有关该事务的元信息，例如该
+      事务被提交的时间戳以及该事务的 XID。
+     </p></div><div class="sect3" id="LOGICALDECODING-OUTPUT-PLUGIN-COMMIT"><div class="titlepage"><div><div><h4 class="title">48.6.4.4. 事务结束回调</h4></div></div></div><p>      只要一个已提交事务的提交动作被解码，就会调用必须提供的
+      <code class="function">commit_cb</code>回调。在此之前，如果有任何被修改
+      的行，将为所有被修改的行调用<code class="function">change_cb</code>回调。
+</p><pre class="programlisting">typedef void (*LogicalDecodeCommitCB) (struct LogicalDecodingContext *ctx,
+                                       ReorderBufferTXN *txn,
+                                       XLogRecPtr commit_lsn);</pre><p>
+     </p></div><div class="sect3" id="LOGICALDECODING-OUTPUT-PLUGIN-CHANGE"><div class="titlepage"><div><div><h4 class="title">48.6.4.5. 更改回调</h4></div></div></div><p>      对于一个事务中的每一个行修改，都将调用必须提供的
+      <code class="function">change_cb</code>回调，这种修改可能是一个
+      <code class="command">INSERT</code>、<code class="command">UPDATE</code>或者
+      <code class="command">DELETE</code>。即使原始命令一次修改了多行，该回调也会
+      为其中的每一行调用一次。
+</p><pre class="programlisting">typedef void (*LogicalDecodeChangeCB) (struct LogicalDecodingContext *ctx,
+                                       ReorderBufferTXN *txn,
+                                       Relation relation,
+                                       ReorderBufferChange *change);</pre><p>
+      <em class="parameter"><code>ctx</code></em>和<em class="parameter"><code>txn</code></em>参数与
+      <code class="function">begin_cb</code>和<code class="function">commit_cb</code>
+      回调具有相同的内容，但是额外多出一个关系描述符
+      <em class="parameter"><code>relation</code></em>指向该行所属的关系以及一个结构
+      <em class="parameter"><code>change</code></em>描述被传入的行修改。
+     </p><div class="note"><h3 class="title">注意</h3><p>       只有没有被标记为“不做日志”（见
+       <a class="xref" href="sql-createtable.html#SQL-CREATETABLE-UNLOGGED"><code class="literal">UNLOGGED</code></a>）并且非临时（见
+       <a class="xref" href="sql-createtable.html#SQL-CREATETABLE-TEMPORARY"><code class="literal">TEMPORARY</code> or <code class="literal">TEMP</code></a>）的用户定义表中的
+       更改才能用逻辑解码抽取。
+      </p></div></div><div class="sect3" id="LOGICALDECODING-OUTPUT-PLUGIN-FILTER-ORIGIN"><div class="titlepage"><div><div><h4 class="title">48.6.4.6. 源过滤器回调</h4></div></div></div><p>       可选的<code class="function">filter_by_origin_cb</code>回调被用来
+       决定从<em class="parameter"><code>origin_id</code></em>重放的数据是否是
+       输出插件感兴趣的数据。
+</p><pre class="programlisting">typedef bool (*LogicalDecodeFilterByOriginCB) (struct LogicalDecodingContext *ctx,
+                                               RepOriginId origin_id);</pre><p>
+      <em class="parameter"><code>ctx</code></em>参数具有和其他回调相同的内容。
+      对这个回调只有复制源的信息可用。要标志传进来的节点上发生的
+      更改是无关的，返回真，这会导致这些更改被过滤掉，否则返回假。
+      对于被过滤掉的事务和更改将不会调用其他回调。
+     </p><p>       在实现级联或者多向复制方案时，这个回调可以派上用场。用源头
+       过滤允许阻止在这样的设置下来回地复制同样的更改。虽然事务和
+       更改也携带了有关源头的信息，通过这个回调过滤明显更有效些。
+     </p></div><div class="sect3" id="LOGICALDECODING-OUTPUT-PLUGIN-MESSAGE"><div class="titlepage"><div><div><h4 class="title">48.6.4.7. 通用消息回调</h4></div></div></div><p>      只要一个逻辑解码消息被解码出来，可选的<code class="function">message_cb</code>回调就会被调用。
+</p><pre class="programlisting">typedef void (*LogicalDecodeMessageCB) (struct LogicalDecodingContext *ctx,
+                                        ReorderBufferTXN *txn,
+                                        XLogRecPtr message_lsn,
+                                        bool transactional,
+                                        const char *prefix,
+                                        Size message_size,
+                                        const char *message);</pre><p>
+      <em class="parameter"><code>txn</code></em>参数包含关于该事务的元信息，如被提交的时间戳和 XID。不过要注意，当消息是非事务性的并且记录该消息的事务中还没有被分配 XID 时，这个参数可以为 NULL。<em class="parameter"><code>lsn</code></em>是该消息的 WAL 位置。<em class="parameter"><code>transactional</code></em>说明该消息是否为事务性的。<em class="parameter"><code>prefix</code></em>是一个任意的空终结的前缀，它当前插件被用来标识感兴趣的消息。最后的<em class="parameter"><code>message</code></em>参数保存着大小为<em class="parameter"><code>message_size</code></em>的消息。
+     </p><p>      应该格外小心确保输出插件用于标识感兴趣消息的前缀是唯一的。建议使用扩展或者输出插件本身的名称。
+     </p></div></div><div class="sect2" id="LOGICALDECODING-OUTPUT-PLUGIN-OUTPUT"><div class="titlepage"><div><div><h3 class="title">48.6.5. 用于产生输出的函数</h3></div></div></div><p>     在<code class="function">begin_cb</code>、<code class="function">commit_cb</code>或者
+      <code class="function">change_cb</code>回调中，为了实际产生输出，
+      输出插件可以把数据写入到<code class="literal">ctx-&gt;out</code>中的
+      <code class="literal">StringInfo</code>输出缓冲区中。在写出到输出缓冲区之前，必须先
+      调用<code class="function">OutputPluginPrepareWrite(ctx, last_write)</code>，在完
+      成写入到缓冲区后，必须调用
+      <code class="function">OutputPluginWrite(ctx, last_write)</code>来执行写出。
+      <em class="parameter"><code>last_write</code></em>指出一次特定的写出是否为该回调的最后
+      一次写出。
+    </p><p>     下面的例子展示了如何把数据输出给一个输出插件的消费者：
+</p><pre class="programlisting">OutputPluginPrepareWrite(ctx, true);
+appendStringInfo(ctx-&gt;out, "BEGIN %u", txn-&gt;xid);
+OutputPluginWrite(ctx, true);</pre><p>
+    </p></div></div><div class="navfooter"><hr /><table width="100%" summary="Navigation footer"><tr><td width="40%" align="left"><a accesskey="p" href="logicaldecoding-catalogs.html">上一页</a> </td><td width="20%" align="center"><a accesskey="u" href="logicaldecoding.html">上一级</a></td><td width="40%" align="right"> <a accesskey="n" href="logicaldecoding-writer.html">下一页</a></td></tr><tr><td width="40%" align="left" valign="top">48.5. 与逻辑解码相关的系统目录 </td><td width="20%" align="center"><a accesskey="h" href="index.html">起始页</a></td><td width="40%" align="right" valign="top"> 48.7. 逻辑解码输出写入器</td></tr></table></div></body></html>

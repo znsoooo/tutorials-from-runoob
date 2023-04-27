@@ -1,0 +1,290 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><title>56.2. 外部数据包装器回调例程</title><link rel="stylesheet" type="text/css" href="stylesheet.css" /><link rev="made" href="pgsql-docs@postgresql.org" /><meta name="generator" content="DocBook XSL Stylesheets V1.79.1" /><link rel="prev" href="fdw-functions.html" title="56.1. 外部数据包装器函数" /><link rel="next" href="fdw-helpers.html" title="56.3. 外部数据包装器助手函数" /></head><body><div xmlns="http://www.w3.org/TR/xhtml1/transitional" class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="5" align="center">56.2. 外部数据包装器回调例程</th></tr><tr><td width="10%" align="left"><a accesskey="p" href="fdw-functions.html" title="56.1. 外部数据包装器函数">上一页</a> </td><td width="10%" align="left"><a accesskey="u" href="fdwhandler.html" title="第 56 章 编写一个外部数据包装器">上一级</a></td><th width="60%" align="center">第 56 章 编写一个外部数据包装器</th><td width="10%" align="right"><a accesskey="h" href="index.html" title="PostgreSQL 10.1 手册">起始页</a></td><td width="10%" align="right"> <a accesskey="n" href="fdw-helpers.html" title="56.3. 外部数据包装器助手函数">下一页</a></td></tr></table><hr></hr></div><div class="sect1" id="FDW-CALLBACKS"><div class="titlepage"><div><div><h2 class="title" style="clear: both">56.2. 外部数据包装器回调例程</h2></div></div></div><div class="toc"><dl class="toc"><dt><span class="sect2"><a href="fdw-callbacks.html#FDW-CALLBACKS-SCAN">56.2.1. 用于扫描外部表的FDW例程</a></span></dt><dt><span class="sect2"><a href="fdw-callbacks.html#FDW-CALLBACKS-JOIN-SCAN">56.2.2. 用于扫描外部连接的 FDW 例程</a></span></dt><dt><span class="sect2"><a href="fdw-callbacks.html#FDW-CALLBACKS-UPPER-PLANNING">56.2.3. 用于规划扫描/连接后处理的 FDW 例程</a></span></dt><dt><span class="sect2"><a href="fdw-callbacks.html#FDW-CALLBACKS-UPDATE">56.2.4. 更新外部表的FDW例程</a></span></dt><dt><span class="sect2"><a href="fdw-callbacks.html#FDW-CALLBACKS-ROW-LOCKING">56.2.5. 用于行锁定的 FDW 例程</a></span></dt><dt><span class="sect2"><a href="fdw-callbacks.html#FDW-CALLBACKS-EXPLAIN">56.2.6. <code class="command">EXPLAIN</code>的FDW例程</a></span></dt><dt><span class="sect2"><a href="fdw-callbacks.html#FDW-CALLBACKS-ANALYZE">56.2.7. <code class="command">ANALYZE</code>的FDW例程</a></span></dt><dt><span class="sect2"><a href="fdw-callbacks.html#FDW-CALLBACKS-IMPORT">56.2.8. <code class="command">IMPORT FOREIGN SCHEMA</code>的 FDW 例程</a></span></dt><dt><span class="sect2"><a href="fdw-callbacks.html#FDW-CALLBACKS-PARALLEL">56.2.9. 并行执行的 FDW 例程</a></span></dt></dl></div><p>     FDW处理器函数返回一个palloc过的<code class="structname">FdwRoutine</code>结构，它包含下文描述的回调函数的指针。扫描相关的函数是必需的，剩下的是可选的。
+    </p><p>     <code class="structname">FdwRoutine</code>结构类型被声明在<code class="filename">src/include/foreign/fdwapi.h</code>中，可以查看它来获得额外的信息。
+    </p><div class="sect2" id="FDW-CALLBACKS-SCAN"><div class="titlepage"><div><div><h3 class="title">56.2.1. 用于扫描外部表的FDW例程</h3></div></div></div><pre class="programlisting">void
+GetForeignRelSize (PlannerInfo *root,
+                   RelOptInfo *baserel,
+                   Oid foreigntableid);</pre><p>
+
+     获取一个外部表的关系尺寸估计。在对一个扫描外部表的查询进行规划的开头将调用该函数。<code class="literal">root</code>是规划器的关于该查询的全局信息；<code class="literal">baserel</code>是规划器的关于该表的信息；<code class="literal">foreigntableid</code>是外部表在<code class="structname">pg_class</code>中的 OID （<code class="literal">foreigntableid</code>可以从规划器的数据结构中获得，但是为了减少工作量，这里直接显式地将它传递给函数）。
+    </p><p>     这个函数应该更新<code class="literal">baserel-&gt;rows</code>为表扫描根据限制条件完成了过滤后将返回的预期行数。<code class="literal">baserel-&gt;rows</code>的初始值只是一个常数的默认估计值，应该尽可能把它替换掉。如果该函数能够计算出一个平均结果行宽度的更好的估计值，该函数也可能选择更新<code class="literal">baserel-&gt;width</code>。
+    </p><p>     更多信息请见<a class="xref" href="fdw-planning.html" title="56.4. 外部数据包装器查询规划">第 56.4 节</a>。
+    </p><pre class="programlisting">void
+GetForeignPaths (PlannerInfo *root,
+                 RelOptInfo *baserel,
+                 Oid foreigntableid);</pre><p>
+
+     为一个外部表上的扫描创建可能的访问路径。这个函数在查询规划过程中被调用。参数和<code class="function">GetForeignRelSize</code>相同，后者已经被调用过了。
+    </p><p>     这个函数必须为外部表上的扫描生成至少一个访问路径（<code class="structname">ForeignPath</code>节点），并且必须调用<code class="function">add_path</code>把每一个这样的路径加入到<code class="literal">baserel-&gt;pathlist</code>中。我们推荐使用<code class="function">create_foreignscan_path</code>来建立<code class="structname">ForeignPath</code>节点。该函数可以生成多个访问路径，例如一个具有合法<code class="literal">pathkeys</code>的路径表示一个预排序好的结果。每一个反问路径必须包含代价估计，并且能包含任何FDW的私有信息，这种信息被用来标识想要使用的指定扫描方法。
+    </p><p>     更多信息请见<a class="xref" href="fdw-planning.html" title="56.4. 外部数据包装器查询规划">第 56.4 节</a>。
+    </p><pre class="programlisting">ForeignScan *
+GetForeignPlan (PlannerInfo *root,
+                RelOptInfo *baserel,
+                Oid foreigntableid,
+                ForeignPath *best_path,
+                List *tlist,
+                List *scan_clauses,
+                Plan *outer_plan);</pre><p>
+
+     从选择的外部访问路径创建一个<code class="structname">ForeignScan</code>计划节点。这个函数在查询规划的末尾被调用。参数和<code class="function">GetForeignRelSize</code>的一样，外加选中的<code class="structname">ForeignPath</code>（在前面由<code class="function">GetForeignPaths</code>、<code class="function">GetForeignJoinPaths</code>或者<code class="function">GetForeignUpperPaths</code>产生）、被计划节点发出的目标列表以及计划节点强制的限制子句以及被<code class="function">RecheckForeignScan</code>执行的复查所使用的<code class="structname">ForeignScan</code>的外子计划（如果该路径是用于一个连接而非基本关系，则<code class="literal">foreigntableid</code>是<code class="literal">InvalidOid</code>）。
+    </p><p>     这个函数必须创建并返回一个<code class="structname">ForeignScan</code>计划节点，我们对剑使用<code class="function">make_foreignscan</code>来建立<code class="structname">ForeignScan</code>节点。
+    </p><p>     更多信息见<a class="xref" href="fdw-planning.html" title="56.4. 外部数据包装器查询规划">第 56.4 节</a>。
+    </p><pre class="programlisting">void
+BeginForeignScan (ForeignScanState *node,
+                  int eflags);</pre><p>
+
+     开始执行一个外部扫描。这个函数在执行器启动阶段被调用。它应该执行任何在扫描能够开始之前需要完成的初始化工作，但是并不开始执行真正的扫描（会在第一次调用<code class="function">IterateForeignScan</code>时完成）。<code class="structname">ForeignScanState</code>节点已经被创建好了，但是它的<code class="structfield">fdw_state</code>域仍然为 NULL。关于要被扫描的表的信息可以通过<code class="structname">ForeignScanState</code>节点访问（特殊地，从底层的<code class="structname">ForeignScan</code>计划节点，它包含任何由<code class="function">GetForeignPlan</code>提供的FDW私有信息）。<code class="literal">eflags</code>包含描述执行器对该计划节点操作模式的标志位。
+    </p><p>     注意当<code class="literal">(eflags &amp; EXEC_FLAG_EXPLAIN_ONLY)</code>为真时，这个函数不应该执行任何外部可见的动作；它应当只做最少的事情来创建对<code class="function">ExplainForeignScan</code> 和<code class="function">EndForeignScan</code>有效的节点状态。
+    </p><pre class="programlisting">TupleTableSlot *
+IterateForeignScan (ForeignScanState *node);</pre><p>
+
+     从外部源获得一行，将它放在一个元组表槽中返回（节点的<code class="structfield">ScanTupleSlot</code>应当被用于此目的）。如果没有更多的行可用则返回 NULL。元组表槽设施允许一个物理的或者虚拟的元组被返回；在大部分情况下出于性能的考虑会倾向于选择后者。注意这是在一个短期存在的内存上下文中被调用的，该内存上下文会在调用之间被重置。如果你需要长期存在的存储，请在<code class="function">BeginForeignScan</code>中创建内存上下文，或者使用节点的<code class="structname">EState</code>中的<code class="structfield">es_query_cxt</code>。
+    </p><p>     如果提供了<code class="structfield">fdw_scan_tlist</code>目标列表，被返回的行必须匹配它，如果没有提供则它们必须匹配被扫描的外部表的行类型。如果选择优化掉不需要的列，你应该在那些列的位置上插入控制或者生成一个忽略了那些列的<code class="structfield">fdw_scan_tlist</code>列表。
+    </p><p>     注意<span class="productname">PostgreSQL</span>的执行器并不在乎被返回的行是否违背了定义在该外部表上的任何约束 — 但是规划器会在乎这一点，并且如果在外部表中有可见行不满足一个约束，规划器可能会错误地优化查询。如果当用户已经声明一个约束应该为真时它却被违背，最合适的处理可能是产生一个错误（就像在数据类型失配的情况下所作的那样）。
+    </p><pre class="programlisting">void
+ReScanForeignScan (ForeignScanState *node);</pre><p>
+
+     从头开始重启一个扫描。注意扫描所依赖的任何参数可能已经改变了值，因此新扫描不一定会返回完全相同的行。
+    </p><pre class="programlisting">void
+EndForeignScan (ForeignScanState *node);</pre><p>
+
+     结束扫描并释放资源。通常释放palloc过的内存并不重要，但是打开的文件和到远程服务器的连接等应该被清理。
+    </p></div><div class="sect2" id="FDW-CALLBACKS-JOIN-SCAN"><div class="titlepage"><div><div><h3 class="title">56.2.2. 用于扫描外部连接的 FDW 例程</h3></div></div></div><p>     如果一个 FDW 支持远程执行外部连接（而不是先把两个表的数据取到本地然后做本地连接），它应该提供这个回调函数：
+    </p><pre class="programlisting">void
+GetForeignJoinPaths (PlannerInfo *root,
+                     RelOptInfo *joinrel,
+                     RelOptInfo *outerrel,
+                     RelOptInfo *innerrel,
+                     JoinType jointype,
+                     JoinPathExtraData *extra);</pre><p>
+     它为两个（或更多）同属于一台外部服务器的外部表的连接创建可能的访问路径。这个可选的函数会在查询规划过程中被调用。和<code class="function">GetForeignPaths</code>一样，这个函数应该为提供的<code class="literal">joinrel</code>生成<code class="structname">ForeignPath</code>路径，并且调用<code class="function">add_path</code>把这些路径加入到该连接应该考虑的路径集合中。但是和<code class="function">GetForeignPaths</code>不一样的是，不需要这个函数产生最少一个路径，因为涉及本地连接的路径总是可用的。
+    </p><p>     注意为相同的连接关系将会重复地调用这个函数用来生成内外关系的不同组合。FDW 需要负责最小化其中重复的工作。
+    </p><p>     如果一个<code class="structname">ForeignPath</code>路径被选中用于该连接，它将在整个连接处理中存在，为其中的成分表和子连接产生的路径将不会被使用。后续对该连接路径的处理大部分和扫描单个外部表的路径一样。一点不同是<code class="structname">ForeignScan</code>计划节点的<code class="structfield">scanrelid</code>应该被设置为零，因为它表示的不是单个关系，而是用<code class="structname">ForeignScan</code>节点的<code class="structfield">fs_relids</code>域来表示被连接的关系集合（后一个域会被核心规划器代码自动设置，不需要由 FDW 填充）。另一点不同是，由于一个远程连接的列列表无法在系统目录中找到，FDW 必须用一个合适的<code class="structfield">TargetEntry</code>节点列表来填充<code class="structfield">fdw_scan_tlist</code>，表示运行时它返回的元组中提供的列的集合。
+    </p><p>     更多信息请见<a class="xref" href="fdw-planning.html" title="56.4. 外部数据包装器查询规划">第 56.4 节</a>。
+    </p></div><div class="sect2" id="FDW-CALLBACKS-UPPER-PLANNING"><div class="titlepage"><div><div><h3 class="title">56.2.3. 用于规划扫描/连接后处理的 FDW 例程</h3></div></div></div><p>     如果一个 FDW 支持执行远程的扫描/连接后处理，例如远程聚集，那么它应该提供这个回调函数：
+    </p><pre class="programlisting">void
+GetForeignUpperPaths (PlannerInfo *root,
+                      UpperRelationKind stage,
+                      RelOptInfo *input_rel,
+                      RelOptInfo *output_rel);</pre><p>
+     为<em class="firstterm">上层关系</em>处理创建可能的访问路径，这是规划器针对所有扫描/连接后查询处理的术语，例如聚集、窗口函数、排序和表更新。在查询规划期间会调用这个可选的函数。当前，只有当该查询中涉及的所有基本关系都属于同一个 FDW 时才会调用这个函数。这个函数应该为 FDW 知道如何远程执行的任何扫描/连接后处理生成<code class="structname">ForeignPath</code>路径，并且调用<code class="function">add_path</code>把这些路径加入到上层关系中。就<code class="function">GetForeignJoinPaths</code>来说，并不要求这个函数在创建任何路径时都能成功，因为路径总是有可能涉及到本地处理。
+    </p><p>     <code class="literal">stage</code>参数表示当前正在考虑的是哪一个扫描/连接后处理步骤。<code class="literal">output_rel</code>是接收表示这一个步骤的路径的上层关系，而<code class="literal">input_rel</code>是表示这个步骤输入的关系（注意被加入到<code class="literal">output_rel</code>中的<code class="structname">ForeignPath</code>路径通常对<code class="literal">input_rel</code>的路径没有直接的依赖，因为它们的处理被认为是在外部处理的。不过，检查为前一个处理步骤生成的路径有助于避免冗余的规划工作）。
+    </p><p>     更多信息请见<a class="xref" href="fdw-planning.html" title="56.4. 外部数据包装器查询规划">第 56.4 节</a>。
+    </p></div><div class="sect2" id="FDW-CALLBACKS-UPDATE"><div class="titlepage"><div><div><h3 class="title">56.2.4. 更新外部表的FDW例程</h3></div></div></div><p>     如果一个FDW支持可写的外部表，根据FDW的需要和功能它应该提供某些或者全部下列回调函数：
+    </p><pre class="programlisting">void
+AddForeignUpdateTargets (Query *parsetree,
+                         RangeTblEntry *target_rte,
+                         Relation target_relation);</pre><p>
+
+     <code class="command">UPDATE</code>和<code class="command">DELETE</code>操作是在之前由表扫描函数取出的行上被执行的。FDW可能需要额外的信息（例如一个行ID或主键列的值）来保证它能够找到要更新或删除的准确行。要支持这些要求，这个函数可以项列列表中增加额外的隐藏或<span class="quote">“<span class="quote">junk</span>”</span>的目标列，它们在一个<code class="command">UPDATE</code>或<code class="command">DELETE</code>期间会被从外部表中获取。
+    </p><p>     要做到这一点，向<code class="literal">parsetree-&gt;targetList</code>中增加<code class="structname">TargetEntry</code>项，它们包含要被获取的额外值的表达式。每一个这样的项必须被标记为<code class="structfield">resjunk</code> = <code class="literal">true</code>，并且必须有一个可区分的<code class="structfield">resname</code>用于在执行期间标识它。请避免使用匹配<code class="literal">ctid<em class="replaceable"><code>N</code></em></code>、<code class="literal">wholerow</code>或<code class="literal">wholerow<em class="replaceable"><code>N</code></em></code>的名字，因为核心系统可能会生成使用这些名字的junk列。
+    </p><p>     这个函数在重写器中被调用，而不是在规划器中，因此可用的信息与在规划例程中的有点区别。<code class="literal">parsetree</code>是<code class="command">UPDATE</code>或<code class="command">DELETE</code>命令的分析树，而<code class="literal">target_rte</code>和<code class="literal">target_relation</code>描述目标外部表。
+    </p><p>     如果<code class="function">AddForeignUpdateTargets</code>指针被设置为<code class="literal">NULL</code>，则不会有额外的目标表达式被加入（这将使得我们不可能实现<code class="command">DELETE</code>操作，而<code class="command">UPDATE</code>则还有可能是可行的，前提是FDW依赖一个未改变的主键来标识行）。
+    </p><pre class="programlisting">List *
+PlanForeignModify (PlannerInfo *root,
+                   ModifyTable *plan,
+                   Index resultRelation,
+                   int subplan_index);</pre><p>
+
+     执行外部表上插入、更新或删除所需的任何附加规划动作。这个函数生成FDW私有信息，该信息将被附加到执行该更新动作的<code class="structname">ModifyTable</code>计划节点。这个私有信息的形式必须是一个<code class="literal">List</code>，并将会在执行阶段被传递给<code class="function">BeginForeignModify</code>。
+    </p><p>     <code class="literal">root</code>是规划器关于该查询的全局信息。<code class="literal">plan</code>是<code class="structname">ModifyTable</code>计划节点，它除了<code class="structfield">fdwPrivLists</code>域之外是完整的。<code class="literal">resultRelation</code>通过目标外部表的范围表索引来标识它。<code class="literal">subplan_index</code>标识这是<code class="structname">ModifyTable</code>计划节点的哪个目标，从零开始计数；如果你希望索引到<code class="literal">plan-&gt;plans</code>或其他<code class="literal">plan</code>节点的子结构中，请使用它。
+    </p><p>     更多信息见<a class="xref" href="fdw-planning.html" title="56.4. 外部数据包装器查询规划">第 56.4 节</a>。
+    </p><p>     如果<code class="function">PlanForeignModify</code>指针被设置为<code class="literal">NULL</code>，则不会有额外的计划时动作被执行，并且传递给<code class="function">BeginForeignModify</code>的<code class="literal">fdw_private</code>列表也将为 NIL。
+    </p><pre class="programlisting">void
+BeginForeignModify (ModifyTableState *mtstate,
+                    ResultRelInfo *rinfo,
+                    List *fdw_private,
+                    int subplan_index,
+                    int eflags);</pre><p>
+
+     开始执行一个外部表修改操作。这个例程在执行器启动期间被调用。它应该执行任何先于实际表修改的初始化工作。随后，<code class="function">ExecForeignInsert</code>、<code class="function">ExecForeignUpdate</code>或<code class="function">ExecForeignDelete</code>将被为每一个将被插入、更新或删除的元组调用。
+    </p><p>     <code class="literal">mtstate</code>是要被执行的<code class="structname">ModifyTable</code>计划节点的状态信息；通过这个结构可以得到关于规划和执行阶段的全局数据。<code class="literal">rinfo</code>是描述目标外部表的<code class="structname">ResultRelInfo</code>结构（<code class="structname">ResultRelInfo</code>的<code class="structfield">ri_FdwState</code>域用于FDW来存储它在此操作中需要的任何私有状态）。<code class="literal">fdw_private</code>包含<code class="function">PlanForeignModify</code>生成的私有数据。<code class="literal">subplan_index</code>标识这是<code class="structname">ModifyTable</code>计划节点的哪个目标。<code class="literal">eflags</code>包含描述执行器对该计划节点操作模式的标志位。
+    </p><p>     注意当<code class="literal">(eflags &amp; EXEC_FLAG_EXPLAIN_ONLY)</code>为真，这个函数不应执行任何外部可见的动作；它只应该做最少的工作来创建<code class="function">ExplainForeignModify</code>和<code class="function">EndForeignModify</code>可用的节点状态。
+    </p><p>     如果<code class="function">BeginForeignModify</code>指针被设置为<code class="literal">NULL</code>，在执行器启动期间将不会采取任何动作。
+    </p><pre class="programlisting">TupleTableSlot *
+ExecForeignInsert (EState *estate,
+                   ResultRelInfo *rinfo,
+                   TupleTableSlot *slot,
+                   TupleTableSlot *planSlot);</pre><p>
+
+     插入一个元组到外部表。<code class="literal">estate</code>是查询的全局执行状态。<code class="literal">rinfo</code>是描述目标外部表的<code class="structname">ResultRelInfo</code>结构。<code class="literal">slot</code>包含要被插入的元组；它将匹配外部表的行类型定义。<code class="literal">planSlot</code>包含由<code class="structname">ModifyTable</code>计划节点的子计划生成的元组；它与<code class="literal">slot</code>不同，它可能包含额外的<span class="quote">“<span class="quote">junk</span>”</span>列（<code class="command">INSERT</code>情况通常不关心<code class="literal">planSlot</code>，但是为了完整性还是在这里提供它）。
+    </p><p>     返回值可以是一个包含实际被插入的数据的槽（这可能会和所提供的数据不同，例如一个触发器动作的结果），或者为 NULL 表示实际没有插入行（还是触发器的结果）。被传入的<code class="literal">slot</code>可以被重用于这个目的。
+    </p><p>     在返回槽中的数据只有在<code class="command">INSERT</code>查询具有一个<code class="literal">RETURNING</code>子句或者外部表具有一个<code class="literal">AFTER ROW</code>触发器时才被使用。触发器要求所有的列，但是 FDW 应该选择优化成根据<code class="literal">RETURNING</code>子句的内容返回某些或全部列。不管怎样，某些槽必须被返回来指示成功，或者查询报告的行计数将会是错误的。
+    </p><p>     如果<code class="function">ExecForeignInsert</code>指针被设置为<code class="literal">NULL</code>，尝试向外部表插入将会失败并报告一个错误消息。
+    </p><pre class="programlisting">TupleTableSlot *
+ExecForeignUpdate (EState *estate,
+                   ResultRelInfo *rinfo,
+                   TupleTableSlot *slot,
+                   TupleTableSlot *planSlot);</pre><p>
+
+     更新外部表中的一个元组。<code class="literal">estate</code>是查询的全局执行状态。<code class="literal">rinfo</code>是描述目标外部表的<code class="structname">ResultRelInfo</code>结构。<code class="literal">slot</code>包含元组的新数据；它将匹配外部表的行类型定义。<code class="literal">planSlot</code>包含由<code class="structname">ModifyTable</code>计划节点的子计划生成的元组；它与<code class="literal">slot</code>不同，它可能包含额外的<span class="quote">“<span class="quote">junk</span>”</span>列（<code class="command">INSERT</code>情况通常不关心<code class="literal">planSlot</code>，但是为了完整性还是在这里提供它）。特殊地，任何<code class="function">AddForeignUpdateTargets</code>所要求的junk列在这个槽中都是有效的。
+    </p><p>     返回值可以是一个包含实际被更新的数据的槽（这可能会和所提供的数据不同，例如一个触发器动作的结果），或者为 NULL 表示实际没有更新行（还是触发器的结果）。被传入的<code class="literal">slot</code>可以被重用于这个目的。
+    </p><p>    在返回槽中的数据只有在<code class="command">UPDATE</code>查询具有一个<code class="literal">RETURNING</code>子句或者外部表具有一个<code class="literal">AFTER ROW</code>触发器时才被使用。触发器要求所有的列，但是 FDW 应该选择优化成根据<code class="literal">RETURNING</code>子句的内容返回某些或全部列。不管怎样，某些槽必须被返回来指示成功，或者查询报告的行计数将会是错误的。
+    </p><p>     如果<code class="function">ExecForeignUpdate</code>指针被设置为<code class="literal">NULL</code>，尝试更新外部表将会失败并报告一个错误消息。
+    </p><pre class="programlisting">TupleTableSlot *
+ExecForeignDelete (EState *estate,
+                   ResultRelInfo *rinfo,
+                   TupleTableSlot *slot,
+                   TupleTableSlot *planSlot);</pre><p>
+
+     从外部表删除一个元组。<code class="literal">estate</code>是查询的全局执行状态。<code class="literal">rinfo</code>是描述目标外部表的<code class="structname">ResultRelInfo</code>结构。<code class="literal">slot</code>在调用时不包含任何有用的东西，但是可以被用于保持被返回的元组。<code class="literal">planSlot</code>包含由<code class="structname">ModifyTable</code>计划节点的子计划生成的元组；特殊地，它将携带<code class="function">AddForeignUpdateTargets</code>所要求的任意垃圾列。垃圾列被用来标识要被删除的元组。
+    </p><p>     返回值可以是一个包含实际被删除的数据的槽（这可能会和所提供的数据不同，例如一个触发器动作的结果），或者为 NULL 表示实际没有删除行（还是触发器的结果）。被传入的<code class="literal">slot</code>可以被重用于这个目的。
+    </p><p>    在返回槽中的数据只有在<code class="command">DELETE</code>查询具有一个<code class="literal">RETURNING</code>子句或者外部表具有一个<code class="literal">AFTER ROW</code>触发器时才被使用。触发器要求所有的列，但是 FDW 应该选择优化成根据<code class="literal">RETURNING</code>子句的内容返回某些或全部列。不管怎样，某些槽必须被返回来指示成功，或者查询报告的行计数将会是错误的。
+    </p><p>     如果<code class="function">ExecForeignDelete</code>指针被设置为<code class="literal">NULL</code>，尝试从外部表中删除将会失败并报告一个错误消息。
+    </p><pre class="programlisting">void
+EndForeignModify (EState *estate,
+                  ResultRelInfo *rinfo);</pre><p>
+
+     结束表更新并释放资源。通常释放palloc的内存并不重要，但是打开的文件和到远程服务器的连接等应当被清除。
+    </p><p>     如果<code class="function">EndForeignModify</code>指针被设置为<code class="literal">NULL</code>，在执行器关闭期间不会采取任何动作。
+    </p><pre class="programlisting">int
+IsForeignRelUpdatable (Relation rel);</pre><p>
+
+     报告指定的外部表支持哪些更新操作。返回值应该是一个规则事件编号的位掩码，它指示了哪些操作被外部表支持，它使用<code class="literal">CmdType</code>枚举，即：
+     <code class="literal">(1 &lt;&lt; CMD_UPDATE) = 4</code>表示<code class="command">UPDATE</code>、
+     <code class="literal">(1 &lt;&lt; CMD_INSERT) = 8</code>表示<code class="command">INSERT</code>以及
+     <code class="literal">(1 &lt;&lt; CMD_DELETE) = 16</code>表示<code class="command">DELETE</code>。
+    </p><p>     如果<code class="function">IsForeignRelUpdatable</code>指针被设置为<code class="literal">NULL</code>，而FDW提供了<code class="function">ExecForeignInsert</code>、<code class="function">ExecForeignUpdate</code>或<code class="function">ExecForeignDelete</code>，则外部表分别被假定为可插入、可更新或可删除。只有在FDW支持某些表是可更新的而某些不是可更新的时候，才需要这个函数（即便如此，也允许在执行例程中抛出一个错误而不是在这个函数中检查。但是，这个函数被用来决定显示在<code class="literal">information_schema</code>视图中的可更新性）。
+    </p><p>     一些对于外部表的插入、更新和删除可以通过实现另一组接口来优化。普通的插入、更新和删除接口会从远程服务器取得行，然后一次修改其中一行。在某些情况下，这种逐行的方式是必要的，但是可能效率不高。如果有可能让外部服务器判断哪些行可以直接修改而无需先检索它们并且没有本地触发器会影响该操作，那么可以让整个操作在远程服务器上执行。下面介绍的接口能让这种做法变成可能。
+    </p><pre class="programlisting">bool
+PlanDirectModify (PlannerInfo *root,
+                  ModifyTable *plan,
+                  Index resultRelation,
+                  int subplan_index);</pre><p>
+
+     决定在远程服务器上执行直接修改是否安全。如果安全，执行所需的规划动作然后返回<code class="literal">true</code>。否则返回<code class="literal">false</code>。这个可选的函数在查询规划期间被调用。如果这个函数成功，在执行阶段将会调用<code class="function">BeginDirectModify</code>、<code class="function">IterateDirectModify</code>和<code class="function">EndDirectModify</code>。否则，对表的修改将采用上文描述的表更新函数来执行。参数和<code class="function">PlanForeignModify</code>的相同。
+    </p><p>     要在远程服务器上执行直接修改，这个函数必须用一个<code class="structname">ForeignScan</code>计划节点（它在远程服务器上执行直接修改）重写目标子计划。<code class="structname">ForeignScan</code>的<code class="structfield">operation</code>域必须被合适地设置为<code class="literal">CmdType</code>枚举值，即<code class="literal">CMD_UPDATE</code>表示<code class="command">UPDATE</code>、<code class="literal">CMD_INSERT</code>表示<code class="command">INSERT</code>而<code class="literal">CMD_DELETE</code>表示<code class="command">DELETE</code>。
+    </p><p>     更多信息请见<a class="xref" href="fdw-planning.html" title="56.4. 外部数据包装器查询规划">第 56.4 节</a>。
+    </p><p>     如果<code class="function">PlanDirectModify</code>指针被设置为<code class="literal">NULL</code>，不会尝试在远程服务器上执行直接修改。
+    </p><pre class="programlisting">void
+BeginDirectModify (ForeignScanState *node,
+                   int eflags);</pre><p>
+
+     准备在远程服务器上执行一次直接修改。这个函数会在执行器启动时被调用。它应该执行直接修改所需的任何初始化工作（应该在第一次<code class="function">IterateDirectModify</code>调用之前完成）。<code class="structname">ForeignScanState</code>节点已经被创建，但是它的<code class="structfield">fdw_state</code>域仍然为 NULL。有关要被修改的表的信息可以通过<code class="structname">ForeignScanState</code>节点（具体地，从底层的<code class="structname">ForeignScan</code>计划节点，它包含了<code class="function">PlanDirectModify</code>提供的 FDW-私有信息）访问。<code class="literal">eflags</code>包含描述执行器对于这个计划节点操作模式的标志位。
+    </p><p>     注意当<code class="literal">(eflags &amp; EXEC_FLAG_EXPLAIN_ONLY)</code>为真时，这个函数不应该执行任何外部可见的动作。它应当只做最少的工作让该节点状态对<code class="function">ExplainDirectModify</code>和<code class="function">EndDirectModify</code>有效。
+    </p><p>     如果<code class="function">BeginDirectModify</code>指针被设置为<code class="literal">NULL</code>，不会尝试在远程服务器上执行直接修改。
+    </p><pre class="programlisting">TupleTableSlot *
+IterateDirectModify (ForeignScanState *node);</pre><p>
+
+     当<code class="command">INSERT</code>、<code class="command">UPDATE</code>或者<code class="command">DELETE</code>查询没有<code class="literal">RETURNING</code>子句时，完成远程服务器上的直接修改后返回 NULL。当查询有该子句时，取出一个包含<code class="literal">RETURNING</code>计算所需数据的结果，用一个元组表槽返回它（节点的<code class="structfield">ScanTupleSlot</code>应被用于这一目的）。实际被插入、更新或者删除的数据必须被存储在该节点的<code class="structname">EState</code>的<code class="literal">es_result_relation_info-&gt;ri_projectReturning-&gt;pi_exprContext-&gt;ecxt_scantuple</code>中。如果没有更多行可用，则返回 NULL。注意这个函数会在一个短期生存的内存上下文中被调用，该上下文会在两次调用之间被重置。如果需要一个长期存在的存储，可以在<code class="function">BeginDirectModify</code>中创建一个内存上下文，或者使用该节点的<code class="structname">EState</code>中的<code class="structfield">es_query_cxt</code>。
+    </p><p>     如果提供了<code class="structfield">fdw_scan_tlist</code>目标列表，则被返回的行必须匹配它。否则，被返回的行必须匹配被更新的外部表的行类型。如果选择优化掉<code class="literal">RETURNING</code>计算不需要的列，应该在这些列的位置上插入空值，或者生成一个忽略这些列的<code class="structfield">fdw_scan_tlist</code>列表。
+    </p><p>     不管该查询是否具有<code class="literal">RETURNING</code>子句，查询所报告的行计数必须由 FDW 本身增加。当查询没有该子句时，FDW 还必须为<code class="command">EXPLAIN ANALYZE</code>情况下的<code class="structname">ForeignScanState</code>节点增加行计数。
+    </p><p>     如果<code class="function">IterateDirectModify</code>指针被设置为<code class="literal">NULL</code>，不会尝试在远程服务器上执行直接修改。
+    </p><pre class="programlisting">void
+EndDirectModify (ForeignScanState *node);</pre><p>
+
+     在远程服务器上的直接修改后进行清理。通常释放用 palloc 分配的内存并不重要，但是诸如打开的文件和到远程服务器的连接应该被清除。
+    </p><p>     如果<code class="function">EndDirectModify</code>指针被设置为<code class="literal">NULL</code>，不会尝试在远程服务器上执行直接修改。
+    </p></div><div class="sect2" id="FDW-CALLBACKS-ROW-LOCKING"><div class="titlepage"><div><div><h3 class="title">56.2.5. 用于行锁定的 FDW 例程</h3></div></div></div><p>     如果一个 FDW 希望支持<em class="firstterm">后期行锁定</em>（如<a class="xref" href="fdw-row-locking.html" title="56.5. 外部数据包装器中的行锁定">第 56.5 节</a>中所述），它必须提供下列回调函数：
+    </p><pre class="programlisting">RowMarkType
+GetForeignRowMarkType (RangeTblEntry *rte,
+                       LockClauseStrength strength);</pre><p>
+
+     报告要对一个外部表使用哪个行标记选项。<code class="literal">rte</code>是该表的<code class="structname">RangeTblEntry</code>节点，而<code class="literal">strength</code>描述<code class="literal">FOR UPDATE/SHARE</code>子句（如果有）所要求的锁长度。结果必须是<code class="literal">RowMarkType</code>枚举类型的一个成员。
+    </p><p>     这个函数在查询规划期间会为每一个出现在<code class="command">UPDATE</code>、<code class="command">DELETE</code>或者<code class="command">SELECT FOR UPDATE/SHARE</code>查询中的外部表调用，并且该外部表不是<code class="command">UPDATE</code>和<code class="command">DELETE</code>的目标。
+    </p><p>     如果<code class="function">GetForeignRowMarkType</code>指针被设置为<code class="literal">NULL</code>，将总是使用<code class="literal">ROW_MARK_COPY</code>选项（这意味着将不会调用<code class="function">RefetchForeignRow</code>，因此也不必提供它）。
+    </p><p>     更多信息请见<a class="xref" href="fdw-row-locking.html" title="56.5. 外部数据包装器中的行锁定">第 56.5 节</a>。
+    </p><pre class="programlisting">HeapTuple
+RefetchForeignRow (EState *estate,
+                   ExecRowMark *erm,
+                   Datum rowid,
+                   bool *updated);</pre><p>
+
+     从外部表中重新取得一个元组，如有必要先锁定它。<code class="literal">estate</code>是该查询的全局执行状态。<code class="literal">erm</code>是描述目标外部表以及要获取的行锁类型（如果有）的<code class="structname">ExecRowMark</code>结构。<code class="literal">rowid</code>标识要取得的元组。<code class="literal">updated</code>是一个输出参数。
+    </p><p>     这个函数应该返回被取得的元组的一个已经分配内存的拷贝，如果无法得到行锁则返回<code class="literal">NULL</code>。要获得的行锁由<code class="literal">erm-&gt;markType</code>定义，它是之前由<code class="function">GetForeignRowMarkType</code>返回的值（<code class="literal">ROW_MARK_REFERENCE</code>标识只重新取得元组但不获得任何锁，这个例程将不会看到<code class="literal">ROW_MARK_COPY</code>）。
+    </p><p>     此外，如果取得的是一个更新过的版本而不是之前获得的同一版本，<code class="literal">*updated</code>应被设置为<code class="literal">true</code>（如果 FDW 无法确定这一点，推荐总是返回<code class="literal">true</code>）。
+    </p><p>     注意在默认情况下，获取行锁失败应该导致产生错误。如果<code class="literal">erm-&gt;waitPolicy</code>指定了<code class="literal">SKIP LOCKED</code>，只有返回<code class="literal">NULL</code>才是合适的。
+    </p><p>     <code class="literal">rowid</code>是要被重新取得的行之前读到的<code class="structfield">ctid</code>值。尽管<code class="literal">rowid</code>值被作为<code class="type">Datum</code>传递，但是目前它只能被读作<code class="type">tid</code>。选择该函数 API 是希望未来能允许其他的行 ID 数据类型。
+    </p><p>     如果<code class="function">RefetchForeignRow</code>指针被设置为<code class="literal">NULL</code>，重新取得行的尝试将会失败并伴随有一个错误消息。
+    </p><p>     更多信息请见<a class="xref" href="fdw-row-locking.html" title="56.5. 外部数据包装器中的行锁定">第 56.5 节</a>。
+    </p><pre class="programlisting">bool
+RecheckForeignScan (ForeignScanState *node, TupleTableSlot *slot);</pre><p>
+     重新检查之前返回的元组是否仍然匹配相关的扫描和连接条件，并且可能提供该元组的一个修改版本。对于不执行连接下推的外部数据包装器，通常把这设置为<code class="literal">NULL</code>并且恰当地设置<code class="structfield">fdw_recheck_quals</code>会更方便。不过当外部连接被下推时，把与所有基表相关的检查重新应用在结果元组上是不够的，即便所有需要的属性都存在也是如此，因为匹配某个条件失败可能会导致某些属性变成 NULL，而不是没有元组被返回。<code class="literal">RecheckForeignScan</code>能够重新检查条件，并且在它们仍然满足时返回真，否则返回假，但是它也能够在提供的槽中存储一个替换元组。
+    </p><p>     要实现连接下推，外部数据包装器通常将构造一个可替代的本地连接计划，它只被用来做重新检查。这将变成<code class="literal">ForeignScan</code>的外子计划。在需要一次重新检查时，这个子计划可以被执行并且结果元组可以被存储在槽中。这个计划不需要效率很高，因为不会有基表返回超过一行。例如，它可以把所有的连接实现为嵌套循环。函数<code class="literal">GetExistingLocalJoinPath</code>可以被用来在已有的路径中搜索合适的本地连接路径，它可以被用作替换的本地连接计划。<code class="literal">GetExistingLocalJoinPath</code>会在指定连接关系的路径列表中搜索一个非参数化路径（如果没有找到这样的路径，它会返回 NULL，这种情况下外部数据包装器可以自行构造本地路径或者可以选择不为这个连接创建访问路径）。
+    </p></div><div class="sect2" id="FDW-CALLBACKS-EXPLAIN"><div class="titlepage"><div><div><h3 class="title">56.2.6. <code class="command">EXPLAIN</code>的FDW例程</h3></div></div></div><pre class="programlisting">void
+ExplainForeignScan (ForeignScanState *node,
+                    ExplainState *es);</pre><p>
+
+     为一个外部表扫描打印额外的<code class="command">EXPLAIN</code>输出。这个函数可以调用<code class="function">ExplainPropertyText</code>和相关函数来向<code class="command">EXPLAIN</code>输出中增加域。<code class="literal">es</code>中的标志域可以被用来决定什么将被打印，并且<code class="structname">ForeignScanState</code>节点的状态可以被检查来为<code class="command">EXPLAIN ANALYZE</code>提供运行时统计数据。
+    </p><p>     如果<code class="function">ExplainForeignScan</code>指针被设置为<code class="literal">NULL</code>，在<code class="command">EXPLAIN</code>期间不会打印任何额外的信息。
+    </p><pre class="programlisting">void
+ExplainForeignModify (ModifyTableState *mtstate,
+                      ResultRelInfo *rinfo,
+                      List *fdw_private,
+                      int subplan_index,
+                      struct ExplainState *es);</pre><p>
+
+     为一个外部表更新打印额外的<code class="command">EXPLAIN</code>输出。这个函数可以调用<code class="function">ExplainPropertyText</code>和相关函数来向<code class="command">EXPLAIN</code>输出中增加域。<code class="literal">es</code>中的标志域可以被用来决定什么将被打印，并且<code class="structname">ModifyTableState</code>节点的状态可以被检查来为<code class="command">EXPLAIN ANALYZE</code>提供运行时统计数据。前四个参数和<code class="function">BeginForeignModify</code>相同。
+    </p><p>     如果<code class="function">ExplainForeignModify</code>指针被设置为<code class="literal">NULL</code>，在<code class="command">EXPLAIN</code>期间不会打印任何额外的信息。
+    </p><pre class="programlisting">void
+ExplainDirectModify (ForeignScanState *node,
+                     ExplainState *es);</pre><p>
+
+     为远程服务器上的直接修改打印额外的<code class="command">EXPLAIN</code>输出。这个函数可以调用<code class="function">ExplainPropertyText</code>和相关函数来为<code class="command">EXPLAIN</code>输出增加域。<code class="literal">es</code>中的标志域可以被用来判断要打印什么，并且在<code class="command">EXPLAIN ANALYZE</code>情况中可以观察<code class="structname">ForeignScanState</code>节点的状态来提供运行时统计信息。
+    </p><p>     如果<code class="function">ExplainDirectModify</code>指针被设置为<code class="literal">NULL</code>，<code class="command">EXPLAIN</code>期间不会打印出额外的信息。
+    </p></div><div class="sect2" id="FDW-CALLBACKS-ANALYZE"><div class="titlepage"><div><div><h3 class="title">56.2.7. <code class="command">ANALYZE</code>的FDW例程</h3></div></div></div><pre class="programlisting">bool
+AnalyzeForeignTable (Relation relation,
+                     AcquireSampleRowsFunc *func,
+                     BlockNumber *totalpages);</pre><p>
+
+     当<a class="xref" href="sql-analyze.html" title="ANALYZE"><span class="refentrytitle">ANALYZE</span></a>被执行在一个外部表上时会调用这个函数。如果FDW可以为这个外部表收集统计信息，它会返回<code class="literal">true</code>并提供一个函数指针，该函数将将从<em class="parameter"><code>func</code></em>中的表上收集采样行，外加<em class="parameter"><code>totalpages</code></em>中页面中的表尺寸估计值。否则，返回<code class="literal">false</code>。
+    </p><p>     如果FDW不支持为任何表收集统计信息，<code class="function">AnalyzeForeignTable</code>指针可以被设置为<code class="literal">NULL</code>。
+    </p><p>     如果提供，采样收集函数必须具有签名
+</p><pre class="programlisting">int
+AcquireSampleRowsFunc (Relation relation, int elevel,
+                       HeapTuple *rows, int targrows,
+                       double *totalrows,
+                       double *totaldeadrows);</pre><p>
+
+     应该从该表上收集最多<em class="parameter"><code>targrows</code></em>行的一个随机采样并将它存放到调用者提供的<em class="parameter"><code>rows</code></em>数组中。实际被收集的行的数量必须被返回。另外，将表中有效行和死亡行的总数存储到输出参数<em class="parameter"><code>totalrows</code></em>和<em class="parameter"><code>totaldeadrows</code></em>中（如果FDW没有死亡行的概念，将<em class="parameter"><code>totaldeadrows</code></em>设置为 0 ）。
+    </p></div><div class="sect2" id="FDW-CALLBACKS-IMPORT"><div class="titlepage"><div><div><h3 class="title">56.2.8. <code class="command">IMPORT FOREIGN SCHEMA</code>的 FDW 例程</h3></div></div></div><pre class="programlisting">List *
+ImportForeignSchema (ImportForeignSchemaStmt *stmt, Oid serverOid);</pre><p>
+
+     取得一个外部表创建命令的列表。在执行<a class="xref" href="sql-importforeignschema.html" title="IMPORT FOREIGN SCHEMA"><span class="refentrytitle">IMPORT FOREIGN SCHEMA</span></a>时会调用这个函数，并且会把该语句的解析树以及要使用的外部服务器的 OID 传递给它。它应该返回一个 C 字符串的列表，每一个必须包含一个<a class="xref" href="sql-createforeigntable.html" title="CREATE FOREIGN TABLE"><span class="refentrytitle">CREATE FOREIGN TABLE</span></a>命令。这些命令将被核心服务器所解析和执行。
+    </p><p>     在<code class="structname">ImportForeignSchemaStmt</code>结构中，<code class="structfield">remote_schema</code>是要从其中导入这些表的远程模式的名称。<code class="structfield">list_type</code>标识如何过滤表名：<code class="literal">FDW_IMPORT_SCHEMA_ALL</code>表示该远程模式中的所有表都应该被导入（这种情况下<code class="structfield">table_list</code>为空），<code class="literal">FDW_IMPORT_SCHEMA_LIMIT_TO</code>表示只包括<code class="structfield">table_list</code>中列出的表，而<code class="literal">FDW_IMPORT_SCHEMA_EXCEPT</code>则表示排除<code class="structfield">table_list</code>中列出的表。<code class="structfield">options</code>是一个用于该导入处理的选项列表。选项的含义由 FDW 决定。例如，一个 FDW 可以用一个选项来定义是否应该导入列的<code class="literal">NOT NULL</code>属性。这些选项不需要与那些 FDW 支持的数据库对象选项有什么关系。
+    </p><p>     FDW 可能会忽略<code class="structname">ImportForeignSchemaStmt</code>的<code class="structfield">local_schema</code>域，因为核心服务器会自动地向解析好的<code class="command">CREATE FOREIGN TABLE</code>命令中插入本地模式的名称。
+    </p><p>     FDW 也不必担心实现<code class="structfield">list_type</code>以及<code class="structfield">table_list</code>所指定的过滤，因为核心服务器将自动根据那些选项跳过为被排除的表所返回的命令。不过，起初就避免为被排除的表创建命令当然更好。函数<code class="function">IsImportableForeignTable()</code>可以用来测试一个给定的外部表名是否能通过该过滤器。
+    </p><p>     如果 FDW 不支持导入表定义，<code class="function">ImportForeignSchema</code>指针可以被设置为<code class="literal">NULL</code>。
+    </p></div><div class="sect2" id="FDW-CALLBACKS-PARALLEL"><div class="titlepage"><div><div><h3 class="title">56.2.9. 并行执行的 FDW 例程</h3></div></div></div><p>     <code class="structname">ForeignScan</code>节点可以选择支持并行执行。一个并行的
+	 <code class="structname">ForeignScan</code>将在多个进程中执行，
+	 并且在相互合作的进程中每个行必须只被返回一次。要做到这样，
+	 进程可以通过动态共享内存的固定尺寸块来协作。
+	 并不保证在每一个进程中这部份共享内存都被映射到相同的地址，
+	 因此必须不能包含指针。下面的函数都是可选的，但是如果要支持并行执行需要提供大多数。
+    </p><pre class="programlisting">bool
+IsForeignScanParallelSafe(PlannerInfo *root, RelOptInfo *rel,
+                          RangeTblEntry *rte);</pre><p>
+    测试一个扫描是否可以在一个并行工作者中被执行。只有当规划器相信可以使用并行计划时才会调用这个函数，如果该扫描在并行工作者中可以安全运行这个函数应该返回真。如果远程数据源具有事务语义，情况通常都不是这样，除非工作者到数据的连接能够以某种方式共享与领导者相同的事务环境。
+    </p><p>    如果没有定义这个函数，则假定该扫描必须被放置在并行领导者中。注意返回真并不意味着该扫描本身可以被并行完成，只是说明该扫描可以在一个并行工作者中执行。因此，即便当不支持并行执行时，定义这个方法也是有用的。
+    </p><pre class="programlisting">Size
+EstimateDSMForeignScan(ForeignScanState *node, ParallelContext *pcxt);</pre><p>
+    估算并行操作所需的动态共享内存的数量。这可能比实际要用的数量更大，但是绝不能更小。返回值的单位是字节。
+	该函数是可选的，如果不需要可以省略；但是如果省略它，
+	接下来的三个函数也必须省略，因为没有分配共享内存将给FDW使用。
+    </p><pre class="programlisting">void
+InitializeDSMForeignScan(ForeignScanState *node, ParallelContext *pcxt,
+                         void *coordinate);</pre><p>
+    初始化并行操作所需的动态共享内存。<code class="literal">coordinate</code>指向共享内存区域，
+	其大小等于<code class="function">EstimateDSMForeignScan</code>的返回值。
+	该函数是可选的，如果不需要可以省略。
+   </p><pre class="programlisting">void
+ReInitializeDSMForeignScan(ForeignScanState *node, ParallelContext *pcxt,
+                           void *coordinate);</pre><p>
+    当外部扫描计划节点即将被重新扫描时，重新初始化并行操作所需的动态共享内存。
+	该函数是可选的，如果不需要可以省略。推荐的做法是此函数仅重置共享状态，
+	而<code class="function">ReScanForeignScan</code>函数仅重置本地状态。目前，
+	这个函数会在<code class="function">ReScanForeignScan</code>之前调用，但最好不要依赖这个顺序。
+   </p><pre class="programlisting">void
+InitializeWorkerForeignScan(ForeignScanState *node, shm_toc *toc,
+                            void *coordinate);</pre><p>
+    基于<code class="literal">InitializeDSMForeignScan</code>
+	期间领导者设置的共享状态初始化并行工作者的本地状态。这个函数是可选的，
+	如果不需要可以省略。
+   </p><pre class="programlisting">void
+ShutdownForeignScan(ForeignScanState *node);</pre><p>
+    预计节点将不会执行完成时释放资源。这在所有情况下都不被调用；有时，
+	<code class="literal">EndForeignScan</code>可能会在没有先调用此函数的情况下调用。
+	由于并行查询使用的DSM段在调用此回调后即被销毁，
+	因此希望在DSM段消失之前采取某些操作的外部数据包装器应实现此方法。
+   </p></div></div><div class="navfooter"><hr /><table width="100%" summary="Navigation footer"><tr><td width="40%" align="left"><a accesskey="p" href="fdw-functions.html">上一页</a> </td><td width="20%" align="center"><a accesskey="u" href="fdwhandler.html">上一级</a></td><td width="40%" align="right"> <a accesskey="n" href="fdw-helpers.html">下一页</a></td></tr><tr><td width="40%" align="left" valign="top">56.1. 外部数据包装器函数 </td><td width="20%" align="center"><a accesskey="h" href="index.html">起始页</a></td><td width="40%" align="right" valign="top"> 56.3. 外部数据包装器助手函数</td></tr></table></div></body></html>

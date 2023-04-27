@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><title>64.3. 可扩展性</title><link rel="stylesheet" type="text/css" href="stylesheet.css" /><link rev="made" href="pgsql-docs@postgresql.org" /><meta name="generator" content="DocBook XSL Stylesheets V1.79.1" /><link rel="prev" href="gin-builtin-opclasses.html" title="64.2. 内建操作符类" /><link rel="next" href="gin-implementation.html" title="64.4. 实现" /></head><body><div xmlns="http://www.w3.org/TR/xhtml1/transitional" class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="5" align="center">64.3. 可扩展性</th></tr><tr><td width="10%" align="left"><a accesskey="p" href="gin-builtin-opclasses.html" title="64.2. 内建操作符类">上一页</a> </td><td width="10%" align="left"><a accesskey="u" href="gin.html" title="第 64 章 GIN 索引">上一级</a></td><th width="60%" align="center">第 64 章 GIN 索引</th><td width="10%" align="right"><a accesskey="h" href="index.html" title="PostgreSQL 10.1 手册">起始页</a></td><td width="10%" align="right"> <a accesskey="n" href="gin-implementation.html" title="64.4. 实现">下一页</a></td></tr></table><hr></hr></div><div class="sect1" id="GIN-EXTENSIBILITY"><div class="titlepage"><div><div><h2 class="title" style="clear: both">64.3. 可扩展性</h2></div></div></div><p>   <acronym class="acronym">GIN</acronym>接口有一个高层次的抽象，要求访问方法实现者只需要实现数据类型被访问的语义。<acronym class="acronym">GIN</acronym>层本身会操心并发、日志和搜索树结构的事情。
+ </p><p>   要让一个<acronym class="acronym">GIN</acronym>访问方法工作起来所要做的全部事情就是实现一些用户定义的方法，它们定义了树中键的行为以及键、被索引项以及可索引查询之间的关系。简而言之，<acronym class="acronym">GIN</acronym>的可扩展性结合了通用性、代码重用和一个干净的接口。
+ </p><p>   一个用于<acronym class="acronym">GIN</acronym>的操作符类必须提供的两个方法是：
+
+ </p><div class="variablelist"><dl class="variablelist"><dt><span class="term"><code class="function">Datum *extractValue(Datum itemValue, int32 *nkeys,
+        bool **nullFlags)</code></span></dt><dd><p>       给定一个要被索引的项，返回一个 palloc 过的键的数组。被返回的键的数量必须被存储在<code class="literal">*nkeys</code>中。如果键中的任意一个可能为空，还要 palloc 一个<code class="literal">*nkeys</code> 个<code class="type">bool</code>域的数组，将它的地址存储在<code class="literal">*nullFlags</code>中，并且根据需要设置这些空值标志。如果所有的键都非空，<code class="literal">*nullFlags</code>可以被留成<code class="symbol">NULL</code>（其初始值）。如果该项不包含键，返回值可以为<code class="symbol">NULL</code>。
+      </p></dd><dt><span class="term"><code class="function">Datum *extractQuery(Datum query, int32 *nkeys,
+        StrategyNumber n, bool **pmatch, Pointer **extra_data,
+        bool **nullFlags, int32 *searchMode)</code></span></dt><dd><p>       给定一个要被查询的值，返回一个 palloc 过的键的数组。即<code class="literal">query</code>是一个可索引操作符（左手边是被索引列）的右手边的值。<code class="literal">n</code>是操作符类中操作符的策略号（见<a class="xref" href="xindex.html#XINDEX-STRATEGIES" title="37.14.2. 索引方法策略">第 37.14.2 节</a>）。通常，<code class="function">extractQuery</code>将需要参考<code class="literal">n</code>来判断<code class="literal">query</code>的数据类型以及它应该用什么方法来抽取键值。被返回的键的数量必须被存储在<code class="literal">*nkeys</code>中。如果键中的任意一个可能为空，还要 palloc 一个<code class="literal">*nkeys</code> 个<code class="type">bool</code>域的数组，将它的地址存储在<code class="literal">*nullFlags</code>中，并且根据需要设置这些空值标志。如果所有的键都非空，<code class="literal">*nullFlags</code>可以被留成<code class="symbol">NULL</code>（其初始值）。如果该项不包含键，返回值可以为<code class="symbol">NULL</code>。
+      </p><p>       <code class="literal">searchMode</code>是一个输出参数，它允许<code class="function">extractQuery</code>指定有关搜索如何被完成的细节。如果<code class="literal">*searchMode</code>被设置为<code class="literal">GIN_SEARCH_MODE_DEFAULT</code>（这是在被调用之前它被初始化的值），只有那些匹配至少一个被返回键的项才会被考虑作为候选匹配。如果<code class="literal">*searchMode</code>被设置为<code class="literal">GIN_SEARCH_MODE_INCLUDE_EMPTY</code>，那么除了至少包含一个匹配键的项之外，根本不包含键的项也被考虑作为候选匹配（例如，这种模式对于实现“是...的子集”操作符有用）。如果<code class="literal">*searchMode</code>被设置为<code class="literal">GIN_SEARCH_MODE_ALL</code>，那么索引中所有非空项都被考虑作为候选匹配，不管它们是否匹配被返回的键（这种模式比其他两种选择要慢很多，但是它对于正确实现极端情况可能是必要的。需要这种模式的操作符在大部分情况下可能并不是一个 GIN 操作符类的好选择）。用于设置这个模式的符号被定义在<code class="filename">access/gin.h</code>中。
+      </p><p>       <code class="literal">pmatch</code>是一个输出参数，它用于在部分匹配匹配被支持时使用。要用它，<code class="function">extractQuery</code>必须分配一个<code class="literal">*nkeys</code>个布尔值的数组，并且把它的地址存储在<code class="literal">*pmatch</code>中。如果一个键要求部分匹配，该数组的对应元素应该被设置为 TRUE，否则设置为 FALSE。如果<code class="literal">*pmatch</code>被设置为<code class="symbol">NULL</code>，则 GIN 假定不需要部分匹配。在调用前，该变量被初始化为<code class="symbol">NULL</code>，这样这个参数可以简单地被不支持部分匹配的操作符类忽略。
+      </p><p>       <code class="literal">extra_data</code>是一个输出参数，它允许<code class="function">extractQuery</code>传递额外数据给<code class="function">consistent</code>和<code class="function">comparePartial</code>方法。要用它，<code class="function">extractQuery</code>必须分配一个<code class="literal">*nkeys</code>个指针的数组，并且把它的地址存储在<code class="literal">*extra_data</code>中，然后把任何它想存储的东西存到单个指针中。在调用前该变量被初始化为<code class="symbol">NULL</code>，这样这个参数可以简单地被不需要额外数据的操作符类忽略。如果<code class="literal">*extra_data</code>被设置，整个数组被传递给<code class="function">consistent</code>方法，并且适当的元素会被传递给<code class="function">comparePartial</code>方法。
+      </p></dd></dl></div><p>
+
+  一个操作符类必须提供一个函数检查一个被索引的项是否匹配查询。有两种形式，
+  一个布尔函数<code class="function">consistent</code>，以及一个三元函数<code class="function">triConsistent</code>。
+  <code class="function">triConsistent</code>覆盖了两者的功能，因此提供<code class="function">triConsistent</code>一个足矣。但是，
+  如果布尔变体的计算代价要更低，两者都提供就会有好处。如果只提供布尔变体，
+  一些基于在取得所有键之前拒绝索引项的优化将会被禁用。
+
+  </p><div class="variablelist"><dl class="variablelist"><dt><span class="term"><code class="function">bool consistent(bool check[], StrategyNumber n, Datum query,
+        int32 nkeys, Pointer extra_data[], bool *recheck,
+        Datum queryKeys[], bool nullFlags[])</code></span></dt><dd><p>       如果一个被索引项满足（如果重新检查指示被返回，则表示可能满足）有策略号<code class="literal">n</code>的查询操作符，则返回 TRUE。这个函数并没有直接访问被索引项的值，因为<acronym class="acronym">GIN</acronym>没有显式存储项。可用的是关于哪些从查询抽取出的键值出现在一个给定被索引项中的知识。<code class="literal">check</code>数组的长度是<code class="literal">nkeys</code>，它和前面由<code class="function">extractQuery</code>为这个<code class="literal">查询</code>数据返回的键的数目相同。
+       如果被索引项包含一个查询键，那么<code class="literal">check</code>数组的对应元素为 TRUE，即如果 (check[i] == TRUE) ，则<code class="function">extractQuery</code>结果数组的第 i 个键存在于被索引项中。在<code class="function">consistent</code>方法需要参考原始<code class="literal">query</code>数据的情况中，它会被传递进来，前面由<code class="function">extractQuery</code>返回的<code class="literal">queryKeys[]</code>和<code class="literal">nullFlags[]</code>数组也一样。<code class="literal">extra_data</code>是由<code class="function">extractQuery</code>返回的额外数据数组，如果没有额外数据则为<code class="symbol">NULL</code>。
+      </p><p>       当<code class="function">extractQuery</code>在<code class="literal">queryKeys[]</code>中返回一个空值键时，如果被索引项包含一个空值键则对应的<code class="literal">check[]</code>元素为 TRUE。即，<code class="literal">check[]</code>的语义类似<code class="literal">IS NOT DISTINCT FROM</code>。如果<code class="function">consistent</code>函数需要说出一个常规值匹配和一个空值匹配之间的区别，它可以检查对应的<code class="literal">nullFlags[]</code>元素。
+      </p><p>       在成功时，如果堆元组需要根据查询操作符被重新检查，则<code class="literal">*recheck</code>应该被设置为 TRUE，或者如果索引测试是准确的则设置为 FALSE。即，一个 FALSE 返回值保证堆元组不匹配查询；一个 TRUE 返回值以及设置为 FALSE 的<code class="literal">*recheck</code>保证堆元组匹配查询；并且一个 TRUE 返回值和设置为 TRUE 的<code class="literal">*recheck</code>表示堆元组可能匹配查询，因此它需要被取出并且通过在原始的被索引项上计算查询操作符来重新检查。
+      </p></dd><dt><span class="term"><code class="function">GinTernaryValue triConsistent(GinTernaryValue check[], StrategyNumber n, Datum query,
+        int32 nkeys, Pointer extra_data[],
+        Datum queryKeys[], bool nullFlags[])</code></span></dt><dd><p>       <code class="function">triConsistent</code>类似于<code class="function">consistent</code>，
+       但和<code class="literal">check[]</code>中的布尔值不同，对每个键有三种可能值：
+       <code class="literal">GIN_TRUE</code>、<code class="literal">GIN_FALSE</code>和<code class="literal">GIN_MAYBE</code>。
+       <code class="literal">GIN_FALSE</code>和<code class="literal">GIN_TRUE</code>具有和常规布尔值相同的含义，
+       而<code class="literal">GIN_MAYBE</code>意味着键的存在未知。当<code class="literal">GIN_MAYBE</code>值出现时，
+       如果项必定匹配（不管该索引项是否包含对应的查询键），该函数应该只返回<code class="literal">GIN_TRUE</code>。
+       同样地，如果项必定不匹配（不管它是否包含<code class="literal">GIN_MAYBE</code>），
+       该函数必须只返回<code class="literal">GIN_FALSE</code>。
+       如果结果依赖于<code class="literal">GIN_MAYBE</code>项，即无法根据已知查询键确认或拒绝匹配，
+       该函数必须返回<code class="literal">GIN_MAYBE</code>。
+      </p><p>       当在<code class="literal">check</code>向量中没有<code class="literal">GIN_MAYBE</code>值时，
+       <code class="literal">GIN_MAYBE</code>返回值等效于在布尔函数<code class="function">consistent</code>中设置
+       <code class="literal">recheck</code>标志等效。
+      </p></dd></dl></div><p>
+ </p><p>  另外，GIN必须有一种方法来对存储在索引中的键值进行排序。
+  运算符类可以通过指定比较方法来定义排序顺序：
+
+  </p><div class="variablelist"><dl class="variablelist"><dt><span class="term"><code class="function">int compare(Datum a, Datum b)</code></span></dt><dd><p>       比较两个键（不是被索引项）并且返回一个整数，整数可以是小于零、零、大于零，分别表示第一个键小于、等于、大于第二个键。空值键不会被传递给这个函数。
+      </p></dd></dl></div><p>
+
+  或者，如果运算符类没有提供<code class="function">compare</code>方法，
+  GIN将查找索引键数据类型的默认btree运算符类，并使用它的比较函数。
+  建议在仅用于一种数据类型的GIN操作符类中指定比较函数，
+  因为查找btree操作符类会花费几个周期。但是，多态GIN操作符类
+  （如<code class="literal">array_ops</code>）通常不能指定单个比较函数。
+ </p><p>  可选的，一个用于<acronym class="acronym">GIN</acronym>的操作符类可以提供下列方法：
+
+  </p><div class="variablelist"><dl class="variablelist"><dt><span class="term"><code class="function">int comparePartial(Datum partial_key, Datum key, StrategyNumber n,
+                              Pointer extra_data)</code></span></dt><dd><p>       比较一个部分匹配键和一个索引键。返回一个整数，其符号指示结果：小于零表示索引键不匹配查询，但是索引扫描应该继续；零表示索引键匹配查询；大于零表示索引扫描应该停止，因为没有更多可能的匹配。产生该部分匹配查询的操作符的策略号<code class="literal">n</code>将被提供，可以通过其语义决定什么时候结束扫描。还有，<code class="literal">extra_data</code>是由<code class="function">extractQuery</code>产生的额外数据数组中的对应元素，如果没有则为<code class="symbol">NULL</code>。空值不会被传递给这个函数。
+      </p></dd></dl></div><p>
+ </p><p>  要支持<span class="quote">“<span class="quote">部分匹配</span>”</span>查询，一个操作符类必须提供<code class="function">comparePartial</code>方法，并且它的<code class="function">extractQuery</code>方法必须在遇到一个部分匹配查询时设置<code class="literal">pmatch</code>参数。详见<a class="xref" href="gin-implementation.html#GIN-PARTIAL-MATCH" title="64.4.2. 部分匹配算法">第 64.4.2 节</a>。
+ </p><p>  上面提到的多个<code class="literal">Datum</code>值的实际数据类型随着操作符类而变化。
+  被传递给<code class="function">extractValue</code>的项值总是操作符类的输入类型，
+  并且所有的键值必须是类的<code class="literal">STORAGE</code>类型。被传递给<code class="function">extractQuery</code>、
+  <code class="function">consistent</code>和<code class="function">triConsistent</code>的<code class="literal">query</code>
+  参数是由该策略号标识的类成员操作符的右手边输入类型。
+  这不需要和被索引类型相同，只要正确类型的键值能从其中被抽取出来。不过，
+  推荐这三个支持函数的 SQL 声明对<code class="literal">query</code>参数使用操作符类的被
+  索引数据类型，即便实际类型可能是某种其他依赖于操作符的东西时也应如此。
+ </p></div><div class="navfooter"><hr /><table width="100%" summary="Navigation footer"><tr><td width="40%" align="left"><a accesskey="p" href="gin-builtin-opclasses.html">上一页</a> </td><td width="20%" align="center"><a accesskey="u" href="gin.html">上一级</a></td><td width="40%" align="right"> <a accesskey="n" href="gin-implementation.html">下一页</a></td></tr><tr><td width="40%" align="left" valign="top">64.2. 内建操作符类 </td><td width="20%" align="center"><a accesskey="h" href="index.html">起始页</a></td><td width="40%" align="right" valign="top"> 64.4. 实现</td></tr></table></div></body></html>

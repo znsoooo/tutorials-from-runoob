@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><title>45.9. 实用函数</title><link rel="stylesheet" type="text/css" href="stylesheet.css" /><link rev="made" href="pgsql-docs@postgresql.org" /><meta name="generator" content="DocBook XSL Stylesheets V1.79.1" /><link rel="prev" href="plpython-subtransaction.html" title="45.8. 显式子事务" /><link rel="next" href="plpython-envar.html" title="45.10. 环境变量" /></head><body><div xmlns="http://www.w3.org/TR/xhtml1/transitional" class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="5" align="center">45.9. 实用函数</th></tr><tr><td width="10%" align="left"><a accesskey="p" href="plpython-subtransaction.html" title="45.8. 显式子事务">上一页</a> </td><td width="10%" align="left"><a accesskey="u" href="plpython.html" title="第 45 章 PL/Python - Python 过程语言">上一级</a></td><th width="60%" align="center">第 45 章 PL/Python - Python 过程语言</th><td width="10%" align="right"><a accesskey="h" href="index.html" title="PostgreSQL 10.1 手册">起始页</a></td><td width="10%" align="right"> <a accesskey="n" href="plpython-envar.html" title="45.10. 环境变量">下一页</a></td></tr></table><hr></hr></div><div class="sect1" id="PLPYTHON-UTIL"><div class="titlepage"><div><div><h2 class="title" style="clear: both">45.9. 实用函数</h2></div></div></div><p>   <code class="literal">plpy</code>模块也提供了函数
+   </p><table border="0" summary="Simple list" class="simplelist"><tr><td><code class="literal">plpy.debug(<em class="replaceable"><code>msg, **kwargs</code></em>)</code></td></tr><tr><td><code class="literal">plpy.log(<em class="replaceable"><code>msg, **kwargs</code></em>)</code></td></tr><tr><td><code class="literal">plpy.info(<em class="replaceable"><code>msg, **kwargs</code></em>)</code></td></tr><tr><td><code class="literal">plpy.notice(<em class="replaceable"><code>msg, **kwargs</code></em>)</code></td></tr><tr><td><code class="literal">plpy.warning(<em class="replaceable"><code>msg, **kwargs</code></em>)</code></td></tr><tr><td><code class="literal">plpy.error(<em class="replaceable"><code>msg, **kwargs</code></em>)</code></td></tr><tr><td><code class="literal">plpy.fatal(<em class="replaceable"><code>msg, **kwargs</code></em>)</code></td></tr></table><p>
+   <a id="idp38284112" class="indexterm"></a>
+   <code class="function">plpy.error</code>和<code class="function">plpy.fatal</code>实际上会产生一个 Python 异常（如果没被捕捉），它会被传播到调用查询中导致当前事务或者子事务被中止。<code class="literal">raise plpy.Error(<em class="replaceable"><code>msg</code></em>)</code>和<code class="literal">raise plpy.Fatal(<em class="replaceable"><code>msg</code></em>)</code>分别等效于调用<code class="literal">plpy.error(<em class="replaceable"><code>msg</code></em>)</code>和<code class="literal">plpy.fatal(<em class="replaceable"><code>msg</code></em>)</code>，不过<code class="literal">raise</code>形式不允许传递关键词参数。其他函数只生成不同优先级的消息。一个特定优先级的消息是被报告给客户端、写入服务器日志还是两者都做，由<a class="xref" href="runtime-config-logging.html#GUC-LOG-MIN-MESSAGES">log_min_messages</a>和<a class="xref" href="runtime-config-logging.html#GUC-CLIENT-MIN-MESSAGES">client_min_messages</a>配置变量控制。详见<a class="xref" href="runtime-config.html" title="第 19 章 服务器配置">第 19 章</a>。
+  </p><p>   <em class="replaceable"><code>msg</code></em>参数被给定位一个位置参数。为了向后兼容，可以给出多于一个位置参数。在那种情况下， 位置参数形成的元组的字符串表达将会变成报告给客户端的消息。
+  </p><p>   下列 keyword-only 参数会被接受：
+   </p><table border="0" summary="Simple list" class="simplelist"><tr><td><code class="literal">detail</code></td></tr><tr><td><code class="literal">hint</code></td></tr><tr><td><code class="literal">sqlstate</code></td></tr><tr><td><code class="literal">schema_name</code></td></tr><tr><td><code class="literal">table_name</code></td></tr><tr><td><code class="literal">column_name</code></td></tr><tr><td><code class="literal">datatype_name</code></td></tr><tr><td><code class="literal">constraint_name</code></td></tr></table><p>
+   作为 keyword-only 参数传递的对象的字符串表达可以用来丰富报告给客户端的消息。例如：
+
+</p><pre class="programlisting">CREATE FUNCTION raise_custom_exception() RETURNS void AS $$
+plpy.error("custom exception message",
+           detail="some info about exception",
+           hint="hint for users")
+$$ LANGUAGE plpythonu;
+
+=# SELECT raise_custom_exception();
+ERROR:  plpy.Error: custom exception message
+DETAIL:  some info about exception
+HINT:  hint for users
+CONTEXT:  Traceback (most recent call last):
+  PL/Python function "raise_custom_exception", line 4, in &lt;module&gt;
+    hint="hint for users")
+PL/Python function "raise_custom_exception"</pre><p>
+  </p><p>   另一组工具函数是<code class="literal">plpy.quote_literal(<em class="replaceable"><code>string</code></em>)</code>、<code class="literal">plpy.quote_nullable(<em class="replaceable"><code>string</code></em>)</code>以及<code class="literal">plpy.quote_ident(<em class="replaceable"><code>string</code></em>)</code>。它们等效于<a class="xref" href="functions-string.html" title="9.4. 字符串函数和操作符">第 9.4 节</a>中描述的内建引用函数。在构建临时查询时它们能派上用场。<a class="xref" href="plpgsql-statements.html#PLPGSQL-QUOTE-LITERAL-EXAMPLE" title="例 42.1. 在动态查询中引用值">例 42.1</a>中动态 SQL 的 PL/Python 等效体是：
+</p><pre class="programlisting">plpy.execute("UPDATE tbl SET %s = %s WHERE key = %s" % (
+    plpy.quote_ident(colname),
+    plpy.quote_nullable(newvalue),
+    plpy.quote_literal(keyvalue)))</pre><p>
+  </p></div><div class="navfooter"><hr /><table width="100%" summary="Navigation footer"><tr><td width="40%" align="left"><a accesskey="p" href="plpython-subtransaction.html">上一页</a> </td><td width="20%" align="center"><a accesskey="u" href="plpython.html">上一级</a></td><td width="40%" align="right"> <a accesskey="n" href="plpython-envar.html">下一页</a></td></tr><tr><td width="40%" align="left" valign="top">45.8. 显式子事务 </td><td width="20%" align="center"><a accesskey="h" href="index.html">起始页</a></td><td width="40%" align="right" valign="top"> 45.10. 环境变量</td></tr></table></div></body></html>

@@ -1,0 +1,105 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><title>F.31. pgstattuple</title><link rel="stylesheet" type="text/css" href="stylesheet.css" /><link rev="made" href="pgsql-docs@postgresql.org" /><meta name="generator" content="DocBook XSL Stylesheets V1.79.1" /><link rel="prev" href="pgstatstatements.html" title="F.30. pg_stat_statements" /><link rel="next" href="pgtrgm.html" title="F.32. pg_trgm" /></head><body><div xmlns="http://www.w3.org/TR/xhtml1/transitional" class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="5" align="center">F.31. pgstattuple</th></tr><tr><td width="10%" align="left"><a accesskey="p" href="pgstatstatements.html" title="F.30. pg_stat_statements">上一页</a> </td><td width="10%" align="left"><a accesskey="u" href="contrib.html" title="附录 F. 额外提供的模块">上一级</a></td><th width="60%" align="center">附录 F. 额外提供的模块</th><td width="10%" align="right"><a accesskey="h" href="index.html" title="PostgreSQL 10.1 手册">起始页</a></td><td width="10%" align="right"> <a accesskey="n" href="pgtrgm.html" title="F.32. pg_trgm">下一页</a></td></tr></table><hr></hr></div><div class="sect1" id="PGSTATTUPLE"><div class="titlepage"><div><div><h2 class="title" style="clear: both">F.31. pgstattuple</h2></div></div></div><div class="toc"><dl class="toc"><dt><span class="sect2"><a href="pgstattuple.html#idp87138752">F.31.1. 函数</a></span></dt><dt><span class="sect2"><a href="pgstattuple.html#idp87252144">F.31.2. 作者</a></span></dt></dl></div><a id="idp87133744" class="indexterm"></a><p>  <code class="filename">pgstattuple</code>模块提供多种函数来获得元组层的统计信息。
+ </p><p>  由于这些函数返回详细的页面级信息，因此只有超级用户在安装时才具有EXECUTE特权。
+  在安装函数之后，用户可以发出<code class="command">GRANT</code>命令来更改函数的权限，
+  以允许非超级用户执行它们。默认情况下，<code class="literal">pg_stat_scan_tables</code>
+  角色的成员被授予访问权限。有关详细信息，请参阅<a class="xref" href="sql-grant.html" title="GRANT"><span class="refentrytitle">GRANT</span></a>命令的描述。
+ </p><div class="sect2" id="idp87138752"><div class="titlepage"><div><div><h3 class="title">F.31.1. 函数</h3></div></div></div><div class="variablelist"><dl class="variablelist"><dt><span class="term">     <code class="function">pgstattuple(regclass) 返回 record</code>
+   <a id="idp87140416" class="indexterm"></a>    
+    </span></dt><dd><p>      <code class="function">pgstattuple</code>返回一个关系的物理长度、<span class="quote">“<span class="quote">死亡</span>”</span>元组的百分比以及其他信息。这可以帮助用户决定是否需要清理。参数是目标关系的名称（可以有选择地用模式限定）或者 OID。例如：
+</p><pre class="programlisting">test=&gt; SELECT * FROM pgstattuple('pg_catalog.pg_proc');
+-[ RECORD 1 ]------+-------
+table_len          | 458752
+tuple_count        | 1470
+tuple_len          | 438896
+tuple_percent      | 95.67
+dead_tuple_count   | 11
+dead_tuple_len     | 3157
+dead_tuple_percent | 0.69
+free_space         | 8932
+free_percent       | 1.95</pre><p>
+     <a class="xref" href="pgstattuple.html#PGSTATTUPLE-COLUMNS" title="表 F.23. pgstattuple 输出列">表 F.23</a>中描述了输出列。
+    </p><div class="table" id="PGSTATTUPLE-COLUMNS"><p class="title"><strong>表 F.23. <code class="function">pgstattuple</code> 输出列</strong></p><div class="table-contents"><table class="table" summary="pgstattuple 输出列" border="1"><colgroup><col /><col /><col /></colgroup><thead><tr><th>列</th><th>类型</th><th>描述</th></tr></thead><tbody><tr><td><code class="structfield">table_len</code></td><td><code class="type">bigint</code></td><td>物理关系长度，以字节计</td></tr><tr><td><code class="structfield">tuple_count</code></td><td><code class="type">bigint</code></td><td>存活元组的数量</td></tr><tr><td><code class="structfield">tuple_len</code></td><td><code class="type">bigint</code></td><td>存活元组的总长度，以字节计</td></tr><tr><td><code class="structfield">tuple_percent</code></td><td><code class="type">float8</code></td><td>存活元组的百分比</td></tr><tr><td><code class="structfield">dead_tuple_count</code></td><td><code class="type">bigint</code></td><td>死亡元组的数量</td></tr><tr><td><code class="structfield">dead_tuple_len</code></td><td><code class="type">bigint</code></td><td>死亡元组的总长度，以字节计</td></tr><tr><td><code class="structfield">dead_tuple_percent</code></td><td><code class="type">float8</code></td><td>死亡元组的百分比</td></tr><tr><td><code class="structfield">free_space</code></td><td><code class="type">bigint</code></td><td>空闲空间总量，以字节计</td></tr><tr><td><code class="structfield">free_percent</code></td><td><code class="type">float8</code></td><td>空闲空间的百分比</td></tr></tbody></table></div></div><br class="table-break" /><div class="note"><h3 class="title">注意</h3><p>      <code class="literal">table_len</code>将总是比<code class="literal">tuple_len</code>、
+	  <code class="literal">dead_tuple_len</code>和<code class="literal">free_space</code>的和要大。
+	  不同之处在于固定的页面开销，每页指向元组的指针表和填充以确保元组正确对齐。
+     </p></div><p>     <code class="function">pgstattuple</code>只要求在关系上的一个读锁。因此结果不能反映一个即时快照，并发更新将影响结果。
+    </p><p>     如果<code class="function">HeapTupleSatisfiesDirty</code>返回假，<code class="function">pgstattuple</code>就判定一个元组是<span class="quote">“<span class="quote">死亡的</span>”</span>。
+    </p></dd><dt><span class="term">     <code class="function">pgstattuple(text) 返回 record</code>
+    </span></dt><dd><p>      与<code class="function">pgstattuple(regclass)</code>相同，只不过通过  TEXT 指定目标关系。这个函数只是为了向后兼容而保留，在未来的发布中将会被废除。
+     </p></dd><dt><span class="term">    <a id="idp87168944" class="indexterm"></a>
+     <code class="function">pgstatindex(regclass) 返回 record</code>
+    </span></dt><dd><p>      <code class="function">pgstatindex</code>返回一个记录显示有关一个 B-树索引的信息。例如：
+</p><pre class="programlisting">test=&gt; SELECT * FROM pgstatindex('pg_cast_oid_index');
+-[ RECORD 1 ]------+------
+version            | 2
+tree_level         | 0
+index_size         | 16384
+root_block_no      | 1
+internal_pages     | 0
+leaf_pages         | 1
+empty_pages        | 0
+deleted_pages      | 0
+avg_leaf_density   | 54.27
+leaf_fragmentation | 0</pre><p>
+     </p><p>     输出列是：
+
+    </p><div class="informaltable"><table class="informaltable" border="1"><colgroup><col /><col /><col /></colgroup><thead><tr><th>列</th><th>类型</th><th>描述</th></tr></thead><tbody><tr><td><code class="structfield">version</code></td><td><code class="type">integer</code></td><td>B-树 版本号</td></tr><tr><td><code class="structfield">tree_level</code></td><td><code class="type">integer</code></td><td>根页的树层次</td></tr><tr><td><code class="structfield">index_size</code></td><td><code class="type">bigint</code></td><td>以字节计的索引总尺寸</td></tr><tr><td><code class="structfield">root_block_no</code></td><td><code class="type">bigint</code></td><td>根页的位置（如果没有则为零）</td></tr><tr><td><code class="structfield">internal_pages</code></td><td><code class="type">bigint</code></td><td><span class="quote">“<span class="quote">内部</span>”</span>（上层）页面的数量</td></tr><tr><td><code class="structfield">leaf_pages</code></td><td><code class="type">bigint</code></td><td>叶子页的数量</td></tr><tr><td><code class="structfield">empty_pages</code></td><td><code class="type">bigint</code></td><td>空页的数量</td></tr><tr><td><code class="structfield">deleted_pages</code></td><td><code class="type">bigint</code></td><td>删除页的数量</td></tr><tr><td><code class="structfield">avg_leaf_density</code></td><td><code class="type">float8</code></td><td>叶子页的平均密度</td></tr><tr><td><code class="structfield">leaf_fragmentation</code></td><td><code class="type">float8</code></td><td>叶子页碎片</td></tr></tbody></table></div><p>
+    </p><p>     报告的<code class="literal">index_size</code>通常对应于<code class="literal">internal_pages + leaf_pages + empty_pages + deleted_pages</code>加一，因为它还包括索引的元页。
+    </p><p>     对于<code class="function">pgstattuple</code>，结果是一页一页累计的并且不要期望结果会表示整个索引的一个即时快照。
+    </p></dd><dt><span class="term">     <code class="function">pgstatindex(text) returns record</code>
+    </span></dt><dd><p>      与<code class="function">pgstatindex(regclass)</code>相同，只不过通过  TEXT 指定目标索引。这个函数只是为了向后兼容而保留，在未来的某个发布中将会被废除。
+     </p></dd><dt><span class="term">     <a id="idp87193696" class="indexterm"></a>
+     <code class="function">pgstatginindex(regclass) 返回 record</code>
+    </span></dt><dd><p>      <code class="function">pgstatginindex</code>返回一个记录显示有关一个 GIN 索引的信息。例如：
+</p><pre class="programlisting">test=&gt; SELECT * FROM pgstatginindex('test_gin_index');
+-[ RECORD 1 ]--+--
+version        | 1
+pending_pages  | 0
+pending_tuples | 0</pre><p>
+     </p><p>     输出列是：
+
+    </p><div class="informaltable"><table class="informaltable" border="1"><colgroup><col /><col /><col /></colgroup><thead><tr><th>列</th><th>类型</th><th>描述</th></tr></thead><tbody><tr><td><code class="structfield">version</code></td><td><code class="type">integer</code></td><td>GIN 版本号</td></tr><tr><td><code class="structfield">pending_pages</code></td><td><code class="type">integer</code></td><td>待处理列表中的页面数</td></tr><tr><td><code class="structfield">pending_tuples</code></td><td><code class="type">bigint</code></td><td>待处理列表中的元组数</td></tr></tbody></table></div><p>
+    </p></dd><dt><span class="term">     <a id="idp87203728" class="indexterm"></a>
+     <code class="function">pgstathashindex(regclass) returns record</code>
+    </span></dt><dd><p>      <code class="function">pgstathashindex</code>返回一个显示HASH索引信息的记录。例如：
+</p><pre class="programlisting">test=&gt; select * from pgstathashindex('con_hash_index');
+-[ RECORD 1 ]--+-----------------
+version        | 4
+bucket_pages   | 33081
+overflow_pages | 0
+bitmap_pages   | 1
+unused_pages   | 32455
+live_items     | 10204006
+dead_items     | 0
+free_percent   | 61.8005949100872</pre><p>
+     </p><p>     输出字段是：
+
+    </p><div class="informaltable"><table class="informaltable" border="1"><colgroup><col /><col /><col /></colgroup><thead><tr><th>字段</th><th>类型</th><th>描述</th></tr></thead><tbody><tr><td><code class="structfield">version</code></td><td><code class="type">integer</code></td><td>HASH版本号</td></tr><tr><td><code class="structfield">bucket_pages</code></td><td><code class="type">bigint</code></td><td>存储桶页面的数量</td></tr><tr><td><code class="structfield">overflow_pages</code></td><td><code class="type">bigint</code></td><td>溢出页面的数量</td></tr><tr><td><code class="structfield">bitmap_pages</code></td><td><code class="type">bigint</code></td><td>位图页数</td></tr><tr><td><code class="structfield">unused_pages</code></td><td><code class="type">bigint</code></td><td>未使用页面的数量</td></tr><tr><td><code class="structfield">live_items</code></td><td><code class="type">bigint</code></td><td>活元组的数量</td></tr><tr><td><code class="structfield">dead_tuples</code></td><td><code class="type">bigint</code></td><td>死元组的数量</td></tr><tr><td><code class="structfield">free_percent</code></td><td><code class="type">float</code></td><td>自由空间的百分比</td></tr></tbody></table></div><p>
+    </p></dd><dt><span class="term">     <a id="idp87220288" class="indexterm"></a>
+     <code class="function">pg_relpages(regclass) 返回 bigint</code>
+    </span></dt><dd><p>      <code class="function">pg_relpages</code>返回关系中的页面数。
+     </p></dd><dt><span class="term">     <code class="function">pg_relpages(text) returns bigint</code>
+    </span></dt><dd><p>      与<code class="function">pg_relpages(regclass)</code>相同，只不过用  TEXT 来 指定目标关系。这个函数只是为了向后兼容而保留，在未来的某个发布中将会被废除。
+     </p></dd><dt><span class="term">     <a id="idp87225712" class="indexterm"></a>
+     <code class="function">pgstattuple_approx(regclass) returns record</code>
+    </span></dt><dd><p>      <code class="function">pgstattuple_approx</code>是<code class="function">pgstattuple</code>的一个更加快速的替代品，它返回近似的结果。参数是目标关系的 OID 或者名称。例如：
+</p><pre class="programlisting">test=&gt; SELECT * FROM pgstattuple_approx('pg_catalog.pg_proc'::regclass);
+-[ RECORD 1 ]--------+-------
+table_len            | 573440
+scanned_percent      | 2
+approx_tuple_count   | 2740
+approx_tuple_len     | 561210
+approx_tuple_percent | 97.87
+dead_tuple_count     | 0
+dead_tuple_len       | 0
+dead_tuple_percent   | 0
+approx_free_space    | 11996
+approx_free_percent  | 2.09</pre><p>
+      输出列在<a class="xref" href="pgstattuple.html#PGSTATAPPROX-COLUMNS" title="表 F.24. pgstattuple_approx输出列">表 F.24</a>中描述。
+     </p><p>      鉴于<code class="function">pgstattuple</code>总是执行全表扫描并且返回存活和死亡元组的准确计数、尺寸和空闲空间，<code class="function">pgstattuple_approx</code>尝试避免全表扫描并且返回死亡元组的准确统计信息，以及存活元组和空闲空间的近似数量及尺寸。
+     </p><p>      这个函数通过根据可见性映射跳过只包含可见元组的页面来实现这一目的（如果一个页面对应的 VM 位被设置，那么就说明它不含有死亡元组）。对于这样的额页面，它会从空闲空间映射中得到空闲空间值，并且假定该页面上的剩余空间由存活元组占据。
+     </p><p>      对于不能被跳过的页面，它会扫描每个元组，在合适的计数器中记录它的存在以及尺寸，并且统计该页面上的空闲空间。最后，它会基于已扫描的页面和元组数量来估计存活元组的总数（采用与 VACUUM 估计 pg_class.reltuples 时相同的方法）。
+     </p><div class="table" id="PGSTATAPPROX-COLUMNS"><p class="title"><strong>表 F.24. <code class="function">pgstattuple_approx</code>输出列</strong></p><div class="table-contents"><table class="table" summary="pgstattuple_approx输出列" border="1"><colgroup><col /><col /><col /></colgroup><thead><tr><th>列</th><th>类型</th><th>描述</th></tr></thead><tbody><tr><td><code class="structfield">table_len</code></td><td><code class="type">bigint</code></td><td>以字节计的物理关系长度（准确）</td></tr><tr><td><code class="structfield">scanned_percent</code></td><td><code class="type">float8</code></td><td>已扫描表的百分比</td></tr><tr><td><code class="structfield">approx_tuple_count</code></td><td><code class="type">bigint</code></td><td>存活元组的数量（估计）</td></tr><tr><td><code class="structfield">approx_tuple_len</code></td><td><code class="type">bigint</code></td><td>以字节计的存活元组总长度（估计）</td></tr><tr><td><code class="structfield">approx_tuple_percent</code></td><td><code class="type">float8</code></td><td>存活元组的百分比</td></tr><tr><td><code class="structfield">dead_tuple_count</code></td><td><code class="type">bigint</code></td><td>死亡元组的数量（准确）</td></tr><tr><td><code class="structfield">dead_tuple_len</code></td><td><code class="type">bigint</code></td><td>以字节计的死亡元组总长度（准确）</td></tr><tr><td><code class="structfield">dead_tuple_percent</code></td><td><code class="type">float8</code></td><td>死亡元组的百分比</td></tr><tr><td><code class="structfield">approx_free_space</code></td><td><code class="type">bigint</code></td><td>以字节计的总空闲空间（估计）</td></tr><tr><td><code class="structfield">approx_free_percent</code></td><td><code class="type">float8</code></td><td>空闲空间的百分比</td></tr></tbody></table></div></div><br class="table-break" /><p>      在上述的输出中，空闲空间数字可能不完全匹配<code class="function">pgstattuple</code>的输出，这是因为空闲空间映射会给出一个准确的数字，但是这个数字不能保证是一个准确的字节数。
+     </p></dd></dl></div></div><div class="sect2" id="idp87252144"><div class="titlepage"><div><div><h3 class="title">F.31.2. 作者</h3></div></div></div><p>   Tatsuo Ishii, Satoshi Nagayasu 和 Abhijit Menon-Sen
+  </p></div></div><div class="navfooter"><hr /><table width="100%" summary="Navigation footer"><tr><td width="40%" align="left"><a accesskey="p" href="pgstatstatements.html">上一页</a> </td><td width="20%" align="center"><a accesskey="u" href="contrib.html">上一级</a></td><td width="40%" align="right"> <a accesskey="n" href="pgtrgm.html">下一页</a></td></tr><tr><td width="40%" align="left" valign="top">F.30. pg_stat_statements </td><td width="20%" align="center"><a accesskey="h" href="index.html">起始页</a></td><td width="40%" align="right" valign="top"> F.32. pg_trgm</td></tr></table></div></body></html>

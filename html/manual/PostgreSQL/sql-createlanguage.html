@@ -1,0 +1,114 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><title>CREATE LANGUAGE</title><link rel="stylesheet" type="text/css" href="stylesheet.css" /><link rev="made" href="pgsql-docs@postgresql.org" /><meta name="generator" content="DocBook XSL Stylesheets V1.79.1" /><link rel="prev" href="sql-createindex.html" title="CREATE INDEX" /><link rel="next" href="sql-creatematerializedview.html" title="CREATE MATERIALIZED VIEW" /></head><body><div xmlns="http://www.w3.org/TR/xhtml1/transitional" class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="5" align="center">CREATE LANGUAGE</th></tr><tr><td width="10%" align="left"><a accesskey="p" href="sql-createindex.html" title="CREATE INDEX">上一页</a> </td><td width="10%" align="left"><a accesskey="u" href="sql-commands.html" title="SQL 命令">上一级</a></td><th width="60%" align="center">SQL 命令</th><td width="10%" align="right"><a accesskey="h" href="index.html" title="PostgreSQL 10.1 手册">起始页</a></td><td width="10%" align="right"> <a accesskey="n" href="sql-creatematerializedview.html" title="CREATE MATERIALIZED VIEW">下一页</a></td></tr></table><hr></hr></div><div class="refentry" id="SQL-CREATELANGUAGE"><div class="titlepage"></div><a id="idp43564928" class="indexterm"></a><div class="refnamediv"><h2><span class="refentrytitle">CREATE LANGUAGE</span></h2><p>CREATE LANGUAGE — 定义一种新的过程语言</p></div><div class="refsynopsisdiv"><h2>大纲</h2><pre class="synopsis">CREATE [ OR REPLACE ] [ PROCEDURAL ] LANGUAGE <em class="replaceable"><code>name</code></em>
+CREATE [ OR REPLACE ] [ TRUSTED ] [ PROCEDURAL ] LANGUAGE <em class="replaceable"><code>name</code></em>
+    HANDLER <em class="replaceable"><code>call_handler</code></em> [ INLINE <em class="replaceable"><code>inline_handler</code></em> ] [ VALIDATOR <em class="replaceable"><code>valfunction</code></em> ]</pre></div><div class="refsect1" id="SQL-CREATELANGUAGE-DESCRIPTION"><h2>描述</h2><p>   <code class="command">CREATE LANGUAGE</code>为一个
+   <span class="productname">PostgreSQL</span>数据库注册一种新的
+   过程语言。接着，可以用这种新语言定义函数和触发器过程。
+  </p><div class="note"><h3 class="title">注意</h3><p>    从<span class="productname">PostgreSQL</span> 9.1 开始，大多数
+    过程语言已经被做成了<span class="quote">“<span class="quote">扩展</span>”</span>，并且应该用
+    <a class="xref" href="sql-createextension.html" title="CREATE EXTENSION"><span class="refentrytitle">CREATE EXTENSION</span></a>而不是
+    <code class="command">CREATE LANGUAGE</code>来安装。
+    <code class="command">CREATE LANGUAGE</code>的直接使用现在应该
+    被限制在扩展安装脚本中。如果在数据库中有一种<span class="quote">“<span class="quote">裸</span>”</span>语言（
+    可能是一次升级的结果），可以用
+    <code class="literal">CREATE EXTENSION <em class="replaceable"><code>langname</code></em> FROM
+    unpackaged</code>把它转换成一个扩展。
+   </p></div><p>   <code class="command">CREATE LANGUAGE</code>实际上把该语言名称与
+   负责执行用该语言编写的函数的处理器函数关联在一起。有关语言处理器的
+   更多信息可以参考<a class="xref" href="plhandler.html" title="第 55 章 编写一个过程语言处理器">第 55 章</a>。
+  </p><p>   有两种形式的<code class="command">CREATE LANGUAGE</code>命令。在
+   第一种形式中，用户只提供想要的语言的名称。
+   <span class="productname">PostgreSQL</span>服务器会查询
+   <a class="link" href="catalog-pg-pltemplate.html" title="51.37. pg_pltemplate"><code class="structname">pg_pltemplate</code></a>系统目录来决定正确的参数。在第二种形式中，用户
+   要提供语言参数和语言名称。第二种形式可以被用来创建一种没有定义在
+   <code class="structname">pg_pltemplate</code>中的语言，但是这种方法被认为即将
+   废弃。
+  </p><p>   当服务器在<code class="structname">pg_pltemplate</code>目录中为给定的语言名称
+   找到一个项时，即使命令中已经包括了语言参数，它也将使用目录中的
+   数据。这种行为简化了旧转储文件的载入，旧转储文件很可能包含过时的
+   信息。
+  </p><p>   通常，用户必须拥有
+   <span class="productname">PostgreSQL</span>超级用户特权来注册
+   一种新的语言。不过，如果该语言被列举在
+   <code class="structname">pg_pltemplate</code>目录中并且被标记为允许
+   由数据库拥有者创建（<code class="structfield">tmpldbacreate</code>为真），则数据
+   库的拥有者可以把新语言注册在数据库中。默认是可信的语言能够由数据
+   库拥有者创建，但是超级用户可以通过修改
+   <code class="structname">pg_pltemplate</code>的内容来调整这种行为。
+   语言的创建者会成为它的拥有者，并且以后可以删除它、对它重命名或者
+   把它赋予给一个新的拥有者。
+  </p><p>   <code class="command">CREATE OR REPLACE LANGUAGE</code>将创建
+   或者替换一种现有的定义。如果该语言已经存在，其参数会被根据指定的
+   值或者来自<code class="structname">pg_pltemplate</code>的值更新。但
+   该语言的拥有关系和权限设置不会更改，并且任何已有的用该语言编写的
+   函数仍然被假定有效。除了创建一种语言的普通特权需求，用户还必须是
+   超级用户或者已有语言的拥有者。<code class="literal">REPLACE</code>情况主要被用来
+   确保该语言存在。如果该语言有一个
+   <code class="structname">pg_pltemplate</code>项，那么
+   <code class="literal">REPLACE</code>将不会实际更改现有定义的任何东西，除非从该语
+   言被创建以来<code class="structname">pg_pltemplate</code>已经被修改
+   过（很少见的情况）。
+  </p></div><div class="refsect1" id="SQL-CREATELANGUAGE-PARAMETERS"><h2>参数</h2><div class="variablelist"><dl class="variablelist"><dt><span class="term"><code class="literal">TRUSTED</code></span></dt><dd><p><code class="literal">TRUSTED</code>指定该语言不会授予用户不该具有的
+      数据访问。如果在注册语言时这个关键词被省略，只有具有
+       <span class="productname">PostgreSQL</span>超级用户特权的用户才能
+       使用该语言创建新函数。
+      </p></dd><dt><span class="term"><code class="literal">PROCEDURAL</code></span></dt><dd><p>       这是一个噪声词。
+      </p></dd><dt><span class="term"><em class="replaceable"><code>name</code></em></span></dt><dd><p>       新过程语言的名称。该名称必须在该数据库的语言中唯一。
+      </p><p>       为了向后兼容，名称可以用单引号围绕。
+      </p></dd><dt><span class="term"><code class="literal">HANDLER</code> <em class="replaceable"><code>call_handler</code></em></span></dt><dd><p><em class="replaceable"><code>call_handler</code></em>
+       是一个之前注册的函数的名称，它将被调用来执行该过程语言的函数。
+       一种过程语言的调用处理器必须以一种编译型语言（如 C）编写并且
+       具有版本 1 的调用约定，它必须在
+       <span class="productname">PostgreSQL</span>内注册为一个没有
+       参数并且返回<code class="type">language_handler</code>类型的函数。
+       <code class="type">language_handler</code>是一种占位符类型， 它被用来
+       标识该函数为一个调用处理器。
+      </p></dd><dt><span class="term"><code class="literal">INLINE</code> <em class="replaceable"><code>inline_handler</code></em></span></dt><dd><p><em class="replaceable"><code>inline_handler</code></em>
+       是一个之前注册的函数的名称，它将被调用来执行一个该语言的匿名代码块（
+       <a class="xref" href="sql-do.html" title="DO"><span class="refentrytitle">DO</span></a>命令）。如果没有指定
+       <em class="replaceable"><code>inline_handler</code></em>函数，则
+       该语言不支持匿名代码块。该处理器函数必须接受一个<code class="type">internal</code>
+       类型的参数，该参数将是<code class="command">DO</code>命令的内部表示，而且它通常
+       将返回<code class="type">void</code>。该处理器的返回值会被忽略。
+      </p></dd><dt><span class="term"><code class="literal">VALIDATOR</code> <em class="replaceable"><code>valfunction</code></em></span></dt><dd><p><em class="replaceable"><code>valfunction</code></em> is the
+       是一个之前注册的函数的名称，当一个该语言的新函数被创建时会调用该函数来
+       验证新函数。如果没有指定验证器函数，那么一个新函数被创建时不会被检查。
+       验证器函数必须接受一个<code class="type">oid</code>类型的参数，它将是要被创建的
+       函数的 OID，而且它通常将返回<code class="type">void</code>。
+      </p><p>       一个验证器函数通常会检查函数体中的语法正确性，但是它也能查看函数的其他
+       属性，例如该语言能否处理特定的参数类型。为了发出一个错误，验证器函数应该
+       使用<code class="function">ereport()</code>函数。验证器函数的返回值会被忽略。
+      </p></dd></dl></div><p>   如果指定的语言名称在<code class="structname">pg_pltemplate</code>中有一项，服务器会忽略
+   <code class="literal">TRUSTED</code>选项和支持函数的名称。
+  </p></div><div class="refsect1" id="SQL-CREATELANGUAGE-NOTES"><h2>注解</h2><p>   使用<a class="xref" href="sql-droplanguage.html" title="DROP LANGUAGE"><span class="refentrytitle">DROP LANGUAGE</span></a>删除过程语言。
+  </p><p>   系统目录<code class="classname">pg_language</code>（见<a class="xref" href="catalog-pg-language.html" title="51.29. pg_language">第 51.29 节</a>）记录着有关当前已安装的语言的信息。
+   还有，<span class="application">psql</span>命令<code class="command">\dL</code>列出已安装的语言。
+  </p><p>   要以一种过程语言创建函数，用户必须具有对于该语言的
+   <code class="literal">USAGE</code>特权。默认情况下，对于可信语言，
+   <code class="literal">USAGE</code>被授予给<code class="literal">PUBLIC</code>（即所有人）。
+   如果需要可以将它收回。
+  </p><p>   过程语言对于单个数据库来说是本地的。但是，一种语言可以被安装在
+   <code class="literal">template1</code>数据库中，这会导致它在所有后续创建的
+   数据库中自动变得可用。
+  </p><p>   如果对语言在服务器的<code class="structname">pg_pltemplate</code>中没有一项，
+   调用处理器函数、内联处理器函数（如果有）以及验证器函数（如果有）
+   必须已经存在。但是当有一个那样的项时，这些函数不必已经存在。如果
+   它们在数据库中不存在，将自动定义它们（如果安装中实现该语言的共享
+   库不可用可能会导致<code class="command">CREATE LANGUAGE</code>失败）。
+  </p><p>   在<span class="productname">PostgreSQL</span> 版本 7.3 之前，需要
+   将处理器函数声明为返回占位符类型<code class="type">opaque</code>而不是
+   <code class="type">language_handler</code>。为了支持载入旧的转储文件，
+   <code class="command">CREATE LANGUAGE</code>将接受被声明为返回
+   <code class="type">opaque</code>的函数，但是它将发出一个提示并且把该函数的声明
+   返回类型改为<code class="type">language_handler</code>。
+  </p></div><div class="refsect1" id="SQL-CREATELANGUAGE-EXAMPLES"><h2>示例</h2><p>   创建任何标准过程语言的最好的方式是：
+</p><pre class="programlisting">CREATE LANGUAGE plperl;</pre><p>
+  </p><p>   对于<code class="structname">pg_pltemplate</code>目录不知道的一种语言，需要这样的命令序列：
+</p><pre class="programlisting">CREATE FUNCTION plsample_call_handler() RETURNS language_handler
+    AS '$libdir/plsample'
+    LANGUAGE C;
+CREATE LANGUAGE plsample
+    HANDLER plsample_call_handler;</pre></div><div class="refsect1" id="SQL-CREATELANGUAGE-COMPAT"><h2>兼容性</h2><p>   <code class="command">CREATE LANGUAGE</code>是一种
+   <span class="productname">PostgreSQL</span>扩展。
+  </p></div><div class="refsect1" id="idp43638688"><h2>另见</h2><span class="simplelist"><a class="xref" href="sql-alterlanguage.html" title="ALTER LANGUAGE"><span class="refentrytitle">ALTER LANGUAGE</span></a>, <a class="xref" href="sql-createfunction.html" title="CREATE FUNCTION"><span class="refentrytitle">CREATE FUNCTION</span></a>, <a class="xref" href="sql-droplanguage.html" title="DROP LANGUAGE"><span class="refentrytitle">DROP LANGUAGE</span></a>, <a class="xref" href="sql-grant.html" title="GRANT"><span class="refentrytitle">GRANT</span></a>, <a class="xref" href="sql-revoke.html" title="REVOKE"><span class="refentrytitle">REVOKE</span></a></span></div></div><div class="navfooter"><hr /><table width="100%" summary="Navigation footer"><tr><td width="40%" align="left"><a accesskey="p" href="sql-createindex.html">上一页</a> </td><td width="20%" align="center"><a accesskey="u" href="sql-commands.html">上一级</a></td><td width="40%" align="right"> <a accesskey="n" href="sql-creatematerializedview.html">下一页</a></td></tr><tr><td width="40%" align="left" valign="top">CREATE INDEX </td><td width="20%" align="center"><a accesskey="h" href="index.html">起始页</a></td><td width="40%" align="right" valign="top"> CREATE MATERIALIZED VIEW</td></tr></table></div></body></html>

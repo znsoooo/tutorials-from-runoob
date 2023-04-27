@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><title>5.1. 表基础</title><link rel="stylesheet" type="text/css" href="stylesheet.css" /><link rev="made" href="pgsql-docs@postgresql.org" /><meta name="generator" content="DocBook XSL Stylesheets V1.79.1" /><link rel="prev" href="ddl.html" title="第 5 章 数据定义" /><link rel="next" href="ddl-default.html" title="5.2. 默认值" /></head><body><div xmlns="http://www.w3.org/TR/xhtml1/transitional" class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="5" align="center">5.1. 表基础</th></tr><tr><td width="10%" align="left"><a accesskey="p" href="ddl.html" title="第 5 章 数据定义">上一页</a> </td><td width="10%" align="left"><a accesskey="u" href="ddl.html" title="第 5 章 数据定义">上一级</a></td><th width="60%" align="center">第 5 章 数据定义</th><td width="10%" align="right"><a accesskey="h" href="index.html" title="PostgreSQL 10.1 手册">起始页</a></td><td width="10%" align="right"> <a accesskey="n" href="ddl-default.html" title="5.2. 默认值">下一页</a></td></tr></table><hr></hr></div><div class="sect1" id="DDL-BASICS"><div class="titlepage"><div><div><h2 class="title" style="clear: both">5.1. 表基础</h2></div></div></div><a id="idp6182528" class="indexterm"></a><a id="idp6183728" class="indexterm"></a><a id="idp6184384" class="indexterm"></a><p>   关系型数据库中的一个表非常像纸上的一张表：它由行和列组成。列的数量和顺序是固定的，并且每一列拥有一个名字。行的数目是变化的，它反映了在一个给定时刻表中存储的数据量。SQL并不保证表中行的顺序。当一个表被读取时，表中的行将以非特定顺序出现，除非明确地指定需要排序。这些将在<a class="xref" href="queries.html" title="第 7 章 查询">第 7 章</a>介绍。此外，SQL不会为行分配唯一的标识符，因此在一个表中可能会存在一些完全相同的行。这是SQL之下的数学模型导致的结果，但并不是所期望的。稍后在本章中我们将看到如何处理这种问题。
+  </p><p>   每一列都有一个数据类型。数据类型约束着一组可以分配给列的可能值，并且它为列中存储的数据赋予了语义，这样它可以用于计算。例如，一个被声明为数字类型的列将不会接受任何文本串，而存储在这样一列中的数据可以用来进行数学计算。反过来，一个被声明为字符串类型的列将接受几乎任何一种的数据，它可以进行如字符串连接的操作但不允许进行数学计算。
+  </p><p>   <span class="productname">PostgreSQL</span>包括了相当多的内建数据类型，可以适用于很多应用。用户也可以定义他们自己的数据类型。大部分内建数据类型有着显而易见的名称和语义，所以我们将它们的详细解释放在<a class="xref" href="datatype.html" title="第 8 章 数据类型">第 8 章</a>中。一些常用的数据类型是：用于整数的<code class="type">integer</code>；可以用于分数的<code class="type">numeric</code>；用于字符串的<code class="type">text</code>，用于日期的<code class="type">date</code>，用于一天内时间的<code class="type">time</code>以及可以同时包含日期和时间的<code class="type">timestamp</code>。
+  </p><a id="idp6192496" class="indexterm"></a><p>   要创建一个表，我们要用到<a class="xref" href="sql-createtable.html" title="CREATE TABLE"><span class="refentrytitle">CREATE TABLE</span></a>命令。在这个命令中 我们需要为新表至少指定一个名字、列的名字及数据类型。例如：
+</p><pre class="programlisting">CREATE TABLE my_first_table (
+    first_column text,
+    second_column integer
+);</pre><p>
+   这将创建一个名为<code class="literal">my_first_table</code>的表，它拥有两个列。第一个列名为<code class="literal">first_column</code>且数据类型为<code class="type">text</code>；第二个列名为<code class="literal">second_column</code>且数据类型为<code class="type">integer</code>。表和列的名字遵循<a class="xref" href="sql-syntax-lexical.html#SQL-SYNTAX-IDENTIFIERS" title="4.1.1. 标识符和关键词">第 4.1.1 节</a>中解释的标识符语法。类型名称通常也是标识符，但是也有些例外。注意列的列表由逗号分隔并被圆括号包围。
+  </p><p>   当然，前面的例子是非常不自然的。通常，我们为表和列赋予的名称都会表明它们存储着什么类别的数据。因此让我们再看一个更现实的例子：
+</p><pre class="programlisting">CREATE TABLE products (
+    product_no integer,
+    name text,
+    price numeric
+);</pre><p>
+   （<code class="type">numeric</code>类型能够存储小数部分，典型的例子是金额。）
+  </p><div class="tip"><h3 class="title">提示</h3><p>    当我们创建很多相关的表时，最好为表和列选择一致的命名模式。例如，一种选择是用单数或复数名词作为表名，每一种都受到一些理论家支持。
+   </p></div><p>   一个表能够拥有的列的数据是有限的，根据列的类型，这个限制介于250和1600之间。但是，极少会定义一个接近这个限制的表，即便有也是一个值得商榷的设计。
+  </p><a id="idp6202832" class="indexterm"></a><p>   如果我们不再需要一个表，我们可以通过使用<a class="xref" href="sql-droptable.html" title="DROP TABLE"><span class="refentrytitle">DROP TABLE</span></a>命令来移除它。例如：
+</p><pre class="programlisting">DROP TABLE my_first_table;
+DROP TABLE products;</pre><p>
+   尝试移除一个不存在的表会引起错误。然而，在SQL脚本中在创建每个表之前无条件地尝试移除它的做法是很常见的，即使发生错误也会忽略之，因此这样的脚本可以在表存在和不存在时都工作得很好（如果你喜欢，可以使用<code class="literal">DROP TABLE IF EXISTS</code>变体来防止出现错误消息，但这并非标准SQL）。
+  </p><p>   如果我们需要修改一个已经存在的表，请参考本章稍后的<a class="xref" href="ddl-alter.html" title="5.5. 修改表">第 5.5 节</a>。
+  </p><p>   利用到目前为止所讨论的工具，我们可以创建一个全功能的表。本章的后续部分将集中于为表定义增加特性来保证数据完整性、安全性或方便。如果你希望现在就去填充你的表，你可以跳过这些直接去<a class="xref" href="dml.html" title="第 6 章 数据操纵">第 6 章</a>。
+  </p></div><div class="navfooter"><hr /><table width="100%" summary="Navigation footer"><tr><td width="40%" align="left"><a accesskey="p" href="ddl.html">上一页</a> </td><td width="20%" align="center"><a accesskey="u" href="ddl.html">上一级</a></td><td width="40%" align="right"> <a accesskey="n" href="ddl-default.html">下一页</a></td></tr><tr><td width="40%" align="left" valign="top">第 5 章 数据定义 </td><td width="20%" align="center"><a accesskey="h" href="index.html">起始页</a></td><td width="40%" align="right" valign="top"> 5.2. 默认值</td></tr></table></div></body></html>

@@ -1,0 +1,264 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><title>19.8. 错误报告和日志</title><link rel="stylesheet" type="text/css" href="stylesheet.css" /><link rev="made" href="pgsql-docs@postgresql.org" /><meta name="generator" content="DocBook XSL Stylesheets V1.79.1" /><link rel="prev" href="runtime-config-query.html" title="19.7. 查询规划" /><link rel="next" href="runtime-config-statistics.html" title="19.9. 运行时统计数据" /></head><body><div xmlns="http://www.w3.org/TR/xhtml1/transitional" class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="5" align="center">19.8. 错误报告和日志</th></tr><tr><td width="10%" align="left"><a accesskey="p" href="runtime-config-query.html" title="19.7. 查询规划">上一页</a> </td><td width="10%" align="left"><a accesskey="u" href="runtime-config.html" title="第 19 章 服务器配置">上一级</a></td><th width="60%" align="center">第 19 章 服务器配置</th><td width="10%" align="right"><a accesskey="h" href="index.html" title="PostgreSQL 10.1 手册">起始页</a></td><td width="10%" align="right"> <a accesskey="n" href="runtime-config-statistics.html" title="19.9. 运行时统计数据">下一页</a></td></tr></table><hr></hr></div><div class="sect1" id="RUNTIME-CONFIG-LOGGING"><div class="titlepage"><div><div><h2 class="title" style="clear: both">19.8. 错误报告和日志</h2></div></div></div><div class="toc"><dl class="toc"><dt><span class="sect2"><a href="runtime-config-logging.html#RUNTIME-CONFIG-LOGGING-WHERE">19.8.1. 在哪里做日志</a></span></dt><dt><span class="sect2"><a href="runtime-config-logging.html#RUNTIME-CONFIG-LOGGING-WHEN">19.8.2. 什么时候记录日志</a></span></dt><dt><span class="sect2"><a href="runtime-config-logging.html#RUNTIME-CONFIG-LOGGING-WHAT">19.8.3. 记录什么到日志</a></span></dt><dt><span class="sect2"><a href="runtime-config-logging.html#RUNTIME-CONFIG-LOGGING-CSVLOG">19.8.4. 使用 CSV 格式的日志输出</a></span></dt><dt><span class="sect2"><a href="runtime-config-logging.html#idp21709808">19.8.5. 进程标题</a></span></dt></dl></div><a id="idp21316464" class="indexterm"></a><div class="sect2" id="RUNTIME-CONFIG-LOGGING-WHERE"><div class="titlepage"><div><div><h3 class="title">19.8.1. 在哪里做日志</h3></div></div></div><a id="idp21318640" class="indexterm"></a><a id="idp21319872" class="indexterm"></a><div class="variablelist"><dl class="variablelist"><dt id="GUC-LOG-DESTINATION"><span class="term"><code class="varname">log_destination</code> (<code class="type">string</code>)
+      <a id="idp21322704" class="indexterm"></a></span></dt><dd><p>        <span class="productname">PostgreSQL</span>支持多种方法来记录服务器消息，包括<span class="systemitem">stderr</span>、<span class="systemitem">csvlog</span>和<span class="systemitem">syslog</span>。在 Windows 上还支持<span class="systemitem">eventlog</span>。设置这个参数为一个由想要的日志目的地的列表，之间用逗号分隔。默认值是只记录到<span class="systemitem">stderr</span>。这个参数只能在<code class="filename">postgresql.conf</code>文件中或在服务器命令行上设置。
+       </p><p>        如果<span class="systemitem">csvlog</span>被包括在<code class="varname">log_destination</code>中，日志项会以<span class="quote">“<span class="quote">逗号分隔值</span>”</span> （<acronym class="acronym">CSV</acronym>）格式被输出，这样可以很方便地把日志载入到程序中。详见<a class="xref" href="runtime-config-logging.html#RUNTIME-CONFIG-LOGGING-CSVLOG" title="19.8.4. 使用 CSV 格式的日志输出">第 19.8.4 节</a>。要产生 CSV 格式的日志输出，必须启用<a class="xref" href="runtime-config-logging.html#GUC-LOGGING-COLLECTOR">logging_collector</a>。
+       </p><p>        当包含<span class="systemitem">stderr</span>或<span class="systemitem">csvlog</span>时，
+		会创建文件<code class="filename">current_logfiles</code>，
+		以记录日志收集器和相关记录目的当前正在使用的日志文件的位置。
+		这提供了一种便捷的方式来查找当前实例正在使用的日志。
+		这里是这个文件内容的一个例子：
+</p><pre class="programlisting">stderr log/postgresql.log
+csvlog log/postgresql.csv</pre><p>
+
+        当一个新的日志文件被创建为一个循环的效果，并且当<code class="varname">log_destination</code>
+		被重新加载时，<code class="filename">current_logfiles</code>被重新创建。
+		当<span class="systemitem">stderr</span>和<span class="systemitem">csvlog</span>
+		都不包含在<code class="varname">log_destination</code>中，并且日志记录收集器被禁用时，
+		它将被删除。
+       </p><div class="note"><h3 class="title">注意</h3><p>         在大多数 Unix 系统上，你将需要修改系统的<span class="application">syslog</span>守护进程的配置来使用<code class="varname">log_destination</code>的<span class="systemitem">syslog</span>选项。<span class="productname">PostgreSQL</span>可以在<span class="application">syslog</span>设备<code class="literal">LOCAL0</code>到<code class="literal">LOCAL7</code>中记录（见<a class="xref" href="runtime-config-logging.html#GUC-SYSLOG-FACILITY">syslog_facility</a>），但是大部分平台上的默认<span class="application">syslog</span>配置会丢弃所有这种消息。你将需要增加这样的内容：
+</p><pre class="programlisting">local0.*    /var/log/postgresql</pre><p>
+         到<span class="application">syslog</span>守护进程的配置文件来让它工作。
+        </p><p>         在 Windows 上，当你使用<code class="varname">log_destination</code>的<code class="literal">eventlog</code>选项时，你应该在操作系统中注册一个事件源及其库，这样 Windows 事件查看器能够清楚地显示事件日志消息。详见<a class="xref" href="event-log-registration.html" title="18.11. 在Windows上注册Event Log">第 18.11 节</a>。
+        </p></div></dd><dt id="GUC-LOGGING-COLLECTOR"><span class="term"><code class="varname">logging_collector</code> (<code class="type">boolean</code>)
+      <a id="idp21352880" class="indexterm"></a></span></dt><dd><p>         这个参数启用<em class="firstterm">日志收集器</em>，它是一个捕捉被发送到<span class="systemitem">stderr</span>的日志消息的后台进程，并且它会将这些消息重定向到日志文件中。这种方法比记录到<span class="application">syslog</span>通常更有用，因为某些类型的消息不会在<span class="application">syslog</span>输出中出现（一个常见的例子是动态链接器错误消息；另一个例子是由<code class="varname">archive_command</code>等脚本产生的错误消息）。这个参数只能在服务器启动时设置。
+       </p><div class="note"><h3 class="title">注意</h3><p>         也可以不使用日志收集器而把日志记录到<span class="systemitem">stderr</span>，日志消息将只会去到服务器的<span class="systemitem">stderr</span>被定向到的位置。不过，那种方法只适合于低日志量，因为它没有提供方法来轮转日志文件。还有，在某些不使用日志收集器的平台上可能会导致丢失或者混淆日志输出，因为多个进程并发写入同一个日志文件时会覆盖彼此的输出。
+        </p></div><div class="note"><h3 class="title">注意</h3><p>          日志收集器被设计成从来不会丢失消息。这意味着在极高的负载下，如果服务器进程试图在收集器已经落后时发送更多的日志消息，那么它会被阻塞。相反，<span class="application">syslog</span>倾向于在无法写入消息时丢掉消息，这意味着在这样的情况下它可能会无法记录某些消息，但是它不会阻塞系统的其他部分。
+        </p></div></dd><dt id="GUC-LOG-DIRECTORY"><span class="term"><code class="varname">log_directory</code> (<code class="type">string</code>)
+      <a id="idp21363808" class="indexterm"></a></span></dt><dd><p>        当<code class="varname">logging_collector</code>被启用时，这个参数决定日志文件将被在哪个目录下创建。它可以被指定为一个绝对路径，也可以被指定为一个相对于集簇数据目录的相对路径。这个参数只能在<code class="filename">postgresql.conf</code>文件中或在服务器命令行上设置。
+        默认是<code class="literal">log</code>。
+       </p></dd><dt id="GUC-LOG-FILENAME"><span class="term"><code class="varname">log_filename</code> (<code class="type">string</code>)
+      <a id="idp21369168" class="indexterm"></a></span></dt><dd><p>        当<code class="varname">logging_collector</code>被启用时，这个参数设置被创建的日志文件的文件名。该值被视为一种<code class="function">strftime</code>模式，因此<code class="literal">%</code>转义可以被用来指定根据时间变化的文件名（注意如果有任何时区独立的<code class="literal">%</code>转义，计算将在由<a class="xref" href="runtime-config-logging.html#GUC-LOG-TIMEZONE">log_timezone</a>指定的时区中完成）。被支持的<code class="literal">%</code>转义和开放组织的<a class="ulink" href="http://pubs.opengroup.org/onlinepubs/009695399/functions/strftime.html" target="_top">strftime</a>说明中列举的类似。
+        注意系统的<code class="function">strftime</code>不会被直接使用，因此平台相关（非标准）的扩展无法工作。
+        默认是<code class="literal">postgresql-%Y-%m-%d_%H%M%S.log</code>。
+       </p><p>        如果你不使用转义来指定一个文件名，你应该计划使用一个日志轮转工具来避免最终填满整个磁盘。在 8.4 发行之前，如果不存在<code class="literal">%</code>转义，<span class="productname">PostgreSQL</span>将追加新日志文件创建时间的纪元，但是现在已经不再这样做了。
+       </p><p>        如果在<code class="varname">log_destination</code>中启用了 CSV 格式输出，<code class="literal">.csv</code>将会被追加到时间戳日志文件名中来创建 CSV 格式输出（如果<code class="varname">log_filename</code>以<code class="literal">.log</code>结尾，该后缀会被替换）。
+       </p><p>        这个参数只能在<code class="filename">postgresql.conf</code>文件中或在服务器命令行上设置。
+       </p></dd><dt id="GUC-LOG-FILE-MODE"><span class="term"><code class="varname">log_file_mode</code> (<code class="type">integer</code>)
+      <a id="idp21384848" class="indexterm"></a></span></dt><dd><p>        在 Unix 系统上，当<code class="varname">logging_collector</code>被启用时，这个参数设置日志文件的权限（在微软 Windows 上这个参数将被忽略）。这个参数值应当是一个数字形式的模式，它可以被<code class="function">chmod</code>和<code class="function">umask</code>系统调用接受（要使用通常的十进制格式，该数字必须以一个<code class="literal">0</code>（零）开始）。
+       </p><p>        默认的权限是<code class="literal">0600</code>，表示只有服务器拥有者才能读取或写入日志文件。其他常用的设置是<code class="literal">0640</code>，它允许拥有者的组成员读取文件。不过要注意你需要修改<a class="xref" href="runtime-config-logging.html#GUC-LOG-DIRECTORY">log_directory</a>为将文件存储在集簇数据目录之外的某个位置，才能利用这个设置。在任何情况下，让日志文件变成任何人都可读是不明智的，因为日志文件中可能包含敏感数据。
+       </p><p>        这个参数只能在<code class="filename">postgresql.conf</code>文件中或在服务器命令行上设置。
+       </p></dd><dt id="GUC-LOG-ROTATION-AGE"><span class="term"><code class="varname">log_rotation_age</code> (<code class="type">integer</code>)
+      <a id="idp21394848" class="indexterm"></a></span></dt><dd><p>        当<code class="varname">logging_collector</code>被启用时，这个参数决定一个个体日志文件的最长生命期。当这些分钟过去后，一个新的日志文件将被创建。将这个参数设置为零将禁用基于时间的新日志文件创建。这个参数只能在<code class="filename">postgresql.conf</code>文件中或在服务器命令行上设置。
+       </p></dd><dt id="GUC-LOG-ROTATION-SIZE"><span class="term"><code class="varname">log_rotation_size</code> (<code class="type">integer</code>)
+      <a id="idp21399536" class="indexterm"></a></span></dt><dd><p>        当<code class="varname">logging_collector</code>被启用时，这个参数决定一个个体日志文件的最大尺寸。当这么多千字节被发送到一个日志文件后，将创建一个新的日志文件。将这个参数设置为零将禁用基于尺寸的新日志文件创建。这个参数只能在<code class="filename">postgresql.conf</code>文件中或在服务器命令行上设置。
+       </p></dd><dt id="GUC-LOG-TRUNCATE-ON-ROTATION"><span class="term"><code class="varname">log_truncate_on_rotation</code> (<code class="type">boolean</code>)
+      <a id="idp21404320" class="indexterm"></a></span></dt><dd><p>        当<code class="varname">logging_collector</code>被启用时，这个参数将导致<span class="productname">PostgreSQL</span>截断（覆盖而不是追加）任何已有的同名日志文件。不过，截断只在一个新文件由于基于时间的轮转被打开时发生，在服务器启动或基于尺寸的轮转时不会发生。如果被关闭，在所有情况下以前存在的文件将被追加。例如，使用这个设置和一个类似<code class="literal">postgresql-%H.log</code>的<code class="varname">log_filename</code>将导致产生 24 个每小时的日志文件，并且循环地覆盖它们。这个参数只能在<code class="filename">postgresql.conf</code>文件中或在服务器命令行上设置。
+       </p><p>        例子：要保留 7 天的日志，每天的一个日志文件被命令为<code class="literal">server_log.Mon</code>、<code class="literal">server_log.Tue</code>等等，并且自动用本周的日志覆盖上一周的日志。可以这样做：将<code class="varname">log_filename</code>设置为<code class="literal">server_log.%a</code>、将<code class="varname">log_truncate_on_rotation</code>设置为<code class="literal">on</code>并且将<code class="varname">log_rotation_age</code>设置为<code class="literal">1440</code>。
+       </p><p>        例子：要保留 24 小时的日志，每个小时一个日志文件，但是在日志文件尺寸超过 1GB 时轮转。可以这样做：将<code class="varname">log_filename</code>设置为<code class="literal">server_log.%H%M</code>、
+        将<code class="varname">log_truncate_on_rotation</code>设置为<code class="literal">on</code>、
+        将<code class="varname">log_rotation_age</code>设置为<code class="literal">60</code>并且
+        将<code class="varname">log_rotation_size</code>设置为<code class="literal">1000000</code>。
+        在<code class="varname">log_filename</code>中包括<code class="literal">%M</code>允许发生任何尺寸驱动的轮转来选择一个不同于每个小时的初始文件名的新文件名。
+       </p></dd><dt id="GUC-SYSLOG-FACILITY"><span class="term"><code class="varname">syslog_facility</code> (<code class="type">enum</code>)
+      <a id="idp21423280" class="indexterm"></a></span></dt><dd><p>        当启用了向<span class="application">syslog</span>记录时，这个参数决定要使用的<span class="application">syslog</span><span class="quote">“<span class="quote">设备</span>”</span>。你可以在<code class="literal">LOCAL0</code>、<code class="literal">LOCAL1</code>、<code class="literal">LOCAL2</code>、<code class="literal">LOCAL3</code>、<code class="literal">LOCAL4</code>、
+        <code class="literal">LOCAL5</code>、<code class="literal">LOCAL6</code>、<code class="literal">LOCAL7</code>中选择，默认值是<code class="literal">LOCAL0</code>。还请参阅系统的<span class="application">syslog</span>守护进程的文档。这个参数只能在<code class="filename">postgresql.conf</code>文件中或在服务器命令行上设置。
+       </p></dd><dt id="GUC-SYSLOG-IDENT"><span class="term"><code class="varname">syslog_ident</code> (<code class="type">string</code>)
+      <a id="idp21436352" class="indexterm"></a></span></dt><dd><p>         当启用了向<span class="application">syslog</span>记录时，这个参数决定用来标识<span class="application">syslog</span>中的<span class="productname">PostgreSQL</span>消息的程序名。默认值是<code class="literal">postgres</code>。这个参数只能在<code class="filename">postgresql.conf</code>文件中或在服务器命令行上设置。
+        </p></dd><dt id="GUC-SYSLOG-SEQUENCE-NUMBERS"><span class="term"><code class="varname">syslog_sequence_numbers</code> (<code class="type">boolean</code>)
+        <a id="idp21443424" class="indexterm"></a>
+       </span></dt><dd><p>         当日志被记录到<span class="application">syslog</span>并且这个设置为 on 
+         （默认）时，每一个消息会被加上一个增长的序号作为前缀（例如
+         <code class="literal">[2]</code>）。这种行为避开了很多 syslog 实现默认采用的
+         <span class="quote">“<span class="quote">--- 上一个消息重复 N 次 ---</span>”</span>形式。在现代 syslog 实现中，
+         抑制重复消息是可以配置的（例如<span class="productname">rsyslog</span>
+         中的<code class="literal">$RepeatedMsgReduction</code>），因此这个参数可能不是必需的。
+         此外，如果你真的想抑制重复消息，你可以把这个参数设置为 off。 
+        </p><p>         这个参数只能在<code class="filename">postgresql.conf</code>文件或者服务器命令行上设置。
+        </p></dd><dt id="GUC-SYSLOG-SPLIT-MESSAGES"><span class="term"><code class="varname">syslog_split_messages</code> (<code class="type">boolean</code>)
+      <a id="idp21451744" class="indexterm"></a>
+      </span></dt><dd><p>        当启用把日志记录到<span class="application">syslog</span>时，这个参数决定消息如何送达
+        syslog。当设置为 on（默认）时，消息会被分成行，
+        并且长的行也会被划分以便能够放到 1024 字节中，
+        这是传统 syslog 实现一种典型的尺寸限制。当设置为 off 时，
+        PostgreSQL 服务器日志消息会被原样送达 syslog 服务，
+        而处理可能的大体量消息的任务由 syslog 服务负责。
+       </p><p>        如果 syslog 最终被记录到一个文本文件中，那么两种设置的效果是一样的，
+        但最好设置为 on，因为大部分 syslog 实现要么不能处理大型消息，
+        要么需要做特殊的配置以处理大型消息。但是如果 syslog 
+        最终写入到某种其他媒介，有必要让消息保持逻辑上的整体性（也更加有用）。
+       </p><p>        这个参数只能在<code class="filename">postgresql.conf</code>文件或者服务器命令行上设置。
+       </p></dd><dt id="GUC-EVENT-SOURCE"><span class="term"><code class="varname">event_source</code> (<code class="type">string</code>)
+      <a id="idp21458704" class="indexterm"></a></span></dt><dd><p>        当启用了向<span class="application">事件日志</span>记录时，这个参数决定用来标识日志中<span class="productname">PostgreSQL</span>消息的程序名。默认值是<code class="literal">PostgreSQL</code>。这个参数只能在<code class="filename">postgresql.conf</code>文件中或在服务器命令行上设置。
+       </p></dd></dl></div></div><div class="sect2" id="RUNTIME-CONFIG-LOGGING-WHEN"><div class="titlepage"><div><div><h3 class="title">19.8.2. 什么时候记录日志</h3></div></div></div><div class="variablelist"><dl class="variablelist"><dt id="GUC-CLIENT-MIN-MESSAGES"><span class="term"><code class="varname">client_min_messages</code> (<code class="type">enum</code>)
+      <a id="idp21466000" class="indexterm"></a></span></dt><dd><p>        控制被发送给客户端的消息级别。有效值是<code class="literal">DEBUG5</code>、
+        <code class="literal">DEBUG4</code>、<code class="literal">DEBUG3</code>、<code class="literal">DEBUG2</code>、
+        <code class="literal">DEBUG1</code>、<code class="literal">LOG</code>、<code class="literal">NOTICE</code>、
+        <code class="literal">WARNING</code>、<code class="literal">ERROR</code>、<code class="literal">FATAL</code>和<code class="literal">PANIC</code>。每个级别都包括其后的所有级别。级别越靠后，被发送的消息越少。默认值是<code class="literal">NOTICE</code>。注意<code class="literal">LOG</code>在这里有与<code class="varname">log_min_messages</code>中不同的排名。
+       </p></dd><dt id="GUC-LOG-MIN-MESSAGES"><span class="term"><code class="varname">log_min_messages</code> (<code class="type">enum</code>)
+      <a id="idp21479280" class="indexterm"></a></span></dt><dd><p>        控制哪些消息级别被写入到服务器日志。有效值是<code class="literal">DEBUG5</code>、<code class="literal">DEBUG4</code>、
+        <code class="literal">DEBUG3</code>、<code class="literal">DEBUG2</code>、<code class="literal">DEBUG1</code>、
+        <code class="literal">INFO</code>、<code class="literal">NOTICE</code>、<code class="literal">WARNING</code>、
+        <code class="literal">ERROR</code>、<code class="literal">LOG</code>、<code class="literal">FATAL</code>和
+        <code class="literal">PANIC</code>。每个级别都包括以后的所有级别。级别越靠后，被发送的消息越少。默认值是<code class="literal">WARNING</code>。注意<code class="literal">LOG</code>在这里有与<code class="varname">log_min_messages</code>中不同的排名。只有超级用户可以改变这个设置。
+       </p></dd><dt id="GUC-LOG-MIN-ERROR-STATEMENT"><span class="term"><code class="varname">log_min_error_statement</code> (<code class="type">enum</code>)
+      <a id="idp21493376" class="indexterm"></a></span></dt><dd><p>        控制哪些导致一个错误情况的 SQL 语句被记录在服务器日志中。任何指定严重级别或更高级别的消息的当前 SQL 语句将被包括在日志项中。有效值是<code class="literal">DEBUG5</code>、
+        <code class="literal">DEBUG4</code>、<code class="literal">DEBUG3</code>、
+        <code class="literal">DEBUG2</code>、<code class="literal">DEBUG1</code>、
+        <code class="literal">INFO</code>、<code class="literal">NOTICE</code>、
+        <code class="literal">WARNING</code>、<code class="literal">ERROR</code>、
+        <code class="literal">LOG</code>、
+        <code class="literal">FATAL</code>和<code class="literal">PANIC</code>。默认值是<code class="literal">ERROR</code>，它表示导致错误、日志消息、致命错误或恐慌错误的语句将被记录在日志中。要有效地关闭记录失败语句，将这个参数设置为<code class="literal">PANIC</code>。只有超级用户可以改变这个设置。
+       </p></dd><dt id="GUC-LOG-MIN-DURATION-STATEMENT"><span class="term"><code class="varname">log_min_duration_statement</code> (<code class="type">integer</code>)
+      <a id="idp21507296" class="indexterm"></a></span></dt><dd><p>         如果语句运行至少指定的毫秒数，将导致记录每一个这种完成的语句的持续时间。将这个参数设置为零将打印所有语句的执行时间。设置为 -1 （默认值）将停止记录语句持续时间。例如，如果你设置它为<code class="literal">250ms</code>，那么所有运行 250ms 或更久的 SQL 语句将被记录。启用这个参数可以有助于追踪应用中未优化的查询。只有超级用户可以改变这个设置。
+        </p><p>         对于使用扩展查询协议的客户端，解析、绑定和执行步骤的持续时间将被独立记录。
+        </p><div class="note"><h3 class="title">注意</h3><p>         当把这个选项和<a class="xref" href="runtime-config-logging.html#GUC-LOG-STATEMENT">log_statement</a>一起使用时，已经被<code class="varname">log_statement</code>记录的语句文本不会在持续时间日志消息中重复。如果你没有使用<span class="application">syslog</span>，我们推荐你使用<a class="xref" href="runtime-config-logging.html#GUC-LOG-LINE-PREFIX">log_line_prefix</a>记录 PID 或会话 ID，这样你可以使用进程 ID 或会话 ID 把语句消息链接到后来的持续时间消息。
+        </p></div></dd></dl></div><p>     <a class="xref" href="runtime-config-logging.html#RUNTIME-CONFIG-SEVERITY-LEVELS" title="表 19.1. 消息严重级别">表 19.1</a>解释了<span class="productname">PostgreSQL</span>所使用的消息严重级别。如果日志输出被发送到<span class="systemitem">syslog</span>或 Windows 的<span class="systemitem">eventlog</span>，严重级别会按照表中所示进行转换。
+    </p><div class="table" id="RUNTIME-CONFIG-SEVERITY-LEVELS"><p class="title"><strong>表 19.1. 消息严重级别</strong></p><div class="table-contents"><table class="table" summary="消息严重级别" border="1"><colgroup><col /><col /><col /><col /></colgroup><thead><tr><th>严重性</th><th>用法</th><th><span class="systemitem">syslog</span></th><th><span class="systemitem">eventlog</span></th></tr></thead><tbody><tr><td><code class="literal">DEBUG1..DEBUG5</code></td><td>为开发者提供连续的更详细的信息。</td><td><code class="literal">DEBUG</code></td><td><code class="literal">INFORMATION</code></td></tr><tr><td><code class="literal">INFO</code></td><td>提供用户隐式要求的信息，例如来自<code class="command">VACUUM VERBOSE</code>的输出。</td><td><code class="literal">INFO</code></td><td><code class="literal">INFORMATION</code></td></tr><tr><td><code class="literal">NOTICE</code></td><td>提供可能对用户有用的信息，例如长标识符截断提示。</td><td><code class="literal">NOTICE</code></td><td><code class="literal">INFORMATION</code></td></tr><tr><td><code class="literal">WARNING</code></td><td>提供可能出现的问题的警告，例如在一个事务块外<code class="command">COMMIT</code>。</td><td><code class="literal">NOTICE</code></td><td><code class="literal">WARNING</code></td></tr><tr><td><code class="literal">ERROR</code></td><td>报告一个导致当前命令中断的错误。</td><td><code class="literal">WARNING</code></td><td><code class="literal">ERROR</code></td></tr><tr><td><code class="literal">LOG</code></td><td>报告管理员可能感兴趣的信息，例如检查点活动。</td><td><code class="literal">INFO</code></td><td><code class="literal">INFORMATION</code></td></tr><tr><td><code class="literal">FATAL</code></td><td>报告一个导致当前会话中断的错误。</td><td><code class="literal">ERR</code></td><td><code class="literal">ERROR</code></td></tr><tr><td><code class="literal">PANIC</code></td><td>报告一个导致所有数据库会话中断的错误。</td><td><code class="literal">CRIT</code></td><td><code class="literal">ERROR</code></td></tr></tbody></table></div></div><br class="table-break" /></div><div class="sect2" id="RUNTIME-CONFIG-LOGGING-WHAT"><div class="titlepage"><div><div><h3 class="title">19.8.3. 记录什么到日志</h3></div></div></div><div class="variablelist"><dl class="variablelist"><dt id="GUC-APPLICATION-NAME"><span class="term"><code class="varname">application_name</code> (<code class="type">string</code>)
+      <a id="idp21545632" class="indexterm"></a></span></dt><dd><p>        application_name可以是任意的小于NAMEDATALEN字字符 （标准编译是64字符）的字符串。它通常由一个连接服务器后的的应用程序设置。 名字会记录在pg_stat_activity和CSV日志条目中。 也可以通过log_line_prefix参数，包含在规律的日志条目中。 只有可打印的ASCII字符可以被用于application_name。 其他字符会被问号(?)替换。
+        <code class="varname">application_name</code>可以是任意小于<code class="symbol">NAMEDATALEN</code>个字符（标准编译中是 64 个字符）的字符串。这通常由一个应用通过到服务器的连接设置。该名称将被显示在<code class="structname">pg_stat_activity</code>视图中并被包括在 CSV 日志项中。它也会被通过<a class="xref" href="runtime-config-logging.html#GUC-LOG-LINE-PREFIX">log_line_prefix</a>包括在普通日志项中。只有可打印 ASCII 字符能被使用在<code class="varname">application_name</code>之中。其他字符将被替换为问号（<code class="literal">?</code>）。
+       </p></dd><dt><span class="term"><code class="varname">debug_print_parse</code> (<code class="type">boolean</code>)
+      <a id="idp21552208" class="indexterm"></a>
+      <br /></span><span class="term"><code class="varname">debug_print_rewritten</code> (<code class="type">boolean</code>)
+      <a id="idp21554304" class="indexterm"></a>
+      <br /></span><span class="term"><code class="varname">debug_print_plan</code> (<code class="type">boolean</code>)
+      <a id="idp21556400" class="indexterm"></a>
+      </span></dt><dd><p>        这些参数将会让多种调试输出被发出。当被设置时，它们为每一个被执行的查询打印结果分析树、查询重写器输出或执行计划。这些消息在<code class="literal">LOG</code>消息级别上被发出，因此默认情况下它们将出现在服务器日志中但不会被发送到客户端。你可以通过调整<a class="xref" href="runtime-config-logging.html#GUC-CLIENT-MIN-MESSAGES">client_min_messages</a>和/或<a class="xref" href="runtime-config-logging.html#GUC-LOG-MIN-MESSAGES">log_min_messages</a>来改变这种情况。这些参数默认是关闭的。
+       </p></dd><dt><span class="term"><code class="varname">debug_pretty_print</code> (<code class="type">boolean</code>)
+      <a id="idp21561808" class="indexterm"></a></span></dt><dd><p>        当被设置时，<code class="varname">debug_pretty_print</code>会缩进由<code class="varname">debug_print_parse</code>、
+        <code class="varname">debug_print_rewritten</code>或
+        <code class="varname">debug_print_plan</code>产生的输出。这将导致比关闭参数时使用的<span class="quote">“<span class="quote">紧凑</span>”</span>模式可读性更强但是更长的输出。它默认是打开的。
+       </p></dd><dt id="GUC-LOG-CHECKPOINTS"><span class="term"><code class="varname">log_checkpoints</code> (<code class="type">boolean</code>)
+      <a id="idp21567392" class="indexterm"></a></span></dt><dd><p>        导致检查点和重启点被记录在服务器日志中。一些统计信息也被包括在日志消息中，包括写入缓冲区的数据和写它们所花的时间。这个参数只能在<code class="filename">postgresql.conf</code>文件中或在服务器命令行上设置。默认值是关闭。
+       </p></dd><dt id="GUC-LOG-CONNECTIONS"><span class="term"><code class="varname">log_connections</code> (<code class="type">boolean</code>)
+      <a id="idp21571776" class="indexterm"></a></span></dt><dd><p>        导致每一次尝试对服务器的连接被记录，客户端认证的成功完成也会被记录。
+        只有超级用户在会话开启时可以改变这个参数，并且在所有会话中不能改变。
+        缺省是<code class="literal">off</code>。
+       </p><div class="note"><h3 class="title">注意</h3><p>          某些客户端程序（例如<span class="application">psql</span>）在要求密码时会尝试连接两次，因此重复的<span class="quote">“<span class="quote">收到连接</span>”</span>消息并不一定表示一个错误。
+        </p></div></dd><dt id="GUC-LOG-DISCONNECTIONS"><span class="term"><code class="varname">log_disconnections</code> (<code class="type">boolean</code>)
+      <a id="idp21577920" class="indexterm"></a></span></dt><dd><p>        记录会话终止原因。日志输出提供信息类似于<code class="varname">log_connections</code>，
+        以及会话持续时间。只有超级用户在会话开启时可以改变这个参数，
+        并且在所有会话中不能改变。缺省是<code class="literal">off</code>。
+       </p></dd><dt id="GUC-LOG-DURATION"><span class="term"><code class="varname">log_duration</code> (<code class="type">boolean</code>)
+      <a id="idp21582592" class="indexterm"></a></span></dt><dd><p>        导致每一个完成的语句的持续时间被记录。默认值是<code class="literal">off</code>。只有超级用户可以改变这个设置。
+       </p><p>        对于使用扩展查询协议的客户端，解析、绑定和执行步骤的持续时间将被独立记录。
+       </p><div class="note"><h3 class="title">注意</h3><p>         设置这个选项和设置<a class="xref" href="runtime-config-logging.html#GUC-LOG-MIN-DURATION-STATEMENT">log_min_duration_statement</a>为零之间的区别是，超过<code class="varname">log_min_duration_statement</code>强制查询的文本被记录，但这个选项不会。因此，如果<code class="varname">log_duration</code>为<code class="literal">on</code>并且<code class="varname">log_min_duration_statement</code>为正值，所有持续时间都将被记录，但是只有超过阈值的语句才会被记录查询文本。这种行为有助于在高负载安装中收集统计信息。
+        </p></div></dd><dt id="GUC-LOG-ERROR-VERBOSITY"><span class="term"><code class="varname">log_error_verbosity</code> (<code class="type">enum</code>)
+      <a id="idp21590832" class="indexterm"></a></span></dt><dd><p>        控制为每一个被记录的消息要写入到服务器日志的细节量。有效值是<code class="literal">TERSE</code>、<code class="literal">DEFAULT</code>和<code class="literal">VERBOSE</code>，每一个都为显示的消息增加更多域。<code class="literal">TERSE</code>排除记录<code class="literal">DETAIL</code>、<code class="literal">HINT</code>、<code class="literal">QUERY</code>和<code class="literal">CONTEXT</code>错误信息。<code class="literal">VERBOSE</code>输出包括<code class="symbol">SQLSTATE</code>错误码（见<a class="xref" href="errcodes-appendix.html" title="附录 A. PostgreSQL错误代码">附录 A</a>）以及产生错误的源代码文件名、函数名和行号。只有超级用户能够更改这个设置。
+       </p></dd><dt id="GUC-LOG-HOSTNAME"><span class="term"><code class="varname">log_hostname</code> (<code class="type">boolean</code>)
+      <a id="idp21602176" class="indexterm"></a></span></dt><dd><p>        默认情况下，连接日志消息只显示连接主机的 IP 地址。打开这个参数将导致也记录主机名。注意根据你的主机名解析设置，这可能会导致很微小的性能损失。这个参数只能在<code class="filename">postgresql.conf</code>文件中或在服务器命令行上设置。
+       </p></dd><dt id="GUC-LOG-LINE-PREFIX"><span class="term"><code class="varname">log_line_prefix</code> (<code class="type">string</code>)
+      <a id="idp21606608" class="indexterm"></a></span></dt><dd><p>         这是一个<code class="function">printf</code>风格的字符串，它在每个日志行的开头输出。<code class="literal">%</code>字符开始<span class="quote">“<span class="quote">转义序列</span>”</span>，它将被按照下文描述的替换成状态信息。未识别的转义被忽略。其他字符被直接复制到日志行。某些转义只被会话进程识别并且被主服务器进程等后台进程当作空。通过指定一个在%之后和该选项之前的数字可以让状态信息左对齐或右对齐。
+         负值将导致在右边用空格填充状态信息已达到最小宽度，而正值则在左边填充。填充对于日志文
+         件的人类可读性大有帮助。这个参数只能在<code class="filename">postgresql.conf</code>文件中或在服务器命令行上设置。
+		 默认值是<code class="literal">'%m [%p] '</code>，它记录时间戳和进程ID。
+
+         </p><div class="informaltable"><table class="informaltable" border="1"><colgroup><col /><col /><col /></colgroup><thead><tr><th>转义</th><th>效果</th><th>只限会话</th></tr></thead><tbody><tr><td><code class="literal">%a</code></td><td>应用名</td><td>是</td></tr><tr><td><code class="literal">%u</code></td><td>用户名</td><td>是</td></tr><tr><td><code class="literal">%d</code></td><td>数据库名</td><td>是</td></tr><tr><td><code class="literal">%r</code></td><td>远程主机名或 IP 地址，以及远程端口</td><td>是</td></tr><tr><td><code class="literal">%h</code></td><td>远程主机名或 IP 地址</td><td>是</td></tr><tr><td><code class="literal">%p</code></td><td>进程 ID</td><td>否</td></tr><tr><td><code class="literal">%t</code></td><td>无毫秒的时间戳</td><td>否</td></tr><tr><td><code class="literal">%m</code></td><td>带毫秒的时间戳</td><td>否</td></tr><tr><td><code class="literal">%n</code></td><td>带毫秒的时间戳（作为 Unix 时间戳）</td><td>否</td></tr><tr><td><code class="literal">%i</code></td><td>命令标签：会话当前命令的类型</td><td>是</td></tr><tr><td><code class="literal">%e</code></td><td>SQLSTATE 错误代码</td><td>否</td></tr><tr><td><code class="literal">%c</code></td><td>会话 ID：见下文</td><td>否</td></tr><tr><td><code class="literal">%l</code></td><td>对每个会话或进程的日志行号，从 1 开始</td><td>否</td></tr><tr><td><code class="literal">%s</code></td><td>进程开始的时间戳</td><td>否</td></tr><tr><td><code class="literal">%v</code></td><td>虚拟事务 ID (backendID/localXID)</td><td>否</td></tr><tr><td><code class="literal">%x</code></td><td>事务 ID （如果未分配则为 0）</td><td>否</td></tr><tr><td><code class="literal">%q</code></td><td>不产生输出，但是告诉非会话进程在字符串的这一点停止；会话进程忽略</td><td>否</td></tr><tr><td><code class="literal">%%</code></td><td>纯文字 <code class="literal">%</code></td><td>否</td></tr></tbody></table></div><p>
+
+         <code class="literal">%c</code>转义打印一个准唯一的会话标识符，它由两个 4 字节的十六进制数（不带先导零）组成，以点号分隔。这些数字是进程启动时间和进程 ID，因此<code class="literal">%c</code>也可以被用作保存打印这些项的方式的空间。例如，要从<code class="literal">pg_stat_activity</code>生成会话标识符，使用这个查询：
+</p><pre class="programlisting">SELECT to_hex(trunc(EXTRACT(EPOCH FROM backend_start))::integer) || '.' ||
+       to_hex(pid)
+FROM pg_stat_activity;</pre><p>
+
+       </p><div class="tip"><h3 class="title">提示</h3><p>         如果你为<code class="varname">log_line_prefix</code>设置了非空值，你通常应该让它的最后一个字符为空格，这样用以提供和日志行的剩余部分的视觉区别。也可以使用标点符号。
+        </p></div><div class="tip"><h3 class="title">提示</h3><p>         <span class="application">Syslog</span>产生自己的时间戳和进程 ID 信息，因此如果你记录到<span class="application">syslog</span>你可能不希望包括哪些转义。
+        </p></div><div class="tip"><h3 class="title">提示</h3><p>         包含仅在会话（后端）上下文（如用户或数据库名称）中可用的信息时，
+		 <code class="literal">%q</code>转义非常有用。例如：
+</p><pre class="programlisting">log_line_prefix = '%m [%p] %q%u@%d/%a '</pre><p>
+        </p></div></dd><dt id="GUC-LOG-LOCK-WAITS"><span class="term"><code class="varname">log_lock_waits</code> (<code class="type">boolean</code>)
+      <a id="idp21650064" class="indexterm"></a></span></dt><dd><p>        控制当一个会话为获得一个锁等到超过<a class="xref" href="runtime-config-locks.html#GUC-DEADLOCK-TIMEOUT">deadlock_timeout</a>时，是否要产生一个日志消息。这有助于决定是否所等待造成了性能低下。默认值是<code class="literal">off</code>。
+		只有超级用户可以更改此设置。
+       </p></dd><dt id="GUC-LOG-STATEMENT"><span class="term"><code class="varname">log_statement</code> (<code class="type">enum</code>)
+      <a id="idp21655056" class="indexterm"></a></span></dt><dd><p>        控制哪些 SQL 语句被记录。有效值是
+        <code class="literal">none</code> (off)、<code class="literal">ddl</code>、<code class="literal">mod</code>和
+        <code class="literal">all</code>（所有语句）。<code class="literal">ddl</code>记录所有数据定义语句，例如<code class="command">CREATE</code>、<code class="command">ALTER</code>和
+        <code class="command">DROP</code>语句。<code class="literal">mod</code>记录所有<code class="literal">ddl</code>语句，外加数据修改语句例如<code class="command">INSERT</code>,
+        <code class="command">UPDATE</code>、<code class="command">DELETE</code>、<code class="command">TRUNCATE</code>,
+        和<code class="command">COPY FROM</code>。
+        如果<code class="command">PREPARE</code>、<code class="command">EXECUTE</code>和
+        <code class="command">EXPLAIN ANALYZE</code>包含合适类型的命令，它们也会被记录。对于使用扩展查询协议的客户端，当收到一个执行消息时会产生日志并且会包括绑定参数的值（任何内嵌的单引号会被双写）。
+       </p><p>        默认值是<code class="literal">none</code>。只有超级用户可以改变这个设置。
+       </p><div class="note"><h3 class="title">注意</h3><p>         即使设置了log_statement=all，包含 简单语法错误的语句也不会被记录。因为仅在完成基本的语法分析并 确定了语句类型之后才记录日志。在使用扩展查询协议的情况下，在 执行阶段之前(语法分析或规划阶段)同样不会记录。将 log_min_error_statement设为ERROR 或更低才能记录这些语句。
+         即使使用<code class="varname">log_statement</code> = <code class="literal">all</code>设置，包含简单语法错误的语句也不会被记录。这是因为只有在完成基本语法解析并确定了语句类型之后才会发出日志消息。在扩展查询协议的情况下，在执行阶段之前（即在解析分析或规划期间）出错的语句也不会被记录。将<code class="varname">log_min_error_statement</code>设置为<code class="literal">ERROR</code>（或更低）来记录这种语句。
+        </p></div></dd><dt id="GUC-LOG-REPLICATION-COMMANDS"><span class="term"><code class="varname">log_replication_commands</code> (<code class="type">boolean</code>)
+      <a id="idp21676224" class="indexterm"></a>
+      </span></dt><dd><p>        导致每个复制命令记录在服务器日志中。
+        参阅<a class="xref" href="protocol-replication.html" title="52.4. 流复制协议">第 52.4 节</a>获取更多复制命令的详细信息。
+        缺省值是<code class="literal">off</code>。只有超级用户可以修改这个设置。
+       </p></dd><dt id="GUC-LOG-TEMP-FILES"><span class="term"><code class="varname">log_temp_files</code> (<code class="type">integer</code>)
+      <a id="idp21681232" class="indexterm"></a></span></dt><dd><p>        控制记录临时文件名和尺寸。临时文件可以被创建用来排序、哈希和存储临时查询结果。当每一个临时文件被删除时都会制作一个日志项。一个零值记录所有临时文件信息，而正值只记录尺寸大于或等于指定千字节数的文件。默认设置为 -1，它禁用这种记录。只有超级用户可以更改这个设置。
+       </p></dd><dt id="GUC-LOG-TIMEZONE"><span class="term"><code class="varname">log_timezone</code> (<code class="type">string</code>)
+      <a id="idp21685056" class="indexterm"></a></span></dt><dd><p>        设置在服务器日志中写入的时间戳的时区。和<a class="xref" href="runtime-config-client.html#GUC-TIMEZONE">TimeZone</a>不同，这个值是集簇范围的，因此所有会话将报告一致的时间戳。内建默认值是<code class="literal">GMT</code>，但是通常会被在<code class="filename">postgresql.conf</code>中覆盖。<span class="application">initdb</span>将安装一个对应于其系统环境的设置。详见<a class="xref" href="datatype-datetime.html#DATATYPE-TIMEZONES" title="8.5.3.  时区">第 8.5.3 节</a>。这个参数只能在<code class="filename">postgresql.conf</code>文件中或在服务器命令行上设置。
+       </p></dd></dl></div></div><div class="sect2" id="RUNTIME-CONFIG-LOGGING-CSVLOG"><div class="titlepage"><div><div><h3 class="title">19.8.4. 使用 CSV 格式的日志输出</h3></div></div></div><p>        包括在log_destination中的csvlog，提供了一个 便捷的方式向数据库中导入日志文件。这个选项以CSV格式发出日志行， 带有这些列： 以毫秒为单位的时间戳，用户名，数据库名，进程ID，客户端主机：端口号， 会话ID，每个会话的行号，命令标签，会话开始时间，虚拟事务ID，日常事务ID， 错误严重性，SQLSTATE代码，错误信息，错误信息的详细信息，建议， 导致错误的内部查询（如果存在），其中的错误位置的字符统计， 错误范围，导致错误的用户查询（如果存在，并且启用log_min_error_statement）， 其中的错误位置的字符统计，PostgreSQL源代码中报错的位置（如果 log_error_verbosity设置为verbose）和应用程序名。 下面是一个用于存储CSV格式日志暑促的简单表定义：
+        在<code class="varname">log_destination</code>列表中包括<code class="literal">csvlog</code>提供了一种便捷方式将日志文件导入到一个数据库表。这个选项发出逗号分隔值（<acronym class="acronym">CSV</acronym>）格式的日志行，包括这些列：
+        带毫秒的时间戳、
+        用户名、
+        数据库名、
+        进程 ID、
+        客户端主机:端口号、
+        会话 ID、
+        每个会话的行号、
+        命令标签、
+        会话开始时间、
+        虚拟事务 ID、
+        普通事务 ID、
+        错误严重性、
+        SQLSTATE 代码、
+        错误消息、
+        错误消息详情、
+        提示、
+        导致错误的内部查询（如果有）、
+        错误位置所在的字符计数、
+        错误上下文、
+        导致错误的用户查询（如果有且被<code class="varname">log_min_error_statement</code>启用）、
+        错误位置所在的字符计数、
+        在 PostgreSQL 源代码中错误的位置（如果<code class="varname">log_error_verbosity</code>被设置为<code class="literal">verbose</code>）以及应用名。
+        下面是一个定义用来存储 CSV 格式日志输出的样表：
+
+</p><pre class="programlisting">CREATE TABLE postgres_log
+(
+  log_time timestamp(3) with time zone,
+  user_name text,
+  database_name text,
+  process_id integer,
+  connection_from text,
+  session_id text,
+  session_line_num bigint,
+  command_tag text,
+  session_start_time timestamp with time zone,
+  virtual_transaction_id text,
+  transaction_id bigint,
+  error_severity text,
+  sql_state_code text,
+  message text,
+  detail text,
+  hint text,
+  internal_query text,
+  internal_query_pos integer,
+  context text,
+  query text,
+  query_pos integer,
+  location text,
+  application_name text,
+  PRIMARY KEY (session_id, session_line_num)
+);</pre><p>
+       </p><p>        使用<code class="command">COPY FROM</code>命令将一个日志文件导入到这个表中：
+
+</p><pre class="programlisting">COPY postgres_log FROM '/full/path/to/logfile.csv' WITH csv;</pre><p>
+       </p><p>       你可以做一些事情来简化导入 CSV 日志文件：
+
+       </p><div class="orderedlist"><ol class="orderedlist" type="1"><li class="listitem"><p>            设置<code class="varname">log_filename</code>和<code class="varname">log_rotation_age</code>为你的日志文件提供一种一致的、可预测的命名空间。这让你预测文件名会是怎样以及知道什么时候一个个体日志文件完成并且因此准备好被导入。
+         </p></li><li class="listitem"><p>           将<code class="varname">log_rotation_size</code>设置为 0 来禁用基于尺寸的日志轮转，因为它使得日志文件名难以预测。
+           </p></li><li class="listitem"><p>           将<code class="varname">log_truncate_on_rotation</code>设置为<code class="literal">on</code>，这样在同一个文件中旧日志数据不会与新数据混杂。
+          </p></li><li class="listitem"><p>           上述表定义包括一个主键声明。这有助于避免意外地两次导入相同的信息。<code class="command">COPY</code>命令一次提交所有它导入的数据，因此任何错误将导致整个导入失败。如果你导入一个部分完成的日志文件并且稍后当它完全完成后再次导入，主键违背将导致导入失败。请等到日志完成且被关闭之后再导入。这个过程也可以避免意外地导入部分完成的行，这种行也将导致<code class="command">COPY</code>失败。
+          </p></li></ol></div><p>
+      </p></div><div class="sect2" id="idp21709808"><div class="titlepage"><div><div><h3 class="title">19.8.5. 进程标题</h3></div></div></div><p>     这些设置控制服务器进程的进程标题是如何被修改的。
+	 进程标题通常使用程序<span class="application">ps</span>查看，或者，在Windows上，
+	 使用<span class="application">进程管理器</span>查看。
+     参阅<a class="xref" href="monitoring-ps.html" title="28.1. 标准 Unix 工具">第 28.1 节</a>获取详情。
+    </p><div class="variablelist"><dl class="variablelist"><dt id="GUC-CLUSTER-NAME"><span class="term"><code class="varname">cluster_name</code> (<code class="type">string</code>)
+      <a id="idp21715008" class="indexterm"></a>
+      </span></dt><dd><p>        设置出现在集群中的所有进程标题中的集群名称。
+        名称可以是任何小于<code class="symbol">NAMEDATALEN</code>字符（标准64字符）的字符串。
+        只有可输出的ASCII字符可以用在<code class="varname">cluster_name</code>值中。
+        其他字符将用问号替换(<code class="literal">?</code>)。
+        如果此参数设置为空字符串<code class="literal">''</code>（即为缺省值），不显示名字。
+        此参数只能在服务器启动时设置。
+       </p></dd><dt id="GUC-UPDATE-PROCESS-TITLE"><span class="term"><code class="varname">update_process_title</code> (<code class="type">boolean</code>)
+      <a id="idp21721248" class="indexterm"></a>
+      </span></dt><dd><p> 
+        启用更新进程标题的特性，这个特性在每次服务器接收到一个新SQL命令时都会更新进程的标题。
+       这个设置在大多数平台上默认为<code class="literal">on</code>，但是在Windows上默认为
+	   <code class="literal">off</code>，因为该平台对于更新进程标题有较大的开销。
+	   只有超级用户可以更改这个设置。
+       </p></dd></dl></div></div></div><div class="navfooter"><hr /><table width="100%" summary="Navigation footer"><tr><td width="40%" align="left"><a accesskey="p" href="runtime-config-query.html">上一页</a> </td><td width="20%" align="center"><a accesskey="u" href="runtime-config.html">上一级</a></td><td width="40%" align="right"> <a accesskey="n" href="runtime-config-statistics.html">下一页</a></td></tr><tr><td width="40%" align="left" valign="top">19.7. 查询规划 </td><td width="20%" align="center"><a accesskey="h" href="index.html">起始页</a></td><td width="40%" align="right" valign="top"> 19.9. 运行时统计数据</td></tr></table></div></body></html>

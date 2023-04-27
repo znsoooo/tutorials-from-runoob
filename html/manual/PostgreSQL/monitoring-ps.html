@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><title>28.1. 标准 Unix 工具</title><link rel="stylesheet" type="text/css" href="stylesheet.css" /><link rev="made" href="pgsql-docs@postgresql.org" /><meta name="generator" content="DocBook XSL Stylesheets V1.79.1" /><link rel="prev" href="monitoring.html" title="第 28 章 监控数据库活动" /><link rel="next" href="monitoring-stats.html" title="28.2. 统计收集器" /></head><body><div xmlns="http://www.w3.org/TR/xhtml1/transitional" class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="5" align="center">28.1. 标准 Unix 工具</th></tr><tr><td width="10%" align="left"><a accesskey="p" href="monitoring.html" title="第 28 章 监控数据库活动">上一页</a> </td><td width="10%" align="left"><a accesskey="u" href="monitoring.html" title="第 28 章 监控数据库活动">上一级</a></td><th width="60%" align="center">第 28 章 监控数据库活动</th><td width="10%" align="right"><a accesskey="h" href="index.html" title="PostgreSQL 10.1 手册">起始页</a></td><td width="10%" align="right"> <a accesskey="n" href="monitoring-stats.html" title="28.2. 统计收集器">下一页</a></td></tr></table><hr></hr></div><div class="sect1" id="MONITORING-PS"><div class="titlepage"><div><div><h2 class="title" style="clear: both">28.1. 标准 Unix 工具</h2></div></div></div><a id="idp25303280" class="indexterm"></a><p>   在大部分 Unix 平台上，<span class="productname">PostgreSQL</span>会修改由<code class="command">ps</code>报告的命令标题，这样个体服务器进程可以被标识。一个显示样例是
+
+</p><pre class="screen">$ ps auxww | grep ^postgres
+postgres  15551  0.0  0.1  57536  7132 pts/0    S    18:02   0:00 postgres -i
+postgres  15554  0.0  0.0  57536  1184 ?        Ss   18:02   0:00 postgres: writer process
+postgres  15555  0.0  0.0  57536   916 ?        Ss   18:02   0:00 postgres: checkpointer process
+postgres  15556  0.0  0.0  57536   916 ?        Ss   18:02   0:00 postgres: wal writer process
+postgres  15557  0.0  0.0  58504  2244 ?        Ss   18:02   0:00 postgres: autovacuum launcher process
+postgres  15558  0.0  0.0  17512  1068 ?        Ss   18:02   0:00 postgres: stats collector process
+postgres  15582  0.0  0.0  58772  3080 ?        Ss   18:04   0:00 postgres: joe runbug 127.0.0.1 idle
+postgres  15606  0.0  0.0  58772  3052 ?        Ss   18:07   0:00 postgres: tgl regression [local] SELECT waiting
+postgres  15610  0.0  0.0  58772  3056 ?        Ss   18:07   0:00 postgres: tgl regression [local] idle in transaction</pre><p>
+
+   （<code class="command">ps</code>的调用方式随不同的平台而变，但是显示的细节都差不多。这个例子来自于一个最近的 Linux 系统）。列在这里的第一个进程是主服务器进程。为它显示的命令参数是当它被启动时使用的那些。接下来的五个进程是由主进程自动启动的后台工作者进程（如果你已经设置系统为不启动统计收集器，<span class="quote">“<span class="quote">统计收集器</span>”</span>进程将不会出现；同样<span class="quote">“<span class="quote">自动清理发动</span>”</span>进程也可以被禁用）。剩余的每一个进程都是一个处理一个客户端连接的服务器进程。每个这种进程都会把它的命令行显示设置为这种形式
+
+</p><pre class="screen">postgres: <em class="replaceable"><code>user</code></em> <em class="replaceable"><code>database</code></em> <em class="replaceable"><code>host</code></em> <em class="replaceable"><code>activity</code></em></pre><p>
+
+  在该客户端连接的生命期中，用户、数据库以及（客户端）主机项保持不变，但是活动指示器会改变。活动可以是<code class="literal">闲置</code>（即等待一个客户端命令）、<code class="literal">在事务中闲置</code>（在一个<code class="command">BEGIN</code>块里等待客户端）或者一个命令类型名，例如<code class="literal">SELECT</code>。还有，如果服务器进程正在等待一个其它会话持有的锁， <code class="literal">等待中</code>会被追加到上述信息中。在上面的例子中，我们可以推断：进程 15606 正在等待进程 15610 完成其事务并且因此释放一些锁（进程 15610 必定是阻塞者，因为没有其他活动会话。在更复杂的情况中，可能需要查看<a class="link" href="view-pg-locks.html" title="51.73. pg_locks"><code class="structname">pg_locks</code></a>系统视图来决定谁阻塞了谁）。
+  </p><p>   如果配置了<a class="xref" href="runtime-config-logging.html#GUC-CLUSTER-NAME">cluster_name</a>，则集簇的名字
+   也将会显示在<code class="command">ps</code>的输出中：
+</p><pre class="screen">$ psql -c 'SHOW cluster_name'
+ cluster_name
+--------------
+ server1
+(1 row)
+
+$ ps aux|grep server1
+postgres   27093  0.0  0.0  30096  2752 ?        Ss   11:34   0:00 postgres: server1: writer process
+...</pre><p>
+  </p><p>   如果你已经关闭了<a class="xref" href="runtime-config-logging.html#GUC-UPDATE-PROCESS-TITLE">update_process_title</a>，那么活动指示器将不会被更新，进程标题仅在新进程被启动的时候设置一次。 在某些平台上这样做可以为每个命令节省可观的开销，但在其它平台上却不明显。
+  </p><div class="tip"><h3 class="title">提示</h3><p>  <span class="productname">Solaris</span>需要特别的处理。你必需使用<code class="command">/usr/ucb/ps</code>而不是<code class="command">/bin/ps</code>。 你还必需使用两个<code class="option">w</code>标志，而不是一个。另外，你对<code class="command">postgres</code>命令的最初调用必须用一个比服务器进程提供的短的<code class="command">ps</code>状态显示。如果你没有满足全部三个要求，每个服务器进程的<code class="command">ps</code>输出将是原始的<code class="command">postgres</code>命令行。
+  command line.
+  </p></div></div><div class="navfooter"><hr /><table width="100%" summary="Navigation footer"><tr><td width="40%" align="left"><a accesskey="p" href="monitoring.html">上一页</a> </td><td width="20%" align="center"><a accesskey="u" href="monitoring.html">上一级</a></td><td width="40%" align="right"> <a accesskey="n" href="monitoring-stats.html">下一页</a></td></tr><tr><td width="40%" align="left" valign="top">第 28 章 监控数据库活动 </td><td width="20%" align="center"><a accesskey="h" href="index.html">起始页</a></td><td width="40%" align="right" valign="top"> 28.2. 统计收集器</td></tr></table></div></body></html>

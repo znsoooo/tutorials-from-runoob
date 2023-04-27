@@ -1,0 +1,500 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><title>ALTER TABLE</title><link rel="stylesheet" type="text/css" href="stylesheet.css" /><link rev="made" href="pgsql-docs@postgresql.org" /><meta name="generator" content="DocBook XSL Stylesheets V1.79.1" /><link rel="prev" href="sql-altersystem.html" title="ALTER SYSTEM" /><link rel="next" href="sql-altertablespace.html" title="ALTER TABLESPACE" /></head><body><div xmlns="http://www.w3.org/TR/xhtml1/transitional" class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="5" align="center">ALTER TABLE</th></tr><tr><td width="10%" align="left"><a accesskey="p" href="sql-altersystem.html" title="ALTER SYSTEM">上一页</a> </td><td width="10%" align="left"><a accesskey="u" href="sql-commands.html" title="SQL 命令">上一级</a></td><th width="60%" align="center">SQL 命令</th><td width="10%" align="right"><a accesskey="h" href="index.html" title="PostgreSQL 10.1 手册">起始页</a></td><td width="10%" align="right"> <a accesskey="n" href="sql-altertablespace.html" title="ALTER TABLESPACE">下一页</a></td></tr></table><hr></hr></div><div class="refentry" id="SQL-ALTERTABLE"><div class="titlepage"></div><a id="idp41066992" class="indexterm"></a><div class="refnamediv"><h2><span class="refentrytitle">ALTER TABLE</span></h2><p>ALTER TABLE — 更改一个表的定义</p></div><div class="refsynopsisdiv"><h2>大纲</h2><pre class="synopsis">ALTER TABLE [ IF EXISTS ] [ ONLY ] <em class="replaceable"><code>name</code></em> [ * ]
+    <em class="replaceable"><code>action</code></em> [, ... ]
+ALTER TABLE [ IF EXISTS ] [ ONLY ] <em class="replaceable"><code>name</code></em> [ * ]
+    RENAME [ COLUMN ] <em class="replaceable"><code>column_name</code></em> TO <em class="replaceable"><code>new_column_name</code></em>
+ALTER TABLE [ IF EXISTS ] [ ONLY ] <em class="replaceable"><code>name</code></em> [ * ]
+    RENAME CONSTRAINT <em class="replaceable"><code>constraint_name</code></em> TO <em class="replaceable"><code>new_constraint_name</code></em>
+ALTER TABLE [ IF EXISTS ] <em class="replaceable"><code>name</code></em>
+    RENAME TO <em class="replaceable"><code>new_name</code></em>
+ALTER TABLE [ IF EXISTS ] <em class="replaceable"><code>name</code></em>
+    SET SCHEMA <em class="replaceable"><code>new_schema</code></em>
+ALTER TABLE ALL IN TABLESPACE <em class="replaceable"><code>name</code></em> [ OWNED BY <em class="replaceable"><code>role_name</code></em> [, ... ] ]
+    SET TABLESPACE <em class="replaceable"><code>new_tablespace</code></em> [ NOWAIT ]
+ALTER TABLE [ IF EXISTS ] <em class="replaceable"><code>name</code></em>
+    ATTACH PARTITION <em class="replaceable"><code>partition_name</code></em> FOR VALUES <em class="replaceable"><code>partition_bound_spec</code></em>
+ALTER TABLE [ IF EXISTS ] <em class="replaceable"><code>name</code></em>
+    DETACH PARTITION <em class="replaceable"><code>partition_name</code></em>
+
+<span class="phrase">其中<em class="replaceable"><code>action</code></em> 是以下之一：</span>
+
+    ADD [ COLUMN ] [ IF NOT EXISTS ] <em class="replaceable"><code>column_name</code></em> <em class="replaceable"><code>data_type</code></em> [ COLLATE <em class="replaceable"><code>collation</code></em> ] [ <em class="replaceable"><code>column_constraint</code></em> [ ... ] ]
+    DROP [ COLUMN ] [ IF EXISTS ] <em class="replaceable"><code>column_name</code></em> [ RESTRICT | CASCADE ]
+    ALTER [ COLUMN ] <em class="replaceable"><code>column_name</code></em> [ SET DATA ] TYPE <em class="replaceable"><code>data_type</code></em> [ COLLATE <em class="replaceable"><code>collation</code></em> ] [ USING <em class="replaceable"><code>expression</code></em> ]
+    ALTER [ COLUMN ] <em class="replaceable"><code>column_name</code></em> SET DEFAULT <em class="replaceable"><code>expression</code></em>
+    ALTER [ COLUMN ] <em class="replaceable"><code>column_name</code></em> DROP DEFAULT
+    ALTER [ COLUMN ] <em class="replaceable"><code>column_name</code></em> { SET | DROP } NOT NULL
+    ALTER [ COLUMN ] <em class="replaceable"><code>column_name</code></em> ADD GENERATED { ALWAYS | BY DEFAULT } AS IDENTITY [ ( <em class="replaceable"><code>sequence_options</code></em> ) ]
+    ALTER [ COLUMN ] <em class="replaceable"><code>column_name</code></em> { SET GENERATED { ALWAYS | BY DEFAULT } | SET <em class="replaceable"><code>sequence_option</code></em> | RESTART [ [ WITH ] <em class="replaceable"><code>restart</code></em> ] } [...]
+    ALTER [ COLUMN ] <em class="replaceable"><code>column_name</code></em> DROP IDENTITY [ IF EXISTS ]
+    ALTER [ COLUMN ] <em class="replaceable"><code>column_name</code></em> SET STATISTICS <em class="replaceable"><code>integer</code></em>
+    ALTER [ COLUMN ] <em class="replaceable"><code>column_name</code></em> SET ( <em class="replaceable"><code>attribute_option</code></em> = <em class="replaceable"><code>value</code></em> [, ... ] )
+    ALTER [ COLUMN ] <em class="replaceable"><code>column_name</code></em> RESET ( <em class="replaceable"><code>attribute_option</code></em> [, ... ] )
+    ALTER [ COLUMN ] <em class="replaceable"><code>column_name</code></em> SET STORAGE { PLAIN | EXTERNAL | EXTENDED | MAIN }
+    ADD <em class="replaceable"><code>table_constraint</code></em> [ NOT VALID ]
+    ADD <em class="replaceable"><code>table_constraint_using_index</code></em>
+    ALTER CONSTRAINT <em class="replaceable"><code>constraint_name</code></em> [ DEFERRABLE | NOT DEFERRABLE ] [ INITIALLY DEFERRED | INITIALLY IMMEDIATE ]
+    VALIDATE CONSTRAINT <em class="replaceable"><code>constraint_name</code></em>
+    DROP CONSTRAINT [ IF EXISTS ]  <em class="replaceable"><code>constraint_name</code></em> [ RESTRICT | CASCADE ]
+    DISABLE TRIGGER [ <em class="replaceable"><code>trigger_name</code></em> | ALL | USER ]
+    ENABLE TRIGGER [ <em class="replaceable"><code>trigger_name</code></em> | ALL | USER ]
+    ENABLE REPLICA TRIGGER <em class="replaceable"><code>trigger_name</code></em>
+    ENABLE ALWAYS TRIGGER <em class="replaceable"><code>trigger_name</code></em>
+    DISABLE RULE <em class="replaceable"><code>rewrite_rule_name</code></em>
+    ENABLE RULE <em class="replaceable"><code>rewrite_rule_name</code></em>
+    ENABLE REPLICA RULE <em class="replaceable"><code>rewrite_rule_name</code></em>
+    ENABLE ALWAYS RULE <em class="replaceable"><code>rewrite_rule_name</code></em>
+    DISABLE ROW LEVEL SECURITY
+    ENABLE ROW LEVEL SECURITY
+    FORCE ROW LEVEL SECURITY
+    NO FORCE ROW LEVEL SECURITY
+    CLUSTER ON <em class="replaceable"><code>index_name</code></em>
+    SET WITHOUT CLUSTER
+    SET WITH OIDS
+    SET WITHOUT OIDS
+    SET TABLESPACE <em class="replaceable"><code>new_tablespace</code></em>
+    SET { LOGGED | UNLOGGED }
+    SET ( <em class="replaceable"><code>storage_parameter</code></em> = <em class="replaceable"><code>value</code></em> [, ... ] )
+    RESET ( <em class="replaceable"><code>storage_parameter</code></em> [, ... ] )
+    INHERIT <em class="replaceable"><code>parent_table</code></em>
+    NO INHERIT <em class="replaceable"><code>parent_table</code></em>
+    OF <em class="replaceable"><code>type_name</code></em>
+    NOT OF
+    OWNER TO { <em class="replaceable"><code>new_owner</code></em> | CURRENT_USER | SESSION_USER }
+    REPLICA IDENTITY { DEFAULT | USING INDEX <em class="replaceable"><code>index_name</code></em> | FULL | NOTHING}
+
+<span class="phrase">并且 <em class="replaceable"><code>table_constraint_using_index</code></em> 是：</span>
+
+    [ CONSTRAINT <em class="replaceable"><code>constraint_name</code></em> ]
+    { UNIQUE | PRIMARY KEY } USING INDEX <em class="replaceable"><code>index_name</code></em>
+    [ DEFERRABLE | NOT DEFERRABLE ] [ INITIALLY DEFERRED | INITIALLY IMMEDIATE ]</pre></div><div class="refsect1" id="idp41125168"><h2>描述</h2><p>   <code class="command">ALTER TABLE</code>更改一个现有表的定义。下文描述了
+   几种形式。注意每一种形式所要求的锁级别可能不同。如果没有明确说明，将会
+   持有一个<code class="literal">ACCESS EXCLUSIVE</code>所。当列出多个子命令时，所
+   持有的锁将是子命令所要求的最严格的那一个。
+
+  </p><div class="variablelist"><dl class="variablelist"><dt><span class="term"><code class="literal">ADD COLUMN [ IF NOT EXISTS ]</code></span></dt><dd><p>      这种形式向该表增加一个新列，使用与
+      <a class="xref" href="sql-createtable.html" title="CREATE TABLE"><span class="refentrytitle">CREATE TABLE</span></a>相同的语法。如果指定了
+      <code class="literal">IF NOT EXISTS</code>并且使用这个名字的列已经存在，则
+      不会抛出错误。
+     </p></dd><dt><span class="term"><code class="literal">DROP COLUMN [ IF EXISTS ]</code></span></dt><dd><p>      这种形式从表删除一列。涉及到该列的索引和表约束也将会被自动
+      删除。如果删除列会导致统计信息仅包含单个列的数据，
+	  那么引用删除列的多变量统计信息也将被删除。
+	  如果在该表之外有任何东西（例如外键引用或者视图）依赖
+      于该列，你将需要用到<code class="literal">CASCADE</code>。如果指定了
+      <code class="literal">IF EXISTS</code>但该列不存在，则不会抛出错误。
+      这种情况中会发出一个提示。
+     </p></dd><dt><span class="term"><code class="literal">SET DATA TYPE</code></span></dt><dd><p>      这种形式更改表中一列的类型。涉及到该列的索引和简单表约束将通过
+      重新解析最初提供的表达式被自动转换为使用新的列类型。可选的
+      <code class="literal">COLLATE</code>子句为新列指定一种排序规则，如果被省略，
+      排序规则会是新列类型的默认排序规则。可选的<code class="literal">USING</code>
+      子句指定如何从旧的列值计算新列值，如果被省略，默认的转换和从旧类型
+      到新类型的赋值造型一样。如果没有从旧类型到新类型的隐式或者赋值造型，
+      则必须提供一个<code class="literal">USING</code>子句。
+     </p></dd><dt><span class="term"><code class="literal">SET</code>/<code class="literal">DROP DEFAULT</code></span></dt><dd><p>      这些形式为一列设置或者移除默认值。默认值只在后续的
+      <code class="command">INSERT</code>或<code class="command">UPDATE</code>命令中生效，
+      它们不会导致已经在表中的行改变。
+     </p></dd><dt><span class="term"><code class="literal">SET</code>/<code class="literal">DROP NOT NULL</code></span></dt><dd><p>      这些形式更改一列是否被标记为允许空值或者拒绝空值。只有当该列
+      不包含空值时，你才能使用<code class="literal">SET NOT NULL</code>。
+     </p><p>      如果这个表是一个分区，如果在父表中标记了<code class="literal">NOT NULL</code>，
+	  则不能在列上执行<code class="literal">DROP NOT NULL</code>。
+	  要从所有分区中删除<code class="literal">NOT NULL</code>约束，
+	  请在父表上执行<code class="literal">DROP NOT NULL</code>。即使父表没有
+	  <code class="literal">NOT NULL</code>约束，如果需要，这样的约束仍然可以添加到单个分区；
+	  也就是说，即使父表允许，子表也可以不允许为空，但是反过来不行。
+     </p></dd><dt><span class="term"><code class="literal">ADD GENERATED { ALWAYS | BY DEFAULT } AS IDENTITY</code><br /></span><span class="term"><code class="literal">SET GENERATED { ALWAYS | BY DEFAULT }</code><br /></span><span class="term"><code class="literal">DROP IDENTITY [ IF EXISTS ]</code></span></dt><dd><p>      这些形式会更改列是否为标识列或更改现有标识列的生成属性。
+	  有关详细信息，请参见<a class="xref" href="sql-createtable.html" title="CREATE TABLE"><span class="refentrytitle">CREATE TABLE</span></a>。
+     </p><p>      如果指定了<code class="literal">DROP IDENTITY IF EXISTS</code>，并且该列不是标识列，
+	  则不会抛出错误。在这种情况下，发出一个通知。
+     </p></dd><dt><span class="term"><code class="literal">SET <em class="replaceable"><code>sequence_option</code></em></code><br /></span><span class="term"><code class="literal">RESTART</code></span></dt><dd><p>      这些形式修改现有标识列下的序列。<em class="replaceable"><code>sequence_option</code></em>
+	  是一个由<a class="xref" href="sql-altersequence.html" title="ALTER SEQUENCE"><span class="refentrytitle">ALTER SEQUENCE</span></a>支持的选项，
+	  例如<code class="literal">INCREMENT BY</code>。
+     </p></dd><dt><span class="term"><code class="literal">SET STATISTICS</code></span></dt><dd><p>      这种形式为后续的<a class="xref" href="sql-analyze.html" title="ANALYZE"><span class="refentrytitle">ANALYZE</span></a>操作设置针对每列
+      的统计收集目标。目标可以被设置在范围 0 到 10000 之间，还可以
+      把它设置为 -1 来恢复到使用系统默认的统计目标（
+      <a class="xref" href="runtime-config-query.html#GUC-DEFAULT-STATISTICS-TARGET">default_statistics_target</a>）。更多有关
+      <span class="productname">PostgreSQL</span>查询规划器使用统计
+      信息的内容可见<a class="xref" href="planner-stats.html" title="14.2. 规划器使用的统计信息">第 14.2 节</a>。
+     </p><p>      <code class="literal">SET STATISTICS</code>要求一个<code class="literal">SHARE UPDATE EXCLUSIVE</code>锁。
+     </p></dd><dt><span class="term"><code class="literal">SET ( <em class="replaceable"><code>attribute_option</code></em> = <em class="replaceable"><code>value</code></em> [, ... ] )</code><br /></span><span class="term"><code class="literal">RESET ( <em class="replaceable"><code>attribute_option</code></em> [, ... ] )</code></span></dt><dd><p>      这种形式设置或者重置每个属性的选项。当前，已定义的针对每个属性的
+      选项只有<code class="literal">n_distinct</code>和<code class="literal">n_distinct_inherited</code>，
+      它们会覆盖后续<a class="xref" href="sql-analyze.html" title="ANALYZE"><span class="refentrytitle">ANALYZE</span></a>操作所得到的可区分值数量
+      估计。<code class="literal">n_distinct</code>影响该表本身的统计信息，而
+      <code class="literal">n_distinct_inherited</code>影响为该表外加其继承子女收集的统计信息。
+      当被设置为一个正值时，<code class="command">ANALYZE</code>将假定该列刚好包含指定
+      数量的可区分非空值。当被设置为一个负值（必须大于等于 -1）时， 
+      <code class="command">ANALYZE</code>将假定可区分非空值的数量与表的尺寸成线性比例，
+      确切的计数由估计的表尺寸乘以给定数字的绝对值计算得到。例如，值 -1 表示
+      该列中所有的值都是可区分的，而值 -0.5 则表示每一个值平均出现两次。当表
+      的尺寸随时间变化时，这会有所帮助，因为这种计算只有在查询规划时才会被
+      执行。指定值为 0 将回到正常的估计可区分值数量的做法。更多有关
+      <span class="productname">PostgreSQL</span>查询规划器使用统计
+      信息的内容可见<a class="xref" href="planner-stats.html" title="14.2. 规划器使用的统计信息">第 14.2 节</a>。
+     </p><p>      更改针对每个属性的选项要求一个
+      <code class="literal">SHARE UPDATE EXCLUSIVE</code>锁。
+     </p></dd><dt><span class="term">     <code class="literal">SET STORAGE</code>
+     <a id="idp41177888" class="indexterm"></a>
+    </span></dt><dd><p>      这种形式为一列设置存储模式。这会控制这列是会被保持在线内还是放在一个
+      二级<acronym class="acronym">TOAST</acronym>表中，以及数据是否应被压缩。对于
+      <code class="type">integer</code>之类的定长、线内、未压缩值必须使用
+      <code class="literal">PLAIN</code>。<code class="literal">MAIN</code>用于线内、可压缩的
+      数据。<code class="literal">EXTERNAL</code>用于外部的、未压缩数据。而
+      <code class="literal">EXTENDED</code>用于外部的、压缩数据。对于大部分支持
+      非-<code class="literal">PLAIN</code>存储的数据类型，<code class="literal">EXTENDED</code>
+      是默认值。使用<code class="literal">EXTERNAL</code>将会让很大的
+      <code class="type">text</code>和<code class="type">bytea</code>之上的子串操作运行得更快，
+      但是代价是存储空间会增加。注意<code class="literal">SET STORAGE</code>本身并不改变
+      表中的任何东西，它只是设置在未来的表更新时要追求的策略。详见
+      <a class="xref" href="storage-toast.html" title="66.2. TOAST">第 66.2 节</a>。
+     </p></dd><dt><span class="term"><code class="literal">ADD <em class="replaceable"><code>table_constraint</code></em> [ NOT VALID ]</code></span></dt><dd><p>      这种形式使用和<a class="xref" href="sql-createtable.html" title="CREATE TABLE"><span class="refentrytitle">CREATE TABLE</span></a>相同的语法外加
+      <code class="literal">NOT VALID</code>选项为一个表增加一个新的约束，该选项
+      当前只被允许用于外键和 CHECK 约束。如果约束被标记为
+      <code class="literal">NOT VALID</code>，将会跳过验证表中所有行满足该约束的
+      初检，这种检查可能会很漫长。该约束仍将被强制到后续的插入和删除上
+      （也就是说，在外键的情况下如果在被引用表中没有一个匹配的行，操作
+      会失败；如果新行不匹配指定的检查约束，操作也会失败）。但是数据库
+      不会假定约束对该表中的所有行都成立，直到通过使用<code class="literal">VALIDATE
+      CONSTRAINT</code>选项对它进行验证。
+     </p></dd><dt><span class="term"><code class="literal">ADD <em class="replaceable"><code>table_constraint_using_index</code></em></code></span></dt><dd><p>      这种形式基于一个已有的唯一索引为一个表增加新的
+      <code class="literal">PRIMARY KEY</code>或<code class="literal">UNIQUE</code>约束。该索引中的
+      所有列将被包括在约束中。
+     </p><p>      该索引不能有表达式列或者是一个部分索引。还有，它必须是一个带有
+      默认排序顺序的 B-树索引。这些限制确保该索引等效于使用常规
+      <code class="literal">ADD PRIMARY KEY</code>或者<code class="literal">ADD UNIQUE</code>命令
+      时创建的索引。
+     </p><p>      如果<code class="literal">PRIMARY KEY</code>被指定，并且该索引的列没有被标记
+      <code class="literal">NOT NULL</code>，那么这个命令将尝试对每一个这样的列做
+      <code class="literal">ALTER COLUMN SET NOT NULL</code>。这需要一次全表扫描
+      来验证这些列不包含空值。在所有其他情况中，这都是一种很快的操作。
+     </p><p>      如果提供了一个约束名，那么该索引将被重命名以匹配该约束名。否则
+      该约束将被命名成索引的名称。
+     </p><p>      这个命令被执行后，该索引被增加的约束<span class="quote">“<span class="quote">拥有</span>”</span>，这和用常规
+      <code class="literal">ADD PRIMARY KEY</code>或<code class="literal">ADD UNIQUE</code>命令
+      创建的索引一样。特别地，删掉该约束将会导致该索引也消失。
+     </p><div class="note"><h3 class="title">注意</h3><p>       如果需要增加一个新的约束但是不希望长时间阻塞表更新，那么使用现有
+       索引增加约束会有所帮助。要这样做，用
+       <code class="command">CREATE INDEX CONCURRENTLY</code>创建该索引，并且
+       接着使用这种语法把它安装为一个正式的约束。例子见下文。
+      </p></div></dd><dt><span class="term"><code class="literal">ALTER CONSTRAINT</code></span></dt><dd><p>      这种形式修改之前创建的一个约束的属性。当前只能修改外键约束。
+     </p></dd><dt><span class="term"><code class="literal">VALIDATE CONSTRAINT</code></span></dt><dd><p>      这种形式验证之前创建为<code class="literal">NOT VALID</code>的外键或检查约束，
+      它会扫描表来确保对于该约束没有行不满足约束。如果约束已经被标记为合法，
+      则什么也不会发生。
+     </p><p>      在大型表上的验证可能是一个长时间的处理。把约束的验证和创建分离开来让
+      我们可以把验证过程推迟到系统闲时进行，或者可以得到额外的时间来更正已
+      经存在的错误从而避免新的错误。还要注意验证本身并不会在运行时阻止对表
+      的写命令。
+     </p><p>      验证只要求被修改表上的一个<code class="literal">SHARE UPDATE EXCLUSIVE</code>
+      锁。如果该约束是一个外键，则还会在被该约束引用的表上要求一个
+      <code class="literal">ROW SHARE</code>锁。
+     </p></dd><dt><span class="term"><code class="literal">DROP CONSTRAINT [ IF EXISTS ]</code></span></dt><dd><p>      这种形式在一个表上删除指定的约束。如果<code class="literal">IF EXISTS</code>
+      被指定并且该约束不存在，不会抛出错误。在这种情况下会发出一个提示。
+     </p></dd><dt><span class="term"><code class="literal">DISABLE</code>/<code class="literal">ENABLE [ REPLICA | ALWAYS ] TRIGGER</code></span></dt><dd><p>      这些形式配置属于该表的触发器的触发设置。系统仍然知道被禁用触发器
+      的存在，但是即使它的触发事件发生也不会执行它。对于一个延迟触发器，
+      会在事件发生时而不是触发器函数真正被执行时检查其启用状态。可以禁
+      用或者启用用名称指定的单个触发器、表上的所有触发器、用户拥有的触
+      发器（这个选项会排除内部生成的约束触发器，例如用来实现外键约束或
+      可延迟唯一和排除约束）。禁用或者启用内部生成的约束触发器要求超级
+      用户特权，这样做要小心因为如果这类触发器不被执行，约束的完整性当
+      然无法保证。触发器引发机制也受到配置变量
+      <a class="xref" href="runtime-config-client.html#GUC-SESSION-REPLICATION-ROLE">session_replication_role</a>的影响。当复制角色是
+      <span class="quote">“<span class="quote">origin</span>”</span>（默认）或者<span class="quote">“<span class="quote">local</span>”</span>时，被简单禁用的
+      触发器将被触发。被配置为<code class="literal">ENABLE REPLICA</code>的触发
+      器只有在会话处于<span class="quote">“<span class="quote">replica</span>”</span>模式时才将被触发。被配置为
+      <code class="literal">ENABLE ALWAYS</code>的触发器的触发不会考虑当前复制
+      模式。
+     </p><p>      这个命令要求一个<code class="literal">SHARE ROW EXCLUSIVE</code>锁。
+     </p></dd><dt><span class="term"><code class="literal">DISABLE</code>/<code class="literal">ENABLE [ REPLICA | ALWAYS ] RULE</code></span></dt><dd><p>      这些形式配置属于表的重写规则的触发设置。系统仍然知道一个被禁用规则的
+      存在，但在查询重写时不会应用它。其语义与禁用的/启用的触发器的一样。
+      对于<code class="literal">ON SELECT</code>规则会忽略这个配置，即使当前会话处于
+      一种非默认的复制角色，这类规则总是会被应用以保持视图工作正常。
+     </p></dd><dt><span class="term"><code class="literal">DISABLE</code>/<code class="literal">ENABLE ROW LEVEL SECURITY</code></span></dt><dd><p>      这些形式控制属于该表的行安全性策略的应用。如果被启用并且该表上
+      不存在策略，则将应用一个默认否定的策略。注意即使行级安全性被禁
+      用，在表上还是可以存在策略。在这种情况下，这些策略将 不 会被应用
+      并且会被忽略。另见<a class="xref" href="sql-createpolicy.html" title="CREATE POLICY"><span class="refentrytitle">CREATE POLICY</span></a>。
+     </p></dd><dt><span class="term"><code class="literal">NO FORCE</code>/<code class="literal">FORCE ROW LEVEL SECURITY</code></span></dt><dd><p>      这些形式控制当用户是表拥有者时表上的行安全性策略的应用。如果被启用，
+      当用户是表拥有者时，行级安全性策略将被应用。如果被禁用（默认），则
+      当用户是表拥有者时，行级安全性将不会被应用。另见
+      <a class="xref" href="sql-createpolicy.html" title="CREATE POLICY"><span class="refentrytitle">CREATE POLICY</span></a>。
+     </p></dd><dt><span class="term"><code class="literal">CLUSTER ON</code></span></dt><dd><p>      这种形式为未来的<a class="xref" href="sql-cluster.html" title="CLUSTER"><span class="refentrytitle">CLUSTER</span></a>操作选择默认的索引。
+      它不会真正地对表进行聚簇。
+     </p><p>      改变聚簇选项要求一个<code class="literal">SHARE UPDATE EXCLUSIVE</code>锁。
+     </p></dd><dt><span class="term"><code class="literal">SET WITHOUT CLUSTER</code></span></dt><dd><p>      这种形式从表中移除最近使用的
+      <a class="xref" href="sql-cluster.html" title="CLUSTER"><span class="refentrytitle">CLUSTER</span></a>索引说明。这会影响未来的不指定索引
+      的聚簇操作。
+     </p><p>      改变聚簇选项要求一个<code class="literal">SHARE UPDATE EXCLUSIVE</code>锁。
+     </p></dd><dt><span class="term"><code class="literal">SET WITH OIDS</code></span></dt><dd><p>      这种形式为表增加一个<code class="literal">oid</code>系统列（见
+      <a class="xref" href="ddl-system-columns.html" title="5.4. 系统列">第 5.4 节</a>）。如果该表已经有 OID，则它
+      什么也不会做。
+     </p><p>      注意这不等效于<code class="literal">ADD COLUMN oid oid</code>，后者只是会增加一个
+      恰好名为<code class="literal">oid</code>的普通列而不是系统列。
+     </p></dd><dt><span class="term"><code class="literal">SET WITHOUT OIDS</code></span></dt><dd><p>      这种形式从该表移除<code class="literal">oid</code>系统列。这完全等效于
+      <code class="literal">DROP COLUMN oid RESTRICT</code>，不过如果没有
+      <code class="literal">oid</code>列它不会抱怨。
+     </p></dd><dt><span class="term"><code class="literal">SET TABLESPACE</code></span></dt><dd><p>      这种形式把该表的表空间更改为指定的表空间并且把该表相关联的数据文件
+      移动到新的表空间中。表上的索引（如果有）不会被移动，但是它们可以用
+      额外的<code class="literal">SET TABLESPACE</code>命令单独移动。当前数据库在
+      一个表空间中的所有表可以用<code class="literal">ALL IN TABLESPACE</code>形式
+      移动，这将会首先锁住所有将被移动的表然后逐个移动。这种形式也支持
+      <code class="literal">OWNED BY</code>，它将只移动指定角色所拥有的表。如果指
+      定了<code class="literal">NOWAIT</code>选项，则命令将在无法立刻获得所有所需
+      要的锁时失败。注意这个命令不移动系统目录，如果想要移动系统目录，应
+      该用<code class="command">ALTER DATABASE</code>或者显式的
+      <code class="command">ALTER TABLE</code>调用。对于这种形式来说，
+      <code class="literal">information_schema</code>关系不被认为是系统目录的一部分，
+      因此它们将会被移动。另见<a class="xref" href="sql-createtablespace.html" title="CREATE TABLESPACE"><span class="refentrytitle">CREATE TABLESPACE</span></a>。
+     </p></dd><dt><span class="term"><code class="literal">SET { LOGGED | UNLOGGED }</code></span></dt><dd><p>      这种形式将表从unlogged改为logged或者反过来
+      （参阅<a class="xref" href="sql-createtable.html#SQL-CREATETABLE-UNLOGGED"><code class="literal">UNLOGGED</code></a>）。不能应用于临时表。
+     </p></dd><dt><span class="term"><code class="literal">SET ( <em class="replaceable"><code>storage_parameter</code></em> = <em class="replaceable"><code>value</code></em> [, ... ] )</code></span></dt><dd><p>      这种形式为该表更改一个或者更多存储参数。可用的参数请见
+      <a class="xref" href="sql-createtable.html#SQL-CREATETABLE-STORAGE-PARAMETERS" title="存储参数">存储参数</a>。注意这个
+      命令将不会立刻修改表内容，这取决于重写表以得到想要的结果可能需要的
+      参数。可以用<a class="link" href="sql-vacuum.html" title="VACUUM">VACUUM
+      FULL</a>、<a class="xref" href="sql-cluster.html" title="CLUSTER"><span class="refentrytitle">CLUSTER</span></a>或者
+      <code class="command">ALTER TABLE</code>的一种形式来强制一次表重写。
+	  对于与规划器相关的参数，更改将在下次表锁定时生效，
+	  因此当前执行的查询不会受到影响。
+     </p><p>      对于fillfactor和autovacuum存储参数以及以下规划器相关参数，
+	  将采用<code class="literal">SHARE UPDATE EXCLUSIVE</code>锁：
+	  <code class="varname">effective_io_concurrency</code>、<code class="varname">parallel_workers</code>、<code class="varname">seq_page_cost</code>、
+      <code class="varname">random_page_cost</code>、<code class="varname">n_distinct</code>和<code class="varname">n_distinct_inherited</code>。
+     </p><div class="note"><h3 class="title">注意</h3><p>       虽然<code class="command">CREATE TABLE</code>允许在<code class="literal">WITH (<em class="replaceable"><code>storage_parameter</code></em>)</code>语法中指定
+       <code class="literal">OIDS</code>，但是
+       <code class="command">ALTER TABLE</code>没有把<code class="literal">OIDS</code>当作一个存储
+       参数，而是使用<code class="literal">SET WITH OIDS</code>
+       和<code class="literal">SET WITHOUT OIDS</code>形式来更改 OID 状态。
+      </p></div></dd><dt><span class="term"><code class="literal">RESET ( <em class="replaceable"><code>storage_parameter</code></em> [, ... ] )</code></span></dt><dd><p>      这种形式把一个或者更多存储参数重置到它们的默认值。和
+      <code class="literal">SET</code>一样，可能需要一次表重写来更新整个表。
+     </p></dd><dt><span class="term"><code class="literal">INHERIT <em class="replaceable"><code>parent_table</code></em></code></span></dt><dd><p>      这种形式把目标表增加为指定父表的一个新子女。随后，针对父亲的查询将
+      包括目标表中的记录。要被增加为一个子女，目标表必须已经包含和父表完
+      全相同的列（也可以有额外的列）。这些列必须具有匹配的数据类型，并且
+      如果它们在父表中具有<code class="literal">NOT NULL</code>约束，它们在子表中
+      也必须有<code class="literal">NOT NULL</code>约束。
+     </p><p>      也必须把子表约束与所有父表的<code class="literal">CHECK</code>约束进行匹配，
+      不过父表中那些被标记为非可继承（也就是用<code class="literal">ALTER TABLE ... ADD CONSTRAINT ... NO INHERIT</code>
+      创建的）除外，它们会被忽略。所有匹配得上的子表约束不能被标记为不可
+      继承。当前，<code class="literal">UNIQUE</code>、<code class="literal">PRIMARY KEY</code>
+      以及<code class="literal">FOREIGN KEY</code>约束没有被考虑，但是这种情况可能
+      会在未来发生变化。
+     </p></dd><dt><span class="term"><code class="literal">NO INHERIT <em class="replaceable"><code>parent_table</code></em></code></span></dt><dd><p>      这种形式把目标表从指定父表的子女列表中移除。针对父表的查询将不再包括
+      来自目标表的记录。
+     </p></dd><dt><span class="term"><code class="literal">OF <em class="replaceable"><code>type_name</code></em></code></span></dt><dd><p>      这种形式把该表链接到一种组合类型，就好像<code class="command">CREATE
+      TABLE OF</code>所做的那样。该表的列名和类型列表必须精确地匹配
+      该组合类型。<code class="literal">oid</code>系统列的存在情况可以不同。该表必须
+      不从任何其他表继承。这些限制确保
+      <code class="command">CREATE TABLE OF</code>能允许一个等价的表定义。
+     </p></dd><dt><span class="term"><code class="literal">NOT OF</code></span></dt><dd><p>      这种形式解除一个有类型的表和其类型之间的关联。
+     </p></dd><dt><span class="term"><code class="literal">OWNER</code></span></dt><dd><p>      这种形式把表、序列、视图、物化视图或外部表的拥有者改为指定用户。
+     </p></dd><dt id="SQL-CREATETABLE-REPLICA-IDENTITY"><span class="term"><code class="literal">REPLICA IDENTITY</code></span></dt><dd><p>      这种形式更改被写入到预写式日志来标识被更新或删除行的信息。除非使用逻辑复制，
+      这个选项将不会产生效果。<code class="literal">DEFAULT</code>（非系统表的默认值）记录主键列
+      （如果有）的旧值。<code class="literal">USING INDEX</code>记录被所提到的索引所覆盖的列的
+      旧值，该索引必须是唯一索引、不是部分索引、不是可延迟索引并且只包括被标记成
+      <code class="literal">NOT NULL</code>的列。<code class="literal">FULL</code>记录行中所有列的旧值。
+      <code class="literal">NOTHING</code>不记录有关旧行的任何信息（这是系统表的默认值）。在所
+      有情况下，除非至少有一个要被记录的列在新旧行版本之间发生变化，将不记录旧值。
+     </p></dd><dt><span class="term"><code class="literal">RENAME</code></span></dt><dd><p>      <code class="literal">RENAME</code>形式更改一个表（或者一个索引、序列、视图、物化视图
+      或者外部表）的名称、表中一个列的名称或者表的一个约束的名称。它对已存储的数据
+      没有影响。
+     </p></dd><dt><span class="term"><code class="literal">SET SCHEMA</code></span></dt><dd><p>      这种形式把该表移动到另一个模式中。相关的该表列拥有的索引、约束和序列也会被
+      移动。
+     </p></dd><dt><span class="term"><code class="literal">ATTACH PARTITION <em class="replaceable"><code>partition_name</code></em> FOR VALUES <em class="replaceable"><code>partition_bound_spec</code></em></code></span></dt><dd><p>      这种形式使用与<a class="xref" href="sql-createtable.html" title="CREATE TABLE"><span class="refentrytitle">CREATE TABLE</span></a>相同的
+	  <em class="replaceable"><code>partition_bound_spec</code></em>语法，
+	  将现有的表（可能本身是分区）作为目标表的分区。
+	  分区绑定规范必须对应于目标表的分区策略和分区键。
+	  要绑定的表必须与目标表具有相同的列，而不能再多；此外，
+	  列类型也必须匹配。此外，它必须具有目标表的所有
+	  <code class="literal">NOT NULL</code>和<code class="literal">CHECK</code>约束。
+	  目前没有考虑<code class="literal">UNIQUE</code>、<code class="literal">PRIMARY KEY</code>
+	  和<code class="literal">FOREIGN KEY</code>约束。
+	  如果附加表的任意<code class="literal">CHECK</code>约束被标记为<code class="literal">NO INHERIT</code>，
+	  则该命令将失败；必须重新创建这样的约束，而不使用<code class="literal">NO INHERIT</code>子句。
+     </p><p>      如果新的分区是普通表，则执行一个全表扫描来检查表中的现有行是否违反分区约束。
+	  可以通过给该表添加一个有效的<code class="literal">CHECK</code>约束来避免此扫描，
+	  在执行此命令之前，只允许满足所需分区约束的行。将使用这样的约束来确定，
+	  而不需要扫描表来验证分区约束。但是，如果任何分区键是表达式并且分区不接受
+	  <code class="literal">NULL</code>值，这将起作用。如果附加一个不接受
+	  <code class="literal">NULL</code>值的列表分区，除非它是一个表达式，
+	  否则向分区键列添加<code class="literal">NOT NULL</code>约束。
+     </p><p>      如果新分区是外部表，则不会执行任何操作来验证外部表中的所有行都遵守分区约束。
+	  （请参阅<a class="xref" href="sql-createforeigntable.html" title="CREATE FOREIGN TABLE"><span class="refentrytitle">CREATE FOREIGN TABLE</span></a>中关于外部表的约束的讨论。）
+     </p></dd><dt><span class="term"><code class="literal">DETACH PARTITION</code> <em class="replaceable"><code>partition_name</code></em></span></dt><dd><p>      该形式分离目标表的指定分区。分离的分区作为独立表继续存在，但不再与分离的表相关联。
+     </p></dd></dl></div><p>
+  </p><p>   除了<code class="literal">RENAME</code>、<code class="literal">SET SCHEMA</code>、
+   <code class="literal">ATTACH PARTITION</code>和
+   <code class="literal">DETACH PARTITION</code>
+   之外的所有作用于单个表的ALTER TABLE形式可以整合到一个具有多个修改的列表中一起使用。例如，可以在一个命
+   令中增加一些列并且/或者修改一些列的类型。对于大型的表这是特别有用的，
+   因为只需要对表做一趟操作。
+  </p><p>   要使用<code class="command">ALTER TABLE</code>，你必须拥有该表。要更改一个表的
+   模式或者表空间，你还必须拥有新模式或表空间上的
+   <code class="literal">CREATE</code>特权。要把一个表作为一个父表的新子表加入，
+   你必须也拥有该父表。另外，要将一个表附加为表的新分区，您必须拥有要附加的那个表。要更改拥有者，你还必须
+   是新拥有角色的一个直接或者间接成员，并且该角色必须具有该表的模式上的
+   <code class="literal">CREATE</code>特权（这些限制强制修改拥有者不能做一些通过删除和重
+   建表做不到的事情。不过，一个超级用户怎么都能更改任何表的所有权。）。
+   要增加一个列、修改一列的类型或者使用<code class="literal">OF</code>子句，你还必
+   须具有该数据类型上的<code class="literal">USAGE</code>特权。
+  </p></div><div class="refsect1" id="idp41330816"><h2>参数</h2><div class="variablelist"><dl class="variablelist"><dt><span class="term"><code class="literal">IF EXISTS</code></span></dt><dd><p>        如果表不存在则不要抛出一个错误。这种情况下会发出一个提示。
+       </p></dd><dt><span class="term"><em class="replaceable"><code>name</code></em></span></dt><dd><p>        要修改的一个现有表的名称（可以是模式限定的）。如果在表名前指定了
+        <code class="literal">ONLY</code>，则只会修改该表。如果没有指定<code class="literal">ONLY</code>，
+        该表及其所有后代表（如果有）都会被修改。可选地，在表名后面可以指定
+        <code class="literal">*</code>用来显式地指示包括后代表。
+       </p></dd><dt><span class="term"><em class="replaceable"><code>column_name</code></em></span></dt><dd><p>        一个新列或者现有列的名称。
+       </p></dd><dt><span class="term"><em class="replaceable"><code>new_column_name</code></em></span></dt><dd><p>        一个现有列的新名称。
+       </p></dd><dt><span class="term"><em class="replaceable"><code>new_name</code></em></span></dt><dd><p>        该表的新名称。
+       </p></dd><dt><span class="term"><em class="replaceable"><code>data_type</code></em></span></dt><dd><p>        一个新列的数据类型或者一个现有列的新数据类型。
+       </p></dd><dt><span class="term"><em class="replaceable"><code>table_constraint</code></em></span></dt><dd><p>        该表的新的表约束。
+       </p></dd><dt><span class="term"><em class="replaceable"><code>constraint_name</code></em></span></dt><dd><p>        一个新约束或者现有约束的名称。
+       </p></dd><dt><span class="term"><code class="literal">CASCADE</code></span></dt><dd><p>        自动删除依赖于被删除列或约束的对象（例如引用该列的视图），
+        并且接着删除依赖于那些对象的
+        所有对象（见<a class="xref" href="ddl-depend.html" title="5.13. 依赖跟踪">第 5.13 节</a>）。
+       </p></dd><dt><span class="term"><code class="literal">RESTRICT</code></span></dt><dd><p>        如果有任何依赖对象时拒绝删除列或者约束。这是默认行为。
+       </p></dd><dt><span class="term"><em class="replaceable"><code>trigger_name</code></em></span></dt><dd><p>        一个要禁用或启用的触发器的名称。
+       </p></dd><dt><span class="term"><code class="literal">ALL</code></span></dt><dd><p>        禁用或者启用属于该表的所有触发器（如果有任何触发器是内部产生的约
+        束触发器则需要超级用户特权，例如那些被用来实现外键约束或者可延迟
+        一致性和排他约束的触发器）。
+       </p></dd><dt><span class="term"><code class="literal">USER</code></span></dt><dd><p>        禁用或者启用属于该表的所有触发器，内部产生的约束触发器（例如那些
+        被用来实现外键约束或者可延迟一致性和排他约束的触发器）除外。
+       </p></dd><dt><span class="term"><em class="replaceable"><code>index_name</code></em></span></dt><dd><p>        一个现有索引的名称。
+       </p></dd><dt><span class="term"><em class="replaceable"><code>storage_parameter</code></em></span></dt><dd><p>        一个表存储参数的名称。
+       </p></dd><dt><span class="term"><em class="replaceable"><code>value</code></em></span></dt><dd><p>        一个表存储参数的新值。根据该参数，该值可能是一个数字或者一个词。
+       </p></dd><dt><span class="term"><em class="replaceable"><code>parent_table</code></em></span></dt><dd><p>        要与这个表关联或者解除关联的父表。
+       </p></dd><dt><span class="term"><em class="replaceable"><code>new_owner</code></em></span></dt><dd><p>        该表的新拥有者的用户名。
+       </p></dd><dt><span class="term"><em class="replaceable"><code>new_tablespace</code></em></span></dt><dd><p>        要把该表移入其中的表空间的名称。
+       </p></dd><dt><span class="term"><em class="replaceable"><code>new_schema</code></em></span></dt><dd><p>        要把该表移入其中的模式的名称。
+       </p></dd><dt><span class="term"><em class="replaceable"><code>partition_name</code></em></span></dt><dd><p>        要附加为新分区或从此表中分离的表的名称。
+       </p></dd><dt><span class="term"><em class="replaceable"><code>partition_bound_spec</code></em></span></dt><dd><p>        新分区的分区绑定规范。请参阅<a class="xref" href="sql-createtable.html" title="CREATE TABLE"><span class="refentrytitle">CREATE TABLE</span></a>获取更多关于相同语法的细节。
+       </p></dd></dl></div></div><div class="refsect1" id="idp41365696"><h2>注解</h2><p>    关键词<code class="literal">COLUMN</code>是噪声，可以被省略。
+   </p><p>    在使用<code class="literal">ADD COLUMN</code>增加一列时，该表中所有现有的行
+    会被用该列的默认值初始化（如果没有指定<code class="literal">DEFAULT</code>子句就是
+    NULL）。如果没有<code class="literal">DEFAULT</code>子句，只会有一个元数据修改并且
+    不会立刻做任何表数据的更改，而增加的 NULL 值会在读出时提供。
+   </p><p>    增加一个带有<code class="literal">DEFAULT</code>子句的列或者更改一个现有列的类型将
+    要求重写整个表及其索引。在更改一个现有列的类型时有一种例外：如果
+    <code class="literal">USING</code>子句不更改列的内容并且旧类型在二进制上与新类型可
+    强制转换或者是新类型上的一个未约束域，则不需要重写表。但是受影响列上
+    的任何索引仍必须被重建。增加或者移除一个系统<code class="literal">oid</code>列也要求
+    重写整个表。对于一个大型表，表和/或索引重建可能会消耗相当多的时间，
+    并且会临时要求差不多两倍的磁盘空间。
+   </p><p>    增加一个<code class="literal">CHECK</code>或者<code class="literal">NOT NULL</code>约束要求扫描
+    表以验证现有行符合该约束，但是不要求一次表重写。
+   </p><p>    同样，在附加新分区时，可能会扫描它以验证现有行是否符合分区约束。
+   </p><p>    提供在一个<code class="command">ALTER TABLE</code>中指定多个更改的选项的主要
+    原因就是多次表扫描或者重写可以因此被整合成一次。
+   </p><p>    <code class="literal">DROP COLUMN</code>形式不会在物理上移除列，而只是简
+    单地让它对 SQL 操作不可见。后续该表中的插入和更新操作将为该列存储
+    一个空值。因此，删除一个列很快，但是它不会立刻减少表所占的磁盘空间，
+    因为被删除列所占用的空间还没有被回收。随着现有列被更新，空间将被逐渐
+    回收（这些说法不适用于删除系统<code class="literal">oid</code>列的情况，那时会立刻
+    使用重写来完成）。
+   </p><p>    要强制立即回收被已删除列占据的空间，你可以执行一种能导致全表重写的
+    <code class="command">ALTER TABLE</code>形式。这种形式会导致重新构造每一个把被
+    删除列替换为空值的行。
+   </p><p>    <code class="command">ALTER TABLE</code>的重写形式对于 MVCC 是不安全的。
+    在一次表重写之后，如果并发事务使用的是一个在重写发生前取得的
+    快照，该表将对这些并发事务呈现出空表的形态。详见
+    <a class="xref" href="mvcc-caveats.html" title="13.5. 提醒">第 13.5 节</a>。
+   </p><p>    <code class="literal">SET DATA TYPE</code>的<code class="literal">USING</code>选项能实际指定
+    涉及该列旧值的任何表达式。也就是说，它可以不但可以引用要被转换的列，
+    还可以引用其他列。这允许使用<code class="literal">SET DATA TYPE</code>语法完成十分
+    普遍的转换。由于这种灵活性，<code class="literal">USING</code>表达式不适合于列
+    的默认值（如果有），结果可能不是一个默认值所需的常量表达式。这意味着
+    在没有从旧类型到新类型的隐式或者赋值造型时，即便提供了一个
+    <code class="literal">USING</code>子句，<code class="literal">SET DATA TYPE</code>还是可能无法
+    转换默认值。在这种情况下，用<code class="literal">DROP DEFAULT</code>删除该默认值，
+    执行<code class="literal">ALTER TYPE</code>并且接着使用<code class="literal">SET DEFAULT</code>增加
+    一个合适的新默认值。类似的考虑也适用于涉及该列的索引和约束。
+   </p><p>    如果一个表有任何后代表，所以如果不对后代做同样的操作，则不允许在父表
+    中增加列、重命名列、更改列的类型。这确保了后代
+    总是具有匹配父表的列。同样，如果不在所有后代中重新命名约束，
+	则不能在父级中重新命名该约束，以便约束在父代及其后代之间也匹配。
+	此外，因为从父项中选择也从其后代中进行选择，所以对父项的约束不能被标记为有效，
+	除非它对于那些后代也被标记为有效。在所有这些情况下，
+    <code class="command">ALTER TABLE ONLY</code>将会被拒绝。
+   </p><p>    只有当一个后代表的列不是从任何其他父表继承而来并且没有该列的独立定义时，
+    一次递归的<code class="literal">DROP COLUMN</code>操作才会移除该列。一次非递归
+    的<code class="literal">DROP COLUMN</code>（即
+    <code class="command">ALTER TABLE ONLY ... DROP COLUMN</code>）不会移除
+    任何后代列，而是会把它们标记成独立定义的列。
+	对于分区表，非递归<code class="literal">DROP COLUMN</code>命令将失败，
+	因为表的所有分区必须与分区根具有相同的列。
+   </p><p>    标识列的操作(<code class="literal">ADD
+    GENERATED</code>、<code class="literal">SET</code>等，<code class="literal">DROP
+    IDENTITY</code>)，还有操作<code class="literal">TRIGGER</code>、<code class="literal">CLUSTER</code>、<code class="literal">OWNER</code>
+    以及<code class="literal">TABLESPACE</code>不会递归到后代表。也就是说，它们的执行
+    总像是指定了<code class="literal">ONLY</code>。增加一个约束只会在没有标记成
+    <code class="literal">NO INHERIT</code>的<code class="literal">CHECK</code>约束上进行。
+   </p><p>    不允许更改一个系统目录表的任何部分。
+   </p><p>    可用参数的进一步描述请见<a class="xref" href="sql-createtable.html" title="CREATE TABLE"><span class="refentrytitle">CREATE TABLE</span></a>。
+    <a class="xref" href="ddl.html" title="第 5 章 数据定义">第 5 章</a>中有关于继承的进一步信息。
+   </p></div><div class="refsect1" id="idp41404272"><h2>示例</h2><p>   要向一个表增加一个类型为<code class="type">varchar</code>的列：
+</p><pre class="programlisting">ALTER TABLE distributors ADD COLUMN address varchar(30);</pre><p>
+  </p><p>   要从表中删除一列：
+</p><pre class="programlisting">ALTER TABLE distributors DROP COLUMN address RESTRICT;</pre><p>
+  </p><p>   要在一个操作中更改两个现有列的类型：
+</p><pre class="programlisting">ALTER TABLE distributors
+    ALTER COLUMN address TYPE varchar(80),
+    ALTER COLUMN name TYPE varchar(100);</pre><p>
+  </p><p>   通过一个<code class="literal">USING</code>子句更改一个包含 Unix 时间戳的整数列为
+   <code class="type">timestamp with time zone</code>：
+</p><pre class="programlisting">ALTER TABLE foo
+    ALTER COLUMN foo_timestamp SET DATA TYPE timestamp with time zone
+    USING
+        timestamp with time zone 'epoch' + foo_timestamp * interval '1 second';</pre><p>
+  </p><p>   同样的，当该列具有一个不能自动造型成新数据类型的默认值表达式时：
+</p><pre class="programlisting">ALTER TABLE foo
+    ALTER COLUMN foo_timestamp DROP DEFAULT,
+    ALTER COLUMN foo_timestamp TYPE timestamp with time zone
+    USING
+        timestamp with time zone 'epoch' + foo_timestamp * interval '1 second',
+    ALTER COLUMN foo_timestamp SET DEFAULT now();</pre><p>
+  </p><p>   To rename an existing column:
+</p><pre class="programlisting">ALTER TABLE distributors RENAME COLUMN address TO city;</pre><p>
+  </p><p>   重命名一个现有的表：
+</p><pre class="programlisting">ALTER TABLE distributors RENAME TO suppliers;</pre><p>
+  </p><p>   重命名一个现有的约束：
+</p><pre class="programlisting">ALTER TABLE distributors RENAME CONSTRAINT zipchk TO zip_check;</pre><p>
+  </p><p>   为一列增加一个非空约束：
+</p><pre class="programlisting">ALTER TABLE distributors ALTER COLUMN street SET NOT NULL;</pre><p>
+   从一列移除一个非空约束：
+</p><pre class="programlisting">ALTER TABLE distributors ALTER COLUMN street DROP NOT NULL;</pre><p>
+  </p><p>   向一个表及其所有子女增加一个检查约束：
+</p><pre class="programlisting">ALTER TABLE distributors ADD CONSTRAINT zipchk CHECK (char_length(zipcode) = 5);</pre><p>
+  </p><p>   只向一个表增加一个检查约束（不为其子女增加）：
+</p><pre class="programlisting">ALTER TABLE distributors ADD CONSTRAINT zipchk CHECK (char_length(zipcode) = 5) NO INHERIT;</pre><p>
+   （该检查约束也不会被未来的子女继承）。
+  </p><p>   从一个表及其子女移除一个检查约束：
+</p><pre class="programlisting">ALTER TABLE distributors DROP CONSTRAINT zipchk;</pre><p>
+  </p><p>   只从一个表移除一个检查约束：
+</p><pre class="programlisting">ALTER TABLE ONLY distributors DROP CONSTRAINT zipchk;</pre><p>
+   （该检查约束仍为子女表保留在某个地方）。
+  </p><p>   为一个表增加一个外键约束：
+</p><pre class="programlisting">ALTER TABLE distributors ADD CONSTRAINT distfk FOREIGN KEY (address) REFERENCES addresses (address);</pre><p>
+  </p><p>   为一个表增加一个外键约束，并且尽量不要影响其他工作：
+</p><pre class="programlisting">ALTER TABLE distributors ADD CONSTRAINT distfk FOREIGN KEY (address) REFERENCES addresses (address) NOT VALID;
+ALTER TABLE distributors VALIDATE CONSTRAINT distfk;</pre><p>
+  </p><p>   为一个表增加一个（多列）唯一约束：
+</p><pre class="programlisting">ALTER TABLE distributors ADD CONSTRAINT dist_id_zipcode_key UNIQUE (dist_id, zipcode);</pre><p>
+  </p><p>   为一个表增加一个自动命名的主键约束，注意一个表只能拥有一个主键：
+</p><pre class="programlisting">ALTER TABLE distributors ADD PRIMARY KEY (dist_id);</pre><p>
+  </p><p>   把一个表移动到一个不同的表空间：
+</p><pre class="programlisting">ALTER TABLE distributors SET TABLESPACE fasttablespace;</pre><p>
+  </p><p>   把一个表移动到一个不同的模式：
+</p><pre class="programlisting">ALTER TABLE myschema.distributors SET SCHEMA yourschema;</pre><p>
+  </p><p>   重建一个主键约束，并且在重建索引期间不阻塞更新：
+</p><pre class="programlisting">CREATE UNIQUE INDEX CONCURRENTLY dist_id_temp_idx ON distributors (dist_id);
+ALTER TABLE distributors DROP CONSTRAINT distributors_pkey,
+    ADD CONSTRAINT distributors_pkey PRIMARY KEY USING INDEX dist_id_temp_idx;</pre><p>   将分区附加到范围分区表中：
+</p><pre class="programlisting">ALTER TABLE measurement
+    ATTACH PARTITION measurement_y2016m07 FOR VALUES FROM ('2016-07-01') TO ('2016-08-01');</pre><p>   将分区附加到列表分区表中：
+</p><pre class="programlisting">ALTER TABLE cities
+    ATTACH PARTITION cities_ab FOR VALUES IN ('a', 'b');</pre><p>   从分区表中分离分区：
+</p><pre class="programlisting">ALTER TABLE measurement
+    DETACH PARTITION measurement_y2015m12;</pre></div><div class="refsect1" id="idp41433152"><h2>兼容性</h2><p>   形式<code class="literal">ADD</code>（不带<code class="literal">USING INDEX</code>）、
+   <code class="literal">DROP [COLUMN]</code>、<code class="literal">DROP IDENTITY</code>、<code class="literal">RESTART</code>、
+   <code class="literal">SET DEFAULT</code>、<code class="literal">SET DATA TYPE</code>（不带<code class="literal">USING</code>）、
+   <code class="literal">SET GENERATED</code>和<code class="literal">SET <em class="replaceable"><code>sequence_option</code></em></code>
+   符合 SQL 标准。其他形式是<span class="productname">PostgreSQL</span>对 SQL 标准的
+   扩展。还有，在一个<code class="command">ALTER TABLE</code>命令中指定多于一个操作的能
+   力也是一种扩展。
+  </p><p>   <code class="command">ALTER TABLE DROP COLUMN</code>可以被用来删除一个表的唯一的
+   列，从而留下一个零列的表。这是一种 SQL 的扩展，SQL 中不允许零列的表。
+  </p></div><div class="refsect1" id="idp41444000"><h2>另见</h2><span class="simplelist"><a class="xref" href="sql-createtable.html" title="CREATE TABLE"><span class="refentrytitle">CREATE TABLE</span></a></span></div></div><div class="navfooter"><hr /><table width="100%" summary="Navigation footer"><tr><td width="40%" align="left"><a accesskey="p" href="sql-altersystem.html">上一页</a> </td><td width="20%" align="center"><a accesskey="u" href="sql-commands.html">上一级</a></td><td width="40%" align="right"> <a accesskey="n" href="sql-altertablespace.html">下一页</a></td></tr><tr><td width="40%" align="left" valign="top">ALTER SYSTEM </td><td width="20%" align="center"><a accesskey="h" href="index.html">起始页</a></td><td width="40%" align="right" valign="top"> ALTER TABLESPACE</td></tr></table></div></body></html>

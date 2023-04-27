@@ -1,0 +1,770 @@
+<!Doctype html>
+<html>
+<head>
+	<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+	<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+	<title>Go Channel 详解 | 菜鸟教程</title>
+
+  <meta name='robots' content='max-image-preview:large' />
+<link rel='stylesheet' id='classic-theme-styles-css' href='http://www.runoob.com/wp-includes/css/classic-themes.min.css?ver=6.2' type='text/css' media='all' />
+<link rel="canonical" href="http://www.runoob.com/w3cnote/go-channel-intro.html" />
+<meta name="keywords" content="Go Channel 详解">
+<meta name="description" content="Channel类型blockingBuffered ChannelsRangeselecttimeoutTimer和Tickerclose同步参考资料 Channel是Go中的一个核心类型，你可以把它看成一个管道，通过它并发核心单元就可以发送或者接收数据进行通讯(communication)。 它的操作符是箭头 &amp;lt;- 。   ch..">
+		
+	<link rel="shortcut icon" href="https://static.runoob.com/images/favicon.ico">
+	<link rel="stylesheet" href="/wp-content/themes/runoob/style.css?v=1.170" type="text/css" media="all" />	
+	<link rel="stylesheet" href="https://cdn.staticfile.org/font-awesome/4.7.0/css/font-awesome.min.css" media="all" />	
+  <!--[if gte IE 9]><!-->
+  <script src="https://cdn.staticfile.org/jquery/2.0.3/jquery.min.js"></script>
+  <!--<![endif]-->
+  <!--[if lt IE 9]>
+     <script src="https://cdn.staticfile.org/jquery/1.9.1/jquery.min.js"></script>
+     <script src="https://cdn.staticfile.org/html5shiv/r29/html5.min.js"></script>
+  <![endif]-->
+  <link rel="apple-touch-icon" href="https://static.runoob.com/images/icon/mobile-icon.png"/>
+  <meta name="apple-mobile-web-app-title" content="菜鸟教程">
+</head>
+<body>
+
+<!--  头部 -->
+<div class="container logo-search">
+
+  <div class="col search row-search-mobile">
+    <form action="index.php">
+      <input class="placeholder" placeholder="搜索……" name="s" autocomplete="off">
+      
+    </form>
+  </div>
+
+  <div class="row">
+    <div class="col logo">
+      <h1><a href="/">菜鸟教程 -- 学的不仅是技术，更是梦想！</a></h1>
+    </div>
+        <div class="col right-list"> 
+    <button class="btn btn-responsive-nav btn-inverse" data-toggle="collapse" data-target=".nav-main-collapse" id="pull" style=""> <i class="fa fa-navicon"></i> </button>
+    </div>
+        
+    <div class="col search search-desktop last">
+      <div class="search-input" >
+      <form action="//www.runoob.com/" target="_blank">
+        <input class="placeholder" id="s" name="s" placeholder="搜索……"  autocomplete="off" style="height: 44px;">
+      </form>
+      
+      </div>
+    </div>
+  </div>
+</div>
+
+
+
+<!-- 导航栏 -->
+<div class="container navigation">
+    <div class="row">
+        <div class="col nav">
+            
+
+                        <ul class="pc-nav" id="note-nav">
+                <li><a href="//www.runoob.com/">首页</a></li>
+                <li><a href="/w3cnote">笔记首页</a></li>
+                <li><a href="/w3cnote/android-tutorial-intro.html" title="Android 基础入门教程">Android</a></li>
+                <li><a href="/w3cnote/es6-tutorial.html" title="ES6 教程">ES6 教程</a></li>
+                <li><a href="/w3cnote/ten-sorting-algorithm.html" title="排序算法">排序算法</a></li>
+                <li><a href="/w3cnote/hadoop-tutorial.html" title="Hadoop 教程">Hadoop</a></li>
+                <li><a href="/w3cnote/zookeeper-tutorial.html" title="Zookeeper 教程">Zookeeper</a></li>
+                <li><a href="/w3cnote/verilog-tutorial.html" title="Verilog 教程">Verilog</a></li>
+                <li><a href="/w3cnote_genre/code" title="编程技术">编程技术</a></li> 
+                <li><a href="/w3cnote_genre/coderlife" title="程序员人生">程序员人生</a></li>
+                
+                <!--<li><a href="javascript:;" class="runoob-pop">登录</a></li>
+                
+                
+                        <li>
+                <a style="font-weight:bold;" href="https://www.runoob.com/linux/linux-tutorial.html#yunserver" target="_blank" onclick="_hmt.push(['_trackEvent', 'aliyun', 'click', 'aliyun'])" title="kkb">云服务器</a>
+                </li>
+                <li><a href="http://gk.link/a/104mQ" target="_blank" style="font-weight: bold;"onclick="_hmt.push(['_trackEvent', '极客时间', 'click', 'jike'])" title="我的圈子">极客时间</a></li>
+            
+                
+                <li><a target="_blank" href="/shoppinglist" rel="nofollow">知识店铺</a></li> 
+        -->
+            </ul>
+                        
+              
+            <ul class="mobile-nav">
+                <li><a href="/w3cnote">首页</a></li>
+                <li><a href="/w3cnote_genre/android" target="_blank" title="Android 基础入门教程">Android</a></li>
+                <li><a href="/w3cnote/es6-tutorial.html" target="_blank" title="ES6 教程">ES6</a></li>
+                <li><a href="/w3cnote_genre/joke" target="_blank" title="程序员笑话">逗乐</a></li>
+                
+                <a href="javascript:void(0)" class="search-reveal">Search</a> 
+            </ul>
+            
+        </div>
+    </div>
+</div>
+
+
+<!--  内容  -->
+<div class="container main">
+	<div class="row">
+
+		<div class="col middle-column big-middle-column">
+	 			<div class="article">
+			<div class="article-heading">
+				<h2>Go Channel 详解</h2>				<h3><em>分类</em> <a href="/w3cnote_genre/code" title="编程技术" >编程技术</a> </h3>
+			</div>
+			<div class="article-body note-body">
+				<div class="article-intro">
+					 <ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#Channel类型"><span class="toc-text">Channel类型</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#blocking"><span class="toc-text">blocking</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Buffered_Channels"><span class="toc-text">Buffered Channels</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Range"><span class="toc-text">Range</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#select"><span class="toc-text">select</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#timeout"><span class="toc-text">timeout</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Timer和Ticker"><span class="toc-text">Timer和Ticker</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#close"><span class="toc-text">close</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#同步"><span class="toc-text">同步</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#参考资料"><span class="toc-text">参考资料</span></a></li></ol>
+<p>Channel是Go中的一个核心类型，你可以把它看成一个管道，通过它并发核心单元就可以发送或者接收数据进行通讯(communication)。</p>
+<p>它的操作符是箭头 <strong>&lt;-</strong> 。 </p>
+
+<pre>ch &lt;- v    // 发送值v到Channel ch中
+v := &lt;-ch  // 从Channel ch中接收数据，并将数据赋值给v</pre>
+<p>(箭头的指向就是数据的流向)</p>
+
+<p>就像 map 和 slice 数据类型一样, channel必须先创建再使用:</p>
+
+
+<pre>ch := make(chan int)</pre>
+<hr>
+<h2 id="Channel类型">Channel类型</h2>
+<p>Channel类型的定义格式如下：</p>
+
+	
+<pre>ChannelType = ( "chan" | "chan" "&lt;-" | "&lt;-" "chan" ) ElementType .</pre>
+
+
+<p>它包括三种类型的定义。可选的<code>&lt;-</code>代表channel的方向。如果没有指定方向，那么Channel就是双向的，既可以接收数据，也可以发送数据。</p>
+
+<pre>chan T          // 可以接收和发送类型为 T 的数据
+chan&lt;- float64  // 只可以用来发送 float64 类型的数据
+&lt;-chan int      // 只可以用来接收 int 类型的数据</pre>
+<p><code>&lt;-</code>总是优先和最左边的类型结合。</p>
+<pre>
+chan&lt;- chan int    // 等价 chan&lt;- (chan int)
+chan&lt;- &lt;-chan int  // 等价 chan&lt;- (&lt;-chan int)
+&lt;-chan &lt;-chan int  // 等价 &lt;-chan (&lt;-chan int)
+chan (&lt;-chan int)</pre>
+
+<p>使用<code>make</code>初始化Channel,并且可以设置容量:</p>
+
+<pre>make(chan int, 100)</pre>
+<p>容量(capacity)代表Channel容纳的最多的元素的数量，代表Channel的缓存的大小。<br>如果没有设置容量，或者容量设置为0, 说明Channel没有缓存，只有sender和receiver都准备好了后它们的通讯(communication)才会发生(Blocking)。如果设置了缓存，就有可能不发生阻塞， 只有buffer满了后 send才会阻塞， 而只有缓存空了后receive才会阻塞。一个nil channel不会通信。</p>
+<p>可以通过内建的<code>close</code>方法可以关闭Channel。</p>
+<p>你可以在多个goroutine从/往 一个channel 中 receive/send 数据, 不必考虑额外的同步措施。</p>
+<p>Channel可以作为一个先入先出(FIFO)的队列，接收的数据和发送的数据的顺序是一致的。</p>
+<p>channel的 receive支持 <em>multi-valued assignment</em>，如</p>
+
+<pre>v, ok := &lt;-ch</pre>
+<p>它可以用来检查Channel是否已经被关闭了。</p>
+<ol>
+<li><strong>send语句</strong><br>send语句用来往Channel中发送数据， 如<code>ch &lt;- 3</code>。<br>它的定义如下:</li>
+</ol>
+
+<pre>SendStmt = Channel "&lt;-" Expression .
+Channel  = Expression .</pre>
+
+
+<p>在通讯(communication)开始前channel和expression必选先求值出来(evaluated)，比如下面的(3+4)先计算出7然后再发送给channel。</p>
+
+<pre>c := make(chan int)
+defer close(c)
+go func() { c &lt;- 3 + 4 }()
+i := &lt;-c
+fmt.Println(i)</pre>
+
+<p>send被执行前(proceed)通讯(communication)一直被阻塞着。如前所言，无缓存的channel只有在receiver准备好后send才被执行。如果有缓存，并且缓存未满，则send会被执行。</p>
+<p>往一个已经被close的channel中继续发送数据会导致<strong>run-time panic</strong>。</p>
+<p>往nil channel中发送数据会一致被阻塞着。</p>
+<ol>
+<li>receive 操作符<br><code>&lt;-ch</code>用来从channel ch中接收数据，这个表达式会一直被block,直到有数据可以接收。</li>
+</ol>
+<p>从一个nil channel中接收数据会一直被block。</p>
+<p>从一个被close的channel中接收数据不会被阻塞，而是立即返回，接收完已发送的数据后会返回元素类型的零值(zero value)。</p>
+<p>如前所述，你可以使用一个额外的返回参数来检查channel是否关闭。</p>
+
+<pre>x, ok := &lt;-ch
+x, ok = &lt;-ch
+var x, ok = &lt;-ch</pre>
+<hr>
+<p>如果OK 是false，表明接收的x是产生的零值，这个channel被关闭了或者为空。</p>
+<h2 id="blocking">blocking</h2>
+<p>默认情况下，发送和接收会一直阻塞着，直到另一方准备好。这种方式可以用来在gororutine中进行同步，而不必使用显示的锁或者条件变量。</p>
+<p>如官方的例子中<code>x, y := &lt;-c, &lt;-c</code>这句会一直等待计算结果发送到channel中。</p>
+
+<pre>import "fmt"
+func sum(s []int, c chan int) {
+&nbsp;&nbsp;&nbsp;&nbsp;sum := 0
+&nbsp;&nbsp;&nbsp;&nbsp;for _, v := range s {
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;sum += v
+&nbsp;&nbsp;&nbsp;&nbsp;}
+&nbsp;&nbsp;&nbsp;&nbsp;c &lt;- sum // send sum to c
+}
+func main() {
+&nbsp;&nbsp;&nbsp;&nbsp;s := []int{7, 2, 8, -9, 4, 0}
+&nbsp;&nbsp;&nbsp;&nbsp;c := make(chan int)
+&nbsp;&nbsp;&nbsp;&nbsp;go sum(s[:len(s)/2], c)
+&nbsp;&nbsp;&nbsp;&nbsp;go sum(s[len(s)/2:], c)
+&nbsp;&nbsp;&nbsp;&nbsp;x, y := &lt;-c, &lt;-c // receive from c
+&nbsp;&nbsp;&nbsp;&nbsp;fmt.Println(x, y, x+y)
+}</pre><hr><h2 id="Buffered_Channels">Buffered Channels</h2>
+<p>make的第二个参数指定缓存的大小：<code>ch := make(chan int, 100)</code>。</p>
+<p>通过缓存的使用，可以尽量避免阻塞，提供应用的性能。</p><hr>
+<h2 id="Range">Range</h2>
+<p><code>for …… range</code>语句可以处理Channel。</p>
+
+
+<pre>func main() {
+&nbsp;&nbsp;&nbsp;&nbsp;go func() {
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;time.Sleep(1 * time.Hour)
+&nbsp;&nbsp;&nbsp;&nbsp;}()
+&nbsp;&nbsp;&nbsp;&nbsp;c := make(chan int)
+&nbsp;&nbsp;&nbsp;&nbsp;go func() {
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;for i := 0; i &lt; 10; i = i + 1 {
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;c &lt;- i
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;close(c)
+&nbsp;&nbsp;&nbsp;&nbsp;}()
+&nbsp;&nbsp;&nbsp;&nbsp;for i := range c {
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;fmt.Println(i)
+&nbsp;&nbsp;&nbsp;&nbsp;}
+&nbsp;&nbsp;&nbsp;&nbsp;fmt.Println("Finished")
+}</pre>
+
+<p><code>range c</code>产生的迭代值为Channel中发送的值，它会一直迭代直到channel被关闭。上面的例子中如果把<code>close(c)</code>注释掉，程序会一直阻塞在<code>for …… range</code>那一行。</p><hr>
+<h2 id="select">select</h2>
+<p><code>select</code>语句选择一组可能的send操作和receive操作去处理。它类似<code>switch</code>,但是只是用来处理通讯(communication)操作。<br>它的<code>case</code>可以是send语句，也可以是receive语句，亦或者<code>default</code>。</p>
+<p><code>receive</code>语句可以将值赋值给一个或者两个变量。它必须是一个receive操作。</p>
+<p>最多允许有一个<code>default case</code>,它可以放在case列表的任何位置，尽管我们大部分会将它放在最后。</p>
+
+<pre>import "fmt"
+func fibonacci(c, quit chan int) {
+&nbsp;&nbsp;&nbsp;&nbsp;x, y := 0, 1
+&nbsp;&nbsp;&nbsp;&nbsp;for {
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;select {
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;case c &lt;- x:
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;x, y = y, x+y
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;case &lt;-quit:
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;fmt.Println("quit")
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;return
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}
+&nbsp;&nbsp;&nbsp;&nbsp;}
+}
+func main() {
+&nbsp;&nbsp;&nbsp;&nbsp;c := make(chan int)
+&nbsp;&nbsp;&nbsp;&nbsp;quit := make(chan int)
+&nbsp;&nbsp;&nbsp;&nbsp;go func() {
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;for i := 0; i &lt; 10; i++ {
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;fmt.Println(&lt;-c)
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;quit &lt;- 0
+&nbsp;&nbsp;&nbsp;&nbsp;}()
+&nbsp;&nbsp;&nbsp;&nbsp;fibonacci(c, quit)
+}</pre>
+
+<p>如果有同时多个case去处理,比如同时有多个channel可以接收数据，那么Go会伪随机的选择一个case处理(pseudo-random)。如果没有case需要处理，则会选择<code>default</code>去处理，如果<code>default case</code>存在的情况下。如果没有<code>default case</code>，则<code>select</code>语句会阻塞，直到某个case需要处理。</p>
+<p>需要注意的是，nil channel上的操作会一直被阻塞，如果没有default case,只有nil channel的select会一直被阻塞。</p>
+<p><code>select</code>语句和<code>switch</code>语句一样，它不是循环，它只会选择一个case来处理，如果想一直处理channel，你可以在外面加一个无限的for循环：</p>
+
+
+<pre>for {
+&nbsp;&nbsp;&nbsp;&nbsp;select {
+&nbsp;&nbsp;&nbsp;&nbsp;case c &lt;- x:
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;x, y = y, x+y
+&nbsp;&nbsp;&nbsp;&nbsp;case &lt;-quit:
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;fmt.Println("quit")
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;return
+&nbsp;&nbsp;&nbsp;&nbsp;}
+}</pre>
+
+<h3 id="timeout">timeout</h3>
+<p><code>select</code>有很重要的一个应用就是超时处理。 因为上面我们提到，如果没有case需要处理，select语句就会一直阻塞着。这时候我们可能就需要一个超时操作，用来处理超时的情况。<br>下面这个例子我们会在2秒后往channel c1中发送一个数据，但是<code>select</code>设置为1秒超时,因此我们会打印出<code>timeout 1</code>,而不是<code>result 1</code>。</p>
+
+
+<pre>import "time"
+import "fmt"
+func main() {
+    c1 := make(chan string, 1)
+    go func() {
+        time.Sleep(time.Second * 2)
+        c1 &lt;- "result 1"
+    }()
+    select {
+    case res := &lt;-c1:
+        fmt.Println(res)
+    case &lt;-time.After(time.Second * 1):
+        fmt.Println("timeout 1")
+    }
+}</pre>
+
+<p>其实它利用的是<code>time.After</code>方法，它返回一个类型为<code>&lt;-chan Time</code>的单向的channel，在指定的时间发送一个当前时间给返回的channel中。</p><hr>
+<h2 id="Timer和Ticker">Timer和Ticker</h2>
+<p>我们看一下关于时间的两个Channel。<br>timer是一个定时器，代表未来的一个单一事件，你可以告诉timer你要等待多长时间，它提供一个Channel，在将来的那个时间那个Channel提供了一个时间值。下面的例子中第二行会阻塞2秒钟左右的时间，直到时间到了才会继续执行。</p>
+
+
+<pre>timer1 := time.NewTimer(time.Second * 2)
+&lt;-timer1.C
+fmt.Println("Timer 1 expired")</pre>
+
+<p>当然如果你只是想单纯的等待的话，可以使用<code>time.Sleep</code>来实现。</p>
+<p>你还可以使用<code>timer.Stop</code>来停止计时器。</p>
+
+
+<pre>timer2 := time.NewTimer(time.Second)
+go func() {
+&nbsp;&nbsp;&nbsp;&nbsp;&lt;-timer2.C
+&nbsp;&nbsp;&nbsp;&nbsp;fmt.Println("Timer 2 expired")
+}()
+stop2 := timer2.Stop()
+if stop2 {
+&nbsp;&nbsp;&nbsp;&nbsp;fmt.Println("Timer 2 stopped")
+}</pre>
+
+<p><code>ticker</code>是一个定时触发的计时器，它会以一个间隔(interval)往Channel发送一个事件(当前时间)，而Channel的接收者可以以固定的时间间隔从Channel中读取事件。下面的例子中ticker每500毫秒触发一次，你可以观察输出的时间。</p>
+
+
+<pre>ticker := time.NewTicker(time.Millisecond * 500)
+go func() {
+&nbsp;&nbsp;&nbsp;&nbsp;for t := range ticker.C {
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;fmt.Println("Tick at", t)
+&nbsp;&nbsp;&nbsp;&nbsp;}
+}()</pre>
+
+<p>类似timer, ticker也可以通过<code>Stop</code>方法来停止。一旦它停止，接收者不再会从channel中接收数据了。</p>
+<h2 id="close">close</h2>
+<p>内建的close方法可以用来关闭channel。</p>
+<p>总结一下channel关闭后sender的receiver操作。<br>如果channel c已经被关闭,继续往它发送数据会导致<code>panic: send on closed channel</code>:</p>
+
+<pre>import "time"
+func main() {
+&nbsp;&nbsp;&nbsp;&nbsp;go func() {
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;time.Sleep(time.Hour)
+&nbsp;&nbsp;&nbsp;&nbsp;}()
+&nbsp;&nbsp;&nbsp;&nbsp;c := make(chan int, 10)
+&nbsp;&nbsp;&nbsp;&nbsp;c &lt;- 1
+&nbsp;&nbsp;&nbsp;&nbsp;c &lt;- 2
+&nbsp;&nbsp;&nbsp;&nbsp;close(c)
+&nbsp;&nbsp;&nbsp;&nbsp;c &lt;- 3
+}</pre>
+
+<p>但是从这个关闭的channel中不但可以读取出已发送的数据，还可以不断的读取零值:</p>
+
+<pre>c := make(chan int, 10)
+c &lt;- 1
+c &lt;- 2
+close(c)
+fmt.Println(&lt;-c) //1
+fmt.Println(&lt;-c) //2
+fmt.Println(&lt;-c) //0
+fmt.Println(&lt;-c) //0</pre>
+
+
+<p>但是如果通过<code>range</code>读取，channel关闭后for循环会跳出：</p>
+
+<pre>c := make(chan int, 10)
+c &lt;- 1
+c &lt;- 2
+close(c)
+for i := range c {
+&nbsp;&nbsp;&nbsp;&nbsp;fmt.Println(i)
+}</pre>
+
+<p>通过<code>i, ok := &lt;-c</code>可以查看Channel的状态，判断值是零值还是正常读取的值。</p>
+
+<pre>c := make(chan int, 10)
+close(c)
+i, ok := &lt;-c
+fmt.Printf("%d, %t", i, ok) //0, false</pre>
+<hr>
+<h2 id="同步">同步</h2>
+<p>channel可以用在goroutine之间的同步。<br>下面的例子中main goroutine通过done channel等待worker完成任务。 worker做完任务后只需往channel发送一个数据就可以通知main goroutine任务完成。</p>
+
+<pre>import (
+&nbsp;&nbsp;&nbsp;&nbsp;"fmt"
+&nbsp;&nbsp;&nbsp;&nbsp;"time"
+)
+func worker(done chan bool) {
+&nbsp;&nbsp;&nbsp;&nbsp;time.Sleep(time.Second)
+&nbsp;&nbsp;&nbsp;&nbsp;// 通知任务已完成
+&nbsp;&nbsp;&nbsp;&nbsp;done &lt;- true
+}
+func main() {
+&nbsp;&nbsp;&nbsp;&nbsp;done := make(chan bool, 1)
+&nbsp;&nbsp;&nbsp;&nbsp;go worker(done)
+&nbsp;&nbsp;&nbsp;&nbsp;// 等待任务完成
+&nbsp;&nbsp;&nbsp;&nbsp;&lt;-done
+}</pre>
+
+
+<blockquote><p>来源：http://colobu.com/2016/04/14/Golang-Channels/</p></blockquote>
+
+				</div>
+			</div>
+			<div class="previous-next-links">
+			<div class="previous-design-link">← <a href="http://www.runoob.com/w3cnote/lua-table-length.html" rel="prev"> lua 中求 table 长度</a> </div>
+			<div class="next-design-link"><a href="http://www.runoob.com/w3cnote/cpp-two-colon-usage.html" rel="next"> C++ 中 :: 的用法</a> →</div>
+			</div>
+						<div class="article-heading-ad" id="w3cnote-ad728">
+			<script async src="//pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script>
+			<!-- 移动版 自动调整 -->
+			<ins class="adsbygoogle"
+			     style="display:inline-block;min-width:300px;max-width:970px;width:100%;height:90px"
+			     data-ad-client="ca-pub-5751451760833794"
+			     data-ad-slot="1691338467"
+			     data-ad-format="horizontal"></ins>
+			<script>
+			(adsbygoogle = window.adsbygoogle || []).push({});
+			</script>
+			</div>
+			<style>
+@media screen and (max-width: 768px) {
+	#w3cnote-ad728 {
+		display: none;
+	}
+}
+p.note-author {
+    border-bottom: 1px solid #ddd;
+    font-size: 18px;
+    font-weight: bold;
+    color: #78a15a;
+    padding-bottom: 2px;
+    margin-bottom: 4px;
+}
+</style>
+<script>
+var aid = 19680;
+</script>
+	</div>
+		
+	</div>
+	<div class="listcol last right-column">
+
+
+
+
+<!--
+	<div class="tab tab-light-blue"> 订阅</div>
+	<div class="sidebar-box">
+		<div class="socialicons">
+			<a href="//www.runoob.com/feed" class="rss">RSS 订阅</a>
+		
+			<form action="//list.qq.com/cgi-bin/qf_compose_send" method="post">
+			<input type="hidden" value="qf_booked_feedback" name="t">
+			<input type="hidden" value="4b67b6b6c1f5e792559940cab4aebb8f1126fba880bff1a8" name="id">
+			<input class="placeholder" id="feed_email" name="to" value="输入邮箱 订阅笔记" autocomplete="off">
+			<input type="submit" value="订阅" class="btn btn-primary">
+			</form>
+		
+		</div>
+ 
+	</div>
+-->	
+
+
+
+<!--
+	<div class="sidebar-box cate-list">
+	<div class="sidebar-box recommend-here list-link">
+			<a href="javascript:void(0);" style="font-size: 16px; color:#64854c;font-weight:bold;">笔记列表</a>
+		</div>
+
+ 
+
+</div>
+-->
+
+	 <div class="sidebar-box cate-list">
+		 		
+
+	 	<div class="sidebar-box recommend-here list-link">
+			<a href="javascript:void(0);" style="font-size: 16px; color:#64854c;font-weight:bold;">教程列表</a>
+		</div>
+		
+		<div class="cate-items"> 
+				<a href="http://www.runoob.com/ado">ADO 教程</a>
+	<a href="http://www.runoob.com/ajax">Ajax 教程</a>
+	<a href="http://www.runoob.com/android">Android 教程</a>
+	<a href="http://www.runoob.com/angularjs2">Angular2 教程</a>
+	<a href="http://www.runoob.com/angularjs">AngularJS 教程</a>
+	<a href="http://www.runoob.com/appml">AppML 教程</a>
+	<a href="http://www.runoob.com/asp">ASP 教程</a>
+	<a href="http://www.runoob.com/aspnet">ASP.NET 教程</a>
+	<a href="http://www.runoob.com/bootstrap">Bootstrap 教程</a>
+	<a href="http://www.runoob.com/bootstrap4">Bootstrap4 教程</a>
+	<a href="http://www.runoob.com/bootstrap5">Bootstrap5 教程</a>
+	<a href="http://www.runoob.com/cprogramming">C 教程</a>
+	<a href="http://www.runoob.com/csharp">C# 教程</a>
+	<a href="http://www.runoob.com/cplusplus">C++ 教程</a>
+	<a href="http://www.runoob.com/chartjs">Chart.js 教程</a>
+	<a href="http://www.runoob.com/cssref">CSS 参考手册</a>
+	<a href="http://www.runoob.com/css">CSS 教程</a>
+	<a href="http://www.runoob.com/css3">CSS3 教程</a>
+	<a href="http://www.runoob.com/django">Django 教程</a>
+	<a href="http://www.runoob.com/docker">Docker 教程</a>
+	<a href="http://www.runoob.com/dtd">DTD 教程</a>
+	<a href="http://www.runoob.com/echarts">ECharts 教程</a>
+	<a href="http://www.runoob.com/eclipse">Eclipse 教程</a>
+	<a href="http://www.runoob.com/firebug">Firebug 教程</a>
+	<a href="http://www.runoob.com/font-awesome">Font Awesome 图标</a>
+	<a href="http://www.runoob.com/foundation">Foundation 教程</a>
+	<a href="http://www.runoob.com/git">Git 教程</a>
+	<a href="http://www.runoob.com/go">Go 语言教程</a>
+	<a href="http://www.runoob.com/googleapi">Google 地图 API 教程</a>
+	<a href="http://www.runoob.com/highcharts">Highcharts 教程</a>
+	<a href="http://www.runoob.com/htmldom">HTML DOM 教程</a>
+	<a href="http://www.runoob.com/tags">HTML 参考手册</a>
+	<a href="http://www.runoob.com/charsets">HTML 字符集</a>
+	<a href="http://www.runoob.com/html">HTML 教程</a>
+	<a href="http://www.runoob.com/http">HTTP 教程</a>
+	<a href="http://www.runoob.com/ionic">ionic 教程</a>
+	<a href="http://www.runoob.com/ios">iOS 教程</a>
+	<a href="http://www.runoob.com/java">Java 教程</a>
+	<a href="http://www.runoob.com/jsref">JavaScript 参考手册</a>
+	<a href="http://www.runoob.com/js">Javascript 教程</a>
+	<a href="http://www.runoob.com/jeasyui">jQuery EasyUI 教程</a>
+	<a href="http://www.runoob.com/jquerymobile">jQuery Mobile 教程</a>
+	<a href="http://www.runoob.com/jqueryui">jQuery UI 教程</a>
+	<a href="http://www.runoob.com/jquery">jQuery 教程</a>
+	<a href="http://www.runoob.com/json">JSON 教程</a>
+	<a href="http://www.runoob.com/jsp">JSP 教程</a>
+	<a href="http://www.runoob.com/julia">Julia 教程</a>
+	<a href="http://www.runoob.com/kotlin">Kotlin 教程</a>
+	<a href="http://www.runoob.com/linux">Linux 教程</a>
+	<a href="http://www.runoob.com/lua">Lua 教程</a>
+	<a href="http://www.runoob.com/markdown">Markdown 教程</a>
+	<a href="http://www.runoob.com/matplotlib">Matplotlib 教程</a>
+	<a href="http://www.runoob.com/maven">Maven 教程</a>
+	<a href="http://www.runoob.com/memcached">Memcached 教程</a>
+	<a href="http://www.runoob.com/mongodb">MongoDB 教程</a>
+	<a href="http://www.runoob.com/mysql">MySQL 教程</a>
+	<a href="http://www.runoob.com/nodejs">Node.js 教程</a>
+	<a href="http://www.runoob.com/numpy">NumPy 教程</a>
+	<a href="http://www.runoob.com/pandas">Pandas 教程</a>
+	<a href="http://www.runoob.com/perl">Perl 教程</a>
+	<a href="http://www.runoob.com/php">PHP 教程</a>
+	<a href="http://www.runoob.com/postgresql">PostgreSQL 教程</a>
+	<a href="http://www.runoob.com/python3">Python 3 教程</a>
+	<a href="http://www.runoob.com/python">Python 基础教程</a>
+	<a href="http://www.runoob.com/r">R 教程</a>
+	<a href="http://www.runoob.com/rdf">RDF 教程</a>
+	<a href="http://www.runoob.com/react">React 教程</a>
+	<a href="http://www.runoob.com/redis">Redis 教程</a>
+	<a href="http://www.runoob.com/rss">RSS 教程</a>
+	<a href="http://www.runoob.com/ruby">Ruby 教程</a>
+	<a href="http://www.runoob.com/rust">Rust 教程</a>
+	<a href="http://www.runoob.com/sass">Sass 教程</a>
+	<a href="http://www.runoob.com/scala">Scala 教程</a>
+	<a href="http://www.runoob.com/scipy">SciPy 教程</a>
+	<a href="http://www.runoob.com/servlet">Servlet 教程</a>
+	<a href="http://www.runoob.com/soap">SOAP 教程</a>
+	<a href="http://www.runoob.com/sql">SQL 教程</a>
+	<a href="http://www.runoob.com/sqlite">SQLite 教程</a>
+	<a href="http://www.runoob.com/svg">SVG 教程</a>
+	<a href="http://www.runoob.com/svn">SVN 教程</a>
+	<a href="http://www.runoob.com/swift">Swift 教程</a>
+	<a href="http://www.runoob.com/tcpip">TCP/IP 教程</a>
+	<a href="http://www.runoob.com/typescript">TypeScript 教程</a>
+	<a href="http://www.runoob.com/vbscript">VBScript 教程</a>
+	<a href="http://www.runoob.com/vue2">Vue.js 教程</a>
+	<a href="http://www.runoob.com/vue3">Vue3 教程</a>
+	<a href="http://www.runoob.com/w3c">W3C 教程</a>
+	<a href="http://www.runoob.com/webservices">Web Service 教程</a>
+	<a href="http://www.runoob.com/wsdl">WSDL 教程</a>
+	<a href="http://www.runoob.com/xlink">XLink 教程</a>
+	<a href="http://www.runoob.com/dom">XML DOM 教程</a>
+	<a href="http://www.runoob.com/schema">XML Schema 教程</a>
+	<a href="http://www.runoob.com/xml">XML 教程</a>
+	<a href="http://www.runoob.com/xpath">XPath 教程</a>
+	<a href="http://www.runoob.com/xquery">XQuery 教程</a>
+	<a href="http://www.runoob.com/xslfo">XSLFO 教程</a>
+	<a href="http://www.runoob.com/xsl">XSLT 教程</a>
+	<a href="http://www.runoob.com/data-structures">数据结构</a>
+	<a href="http://www.runoob.com/regexp">正则表达式</a>
+	<a href="http://www.runoob.com/quiz">测验</a>
+	<a href="http://www.runoob.com/browsers">浏览器</a>
+	<a href="http://www.runoob.com/quality">网站品质</a>
+	<a href="http://www.runoob.com/web">网站建设指南</a>
+	<a href="http://www.runoob.com/hosting">网站服务器教程</a>
+	<a href="http://www.runoob.com/design-pattern">设计模式</a>
+			
+		</div> 
+		 	 </div>
+</div>
+	</div>
+</div>
+
+
+<!-- 底部 -->
+<div id="footer" class="mar-t50">
+   <div class="runoob-block">
+    <div class="runoob cf">
+     <dl>
+      <dt>
+       在线实例
+      </dt>
+      <dd>
+       &middot;<a target="_blank" href="/html/html-examples.html">HTML 实例</a>
+      </dd>
+      <dd>
+       &middot;<a target="_blank" href="/css/css-examples.html">CSS 实例</a>
+      </dd>
+      <dd>
+       &middot;<a target="_blank" href="/js/js-examples.html">JavaScript 实例</a>
+      </dd>
+      <dd>
+       &middot;<a target="_blank" href="/ajx/ajax-examples.html">Ajax 实例</a>
+      </dd>
+       <dd>
+       &middot;<a target="_blank" href="/jquery/jquery-examples.html">jQuery 实例</a>
+      </dd>
+      <dd>
+       &middot;<a target="_blank" href="/xml/xml-examples.html">XML 实例</a>
+      </dd>
+      <dd>
+       &middot;<a target="_blank" href="/java/java-examples.html">Java 实例</a>
+      </dd>
+     
+     </dl>
+     <dl>
+      <dt>
+      字符集&工具
+      </dt>
+      <dd>
+       &middot; <a target="_blank" href="/charsets/html-charsets.html">HTML 字符集设置</a>
+      </dd>
+      <dd>
+       &middot; <a target="_blank" href="/tags/html-ascii.html">HTML ASCII 字符集</a>
+      </dd>
+     <dd>
+       &middot; <a target="_blank" href="https://c.runoob.com/front-end/6939/">JS 混淆/加密</a>
+      </dd> 
+      <dd>
+       &middot; <a target="_blank" href="https://c.runoob.com/front-end/6232/">PNG/JPEG 图片压缩</a>
+      </dd>
+      <dd>
+       &middot; <a target="_blank" href="/tags/html-colorpicker.html">HTML 拾色器</a>
+      </dd>
+      <dd>
+       &middot; <a target="_blank" href="//c.runoob.com/front-end/53">JSON 格式化工具</a>
+      </dd>
+      <dd>
+       &middot; <a target="_blank" href="//c.runoob.com/front-end/6680/">随机数生成器</a>
+      </dd>
+     </dl>
+     <dl>
+      <dt>
+       最新更新
+      </dt>
+                   <dd>
+       &middot;
+      <a href="http://www.runoob.com/matplotlib/matplotlib-imread.html" title="Matplotlib imread() 方法">Matplotlib imre...</a>
+      </dd>
+              <dd>
+       &middot;
+      <a href="http://www.runoob.com/matplotlib/matplotlib-imsave.html" title="Matplotlib imsave() 方法">Matplotlib imsa...</a>
+      </dd>
+              <dd>
+       &middot;
+      <a href="http://www.runoob.com/matplotlib/matplotlib-imshow.html" title="Matplotlib imshow() 方法">Matplotlib imsh...</a>
+      </dd>
+              <dd>
+       &middot;
+      <a href="http://www.runoob.com/matplotlib/matplotlib-hist.html" title="Matplotlib 直方图">Matplotlib 直方图</a>
+      </dd>
+              <dd>
+       &middot;
+      <a href="http://www.runoob.com/python3/python-func-object.html" title="Python object() 函数">Python object()...</a>
+      </dd>
+              <dd>
+       &middot;
+      <a href="http://www.runoob.com/python3/python-ai-draw.html" title="Python AI 绘画">Python AI 绘画</a>
+      </dd>
+              <dd>
+       &middot;
+      <a href="http://www.runoob.com/w3cnote/cursor-editor.html" title="神辅助 Cursor 编辑器，加入 GPT-4 让编码更轻松！">神辅助 Cursor ...</a>
+      </dd>
+             </dl>
+     <dl>
+      <dt>
+       站点信息
+      </dt>
+      <dd>
+       &middot;
+       <a target="_blank" href="mailto:admin@runoob.com" rel="external nofollow">意见反馈</a>
+       </dd>
+      <dd>
+       &middot;
+      <a target="_blank" href="/disclaimer">免责声明</a>
+       </dd>
+      <dd>
+       &middot;
+       <a target="_blank" href="/aboutus">关于我们</a>
+       </dd>
+      <dd>
+       &middot;
+      <a target="_blank" href="/archives">文章归档</a>
+      </dd>
+    
+     </dl>
+    
+     <div class="search-share">
+      <div class="app-download">
+        <div>
+         <strong>关注微信</strong>
+        </div>
+      </div>
+      <div class="share">
+      <img width="128" height="128" src="/wp-content/themes/runoob/assets/images/qrcode.png" />
+       </div>
+     </div>
+     
+    </div>
+   </div>
+   <div class="w-1000 copyright">
+     Copyright &copy; 2013-2023    <strong><a href="//www.runoob.com/" target="_blank">菜鸟教程</a></strong>&nbsp;
+    <strong><a href="//www.runoob.com/" target="_blank">runoob.com</a></strong> All Rights Reserved. 备案号：<a target="_blank" rel="nofollow" href="https://beian.miit.gov.cn/">闽ICP备15012807号-1</a>
+   </div>
+  </div>
+  <div class="fixed-btn">
+    <a class="go-top" href="javascript:void(0)" title="返回顶部"> <i class="fa fa-angle-up"></i></a>
+    <a class="qrcode"  href="javascript:void(0)" title="关注我们"><i class="fa fa-qrcode"></i></a>
+    <a class="writer" style="display:none" href="javascript:void(0)"   title="标记/收藏"><i class="fa fa-star" aria-hidden="true"></i></a>
+    <!-- qrcode modal -->
+    <div id="bottom-qrcode" class="modal panel-modal hide fade in">
+      <h4>微信关注</h4>
+      <div class="panel-body"><img alt="微信关注" width="128" height="128" src="/wp-content/themes/runoob/assets/images/qrcode.png"></div> 
+    </div>
+  </div>
+
+ <div style="display:none;">
+<script async src="https://www.googletagmanager.com/gtag/js?id=UA-84264393-2"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+
+  gtag('config', 'UA-84264393-2');
+</script>
+<script>
+var _hmt = _hmt || [];
+(function() {
+  var hm = document.createElement("script");
+  hm.src = "https://hm.baidu.com/hm.js?3eec0b7da6548cf07db3bc477ea905ee";
+  var s = document.getElementsByTagName("script")[0]; 
+  s.parentNode.insertBefore(hm, s);
+})();
+</script>
+
+</div>
+<script>
+window.jsui={
+    www: 'https://www.runoob.com',
+    uri: 'https://www.runoob.com/wp-content/themes/runoob'
+};
+</script>
+
+<script src="https://static.runoob.com/assets/libs/hl/run_prettify.js"></script>
+<script src="/wp-content/themes/runoob/assets/js/main.min.js?v=1.156"></script>
+
+</body>
+</html>

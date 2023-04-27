@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><title>F.9. citext</title><link rel="stylesheet" type="text/css" href="stylesheet.css" /><link rev="made" href="pgsql-docs@postgresql.org" /><meta name="generator" content="DocBook XSL Stylesheets V1.79.1" /><link rel="prev" href="chkpass.html" title="F.8. chkpass" /><link rel="next" href="cube.html" title="F.10. cube" /></head><body><div xmlns="http://www.w3.org/TR/xhtml1/transitional" class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="5" align="center">F.9. citext</th></tr><tr><td width="10%" align="left"><a accesskey="p" href="chkpass.html" title="F.8. chkpass">上一页</a> </td><td width="10%" align="left"><a accesskey="u" href="contrib.html" title="附录 F. 额外提供的模块">上一级</a></td><th width="60%" align="center">附录 F. 额外提供的模块</th><td width="10%" align="right"><a accesskey="h" href="index.html" title="PostgreSQL 10.1 手册">起始页</a></td><td width="10%" align="right"> <a accesskey="n" href="cube.html" title="F.10. cube">下一页</a></td></tr></table><hr></hr></div><div class="sect1" id="CITEXT"><div class="titlepage"><div><div><h2 class="title" style="clear: both">F.9. citext</h2></div></div></div><div class="toc"><dl class="toc"><dt><span class="sect2"><a href="citext.html#idp85063296">F.9.1. 基本原理</a></span></dt><dt><span class="sect2"><a href="citext.html#idp85075424">F.9.2. 如何使用它</a></span></dt><dt><span class="sect2"><a href="citext.html#idp85079968">F.9.3. 串比较行为</a></span></dt><dt><span class="sect2"><a href="citext.html#idp85103040">F.9.4. 限制</a></span></dt><dt><span class="sect2"><a href="citext.html#idp85120288">F.9.5. 作者</a></span></dt></dl></div><a id="idp85059408" class="indexterm"></a><p>  <code class="filename">citext</code>模块提供了一种大小写不敏感的字符串类型：<code class="type">citext</code>。特别地，它在比较值时内部调用的是<code class="function">lower</code>。除此之外，它的行为几乎与<code class="type">text</code>完全相同。
+ </p><div class="sect2" id="idp85063296"><div class="titlepage"><div><div><h3 class="title">F.9.1. 基本原理</h3></div></div></div><p>   在<span class="productname">PostgreSQL</span>中做大小写不敏感匹配的标准方法曾经是在比较值时使用<code class="function">lower</code>函数，例如：
+
+</p><pre class="programlisting">SELECT * FROM tab WHERE lower(col) = LOWER(?);</pre><p>
+  </p><p>   这工作得比较好，但是有一些缺点：
+  </p><div class="itemizedlist"><ul class="itemizedlist" style="list-style-type: disc; "><li class="listitem"><p>      它让你的 SQL 语句冗长，并且你必须总是要记住在列和查询值上使用<code class="function">lower</code>。
+     </p></li><li class="listitem"><p>      它不会使用一个索引，除非你使用<code class="function">lower</code>创建一个函数索引。
+     </p></li><li class="listitem"><p>      如果你声明一个列为<code class="literal">UNIQUE</code>或<code class="literal">PRIMARY KEY</code>，隐式生成的索引是大小写敏感的。因此，它对于大小写不敏感的搜索是没有用处的，并且它不会强制大小写不敏感的唯一性。
+     </p></li></ul></div><p>    <code class="type">citext</code>数据类型允许你在 SQL 查询中消除对<code class="function">lower</code>的调用，并且允许一个主键是大小写无关的。就和<code class="type">text</code>一样，<code class="type">citext</code>是区域相关的，这意味着大写和小写字符的匹配依赖于数据库<code class="literal">LC_CTYPE</code>设置的规则。此外，这种行为和在查询中使用<code class="function">lower</code>是一样的。但是因为它是由数据类型以透明的方式完成的，你不需要记住在你的查询中做任何特殊的事情。
+   </p></div><div class="sect2" id="idp85075424"><div class="titlepage"><div><div><h3 class="title">F.9.2. 如何使用它</h3></div></div></div><p>   这里是一个简单的用法示例：
+
+</p><pre class="programlisting">CREATE TABLE users (
+    nick CITEXT PRIMARY KEY,
+    pass TEXT   NOT NULL
+);
+
+INSERT INTO users VALUES ( 'larry',  md5(random()::text) );
+INSERT INTO users VALUES ( 'Tom',    md5(random()::text) );
+INSERT INTO users VALUES ( 'Damian', md5(random()::text) );
+INSERT INTO users VALUES ( 'NEAL',   md5(random()::text) );
+INSERT INTO users VALUES ( 'Bjørn',  md5(random()::text) );
+
+SELECT * FROM users WHERE nick = 'Larry';</pre><p>
+
+   即使<code class="structfield">nick</code>列被设置为<code class="literal">larry</code>而查询是<code class="literal">Larry</code>，<code class="command">SELECT</code>语句也将只返回一个元组。
+  </p></div><div class="sect2" id="idp85079968"><div class="titlepage"><div><div><h3 class="title">F.9.3. 串比较行为</h3></div></div></div><p>   <code class="type">citext</code>执行比较时先将每一个串转换成小写形式（调用<code class="function">lower</code>）然后正常地比较结果。因此，如果两个串通过<code class="function">lower</code>产生相同的结果，它们就被认为是相等。
+  </p><p>   为了尽可能接近地模拟一种大小写不敏感的排序规则，一些串处理操作符和函数有<code class="type">citext</code>相关的版本。例如，当应用到<code class="type">citext</code>时，正则表达式操作符<code class="literal">~</code>和<code class="literal">~*</code>会展现出相同的行为：它们都以大小写不敏感的方式匹配。<code class="literal">!~</code>和<code class="literal">!~*</code>也是一样，以及<code class="literal">LIKE</code>操作符<code class="literal">~~</code>和<code class="literal">~~*</code>，以及<code class="literal">!~~</code>和<code class="literal">!~~*</code>。如果你想以大小写敏感的方式匹配，你可以把该操作符的参数造型成<code class="type">text</code>。
+  </p><p>   相似地，如果下列函数的参数是<code class="type">citext</code>，它们会以大小写不敏感的方式执行匹配：
+  </p><div class="itemizedlist"><ul class="itemizedlist" style="list-style-type: disc; "><li class="listitem"><p>      <code class="function">regexp_match()</code>
+    </p></li><li class="listitem"><p>      <code class="function">regexp_matches()</code>
+    </p></li><li class="listitem"><p>      <code class="function">regexp_replace()</code>
+    </p></li><li class="listitem"><p>      <code class="function">regexp_split_to_array()</code>
+    </p></li><li class="listitem"><p>      <code class="function">regexp_split_to_table()</code>
+    </p></li><li class="listitem"><p>      <code class="function">replace()</code>
+    </p></li><li class="listitem"><p>      <code class="function">split_part()</code>
+    </p></li><li class="listitem"><p>      <code class="function">strpos()</code>
+    </p></li><li class="listitem"><p>      <code class="function">translate()</code>
+    </p></li></ul></div><p>   对于 regexp 函数，如果你想要以大小写敏感的方式匹配，你可以指定<span class="quote">“<span class="quote">c</span>”</span>标志来强制大小写敏感的匹配。否则，如果你想要大小写敏感的行为，你必须在使用这些函数之一之前造型到<code class="type">text</code>。
+  </p></div><div class="sect2" id="idp85103040"><div class="titlepage"><div><div><h3 class="title">F.9.4. 限制</h3></div></div></div><div class="itemizedlist"><ul class="itemizedlist" style="list-style-type: disc; "><li class="listitem"><p>      <code class="type">citext</code>的大小写折叠行为取决于你的数据库的<code class="literal">LC_CTYPE</code>设置。因此它如何比较值是在数据库被创建时决定的。在 Unicode 标准定义的术语中没有真正的大小写不敏感。实际上，它的含义是，只要你对你的排序规则满意，你就应该对<code class="type">citext</code>的比较满意。但是如果在你的数据库中存储有不同语言的数据，当排序规则是用于一种语言时，另一种语言的用户可能会发现他们的查询结果并不是所期待的。
+     </p></li><li class="listitem"><p>      自<span class="productname">PostgreSQL</span> 9.1 其，你可以为<code class="type">citext</code>列或数据值附加一个<code class="literal">COLLATE</code>说明。当前，在比较大小写折叠过的字符串时，<code class="type">citext</code>操作符将尊重一种非默认的<code class="literal">COLLATE</code>说明，但是最初到小写形式的折叠是根据数据库的 <code class="literal">LC_CTYPE</code>设置完成的（就是说，尽管给出了<code class="literal">COLLATE "default"</code>）。这可能在未来的发行中被改变，这样两步都能遵循输入的<code class="literal">COLLATE</code>说明。
+     </p></li><li class="listitem"><p>       <code class="type">citext</code>的效率不如<code class="type">text</code>，因为操作符函数和 B 树比较函数必须创建数据的拷贝并且将它转换为小写形式来进行比较。不过，它比使用<code class="function">lower</code>进行大小写不敏感的匹配的效率要略高。
+     </p></li><li class="listitem"><p>      如果你在某些环境下需要以大小写敏感的方式比较数据并且在另一些环境下需要以大小写不敏感的方式比较数据，<code class="type">citext</code>就帮不上什么忙。标准的答案是使用<code class="type">text</code>类型并且在你需要以大小写不敏感的方式比较时手工使用<code class="function">lower</code>函数。如果大小写不敏感的比较需求不频繁，这会工作得不错。如果你大部分时间需要大小写不敏感的行为，考虑将数据存储为<code class="type">citext</code>并且在进行大小写敏感比较时显式地将列造型为<code class="type">text</code>。不管在那种情况下，你都需要两个索引来让两种类型的搜索更快。
+    </p></li><li class="listitem"><p>      包含<code class="type">citext</code>操作符的模式必须在当前的<code class="varname">search_path</code>（通常是<code class="literal">public</code>）中。如果它不在搜索路径中，普通的大小写敏感的<code class="type">text</code>操作符将会取而代之。
+    </p></li></ul></div></div><div class="sect2" id="idp85120288"><div class="titlepage"><div><div><h3 class="title">F.9.5. 作者</h3></div></div></div><p>   David E. Wheeler <code class="email">&lt;<a class="email" href="mailto:david@kineticode.com">david@kineticode.com</a>&gt;</code>
+  </p><p>    受 Donald Fraser 的<code class="type">citext</code>模块启发。
+  </p></div></div><div class="navfooter"><hr /><table width="100%" summary="Navigation footer"><tr><td width="40%" align="left"><a accesskey="p" href="chkpass.html">上一页</a> </td><td width="20%" align="center"><a accesskey="u" href="contrib.html">上一级</a></td><td width="40%" align="right"> <a accesskey="n" href="cube.html">下一页</a></td></tr><tr><td width="40%" align="left" valign="top">F.8. chkpass </td><td width="20%" align="center"><a accesskey="h" href="index.html">起始页</a></td><td width="40%" align="right" valign="top"> F.10. cube</td></tr></table></div></body></html>

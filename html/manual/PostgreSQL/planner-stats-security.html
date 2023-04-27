@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><title>68.3. 规划器统计和安全</title><link rel="stylesheet" type="text/css" href="stylesheet.css" /><link rev="made" href="pgsql-docs@postgresql.org" /><meta name="generator" content="DocBook XSL Stylesheets V1.79.1" /><link rel="prev" href="multivariate-statistics-examples.html" title="68.2. 多变量统计例子" /><link rel="next" href="appendixes.html" title="部分 VIII. 附录" /></head><body><div xmlns="http://www.w3.org/TR/xhtml1/transitional" class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="5" align="center">68.3. 规划器统计和安全</th></tr><tr><td width="10%" align="left"><a accesskey="p" href="multivariate-statistics-examples.html" title="68.2. 多变量统计例子">上一页</a> </td><td width="10%" align="left"><a accesskey="u" href="planner-stats-details.html" title="第 68 章 规划器如何使用统计信息">上一级</a></td><th width="60%" align="center">第 68 章 规划器如何使用统计信息</th><td width="10%" align="right"><a accesskey="h" href="index.html" title="PostgreSQL 10.1 手册">起始页</a></td><td width="10%" align="right"> <a accesskey="n" href="appendixes.html" title="部分 VIII. 附录">下一页</a></td></tr></table><hr></hr></div><div class="sect1" id="PLANNER-STATS-SECURITY"><div class="titlepage"><div><div><h2 class="title" style="clear: both">68.3. 规划器统计和安全</h2></div></div></div><p>   对表<code class="structname">pg_statistic</code>的访问仅限于超级用户，
+   以便普通用户无法从中了解其他用户的表的内容。
+   一些选择性估算函数将使用用户提供的操作符（出现在查询中的操作符或相关操作符）
+   来分析所存储的统计。例如，为了确定存储的最常用值是否适用，
+   选择性估计器将必须运行适当的<code class="literal">=</code>
+   运算符来将查询中的常量与存储的值进行比较。因此，
+   <code class="structname">pg_statistic</code>中的数据可能会传递给用户定义的运算符。
+   适当制作的操作符可以故意泄漏传递的操作数（例如，通过记录它们或将它们写入不同的表），
+   或者通过在错误消息中显示它们的值来意外泄漏它们，无论哪种情况都可能暴露
+   <code class="structname">pg_statistic</code>中的数据给一个不应该能够看到它的用户。
+  </p><p>   为了防止这种情况，以下内容适用于所有内置的选择性估计函数。在规划查询时，
+   为了能够使用存储的统计信息，当前用户必须在表或相关列上具有
+   <code class="literal">SELECT</code>权限，或者使用的操作符必须是
+   <code class="literal">LEAKPROOF</code>（更准确地说，是操作符所基于的函数）。
+   如果不是，那么选择性估计器将表现得好像没有统计数据可用，
+   并且规划器将继续进行默认或回退假设。
+  </p><p>   如果用户对表或列没有所需的权限，那么在很多情况下，查询最终会收到权限被拒绝的错误，
+   在这种情况下，这种机制在实践中是不可见的。但是，如果用户正在从安全屏障视图读取数据，
+   则规划器可能希望检查用户无法访问的基础表的统计数据。在这种情况下，
+   操作符应该是防漏的，否则统计数据将不会被使用。没有直接的反馈意见，
+   除非计划可能是次优的。如果有人怀疑是这种情况，
+   可以尝试将查询作为更有特权的用户来运行，以查看是否产生了不同的计划。
+  </p><p>   此限制仅适用于规划器需要对<code class="structname">pg_statistic</code>
+   中的一个或多个值执行用户定义的运算符的情况。因此，无论访问权限如何，
+   规划器都可以使用通用的统计信息，例如列中空值的比例或列中不同值的数量。
+  </p><p>   可能对用户定义的操作符进行统计操作的第三方扩展中包含的选择性估计函数，
+   应遵循相同的安全规则。请参考PostgreSQL源代码获取指导。
+  </p></div><div class="navfooter"><hr /><table width="100%" summary="Navigation footer"><tr><td width="40%" align="left"><a accesskey="p" href="multivariate-statistics-examples.html">上一页</a> </td><td width="20%" align="center"><a accesskey="u" href="planner-stats-details.html">上一级</a></td><td width="40%" align="right"> <a accesskey="n" href="appendixes.html">下一页</a></td></tr><tr><td width="40%" align="left" valign="top">68.2. 多变量统计例子 </td><td width="20%" align="center"><a accesskey="h" href="index.html">起始页</a></td><td width="40%" align="right" valign="top"> 部分 VIII. 附录</td></tr></table></div></body></html>

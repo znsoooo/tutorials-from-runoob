@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><title>E.48. 版本 9.3.9</title><link rel="stylesheet" type="text/css" href="stylesheet.css" /><link rev="made" href="pgsql-docs@postgresql.org" /><meta name="generator" content="DocBook XSL Stylesheets V1.79.1" /><link rel="prev" href="release-9-3-10.html" title="E.47. 版本 9.3.10" /><link rel="next" href="release-9-3-8.html" title="E.49. 版本 9.3.8" /></head><body><div xmlns="http://www.w3.org/TR/xhtml1/transitional" class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="5" align="center">E.48. 版本 9.3.9</th></tr><tr><td width="10%" align="left"><a accesskey="p" href="release-9-3-10.html" title="E.47. 版本 9.3.10">上一页</a> </td><td width="10%" align="left"><a accesskey="u" href="release.html" title="附录 E. 版本说明">上一级</a></td><th width="60%" align="center">附录 E. 版本说明</th><td width="10%" align="right"><a accesskey="h" href="index.html" title="PostgreSQL 10.1 手册">起始页</a></td><td width="10%" align="right"> <a accesskey="n" href="release-9-3-8.html" title="E.49. 版本 9.3.8">下一页</a></td></tr></table><hr></hr></div><div class="sect1" id="RELEASE-9-3-9"><div class="titlepage"><div><div><h2 class="title" style="clear: both">E.48. 版本 9.3.9</h2></div></div></div><div class="toc"><dl class="toc"><dt><span class="sect2"><a href="release-9-3-9.html#idp69042832">E.48.1. 迁移到版本 9.3.9</a></span></dt><dt><span class="sect2"><a href="release-9-3-9.html#idp69046064">E.48.2. 修改列表</a></span></dt></dl></div><p><strong>发布日期：. </strong>2015-06-12</p><p>这个版本包含少量自9.3.8以来的修复。
+关于9.3主版本的新特性信息，请查看<a class="xref" href="release-9-3.html" title="E.57. 版本 9.3">第 E.57 节</a>。</p><div class="sect2" id="idp69042832"><div class="titlepage"><div><div><h3 class="title">E.48.1. 迁移到版本 9.3.9</h3></div></div></div><p>    运行9.3.X版本的用户不需要转储/恢复。
+   </p><p>不过，如果你正在升级一个以前使用<span class="application">pg_upgrade</span>
+版本9.3.0到9.3.4（包含）升级的安装，那么请查看下面的第一条修改日志项。</p><p>另外，如果你是从一个早于9.3.7的版本升级而来，请查看<a class="xref" href="release-9-3-7.html" title="E.50. 版本 9.3.7">第 E.50 节</a>。</p></div><div class="sect2" id="idp69046064"><div class="titlepage"><div><div><h3 class="title">E.48.2. 修改列表</h3></div></div></div><div class="itemizedlist"><ul class="itemizedlist" style="list-style-type: disc; "><li class="listitem"><p>修复从不一致的数据库状态恢复时可能的失败 (Robert Haas)</p><p>最近的<span class="productname">PostgreSQL</span>版本引入了防卫multixact概括的机制，
+但是这些代码没有考虑到当数据库在一个不一致的状态时，
+它需要在崩溃恢复期间运行。这会导致在崩溃之后未能重启，或未能启动次要服务器。
+之前在<span class="application">pg_upgrade</span>中修复的bug，也会导致这样的失败，
+在已经使用了<span class="application">pg_upgrade</span>版本9.3.0到9.3.4的安装中。</p><p>正在讨论的<span class="application">pg_upgrade</span>错误将在<code class="filename">pg_control</code>
+中将<code class="literal">oldestMultiXid</code>设置为1，即使实际值要高一些。
+由于在这个版本中引入的修复，这样的情况将导致立即紧急的自动清理，
+直到确定出一个正确的<code class="literal">oldestMultiXid</code>值。
+如果这会造成困难，用户可以通过在升级到这个版本<span class="emphasis"><em>之前</em></span>手动清理来避免它。
+详细：
+
+      </p><div class="orderedlist"><ol class="orderedlist" type="1"><li class="listitem"><p>检查<span class="application">pg_controldata</span>是否报告<span class="quote">“<span class="quote">Latest
+         checkpoint's oldestMultiXid</span>”</span>为1。如果不，则什么也不需要做。</p></li><li class="listitem"><p>查看<code class="filename">PGDATA/pg_multixact/offsets</code>，看是否有个文件名叫<code class="filename">0000</code>。
+如果有，则什么也不需要做。</p></li><li class="listitem"><p>否则，对于每个<code class="structname">pg_class</code>.<code class="structfield">relminmxid</code>等于1的表，
+将<a class="xref" href="runtime-config-client.html#GUC-VACUUM-MULTIXACT-FREEZE-MIN-AGE">vacuum_multixact_freeze_min_age</a>和
+<a class="xref" href="runtime-config-client.html#GUC-VACUUM-MULTIXACT-FREEZE-TABLE-AGE">vacuum_multixact_freeze_table_age</a>都设置为0，
+<code class="command">VACUUM</code>该表。（你可以使用<a class="xref" href="runtime-config-resource.html#RUNTIME-CONFIG-RESOURCE-VACUUM-COST" title="19.4.4. 基于代价的清理延迟">第 19.4.4 节</a>
+中描述的清理成本延迟参数，减少当前会话的性能后果。）
+必须使用<span class="productname">PostgreSQL</span> 9.3.5或更高版本执行此步骤。</p></li></ol></div><p>
+     </p></li><li class="listitem"><p>修复罕见的失败，无效关系缓存初始化文件 (Tom Lane)</p><p>在错误的时间并发活动，系统目录上的<code class="command">VACUUM FULL</code>可能会未能更新
+<span class="quote">“<span class="quote">初始化文件</span>”</span>，初始化文件是用来避免新会话的缓存加载工作的。
+这会导致稍后的会话完全不能访问该目录。这是一个非常老的bug，
+但是因为很难触发它，所以直到最近才看到可再生的情况。</p></li><li class="listitem"><p>避免到来的会话和<code class="literal">CREATE/DROP DATABASE</code>之间的死锁 (Tom Lane)</p><p>数据库中启动的一个新会话是<code class="command">DROP DATABASE</code>命令的目标，
+或者<code class="command">CREATE DATABASE</code>命令的模板，会导致命令等待5秒钟然后失败，
+即使新会话在此之前退出。</p></li><li class="listitem"><p>改善规划器对带有内部索引扫描的半连接和反连接的成本估计 (Tom Lane, Tomas Vondra)</p><p>这种类型的规划在连接子句用作索引扫描条件时是相当便宜的，
+即使内部扫描通常抓取很多行，因为执行器将在获取到一行之后停止。
+规划器只负责部分结果，并且因此过高的评估成本，
+导致它可能选择一些其他较低效率的规划类型。</p></li></ul></div></div></div><div class="navfooter"><hr /><table width="100%" summary="Navigation footer"><tr><td width="40%" align="left"><a accesskey="p" href="release-9-3-10.html">上一页</a> </td><td width="20%" align="center"><a accesskey="u" href="release.html">上一级</a></td><td width="40%" align="right"> <a accesskey="n" href="release-9-3-8.html">下一页</a></td></tr><tr><td width="40%" align="left" valign="top">E.47. 版本 9.3.10 </td><td width="20%" align="center"><a accesskey="h" href="index.html">起始页</a></td><td width="40%" align="right" valign="top"> E.49. 版本 9.3.8</td></tr></table></div></body></html>

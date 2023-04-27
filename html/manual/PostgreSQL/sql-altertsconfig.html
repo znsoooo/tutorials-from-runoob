@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><title>ALTER TEXT SEARCH CONFIGURATION</title><link rel="stylesheet" type="text/css" href="stylesheet.css" /><link rev="made" href="pgsql-docs@postgresql.org" /><meta name="generator" content="DocBook XSL Stylesheets V1.79.1" /><link rel="prev" href="sql-altertablespace.html" title="ALTER TABLESPACE" /><link rel="next" href="sql-altertsdictionary.html" title="ALTER TEXT SEARCH DICTIONARY" /></head><body><div xmlns="http://www.w3.org/TR/xhtml1/transitional" class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="5" align="center">ALTER TEXT SEARCH CONFIGURATION</th></tr><tr><td width="10%" align="left"><a accesskey="p" href="sql-altertablespace.html" title="ALTER TABLESPACE">上一页</a> </td><td width="10%" align="left"><a accesskey="u" href="sql-commands.html" title="SQL 命令">上一级</a></td><th width="60%" align="center">SQL 命令</th><td width="10%" align="right"><a accesskey="h" href="index.html" title="PostgreSQL 10.1 手册">起始页</a></td><td width="10%" align="right"> <a accesskey="n" href="sql-altertsdictionary.html" title="ALTER TEXT SEARCH DICTIONARY">下一页</a></td></tr></table><hr></hr></div><div class="refentry" id="SQL-ALTERTSCONFIG"><div class="titlepage"></div><a id="idp41475616" class="indexterm"></a><div class="refnamediv"><h2><span class="refentrytitle">ALTER TEXT SEARCH CONFIGURATION</span></h2><p>ALTER TEXT SEARCH CONFIGURATION — 更改一个文本搜索配置的定义</p></div><div class="refsynopsisdiv"><h2>大纲</h2><pre class="synopsis">ALTER TEXT SEARCH CONFIGURATION <em class="replaceable"><code>name</code></em>
+    ADD MAPPING FOR <em class="replaceable"><code>token_type</code></em> [, ... ] WITH <em class="replaceable"><code>dictionary_name</code></em> [, ... ]
+ALTER TEXT SEARCH CONFIGURATION <em class="replaceable"><code>name</code></em>
+    ALTER MAPPING FOR <em class="replaceable"><code>token_type</code></em> [, ... ] WITH <em class="replaceable"><code>dictionary_name</code></em> [, ... ]
+ALTER TEXT SEARCH CONFIGURATION <em class="replaceable"><code>name</code></em>
+    ALTER MAPPING REPLACE <em class="replaceable"><code>old_dictionary</code></em> WITH <em class="replaceable"><code>new_dictionary</code></em>
+ALTER TEXT SEARCH CONFIGURATION <em class="replaceable"><code>name</code></em>
+    ALTER MAPPING FOR <em class="replaceable"><code>token_type</code></em> [, ... ] REPLACE <em class="replaceable"><code>old_dictionary</code></em> WITH <em class="replaceable"><code>new_dictionary</code></em>
+ALTER TEXT SEARCH CONFIGURATION <em class="replaceable"><code>name</code></em>
+    DROP MAPPING [ IF EXISTS ] FOR <em class="replaceable"><code>token_type</code></em> [, ... ]
+ALTER TEXT SEARCH CONFIGURATION <em class="replaceable"><code>name</code></em> RENAME TO <em class="replaceable"><code>new_name</code></em>
+ALTER TEXT SEARCH CONFIGURATION <em class="replaceable"><code>name</code></em> OWNER TO { <em class="replaceable"><code>new_owner</code></em> | CURRENT_USER | SESSION_USER }
+ALTER TEXT SEARCH CONFIGURATION <em class="replaceable"><code>name</code></em> SET SCHEMA <em class="replaceable"><code>new_schema</code></em></pre></div><div class="refsect1" id="idp41491360"><h2>描述</h2><p>   <code class="command">ALTER TEXT SEARCH CONFIGURATION</code>
+   更改一个文本搜索配置的定义。你可以修改其从记号类型到词典的映射
+   或者更改该配置的名称或者拥有者。
+  </p><p>   要使用<code class="command">ALTER TEXT SEARCH CONFIGURATION</code>，
+   你必须是该配置的拥有者。
+  </p></div><div class="refsect1" id="idp41494128"><h2>参数</h2><div class="variablelist"><dl class="variablelist"><dt><span class="term"><em class="replaceable"><code>name</code></em></span></dt><dd><p>      一个现有文本搜索配置的名称（可以是模式限定的）。
+     </p></dd><dt><span class="term"><em class="replaceable"><code>token_type</code></em></span></dt><dd><p>      由该配置的解析器发出的记号类型的名称。
+     </p></dd><dt><span class="term"><em class="replaceable"><code>dictionary_name</code></em></span></dt><dd><p>      在其中查阅指定记号类型的文本搜索字典的名称。如果列出了
+      多个字典，会按照指定的顺序查阅它们。
+     </p></dd><dt><span class="term"><em class="replaceable"><code>old_dictionary</code></em></span></dt><dd><p>      在映射中要替换的文本搜索字典的名称。
+     </p></dd><dt><span class="term"><em class="replaceable"><code>new_dictionary</code></em></span></dt><dd><p>      被用来替代<em class="replaceable"><code>old_dictionary</code></em>
+      的文本搜索字典的名称。
+     </p></dd><dt><span class="term"><em class="replaceable"><code>new_name</code></em></span></dt><dd><p>      该文本搜索配置的新名称。
+     </p></dd><dt><span class="term"><em class="replaceable"><code>new_owner</code></em></span></dt><dd><p>      该文本搜索配置的新拥有者。
+     </p></dd><dt><span class="term"><em class="replaceable"><code>new_schema</code></em></span></dt><dd><p>      该文本搜索配置的新模式。
+     </p></dd></dl></div><p>   <code class="literal">ADD MAPPING FOR</code>形式会安装一些词典（用列表列出）用于在其中
+   查阅指定的记号类型。如果对任一记号类型已经有一个映射，则会发生错误。
+   <code class="literal">ALTER MAPPING FOR</code>形式做同样的事情，但是首先会移除这些记号
+   类型的任何现有映射。<code class="literal">ALTER MAPPING REPLACE</code>形式用
+   <em class="replaceable"><code>new_dictionary</code></em>来替换任何位
+   置上的<em class="replaceable"><code>old_dictionary</code></em>。当出
+   现<code class="literal">FOR</code>时，只会为指定的记号类型做这样的事情。如果不出现
+   <code class="literal">FOR</code>，则会为该配置中所有的映射都这样做。
+   <code class="literal">DROP MAPPING</code>形式会移除指定记号类型的所有字典，导致该文本
+   搜索配置忽略这些类型。除非出现<code class="literal">IF EXISTS</code>，在那些记号类型没有
+   任何映射时会发生错误。
+  </p></div><div class="refsect1" id="idp41513472"><h2>示例</h2><p>   下面的例子把<code class="literal">my_config</code>中任何位置上的<code class="literal">english</code>字典
+   替换为<code class="literal">swedish</code>字典。
+  </p><pre class="programlisting">ALTER TEXT SEARCH CONFIGURATION my_config
+  ALTER MAPPING REPLACE english WITH swedish;</pre></div><div class="refsect1" id="idp41516992"><h2>兼容性</h2><p>   在 SQL 标准中没有
+   <code class="command">ALTER TEXT SEARCH CONFIGURATION</code>
+   语句。
+  </p></div><div class="refsect1" id="idp41518496"><h2>另见</h2><span class="simplelist"><a class="xref" href="sql-createtsconfig.html" title="CREATE TEXT SEARCH CONFIGURATION"><span class="refentrytitle">CREATE TEXT SEARCH CONFIGURATION</span></a>, <a class="xref" href="sql-droptsconfig.html" title="DROP TEXT SEARCH CONFIGURATION"><span class="refentrytitle">DROP TEXT SEARCH CONFIGURATION</span></a></span></div></div><div class="navfooter"><hr /><table width="100%" summary="Navigation footer"><tr><td width="40%" align="left"><a accesskey="p" href="sql-altertablespace.html">上一页</a> </td><td width="20%" align="center"><a accesskey="u" href="sql-commands.html">上一级</a></td><td width="40%" align="right"> <a accesskey="n" href="sql-altertsdictionary.html">下一页</a></td></tr><tr><td width="40%" align="left" valign="top">ALTER TABLESPACE </td><td width="20%" align="center"><a accesskey="h" href="index.html">起始页</a></td><td width="40%" align="right" valign="top"> ALTER TEXT SEARCH DICTIONARY</td></tr></table></div></body></html>

@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><title>第 49 章 复制进度追踪</title><link rel="stylesheet" type="text/css" href="stylesheet.css" /><link rev="made" href="pgsql-docs@postgresql.org" /><meta name="generator" content="DocBook XSL Stylesheets V1.79.1" /><link rel="prev" href="logicaldecoding-synchronous.html" title="48.8. 逻辑解码的同步复制支持" /><link rel="next" href="reference.html" title="部分 VI. 参考" /></head><body><div xmlns="http://www.w3.org/TR/xhtml1/transitional" class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="5" align="center">第 49 章 复制进度追踪</th></tr><tr><td width="10%" align="left"><a accesskey="p" href="logicaldecoding-synchronous.html" title="48.8. 逻辑解码的同步复制支持">上一页</a> </td><td width="10%" align="left"><a accesskey="u" href="server-programming.html" title="部分 V. 服务器编程">上一级</a></td><th width="60%" align="center">部分 V. 服务器编程</th><td width="10%" align="right"><a accesskey="h" href="index.html" title="PostgreSQL 10.1 手册">起始页</a></td><td width="10%" align="right"> <a accesskey="n" href="reference.html" title="部分 VI. 参考">下一页</a></td></tr></table><hr></hr></div><div class="chapter" id="REPLICATION-ORIGINS"><div class="titlepage"><div><div><h2 class="title">第 49 章 复制进度追踪</h2></div></div></div><a id="idp39561616" class="indexterm"></a><a id="idp39562688" class="indexterm"></a><p>  复制源是为了更容易地在<a class="link" href="logicaldecoding.html" title="第 48 章 逻辑解码">逻辑解码</a>
+  上实现逻辑复制解决方案而设计。它们提供了对两种常见问题的解决方案：
+  </p><div class="itemizedlist"><ul class="itemizedlist" style="list-style-type: disc; "><li class="listitem"><p>如何安全地跟踪复制进度？</p></li><li class="listitem"><p>如何基于一行的来源更改复制行为？例如，阻止双向复制
+    设置中的循环</p></li></ul></div><p>
+ </p><p>  复制源只有两个属性，名称和 OID。名称应该可以被用来在系统间引用该源，
+  它是一种自由形式的<code class="type">文本</code>。为了避免复制源之间的冲突，可以
+  在复制源的名称前加上复制解决方案的名称。在空间效率很重要的情况下，OID
+  被用来避免不得不存储长版本。OID 不能在系统间被共享。
+ </p><p>  可以使用函数
+  <a class="link" href="functions-admin.html#PG-REPLICATION-ORIGIN-CREATE"><code class="function">pg_replication_origin_create()</code></a>创建复制源，使用函数
+  <a class="link" href="functions-admin.html#PG-REPLICATION-ORIGIN-DROP"><code class="function">pg_replication_origin_drop()</code></a>删除复制源，并且在系统目录
+  <a class="link" href="catalog-pg-replication-origin.html" title="51.43. pg_replication_origin"><code class="structname">pg_replication_origin</code></a>中查看复制源。
+ </p><p>  构建一套复制解决方案的一个重要部分是以一种安全的方式跟踪重放进度。当应用
+  过程或者整个集簇死掉时，需要能够找出数据被成功地复制到了什么地方。对此的
+  简单解决方案（例如为每一个被重放的事务更新一个表行）有运行时负荷和数据库
+  膨胀的问题。
+ </p><p>  通过使用复制源，一个会话可以被标记为从一个远程节点重放（使用
+  <a class="link" href="functions-admin.html#PG-REPLICATION-ORIGIN-SESSION-SETUP"><code class="function">pg_replication_origin_session_setup()</code></a>函数）。此外，
+  可以使用
+  <a class="link" href="functions-admin.html#PG-REPLICATION-ORIGIN-XACT-SETUP"><code class="function">pg_replication_origin_xact_setup()</code></a>以每一个事务为基础配置每一个源事务的
+  <acronym class="acronym">LSN</acronym>和提交时间戳。如果完成这样的配置，
+  复制过程将保持在一种对崩溃安全的方式中。所有复制源的重放进度可以在
+  <a class="link" href="view-pg-replication-origin-status.html" title="51.79. pg_replication_origin_status">   <code class="structname">pg_replication_origin_status</code>
+  </a>视图中看到。一个源的进度（例如在继续复制时）可以使用
+  <a class="link" href="functions-admin.html#PG-REPLICATION-ORIGIN-PROGRESS"><code class="function">pg_replication_origin_progress()</code></a>（用于任何源）或者
+  <a class="link" href="functions-admin.html#PG-REPLICATION-ORIGIN-SESSION-PROGRESS"><code class="function">pg_replication_origin_session_progress()</code></a>
+  （用于在当前会话中配置的源）获得。
+ </p><p>  在比从一个系统复制到另一个系统更复杂的复制拓扑中，另一个问题是很难避免再次
+  复制已经被重放的行。这可能导致复制中的循环和低效。复制源提供了一种可选的机制
+  来识别和阻止这种问题。在使用前一段提到的函数配置时，每一个被传递
+  给输出插件回调（见<a class="xref" href="logicaldecoding-output-plugin.html" title="48.6. 逻辑解码输出插件">第 48.6 节</a>）的由该会话
+  生成的改变和事务会被标记上该会话的复制源。这使得可以在输出插件中以不同的方式
+  对待它们，例如忽略除本地生成的行之外的所有行。此外，
+  <a class="link" href="logicaldecoding-output-plugin.html#LOGICALDECODING-OUTPUT-PLUGIN-FILTER-ORIGIN" title="48.6.4.6. 源过滤器回调">  <code class="function">filter_by_origin_cb</code></a>回调可以被用来基于来源过滤逻辑
+  解码改变流。虽然灵活性较低，通过这种回调进行过滤比用输出插件过滤效率更高。
+ </p></div><div class="navfooter"><hr /><table width="100%" summary="Navigation footer"><tr><td width="40%" align="left"><a accesskey="p" href="logicaldecoding-synchronous.html">上一页</a> </td><td width="20%" align="center"><a accesskey="u" href="server-programming.html">上一级</a></td><td width="40%" align="right"> <a accesskey="n" href="reference.html">下一页</a></td></tr><tr><td width="40%" align="left" valign="top">48.8. 逻辑解码的同步复制支持 </td><td width="20%" align="center"><a accesskey="h" href="index.html">起始页</a></td><td width="40%" align="right" valign="top"> 部分 VI. 参考</td></tr></table></div></body></html>

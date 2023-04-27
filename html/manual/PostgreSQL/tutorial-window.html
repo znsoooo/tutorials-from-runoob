@@ -1,0 +1,94 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><title>3.5. 窗口函数</title><link rel="stylesheet" type="text/css" href="stylesheet.css" /><link rev="made" href="pgsql-docs@postgresql.org" /><meta name="generator" content="DocBook XSL Stylesheets V1.79.1" /><link rel="prev" href="tutorial-transactions.html" title="3.4. 事务" /><link rel="next" href="tutorial-inheritance.html" title="3.6. 继承" /></head><body><div xmlns="http://www.w3.org/TR/xhtml1/transitional" class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="5" align="center">3.5. 窗口函数</th></tr><tr><td width="10%" align="left"><a accesskey="p" href="tutorial-transactions.html" title="3.4. 事务">上一页</a> </td><td width="10%" align="left"><a accesskey="u" href="tutorial-advanced.html" title="第 3 章 高级特性">上一级</a></td><th width="60%" align="center">第 3 章 高级特性</th><td width="10%" align="right"><a accesskey="h" href="index.html" title="PostgreSQL 10.1 手册">起始页</a></td><td width="10%" align="right"> <a accesskey="n" href="tutorial-inheritance.html" title="3.6. 继承">下一页</a></td></tr></table><hr></hr></div><div class="sect1" id="TUTORIAL-WINDOW"><div class="titlepage"><div><div><h2 class="title" style="clear: both">3.5. 窗口函数</h2></div></div></div><a id="idp5493952" class="indexterm"></a><p>    一个<em class="firstterm">窗口函数</em>在一系列与当前行有某种关联的表行上执行一种计算。这与一个聚集函数所完成的计算有可比之处。但是窗口函数并不会使多行被聚集成一个单独的输出行，这与通常的非窗口聚集函数不同。取而代之，行保留它们独立的标识。在这些现象背后，窗口函数可以访问的不仅仅是查询结果的当前行。
+   </p><p>    下面是一个例子用于展示如何将每一个员工的薪水与他/她所在部门的平均薪水进行比较：
+
+</p><pre class="programlisting">SELECT depname, empno, salary, avg(salary) OVER (PARTITION BY depname) FROM empsalary;</pre><p>
+
+</p><pre class="screen">  depname  | empno | salary |          avg
+-----------+-------+--------+-----------------------
+ develop   |    11 |   5200 | 5020.0000000000000000
+ develop   |     7 |   4200 | 5020.0000000000000000
+ develop   |     9 |   4500 | 5020.0000000000000000
+ develop   |     8 |   6000 | 5020.0000000000000000
+ develop   |    10 |   5200 | 5020.0000000000000000
+ personnel |     5 |   3500 | 3700.0000000000000000
+ personnel |     2 |   3900 | 3700.0000000000000000
+ sales     |     3 |   4800 | 4866.6666666666666667
+ sales     |     1 |   5000 | 4866.6666666666666667
+ sales     |     4 |   4800 | 4866.6666666666666667
+(10 rows)</pre><p>
+
+    最开始的三个输出列直接来自于表<code class="structname">empsalary</code>，并且表中每一行都有一个输出行。第四列表示对与当前行具有相同<code class="structfield">depname</code>值的所有表行取得平均值（这实际和非窗口<code class="function">avg</code>聚集函数是相同的函数，但是<code class="literal">OVER</code>子句使得它被当做一个窗口函数处理并在一个合适的窗口帧上计算。）。
+   </p><p>    一个窗口函数调用总是包含一个直接跟在窗口函数名及其参数之后的<code class="literal">OVER</code>子句。这使得它从句法上和一个普通函数或非窗口函数区分开来。<code class="literal">OVER</code>子句决定究竟查询中的哪些行被分离出来由窗口函数处理。<code class="literal">OVER</code>子句中的<code class="literal">PARTITION BY</code>子句指定了将具有相同<code class="literal">PARTITION BY</code>表达式值的行分到组或者分区。对于每一行，窗口函数都会在当前行同一分区的行上进行计算。
+   </p><p>    我们可以通过<code class="literal">OVER</code>上的<code class="literal">ORDER BY</code>控制窗口函数处理行的顺序（窗口的<code class="literal">ORDER BY</code>并不一定要符合行输出的顺序。）。下面是一个例子：
+
+</p><pre class="programlisting">SELECT depname, empno, salary,
+       rank() OVER (PARTITION BY depname ORDER BY salary DESC) FROM empsalary;</pre><p>
+
+</p><pre class="screen">  depname  | empno | salary | rank
+-----------+-------+--------+------
+ develop   |     8 |   6000 |    1
+ develop   |    10 |   5200 |    2
+ develop   |    11 |   5200 |    2
+ develop   |     9 |   4500 |    4
+ develop   |     7 |   4200 |    5
+ personnel |     2 |   3900 |    1
+ personnel |     5 |   3500 |    2
+ sales     |     1 |   5000 |    1
+ sales     |     4 |   4800 |    2
+ sales     |     3 |   4800 |    2
+(10 rows)</pre><p>
+
+    如上所示，<code class="function">rank</code>函数在当前行的分区内按照<code class="literal">ORDER BY</code>子句的顺序为每一个可区分的<code class="literal">ORDER BY</code>值产生了一个数字等级。<code class="function">rank</code>不需要显式的参数，因为它的行为完全决定于<code class="literal">OVER</code>子句。
+   </p><p>    一个窗口函数所考虑的行属于那些通过查询的<code class="literal">FROM</code>子句产生并通过<code class="literal">WHERE</code>、<code class="literal">GROUP BY</code>、<code class="literal">HAVING</code>过滤的<span class="quote">“<span class="quote">虚拟表</span>”</span>。例如，一个由于不满足<code class="literal">WHERE</code>条件被删除的行是不会被任何窗口函数所见的。在一个查询中可以包含多个窗口函数，每个窗口函数都可以用不同的<code class="literal">OVER</code>子句来按不同方式划分数据，但是它们都作用在由虚拟表定义的同一个行集上。
+   </p><p>    我们已经看到如果行的顺序不重要时<code class="literal">ORDER BY</code>可以忽略。<code class="literal">PARTITION BY</code>同样也可以被忽略，在这种情况下会产生一个包含所有行的分区。
+   </p><p>    这里有一个与窗口函数相关的重要概念：对于每一行，在它的分区中的行集被称为它的窗口帧。 一些窗口函数只作用在<em class="firstterm">窗口帧</em>中的行上，而不是整个分区。默认情况下，如果使用<code class="literal">ORDER BY</code>，则帧包括从分区开始到当前行的所有行，以及后续任何与当前行在<code class="literal">ORDER BY</code>子句上相等的行。如果<code class="literal">ORDER BY</code>被忽略，则默认帧包含整个分区中所有的行。
+     <a href="#ftn.idp5522064" class="footnote"><sup class="footnote" id="idp5522064">[4]</sup></a>
+    下面是使用<code class="function">sum</code>的例子：
+   </p><pre class="programlisting">SELECT salary, sum(salary) OVER () FROM empsalary;</pre><pre class="screen"> salary |  sum
+--------+-------
+   5200 | 47100
+   5000 | 47100
+   3500 | 47100
+   4800 | 47100
+   3900 | 47100
+   4200 | 47100
+   4500 | 47100
+   4800 | 47100
+   6000 | 47100
+   5200 | 47100
+(10 rows)</pre><p>    如上所示，由于在<code class="literal">OVER</code>子句中没有<code class="literal">ORDER BY</code>，窗口帧和分区一样，而如果缺少<code class="literal">PARTITION BY</code>则和整个表一样。换句话说，每个合计都会在整个表上进行，这样我们为每一个输出行得到的都是相同的结果。但是如果我们加上一个<code class="literal">ORDER BY</code>子句，我们会得到非常不同的结果：
+   </p><pre class="programlisting">SELECT salary, sum(salary) OVER (ORDER BY salary) FROM empsalary;</pre><pre class="screen"> salary |  sum
+--------+-------
+   3500 |  3500
+   3900 |  7400
+   4200 | 11600
+   4500 | 16100
+   4800 | 25700
+   4800 | 25700
+   5000 | 30700
+   5200 | 41100
+   5200 | 41100
+   6000 | 47100
+(10 rows)</pre><p>    这里的合计是从第一个（最低的）薪水一直到当前行，包括任何与当前行相同的行（注意相同薪水行的结果）。
+   </p><p>    窗口函数只允许出现在查询的<code class="literal">SELECT</code>列表和<code class="literal">ORDER BY</code>子句中。它们不允许出现在其他地方，例如<code class="literal">GROUP BY</code>、<code class="literal">HAVING</code>和<code class="literal">WHERE</code>子句中。这是因为窗口函数的执行逻辑是在处理完这些子句之后。另外，窗口函数在非窗口聚集函数之后执行。这意味着可以在窗口函数的参数中包括一个聚集函数，但反过来不行。
+   </p><p>    如果需要在窗口计算执行后进行过滤或者分组，我们可以使用子查询。例如：
+
+</p><pre class="programlisting">SELECT depname, empno, salary, enroll_date
+FROM
+  (SELECT depname, empno, salary, enroll_date,
+          rank() OVER (PARTITION BY depname ORDER BY salary DESC, empno) AS pos
+     FROM empsalary
+  ) AS ss
+WHERE pos &lt; 3;</pre><p>
+
+    上述查询仅仅显示了内层查询中<code class="literal">rank</code>低于3的结果。
+   </p><p>    当一个查询涉及到多个窗口函数时，可以将每一个分别写在一个独立的<code class="literal">OVER</code>子句中。但如果多个函数要求同一个窗口行为时，这种做法是冗余的而且容易出错的。替代方案是，每一个窗口行为可以被放在一个命名的<code class="literal">WINDOW</code>子句中，然后在<code class="literal">OVER</code>中引用它。例如：
+
+</p><pre class="programlisting">SELECT sum(salary) OVER w, avg(salary) OVER w
+  FROM empsalary
+  WINDOW w AS (PARTITION BY depname ORDER BY salary DESC);</pre><p>
+   </p><p>    关于窗口函数的更多细节可以在<a class="xref" href="sql-expressions.html#SYNTAX-WINDOW-FUNCTIONS" title="4.2.8. 窗口函数调用">第 4.2.8 节</a>、<a class="xref" href="functions-window.html" title="9.21. 窗口函数">第 9.21 节</a>、<a class="xref" href="queries-table-expressions.html#QUERIES-WINDOW" title="7.2.5. 窗口函数处理">第 7.2.5 节</a>以及<a class="xref" href="sql-select.html" title="SELECT"><span class="refentrytitle">SELECT</span></a>参考页中找到。
+   </p><div class="footnotes"><br /><hr style="width:100; text-align:left;margin-left: 0" /><div id="ftn.idp5522064" class="footnote"><p><a href="#idp5522064" class="para"><sup class="para">[4] </sup></a>       还有些选项用于以其他方式定义窗口帧，但是这不包括在本教程内。详见<a class="xref" href="sql-expressions.html#SYNTAX-WINDOW-FUNCTIONS" title="4.2.8. 窗口函数调用">第 4.2.8 节</a>。
+      </p></div></div></div><div class="navfooter"><hr /><table width="100%" summary="Navigation footer"><tr><td width="40%" align="left"><a accesskey="p" href="tutorial-transactions.html">上一页</a> </td><td width="20%" align="center"><a accesskey="u" href="tutorial-advanced.html">上一级</a></td><td width="40%" align="right"> <a accesskey="n" href="tutorial-inheritance.html">下一页</a></td></tr><tr><td width="40%" align="left" valign="top">3.4. 事务 </td><td width="20%" align="center"><a accesskey="h" href="index.html">起始页</a></td><td width="40%" align="right" valign="top"> 3.6. 继承</td></tr></table></div></body></html>

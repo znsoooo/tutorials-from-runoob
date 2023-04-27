@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><title>26.3. 故障转移</title><link rel="stylesheet" type="text/css" href="stylesheet.css" /><link rev="made" href="pgsql-docs@postgresql.org" /><meta name="generator" content="DocBook XSL Stylesheets V1.79.1" /><link rel="prev" href="warm-standby.html" title="26.2. 日志传送后备服务器" /><link rel="next" href="log-shipping-alternative.html" title="26.4. 日志传送的替代方法" /></head><body><div xmlns="http://www.w3.org/TR/xhtml1/transitional" class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="5" align="center">26.3. 故障转移</th></tr><tr><td width="10%" align="left"><a accesskey="p" href="warm-standby.html" title="26.2. 日志传送后备服务器">上一页</a> </td><td width="10%" align="left"><a accesskey="u" href="high-availability.html" title="第 26 章 高可用、负载均衡和复制">上一级</a></td><th width="60%" align="center">第 26 章 高可用、负载均衡和复制</th><td width="10%" align="right"><a accesskey="h" href="index.html" title="PostgreSQL 10.1 手册">起始页</a></td><td width="10%" align="right"> <a accesskey="n" href="log-shipping-alternative.html" title="26.4. 日志传送的替代方法">下一页</a></td></tr></table><hr></hr></div><div class="sect1" id="WARM-STANDBY-FAILOVER"><div class="titlepage"><div><div><h2 class="title" style="clear: both">26.3. 故障转移</h2></div></div></div><p>    如果主服务器失效，则后备服务器应该开始故障转移过程。
+   </p><p>    如果后备服务器失效，则不会有故障转移发生。如果后备服务器可以被重启
+    （即使晚一点），由于可重启恢复的优势，那么恢复处理也能被立即重启。
+    如果后备服务器不能被重启，则一个全新的后备服务器实例应该被创建。
+   </p><p>    如果主服务器失效并且后备服务器成为了新的主服务器，那么接下来旧的主服务器重启后，
+    你必须有一种机制来通知旧的主服务器不再成为主服务器。有些时候这被称为
+    <acronym class="acronym">STONITH</acronym>（Shoot The Other Node In The Head，关闭其他节点），
+    这对于避免出现两个系统都认为它们是主服务器的情况非常必要，
+    那种情况将导致混乱并且最终导致数据丢失。
+   </p><p>    很多故障转移系统仅使用两个系统，主系统和后备系统，
+    它们由某种心跳机制连接来持续验证两者之间的连接性和主系统的可用性。
+    也可能会使用第三个系统（称为目击者服务器）来防止某些不当故障转移的情况，
+    但是除非非常小心地建立它并且经过了严格地测试，否则额外的复杂度可能会使该工作得不偿失。
+   </p><p>    <span class="productname">PostgreSQL</span>
+    并不提供在主服务器上标识失败并且通知后备数据库服务器所需的系统软件。
+    现在已有很多这样的工具并且很好地与成功的故障转移所需的操作系统功能整合在一起，
+    例如 IP 地址迁移。
+   </p><p>    一旦到后备服务器的故障转移发生，就只有单一的一台服务器在操作。
+    这被称为一种退化状态。之前的后备服务器现在是主服务器，
+    但之前的主服务器处于关闭并且可能一直保持关闭。要回到正常的操作，
+    一个后备服务器必须被重建，要么在之前的主系统起来时使用它重建，
+    要么使用第三台（可能是全新的）服务器来重建。<a class="xref" href="app-pgrewind.html" title="pg_rewind"><span class="refentrytitle"><span class="application">pg_rewind</span></span></a>
+    工具可以用来在大型集群上加速此进程。一旦完成，
+    主服务器和后备服务器可以被认为是互换了角色。
+    某些人选择使用第三台服务器来为新的主服务器提供备份，直到新的后备服务器被重建，
+    不过显然这会使得系统配置和操作处理更复杂。
+   </p><p>    因此，从主服务器切换到后备服务器可以很快，但是要求一些时间来重新准备故障转移集群。
+    从主服务器到后备服务器的定期切换是有用的，
+    因为它允许每个系统有定期的关闭时间来进行维护。
+    这也可以作为一种对故障转移机制的测试，以保证在你需要它时它真地能够工作。
+    我们推荐写一些管理过程来做这些事情。
+   </p><p>    要触发一台日志传送后备服务器的故障转移，运行<code class="command">pg_ctl promote</code>
+    或者创建一个触发器文件，其文件名和路径由<code class="filename">recovery.conf</code>
+    中的<code class="varname">trigger_file</code>设置指定。如果你正在规划使用
+    <code class="command">pg_ctl promote</code>进行故障转移，<code class="varname">trigger_file</code>就不是必要的。
+    如果你正在建立只用于从主服务器分流只读查询而不是高可用性目的的报告服务器，
+    你不需要提升它。
+   </p></div><div class="navfooter"><hr /><table width="100%" summary="Navigation footer"><tr><td width="40%" align="left"><a accesskey="p" href="warm-standby.html">上一页</a> </td><td width="20%" align="center"><a accesskey="u" href="high-availability.html">上一级</a></td><td width="40%" align="right"> <a accesskey="n" href="log-shipping-alternative.html">下一页</a></td></tr><tr><td width="40%" align="left" valign="top">26.2. 日志传送后备服务器 </td><td width="20%" align="center"><a accesskey="h" href="index.html">起始页</a></td><td width="40%" align="right" valign="top"> 26.4. 日志传送的替代方法</td></tr></table></div></body></html>

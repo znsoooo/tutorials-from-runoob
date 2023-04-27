@@ -1,0 +1,157 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><title>38.4. 一个完整的触发器实例</title><link rel="stylesheet" type="text/css" href="stylesheet.css" /><link rev="made" href="pgsql-docs@postgresql.org" /><meta name="generator" content="DocBook XSL Stylesheets V1.79.1" /><link rel="prev" href="trigger-interface.html" title="38.3. 用 C 编写触发器函数" /><link rel="next" href="event-triggers.html" title="第 39 章 事件触发器" /></head><body><div xmlns="http://www.w3.org/TR/xhtml1/transitional" class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="5" align="center">38.4. 一个完整的触发器实例</th></tr><tr><td width="10%" align="left"><a accesskey="p" href="trigger-interface.html" title="38.3. 用 C 编写触发器函数">上一页</a> </td><td width="10%" align="left"><a accesskey="u" href="triggers.html" title="第 38 章 触发器">上一级</a></td><th width="60%" align="center">第 38 章 触发器</th><td width="10%" align="right"><a accesskey="h" href="index.html" title="PostgreSQL 10.1 手册">起始页</a></td><td width="10%" align="right"> <a accesskey="n" href="event-triggers.html" title="第 39 章 事件触发器">下一页</a></td></tr></table><hr></hr></div><div class="sect1" id="TRIGGER-EXAMPLE"><div class="titlepage"><div><div><h2 class="title" style="clear: both">38.4. 一个完整的触发器实例</h2></div></div></div><p>    这里有一个用 C 编写的触发器函数的非常简单的例子（用过程语言编写的触发器的例子可以在过程语言的文档中找到）。
+   </p><p>    如果该命令试图向列<code class="structfield">x</code>中插入一个空值，函数<code class="function">trigf</code>报告表<code class="structname">ttest</code>中的行数并且跳过实际的操作（这样该触发器会作为一个非空约束但不会中止事务）。
+   </p><p>    首先，表定义：
+</p><pre class="programlisting">CREATE TABLE ttest (
+    x integer
+);</pre><p>
+   </p><p>    这是该触发器函数的源代码：
+</p><pre class="programlisting">#include "postgres.h"
+#include "fmgr.h"
+#include "executor/spi.h"       /* this is what you need to work with SPI */
+#include "commands/trigger.h"   /* ... triggers ... */
+#include "utils/rel.h"          /* ... and relations */
+
+PG_MODULE_MAGIC;
+
+PG_FUNCTION_INFO_V1(trigf);
+
+Datum
+trigf(PG_FUNCTION_ARGS)
+{
+    TriggerData *trigdata = (TriggerData *) fcinfo-&gt;context;
+    TupleDesc   tupdesc;
+    HeapTuple   rettuple;
+    char       *when;
+    bool        checknull = false;
+    bool        isnull;
+    int         ret, i;
+
+    /* make sure it's called as a trigger at all */
+    if (!CALLED_AS_TRIGGER(fcinfo))
+        elog(ERROR, "trigf: not called by trigger manager");
+
+    /* tuple to return to executor */
+    if (TRIGGER_FIRED_BY_UPDATE(trigdata-&gt;tg_event))
+        rettuple = trigdata-&gt;tg_newtuple;
+    else
+        rettuple = trigdata-&gt;tg_trigtuple;
+
+    /* check for null values */
+    if (!TRIGGER_FIRED_BY_DELETE(trigdata-&gt;tg_event)
+        &amp;&amp; TRIGGER_FIRED_BEFORE(trigdata-&gt;tg_event))
+        checknull = true;
+
+    if (TRIGGER_FIRED_BEFORE(trigdata-&gt;tg_event))
+        when = "before";
+    else
+        when = "after ";
+
+    tupdesc = trigdata-&gt;tg_relation-&gt;rd_att;
+
+    /* connect to SPI manager */
+    if ((ret = SPI_connect()) &lt; 0)
+        elog(ERROR, "trigf (fired %s): SPI_connect returned %d", when, ret);
+
+    /* get number of rows in table */
+    ret = SPI_exec("SELECT count(*) FROM ttest", 0);
+
+    if (ret &lt; 0)
+        elog(ERROR, "trigf (fired %s): SPI_exec returned %d", when, ret);
+
+    /* count(*) returns int8, so be careful to convert */
+    i = DatumGetInt64(SPI_getbinval(SPI_tuptable-&gt;vals[0],
+                                    SPI_tuptable-&gt;tupdesc,
+                                    1,
+                                    &amp;isnull));
+
+    elog (INFO, "trigf (fired %s): there are %d rows in ttest", when, i);
+
+    SPI_finish();
+
+    if (checknull)
+    {
+        SPI_getbinval(rettuple, tupdesc, 1, &amp;isnull);
+        if (isnull)
+            rettuple = NULL;
+    }
+
+    return PointerGetDatum(rettuple);
+}</pre><p>
+   </p><p>    在你编译了该源代码（见<a class="xref" href="xfunc-c.html#DFUNC" title="37.9.5. 编译和链接动态载入的函数">第 37.9.5 节</a>）之后，声明该函数和触发器：
+</p><pre class="programlisting">CREATE FUNCTION trigf() RETURNS trigger
+    AS '<em class="replaceable"><code>filename</code></em>'
+    LANGUAGE C;
+
+CREATE TRIGGER tbefore BEFORE INSERT OR UPDATE OR DELETE ON ttest
+    FOR EACH ROW EXECUTE PROCEDURE trigf();
+
+CREATE TRIGGER tafter AFTER INSERT OR UPDATE OR DELETE ON ttest
+    FOR EACH ROW EXECUTE PROCEDURE trigf();</pre><p>
+   </p><p>    现在你可以测试该触发器的操作：
+</p><pre class="screen">=&gt; INSERT INTO ttest VALUES (NULL);
+INFO:  trigf (fired before): there are 0 rows in ttest
+INSERT 0 0
+
+-- Insertion skipped and AFTER trigger is not fired
+
+=&gt; SELECT * FROM ttest;
+ x
+---
+(0 rows)
+
+=&gt; INSERT INTO ttest VALUES (1);
+INFO:  trigf (fired before): there are 0 rows in ttest
+INFO:  trigf (fired after ): there are 1 rows in ttest
+                                       ^^^^^^^^
+                             remember what we said about visibility.
+INSERT 167793 1
+vac=&gt; SELECT * FROM ttest;
+ x
+---
+ 1
+(1 row)
+
+=&gt; INSERT INTO ttest SELECT x * 2 FROM ttest;
+INFO:  trigf (fired before): there are 1 rows in ttest
+INFO:  trigf (fired after ): there are 2 rows in ttest
+                                       ^^^^^^
+                             remember what we said about visibility.
+INSERT 167794 1
+=&gt; SELECT * FROM ttest;
+ x
+---
+ 1
+ 2
+(2 rows)
+
+=&gt; UPDATE ttest SET x = NULL WHERE x = 2;
+INFO:  trigf (fired before): there are 2 rows in ttest
+UPDATE 0
+=&gt; UPDATE ttest SET x = 4 WHERE x = 2;
+INFO:  trigf (fired before): there are 2 rows in ttest
+INFO:  trigf (fired after ): there are 2 rows in ttest
+UPDATE 1
+vac=&gt; SELECT * FROM ttest;
+ x
+---
+ 1
+ 4
+(2 rows)
+
+=&gt; DELETE FROM ttest;
+INFO:  trigf (fired before): there are 2 rows in ttest
+INFO:  trigf (fired before): there are 1 rows in ttest
+INFO:  trigf (fired after ): there are 0 rows in ttest
+INFO:  trigf (fired after ): there are 0 rows in ttest
+                                       ^^^^^^
+                             remember what we said about visibility.
+DELETE 2
+=&gt; SELECT * FROM ttest;
+ x
+---
+(0 rows)</pre><p>
+
+   </p><p>    在<code class="filename">src/test/regress/regress.c</code>和<a class="xref" href="contrib-spi.html" title="F.37. spi">spi</a>中有更多复杂的例子。
+   </p></div><div class="navfooter"><hr /><table width="100%" summary="Navigation footer"><tr><td width="40%" align="left"><a accesskey="p" href="trigger-interface.html">上一页</a> </td><td width="20%" align="center"><a accesskey="u" href="triggers.html">上一级</a></td><td width="40%" align="right"> <a accesskey="n" href="event-triggers.html">下一页</a></td></tr><tr><td width="40%" align="left" valign="top">38.3. 用 C 编写触发器函数 </td><td width="20%" align="center"><a accesskey="h" href="index.html">起始页</a></td><td width="40%" align="right" valign="top"> 第 39 章 事件触发器</td></tr></table></div></body></html>

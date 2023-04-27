@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><title>CREATE TRANSFORM</title><link rel="stylesheet" type="text/css" href="stylesheet.css" /><link rev="made" href="pgsql-docs@postgresql.org" /><meta name="generator" content="DocBook XSL Stylesheets V1.79.1" /><link rel="prev" href="sql-createtstemplate.html" title="CREATE TEXT SEARCH TEMPLATE" /><link rel="next" href="sql-createtrigger.html" title="CREATE TRIGGER" /></head><body><div xmlns="http://www.w3.org/TR/xhtml1/transitional" class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="5" align="center">CREATE TRANSFORM</th></tr><tr><td width="10%" align="left"><a accesskey="p" href="sql-createtstemplate.html" title="CREATE TEXT SEARCH TEMPLATE">上一页</a> </td><td width="10%" align="left"><a accesskey="u" href="sql-commands.html" title="SQL 命令">上一级</a></td><th width="60%" align="center">SQL 命令</th><td width="10%" align="right"><a accesskey="h" href="index.html" title="PostgreSQL 10.1 手册">起始页</a></td><td width="10%" align="right"> <a accesskey="n" href="sql-createtrigger.html" title="CREATE TRIGGER">下一页</a></td></tr></table><hr></hr></div><div class="refentry" id="SQL-CREATETRANSFORM"><div class="titlepage"></div><a id="idp45301424" class="indexterm"></a><div class="refnamediv"><h2><span class="refentrytitle">CREATE TRANSFORM</span></h2><p>CREATE TRANSFORM — 定义一个新的转换</p></div><div class="refsynopsisdiv"><h2>大纲</h2><pre class="synopsis">CREATE [ OR REPLACE ] TRANSFORM FOR <em class="replaceable"><code>type_name</code></em> LANGUAGE <em class="replaceable"><code>lang_name</code></em> (
+    FROM SQL WITH FUNCTION <em class="replaceable"><code>from_sql_function_name</code></em> [ (<em class="replaceable"><code>argument_type</code></em> [, ...]) ],
+    TO SQL WITH FUNCTION <em class="replaceable"><code>to_sql_function_name</code></em> [ (<em class="replaceable"><code>argument_type</code></em> [, ...]) ]
+);</pre></div><div class="refsect1" id="SQL-CREATETRANSFORM-DESCRIPTION"><h2>简介</h2><p>   <code class="command">CREATE TRANSFORM</code>定义一种新的转换。
+   <code class="command">CREATE OR REPLACE TRANSFORM</code>将
+   创建一种新的转换或者替换现有的定义。
+  </p><p>   一种转换指定了如何把一种数据类型适配到一种过程语言。例如，在用
+   PL/Python 编写一个使用<code class="type">hstore</code>类型的函数时，PL/Python
+   没有关于如何在 Python 环境中表示<code class="type">hstore</code>值的先验知识。
+   语言的实现通常默认会使用文本表示，但是在一些时候这很不方便，例如
+   有时可能用一个联合数组或者列表更合适。
+  </p><p>   一种转换指定了两个函数：
+   </p><div class="itemizedlist"><ul class="itemizedlist" style="list-style-type: disc; "><li class="listitem"><p>      一个<span class="quote">“<span class="quote">from SQL</span>”</span>函数负责将类型从 SQL 环境转换到语言。
+      这个函数将在该语言编写的一个函数的参数上调用。
+     </p></li><li class="listitem"><p>      一个<span class="quote">“<span class="quote">to SQL</span>”</span>函数负责将类型从语言转换到 SQL 环境。这
+      个函数将在该语言编写的一个函数的返回值上调用。
+     </p></li></ul></div><p>
+   没有必要同时提供这些函数。如果有一种没有被指定，将在必要时使用与语言相
+   关的默认行为（为了完全阻止在一个方向上发生转换，你也可以写一个总是报错
+   的转换函数）。
+  </p><p>   要创建一种转换，你必须拥有该类型并且具有该类型上的
+   <code class="literal">USAGE</code>特权，拥有该语言上的
+   <code class="literal">USAGE</code>特权，并且拥有 from-SQL 和 to-SQL 函数（如果
+   指定了）及其上的<code class="literal">EXECUTE</code>特权。
+  </p></div><div class="refsect1" id="idp45317744"><h2>参数</h2><div class="variablelist"><dl class="variablelist"><dt><span class="term"><em class="replaceable"><code>type_name</code></em></span></dt><dd><p>       该转换的数据类型的名称。
+      </p></dd><dt><span class="term"><em class="replaceable"><code>lang_name</code></em></span></dt><dd><p>       该转换的语言的名称。
+      </p></dd><dt><span class="term"><code class="literal"><em class="replaceable"><code>from_sql_function_name</code></em>[(<em class="replaceable"><code>argument_type</code></em> [, ...])]</code></span></dt><dd><p>       将该类型从 SQL 环境转换到该语言的函数名。它必须接受一个
+       <code class="type">internal</code>类型的参数并且返回类型<code class="type">internal</code>。
+       实参将是该转换所适用的类型，并且该函数也应该被写成认为它是那种类型（
+       但是不允许声明一个返回<code class="type">internal</code>但没有至少一个
+       <code class="type">internal</code>类型参数的 SQL 层函数）。实际的返回值将与
+       语言的实现相关。如果没有指定参数列表，则函数名在该模式中必须唯一。
+      </p></dd><dt><span class="term"><code class="literal"><em class="replaceable"><code>to_sql_function_name</code></em>[(<em class="replaceable"><code>argument_type</code></em> [, ...])]</code></span></dt><dd><p>       将该类型从语言转换到 SQL 环境的函数名。它必须接受一个
+       <code class="type">internal</code>类型的参数并且返回该转换所适用的类型。实参值
+       将与语言的实现相关。如果没有指定参数列表，则函数名在该模式中必须唯一。
+      </p></dd></dl></div></div><div class="refsect1" id="SQL-CREATETRANSFORM-NOTES"><h2>注解</h2><p>   使用<a class="xref" href="sql-droptransform.html" title="DROP TRANSFORM"><span class="refentrytitle">DROP TRANSFORM</span></a>移除转换。
+  </p></div><div class="refsect1" id="SQL-CREATETRANSFORM-EXAMPLES"><h2>示例</h2><p>   要为类型<code class="type">hstore</code>和语言
+   <code class="literal">plpythonu</code>创建一种转换，先搞定该类型和语言：
+</p><pre class="programlisting">CREATE TYPE hstore ...;
+
+CREATE LANGUAGE plpythonu ...;</pre><p>
+   然后创建需要的函数：
+</p><pre class="programlisting">CREATE FUNCTION hstore_to_plpython(val internal) RETURNS internal
+LANGUAGE C STRICT IMMUTABLE
+AS ...;
+
+CREATE FUNCTION plpython_to_hstore(val internal) RETURNS hstore
+LANGUAGE C STRICT IMMUTABLE
+AS ...;</pre><p>
+   最后创建转换把它们连接起来：
+</p><pre class="programlisting">CREATE TRANSFORM FOR hstore LANGUAGE plpythonu (
+    FROM SQL WITH FUNCTION hstore_to_plpython(internal),
+    TO SQL WITH FUNCTION plpython_to_hstore(internal)
+);</pre><p>
+   实际上，这些命令将被包裹在扩展中。
+  </p><p>   <code class="filename">contrib</code>小节包含了一些提供转换的扩展，
+   它们可以作为实际的例子。
+  </p></div><div class="refsect1" id="SQL-CREATETRANSFORM-COMPAT"><h2>兼容性</h2><p>   这种形式的<code class="command">CREATE TRANSFORM</code>是一种
+   <span class="productname">PostgreSQL</span>扩展。在
+   <acronym class="acronym">SQL</acronym>标准中有一个<code class="command">CREATE
+   TRANSFORM</code>命令，但是它是用于把数据类型适配到
+   客户端语言。该用法不受
+   <span class="productname">PostgreSQL</span>支持。
+  </p></div><div class="refsect1" id="SQL-CREATETRANSFORM-SEEALSO"><h2>另见</h2><p>   <a class="xref" href="sql-createfunction.html" title="CREATE FUNCTION"><span class="refentrytitle">CREATE FUNCTION</span></a>,
+   <a class="xref" href="sql-createlanguage.html" title="CREATE LANGUAGE"><span class="refentrytitle">CREATE LANGUAGE</span></a>,
+   <a class="xref" href="sql-createtype.html" title="CREATE TYPE"><span class="refentrytitle">CREATE TYPE</span></a>,
+   <a class="xref" href="sql-droptransform.html" title="DROP TRANSFORM"><span class="refentrytitle">DROP TRANSFORM</span></a>
+  </p></div></div><div class="navfooter"><hr /><table width="100%" summary="Navigation footer"><tr><td width="40%" align="left"><a accesskey="p" href="sql-createtstemplate.html">上一页</a> </td><td width="20%" align="center"><a accesskey="u" href="sql-commands.html">上一级</a></td><td width="40%" align="right"> <a accesskey="n" href="sql-createtrigger.html">下一页</a></td></tr><tr><td width="40%" align="left" valign="top">CREATE TEXT SEARCH TEMPLATE </td><td width="20%" align="center"><a accesskey="h" href="index.html">起始页</a></td><td width="40%" align="right" valign="top"> CREATE TRIGGER</td></tr></table></div></body></html>

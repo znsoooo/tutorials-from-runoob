@@ -1,0 +1,298 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><title>35.6. pgtypes 库</title><link rel="stylesheet" type="text/css" href="stylesheet.css" /><link rev="made" href="pgsql-docs@postgresql.org" /><meta name="generator" content="DocBook XSL Stylesheets V1.79.1" /><link rel="prev" href="ecpg-dynamic.html" title="35.5. 动态 SQL" /><link rel="next" href="ecpg-descriptors.html" title="35.7. 使用描述符区域" /></head><body><div xmlns="http://www.w3.org/TR/xhtml1/transitional" class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="5" align="center">35.6. pgtypes 库</th></tr><tr><td width="10%" align="left"><a accesskey="p" href="ecpg-dynamic.html" title="35.5. 动态 SQL">上一页</a> </td><td width="10%" align="left"><a accesskey="u" href="ecpg.html" title="第 35 章 ECPG - C 中的嵌入式 SQL">上一级</a></td><th width="60%" align="center">第 35 章 <span xmlns="http://www.w3.org/1999/xhtml" class="application">ECPG</span> - C 中的嵌入式 <acronym xmlns="http://www.w3.org/1999/xhtml" class="acronym">SQL</acronym></th><td width="10%" align="right"><a accesskey="h" href="index.html" title="PostgreSQL 10.1 手册">起始页</a></td><td width="10%" align="right"> <a accesskey="n" href="ecpg-descriptors.html" title="35.7. 使用描述符区域">下一页</a></td></tr></table><hr></hr></div><div class="sect1" id="ECPG-PGTYPES"><div class="titlepage"><div><div><h2 class="title" style="clear: both">35.6. pgtypes 库</h2></div></div></div><div class="toc"><dl class="toc"><dt><span class="sect2"><a href="ecpg-pgtypes.html#ECPG-PGTYPES-NUMERIC">35.6.1. numeric类型</a></span></dt><dt><span class="sect2"><a href="ecpg-pgtypes.html#ECPG-PGTYPES-DATE">35.6.2. 日期类型</a></span></dt><dt><span class="sect2"><a href="ecpg-pgtypes.html#ECPG-PGTYPES-TIMESTAMP">35.6.3. 时间戳类型</a></span></dt><dt><span class="sect2"><a href="ecpg-pgtypes.html#ECPG-PGTYPES-INTERVAL">35.6.4. 区间类型</a></span></dt><dt><span class="sect2"><a href="ecpg-pgtypes.html#ECPG-PGTYPES-DECIMAL">35.6.5. decimal类型</a></span></dt><dt><span class="sect2"><a href="ecpg-pgtypes.html#ECPG-PGTYPES-ERRNO">35.6.6. pgtypeslib 的 errno 值</a></span></dt><dt><span class="sect2"><a href="ecpg-pgtypes.html#ECPG-PGTYPES-CONSTANTS">35.6.7. pgtypeslib 的特殊常量</a></span></dt></dl></div><p>   pgtypes 库将<span class="productname">PostgreSQL</span>数据库类型映射到 C 中等价的类型以便在 C 程序中使用。它还提供在 C 中对这些类型进行基本计算的函数，即不依赖<span class="productname">PostgreSQL</span>服务器进行计算。请看下面的例子：
+</p><pre class="programlisting">EXEC SQL BEGIN DECLARE SECTION;
+   date date1;
+   timestamp ts1, tsout;
+   interval iv1;
+   char *out;
+EXEC SQL END DECLARE SECTION;
+
+PGTYPESdate_today(&amp;date1);
+EXEC SQL SELECT started, duration INTO :ts1, :iv1 FROM datetbl WHERE d=:date1;
+PGTYPEStimestamp_add_interval(&amp;ts1, &amp;iv1, &amp;tsout);
+out = PGTYPEStimestamp_to_asc(&amp;tsout);
+printf("Started + duration: %s\n", out);
+free(out);</pre><p>
+  </p><div class="sect2" id="ECPG-PGTYPES-NUMERIC"><div class="titlepage"><div><div><h3 class="title">35.6.1. numeric类型</h3></div></div></div><p>    numeric类型用来完成对任意精度的计算。<span class="productname">PostgreSQL</span>服务器中等效的类型请见<a class="xref" href="datatype-numeric.html" title="8.1. 数字类型">第 8.1 节</a>。因为要用于任意精度，这种变量需要能够动态地扩展和收缩。这也是为什么你只能用<code class="function">PGTYPESnumeric_new</code>和<code class="function">PGTYPESnumeric_free</code>函数在堆上创建numeric变量。decimal类型与numeric类型相似但是在精度上有限制，decimal类型可以在堆上创建也可以在栈上创建。
+   </p><p>   下列函数可以用于numeric类型：
+   </p><div class="variablelist"><dl class="variablelist"><dt><span class="term"><code class="function">PGTYPESnumeric_new</code></span></dt><dd><p>      请求一个指向新分配的numeric变量的指针。
+</p><pre class="synopsis">numeric *PGTYPESnumeric_new(void);</pre><p>
+      </p></dd><dt><span class="term"><code class="function">PGTYPESnumeric_free</code></span></dt><dd><p>      释放一个numeric类型，释放它所有的内存。
+</p><pre class="synopsis">void PGTYPESnumeric_free(numeric *var);</pre><p>
+      </p></dd><dt><span class="term"><code class="function">PGTYPESnumeric_from_asc</code></span></dt><dd><p>       从字符串记号中解析一个numeric类型。
+</p><pre class="synopsis">numeric *PGTYPESnumeric_from_asc(char *str, char **endptr);</pre><p>
+       例如，可用的格式是：
+        <code class="literal">-2</code>、
+        <code class="literal">.794</code>、
+        <code class="literal">+3.44</code>、
+        <code class="literal">592.49E07</code>或者
+        <code class="literal">-32.84e-4</code>。
+       如果值能被成功地解析，将返回一个有效的指针，否则返回 NULL 指针。目前 ECPG 总是解析整个字符串并且因此当前不支持把第一个非法字符的地址存储在<code class="literal">*endptr</code>中。你可以安全地把<code class="literal">endptr</code>设置为 NULL。
+      </p></dd><dt><span class="term"><code class="function">PGTYPESnumeric_to_asc</code></span></dt><dd><p>       返回由<code class="function">malloc</code>分配的字符串的指针，它包含numeric类型<code class="literal">num</code>的字符串表达。
+</p><pre class="synopsis">char *PGTYPESnumeric_to_asc(numeric *num, int dscale);</pre><p>
+       numeric值将被使用<code class="literal">dscale</code>小数位打印，必要时会圆整。
+      </p></dd><dt><span class="term"><code class="function">PGTYPESnumeric_add</code></span></dt><dd><p>       把两个numeric变量相加放到第三个numeric变量中。
+</p><pre class="synopsis">int PGTYPESnumeric_add(numeric *var1, numeric *var2, numeric *result);</pre><p>
+       该函数把变量<code class="literal">var1</code>和<code class="literal">var2</code>相加放到结果变量<code class="literal">result</code>中。成功时该函数返回 0，出错时返回 -1。
+      </p></dd><dt><span class="term"><code class="function">PGTYPESnumeric_sub</code></span></dt><dd><p>       把两个numeric变量相减并且把结果返回到第三个numeric变量。
+</p><pre class="synopsis">int PGTYPESnumeric_sub(numeric *var1, numeric *var2, numeric *result);</pre><p>
+       该函数把变量<code class="literal">var2</code>从变量<code class="literal">var1</code>中减除。该操作的结果被存储在变量<code class="literal">result</code>中。成功时该函数返回 0，出错时返回 -1。
+      </p></dd><dt><span class="term"><code class="function">PGTYPESnumeric_mul</code></span></dt><dd><p>       把两个numeric变量相乘并且把结果返回到第三个numeric变量。
+</p><pre class="synopsis">int PGTYPESnumeric_mul(numeric *var1, numeric *var2, numeric *result);</pre><p>
+       该函数把变量<code class="literal">var1</code>和<code class="literal">var2</code>相乘。该操作的结果被存储在变量<code class="literal">result</code>中。成功时该函数返回 0，出错时返回 -1。
+      </p></dd><dt><span class="term"><code class="function">PGTYPESnumeric_div</code></span></dt><dd><p>       把两个numeric变量相除并且把结果返回到第三个numeric变量。
+</p><pre class="synopsis">int PGTYPESnumeric_div(numeric *var1, numeric *var2, numeric *result);</pre><p>
+       该函数用变量<code class="literal">var2</code>除变量<code class="literal">var1</code>。该操作的结果被存储在变量<code class="literal">result</code>中。成功时该函数返回 0，出错时返回 -1。
+      </p></dd><dt><span class="term"><code class="function">PGTYPESnumeric_cmp</code></span></dt><dd><p>       比较两个numeric变量。
+</p><pre class="synopsis">int PGTYPESnumeric_cmp(numeric *var1, numeric *var2)</pre><p>
+       这个函数比较两个numeric变量。错误时会返回<code class="literal">INT_MAX</code>。成功时，该函数返回三种可能结果之一：
+       </p><div class="itemizedlist"><ul class="itemizedlist" style="list-style-type: disc; "><li class="listitem"><p>          <code class="literal">var1</code>大于<code class="literal">var2</code>则返回 1
+         </p></li><li class="listitem"><p>          如果<code class="literal">var1</code>小于<code class="literal">var2</code>则返回 -1
+         </p></li><li class="listitem"><p>          如果<code class="literal">var1</code>和<code class="literal">var2</code>相等则返回 0
+         </p></li></ul></div><p>
+      </p></dd><dt><span class="term"><code class="function">PGTYPESnumeric_from_int</code></span></dt><dd><p>       把一个整数变量转换成一个numeric变量。
+</p><pre class="synopsis">int PGTYPESnumeric_from_int(signed int int_val, numeric *var);</pre><p>
+       这个函数接受一个有符号整型变量并且把它存储在numeric变量<code class="literal">var</code>中。成功时返回 0，失败时返回 -1。
+      </p></dd><dt><span class="term"><code class="function">PGTYPESnumeric_from_long</code></span></dt><dd><p>       把一个长整型变量转换成一个numeric变量。
+</p><pre class="synopsis">int PGTYPESnumeric_from_long(signed long int long_val, numeric *var);</pre><p>
+       这个函数接受一个有符号长整型变量并且把它存储在numeric变量<code class="literal">var</code>中。成功时返回 0，失败时返回 -1。
+      </p></dd><dt><span class="term"><code class="function">PGTYPESnumeric_copy</code></span></dt><dd><p>       把一个numeric变量复制到另一个中。
+</p><pre class="synopsis">int PGTYPESnumeric_copy(numeric *src, numeric *dst);</pre><p>
+       这个函数把<code class="literal">src</code>指向的变量的值复制到<code class="literal">dst</code>指向的变量中。成功时该函数返回 0，出错时返回 -1。
+      </p></dd><dt><span class="term"><code class="function">PGTYPESnumeric_from_double</code></span></dt><dd><p>       把一个双精度类型的变量转换成一个numeric变量。
+</p><pre class="synopsis">int  PGTYPESnumeric_from_double(double d, numeric *dst);</pre><p>
+       这个函数接受一个双精度类型的变量并且把结果存储在<code class="literal">dst</code>指向的变量中。成功时该函数返回 0，出错时返回 -1。
+      </p></dd><dt><span class="term"><code class="function">PGTYPESnumeric_to_double</code></span></dt><dd><p>       将一个numeric类型的变量转换成双精度。
+</p><pre class="synopsis">int PGTYPESnumeric_to_double(numeric *nv, double *dp)</pre><p>
+       这个函数将<code class="literal">nv</code>指向的变量中的numeric值转换成<code class="literal">dp</code>指向的双精度变量。成功时该函数返回 0，出错时返回 -1（包括溢出）。溢出时，全局变量<code class="literal">errno</code>将被额外地设置成<code class="literal">PGTYPES_NUM_OVERFLOW</code>。
+      </p></dd><dt><span class="term"><code class="function">PGTYPESnumeric_to_int</code></span></dt><dd><p>       将一个numeric类型的变量转换成整数。
+</p><pre class="synopsis">int PGTYPESnumeric_to_int(numeric *nv, int *ip);</pre><p>
+       该函数将<code class="literal">nv</code>指向的变量的numeric值转换成<code class="literal">ip</code>指向的整数变量。成功时该函数返回 0，出错时返回 -1（包括溢出）。溢出时，全局变量<code class="literal">errno</code>将被额外地设置成<code class="literal">PGTYPES_NUM_OVERFLOW</code>。
+      </p></dd><dt><span class="term"><code class="function">PGTYPESnumeric_to_long</code></span></dt><dd><p>       将一个numeric类型的变量转换成长整型。
+</p><pre class="synopsis">int PGTYPESnumeric_to_long(numeric *nv, long *lp);</pre><p>
+       该函数将<code class="literal">nv</code>指向的变量的numeric值转换成<code class="literal">ip</code>指向的长整型变量。成功时该函数返回 0，出错时返回 -1（包括溢出）。溢出时，全局变量<code class="literal">errno</code>将被额外地设置成<code class="literal">PGTYPES_NUM_OVERFLOW</code>。
+      </p></dd><dt><span class="term"><code class="function">PGTYPESnumeric_to_decimal</code></span></dt><dd><p>       将一个numeric类型的变量转换成decimal。
+</p><pre class="synopsis">int PGTYPESnumeric_to_decimal(numeric *src, decimal *dst);</pre><p>
+       该函数将<code class="literal">nv</code>指向的变量的numeric值转换成<code class="literal">ip</code>指向的decimal变量。成功时该函数返回 0，出错时返回 -1（包括溢出）。溢出时，全局变量<code class="literal">errno</code>将被额外地设置成<code class="literal">PGTYPES_NUM_OVERFLOW</code>。
+      </p></dd><dt><span class="term"><code class="function">PGTYPESnumeric_from_decimal</code></span></dt><dd><p>       将一个decimal类型的变量转换成numeric。
+</p><pre class="synopsis">int PGTYPESnumeric_from_decimal(decimal *src, numeric *dst);</pre><p>
+       该函数将<code class="literal">nv</code>指向的变量的decimal值转换成<code class="literal">ip</code>指向的numeric变量。成功时该函数返回 0，出错时返回 -1（包括溢出）。因为decimal类型被实现为numeric类型的一个有限的版本，在这个转换上不会发生溢出。
+      </p></dd></dl></div><p>
+   </p></div><div class="sect2" id="ECPG-PGTYPES-DATE"><div class="titlepage"><div><div><h3 class="title">35.6.2. 日期类型</h3></div></div></div><p>    C 中的日期类型允许你的程序处理 SQL 日期类型的数据。<span class="productname">PostgreSQL</span>服务器的等效类型可见<a class="xref" href="datatype-datetime.html" title="8.5. 日期/时间类型">第 8.5 节</a>。
+   </p><p>    下列函数可以被用于日期类型：
+    </p><div class="variablelist"><dl class="variablelist"><dt id="PGTYPESDATEFROMTIMESTAMP"><span class="term"><code class="function">PGTYPESdate_from_timestamp</code></span></dt><dd><p>        从一个时间戳中抽取日期部分。
+</p><pre class="synopsis">date PGTYPESdate_from_timestamp(timestamp dt);</pre><p>
+        该函数接收一个时间戳作为它的唯一参数并且从这个时间戳返回抽取的日期部分。
+       </p></dd><dt id="PGTYPESDATEFROMASC"><span class="term"><code class="function">PGTYPESdate_from_asc</code></span></dt><dd><p>       从日期的文本表达解析一个日期。
+</p><pre class="synopsis">date PGTYPESdate_from_asc(char *str, char **endptr);</pre><p>
+        该函数接收一个 C 的字符串<code class="literal">str</code>以及一个指向 C 字符串的指针<code class="literal">endptr</code>。当前 ECPG 总是解析完整的字符串并且因此当前不支持将第一个非法字符的地址存储在<code class="literal">*endptr</code>中。你可以安全地把<code class="literal">endptr</code>设置为 NULL。
+       </p><p>        注意该函数总是假定格式按照 MDY 格式化并且当前在 ECPG 中没有变体可以改变这种格式。
+       </p><p>        <a class="xref" href="ecpg-pgtypes.html#ECPG-PGTYPESDATE-FROM-ASC-TABLE" title="表 35.2. PGTYPESdate_from_asc的合法输入格式">表 35.2</a>展示了所有允许的输入格式。
+       </p><div class="table" id="ECPG-PGTYPESDATE-FROM-ASC-TABLE"><p class="title"><strong>表 35.2. <code class="function">PGTYPESdate_from_asc</code>的合法输入格式</strong></p><div class="table-contents"><table class="table" summary="PGTYPESdate_from_asc的合法输入格式" border="1"><colgroup><col /><col /></colgroup><thead><tr><th>输入</th><th>结果</th></tr></thead><tbody><tr><td><code class="literal">January 8, 1999</code></td><td><code class="literal">January 8, 1999</code></td></tr><tr><td><code class="literal">1999-01-08</code></td><td><code class="literal">January 8, 1999</code></td></tr><tr><td><code class="literal">1/8/1999</code></td><td><code class="literal">January 8, 1999</code></td></tr><tr><td><code class="literal">1/18/1999</code></td><td><code class="literal">January 18, 1999</code></td></tr><tr><td><code class="literal">01/02/03</code></td><td><code class="literal">February 1, 2003</code></td></tr><tr><td><code class="literal">1999-Jan-08</code></td><td><code class="literal">January 8, 1999</code></td></tr><tr><td><code class="literal">Jan-08-1999</code></td><td><code class="literal">January 8, 1999</code></td></tr><tr><td><code class="literal">08-Jan-1999</code></td><td><code class="literal">January 8, 1999</code></td></tr><tr><td><code class="literal">99-Jan-08</code></td><td><code class="literal">January 8, 1999</code></td></tr><tr><td><code class="literal">08-Jan-99</code></td><td><code class="literal">January 8, 1999</code></td></tr><tr><td><code class="literal">08-Jan-06</code></td><td><code class="literal">January 8, 2006</code></td></tr><tr><td><code class="literal">Jan-08-99</code></td><td><code class="literal">January 8, 1999</code></td></tr><tr><td><code class="literal">19990108</code></td><td><code class="literal">ISO 8601; January 8, 1999</code></td></tr><tr><td><code class="literal">990108</code></td><td><code class="literal">ISO 8601; January 8, 1999</code></td></tr><tr><td><code class="literal">1999.008</code></td><td><code class="literal">年以及积日</code></td></tr><tr><td><code class="literal">J2451187</code></td><td><code class="literal">儒略日</code></td></tr><tr><td><code class="literal">January 8, 99 BC</code></td><td><code class="literal">公元前 99 年</code></td></tr></tbody></table></div></div><br class="table-break" /></dd><dt id="PGTYPESDATETOASC"><span class="term"><code class="function">PGTYPESdate_to_asc</code></span></dt><dd><p>        返回一个日期变量的文本表达。
+</p><pre class="synopsis">char *PGTYPESdate_to_asc(date dDate);</pre><p>
+        该函数接收日期<code class="literal">dDate</code>作为它的唯一参数。它将以形式<code class="literal">1999-01-18</code>输出该日期，即以<code class="literal">YYYY-MM-DD</code>格式输出。
+       </p></dd><dt id="PGTYPESDATEJULMDY"><span class="term"><code class="function">PGTYPESdate_julmdy</code></span></dt><dd><p>        从一个日期类型变量中抽取日、月和年的值。
+</p><pre class="synopsis">void PGTYPESdate_julmdy(date d, int *mdy);</pre><p>
+       
+        该函数接收日期<code class="literal">d</code>以及一个指向有 3 个整数值的数组<code class="literal">mdy</code>的指针。变量名就表明了顺序：<code class="literal">mdy[0]</code>将被设置为包含月份，<code class="literal">mdy[1]</code>将被设置为日的值，而<code class="literal">mdy[2]</code>将包含年。
+       </p></dd><dt id="PGTYPESDATEMDYJUL"><span class="term"><code class="function">PGTYPESdate_mdyjul</code></span></dt><dd><p>        从一个由 3 个整数构成的数组创建一个日期值，3 个整数分别指定日、月和年。
+</p><pre class="synopsis">void PGTYPESdate_mdyjul(int *mdy, date *jdate);</pre><p>
+        这个函数接收 3 个整数（<code class="literal">mdy</code>）组成的数组作为其第一个参数，其第二个参数是一个指向日期类型变量的指针，它被用来保存操作的结果。
+       </p></dd><dt id="PGTYPESDATEDAYOFWEEK"><span class="term"><code class="function">PGTYPESdate_dayofweek</code></span></dt><dd><p>        为一个日期值返回表示它是星期几的数字。
+</p><pre class="synopsis">int PGTYPESdate_dayofweek(date d);</pre><p>
+        这个函数接收日期变量<code class="literal">d</code>作为它唯一的参数并且返回一个整数说明这个日期是星期几。
+        </p><div class="itemizedlist"><ul class="itemizedlist" style="list-style-type: disc; "><li class="listitem"><p>           0 - 星期日
+          </p></li><li class="listitem"><p>           1 - 星期一
+          </p></li><li class="listitem"><p>           2 - 星期二
+          </p></li><li class="listitem"><p>           3 - 星期三
+          </p></li><li class="listitem"><p>           4 - 星期四
+          </p></li><li class="listitem"><p>           5 - 星期五
+          </p></li><li class="listitem"><p>           6 - 星期六
+          </p></li></ul></div><p>
+       </p></dd><dt id="PGTYPESDATETODAY"><span class="term"><code class="function">PGTYPESdate_today</code></span></dt><dd><p>        得到当前日期。
+</p><pre class="synopsis">void PGTYPESdate_today(date *d);</pre><p>
+        该函数接收一个指向一个日期变量（<code class="literal">d</code>）的指针并且把该参数设置为当前日期。
+       </p></dd><dt id="PGTYPESDATEFMTASC"><span class="term"><code class="function">PGTYPESdate_fmt_asc</code></span></dt><dd><p>        使用一个格式掩码将一个日期类型的变量转换成它的文本表达。
+</p><pre class="synopsis">int PGTYPESdate_fmt_asc(date dDate, char *fmtstring, char *outbuf);</pre><p>
+        该函数接收要转换的日期（<code class="literal">dDate</code>）、格式掩码（<code class="literal">fmtstring</code>）以及将要保存日期的文本表达的字符串（<code class="literal">outbuf</code>）。
+       </p><p>        成功时，返回 0；如果发生错误，则返回一个负值。
+       </p><p>        下面是你可以使用的域指示符：
+        </p><div class="itemizedlist"><ul class="itemizedlist" style="list-style-type: disc; "><li class="listitem"><p>           <code class="literal">dd</code> - 一个月中的第几天。
+          </p></li><li class="listitem"><p>           <code class="literal">mm</code> - 一年中的第几个月。
+          </p></li><li class="listitem"><p>           <code class="literal">yy</code> - 两位数的年份。
+          </p></li><li class="listitem"><p>           <code class="literal">yyyy</code> - 四位数的年份。
+          </p></li><li class="listitem"><p>           <code class="literal">ddd</code> - 星期几的名称（简写）。
+          </p></li><li class="listitem"><p>           <code class="literal">mmm</code> - 月份的名称（简写）。
+          </p></li></ul></div><p>
+        所有其他字符会被原封不动地复制到输出字符串中。
+       </p><p>        <a class="xref" href="ecpg-pgtypes.html#ECPG-PGTYPESDATE-FMT-ASC-EXAMPLE-TABLE" title="表 35.3. PGTYPESdate_fmt_asc的合法输入格式">表 35.3</a>指出了一些可能的格式。这将给你一些线索如何使用这个函数。所有输出都是基于同一个日期：1959年11月23日。
+       </p><div class="table" id="ECPG-PGTYPESDATE-FMT-ASC-EXAMPLE-TABLE"><p class="title"><strong>表 35.3. <code class="function">PGTYPESdate_fmt_asc</code>的合法输入格式</strong></p><div class="table-contents"><table class="table" summary="PGTYPESdate_fmt_asc的合法输入格式" border="1"><colgroup><col /><col /></colgroup><thead><tr><th>格式</th><th>结果</th></tr></thead><tbody><tr><td><code class="literal">mmddyy</code></td><td><code class="literal">112359</code></td></tr><tr><td><code class="literal">ddmmyy</code></td><td><code class="literal">231159</code></td></tr><tr><td><code class="literal">yymmdd</code></td><td><code class="literal">591123</code></td></tr><tr><td><code class="literal">yy/mm/dd</code></td><td><code class="literal">59/11/23</code></td></tr><tr><td><code class="literal">yy mm dd</code></td><td><code class="literal">59 11 23</code></td></tr><tr><td><code class="literal">yy.mm.dd</code></td><td><code class="literal">59.11.23</code></td></tr><tr><td><code class="literal">.mm.yyyy.dd.</code></td><td><code class="literal">.11.1959.23.</code></td></tr><tr><td><code class="literal">mmm. dd, yyyy</code></td><td><code class="literal">Nov. 23, 1959</code></td></tr><tr><td><code class="literal">mmm dd yyyy</code></td><td><code class="literal">Nov 23 1959</code></td></tr><tr><td><code class="literal">yyyy dd mm</code></td><td><code class="literal">1959 23 11</code></td></tr><tr><td><code class="literal">ddd, mmm. dd, yyyy</code></td><td><code class="literal">Mon, Nov. 23, 1959</code></td></tr><tr><td><code class="literal">(ddd) mmm. dd, yyyy</code></td><td><code class="literal">(Mon) Nov. 23, 1959</code></td></tr></tbody></table></div></div><br class="table-break" /></dd><dt id="PGTYPESDATEDEFMTASC"><span class="term"><code class="function">PGTYPESdate_defmt_asc</code></span></dt><dd><p>        使用一个格式掩码把一个 C 的 <code class="type">char*</code>子返回串转换成一个日期类型的值。
+</p><pre class="synopsis">int PGTYPESdate_defmt_asc(date *d, char *fmt, char *str);</pre><p>
+        
+        该函数接收一个用来保存操作结果的指向日期值的指针（<code class="literal">d</code>）、用于解析日期的格式掩码（<code class="literal">fmt</code>）以及包含日期文本表达的 C char* 串（<code class="literal">str</code>）。该函数期望文本表达匹配格式掩码。不过你不需要字符串和格式掩码的一一映射。该函数只分析相继顺序并且查找表示年份位置的文字<code class="literal">yy</code>或者<code class="literal">yyyy</code>、表示月份位置的<code class="literal">mm</code>以及表示日位置的<code class="literal">dd</code>。
+       </p><p>        <a class="xref" href="ecpg-pgtypes.html#ECPG-RDEFMTDATE-EXAMPLE-TABLE" title="表 35.4. rdefmtdate的合法输入格式">表 35.4</a>给出了一些可能的格式。这将给你一些线索如何使用这个函数。
+       </p><div class="table" id="ECPG-RDEFMTDATE-EXAMPLE-TABLE"><p class="title"><strong>表 35.4. <code class="function">rdefmtdate</code>的合法输入格式</strong></p><div class="table-contents"><table class="table" summary="rdefmtdate的合法输入格式" border="1"><colgroup><col /><col /><col /></colgroup><thead><tr><th>格式</th><th>字符串</th><th>结果</th></tr></thead><tbody><tr><td><code class="literal">ddmmyy</code></td><td><code class="literal">21-2-54</code></td><td><code class="literal">1954-02-21</code></td></tr><tr><td><code class="literal">ddmmyy</code></td><td><code class="literal">2-12-54</code></td><td><code class="literal">1954-12-02</code></td></tr><tr><td><code class="literal">ddmmyy</code></td><td><code class="literal">20111954</code></td><td><code class="literal">1954-11-20</code></td></tr><tr><td><code class="literal">ddmmyy</code></td><td><code class="literal">130464</code></td><td><code class="literal">1964-04-13</code></td></tr><tr><td><code class="literal">mmm.dd.yyyy</code></td><td><code class="literal">MAR-12-1967</code></td><td><code class="literal">1967-03-12</code></td></tr><tr><td><code class="literal">yy/mm/dd</code></td><td><code class="literal">1954, February 3rd</code></td><td><code class="literal">1954-02-03</code></td></tr><tr><td><code class="literal">mmm.dd.yyyy</code></td><td><code class="literal">041269</code></td><td><code class="literal">1969-04-12</code></td></tr><tr><td><code class="literal">yy/mm/dd</code></td><td><code class="literal">在 2525 年的七月二十八日，人类还将存在</code></td><td><code class="literal">2525-07-28</code></td></tr><tr><td><code class="literal">dd-mm-yy</code></td><td><code class="literal">也是 2525 年七月的二十八日</code></td><td><code class="literal">2525-07-28</code></td></tr><tr><td><code class="literal">mmm.dd.yyyy</code></td><td><code class="literal">9/14/58</code></td><td><code class="literal">1958-09-14</code></td></tr><tr><td><code class="literal">yy/mm/dd</code></td><td><code class="literal">47/03/29</code></td><td><code class="literal">1947-03-29</code></td></tr><tr><td><code class="literal">mmm.dd.yyyy</code></td><td><code class="literal">oct 28 1975</code></td><td><code class="literal">1975-10-28</code></td></tr><tr><td><code class="literal">mmddyy</code></td><td><code class="literal">Nov 14th, 1985</code></td><td><code class="literal">1985-11-14</code></td></tr></tbody></table></div></div><br class="table-break" /></dd></dl></div><p>
+   </p></div><div class="sect2" id="ECPG-PGTYPES-TIMESTAMP"><div class="titlepage"><div><div><h3 class="title">35.6.3. 时间戳类型</h3></div></div></div><p>    C 中的时间戳类型允许你的程序处理 SQL 时间戳类型的数据。<span class="productname">PostgreSQL</span>服务器的等效类型可见<a class="xref" href="datatype-datetime.html" title="8.5. 日期/时间类型">第 8.5 节</a>。
+   </p><p>    下列函数可用于时间戳类型：
+    </p><div class="variablelist"><dl class="variablelist"><dt id="PGTYPESTIMESTAMPFROMASC"><span class="term"><code class="function">PGTYPEStimestamp_from_asc</code></span></dt><dd><p>        从文本表达解析一个时间戳并放到一个时间戳变量中。
+</p><pre class="synopsis">timestamp PGTYPEStimestamp_from_asc(char *str, char **endptr);</pre><p>
+        这个函数接收一个要解析的字符串（<code class="literal">str</code>）以及一个 C char* 的指针（<code class="literal">endptr</code>）。当前 ECPG 总是解析完整的字符串并且因此当前不支持将第一个非法字符的地址存储在<code class="literal">*endptr</code>中。你可以安全地把<code class="literal">endptr</code>设置为 NULL。
+       </p><p>        成功时该函数返回解析到的时间戳。错误时，会返回<code class="literal">PGTYPESInvalidTimestamp</code>并且<code class="varname">errno</code>会被设置为<code class="literal">PGTYPES_TS_BAD_TIMESTAMP</code>。关于这个值的重要提示请见<a class="xref" href="ecpg-pgtypes.html#PGTYPESINVALIDTIMESTAMP"><code class="literal">PGTYPESInvalidTimestamp</code></a>。
+       </p><p>        通常，该输入字符串能够包含一个允许的日期说明、一个空格字符和一个允许的时间说明的任意组合。注意 ECPG 不支持时区。它能够解析时区但是不会应用任何计算（例如<span class="productname">PostgreSQL</span>服务器所作的事情）。时区指示符会被无声无息地丢弃。
+       </p><p>        <a class="xref" href="ecpg-pgtypes.html#ECPG-PGTYPESTIMESTAMP-FROM-ASC-EXAMPLE-TABLE" title="表 35.5. PGTYPEStimestamp_from_asc的合法输入格式">表 35.5</a>包含输入字符串的一些例子。
+       </p><div class="table" id="ECPG-PGTYPESTIMESTAMP-FROM-ASC-EXAMPLE-TABLE"><p class="title"><strong>表 35.5. <code class="function">PGTYPEStimestamp_from_asc</code>的合法输入格式</strong></p><div class="table-contents"><table class="table" summary="PGTYPEStimestamp_from_asc的合法输入格式" border="1"><colgroup><col /><col /></colgroup><thead><tr><th>输入</th><th>结果</th></tr></thead><tbody><tr><td><code class="literal">1999-01-08 04:05:06</code></td><td><code class="literal">1999-01-08 04:05:06</code></td></tr><tr><td><code class="literal">January 8 04:05:06 1999 PST</code></td><td><code class="literal">1999-01-08 04:05:06</code></td></tr><tr><td><code class="literal">1999-Jan-08 04:05:06.789-8</code></td><td><code class="literal">1999-01-08 04:05:06.789 （忽略了时区指示符）</code></td></tr><tr><td><code class="literal">J2451187 04:05-08:00</code></td><td><code class="literal">1999-01-08 04:05:00 （忽略了时区指示符）</code></td></tr></tbody></table></div></div><br class="table-break" /></dd><dt id="PGTYPESTIMESTAMPTOASC"><span class="term"><code class="function">PGTYPEStimestamp_to_asc</code></span></dt><dd><p>        将一个日期转换成一个 C char* 字符串。
+</p><pre class="synopsis">char *PGTYPEStimestamp_to_asc(timestamp tstamp);</pre><p>
+        该函数接收时间戳<code class="literal">tstamp</code>作为它的唯一参数并且返回一个分配好的包含该时间戳文本表达的字符串。
+       </p></dd><dt id="PGTYPESTIMESTAMPCURRENT"><span class="term"><code class="function">PGTYPEStimestamp_current</code></span></dt><dd><p>        检索当前的时间戳。
+</p><pre class="synopsis">void PGTYPEStimestamp_current(timestamp *ts);</pre><p>
+        该函数检索当前的时间戳并且将它保存在<code class="literal">ts</code>指向的时间戳变量。
+       </p></dd><dt id="PGTYPESTIMESTAMPFMTASC"><span class="term"><code class="function">PGTYPEStimestamp_fmt_asc</code></span></dt><dd><p>        使用一个格式掩码将一个时间戳变量转换成一个 C char* 。
+</p><pre class="synopsis">int PGTYPEStimestamp_fmt_asc(timestamp *ts, char *output, int str_len, char *fmtstr);</pre><p>
+        该函数接收一个指向时间戳的指针作为它的第一个参数（<code class="literal">ts</code>）、一个指向输出缓冲区的指针（<code class="literal">output</code>）、为输出缓冲区分配的最大长度（<code class="literal">str_len</code>）以及用于转换的格式掩码（<code class="literal">fmtstr</code>）。
+       </p><p>        成功时，该函数返回 0；如果有错误发生，则返回一个负值。
+       </p><p>        你可以为格式掩码使用下列格式指示符。格式指示符就是用在<span class="productname">libc</span>的<code class="function">strftime</code>函数中的那一些。任何非格式指示符将被复制到输出缓冲区。
+        
+        </p><div class="itemizedlist"><ul class="itemizedlist" style="list-style-type: disc; "><li class="listitem"><p>           <code class="literal">%A</code> - 被完整的星期几名称的本国表达所替换。
+          </p></li><li class="listitem"><p>           <code class="literal">%a</code> - 被简写星期几名称的本国表达所替换。
+          </p></li><li class="listitem"><p>           <code class="literal">%B</code> - 被完整的月份名称的本国表达所替换。
+          </p></li><li class="listitem"><p>           <code class="literal">%b</code> - 被简写月份名称的本国表达所替换。
+          </p></li><li class="listitem"><p>           <code class="literal">%C</code> - 被十进制数（年份/100）所替换，单一数字会被前置一个零。
+          </p></li><li class="listitem"><p>           <code class="literal">%c</code> - 被时间和日期的本国表达所替换。
+          </p></li><li class="listitem"><p>           <code class="literal">%D</code> - 等效于<code class="literal">%m/%d/%y</code>。
+          </p></li><li class="listitem"><p>           <code class="literal">%d</code> - 被十进制数（01-31）的日所替换。
+          </p></li><li class="listitem"><p>           <code class="literal">%E*</code> <code class="literal">%O*</code> -  POSIX 区域扩展。序列
+           <code class="literal">%Ec</code>
+           <code class="literal">%EC</code>
+           <code class="literal">%Ex</code>
+           <code class="literal">%EX</code>
+           <code class="literal">%Ey</code>
+           <code class="literal">%EY</code>
+           <code class="literal">%Od</code>
+           <code class="literal">%Oe</code>
+           <code class="literal">%OH</code>
+           <code class="literal">%OI</code>
+           <code class="literal">%Om</code>
+           <code class="literal">%OM</code>
+           <code class="literal">%OS</code>
+           <code class="literal">%Ou</code>
+           <code class="literal">%OU</code>
+           <code class="literal">%OV</code>
+           <code class="literal">%Ow</code>
+           <code class="literal">%OW</code>
+           <code class="literal">%Oy</code>
+           被假定提供可供选择的表达。
+          </p><p>           此外还实现了<code class="literal">%OB</code>来表达可供选择的月份名称（单独使用，不用提过的日）。
+          </p></li><li class="listitem"><p>           <code class="literal">%e</code> - 被十进制数（01-31）的日所替换，单一数字被前置一个空格。
+          </p></li><li class="listitem"><p>           <code class="literal">%F</code> - 等效于<code class="literal">%Y-%m-%d</code>。
+          </p></li><li class="listitem"><p>           <code class="literal">%G</code> - 被替换为一个带有世纪的十进制数年份。这个年份是包含这一周大部分的年份（星期一作为这一周的第一天）。
+          </p></li><li class="listitem"><p>           <code class="literal">%g</code> - 被替换为与<code class="literal">%G</code>中相同的年份，但是作为一个不带世纪的十进制数（00-99）。
+          </p></li><li class="listitem"><p>           <code class="literal">%H</code> - 被替换为一个十进制数的小时（24 小时制，00-23）。
+          </p></li><li class="listitem"><p>           <code class="literal">%h</code> - 和<code class="literal">%b</code>相同。
+          </p></li><li class="listitem"><p>           <code class="literal">%I</code> - 被替换为一个十进制数的小时（12 小时制，01-12）。
+          </p></li><li class="listitem"><p>           <code class="literal">%j</code> - 被替换为一个十进制数的积日（001-366）。
+          </p></li><li class="listitem"><p>           <code class="literal">%k</code> - 被替换为一个十进制数的小时（24 小时制，00-23），单一数字被前置一个空白。
+          </p></li><li class="listitem"><p>           <code class="literal">%l</code> - 被替换为一个十进制数的小时（12 小时制，01-12），单一数字被前置一个空白。
+          </p></li><li class="listitem"><p>           <code class="literal">%M</code> - 被替换为一个十进制数的分钟（00-59）。
+          </p></li><li class="listitem"><p>           <code class="literal">%m</code> - 被替换为一个十进制数的月份（01-12）。
+          </p></li><li class="listitem"><p>          <code class="literal">%n</code> - 被替换为一个新行。
+          </p></li><li class="listitem"><p>           <code class="literal">%O*</code> - 和<code class="literal">%E*</code>相同。
+          </p></li><li class="listitem"><p>           <code class="literal">%p</code> - 根据情况被替换为<span class="quote">“<span class="quote">午前</span>”</span>或<span class="quote">“<span class="quote">午后</span>”</span>的本国表达。
+          </p></li><li class="listitem"><p>           <code class="literal">%R</code> - 等效于<code class="literal">%H:%M</code>。
+          </p></li><li class="listitem"><p>           <code class="literal">%r</code> - 等效于<code class="literal">%I:%M:%S%p</code>。
+          </p></li><li class="listitem"><p>           <code class="literal">%S</code> - 被替换为十进制数的秒（00-60）。
+          </p></li><li class="listitem"><p>           <code class="literal">%s</code> - 被替换为从 UTC 新纪元以来的秒数。
+          </p></li><li class="listitem"><p>           <code class="literal">%T</code> - 等效于<code class="literal">%H:%M:%S</code>
+          </p></li><li class="listitem"><p>           <code class="literal">%t</code> - 被替换为一个制表符。
+          </p></li><li class="listitem"><p>           <code class="literal">%U</code> - 被替换为十进制数的周数（周日作为一周的第一天，00-53）。
+          </p></li><li class="listitem"><p>           <code class="literal">%u</code> - 被替换为十进制数的星期几（周一作为一周的第一天，1-7）。
+          </p></li><li class="listitem"><p>           <code class="literal">%V</code> - 被替换为十进制数的周数（周一作为一周的第一天，01-53）。如果包含 1 月 1 日的周在新年中有 4 天或更多天，那么它是第一周。否则它是前一年的最后一周，并且下一周是第一周。
+          </p></li><li class="listitem"><p>           <code class="literal">%v</code> - 等效于<code class="literal">%e-%b-%Y</code>。
+          </p></li><li class="listitem"><p>           <code class="literal">%W</code> - 被替换为十进制数的周数（周一作为一周的第一天，00-53）。
+          </p></li><li class="listitem"><p>           <code class="literal">%w</code> - 被替换为十进制数的星期几（0-6，周日作为一周的第一天）。
+          </p></li><li class="listitem"><p>           <code class="literal">%X</code> - 被替换为时间的本国表达。
+          </p></li><li class="listitem"><p>           <code class="literal">%x</code> - 被替换为日期的本国表达。
+          </p></li><li class="listitem"><p>           <code class="literal">%Y</code> - 被替换为十进制数的带世纪的年份。
+          </p></li><li class="listitem"><p>           <code class="literal">%y</code> - 被替换为十进制数的不带世纪的年份（00-99）。
+          </p></li><li class="listitem"><p>           <code class="literal">%Z</code> - 被替换为时区名称。
+          </p></li><li class="listitem"><p>           <code class="literal">%z</code> - 被替换为相对于 UTC 的时区偏移；一个前导的加号表示 UTC 东部，一个负号表示 UTC 西部，接着是分别有两个数字的小时和分钟并且它们之间没有定界符（RFC 822 日期头部的一般形式）。
+          </p></li><li class="listitem"><p>           <code class="literal">%+</code> - 被替换为日期和时间的本国表达。
+          </p></li><li class="listitem"><p>           <code class="literal">%-*</code> - GNU libc 扩展。在执行数值输出时不做任何填充。
+          </p></li><li class="listitem"><p>           $_* - GNU libc 扩展。显式地指定用空格填充。
+          </p></li><li class="listitem"><p>           <code class="literal">%0*</code> - GNU libc 扩展。显式地指定用零填充。
+          </p></li><li class="listitem"><p>           <code class="literal">%%</code> - 被替换为<code class="literal">%</code>。
+          </p></li></ul></div><p>
+       </p></dd><dt id="PGTYPESTIMESTAMPSUB"><span class="term"><code class="function">PGTYPEStimestamp_sub</code></span></dt><dd><p>        从一个时间戳中减去另一个时间戳并且把结果保存在一个区间类型的变量中。
+</p><pre class="synopsis">int PGTYPEStimestamp_sub(timestamp *ts1, timestamp *ts2, interval *iv);</pre><p>
+        该函数将从<code class="literal">ts1</code>指向的时间戳变量中减去<code class="literal">ts2</code>指向的时间戳变量，并且将把结果存储在<code class="literal">iv</code>指向的区间变量中。
+       </p><p>        成功时，该函数返回 0；发生错误时则返回一个负值。
+       </p></dd><dt id="PGTYPESTIMESTAMPDEFMTASC"><span class="term"><code class="function">PGTYPEStimestamp_defmt_asc</code></span></dt><dd><p>        Parse a timestamp value from its textual representation using a
+        formatting mask.
+</p><pre class="synopsis">int PGTYPEStimestamp_defmt_asc(char *str, char *fmt, timestamp *d);</pre><p>
+        The function receives the textual representation of a timestamp in the
+        variable <code class="literal">str</code> as well as the formatting mask to use in the
+        variable <code class="literal">fmt</code>. The result will be stored in the variable
+        that <code class="literal">d</code> points to.
+       </p><p>        If the formatting mask <code class="literal">fmt</code> is NULL, the function will fall
+        back to the default formatting mask which is <code class="literal">%Y-%m-%d
+        %H:%M:%S</code>.
+       </p><p>        This is the reverse function to <a class="xref" href="ecpg-pgtypes.html#PGTYPESTIMESTAMPFMTASC"><code class="function">PGTYPEStimestamp_fmt_asc</code></a>.  See the documentation there in
+        order to find out about the possible formatting mask entries.
+       </p></dd><dt id="PGTYPESTIMESTAMPADDINTERVAL"><span class="term"><code class="function">PGTYPEStimestamp_add_interval</code></span></dt><dd><p>        Add an interval variable to a timestamp variable.
+</p><pre class="synopsis">int PGTYPEStimestamp_add_interval(timestamp *tin, interval *span, timestamp *tout);</pre><p>
+        The function receives a pointer to a timestamp variable <code class="literal">tin</code>
+        and a pointer to an interval variable <code class="literal">span</code>. It adds the
+        interval to the timestamp and saves the resulting timestamp in the
+        variable that <code class="literal">tout</code> points to.
+       </p><p>        Upon success, the function returns 0 and a negative value if an
+        error occurred.
+       </p></dd><dt id="PGTYPESTIMESTAMPSUBINTERVAL"><span class="term"><code class="function">PGTYPEStimestamp_sub_interval</code></span></dt><dd><p>        Subtract an interval variable from a timestamp variable.
+</p><pre class="synopsis">int PGTYPEStimestamp_sub_interval(timestamp *tin, interval *span, timestamp *tout);</pre><p>
+        The function subtracts the interval variable that <code class="literal">span</code>
+        points to from the timestamp variable that <code class="literal">tin</code> points to
+        and saves the result into the variable that <code class="literal">tout</code> points
+        to.
+       </p><p>        Upon success, the function returns 0 and a negative value if an
+        error occurred.
+       </p></dd></dl></div><p>
+   </p></div><div class="sect2" id="ECPG-PGTYPES-INTERVAL"><div class="titlepage"><div><div><h3 class="title">35.6.4. 区间类型</h3></div></div></div><p>    C 中的区间类型允许你的程序处理 SQL 区间类型的数据。<span class="productname">PostgreSQL</span>服务器的等效类型可见<a class="xref" href="datatype-datetime.html" title="8.5. 日期/时间类型">第 8.5 节</a>。
+   </p><p>    下列函数可以用于区间类型：
+    </p><div class="variablelist"><dl class="variablelist"><dt id="PGTYPESINTERVALNEW"><span class="term"><code class="function">PGTYPESinterval_new</code></span></dt><dd><p>        返回一个指向新分配的区间变量的指针。
+</p><pre class="synopsis">interval *PGTYPESinterval_new(void);</pre><p>
+       </p></dd><dt id="PGTYPESINTERVALFREE"><span class="term"><code class="function">PGTYPESinterval_free</code></span></dt><dd><p>        释放先前分配的区间变量的内存。
+</p><pre class="synopsis">void PGTYPESinterval_new(interval *intvl);</pre><p>
+       </p></dd><dt id="PGTYPESINTERVALFROMASC"><span class="term"><code class="function">PGTYPESinterval_from_asc</code></span></dt><dd><p>        从文本表达解析一个区间。
+</p><pre class="synopsis">interval *PGTYPESinterval_from_asc(char *str, char **endptr);</pre><p>
+        该函数解析输入字符串<code class="literal">str</code>并且返回一个已分配的区间变量的指针。目前 ECPG 总是解析整个字符串并且因此当前不支持把第一个非法字符的地址存储在<code class="literal">*endptr</code>中。你可以安全地把<code class="literal">endptr</code>设置为 NULL。
+       </p></dd><dt id="PGTYPESINTERVALTOASC"><span class="term"><code class="function">PGTYPESinterval_to_asc</code></span></dt><dd><p>        将一个区间类型的变量转换成它的文本表达。
+</p><pre class="synopsis">char *PGTYPESinterval_to_asc(interval *span);</pre><p>
+        该函数将<code class="literal">span</code>指向的区间变量转换成一个 C char*。输出看起来像这个例子：
+        <code class="literal">@ 1 day 12 hours 59 mins 10 secs</code>.
+       </p></dd><dt id="PGTYPESINTERVALCOPY"><span class="term"><code class="function">PGTYPESinterval_copy</code></span></dt><dd><p>        复制一个区间类型的变量。
+</p><pre class="synopsis">int PGTYPESinterval_copy(interval *intvlsrc, interval *intvldest);</pre><p>
+        该函数将<code class="literal">intvlsrc</code>指向的区间变量复制到<code class="literal">intvldest</code>指向的区间变量。注意你需要现为目标变量分配好内存。
+       </p></dd></dl></div><p>
+   </p></div><div class="sect2" id="ECPG-PGTYPES-DECIMAL"><div class="titlepage"><div><div><h3 class="title">35.6.5. decimal类型</h3></div></div></div><p>     decimal类型和numeric类型相似。不过，它被限制为最大精度是 30 个有效位。与numeric类型只能在堆上创建相反，decimal类型既可以在栈上也可以在堆上创建（使用函数<code class="function">PGTYPESdecimal_new</code> 和<code class="function">PGTYPESdecimal_free</code>）。在<a class="xref" href="ecpg-informix-compat.html" title="35.15. Informix兼容模式">第 35.15 节</a>中描述的<span class="productname">Informix</span>兼容模式中有很多其它函数可以处理decimal类型。
+   </p><p>    下列函数可以被用于decimal类型并且不仅被包含于<code class="literal">libcompat</code>库中。
+    </p><div class="variablelist"><dl class="variablelist"><dt><span class="term"><code class="function">PGTYPESdecimal_new</code></span></dt><dd><p>       要求一个指向新分配的decimal变量的指针。
+</p><pre class="synopsis">decimal *PGTYPESdecimal_new(void);</pre><p>
+       </p></dd><dt><span class="term"><code class="function">PGTYPESdecimal_free</code></span></dt><dd><p>       释放一个decimal类型，释放它的所有内存。
+</p><pre class="synopsis">void PGTYPESdecimal_free(decimal *var);</pre><p>
+       </p></dd></dl></div><p>
+   </p></div><div class="sect2" id="ECPG-PGTYPES-ERRNO"><div class="titlepage"><div><div><h3 class="title">35.6.6. pgtypeslib 的 errno 值</h3></div></div></div><p>    </p><div class="variablelist"><dl class="variablelist"><dt><span class="term"><code class="literal">PGTYPES_NUM_BAD_NUMERIC</code></span></dt><dd><p>        一个参数应该包含一个numeric变量（或者指向一个numeric变量），但是实际上它的内存表达非法。
+       </p></dd><dt><span class="term"><code class="literal">PGTYPES_NUM_OVERFLOW</code></span></dt><dd><p>        发生一次溢出。由于numeric类型可以处理几乎任何精度，将一个numeric变量转换成其他类型可能导致溢出。
+       </p></dd><dt><span class="term"><code class="literal">PGTYPES_NUM_UNDERFLOW</code></span></dt><dd><p>        发生一次下溢。由于numeric类型可以处理几乎任何精度，将一个numeric变量转换成其他类型可能导致下溢。
+       </p></dd><dt><span class="term"><code class="literal">PGTYPES_NUM_DIVIDE_ZERO</code></span></dt><dd><p>        尝试了一次除零。
+       </p></dd><dt><span class="term"><code class="literal">PGTYPES_DATE_BAD_DATE</code></span></dt><dd><p>        一个非法的日期字符串被传给了<code class="function">PGTYPESdate_from_asc</code>函数。
+       </p></dd><dt><span class="term"><code class="literal">PGTYPES_DATE_ERR_EARGS</code></span></dt><dd><p>        非法参数被传给了<code class="function">PGTYPESdate_defmt_asc</code>函数。
+       </p></dd><dt><span class="term"><code class="literal">PGTYPES_DATE_ERR_ENOSHORTDATE</code></span></dt><dd><p>        <code class="function">PGTYPESdate_defmt_asc</code>函数在输入字符串中发现了一个非法记号。
+       </p></dd><dt><span class="term"><code class="literal">PGTYPES_INTVL_BAD_INTERVAL</code></span></dt><dd><p>        一个非法的区间字符串被传给了<code class="function">PGTYPESinterval_from_asc</code>函数，或者一个非法的区间值被传给了<code class="function">PGTYPESinterval_to_asc</code>函数。
+       </p></dd><dt><span class="term"><code class="literal">PGTYPES_DATE_ERR_ENOTDMY</code></span></dt><dd><p>        在<code class="function">PGTYPESdate_defmt_asc</code>函数中有日/月/年不匹配的赋值。
+       </p></dd><dt><span class="term"><code class="literal">PGTYPES_DATE_BAD_DAY</code></span></dt><dd><p>        <code class="function">PGTYPESdate_defmt_asc</code>函数发现了月中的一个非法日值。
+       </p></dd><dt><span class="term"><code class="literal">PGTYPES_DATE_BAD_MONTH</code></span></dt><dd><p>        <code class="function">PGTYPESdate_defmt_asc</code>函数发现了一个非法的月值。
+       </p></dd><dt><span class="term"><code class="literal">PGTYPES_TS_BAD_TIMESTAMP</code></span></dt><dd><p>        一个非法的时间戳字符串被传给了<code class="function">PGTYPEStimestamp_from_asc</code>函数，或者一个非法的时间戳值被传给了<code class="function">PGTYPEStimestamp_to_asc</code>函数。
+       </p></dd><dt><span class="term"><code class="literal">PGTYPES_TS_ERR_EINFTIME</code></span></dt><dd><p>        在一个无法处理无限时间戳值的环境中遇到了这样一个值。
+       </p></dd></dl></div><p>
+   </p></div><div class="sect2" id="ECPG-PGTYPES-CONSTANTS"><div class="titlepage"><div><div><h3 class="title">35.6.7. pgtypeslib 的特殊常量</h3></div></div></div><p>    </p><div class="variablelist"><dl class="variablelist"><dt id="PGTYPESINVALIDTIMESTAMP"><span class="term"><code class="literal">PGTYPESInvalidTimestamp</code></span></dt><dd><p>        表示一个非法时间戳的时间戳类型值。在解析错误时，函数<code class="function">PGTYPEStimestamp_from_asc</code>会返回这个值。注意由于<code class="type">timestamp</code>数据类型的内部表达，<code class="literal">PGTYPESInvalidTimestamp</code>在同时也是一个合法的时间戳。它被设置为<code class="literal">1899-12-31 23:59:59</code>。为了检测到错误，确认你的应用在每次调用<code class="function">PGTYPEStimestamp_from_asc</code>后不仅仅测试<code class="literal">PGTYPESInvalidTimestamp</code>，还应该测试<code class="literal">errno != 0</code>。
+       </p></dd></dl></div><p>
+   </p></div></div><div class="navfooter"><hr /><table width="100%" summary="Navigation footer"><tr><td width="40%" align="left"><a accesskey="p" href="ecpg-dynamic.html">上一页</a> </td><td width="20%" align="center"><a accesskey="u" href="ecpg.html">上一级</a></td><td width="40%" align="right"> <a accesskey="n" href="ecpg-descriptors.html">下一页</a></td></tr><tr><td width="40%" align="left" valign="top">35.5. 动态 SQL </td><td width="20%" align="center"><a accesskey="h" href="index.html">起始页</a></td><td width="40%" align="right" valign="top"> 35.7. 使用描述符区域</td></tr></table></div></body></html>

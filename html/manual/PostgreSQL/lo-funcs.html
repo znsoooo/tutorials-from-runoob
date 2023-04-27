@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><title>34.4. 服务器端函数</title><link rel="stylesheet" type="text/css" href="stylesheet.css" /><link rev="made" href="pgsql-docs@postgresql.org" /><meta name="generator" content="DocBook XSL Stylesheets V1.79.1" /><link rel="prev" href="lo-interfaces.html" title="34.3. 客户端接口" /><link rel="next" href="lo-examplesect.html" title="34.5. 例子程序" /></head><body><div xmlns="http://www.w3.org/TR/xhtml1/transitional" class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="5" align="center">34.4. 服务器端函数</th></tr><tr><td width="10%" align="left"><a accesskey="p" href="lo-interfaces.html" title="34.3. 客户端接口">上一页</a> </td><td width="10%" align="left"><a accesskey="u" href="largeobjects.html" title="第 34 章 大对象">上一级</a></td><th width="60%" align="center">第 34 章 大对象</th><td width="10%" align="right"><a accesskey="h" href="index.html" title="PostgreSQL 10.1 手册">起始页</a></td><td width="10%" align="right"> <a accesskey="n" href="lo-examplesect.html" title="34.5. 例子程序">下一页</a></td></tr></table><hr></hr></div><div class="sect1" id="LO-FUNCS"><div class="titlepage"><div><div><h2 class="title" style="clear: both">34.4. 服务器端函数</h2></div></div></div><p>   <a class="xref" href="lo-funcs.html#LO-FUNCS-TABLE" title="表 34.1. 面向 SQL 的大对象函数">表 34.1</a>中列出了为从 SQL 操纵大对象定制的服务器端函数。
+  </p><div class="table" id="LO-FUNCS-TABLE"><p class="title"><strong>表 34.1. 面向 SQL 的大对象函数</strong></p><div class="table-contents"><table class="table" summary="面向 SQL 的大对象函数" border="1"><colgroup><col /><col /><col /><col /><col /></colgroup><thead><tr><th>函数</th><th>返回类型</th><th>描述</th><th>实例</th><th>结果</th></tr></thead><tbody><tr><td>       <a id="idp29130880" class="indexterm"></a>
+       <code class="literal"><code class="function">lo_from_bytea(<em class="parameter"><code>loid</code></em> <code class="type">oid</code>, <em class="parameter"><code>string</code></em> <code class="type">bytea</code>)</code></code>
+      </td><td><code class="type">oid</code></td><td>       创建一个大对象并且在其中存储数据，返回它的 OID。
+       传递<code class="literal">0</code>会让系统选择一个 OID。
+      </td><td><code class="literal">lo_from_bytea(0, E'\\xffffff00')</code></td><td><code class="literal">24528</code></td></tr><tr><td>       <a id="idp29138272" class="indexterm"></a>
+       <code class="literal"><code class="function">lo_put(<em class="parameter"><code>loid</code></em> <code class="type">oid</code>, <em class="parameter"><code>offset</code></em> <code class="type">bigint</code>, <em class="parameter"><code>str</code></em> <code class="type">bytea</code>)</code></code>
+      </td><td><code class="type">void</code></td><td>       在给定的偏移位置写入数据。
+      </td><td><code class="literal">lo_put(24528, 1, E'\\xaa')</code></td><td> </td></tr><tr><td>       <a id="idp29145440" class="indexterm"></a>
+       <code class="literal"><code class="function">lo_get(<em class="parameter"><code>loid</code></em> <code class="type">oid</code> [<span class="optional">, <em class="parameter"><code>from</code></em> <code class="type">bigint</code>, <em class="parameter"><code>for</code></em> <code class="type">int</code></span>])</code></code>
+      </td><td><code class="type">bytea</code></td><td>       在其中抽取内容或一个子串。
+      </td><td><code class="literal">lo_get(24528, 0, 3)</code></td><td><code class="literal">\xffaaff</code></td></tr></tbody></table></div></div><br class="table-break" /><p>   之前描述过的每个客户端函数都有一个相应的服务器端函数。实际上，
+   多半客户端函数都是等效的服务器端函数的简单接口。这些可以从 SQL 
+   命令方便调用的函数是：
+   <code class="function">lo_creat</code><a id="idp29154288" class="indexterm"></a>、
+   <code class="function">lo_create</code>、
+   <code class="function">lo_unlink</code><a id="idp29156416" class="indexterm"></a>、
+   <code class="function">lo_import</code><a id="idp29157824" class="indexterm"></a>以及
+   <code class="function">lo_export</code><a id="idp29159232" class="indexterm"></a>。
+   下面是使用它们的例子：
+
+</p><pre class="programlisting">CREATE TABLE image (
+    name            text,
+    raster          oid
+);
+
+SELECT lo_creat(-1);       -- 返回新的空大对象的OID
+
+SELECT lo_create(43213);   -- 尝试创建OID为43213的大对象
+
+SELECT lo_unlink(173454);  -- 删除OID为173454的大对象
+
+INSERT INTO image (name, raster)
+    VALUES ('beautiful image', lo_import('/etc/motd'));
+
+INSERT INTO image (name, raster)  -- 和上面相同，但是指定了使用的OID
+    VALUES ('beautiful image', lo_import('/etc/motd', 68583));
+
+SELECT lo_export(image.raster, '/tmp/motd') FROM image
+    WHERE name = 'beautiful image';</pre><p>
+  </p><p>    服务器端的<code class="function">lo_import</code>和<code class="function">lo_export</code>函数具有和它们的客户端同类大不相同的行为。这两个函数从服务器的文件系统中读和写文件，使用的是数据库所有者的权限。因此，它们的使用被限制于超级用户。相反，客户端的导入和导出函数读写的是客户端的文件系统，使用的是客户端程序的权限。因此客户端函数不需要超级用户权限。
+  </p><p>    函数<code class="function">lo_read</code>和
+    <code class="function">lo_write</code>的功能也可以在服务器端调用，但是在服务器端的名称与客户端接口不同：它们的名称中不包含下划线。我们必须以<code class="function">loread</code>和<code class="function">lowrite</code>调用这些函数。
+  </p></div><div class="navfooter"><hr /><table width="100%" summary="Navigation footer"><tr><td width="40%" align="left"><a accesskey="p" href="lo-interfaces.html">上一页</a> </td><td width="20%" align="center"><a accesskey="u" href="largeobjects.html">上一级</a></td><td width="40%" align="right"> <a accesskey="n" href="lo-examplesect.html">下一页</a></td></tr><tr><td width="40%" align="left" valign="top">34.3. 客户端接口 </td><td width="20%" align="center"><a accesskey="h" href="index.html">起始页</a></td><td width="40%" align="right" valign="top"> 34.5. 例子程序</td></tr></table></div></body></html>

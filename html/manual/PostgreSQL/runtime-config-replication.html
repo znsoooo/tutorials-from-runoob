@@ -1,0 +1,141 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><title>19.6. 复制</title><link rel="stylesheet" type="text/css" href="stylesheet.css" /><link rev="made" href="pgsql-docs@postgresql.org" /><meta name="generator" content="DocBook XSL Stylesheets V1.79.1" /><link rel="prev" href="runtime-config-wal.html" title="19.5. 预写式日志" /><link rel="next" href="runtime-config-query.html" title="19.7. 查询规划" /></head><body><div xmlns="http://www.w3.org/TR/xhtml1/transitional" class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="5" align="center">19.6. 复制</th></tr><tr><td width="10%" align="left"><a accesskey="p" href="runtime-config-wal.html" title="19.5. 预写式日志">上一页</a> </td><td width="10%" align="left"><a accesskey="u" href="runtime-config.html" title="第 19 章 服务器配置">上一级</a></td><th width="60%" align="center">第 19 章 服务器配置</th><td width="10%" align="right"><a accesskey="h" href="index.html" title="PostgreSQL 10.1 手册">起始页</a></td><td width="10%" align="right"> <a accesskey="n" href="runtime-config-query.html" title="19.7. 查询规划">下一页</a></td></tr></table><hr></hr></div><div class="sect1" id="RUNTIME-CONFIG-REPLICATION"><div class="titlepage"><div><div><h2 class="title" style="clear: both">19.6. 复制</h2></div></div></div><div class="toc"><dl class="toc"><dt><span class="sect2"><a href="runtime-config-replication.html#RUNTIME-CONFIG-REPLICATION-SENDER">19.6.1. 发送服务器</a></span></dt><dt><span class="sect2"><a href="runtime-config-replication.html#RUNTIME-CONFIG-REPLICATION-MASTER">19.6.2. 主服务器</a></span></dt><dt><span class="sect2"><a href="runtime-config-replication.html#RUNTIME-CONFIG-REPLICATION-STANDBY">19.6.3. 后备服务器</a></span></dt><dt><span class="sect2"><a href="runtime-config-replication.html#RUNTIME-CONFIG-REPLICATION-SUBSCRIBER">19.6.4. 订阅</a></span></dt></dl></div><p>     这些设置控制内建<em class="firstterm">流复制</em>特性（见<a class="xref" href="warm-standby.html#STREAMING-REPLICATION" title="26.2.5. 流复制">第 26.2.5 节</a>）的行为。服务器将可以是主控服务器或后备服务器。主控机能发送数据，而后备机总是被复制数据的接收者。当使用级联复制（见<a class="xref" href="warm-standby.html#CASCADING-REPLICATION" title="26.2.7. 级联复制">第 26.2.7 节</a>）时，后备服务器也可以是发送者，同时也是接收者。这些参数主要用于发送服务器和后备服务器，尽管某些只在主服务器上有意义。如果有必要，设置可以在集群中变化而不出问题。
+    </p><div class="sect2" id="RUNTIME-CONFIG-REPLICATION-SENDER"><div class="titlepage"><div><div><h3 class="title">19.6.1. 发送服务器</h3></div></div></div><p>      这些参数可以在任何发送复制数据给一个或多个后备服务器的服务器上设置。主控机总是一个发送服务器，因此这些参数总是要在主控机上设置。这些参数的角色和含义不会在一个后备机变成主控机后改变。
+     </p><div class="variablelist"><dl class="variablelist"><dt id="GUC-MAX-WAL-SENDERS"><span class="term"><code class="varname">max_wal_senders</code> (<code class="type">integer</code>)
+       <a id="idp20963056" class="indexterm"></a></span></dt><dd><p>        指定来自后备服务器或流式基础备份客户端的并发连接的最大数量（即同时运行 WAL 发送进程
+        的最大数）。默认值是10，0值意味着禁用复制。WAL 发送进程被计算在连接总数内，因此该参数
+        不能被设置为高于<a class="xref" href="runtime-config-connection.html#GUC-MAX-CONNECTIONS">max_connections</a>的值。突然的流客户端断开
+        连接可能导致一个孤立连接槽（知道达到超时），因此这个参数应该设置得略高于最大客户端
+        连接数，这样断开连接的客户端可以立刻重新连接。这个参数只能在服务器启动时被设置。
+        <code class="varname">wal_level</code>必须设置为<code class="literal">archive</code>或更高级别以允许来自后备服
+        务器的连接。
+       </p></dd><dt id="GUC-MAX-REPLICATION-SLOTS"><span class="term"><code class="varname">max_replication_slots</code> (<code class="type">integer</code>)
+       <a id="idp20969376" class="indexterm"></a>
+       </span></dt><dd><p>         指定服务器可以支持的复制槽（见<a class="xref" href="warm-standby.html#STREAMING-REPLICATION-SLOTS" title="26.2.6. 复制槽">第 26.2.6 节</a>）
+         最大数量。默认值为10。这个参数只能在服务器启动时设置。要允许使用复制槽，
+         <code class="varname">wal_level</code>必须被设置为<code class="literal">archive</code>或
+         更高。把它的值设置为低于现有复制槽的数量会阻止服务器启动。
+        </p></dd><dt id="GUC-WAL-KEEP-SEGMENTS"><span class="term"><code class="varname">wal_keep_segments</code> (<code class="type">integer</code>)
+       <a id="idp20974896" class="indexterm"></a></span></dt><dd><p>        指定在后备服务器需要为流复制获取日志段文件的情况下，<code class="filename">pg_wal</code>目录下所能保留的过去日志文件段的最小数目。每个段通常是 16 兆字节。如果一个连接到发送服务器的后备服务器落后了超过<code class="varname">wal_keep_segments</code>个段，发送服务器可以移除一个后备机仍然需要的 WAL 段，在这种情况下复制连接将被中断。最终结果是下行连接也将最终失败（不过，如果在使用 WAL 归档，后备服务器可以通过从归档获取段来恢复）。
+       </p><p>        只设置<code class="filename">pg_wal</code>中保留的文件段的最小数目；系统可能需要为 WAL 归档或从一个检查点恢复保留更多段。如果<code class="varname">wal_keep_segments</code>为零（默认值）， 更多的空间来 存放WAL归档或从一个检查点恢复。如果wal_keep_segments是零（缺省）， 系统不会为后备目的保留任何多余的段，因此后备服务器可用的旧 WAL 段的数量是一个上个检查点位置和 WAL 归档状态的函数。这个参数只能在<code class="filename">postgresql.conf</code>文件中或在服务器命令行上设置。
+       </p></dd><dt id="GUC-WAL-SENDER-TIMEOUT"><span class="term"><code class="varname">wal_sender_timeout</code> (<code class="type">integer</code>)
+      <a id="idp20982848" class="indexterm"></a></span></dt><dd><p>        中断那些停止活动超过指定毫秒数的复制连接。这对发送服务器检测一个后备机崩溃或网络中断有用。零值将禁用该超时机制。这个参数只能在<code class="filename">postgresql.conf</code>文件中或在服务器命令行上设置。默认值是 60 秒。
+       </p></dd><dt id="GUC-TRACK-COMMIT-TIMESTAMP"><span class="term"><code class="varname">track_commit_timestamp</code> (<code class="type">boolean</code>)
+      <a id="idp20987312" class="indexterm"></a>
+      </span></dt><dd><p>        记录事务提交时间。这个参数只能在<code class="filename">postgresql.conf</code>文件
+        或者服务器命令行上设置。缺省值是<code class="literal">off</code>。
+       </p></dd></dl></div></div><div class="sect2" id="RUNTIME-CONFIG-REPLICATION-MASTER"><div class="titlepage"><div><div><h3 class="title">19.6.2. 主服务器</h3></div></div></div><p>      这些参数可以在发送复制数据给一个或多个后备服务器的主控/主要服务器上设置。注意除了这些参数之外，在主控服务器上必须设置合适的<a class="xref" href="runtime-config-wal.html#GUC-WAL-LEVEL">wal_level</a>，并且也启用可选的 WAL 归档（见<a class="xref" href="runtime-config-wal.html#RUNTIME-CONFIG-WAL-ARCHIVING" title="19.5.3. 归档">第 19.5.3 节</a>）。这些参数值与后备服务器无关，尽管你可能希望为了准备好一个后备机转变成主控机来设置这些参数。
+     </p><div class="variablelist"><dl class="variablelist"><dt id="GUC-SYNCHRONOUS-STANDBY-NAMES"><span class="term"><code class="varname">synchronous_standby_names</code> (<code class="type">string</code>)
+      <a id="idp20995600" class="indexterm"></a></span></dt><dd><p>        如<a class="xref" href="warm-standby.html#SYNCHRONOUS-REPLICATION" title="26.2.8. 同步复制">第 26.2.8 节</a>所述，
+        这个参数指定一个支持<em class="firstterm">同步复制</em>的后备服务器的列表。
+        可能会有一个或者多个活动的同步后备服务器，
+        在这些后备服务器确认收到它们的数据之后，等待提交的事务将被允许继续下去。
+        同步后备服务器是那些名字出现在这个列表中，
+        并且当前已连接并且正在实时流传输数据（如<a class="link" href="monitoring-stats.html#MONITORING-STATS-VIEWS-TABLE" title="表 28.2. 已收集统计信息的视图">        <code class="literal">pg_stat_replication</code></a>视图中<code class="literal">streaming</code>
+        的状态所示）的服务器。指定多个同步备用可以实现非常高的可用性并防止数据丢失。 
+       </p><p>        用于此目的的备用服务器的名称是备用数据库的<code class="varname">application_name</code>设置，
+		如备用数据库的连接信息中所设置的。在物理复制备用的情况下，
+		这应该在<code class="filename">recovery.conf</code>的<code class="varname">primary_conninfo</code>
+		设置中设置；默认值是<code class="literal">walreceiver</code>。对于逻辑复制，
+		可以在订阅的连接信息中设置，并且它默认为订阅名称。对于其他复制流消费者，
+		请参阅他们的文档。
+       </p><p>        这个参数使用下面的语法之一来指定一个后备服务器列表： 
+</p><pre class="synopsis">[FIRST] <em class="replaceable"><code>num_sync</code></em> ( <em class="replaceable"><code>standby_name</code></em> [, ...] )
+ANY <em class="replaceable"><code>num_sync</code></em> ( <em class="replaceable"><code>standby_name</code></em> [, ...] )
+<em class="replaceable"><code>standby_name</code></em> [, ...]</pre><p>
+        其中<em class="replaceable"><code>num_sync</code></em>
+        是事务需要等待其回复的同步后备服务器的数量，<em class="replaceable"><code>standby_name</code></em>
+        是一个后备服务器的名称。
+		<code class="literal">FIRST</code>和<code class="literal">ANY</code>
+		指定从列出的服务器中选择同步备用数据库的方法。
+       </p><p>        关键字<code class="literal">FIRST</code>加上<em class="replaceable"><code>num_sync</code></em>，
+		指定基于优先级的同步复制，并使事务提交等待，
+		直到它们的WAL记录被复制到根据其优先级进行选择的
+		<em class="replaceable"><code>num_sync</code></em>同步备用数据库。
+		例如，<code class="literal">FIRST 3 (s1, s2, s3, s4)</code>
+		的设置将导致每个提交等待来自从备用服务器
+		<code class="literal">s1</code>、<code class="literal">s2</code>、<code class="literal">s3</code>和<code class="literal">s4</code>
+		中选择出来的三个更高级备用服务器的回复。
+		其名称出现在列表前面的备用数据库被赋予更高的优先级，并将被视为同步。
+		在列表后面出现的其他备用服务器代表潜在的同步备用服务器。
+		如果任何当前的同步备用服务器因任何原因断开连接，
+		它将立即被次最高优先级的备用机器替换。关键字<code class="literal">FIRST</code>是可选的。
+       </p><p>        关键字<code class="literal">ANY</code>加上<em class="replaceable"><code>num_sync</code></em>，
+		指定基于数量的同步复制，并使事务提交等待，直到它们的WAL记录被复制到
+		<span class="emphasis"><em>至少</em></span><em class="replaceable"><code>num_sync</code></em>
+		个列出的备用服务器。例如，<code class="literal">ANY 3 (s1, s2, s3, s4)</code>
+		的设置将导致每个提交至少被<code class="literal">s1</code>、<code class="literal">s2</code>、 <code class="literal">s3</code>
+		和<code class="literal">s4</code>中的任意三个备用服务器回复处理。
+       </p><p>        <code class="literal">FIRST</code>和<code class="literal">ANY</code>是大小写无关的。
+		如果这些关键字用作备用服务器的名称，那么
+		<em class="replaceable"><code>standby_name</code></em>必须是双引号引用的。
+       </p><p>        第三种语法在<span class="productname">PostgreSQL</span>版本9.6之前使用，并且仍然受支持。
+		它与第一个使用<code class="literal">FIRST</code>和<em class="replaceable"><code>num_sync</code></em>
+		等于1的语法相同。例如，<code class="literal">FIRST 1 (s1, s2)</code>和<code class="literal">s1, s2</code>
+		具有相同的含义：选择<code class="literal">s1</code>或<code class="literal">s2</code>作为同步备用。
+       </p><p>        特殊项<code class="literal">*</code>匹配任何备用服务器名称。
+       </p><p>        没有机制来强制备用名称的唯一性。在重复的情况下，
+		匹配的备用数据库之一将被视为较高优先级，但确切地说哪一个是不确定的。
+       </p><div class="note"><h3 class="title">注意</h3><p>         每一个<em class="replaceable"><code>standby_name</code></em>
+         都应该具有合法 SQL 标识符的形式，除非它是<code class="literal">*</code>。
+         如果必要你可以使用双引号。但是注意在比较
+         <em class="replaceable"><code>standby_name</code></em>
+         和后备机应用程序名称时是大小写不敏感的（不管有没有双引号）。
+        </p></div><p>        如果这里没有指定同步后备机名称，那么同步复制不能被启用并且事务提交将不会等待复制。这是默认的配置。即便当同步复制被启用时，个体事务也可以被配置为不等待复制，做法是将<a class="xref" href="runtime-config-wal.html#GUC-SYNCHRONOUS-COMMIT">synchronous_commit</a>参数设置为<code class="literal">local</code>或<code class="literal">off</code>。
+       </p><p>        这个参数只能在<code class="filename">postgresql.conf</code>文件中或在服务器命令行上设置。
+       </p></dd><dt id="GUC-VACUUM-DEFER-CLEANUP-AGE"><span class="term"><code class="varname">vacuum_defer_cleanup_age</code> (<code class="type">integer</code>)
+      <a id="idp21045184" class="indexterm"></a></span></dt><dd><p>                指定<code class="command">VACUUM</code>和<acronym class="acronym">HOT</acronym>更新在清除死亡行版本之前，应该推迟多久（以事务数量计）。默认值是零个事务，表示死亡行版本将被尽可能快地清除，即当它们不再对任何打开的事务可见时尽快清除。在一个支持热后备服务器的主服务器上，你可能希望把这个参数设置为一个非零值，如<a class="xref" href="hot-standby.html" title="26.5. 热备">第 26.5 节</a>中所述。这允许后备机上的查询有更多时间来完成而不会由于先前的行清除产生冲突。但是，由于该值是用在主服务器上发生的写事务的数目衡量的，很难预测对后备机查询可用的附加时间到底是多少。这个参数只能在<code class="filename">postgresql.conf</code>文件中或在服务器命令行上设置。
+       </p><p>        你也可以考虑设置后备服务器上的<code class="varname">hot_standby_feedback</code>作为使用这个参数的一种替代方案。
+       </p><p>        这无法阻止已经达到<code class="varname">old_snapshot_threshold</code>
+        所指定年龄的死亡行被清除。
+       </p></dd></dl></div></div><div class="sect2" id="RUNTIME-CONFIG-REPLICATION-STANDBY"><div class="titlepage"><div><div><h3 class="title">19.6.3. 后备服务器</h3></div></div></div><p>      这些设置空值接收复制数据的一个后备服务器的行为。它们的值与主服务器无关。
+     </p><div class="variablelist"><dl class="variablelist"><dt id="GUC-HOT-STANDBY"><span class="term"><code class="varname">hot_standby</code> (<code class="type">boolean</code>)
+      <a id="idp21055312" class="indexterm"></a></span></dt><dd><p>        指定在恢复期间，你是否能够连接并运行查询，如<a class="xref" href="hot-standby.html" title="26.5. 热备">第 26.5 节</a>中所述。默认值是<code class="literal">on</code>。这个参数只能在服务器启动时设置。它只在归档恢复期间或后备机模式下才有效。
+       </p></dd><dt id="GUC-MAX-STANDBY-ARCHIVE-DELAY"><span class="term"><code class="varname">max_standby_archive_delay</code> (<code class="type">integer</code>)
+      <a id="idp21060192" class="indexterm"></a></span></dt><dd><p>        当热后备机处于活动状态时，这个参数决定取消那些与即将应用的 WAL 项冲突的后备机查询之前，后备服务器应该等待多久，如<a class="xref" href="hot-standby.html#HOT-STANDBY-CONFLICT" title="26.5.2. 处理查询冲突">第 26.5.2 节</a>中所述。当 WAL 数据被从 WAL 归档（并且因此不是当前的 WAL）时，<code class="varname">max_standby_archive_delay</code>可以应用。默认值是 30 秒。如果没有指定，衡量单位是毫秒。值 -1 允许后备机一直等到冲突查询结束。这个参数只能在<code class="filename">postgresql.conf</code>文件中或在服务器命令行上设置。
+       </p><p>        注意，<code class="varname">max_standby_archive_delay</code>与取消之前一个查询能够运行的最长时间不同；它表示应用任何一个 WAL 段数据能够被允许的最长总时间。因此，如果一个查询早于 WAL 段导致了显著的延迟，后续冲突查询将只有更少的时间。
+       </p></dd><dt id="GUC-MAX-STANDBY-STREAMING-DELAY"><span class="term"><code class="varname">max_standby_streaming_delay</code> (<code class="type">integer</code>)
+      <a id="idp21067152" class="indexterm"></a></span></dt><dd><p>        当热后备机处于活动状态时，这个参数决定取消那些与即将应用的 WAL 项冲突的后备机查询之前，后备服务器应该等待多久，如<a class="xref" href="hot-standby.html#HOT-STANDBY-CONFLICT" title="26.5.2. 处理查询冲突">第 26.5.2 节</a>中所述。当 WAL 数据正在通过流复制被接收时，<code class="varname">max_standby_streaming_delay</code>可以应用。默认值是 30 秒。如果没有指定，衡量单位是毫秒。值 -1 允许后备机一直等到冲突查询结束。这个参数只能在<code class="filename">postgresql.conf</code>文件中或在服务器命令行上设置。
+       </p><p>        注意，<code class="varname">max_standby_streaming_delay</code>与取消之前一个查询能够运行的最长时间不同；它表示在从主服务器接收到 WAL 数据并立刻应用它能够被允许的最长总时间。因此，如果一个查询导致了显著的延迟，后续冲突查询将只有更少的时间，直到后备服务器再次赶上进度。
+       </p></dd><dt id="GUC-WAL-RECEIVER-STATUS-INTERVAL"><span class="term"><code class="varname">wal_receiver_status_interval</code> (<code class="type">integer</code>)
+      <a id="idp21074288" class="indexterm"></a></span></dt><dd><p>       指定在后备机上的 WAL 接收者进程向主服务器或上游后备机发送有关复制进度的信息的最小频度，它可以使用<a class="link" href="monitoring-stats.html#MONITORING-STATS-VIEWS-TABLE" title="表 28.2. 已收集统计信息的视图"><code class="literal">pg_stat_replication</code></a>视图看到。后备机将报告它已经写入的上一个预写式日志位置、它已经刷到磁盘的上一个位置以及它已经应用的最后一个位置。这个参数的值是报告之间的最大间隔，以秒计。每次写入或刷出位置改变时会发送状态更新，或者至少按这个参数的指定的频度发送。因此，应用位置可能比真实位置略微滞后。将这个参数设置为零将完全禁用状态更新。这个参数只能在<code class="filename">postgresql.conf</code>文件中或在服务器命令行上设置。默认值是 10 秒。
+      </p></dd><dt id="GUC-HOT-STANDBY-FEEDBACK"><span class="term"><code class="varname">hot_standby_feedback</code> (<code class="type">boolean</code>)
+      <a id="idp21080928" class="indexterm"></a></span></dt><dd><p>        指定一个热后备机是否将会向主服务器或上游后备机发送有关于后备机上当前正被执行的查询的反馈。这个参数可以被用来排除由于记录清除导致的查询取消，但是可能导致在主服务器上用于某些负载的数据库膨胀。反馈消息的发送频度不会高于每个<code class="varname">wal_receiver_status_interval</code>周期发送一次。默认值是<code class="literal">off</code>。这个参数只能在<code class="filename">postgresql.conf</code>文件中或在服务器命令行上设置。
+       </p><p>        如果使用级联复制，反馈将被向上游传递直到它最后到达主服务器。后备机在接收到反馈之后除了传递给上游不会做任何其他操作。
+       </p><p>        这个设置不会覆盖主服务器上的<code class="varname">old_snapshot_threshold</code>的行为，
+        后备服务器上一个超过了主服务器年龄阈值的快照可能会变得不可用，
+        导致后备服务器上事务的取消。这是因为<code class="varname">old_snapshot_threshold</code>
+        是为了对死亡行能够存在的时间给出一个绝对限制，
+        不然就会因为一个后备服务器的配置而被违背。
+       </p></dd><dt id="GUC-WAL-RECEIVER-TIMEOUT"><span class="term"><code class="varname">wal_receiver_timeout</code> (<code class="type">integer</code>)
+      <a id="idp21089152" class="indexterm"></a></span></dt><dd><p>        中止处于非活动状态超过指定毫秒数的复制链接。这对于正在接收的后备服务器检测主服务器崩溃或网络断开有用。值零会禁用超时机制。这个参数只能在<code class="filename">postgresql.conf</code>文件中或在服务器命令行上设置。默认值是 60 秒。
+       </p></dd><dt id="GUC-WAL-RETRIEVE-RETRY-INTERVAL"><span class="term"><code class="varname">wal_retrieve_retry_interval</code> (<code class="type">integer</code>)
+      <a id="idp21093632" class="indexterm"></a>
+      </span></dt><dd><p>        指定等待服务器应等待多长时间时，
+        当重试检索WAL数据之前来自任何源
+        （流复制，本地<code class="filename">pg_wal</code>或者WAL归档）的WAL数据不可用。
+        此参数只能在<code class="filename">postgresql.conf</code>文件或服务器命令行设置。
+        缺省值是5秒。如果没有指定，单位是毫秒。
+       </p><p>        此参数有助于配置恢复节点控制等待新的WAL数据可用的时间数。
+        例如，在归档恢复中，通过减少此参数的值检测一个新的WAL日志文件中使得恢复更加敏感，
+        这种做法是有可能的。在一个低WAL活动系统中，增加它减少了必要的访问WAL归档的需求量，
+        一些有用例子在云环境中访问基础设施的时间量要考虑在内。
+       </p></dd></dl></div></div><div class="sect2" id="RUNTIME-CONFIG-REPLICATION-SUBSCRIBER"><div class="titlepage"><div><div><h3 class="title">19.6.4. 订阅</h3></div></div></div><p>      这些设置控制逻辑复制订阅的行为。发布者的值无关紧要。
+     </p><p>      请注意，<code class="varname">wal_receiver_timeout</code>和
+      <code class="varname">wal_retrieve_retry_interval</code>配置参数还影响逻辑复制工作。
+     </p><div class="variablelist"><dl class="variablelist"><dt id="GUC-MAX-LOGICAL-REPLICATION-WORKERS"><span class="term"><code class="varname">max_logical_replication_workers</code> (<code class="type">int</code>)
+      <a id="idp21102576" class="indexterm"></a>
+      </span></dt><dd><p>        指定逻辑复制工作的最大数量。这包括应用工作和表同步工作。
+       </p><p>        逻辑复制工作进程是从<code class="varname">max_worker_processes</code>
+		定义的进程池中取出的。
+       </p><p>        默认值是4。
+       </p></dd><dt id="GUC-MAX-SYNC-WORKERS-PER-SUBSCRIPTION"><span class="term"><code class="varname">max_sync_workers_per_subscription</code> (<code class="type">integer</code>)
+      <a id="idp21107424" class="indexterm"></a>
+      </span></dt><dd><p>        每个订阅的最大同步工作者数量。
+		此参数控制订阅初始化期间或添加新表时初始数据副本的并行数量。
+       </p><p>        目前，每个表只能有一个同步工作进程。
+       </p><p>        同步工作进程是从<code class="varname">max_logical_replication_workers</code>
+		定义的进程池中取出的。
+       </p><p>        默认值是2。
+       </p></dd></dl></div></div></div><div class="navfooter"><hr /><table width="100%" summary="Navigation footer"><tr><td width="40%" align="left"><a accesskey="p" href="runtime-config-wal.html">上一页</a> </td><td width="20%" align="center"><a accesskey="u" href="runtime-config.html">上一级</a></td><td width="40%" align="right"> <a accesskey="n" href="runtime-config-query.html">下一页</a></td></tr><tr><td width="40%" align="left" valign="top">19.5. 预写式日志 </td><td width="20%" align="center"><a accesskey="h" href="index.html">起始页</a></td><td width="40%" align="right" valign="top"> 19.7. 查询规划</td></tr></table></div></body></html>

@@ -1,0 +1,132 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><title>40.3. 物化视图</title><link rel="stylesheet" type="text/css" href="stylesheet.css" /><link rev="made" href="pgsql-docs@postgresql.org" /><meta name="generator" content="DocBook XSL Stylesheets V1.79.1" /><link rel="prev" href="rules-views.html" title="40.2. 视图和规则系统" /><link rel="next" href="rules-update.html" title="40.4. INSERT、UPDATE和DELETE上的规则" /></head><body><div xmlns="http://www.w3.org/TR/xhtml1/transitional" class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="5" align="center">40.3. 物化视图</th></tr><tr><td width="10%" align="left"><a accesskey="p" href="rules-views.html" title="40.2. 视图和规则系统">上一页</a> </td><td width="10%" align="left"><a accesskey="u" href="rules.html" title="第 40 章 规则系统">上一级</a></td><th width="60%" align="center">第 40 章 规则系统</th><td width="10%" align="right"><a accesskey="h" href="index.html" title="PostgreSQL 10.1 手册">起始页</a></td><td width="10%" align="right"> <a accesskey="n" href="rules-update.html" title="40.4. INSERT、UPDATE和DELETE上的规则">下一页</a></td></tr></table><hr></hr></div><div class="sect1" id="RULES-MATERIALIZEDVIEWS"><div class="titlepage"><div><div><h2 class="title" style="clear: both">40.3. 物化视图</h2></div></div></div><a id="idp35617920" class="indexterm"></a><a id="idp35619408" class="indexterm"></a><a id="idp35620768" class="indexterm"></a><p>    <span class="productname">PostgreSQL</span>中的物化视图像视图一样使用了规则系统，但是以一种类表的形式保留了结果。在物化视图：
+
+</p><pre class="programlisting">CREATE MATERIALIZED VIEW mymatview AS SELECT * FROM mytab;</pre><p>
+
+    和视图：
+
+</p><pre class="programlisting">CREATE TABLE mymatview AS SELECT * FROM mytab;</pre><p>
+
+    之间的主要区别是物化视图不能直接被更新，并且用于创建物化视图的查询的存储方式和视图查询的存储方式完全相同，因此要为物化视图生成新鲜的数据：
+
+</p><pre class="programlisting">REFRESH MATERIALIZED VIEW mymatview;</pre><p>
+
+    The information about a materialized view in the
+    有关一个<span class="productname">PostgreSQL</span>系统目录中的物化视图的信息和一个表或视图的信息完全相同。因此对于解析器，一个物化视图就是一个关系，就像一个表或一个视图。当一个物化视图被一个查询引用时，数据直接从物化视图中返回，如同表一样；规则只被用来填充物化视图。</p><p>    虽然对物化视图中存储的数据的访问常常要快于直接访问底层表或通过一个视图访问，但是数据并不总是最新的；但是某些时候并不需要当前数据。考虑一个记录销售情况的表：
+
+</p><pre class="programlisting">CREATE TABLE invoice (
+    invoice_no    integer        PRIMARY KEY,
+    seller_no     integer,       -- 销售员的 ID
+    invoice_date  date,          -- 销售日期
+    invoice_amt   numeric(13,2)  -- 销售量
+);</pre><p>
+
+    如果人们想快速绘制历史销售数据，他们可能希望汇总，并且他们可能并不关心当前日期的不完整数据：
+
+</p><pre class="programlisting">CREATE MATERIALIZED VIEW sales_summary AS
+  SELECT
+      seller_no,
+      invoice_date,
+      sum(invoice_amt)::numeric(13,2) as sales_amt
+    FROM invoice
+    WHERE invoice_date &lt; CURRENT_DATE
+    GROUP BY
+      seller_no,
+      invoice_date
+    ORDER BY
+      seller_no,
+      invoice_date;
+
+CREATE UNIQUE INDEX sales_summary_seller
+  ON sales_summary (seller_no, invoice_date);</pre><p>
+
+    这个物化视图可能对在为销售员创建的控制面板上显示一个图表非常有用。可以用一个计划任务在每晚使用这个 SQL 语句更新该统计信息：
+
+</p><pre class="programlisting">REFRESH MATERIALIZED VIEW sales_summary;</pre><p>    物化视图的另一种使用是允许通过一个外部数据包装器对来
+    自一个远程系统的数据进行更快的访问。下面有一个使用
+    <code class="literal">file_fdw</code>的简单例子，但是由于本地系
+    统上可以使用高速缓存，因此比起访问一个远程系统的性
+    能差异可能会比这里所展示的更大。注意鉴于
+    <code class="literal">file_fdw</code>不支持索引，我们也使用这种
+    能力来在物化视图上放置索引。这种优势可能不适用于其
+    他种类的外部数据访问。</p><p>
+    建立：
+
+</p><pre class="programlisting">CREATE EXTENSION file_fdw;
+CREATE SERVER local_file FOREIGN DATA WRAPPER file_fdw;
+CREATE FOREIGN TABLE words (word text NOT NULL)
+  SERVER local_file
+  OPTIONS (filename '/usr/share/dict/words');
+CREATE MATERIALIZED VIEW wrd AS SELECT * FROM words;
+CREATE UNIQUE INDEX wrd_word ON wrd (word);
+CREATE EXTENSION pg_trgm;
+CREATE INDEX wrd_trgm ON wrd USING gist (word gist_trgm_ops);
+VACUUM ANALYZE wrd;</pre><p>
+
+    现在让我们对一个词进行拼写检查。直接使用<code class="literal">file_fdw</code>：
+
+</p><pre class="programlisting">SELECT count(*) FROM words WHERE word = 'caterpiler';
+
+ count 
+-------
+     0
+(1 row)</pre><p>
+
+    通过<code class="command">EXPLAIN ANALYZE</code>，我们可以看到：
+
+</p><pre class="programlisting"> Aggregate  (cost=21763.99..21764.00 rows=1 width=0) (actual time=188.180..188.181 rows=1 loops=1)
+   -&gt;  Foreign Scan on words  (cost=0.00..21761.41 rows=1032 width=0) (actual time=188.177..188.177 rows=0 loops=1)
+         Filter: (word = 'caterpiler'::text)
+         Rows Removed by Filter: 479829
+         Foreign File: /usr/share/dict/words
+         Foreign File Size: 4953699
+ Planning time: 0.118 ms
+ Execution time: 188.273 ms</pre><p>
+
+    如果使用物化视图，该查询会快很多：
+
+</p><pre class="programlisting"> Aggregate  (cost=4.44..4.45 rows=1 width=0) (actual time=0.042..0.042 rows=1 loops=1)
+   -&gt;  Index Only Scan using wrd_word on wrd  (cost=0.42..4.44 rows=1 width=0) (actual time=0.039..0.039 rows=0 loops=1)
+         Index Cond: (word = 'caterpiler'::text)
+         Heap Fetches: 0
+ Planning time: 0.164 ms
+ Execution time: 0.117 ms</pre><p>
+
+    不管哪种方式，单词都是被拼错的，因此让我们看看什么是我们可能想要的。再次使用<code class="literal">file_fdw</code>：
+
+</p><pre class="programlisting">SELECT word FROM words ORDER BY word &lt;-&gt; 'caterpiler' LIMIT 10;
+
+     word     
+---------------
+ cater
+ caterpillar
+ Caterpillar
+ caterpillars
+ caterpillar's
+ Caterpillar's
+ caterer
+ caterer's
+ caters
+ catered
+(10 rows)</pre><p>
+
+</p><pre class="programlisting"> Limit  (cost=11583.61..11583.64 rows=10 width=32) (actual time=1431.591..1431.594 rows=10 loops=1)
+   -&gt;  Sort  (cost=11583.61..11804.76 rows=88459 width=32) (actual time=1431.589..1431.591 rows=10 loops=1)
+         Sort Key: ((word &lt;-&gt; 'caterpiler'::text))
+         Sort Method: top-N heapsort  Memory: 25kB
+         -&gt;  Foreign Scan on words  (cost=0.00..9672.05 rows=88459 width=32) (actual time=0.057..1286.455 rows=479829 loops=1)
+               Foreign File: /usr/share/dict/words
+               Foreign File Size: 4953699
+ Planning time: 0.128 ms
+ Execution time: 1431.679 ms</pre><p>
+
+    使用物化视图：
+
+</p><pre class="programlisting"> Limit  (cost=0.29..1.06 rows=10 width=10) (actual time=187.222..188.257 rows=10 loops=1)
+   -&gt;  Index Scan using wrd_trgm on wrd  (cost=0.29..37020.87 rows=479829 width=10) (actual time=187.219..188.252 rows=10 loops=1)
+         Order By: (word &lt;-&gt; 'caterpiler'::text)
+ Planning time: 0.196 ms
+ Execution time: 198.640 ms</pre><p>
+
+    如果你能够忍受定期把远程数据更新到本地数据库，其性能收益可能是巨大的。</p></div><div class="navfooter"><hr /><table width="100%" summary="Navigation footer"><tr><td width="40%" align="left"><a accesskey="p" href="rules-views.html">上一页</a> </td><td width="20%" align="center"><a accesskey="u" href="rules.html">上一级</a></td><td width="40%" align="right"> <a accesskey="n" href="rules-update.html">下一页</a></td></tr><tr><td width="40%" align="left" valign="top">40.2. 视图和规则系统 </td><td width="20%" align="center"><a accesskey="h" href="index.html">起始页</a></td><td width="40%" align="right" valign="top"> 40.4. <code class="command">INSERT</code>、<code class="command">UPDATE</code>和<code class="command">DELETE</code>上的规则</td></tr></table></div></body></html>

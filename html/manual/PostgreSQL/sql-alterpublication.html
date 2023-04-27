@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><title>ALTER PUBLICATION</title><link rel="stylesheet" type="text/css" href="stylesheet.css" /><link rev="made" href="pgsql-docs@postgresql.org" /><meta name="generator" content="DocBook XSL Stylesheets V1.79.1" /><link rel="prev" href="sql-alterpolicy.html" title="ALTER POLICY" /><link rel="next" href="sql-alterrole.html" title="ALTER ROLE" /></head><body><div xmlns="http://www.w3.org/TR/xhtml1/transitional" class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="5" align="center">ALTER PUBLICATION</th></tr><tr><td width="10%" align="left"><a accesskey="p" href="sql-alterpolicy.html" title="ALTER POLICY">上一页</a> </td><td width="10%" align="left"><a accesskey="u" href="sql-commands.html" title="SQL 命令">上一级</a></td><th width="60%" align="center">SQL 命令</th><td width="10%" align="right"><a accesskey="h" href="index.html" title="PostgreSQL 10.1 手册">起始页</a></td><td width="10%" align="right"> <a accesskey="n" href="sql-alterrole.html" title="ALTER ROLE">下一页</a></td></tr></table><hr></hr></div><div class="refentry" id="SQL-ALTERPUBLICATION"><div class="titlepage"></div><a id="idp40640736" class="indexterm"></a><div class="refnamediv"><h2><span class="refentrytitle">ALTER PUBLICATION</span></h2><p>ALTER PUBLICATION — 修改发布的定义</p></div><div class="refsynopsisdiv"><h2>大纲</h2><pre class="synopsis">ALTER PUBLICATION <em class="replaceable"><code>name</code></em> ADD TABLE [ ONLY ] <em class="replaceable"><code>table_name</code></em> [ * ] [, ...]
+ALTER PUBLICATION <em class="replaceable"><code>name</code></em> SET TABLE [ ONLY ] <em class="replaceable"><code>table_name</code></em> [ * ] [, ...]
+ALTER PUBLICATION <em class="replaceable"><code>name</code></em> DROP TABLE [ ONLY ] <em class="replaceable"><code>table_name</code></em> [ * ] [, ...]
+ALTER PUBLICATION <em class="replaceable"><code>name</code></em> SET ( <em class="replaceable"><code>publication_parameter</code></em> [= <em class="replaceable"><code>value</code></em>] [, ... ] )
+ALTER PUBLICATION <em class="replaceable"><code>name</code></em> OWNER TO { <em class="replaceable"><code>new_owner</code></em> | CURRENT_USER | SESSION_USER }
+ALTER PUBLICATION <em class="replaceable"><code>name</code></em> RENAME TO <em class="replaceable"><code>new_name</code></em></pre></div><div class="refsect1" id="idp40652896"><h2>描述</h2><p>   命令<code class="command">ALTER PUBLICATION</code>可以更改发布的属性。
+  </p><p>   前三个语句更改哪些表是该发布的一部分。<code class="literal">SET TABLE</code>
+   子句用指定的表替换发布中的表的列表。<code class="literal">ADD TABLE</code>和
+   <code class="literal">DROP TABLE</code>子句将从发布中添加和删除一个或多个表。
+   请注意，将表添加到已订阅的发布中将需要在订阅端执行<code class="literal">ALTER SUBSCRIPTION
+   ... REFRESH PUBLICATION</code>操作才能生效。
+  </p><p>   第四条语句可以改变在<a class="xref" href="sql-createpublication.html" title="CREATE PUBLICATION"><span class="refentrytitle">CREATE PUBLICATION</span></a>中指定的所有发布属性。
+   该命令中未提及的属性保留其先前的设置。
+  </p><p>   其余语句更改所有者和发布的名称。
+  </p><p>   你必须拥有该发布才能使用<code class="command">ALTER PUBLICATION</code>。要改变所有者，
+   你也必须是新所有者角色的直接或间接成员。新的所有者必须在数据库上拥有
+   <code class="literal">CREATE</code>权限。此外，<code class="literal">FOR ALL TABLES</code>
+   发布的新所有者必须是超级用户。但是，
+   超级用户可以在避开这些限制的情况下更改发布的所有权。
+  </p></div><div class="refsect1" id="idp40662256"><h2>参数</h2><div class="variablelist"><dl class="variablelist"><dt><span class="term"><em class="replaceable"><code>name</code></em></span></dt><dd><p>      要修改定义的现有发布的名称。
+     </p></dd><dt><span class="term"><em class="replaceable"><code>table_name</code></em></span></dt><dd><p>      现有表的名称。如果在表名之前指定了<code class="literal">ONLY</code>，则只有该表受到影响。
+	  如果没有指定<code class="literal">ONLY</code>，则该表及其所有后代表（如果有的话）都会受到影响。
+	  可选地，可以在表名之后指定<code class="literal">*</code>以明确指示包含后代表。
+     </p></dd><dt><span class="term"><code class="literal">SET ( <em class="replaceable"><code>publication_parameter</code></em> [= <em class="replaceable"><code>value</code></em>] [, ... ] )</code></span></dt><dd><p>      该子句修改最初由<a class="xref" href="sql-createpublication.html" title="CREATE PUBLICATION"><span class="refentrytitle">CREATE PUBLICATION</span></a>设置的发布参数。
+     </p></dd><dt><span class="term"><em class="replaceable"><code>new_owner</code></em></span></dt><dd><p>      发布的新所有者的用户名。
+     </p></dd><dt><span class="term"><em class="replaceable"><code>new_name</code></em></span></dt><dd><p>      发布的新名称。
+     </p></dd></dl></div></div><div class="refsect1" id="idp40673728"><h2>示例</h2><p>   将发布修改为只发布删除和更新：
+   Change the publication to publish only deletes and updates:
+</p><pre class="programlisting">ALTER PUBLICATION noinsert SET (publish = 'update, delete');</pre><p>
+  </p><p>   给发布添加一些表：
+</p><pre class="programlisting">ALTER PUBLICATION mypublication ADD TABLE users, departments;</pre></div><div class="refsect1" id="idp40676320"><h2>兼容性</h2><p>   <code class="command">ALTER PUBLICATION</code>是<span class="productname">PostgreSQL</span>的一个扩展。
+  </p></div><div class="refsect1" id="idp40678432"><h2>又见</h2><span class="simplelist"><a class="xref" href="sql-createpublication.html" title="CREATE PUBLICATION"><span class="refentrytitle">CREATE PUBLICATION</span></a>, <a class="xref" href="sql-droppublication.html" title="DROP PUBLICATION"><span class="refentrytitle">DROP PUBLICATION</span></a>, <a class="xref" href="sql-createsubscription.html" title="CREATE SUBSCRIPTION"><span class="refentrytitle">CREATE SUBSCRIPTION</span></a>, <a class="xref" href="sql-altersubscription.html" title="ALTER SUBSCRIPTION"><span class="refentrytitle">ALTER SUBSCRIPTION</span></a></span></div></div><div class="navfooter"><hr /><table width="100%" summary="Navigation footer"><tr><td width="40%" align="left"><a accesskey="p" href="sql-alterpolicy.html">上一页</a> </td><td width="20%" align="center"><a accesskey="u" href="sql-commands.html">上一级</a></td><td width="40%" align="right"> <a accesskey="n" href="sql-alterrole.html">下一页</a></td></tr><tr><td width="40%" align="left" valign="top">ALTER POLICY </td><td width="20%" align="center"><a accesskey="h" href="index.html">起始页</a></td><td width="40%" align="right" valign="top"> ALTER ROLE</td></tr></table></div></body></html>

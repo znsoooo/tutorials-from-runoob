@@ -1,0 +1,370 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><title>35.15. Informix兼容模式</title><link rel="stylesheet" type="text/css" href="stylesheet.css" /><link rev="made" href="pgsql-docs@postgresql.org" /><meta name="generator" content="DocBook XSL Stylesheets V1.79.1" /><link rel="prev" href="ecpg-sql-whenever.html" title="WHENEVER" /><link rel="next" href="ecpg-develop.html" title="35.16. 内部" /></head><body><div xmlns="http://www.w3.org/TR/xhtml1/transitional" class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="5" align="center">35.15. <span xmlns="http://www.w3.org/1999/xhtml" class="productname">Informix</span>兼容模式</th></tr><tr><td width="10%" align="left"><a accesskey="p" href="ecpg-sql-whenever.html" title="WHENEVER">上一页</a> </td><td width="10%" align="left"><a accesskey="u" href="ecpg.html" title="第 35 章 ECPG - C 中的嵌入式 SQL">上一级</a></td><th width="60%" align="center">第 35 章 <span xmlns="http://www.w3.org/1999/xhtml" class="application">ECPG</span> - C 中的嵌入式 <acronym xmlns="http://www.w3.org/1999/xhtml" class="acronym">SQL</acronym></th><td width="10%" align="right"><a accesskey="h" href="index.html" title="PostgreSQL 10.1 手册">起始页</a></td><td width="10%" align="right"> <a accesskey="n" href="ecpg-develop.html" title="35.16. 内部">下一页</a></td></tr></table><hr></hr></div><div class="sect1" id="ECPG-INFORMIX-COMPAT"><div class="titlepage"><div><div><h2 class="title" style="clear: both">35.15. <span class="productname">Informix</span>兼容模式</h2></div></div></div><div class="toc"><dl class="toc"><dt><span class="sect2"><a href="ecpg-informix-compat.html#ECPG-INFORMIX-TYPES">35.15.1. 附加类型</a></span></dt><dt><span class="sect2"><a href="ecpg-informix-compat.html#ECPG-INFORMIX-STATEMENTS">35.15.2. 附加的/缺少的 嵌入式 SQL 语句</a></span></dt><dt><span class="sect2"><a href="ecpg-informix-compat.html#ECPG-INFORMIX-SQLDA">35.15.3. Informix-兼容的 SQLDA 描述符区域</a></span></dt><dt><span class="sect2"><a href="ecpg-informix-compat.html#ECPG-INFORMIX-FUNCTIONS">35.15.4. 附加函数</a></span></dt><dt><span class="sect2"><a href="ecpg-informix-compat.html#ECPG-INFORMIX-CONSTANTS">35.15.5. 额外的常量</a></span></dt></dl></div><p>   <code class="command">ecpg</code>可以运行在一种所谓的<em class="firstterm">Informix 兼容模式</em>中。如果这种模式被激活，它的行为就好像它是一个用于<span class="productname">Informix</span> E/SQL 的<span class="productname">Informix</span>预编译器。一般而言，这将允许你使用美元符号替代<code class="literal">EXEC SQL</code>来引入嵌入式 SQL 命令：
+</p><pre class="programlisting">$int j = 3;
+$CONNECT TO :dbname;
+$CREATE TABLE test(i INT PRIMARY KEY, j INT);
+$INSERT INTO test(i, j) VALUES (7, :j);
+$COMMIT;</pre><p>
+  </p><div class="note"><h3 class="title">注意</h3><p>    在<code class="literal">$</code>之间不能有任何空白以及下列之一的预处理器指令：<code class="literal">include</code>、<code class="literal">define</code>、<code class="literal">ifdef</code>等。否则，预处理器将把记号解析成一个主变量。
+   </p></div><p>   有两种兼容性模式：<code class="literal">INFORMIX</code>、<code class="literal">INFORMIX_SE</code>
+  </p><p>   在链接使用这种兼容性模式的程序时，要记得链接上和 ECPG 一起发布的<code class="literal">libcompat</code>。
+  </p><p>   除了之前解释过的语法糖，<span class="productname">Informix</span>兼容性模式从 E/SQL 中移植了一些用于输入、输出和数据转换的函数以及嵌入式 SQL 语句到 ECPG 中。
+  </p><p>   <span class="productname">Informix</span>兼容性模式与 ECPG 的 pgtypeslib 库紧密连接。pgtypeslib 把 SQL 数据类型映射到 C 主程序中的数据类型并且大部分<span class="productname">Informix</span>兼容性模式的附加函数允许我们在那些 C 主程序类型上操作。不过注意兼容性的范围被有所限制。它并不是想尝试复制<span class="productname">Informix</span>的行为。它允许你做或多或少的相同操作并且给你具有相同名称和相同基本行为的函数，但是此刻如果你使用<span class="productname">Informix</span>，其中并没有唾手可得的替代品。此外，一些数据类型也不同。例如，<span class="productname">PostgreSQL</span>的日期时间和区间类型不理解范围（例如<code class="literal">YEAR TO MINUTE</code>），因此你也无法在 ECPG 中找到支持。
+  </p><div class="sect2" id="ECPG-INFORMIX-TYPES"><div class="titlepage"><div><div><h3 class="title">35.15.1. 附加类型</h3></div></div></div><p>    用于存储右切边字符串数据的 Informix-特殊的 "string" 伪类型现在在 Informix 模式中不用<code class="literal">typedef</code>就能支持。事实上，在 Informix 模式中，ECPG 拒绝处理包含<code class="literal">typedef sometype string;</code>的源文件。
+</p><pre class="programlisting">EXEC SQL BEGIN DECLARE SECTION;
+string userid; /* 这个变量将包含切边过的数据 */
+EXEC SQL END DECLARE SECTION;
+
+EXEC SQL FETCH MYCUR INTO :userid;</pre><p>
+   </p></div><div class="sect2" id="ECPG-INFORMIX-STATEMENTS"><div class="titlepage"><div><div><h3 class="title">35.15.2. 附加的/缺少的 嵌入式 SQL 语句</h3></div></div></div><p>    </p><div class="variablelist"><dl class="variablelist"><dt><span class="term"><code class="literal">CLOSE DATABASE</code></span></dt><dd><p>        这个语句关闭当前连接。事实上，这是 ECPG 的<code class="literal">DISCONNECT CURRENT</code>语句的同义词：
+</p><pre class="programlisting">$CLOSE DATABASE;                /* 关闭当前连接 */
+EXEC SQL CLOSE DATABASE;</pre><p>
+       </p></dd><dt><span class="term"><code class="literal">FREE cursor_name</code></span></dt><dd><p>        由于 ECPG 和 Informix ESQL/C 在工作方式上的区别（一个是纯语法转换而另一个依赖于底层的运行时库），在 ECPG 中没有<code class="literal">FREE cursor_name</code>语句。这是因为在 ECPG 中，<code class="literal">DECLARE CURSOR</code>不会翻译成一个运行时库中使用游标名的函数调用。这意味着在 ECPG 运行时库中不会有 SQL 游标的运行时登记，SQL 游标只登记在 PostgreSQL 服务器中。
+       </p></dd><dt><span class="term"><code class="literal">FREE statement_name</code></span></dt><dd><p>        <code class="literal">FREE statement_name</code>是<code class="literal">DEALLOCATE PREPARE statement_name</code>的同义词。
+       </p></dd></dl></div><p>
+   </p></div><div class="sect2" id="ECPG-INFORMIX-SQLDA"><div class="titlepage"><div><div><h3 class="title">35.15.3. Informix-兼容的 SQLDA 描述符区域</h3></div></div></div><p>    Informix-兼容模式支持一种与中所述不同的结构。如下：
+</p><pre class="programlisting">struct sqlvar_compat
+{
+    short   sqltype;
+    int     sqllen;
+    char   *sqldata;
+    short  *sqlind;
+    char   *sqlname;
+    char   *sqlformat;
+    short   sqlitype;
+    short   sqlilen;
+    char   *sqlidata;
+    int     sqlxid;
+    char   *sqltypename;
+    short   sqltypelen;
+    short   sqlownerlen;
+    short   sqlsourcetype;
+    char   *sqlownername;
+    int     sqlsourceid;
+    char   *sqlilongdata;
+    int     sqlflags;
+    void   *sqlreserved;
+};
+
+struct sqlda_compat
+{
+    short  sqld;
+    struct sqlvar_compat *sqlvar;
+    char   desc_name[19];
+    short  desc_occ;
+    struct sqlda_compat *desc_next;
+    void  *reserved;
+};
+
+typedef struct sqlvar_compat    sqlvar_t;
+typedef struct sqlda_compat     sqlda_t;</pre><p>
+   </p><p>    全局属性是：
+    </p><div class="variablelist"><dl class="variablelist"><dt><span class="term"><code class="literal">sqld</code></span></dt><dd><p>        <code class="literal">SQLDA</code>描述符中域的数量。
+       </p></dd><dt><span class="term"><code class="literal">sqlvar</code></span></dt><dd><p>        每一个域属性的指针。
+       </p></dd><dt><span class="term"><code class="literal">desc_name</code></span></dt><dd><p>        未使用，用零字节填充。
+       </p></dd><dt><span class="term"><code class="literal">desc_occ</code></span></dt><dd><p>        已分配结构的尺寸。
+       </p></dd><dt><span class="term"><code class="literal">desc_next</code></span></dt><dd><p>        如果结果集包含多于一个记录，这个域是下一个 SQLDA 结构的指针。
+       </p></dd><dt><span class="term"><code class="literal">reserved</code></span></dt><dd><p>        未使用的指针，包含 NULL。为 Informix-兼容性而保留。
+       </p></dd></dl></div><p>
+
+    对每一个域的属性如下，它们被存储在<code class="literal">sqlvar</code>数组中：
+
+    </p><div class="variablelist"><dl class="variablelist"><dt><span class="term"><code class="literal">sqltype</code></span></dt><dd><p>        域的类型。可以使用的常量定义在<code class="literal">sqltypes.h</code>中。
+       </p></dd><dt><span class="term"><code class="literal">sqllen</code></span></dt><dd><p>        域数据的长度。
+       </p></dd><dt><span class="term"><code class="literal">sqldata</code></span></dt><dd><p>        域数据的指针。该指针是<code class="literal">char *</code>类型，它所指向的数据是二进制个事。例子：
+</p><pre class="programlisting">int intval;
+
+switch (sqldata-&gt;sqlvar[i].sqltype)
+{
+    case SQLINTEGER:
+        intval = *(int *)sqldata-&gt;sqlvar[i].sqldata;
+        break;
+  ...
+}</pre><p>
+       </p></dd><dt><span class="term"><code class="literal">sqlind</code></span></dt><dd><p>        NULL 指示符的指针。如果是由 DESCRIBE 或 FETCH 返回，那么它总是一个有效的指针。如果被用作<code class="literal">EXECUTE ... USING sqlda;</code>的输入，那么 NULL-指针值意味着这个域的值是非-NULL 的。否则必须正确地设置一个有效的指针和<code class="literal">sqlitype</code>。例子：
+</p><pre class="programlisting">if (*(int2 *)sqldata-&gt;sqlvar[i].sqlind != 0)
+    printf("value is NULL\n");</pre><p>
+       </p></dd><dt><span class="term"><code class="literal">sqlname</code></span></dt><dd><p>        域的名称。以 0 终止的字符串。
+       </p></dd><dt><span class="term"><code class="literal">sqlformat</code></span></dt><dd><p>        在 Informix 中保留，是该域的<code class="function">PQfformat()</code>的值。
+       </p></dd><dt><span class="term"><code class="literal">sqlitype</code></span></dt><dd><p>        NULL 指示符数据的类型。当从服务器返回数据时，它总是 SQLSMINT。当<code class="literal">SQLDA</code>被用于一个参数化查询时，数据要根据设置的类型对待。
+       </p></dd><dt><span class="term"><code class="literal">sqlilen</code></span></dt><dd><p>        NULL 指示符数据的长度。
+       </p></dd><dt><span class="term"><code class="literal">sqlxid</code></span></dt><dd><p>        该域的扩展类型，<code class="function">PQftype()</code>的结果。
+       </p></dd><dt><span class="term"><code class="literal">sqltypename</code><br /></span><span class="term"><code class="literal">sqltypelen</code><br /></span><span class="term"><code class="literal">sqlownerlen</code><br /></span><span class="term"><code class="literal">sqlsourcetype</code><br /></span><span class="term"><code class="literal">sqlownername</code><br /></span><span class="term"><code class="literal">sqlsourceid</code><br /></span><span class="term"><code class="literal">sqlflags</code><br /></span><span class="term"><code class="literal">sqlreserved</code></span></dt><dd><p>        未使用。
+       </p></dd><dt><span class="term"><code class="literal">sqlilongdata</code></span></dt><dd><p>        如果<code class="literal">sqllen</code>大于 32kB，它等于<code class="literal">sqldata</code>。
+       </p></dd></dl></div><p>
+
+    例子：
+</p><pre class="programlisting">EXEC SQL INCLUDE sqlda.h;
+
+    sqlda_t        *sqlda; /* 这不需要在嵌入式 DECLARE SECTION 下 */
+
+    EXEC SQL BEGIN DECLARE SECTION;
+    char *prep_stmt = "select * from table1";
+    int i;
+    EXEC SQL END DECLARE SECTION;
+
+    ...
+
+    EXEC SQL PREPARE mystmt FROM :prep_stmt;
+
+    EXEC SQL DESCRIBE mystmt INTO sqlda;
+
+    printf("# of fields: %d\n", sqlda-&gt;sqld);
+    for (i = 0; i &lt; sqlda-&gt;sqld; i++)
+      printf("field %d: \"%s\"\n", sqlda-&gt;sqlvar[i]-&gt;sqlname);
+
+    EXEC SQL DECLARE mycursor CURSOR FOR mystmt;
+    EXEC SQL OPEN mycursor;
+    EXEC SQL WHENEVER NOT FOUND GOTO out;
+
+    while (1)
+    {
+      EXEC SQL FETCH mycursor USING sqlda;
+    }
+
+    EXEC SQL CLOSE mycursor;
+
+    free(sqlda); /* 主结构完全被 free()，sqlda 和 sqlda-&gt;sqlvar 在一个已分配区域中 */</pre><p>
+    更多信息可见<code class="literal">sqlda.h</code>头部和<code class="literal">src/interfaces/ecpg/test/compat_informix/sqlda.pgc</code>回归测试。
+   </p></div><div class="sect2" id="ECPG-INFORMIX-FUNCTIONS"><div class="titlepage"><div><div><h3 class="title">35.15.4. 附加函数</h3></div></div></div><p>    </p><div class="variablelist"><dl class="variablelist"><dt><span class="term"><code class="function">decadd</code></span></dt><dd><p>        将两个decimal类型值相加。
+</p><pre class="synopsis">int decadd(decimal *arg1, decimal *arg2, decimal *sum);</pre><p>
+        该函数接收第一个类型为 decimal 的操作数的指针（<code class="literal">arg1</code>）、第二个类型为 decimal 的操作数的指针（<code class="literal">arg2</code>）以及将包含和的 decimal 值的指针（<code class="literal">sum</code>）。成功时该函数返回 0。溢出时返回<code class="symbol">ECPG_INFORMIX_NUM_OVERFLOW</code>，下溢时返回<code class="symbol">ECPG_INFORMIX_NUM_UNDERFLOW</code>。其他失败会返回 -1 并且<code class="varname">errno</code>会被设置为相应的 pgtypeslib 中的<code class="varname">errno</code>编号。
+       </p></dd><dt><span class="term"><code class="function">deccmp</code></span></dt><dd><p>        比较两个 decimal 变量。
+</p><pre class="synopsis">int deccmp(decimal *arg1, decimal *arg2);</pre><p>
+        该函数接收第一个 decimal 值的指针（<code class="literal">arg1</code>）、第二个 decimal 值的指针（<code class="literal">arg2</code>）并且返回一个整数值说明哪一个值更大。
+        </p><div class="itemizedlist"><ul class="itemizedlist" style="list-style-type: disc; "><li class="listitem"><p>           1，如果<code class="literal">arg1</code>指向的值大于<code class="literal">var2</code>指向的值
+          </p></li><li class="listitem"><p>           -1，如果<code class="literal">arg1</code>指向的值小于<code class="literal">var2</code>指向的值</p></li><li class="listitem"><p>           0，如果<code class="literal">arg1</code>指向的值与<code class="literal">arg2</code>指向的值相等
+          </p></li></ul></div><p>
+       </p></dd><dt><span class="term"><code class="function">deccopy</code></span></dt><dd><p>        拷贝一个 decimal 值。
+</p><pre class="synopsis">void deccopy(decimal *src, decimal *target);</pre><p>
+        该函数接收要拷贝的 decimal 值的指针作为第一个参数（<code class="literal">src</code>）以及一个类型为 decimal 的目标结构的指针作为第二个参数（<code class="literal">target</code>）。
+       </p></dd><dt><span class="term"><code class="function">deccvasc</code></span></dt><dd><p>        把一个值从 ASCII 表达转换成一个 decimal 类型。
+</p><pre class="synopsis">int deccvasc(char *cp, int len, decimal *np);</pre><p>
+        该函数接收一个包含要转换的数字的字符串表达的字符串指针（<code class="literal">cp</code>）及其长度（<code class="literal">len</code>）。<code class="literal">np</code>是一个用来保存操作结果的 decimal 值的指针。
+       </p><p>        例如，可用的格式有：
+         <code class="literal">-2</code>、
+         <code class="literal">.794</code>、
+         <code class="literal">+3.44</code>、
+         <code class="literal">592.49E07</code>或者
+         <code class="literal">-32.84e-4</code>。
+       </p><p>        成功时该函数返回 0。如果发生溢出或者下溢，分别返回
+        <code class="literal">ECPG_INFORMIX_NUM_OVERFLOW</code>或者
+        <code class="literal">ECPG_INFORMIX_NUM_UNDERFLOW</code>。如果 ASCII 表达无法被解析，将返回<code class="literal">ECPG_INFORMIX_BAD_NUMERIC</code>。如果解析指数时发生问题则返回<code class="literal">ECPG_INFORMIX_BAD_EXPONENT</code>。
+       </p></dd><dt><span class="term"><code class="function">deccvdbl</code></span></dt><dd><p>        将一个 double 值转换成一个 decimal 值。
+</p><pre class="synopsis">int deccvdbl(double dbl, decimal *np);</pre><p>
+        该函数接收要被转换的 double 变量作为第一个参数（<code class="literal">dbl</code>）。该函数接收一个 decimal 变量的指针作为第二个参数（<code class="literal">np</code>），它被用来保存操作的结果。
+       </p><p>        该函数在成功时返回 0，在转换失败时返回一个负值。
+       </p></dd><dt><span class="term"><code class="function">deccvint</code></span></dt><dd><p>        将一个 int 值转换成 decimal 值。
+</p><pre class="synopsis">int deccvint(int in, decimal *np);</pre><p>
+        该函数接收要被转换的 int 变量作为第一个参数（<code class="literal">in</code>）。该函数接收一个 decimal 变量的指针作为第二个参数（<code class="literal">np</code>），它被用来保存操作的结果。
+       </p><p>        该函数在成功时返回 0，在转换失败时返回一个负值。
+       </p></dd><dt><span class="term"><code class="function">deccvlong</code></span></dt><dd><p>        将一个 long 值转换成 decimal 值。
+</p><pre class="synopsis">int deccvlong(long lng, decimal *np);</pre><p>
+        该函数接收要被转换的 long 变量作为第一个参数（<code class="literal">lng</code>）。该函数接收一个 decimal 变量的指针作为第二个参数（<code class="literal">np</code>），它被用来保存操作的结果。
+       </p><p>        该函数在成功时返回 0，在转换失败时返回一个负值。
+       </p></dd><dt><span class="term"><code class="function">decdiv</code></span></dt><dd><p>        用两个 decimal 类型的变量做除法。
+</p><pre class="synopsis">int decdiv(decimal *n1, decimal *n2, decimal *result);</pre><p>
+        该函数接收两个变量的指针作为第一个（<code class="literal">n1</code>）和第二个（<code class="literal">n2</code>）操作数并且结算<code class="literal">n1</code>/<code class="literal">n2</code>。 <code class="literal">result</code>是一个指向保存操作结果的变量的指针。
+       </p><p>        成功时返回 0，如果除法失败则返回一个负值。如果发生溢出或下溢，该函数分别返回
+        <code class="literal">ECPG_INFORMIX_NUM_OVERFLOW</code>或者
+        <code class="literal">ECPG_INFORMIX_NUM_UNDERFLOW</code>。如果发现一次除零尝试，该函数返回
+        <code class="literal">ECPG_INFORMIX_DIVIDE_ZERO</code>。
+       </p></dd><dt><span class="term"><code class="function">decmul</code></span></dt><dd><p>        将两个 decimal 值相乘。
+</p><pre class="synopsis">int decmul(decimal *n1, decimal *n2, decimal *result);</pre><p>
+        该函数接收两个变量的指针作为第一个（<code class="literal">n1</code>）和第二个（<code class="literal">n2</code>）操作数并且结算<code class="literal">n1</code>*<code class="literal">n2</code>。 <code class="literal">result</code>是一个指向保存操作结果的变量的指针。
+       </p><p>        成功时返回 0，如果乘法失败则返回一个负值。如果发生溢出或下溢，该函数分别返回
+        <code class="literal">ECPG_INFORMIX_NUM_OVERFLOW</code>或者
+        <code class="literal">ECPG_INFORMIX_NUM_UNDERFLOW</code>。
+       </p></dd><dt><span class="term"><code class="function">decsub</code></span></dt><dd><p>        从一个 decimal 值中减去另一个。
+</p><pre class="synopsis">int decsub(decimal *n1, decimal *n2, decimal *result);</pre><p>
+
+        该函数接收两个变量的指针作为第一个（<code class="literal">n1</code>）和第二个（<code class="literal">n2</code>）操作数并且结算<code class="literal">n1</code>-<code class="literal">n2</code>。 <code class="literal">result</code>是一个指向保存操作结果的变量的指针。
+       </p><p>        成功时返回 0，如果减法失败则返回一个负值。如果发生溢出或下溢，该函数分别返回
+        <code class="literal">ECPG_INFORMIX_NUM_OVERFLOW</code>或者
+        <code class="literal">ECPG_INFORMIX_NUM_UNDERFLOW</code>。
+       </p></dd><dt><span class="term"><code class="function">dectoasc</code></span></dt><dd><p>        将一个 decimal 变量转换成它的 ASCII 表达放在一个 C char* 字符串中。
+</p><pre class="synopsis">int dectoasc(decimal *np, char *cp, int len, int right)</pre><p>
+        该函数接收一个要被转换成文本表达的 decimal 类型变量的指针（<code class="literal">np</code>）。<code class="literal">cp</code>是应保存操作结果的缓冲区。参数<code class="literal">right</code>指定小数点右边应该有多少位保留在输出中。结果将被圆整到所指定数量的十进制位。将<code class="literal">right</code>设置为 -1 表示输出中应该包括所有可用的十进制位。如果输出缓冲区的长度（由<code class="literal">len</code>指定）不足以保存包含拖尾零字节的文本表达，结果中将只保存一个单一的<code class="literal">*</code>字符并且返回 -1。
+       </p><p>        如果缓冲区<code class="literal">cp</code>太小该函数返回 -1；如果内存耗尽，则返回<code class="literal">ECPG_INFORMIX_OUT_OF_MEMORY</code>。
+       </p></dd><dt><span class="term"><code class="function">dectodbl</code></span></dt><dd><p>        将一个 decimal 类型变量转换成一个 double 类型变量。
+</p><pre class="synopsis">int dectodbl(decimal *np, double *dblp);</pre><p>
+        该函数接收一个要转换的 decimal 值的指针（<code class="literal">np</code>）以及一个保存操作结果的 double 变量的指针（<code class="literal">dblp</code>）。
+       </p><p>        该函数在成功时返回 0，在转换失败时返回一个负值。
+       </p></dd><dt><span class="term"><code class="function">dectoint</code></span></dt><dd><p>        将一个 decimal 类型变量转换成一个整数类型变量。
+</p><pre class="synopsis">int dectoint(decimal *np, int *ip);</pre><p>
+        该函数接收一个要转换的 decimal 值的指针（<code class="literal">np</code>）以及一个保存操作结果的整数变量的指针（<code class="literal">ip</code>）。
+       </p><p>        该函数在成功时返回 0，在转换失败时返回一个负值。如果发生溢出，会返回<code class="literal">ECPG_INFORMIX_NUM_OVERFLOW</code>。
+       </p><p>        注意 ECPG 实现与<span class="productname">Informix</span>实现不同。<span class="productname">Informix</span>限制一个整数的范围是从 -32767 到 32767，而 ECPG 实现中的限制取决于架构（<code class="literal">-INT_MAX .. INT_MAX</code>）。
+       </p></dd><dt><span class="term"><code class="function">dectolong</code></span></dt><dd><p>        将一个 decimal 类型变量转换成一个长整型变量。
+</p><pre class="synopsis">int dectolong(decimal *np, long *lngp);</pre><p>
+        该函数接收一个要转换的 decimal 值的指针（<code class="literal">np</code>）以及一个保存操作结果的长整型变量的指针（<code class="literal">lngp</code>）。
+       </p><p>        该函数在成功时返回 0，在转换失败时返回一个负值。如果发生溢出，会返回<code class="literal">ECPG_INFORMIX_NUM_OVERFLOW</code>。
+       </p><p>        注意 ECPG 实现与<span class="productname">Informix</span>实现不同。<span class="productname">Informix</span>限制一个整数的范围是从 -2,147,483,647 到 2,147,483,647，而 ECPG 实现中的限制取决于架构（<code class="literal">-LONG_MAX .. LONG_MAX</code>）。
+       </p></dd><dt><span class="term"><code class="function">rdatestr</code></span></dt><dd><p>        将一个日期转换成一个 C char* 字符串。
+</p><pre class="synopsis">int rdatestr(date d, char *str);</pre><p>
+        该函数接收两个参数，第一个是要转换的日期（<code class="literal">d</code>），第二个是目标字符串的指针。输出格式总是<code class="literal">yyyy-mm-dd</code>，因此你需要为该字符串分配至少 11 个字节（包括零字节终止符）。
+       </p><p>        成功时该函数返回 0，如果发生错误则返回一个负值。
+       </p><p>        注意 ECPG 实现与<span class="productname">Informix</span>实现不同。在<span class="productname">Informix</span>中，该格式可能受到环境变量设置的影响。而在 ECPG 中，你不能改变输出格式。
+       </p></dd><dt><span class="term"><code class="function">rstrdate</code></span></dt><dd><p>        解析一个日期的文本表达。
+</p><pre class="synopsis">int rstrdate(char *str, date *d);</pre><p>
+        该函数接收要转换的日期的文本表达（<code class="literal">str</code>）以及一个日期类型变量的指针（<code class="literal">d</code>）。这个函数不允许你指定一个格式掩码。它使用<span class="productname">Informix</span>的默认格式掩码<code class="literal">mm/dd/yyyy</code>。在内部，这个函数用<code class="function">rdefmtdate</code>的方式实现。因此，<code class="function">rstrdate</code>不会更快，并且如果可以选择，你应该选用允许你显式指定格式掩码的<code class="function">rdefmtdate</code>。
+       </p><p>        该返回与<code class="function">rdefmtdate</code>相同的值。
+       </p></dd><dt><span class="term"><code class="function">rtoday</code></span></dt><dd><p>        得到当前日期。
+</p><pre class="synopsis">void rtoday(date *d);</pre><p>
+        该函数接收一个日期变量的指针（<code class="literal">d</code>），它会把该变量设置为当前日期。
+       </p><p>        在内部这个函数使用<a class="xref" href="ecpg-pgtypes.html#PGTYPESDATETODAY"><code class="function">PGTYPESdate_today</code></a>函数。
+       </p></dd><dt><span class="term"><code class="function">rjulmdy</code></span></dt><dd><p>        从一个日期类型变量中抽取日、月、年的值。
+</p><pre class="synopsis">int rjulmdy(date d, short mdy[3]);</pre><p>
+        该函数接收日期<code class="literal">d</code>和由 3 个短整型值构成的数组的指针<code class="literal">mdy</code>。该变量名指定了顺序：<code class="literal">mdy[0]</code>将被设置为包含月的编号，<code class="literal">mdy[1]</code>将被设置为日的值，而<code class="literal">mdy[2]</code>将包含年。
+       </p><p>        当前该函数总是返回 0。
+       </p><p>        在内部该函数使用<a class="xref" href="ecpg-pgtypes.html#PGTYPESDATEJULMDY"><code class="function">PGTYPESdate_julmdy</code></a>函数。
+       </p></dd><dt><span class="term"><code class="function">rdefmtdate</code></span></dt><dd><p>        使用一个格式掩码把一个字符串转换成一个日期类型的值。
+</p><pre class="synopsis">int rdefmtdate(date *d, char *fmt, char *str);</pre><p>
+        该函数接收一个用于保存操作结果的日期值的指针（<code class="literal">d</code>）、要用来解析日期的格式掩码（<code class="literal">fmt</code>）以及包含日期文本表达的 C char* 字符串（<code class="literal">str</code>）。该文本表达应该匹配格式掩码。不过，你不需要具有从该字符串到格式掩码的 一一映射。该函数将分析顺序并且寻找表示年的位置的文字<code class="literal">yy</code>或<code class="literal">yyyy</code>、表示月的位置的<code class="literal">mm</code>以及表示日的位置的<code class="literal">dd</code>。
+       </p><p>        该函数返回下列值：
+        </p><div class="itemizedlist"><ul class="itemizedlist" style="list-style-type: disc; "><li class="listitem"><p>           0 - 该函数成功终止。
+          </p></li><li class="listitem"><p>           <code class="literal">ECPG_INFORMIX_ENOSHORTDATE</code> - 该日期不包含日、月、年之间的定界符。在这种情况下，输入字符串必须是正好 6 个或 8 个字节，但实际上却不是。
+          </p></li><li class="listitem"><p>           <code class="literal">ECPG_INFORMIX_ENOTDMY</code> - 格式字符串没有正确地指示年、月、日的顺序。
+          </p></li><li class="listitem"><p>           <code class="literal">ECPG_INFORMIX_BAD_DAY</code> - 输入字符串不含一个合法的日。
+          </p></li><li class="listitem"><p>           <code class="literal">ECPG_INFORMIX_BAD_MONTH</code> - 输入字符串不含一个合法的月。
+          </p></li><li class="listitem"><p>           <code class="literal">ECPG_INFORMIX_BAD_YEAR</code> - 输入字符串不含一个合法的年。
+          </p></li></ul></div><p>
+       </p><p>        在内部这个函数被实现为使用<a class="xref" href="ecpg-pgtypes.html#PGTYPESDATEDEFMTASC"><code class="function">PGTYPESdate_defmt_asc</code></a>函数。示例输入表可以在那里找到。
+       </p></dd><dt><span class="term"><code class="function">rfmtdate</code></span></dt><dd><p>        使用一个格式掩码将一个日期类型变量转换成它的文本表达。
+</p><pre class="synopsis">int rfmtdate(date d, char *fmt, char *str);</pre><p>
+        该函数接收要转换的日期（<code class="literal">d</code>）、格式掩码（<code class="literal">fmt</code>）以及将保存日期的文本表达的字符串（<code class="literal">str</code>）。
+       </p><p>        成功时该函数返回 0，如果发生错误则返回一个负值。
+       </p><p>        在内部这个函数使用<a class="xref" href="ecpg-pgtypes.html#PGTYPESDATEFMTASC"><code class="function">PGTYPESdate_fmt_asc</code></a>函数，例子请参考该函数。
+       </p></dd><dt><span class="term"><code class="function">rmdyjul</code></span></dt><dd><p>        从由 3 个短整型组成的数组创建一个日期值，它指定了该日期的日、月、年。
+</p><pre class="synopsis">int rmdyjul(short mdy[3], date *d);</pre><p>
+        该函数接收一个由 3 个短整型构成的数组（<code class="literal">mdy</code>）以及一个用来保存操作结构的日期类型变量的指针。
+       </p><p>        当前该函数总是返回 0。
+       </p><p>        在内部这个函数被实现为使用<a class="xref" href="ecpg-pgtypes.html#PGTYPESDATEMDYJUL"><code class="function">PGTYPESdate_mdyjul</code></a>。
+       </p></dd><dt><span class="term"><code class="function">rdayofweek</code></span></dt><dd><p>        为一个日期值返回一个表示它是星期几的数字。
+</p><pre class="synopsis">int rdayofweek(date d);</pre><p>
+        该函数接收日期变量<code class="literal">d</code>作为它的唯一参数并且返回一个整数指示这一天是星期几。
+        </p><div class="itemizedlist"><ul class="itemizedlist" style="list-style-type: disc; "><li class="listitem"><p>           0 - 周日
+          </p></li><li class="listitem"><p>           1 - 周一
+          </p></li><li class="listitem"><p>           2 - 周二
+          </p></li><li class="listitem"><p>           3 - 周三
+          </p></li><li class="listitem"><p>           4 - 周四
+          </p></li><li class="listitem"><p>           5 - 周五
+          </p></li><li class="listitem"><p>           6 - 周六
+          </p></li></ul></div><p>
+       </p><p>        在内部这个函数被实现为使用函数<a class="xref" href="ecpg-pgtypes.html#PGTYPESDATEDAYOFWEEK"><code class="function">PGTYPESdate_dayofweek</code></a>。
+       </p></dd><dt><span class="term"><code class="function">dtcurrent</code></span></dt><dd><p>        检索当前的时间戳。
+</p><pre class="synopsis">void dtcurrent(timestamp *ts);</pre><p>
+        该函数检索当前时间戳并且把它保存在<code class="literal">ts</code>指向的时间戳变量中。
+       </p></dd><dt><span class="term"><code class="function">dtcvasc</code></span></dt><dd><p>        把一个时间戳从它的文本表达解析到一个时间戳变量中。
+</p><pre class="synopsis">int dtcvasc(char *str, timestamp *ts);</pre><p>
+        该函数接收要解析的字符串（<code class="literal">str</code>）以及一个指向保存操作结果的时间戳变量的指针（<code class="literal">ts</code>）。
+       </p><p>        成功时该函数返回 0，如果发生错误则返回一个负值。
+       </p><p>        在内部这个函数使用<a class="xref" href="ecpg-pgtypes.html#PGTYPESTIMESTAMPFROMASC"><code class="function">PGTYPEStimestamp_from_asc</code></a>函数。一个输入示例的表格可以参考该函数的文档。
+       </p></dd><dt><span class="term"><code class="function">dtcvfmtasc</code></span></dt><dd><p>        使用一个格式掩码把一个时间戳从它的文本表达解析到一个时间戳变量中。
+</p><pre class="synopsis">dtcvfmtasc(char *inbuf, char *fmtstr, timestamp *dtvalue)</pre><p>
+        该函数接收要解析的字符串（<code class="literal">inbuf</code>）、要使用的格式掩码（<code class="literal">fmtstr</code>）以及一个指向保存操作结果的时间戳变量的指针（<code class="literal">dtvalue</code>）。
+       </p><p>        这个函数通过<a class="xref" href="ecpg-pgtypes.html#PGTYPESTIMESTAMPDEFMTASC"><code class="function">PGTYPEStimestamp_defmt_asc</code></a>函数实现。可以使用的格式说明符的列表可以参考该函数的文档。
+       </p><p>        成功时该函数返回 0，如果发生错误则返回一个负值。
+       </p></dd><dt><span class="term"><code class="function">dtsub</code></span></dt><dd><p>        从一个时间戳中减去另一个并且返回一个区间类型变量。
+</p><pre class="synopsis">int dtsub(timestamp *ts1, timestamp *ts2, interval *iv);</pre><p>
+        该函数将从<code class="literal">ts1</code>指向的时间戳变量中减去<code class="literal">ts2</code>指向的时间戳变量，并且将把结果存储在<code class="literal">iv</code>指向的区间变量中。
+       </p><p>        成功时该函数返回 0，如果发生错误则返回一个负值。
+       </p></dd><dt><span class="term"><code class="function">dttoasc</code></span></dt><dd><p>        将一个时间戳变量转换成一个 C char* 字符串。
+</p><pre class="synopsis">int dttoasc(timestamp *ts, char *output);</pre><p>
+        该函数接收一个要转换的时间戳变量的指针（<code class="literal">ts</code>）以及用于保存操作结果的字符串（<code class="literal">output</code>）。它根据 SQL 标准把<code class="literal">ts</code>转换成它的文本表达，形式为<code class="literal">YYYY-MM-DD HH:MM:SS</code>。
+       </p><p>        成功时该函数返回 0，如果发生错误则返回一个负值。
+       </p></dd><dt><span class="term"><code class="function">dttofmtasc</code></span></dt><dd><p>        使用一个格式掩码将一个时间戳变量转换成一个 C char*。
+</p><pre class="synopsis">int dttofmtasc(timestamp *ts, char *output, int str_len, char *fmtstr);</pre><p>
+        该函数接收一个要转换的时间戳的指针（<code class="literal">ts</code>）、一个输出缓冲区的指针（<code class="literal">output</code>）、已经为输出缓冲区分配的最大长度（<code class="literal">str_len</code>）以及用于转换的格式掩码（<code class="literal">fmtstr</code>）。
+       </p><p>        成功时该函数返回 0，如果发生错误则返回一个负值。
+       </p><p>        在内部，这个函数使用<a class="xref" href="ecpg-pgtypes.html#PGTYPESTIMESTAMPFMTASC"><code class="function">PGTYPEStimestamp_fmt_asc</code></a>函数。可以使用的格式说明符的列表可以参考该函数的文档。
+       </p></dd><dt><span class="term"><code class="function">intoasc</code></span></dt><dd><p>        将一个区间变量转换成一个 C char* 字符串。
+</p><pre class="synopsis">int intoasc(interval *i, char *str);</pre><p>
+        该函数接收一个要转换的区间变量的指针（<code class="literal">i</code>）以及要保持该操作结果的字符串（<code class="literal">str</code>）。它根据 SQL 标准把<code class="literal">i</code>转换成它的文本表达，形式为<code class="literal">YYYY-MM-DD HH:MM:SS</code>。
+       </p><p>        成功时该函数返回 0，如果发生错误则返回一个负值。
+       </p></dd><dt><span class="term"><code class="function">rfmtlong</code></span></dt><dd><p>        用一个格式掩码将一个长整型值转换成它的文本表达。
+</p><pre class="synopsis">int rfmtlong(long lng_val, char *fmt, char *outbuf);</pre><p>
+        该函数接收长整型值<code class="literal">lng_val</code>、格式掩码<code class="literal">fmt</code>以及输出缓冲区的指针<code class="literal">outbuf</code>。它根据格式掩码将长整型值转换成文本表达。
+       </p><p>        格式掩码可以由下列格式说明字符构成：
+        </p><div class="itemizedlist"><ul class="itemizedlist" style="list-style-type: disc; "><li class="listitem"><p>           <code class="literal">*</code> （星） - 如果这个位置可以为空白，否则用一个星号填充。
+          </p></li><li class="listitem"><p>           <code class="literal">&amp;</code> （花号） -如果这个位置可以为空白，否则用一个零填充。
+          </p></li><li class="listitem"><p>           <code class="literal">#</code> - 把前导零转变成空白。
+          </p></li><li class="listitem"><p>           <code class="literal">&lt;</code> - 左对齐字符串中的数字。
+          </p></li><li class="listitem"><p>           <code class="literal">,</code> （逗号） - 将有四个或者更多数位的数字份组成用逗号分隔的 3 数位组。
+          </p></li><li class="listitem"><p>           <code class="literal">.</code> （点） - 这个字符分隔数字的整数部分和小数部分。
+          </p></li><li class="listitem"><p>           <code class="literal">-</code> （负） - 如果该数字是一个负值则负号会出现。
+          </p></li><li class="listitem"><p>           <code class="literal">+</code> （加） - 如果该数字是一个正值则加号会出现。
+          </p></li><li class="listitem"><p>           <code class="literal">(</code> - 这会替换负数前面的负号。负号将不会出现。
+          </p></li><li class="listitem"><p>           <code class="literal">)</code> - 这个字符替换负号并且被打印在负值的后面。
+          </p></li><li class="listitem"><p>           <code class="literal">$</code> - 货币符号。
+          </p></li></ul></div><p>
+       </p></dd><dt><span class="term"><code class="function">rupshift</code></span></dt><dd><p>        把一个字符串转换成大写形式。
+</p><pre class="synopsis">void rupshift(char *str);</pre><p>
+        该函数接收一个字符串的指针并且把每一个小写形式的字符变成大写形式。
+       </p></dd><dt><span class="term"><code class="function">byleng</code></span></dt><dd><p>        返回一个字符串的字符数，其中不含拖尾的空白。
+</p><pre class="synopsis">int byleng(char *str, int len);</pre><p>
+        该函数期待一个定长字符串作为它的第一个参数（<code class="literal">str</code>）并且把它的长度作为第二个参数（<code class="literal">len</code>）。该函数会返回有效字符的数量，也就是字符串不含拖尾空白的长度。
+       </p></dd><dt><span class="term"><code class="function">ldchar</code></span></dt><dd><p>        复制一个定长字符串到一个空终止的字符串。
+</p><pre class="synopsis">void ldchar(char *src, int len, char *dest);</pre><p>
+        该函数接收要被复制的定长字符串（<code class="literal">src</code>）、它的长度（<code class="literal">len</code>）以及目标内存的指针（<code class="literal">dest</code>）。注意你需要为<code class="literal">dest</code>指向的字符串保留至少<code class="literal">len+1</code>个字节。该函数复制至多<code class="literal">len</code>个字节到新的位置（如果源字符串有拖尾的空格）并且增加空终止符。
+       </p></dd><dt><span class="term"><code class="function">rgetmsg</code></span></dt><dd><pre class="synopsis">int rgetmsg(int msgnum, char *s, int maxsize);</pre><p>
+        这个函数存在，但是目前还没有实现！
+       </p></dd><dt><span class="term"><code class="function">rtypalign</code></span></dt><dd><pre class="synopsis">int rtypalign(int offset, int type);</pre><p>
+        这个函数存在，但是目前还没有实现！
+       </p></dd><dt><span class="term"><code class="function">rtypmsize</code></span></dt><dd><pre class="synopsis">int rtypmsize(int type, int len);</pre><p>
+        这个函数存在，但是目前还没有实现！
+       </p></dd><dt><span class="term"><code class="function">rtypwidth</code></span></dt><dd><pre class="synopsis">int rtypwidth(int sqltype, int sqllen);</pre><p>
+        这个函数存在，但是目前还没有实现！
+       </p></dd><dt id="RSETNULL"><span class="term"><code class="function">rsetnull</code></span></dt><dd><p>        设置一个变量为 NULL。
+</p><pre class="synopsis">int rsetnull(int t, char *ptr);</pre><p>
+        该函数接收一个表示变量类型的整数以及一个被造型成 C char* 指针的变量本身的指针。
+       </p><p>        存在下列类型：
+        </p><div class="itemizedlist"><ul class="itemizedlist" style="list-style-type: disc; "><li class="listitem"><p>           <code class="literal">CCHARTYPE</code> - 用于类型<code class="type">char</code>或者<code class="type">char*</code>的一个变量
+          </p></li><li class="listitem"><p>           <code class="literal">CSHORTTYPE</code> - 用于类型<code class="type">short int</code>的一个变量
+          </p></li><li class="listitem"><p>           <code class="literal">CINTTYPE</code> - 用于类型<code class="type">int</code>的一个变量
+          </p></li><li class="listitem"><p>           <code class="literal">CBOOLTYPE</code> - 用于类型<code class="type">boolean</code>的一个变量
+          </p></li><li class="listitem"><p>           <code class="literal">CFLOATTYPE</code> - 用于类型<code class="type">float</code>的一个变量
+          </p></li><li class="listitem"><p>           <code class="literal">CLONGTYPE</code> - 用于类型<code class="type">long</code>的一个变量
+          </p></li><li class="listitem"><p>           <code class="literal">CDOUBLETYPE</code> - 用于类型<code class="type">double</code>的一个变量
+          </p></li><li class="listitem"><p>           <code class="literal">CDECIMALTYPE</code> - 用于类型<code class="type">decimal</code>的一个变量
+          </p></li><li class="listitem"><p>           <code class="literal">CDATETYPE</code> - 用于类型<code class="type">date</code>的一个变量
+          </p></li><li class="listitem"><p>           <code class="literal">CDTIMETYPE</code> - 用于类型<code class="type">timestamp</code>的一个变量
+          </p></li></ul></div><p>
+       </p><p>        这里是一个调用这个函数的例子：
+</p><pre class="programlisting">$char c[] = "abc       ";
+$short s = 17;
+$int i = -74874;
+
+rsetnull(CCHARTYPE, (char *) c);
+rsetnull(CSHORTTYPE, (char *) &amp;s);
+rsetnull(CINTTYPE, (char *) &amp;i);</pre><p>
+       </p></dd><dt><span class="term"><code class="function">risnull</code></span></dt><dd><p>        测试一个变量是否为 NULL。
+</p><pre class="synopsis">int risnull(int t, char *ptr);</pre><p>
+        该函数接收要测试的变量的类型（<code class="literal">t</code>）以及一个指向该变量的指针（<code class="literal">ptr</code>）。注意后者需要被造型为一个 char*。可能的变量类型请见函数<a class="xref" href="ecpg-informix-compat.html#RSETNULL"><code class="function">rsetnull</code></a>。
+       </p><p>        这里是一个如何使用这个函数的例子：
+</p><pre class="programlisting">$char c[] = "abc       ";
+$short s = 17;
+$int i = -74874;
+
+risnull(CCHARTYPE, (char *) c);
+risnull(CSHORTTYPE, (char *) &amp;s);
+risnull(CINTTYPE, (char *) &amp;i);</pre><p>
+       </p></dd></dl></div><p>
+   </p></div><div class="sect2" id="ECPG-INFORMIX-CONSTANTS"><div class="titlepage"><div><div><h3 class="title">35.15.5. 额外的常量</h3></div></div></div><p>    注意这里所有的常量都描述错误并且它们都被定义为表示负值。在每一种不同常量的描述中，你还可以找到在当前实现中该常量表示的值。不过你不应该依赖于这个数字。但是你可以相信所有的这些常量都是被定义为表示负值。
+    </p><div class="variablelist"><dl class="variablelist"><dt><span class="term"><code class="literal">ECPG_INFORMIX_NUM_OVERFLOW</code></span></dt><dd><p>        如果在一次计算中发生了溢出，函数会返回这个值。在内部它被定义为 -1200（<span class="productname">Informix</span>定义）。
+       </p></dd><dt><span class="term"><code class="literal">ECPG_INFORMIX_NUM_UNDERFLOW</code></span></dt><dd><p>        如果在一次计算中发生了下溢，函数会返回这个值。在内部它被定义为 -1201（<span class="productname">Informix</span>定义）。
+       </p></dd><dt><span class="term"><code class="literal">ECPG_INFORMIX_DIVIDE_ZERO</code></span></dt><dd><p>       如果发现尝试除零，函数会返回这个值。在内部它被定义为 -1202（<span class="productname">Informix</span>定义）。
+       </p></dd><dt><span class="term"><code class="literal">ECPG_INFORMIX_BAD_YEAR</code></span></dt><dd><p>        如果在解析一个日期时为年找到了一个坏的值，函数会返回这个值。在内部它被定义为 -1204（<span class="productname">Informix</span>定义）。
+       </p></dd><dt><span class="term"><code class="literal">ECPG_INFORMIX_BAD_MONTH</code></span></dt><dd><p>        如果在解析一个日期时为月找到了一个坏的值，函数会返回这个值。在内部它被定义为 -1205（<span class="productname">Informix</span>定义）。
+       </p></dd><dt><span class="term"><code class="literal">ECPG_INFORMIX_BAD_DAY</code></span></dt><dd><p>        如果在解析一个日期时为日找到了一个坏的值，函数会返回这个值。在内部它被定义为 -1206（<span class="productname">Informix</span>定义）。
+       </p></dd><dt><span class="term"><code class="literal">ECPG_INFORMIX_ENOSHORTDATE</code></span></dt><dd><p>        如果一个解析例程需要一个短日期表示但是却没有得到正确长度的日期自如穿，函数会返回这个值。在内部它被定义为 -1209（<span class="productname">Informix</span>定义）。
+       </p></dd><dt><span class="term"><code class="literal">ECPG_INFORMIX_DATE_CONVERT</code></span></dt><dd><p>        如果在日期格式化时产生了一个错误，函数会返回这个值。在内部它被定义为 -1210（<span class="productname">Informix</span>定义）。
+       </p></dd><dt><span class="term"><code class="literal">ECPG_INFORMIX_OUT_OF_MEMORY</code></span></dt><dd><p>        如果在操作时内存被耗尽，函数会返回这个值。在内部它被定义为 -1211（<span class="productname">Informix</span>定义）。
+       </p></dd><dt><span class="term"><code class="literal">ECPG_INFORMIX_ENOTDMY</code></span></dt><dd><p>        如果一个解析例程被假定为得到一个格式掩码（如<code class="literal">mmddyy</code>）但是列出的域并不是全部正确，函数会返回这个值。在内部它被定义为 -1212（<span class="productname">Informix</span>定义）。
+       </p></dd><dt><span class="term"><code class="literal">ECPG_INFORMIX_BAD_NUMERIC</code></span></dt><dd><p>        如果一个解析例程因为一个numeric值的文本表达包含错误而不能解析它或者一个例程因为至少一个numeric变量非法而无法完成一次涉及numeric变量的计算，函数会返回这个值。在内部它被定义为 -1213（<span class="productname">Informix</span>定义）。
+       </p></dd><dt><span class="term"><code class="literal">ECPG_INFORMIX_BAD_EXPONENT</code></span></dt><dd><p>        如果一个解析例程不能解析一个指数，函数会返回这个值。在内部它被定义为 -1216（<span class="productname">Informix</span>定义）。
+       </p></dd><dt><span class="term"><code class="literal">ECPG_INFORMIX_BAD_DATE</code></span></dt><dd><p>       如果一个解析例程不能解析一个日期，函数会返回这个值。在内部它被定义为 -1218（<span class="productname">Informix</span>定义）。
+       </p></dd><dt><span class="term"><code class="literal">ECPG_INFORMIX_EXTRA_CHARS</code></span></dt><dd><p>       如果一个解析例程被传递了它不能解析的额外字符，函数会返回这个值。在内部它被定义为 -1264（<span class="productname">Informix</span>定义）。
+       </p></dd></dl></div><p>
+   </p></div></div><div class="navfooter"><hr /><table width="100%" summary="Navigation footer"><tr><td width="40%" align="left"><a accesskey="p" href="ecpg-sql-whenever.html">上一页</a> </td><td width="20%" align="center"><a accesskey="u" href="ecpg.html">上一级</a></td><td width="40%" align="right"> <a accesskey="n" href="ecpg-develop.html">下一页</a></td></tr><tr><td width="40%" align="left" valign="top">WHENEVER </td><td width="20%" align="center"><a accesskey="h" href="index.html">起始页</a></td><td width="40%" align="right" valign="top"> 35.16. 内部</td></tr></table></div></body></html>

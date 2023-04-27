@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><title>第 47 章 后台工作者进程</title><link rel="stylesheet" type="text/css" href="stylesheet.css" /><link rev="made" href="pgsql-docs@postgresql.org" /><meta name="generator" content="DocBook XSL Stylesheets V1.79.1" /><link rel="prev" href="spi-examples.html" title="46.5. 例子" /><link rel="next" href="logicaldecoding.html" title="第 48 章 逻辑解码" /></head><body><div xmlns="http://www.w3.org/TR/xhtml1/transitional" class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="5" align="center">第 47 章 后台工作者进程</th></tr><tr><td width="10%" align="left"><a accesskey="p" href="spi-examples.html" title="46.5. 例子">上一页</a> </td><td width="10%" align="left"><a accesskey="u" href="server-programming.html" title="部分 V. 服务器编程">上一级</a></td><th width="60%" align="center">部分 V. 服务器编程</th><td width="10%" align="right"><a accesskey="h" href="index.html" title="PostgreSQL 10.1 手册">起始页</a></td><td width="10%" align="right"> <a accesskey="n" href="logicaldecoding.html" title="第 48 章 逻辑解码">下一页</a></td></tr></table><hr></hr></div><div class="chapter" id="BGWORKER"><div class="titlepage"><div><div><h2 class="title">第 47 章 后台工作者进程</h2></div></div></div><a id="idp39318336" class="indexterm"></a><p>  PostgreSQL可以被扩展来在独立进程中运行用户提供的代码。这种进程被<code class="command">postgres</code>启动、停止和监控，这使它们的生命期与服务器的状态紧密联系。这些进程具有选项可以挂接上<span class="productname">PostgreSQL</span>的共享内存区域，并且可以从内部连接到数据库。它们也可以连续地运行多个事务，就像一个正常的被客户端连接的服务器进程。同样，通过链接到<span class="application">libpq</span>，它们可以连接到服务器并像一个正常客户端应用工作。
+ </p><div class="warning"><h3 class="title">警告</h3><p>   在使用后台工作者进程时具有相当大的鲁棒性和安全性风险，因为它们由<code class="literal">C</code>语言编写，对数据具有无限制的访问权。希望使用包括后台工作者进程在内的模块的管理员必须要极度小心。只有仔细审计过的模块才会被允许运行后台工作者进程。
+  </p></div><p>  通过将模块名放在<code class="varname">shared_preload_libraries</code>中，可以在<span class="productname">PostgreSQL</span>被启动时初始化后台工作者。一个希望运行后台工作者的模块需要通过在其<code class="function">_PG_init()</code>中调用<code class="function">RegisterBackgroundWorker(<code class="type">BackgroundWorker *worker</code>)</code>来注册它。也可以在系统启动后通过调用函数<code class="function">RegisterDynamicBackgroundWorker(<code class="type">BackgroundWorker
+  *worker, BackgroundWorkerHandle **handle</code>)</code>来启动后台工作者。与只能在postmaster内调用的<code class="function">RegisterBackgroundWorker</code>不同，必须从一个常规后端调用<code class="function">RegisterDynamicBackgroundWorker</code>。
+ </p><pre class="programlisting">typedef void (*bgworker_main_type)(Datum main_arg);
+typedef struct BackgroundWorker
+{
+    char        bgw_name[BGW_MAXLEN];
+    int         bgw_flags;
+    BgWorkerStartTime bgw_start_time;
+    int         bgw_restart_time;       /* in seconds, or BGW_NEVER_RESTART */
+    char        bgw_library_name[BGW_MAXLEN];
+    char        bgw_function_name[BGW_MAXLEN];
+    Datum       bgw_main_arg;
+    char        bgw_extra[BGW_EXTRALEN];
+    int         bgw_notify_pid;
+} BackgroundWorker;</pre><p>
+  </p><p>   <code class="structfield">bgw_name</code>是一个用于记录消息、处理列表和类似上下文的字符串。
+  </p><p>   <code class="structfield">bgw_flags</code>是一个按位与的位掩码，它用于指示模块想要的能力。可能的值是：
+   </p><div class="variablelist"><dl class="variablelist"><dt><span class="term"><code class="literal">BGWORKER_SHMEM_ACCESS</code></span></dt><dd><p>       <a id="idp39334304" class="indexterm"></a>
+       请求共享内存访问。没有共享内存使用权的工作者不能访问任何的<span class="productname">PostgreSQL</span>共享数据结构，例如重量级或者轻量级锁、共享缓冲区以及该工作者本身想要创建和使用的任何自定义数据结构。
+      </p></dd><dt><span class="term"><code class="literal">BGWORKER_BACKEND_DATABASE_CONNECTION</code></span></dt><dd><p>       <a id="idp39337408" class="indexterm"></a>
+       请求建立数据库连接的能力，这样它后面可以通过建立起的连接运行事务和查询。一个使用<code class="literal">BGWORKER_BACKEND_DATABASE_CONNECTION</code>来连接一个数据库的后台工作者也必须使用<code class="literal">BGWORKER_SHMEM_ACCESS</code>挂接到共享内存，否则工作者启动将会失败。
+      </p></dd></dl></div><p>
+
+  </p><p>   <code class="structfield">bgw_start_time</code>是服务器状态，在该状态中<code class="command">postgres</code>会启动该进程，它可以是<code class="literal">BgWorkerStart_PostmasterStart</code>（在<code class="command">postgres</code>本身完成初始化之后立即启动，这种进程不能使用数据库连接）、<code class="literal">BgWorkerStart_ConsistentState</code>（当一个热后备中达到一个一致性状态之后立即启动，允许进程连接到数据库并运行只读查询）和<code class="literal">BgWorkerStart_RecoveryFinished</code>（在系统进入到正常读写状态后立即启动）之一。注意后两种值在服务器不是一个热后备的情况下是等同的。注意这种设置仅仅表示何时启动进程，当一个不同状态到达时它们不会停止。
+  </p><p>   <code class="structfield">bgw_restart_time</code>是在崩溃情况下<code class="command">postgres</code>启动进程之前等待的时间间隔，以秒计。它可以是任何正值，或者<code class="literal">BGW_NEVER_RESTART</code>，表示在出现崩溃后不重启进程。
+  </p><p>   <code class="structfield">bgw_library_name</code>是应该在其中定位后台工作者初始入口点的库名称。
+   所指的库将被工作者进程动态载入并且<code class="structfield">bgw_function_name</code>将被用来标识要调用的函数。
+   如果从核心代码载入一个函数，则必须设置为"postgres"。
+  </p><p>   <code class="structfield">bgw_function_name</code>是一个动态载入库中的一个函数名，该函数将被用作一个新后台工作者的初始入口点。
+  </p><p>   <code class="structfield">bgw_main_arg</code>是后台工作者主函数的<code class="type">Datum</code>参数。这个主函数应该有一个单一的<code class="type">Datum</code>类型的参数，并且返回<code class="type">void</code>。<code class="structfield">bgw_main_arg</code>将被作为参数传递。此外，全局变量<code class="literal">MyBgworkerEntry</code>指向注册时传入的<code class="structname">BackgroundWorker</code>结构的一份拷贝，工作者会发现检查这个结构会很有用。
+  </p><p>   在 Windows （以及任何定义了<code class="literal">EXEC_BACKEND</code>的地方）上或者动态后台工作者中，用引用的方式传递<code class="type">Datum</code>是不安全的，只有传值才安全。如果要求一个参数，最安全的方式是传递一个 int32 或者其他的小型值，并且把它当做共享内存中分配的一个数组的索引来使用。如果被传递的是一个<code class="type">cstring</code>或者<code class="type">text</code>这样的值，那么在新的后台工作者进程中该指针将不会有效。
+  </p><p>   <code class="structfield">bgw_extra</code>可以包含要传递给后台工作者的额外数据。与<code class="structfield">bgw_main_arg</code>不同，这个数据不会被作为一个参数传递给工作者的主函数，而是按照上面所述通过<code class="literal">MyBgworkerEntry</code>来访问。
+  </p><p>   <code class="structfield">bgw_notify_pid</code>是一个PostgreSQL后端进程的PID，   当后台工作者进程启动或者退出时，postmaster会向这个PID所指的进程发送<code class="literal">SIGUSR1</code>。
+   对于在postmaster启动时注册的工作者，它应该为0；或者注册该工作者的后端不希望等待该工作者启动时，它也应该为0。否则，它应该被初始化为<code class="literal">MyProcPid</code>。
+  </p><p>   一旦运行起来，进程可以通过调用<code class="function">BackgroundWorkerInitializeConnection(<em class="parameter"><code>char *dbname</code></em>, <em class="parameter"><code>char *username</code></em>)</code>或者<code class="function">BackgroundWorkerInitializeConnectionByOid(<em class="parameter"><code>Oid dboid</code></em>, <em class="parameter"><code>Oid useroid</code></em>)</code>来连接到一个数据库。这使得该进程可以使用<code class="literal">SPI</code>接口运行事务和查询。
+   如果<code class="varname">dbname</code>为NULL或者<code class="varname">dboid</code>为<code class="literal">InvalidOid</code>，该会话没有连接到任何特定数据库，但共享的目录可以被访问。
+   如果<code class="varname">username</code>为NULL或者<code class="varname">useroid</code>为<code class="literal">InvalidOid</code>，该进程将以在<code class="command">initdb</code>阶段创建的超级用户身份运行。
+   在每一个后台进程中，只能调用两者之一，并且只能调用一次，所以不可能切换数据库。
+  </p><p>   当控制到达后台进程的主函数时，信号初始会被阻塞，并且必须被它解除阻塞。这是为了允许进程自定义它的信号处理器。在新进程中可以通过调用<code class="function">BackgroundWorkerUnblockSignals</code>来解除对信号的阻塞，还可以通过调用<code class="function">BackgroundWorkerBlockSignals</code>来阻塞信号。
+  </p><p>   如果一个后台工作者的<code class="structfield">bgw_restart_time</code>被配置为
+   <code class="literal">BGW_NEVER_RESTART</code>，或者它退出时的退出码为0，又或者它是被
+   <code class="function">TerminateBackgroundWorker</code>所终止，它将会被postmaster在退出时自动解除
+   注册。否则，它将在等待通过<code class="structfield">bgw_restart_time</code>配置的时间段之后被重新启动，
+   或者在postmaster因为一次后端失败重新初始化集簇时立刻被重启。需要临时禁止执行的后端应该使用
+   可中断的休眠而不是退出，这可以通过调用<code class="function">WaitLatch()</code>实现。
+   调用该函数时要确保<code class="literal">WL_POSTMASTER_DEATH</code>标志被设置，并且验证在
+   <code class="command">postgres</code>本身被终止的紧急情况下产生的快速退出返回码。
+  </p><p>   当一个后台工作者是通过<code class="function">RegisterDynamicBackgroundWorker</code>函数
+   注册时，后端可以执行该注册以获得有关该工作者的状态信息。希望这样做的后端应该把一个
+   <code class="type">BackgroundWorkerHandle *</code>的地址作为第二个参数传递给
+   <code class="function">RegisterDynamicBackgroundWorker</code>。如果工作者被成功地注册，
+   这个指针将被用一个非透明句柄初始化，它之后会被传递给
+   <code class="function">GetBackgroundWorkerPid(<em class="parameter"><code>BackgroundWorkerHandle *</code></em>, <em class="parameter"><code>pid_t *</code></em>)</code>或者
+   <code class="function">TerminateBackgroundWorker(<em class="parameter"><code>BackgroundWorkerHandle *</code></em>)</code>。
+   <code class="function">GetBackgroundWorkerPid</code>可以被用来测试工作者的状态：返回值为
+   <code class="literal">BGWH_NOT_YET_STARTED</code>表示该工作者还未被postmaster启动；
+   <code class="literal">BGWH_STOPPED</code>表示它已经被启动但是不再运行；
+   而<code class="literal">BGWH_STARTED</code>表示它正在运行。在最后一种情况下，PID也将被通过
+   第二个参数返回。
+   <code class="function">TerminateBackgroundWorker</code>导致postmaster发送<code class="literal">SIGTERM</code>
+   给工作者（如果它在运行），并且在它不再运行时尽快解除注册。
+  </p><p>   在某些情况下，一个注册后台工作者的进程可能希望等待该工作者启动起来。其实现方式是：把
+   <code class="structfield">bgw_notify_pid</code>初始化成<code class="literal">MyProcPid</code>并且接着
+   把注册时得到的<code class="type">BackgroundWorkerHandle *</code>传递给
+   <code class="function">WaitForBackgroundWorkerStartup(<em class="parameter"><code>BackgroundWorkerHandle
+   *handle</code></em>, <em class="parameter"><code>pid_t *</code></em>)</code>函数。
+   这个函数将阻塞直到postmaster已经尝试启动该后台工作者，或者直到postmaster死亡。如果后台
+   工作者正在运行，返回值将是<code class="literal">BGWH_STARTED</code>，并且其PID将被写入到所提供的地址。
+   否则，返回值将是<code class="literal">BGWH_STOPPED</code>或者
+   <code class="literal">BGWH_POSTMASTER_DIED</code>。
+  </p><p>   如果一个后台工作者通过服务器编程接口（<acronym class="acronym">SPI</acronym>）用<code class="command">NOTIFY</code>命令发送异步通知，在提交外层事务之后它应该显式地调用<code class="function">ProcessCompletedNotifies</code>，这样通知才能被发送出去。如果一个后台工作者通过<acronym class="acronym">SPI</acronym>使用<code class="command">LISTEN</code>注册为接收异步通知，它将记录那些通知，但是对于工作者来说没有程序化的方式可以拦截以及响应那些通知。
+  </p><p>   <code class="filename">src/test/modules/worker_spi</code>模块包含了一个实例，它展示了一些有用的技巧。
+  </p><p>   注册的后台工作者的最大数量由<a class="xref" href="runtime-config-resource.html#GUC-MAX-WORKER-PROCESSES">max_worker_processes</a>限制。
+  </p></div><div class="navfooter"><hr /><table width="100%" summary="Navigation footer"><tr><td width="40%" align="left"><a accesskey="p" href="spi-examples.html">上一页</a> </td><td width="20%" align="center"><a accesskey="u" href="server-programming.html">上一级</a></td><td width="40%" align="right"> <a accesskey="n" href="logicaldecoding.html">下一页</a></td></tr><tr><td width="40%" align="left" valign="top">46.5. 例子 </td><td width="20%" align="center"><a accesskey="h" href="index.html">起始页</a></td><td width="40%" align="right" valign="top"> 第 48 章 逻辑解码</td></tr></table></div></body></html>

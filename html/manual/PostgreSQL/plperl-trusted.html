@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><title>44.5. 可信的和不可信的 PL/Perl</title><link rel="stylesheet" type="text/css" href="stylesheet.css" /><link rev="made" href="pgsql-docs@postgresql.org" /><meta name="generator" content="DocBook XSL Stylesheets V1.79.1" /><link rel="prev" href="plperl-global.html" title="44.4. PL/Perl 中的全局值" /><link rel="next" href="plperl-triggers.html" title="44.6. PL/Perl 触发器" /></head><body><div xmlns="http://www.w3.org/TR/xhtml1/transitional" class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="5" align="center">44.5. 可信的和不可信的 PL/Perl</th></tr><tr><td width="10%" align="left"><a accesskey="p" href="plperl-global.html" title="44.4. PL/Perl 中的全局值">上一页</a> </td><td width="10%" align="left"><a accesskey="u" href="plperl.html" title="第 44 章 PL/Perl - Perl 过程语言">上一级</a></td><th width="60%" align="center">第 44 章 PL/Perl - Perl 过程语言</th><td width="10%" align="right"><a accesskey="h" href="index.html" title="PostgreSQL 10.1 手册">起始页</a></td><td width="10%" align="right"> <a accesskey="n" href="plperl-triggers.html" title="44.6. PL/Perl 触发器">下一页</a></td></tr></table><hr></hr></div><div class="sect1" id="PLPERL-TRUSTED"><div class="titlepage"><div><div><h2 class="title" style="clear: both">44.5. 可信的和不可信的 PL/Perl</h2></div></div></div><a id="idp37883008" class="indexterm"></a><p>   通常，PL/Perl 被作为一种<span class="quote">“<span class="quote">可信的</span>”</span>编程语言安装，其名称
+   为<code class="literal">plperl</code>。在这种设置下，为了保持安全性禁用了某些
+   Perl 操作。一般来说，被限制的操作是那些与环境交互的操作。它们
+   包括文件处理操作、<code class="literal">require</code>以及
+   <code class="literal">use</code>（外部模块）。没有办法像 C 函数那样访问
+   数据库服务器进程的内部或者用服务器进程的权限得到 OS 级别的访问。
+   因此，任何没有特权的数据库用户也被允许使用这种语言。
+  </p><p>   下面例子中的函数将无法工作，因为出于安全原因不允许它做文件操作：
+</p><pre class="programlisting">CREATE FUNCTION badfunc() RETURNS integer AS $$
+    my $tmpfile = "/tmp/badfile";
+    open my $fh, '&gt;', $tmpfile
+        or elog(ERROR, qq{could not open the file "$tmpfile": $!});
+    print $fh "Testing writing to a file\n";
+    close $fh or elog(ERROR, qq{could not close the file "$tmpfile": $!});
+    return 1;
+$$ LANGUAGE plperl;</pre><p>
+    这个函数的创建会失败，因为验证器会捕捉到它使用了禁用的操作。
+  </p><p>   有些时候需要编写不受限制的 Perl 函数。例如，我们可能想要一个能发送
+   电子邮件的 Perl 函数。要处理这些情况，可以把 PL/Perl 安装成一种
+   <span class="quote">“<span class="quote">不可信的</span>”</span>语言（通常被称作
+   <span class="application">PL/PerlU</span><a id="idp37891696" class="indexterm"></a>）。
+   在这种情况下整个 Perl 语言的特性都可以使用。在安装语言时，用语言
+   名称<code class="literal">plperlu</code>将会选择不可信的 PL/Perl 变体。
+  </p><p>   <span class="application">PL/PerlU</span>函数的编写者必须注意该函数不能被用来做
+   其设计目的之外的事情，因为该函数能做一个作为数据库管理员登录的用户
+   可以做的任何事情。注意数据库系统只允许数据库超级用户用不可信语言
+   创建函数。
+  </p><p>   如果上述函数是一个超级用户用语言<code class="literal">plperlu</code>创建的，则可以
+   执行成功。
+  </p><p>   以和<code class="literal">plperl</code>语言同样的方式，可以用<code class="literal">plperlu</code>
+   编写 Perl 中的匿名代码块，这样的代码块能够使用受限的操作，不过调用
+   者必须是超级用户。
+  </p><div class="note"><h3 class="title">注意</h3><p>    虽然对每个 SQL 角色会在一个独立的 Perl 解释器中运行
+    <span class="application">PL/Perl</span>函数，但是在一个给定会话中执行的所有
+    <span class="application">PL/PerlU</span>函数都运行在一个 Perl 解释器中（与用于
+    任何<span class="application">PL/Perl</span>函数的解释器不同）。这允许
+    <span class="application">PL/PerlU</span>函数自由地共享数据，但是
+    <span class="application">PL/Perl</span>和<span class="application">PL/PerlU</span>函数之间不会
+    发生任何交流。
+   </p></div><div class="note"><h3 class="title">注意</h3><p>    Perl 不支持一个进程中的多个解释器，除非编译它时使用了合适的标志，
+    即<code class="literal">usemultiplicity</code>或者<code class="literal">useithreads</code>（
+    <code class="literal">usemultiplicity</code>会更好，除非你确实需要使用线程。更多细节，
+    请见<span class="citerefentry"><span class="refentrytitle">perlembed</span></span>手册页）。
+    如果<span class="application">PL/Perl</span>用的是一份没有这样编译的 Perl 拷贝，那么
+    在每个会话中只能有一个 Perl 解释器，并且因此任一会话只能要么执行
+    <span class="application">PL/PerlU</span>函数，要么执行同一个 SQL 角色调用的
+    <span class="application">PL/Perl</span>函数。
+   </p></div></div><div class="navfooter"><hr /><table width="100%" summary="Navigation footer"><tr><td width="40%" align="left"><a accesskey="p" href="plperl-global.html">上一页</a> </td><td width="20%" align="center"><a accesskey="u" href="plperl.html">上一级</a></td><td width="40%" align="right"> <a accesskey="n" href="plperl-triggers.html">下一页</a></td></tr><tr><td width="40%" align="left" valign="top">44.4. PL/Perl 中的全局值 </td><td width="20%" align="center"><a accesskey="h" href="index.html">起始页</a></td><td width="40%" align="right" valign="top"> 44.6. PL/Perl 触发器</td></tr></table></div></body></html>

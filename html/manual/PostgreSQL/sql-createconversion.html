@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><title>CREATE CONVERSION</title><link rel="stylesheet" type="text/css" href="stylesheet.css" /><link rev="made" href="pgsql-docs@postgresql.org" /><meta name="generator" content="DocBook XSL Stylesheets V1.79.1" /><link rel="prev" href="sql-createcollation.html" title="CREATE COLLATION" /><link rel="next" href="sql-createdatabase.html" title="CREATE DATABASE" /></head><body><div xmlns="http://www.w3.org/TR/xhtml1/transitional" class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="5" align="center">CREATE CONVERSION</th></tr><tr><td width="10%" align="left"><a accesskey="p" href="sql-createcollation.html" title="CREATE COLLATION">上一页</a> </td><td width="10%" align="left"><a accesskey="u" href="sql-commands.html" title="SQL 命令">上一级</a></td><th width="60%" align="center">SQL 命令</th><td width="10%" align="right"><a accesskey="h" href="index.html" title="PostgreSQL 10.1 手册">起始页</a></td><td width="10%" align="right"> <a accesskey="n" href="sql-createdatabase.html" title="CREATE DATABASE">下一页</a></td></tr></table><hr></hr></div><div class="refentry" id="SQL-CREATECONVERSION"><div class="titlepage"></div><a id="idp42809776" class="indexterm"></a><div class="refnamediv"><h2><span class="refentrytitle">CREATE CONVERSION</span></h2><p>CREATE CONVERSION — 定义一种新的编码转换</p></div><div class="refsynopsisdiv"><h2>大纲</h2><pre class="synopsis">CREATE [ DEFAULT ] CONVERSION <em class="replaceable"><code>name</code></em>
+    FOR <em class="replaceable"><code>source_encoding</code></em> TO <em class="replaceable"><code>dest_encoding</code></em> FROM <em class="replaceable"><code>function_name</code></em></pre></div><div class="refsect1" id="SQL-CREATECONVERSION-DESCRIPTION"><h2>描述</h2><p>   <code class="command">CREATE CONVERSION</code>定义一种字符集编码间
+   新的转换。还有，被标记为<code class="literal">DEFAULT</code>的转换将被
+   自动地用于客户端和服务器之间的编码转换。为了这个目的，必须定义两个
+   转换（从编码 A 到 B <span class="emphasis"><em>以及</em></span>从编码 B 到 A）。
+ </p><p>   要创建一个转换，你必须拥有该函数上的<code class="literal">EXECUTE</code>特权
+   以及目标模式上的<code class="literal">CREATE</code>特权。
+  </p></div><div class="refsect1" id="idp42819888"><h2>参数</h2><div class="variablelist"><dl class="variablelist"><dt><span class="term"><code class="literal">DEFAULT</code></span></dt><dd><p>       <code class="literal">DEFAULT</code>子句表示这个转换是从源编码到目标编码的默认
+       转换。在一个模式中对于每一个编码对，只应该有一个默认转换。
+      </p></dd><dt><span class="term"><em class="replaceable"><code>name</code></em></span></dt><dd><p>       转换的名称，可以被模式限定。如果没有被模式限定，该转换被定义在
+       当前模式中。在一个模式中，转换名称必须唯一。
+      </p></dd><dt><span class="term"><em class="replaceable"><code>source_encoding</code></em></span></dt><dd><p>       源编码名称。
+      </p></dd><dt><span class="term"><em class="replaceable"><code>dest_encoding</code></em></span></dt><dd><p>       目标编码名称。
+      </p></dd><dt><span class="term"><em class="replaceable"><code>function_name</code></em></span></dt><dd><p>       被用来执行转换的函数。函数名可以被模式限定。如果没有，将在路径
+       中查找该函数。
+      </p><p>       该函数必须具有一下的特征：
+
+</p><pre class="programlisting">conv_proc(
+    integer,  -- 源编码 ID
+    integer,  -- 目标编码 ID
+    cstring,  -- 源字符串（空值终止的 C 字符串）
+    internal, -- 目标（用一个空值终止的 C 字符串填充）
+    integer   -- 源字符串长度
+) RETURNS void;</pre></dd></dl></div></div><div class="refsect1" id="SQL-CREATECONVERSION-NOTES"><h2>注解</h2><p>   使用<code class="command">DROP CONVERSION</code>可以移除用户定义的转换。
+  </p><p>   创建转换所要求的特权可能在未来的发行中被更改。
+  </p></div><div class="refsect1" id="SQL-CREATECONVERSION-EXAMPLES"><h2>示例</h2><p>   使用<code class="function">myfunc</code>创建一个从编码<code class="literal">UTF8</code>到
+   <code class="literal">LATIN1</code>的转换：
+</p><pre class="programlisting">CREATE CONVERSION myconv FOR 'UTF8' TO 'LATIN1' FROM myfunc;</pre></div><div class="refsect1" id="SQL-CREATECONVERSION-COMPAT"><h2>兼容性</h2><p>    <code class="command">CREATE CONVERSION</code>是一种
+    <span class="productname">PostgreSQL</span>扩展。在 SQL 标准中
+    没有<code class="command">CREATE CONVERSION</code>语句，但是有
+    一个目的和语法都类似的
+    <code class="command">CREATE TRANSLATION</code>语句。
+  </p></div><div class="refsect1" id="SQL-CREATECONVERSION-SEEALSO"><h2>另见</h2><span class="simplelist"><a class="xref" href="sql-alterconversion.html" title="ALTER CONVERSION"><span class="refentrytitle">ALTER CONVERSION</span></a>, <a class="xref" href="sql-createfunction.html" title="CREATE FUNCTION"><span class="refentrytitle">CREATE FUNCTION</span></a>, <a class="xref" href="sql-dropconversion.html" title="DROP CONVERSION"><span class="refentrytitle">DROP CONVERSION</span></a></span></div></div><div class="navfooter"><hr /><table width="100%" summary="Navigation footer"><tr><td width="40%" align="left"><a accesskey="p" href="sql-createcollation.html">上一页</a> </td><td width="20%" align="center"><a accesskey="u" href="sql-commands.html">上一级</a></td><td width="40%" align="right"> <a accesskey="n" href="sql-createdatabase.html">下一页</a></td></tr><tr><td width="40%" align="left" valign="top">CREATE COLLATION </td><td width="20%" align="center"><a accesskey="h" href="index.html">起始页</a></td><td width="40%" align="right" valign="top"> CREATE DATABASE</td></tr></table></div></body></html>

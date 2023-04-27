@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><title>9.23. 行和数组比较</title><link rel="stylesheet" type="text/css" href="stylesheet.css" /><link rev="made" href="pgsql-docs@postgresql.org" /><meta name="generator" content="DocBook XSL Stylesheets V1.79.1" /><link rel="prev" href="functions-subquery.html" title="9.22. 子查询表达式" /><link rel="next" href="functions-srf.html" title="9.24. 集合返回函数" /></head><body><div xmlns="http://www.w3.org/TR/xhtml1/transitional" class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="5" align="center">9.23. 行和数组比较</th></tr><tr><td width="10%" align="left"><a accesskey="p" href="functions-subquery.html" title="9.22. 子查询表达式">上一页</a> </td><td width="10%" align="left"><a accesskey="u" href="functions.html" title="第 9 章 函数和操作符">上一级</a></td><th width="60%" align="center">第 9 章 函数和操作符</th><td width="10%" align="right"><a accesskey="h" href="index.html" title="PostgreSQL 10.1 手册">起始页</a></td><td width="10%" align="right"> <a accesskey="n" href="functions-srf.html" title="9.24. 集合返回函数">下一页</a></td></tr></table><hr></hr></div><div class="sect1" id="FUNCTIONS-COMPARISONS"><div class="titlepage"><div><div><h2 class="title" style="clear: both">9.23. 行和数组比较</h2></div></div></div><div class="toc"><dl class="toc"><dt><span class="sect2"><a href="functions-comparisons.html#FUNCTIONS-COMPARISONS-IN-SCALAR">9.23.1. <code class="literal">IN</code></a></span></dt><dt><span class="sect2"><a href="functions-comparisons.html#idp14513168">9.23.2. <code class="literal">NOT IN</code></a></span></dt><dt><span class="sect2"><a href="functions-comparisons.html#idp14522928">9.23.3. <code class="literal">ANY</code>/<code class="literal">SOME</code> (array)</a></span></dt><dt><span class="sect2"><a href="functions-comparisons.html#idp14533104">9.23.4. <code class="literal">ALL</code> (array)</a></span></dt><dt><span class="sect2"><a href="functions-comparisons.html#ROW-WISE-COMPARISON">9.23.5. 行构造器比较</a></span></dt><dt><span class="sect2"><a href="functions-comparisons.html#COMPOSITE-TYPE-COMPARISON">9.23.6. 组合类型比较</a></span></dt></dl></div><a id="idp14495616" class="indexterm"></a><a id="idp14496272" class="indexterm"></a><a id="idp14496960" class="indexterm"></a><a id="idp14497616" class="indexterm"></a><a id="idp14498272" class="indexterm"></a><a id="idp14498960" class="indexterm"></a><a id="idp14499936" class="indexterm"></a><a id="idp14500624" class="indexterm"></a><a id="idp14501600" class="indexterm"></a><a id="idp14502576" class="indexterm"></a><a id="idp14503264" class="indexterm"></a><p>   本节描述几个特殊的结构，用于在值的组之间进行多重比较。这些形式语法上和前面一节的子查询形式相关，但是不涉及子查询。 这种形式涉及的数组子表达式是<span class="productname">PostgreSQL</span>的扩展； 其它的是<acronym class="acronym">SQL</acronym>兼容的。所有本节记录的表达式形式都返回布尔（Boolean）结果（真/假）。
+  </p><div class="sect2" id="FUNCTIONS-COMPARISONS-IN-SCALAR"><div class="titlepage"><div><div><h3 class="title">9.23.1. <code class="literal">IN</code></h3></div></div></div><pre class="synopsis"><em class="replaceable"><code>expression</code></em> IN (<em class="replaceable"><code>value</code></em> [<span class="optional">, ...</span>])</pre><p>   右手边是一个圆括弧包围的标量列表。如果左手边表达式的结果等于任何右手边表达式中的一个，结果为<span class="quote">“<span class="quote">真</span>”</span>。它是下面形式的缩写
+
+</p><pre class="synopsis"><em class="replaceable"><code>expression</code></em> = <em class="replaceable"><code>value1</code></em>
+OR
+<em class="replaceable"><code>expression</code></em> = <em class="replaceable"><code>value2</code></em>
+OR
+...</pre><p>
+  </p><p>   请注意如果左手边表达式得到空值，或者没有相等的右手边值并且至少有一个右手边的表达式得到空值，那么<code class="token">IN</code>结构的结果将为空值，而不是假。这符合 SQL 处理空值的布尔组合的一般规则。
+  </p></div><div class="sect2" id="idp14513168"><div class="titlepage"><div><div><h3 class="title">9.23.2. <code class="literal">NOT IN</code></h3></div></div></div><pre class="synopsis"><em class="replaceable"><code>expression</code></em> NOT IN (<em class="replaceable"><code>value</code></em> [<span class="optional">, ...</span>])</pre><p>   右手边是一个圆括弧包围的标量列表。如果左手边表达式的结果不等于所有右手边表达式，结果为<span class="quote">“<span class="quote">真</span>”</span>。它是下面形式的缩写
+
+</p><pre class="synopsis"><em class="replaceable"><code>expression</code></em> &lt;&gt; <em class="replaceable"><code>value1</code></em>
+AND
+<em class="replaceable"><code>expression</code></em> &lt;&gt; <em class="replaceable"><code>value2</code></em>
+AND
+...</pre><p>
+  </p><p>   请注意如果左手边表达式得到空值，或者没有相等的右手边值并且至少有一个右手边的表达式得到空值，那么<code class="token">NOT IN</code>结构的结果将为空值， 而不是我们可能天真地认为的真值。这符合 SQL 处理空值的布尔组合的一般规则。
+  </p><div class="tip"><h3 class="title">提示</h3><p>   <code class="literal">x NOT IN y</code>在所有情况下都等效于<code class="literal">NOT (x IN y)</code>。但是，在处理空值的时候，用<code class="token">NOT IN</code>比用<code class="token">IN</code>更可能迷惑新手。最好尽可能用正逻辑来表达你的条件。
+  </p></div></div><div class="sect2" id="idp14522928"><div class="titlepage"><div><div><h3 class="title">9.23.3. <code class="literal">ANY</code>/<code class="literal">SOME</code> (array)</h3></div></div></div><pre class="synopsis"><em class="replaceable"><code>expression</code></em> <em class="replaceable"><code>operator</code></em> ANY (<em class="replaceable"><code>array expression</code></em>)
+<em class="replaceable"><code>expression</code></em> <em class="replaceable"><code>operator</code></em> SOME (<em class="replaceable"><code>array expression</code></em>)</pre><p>   右手边是一个圆括弧包围的表达式，它必须得到一个数组值。左手边表达式被计算并且使用给出的<em class="replaceable"><code>操作符</code></em>对数组的每个元素进行比较，这个操作符必须得到布尔结果。如果得到了任何真值结果，那么<code class="token">ANY</code>的结果是<span class="quote">“<span class="quote">真</span>”</span>。 如果没有找到真值结果（包括数组只有零个元素的情况），那么结果是<span class="quote">“<span class="quote">假</span>”</span>。
+  </p><p>   如果数组表达式得到一个空数组，<code class="token">ANY</code>的结果将为空值。如果左手边的表达式得到空值，<code class="token">ANY</code>通常是空值（尽管一个非严格比较操作符可能得到一个不同的结果）。另外，如果右手边的数组包含任何空值元素或者没有得到真值比较结果，<code class="token">ANY</code>的结果将是空值而不是假（再次，假设是一个严格的比较操作符）。这符合 SQL 对空值的布尔组合的一般规则。
+  </p><p>   <code class="token">SOME</code>是<code class="token">ANY</code>的同义词。
+  </p></div><div class="sect2" id="idp14533104"><div class="titlepage"><div><div><h3 class="title">9.23.4. <code class="literal">ALL</code> (array)</h3></div></div></div><pre class="synopsis"><em class="replaceable"><code>expression</code></em> <em class="replaceable"><code>operator</code></em> ALL (<em class="replaceable"><code>array expression</code></em>)</pre><p>   右手边是一个圆括弧包围的表达式，它必须得到一个数组值。左手边表达式将被计算并使用给出的<em class="replaceable"><code>操作符</code></em>与数组的每个元素进行比较，这个操作符必须得到一个布尔结果。如果所有比较都得到真值结果，那么<code class="token">ALL</code>的结果是 <span class="quote">“<span class="quote">真</span>”</span>（包括数组只有零个元素的情况）。如果有任何假值结果，那么结果是<span class="quote">“<span class="quote">假</span>”</span>。
+  </p><p>  如果数组表达式得到一个空数组，<code class="token">ALL</code>的结果将为空值。如果左手边的表达式得到空值，<code class="token">ALL</code>通常是空值（尽管一个非严格比较操作符可能得到一个不同的结果）。另外，如果右手边的数组包含任何空值元素或者没有得到假值比较结果，<code class="token">ALL</code>的结果将是空值而不是真（再次，假设是一个严格的比较操作符）。这符合 SQL 对空值的布尔组合的一般规则。
+  </p></div><div class="sect2" id="ROW-WISE-COMPARISON"><div class="titlepage"><div><div><h3 class="title">9.23.5. 行构造器比较</h3></div></div></div><pre class="synopsis"><em class="replaceable"><code>row_constructor</code></em> <em class="replaceable"><code>operator</code></em> <em class="replaceable"><code>row_constructor</code></em></pre><p>   每一边都是一个行构造器，如<a class="xref" href="sql-expressions.html#SQL-SYNTAX-ROW-CONSTRUCTORS" title="4.2.13. 行构造器">第 4.2.13 节</a>所述。两个行值必须具有相同数量的域。每一边被计算并且被逐行比较。当<em class="replaceable"><code>操作符</code></em>是
+   <code class="literal">=</code>、
+   <code class="literal">&lt;&gt;</code>、
+   <code class="literal">&lt;</code>
+   <code class="literal">&lt;=</code>、
+   <code class="literal">&gt;</code>、
+   <code class="literal">&gt;=</code>时，允许进行行构造器比较。每一个行元素必须是具有一个默认 B 树操作符类的类型，否则尝试比较会产生一个错误。
+  </p><div class="note"><h3 class="title">注意</h3><p>    Errors related to the number or types of elements might not occur if
+    the comparison is resolved using earlier columns.
+   </p></div><p>   <code class="literal">=</code>和<code class="literal">&lt;&gt;</code>情况略有不同。如果两行的所有对应成员都是非空且相等则这两行被认为相等；如果任何对应成员是非空但是不相等则这两行不相等；否则行比较的结果为未知（空值）。
+  </p><p>   对于<code class="literal">&lt;</code>、<code class="literal">&lt;=</code>、<code class="literal">&gt;</code>和<code class="literal">&gt;=</code>情况，行元素被从左至右比较，在找到一处不等的或为空的元素对就立刻停下来。如果这一对元素都为空值，则行比较的结果为未知（空值）；否则这一对元素的比较结果决定行比较的结果。例如，<code class="literal">ROW(1,2,NULL) &lt; ROW(1,3,0)</code>得到真，而不是空值，因为第三对元素并没有被考虑。
+  </p><div class="note"><h3 class="title">注意</h3><p>    在<span class="productname">PostgreSQL</span> 8.2之前，<code class="literal">&lt;</code>、<code class="literal">&lt;=</code>、<code class="literal">&gt;</code>和<code class="literal">&gt;=</code>情况不是按照每个 SQL 声明来处理的。一个像<code class="literal">ROW(a,b) &lt; ROW(c,d)</code>的比较会被实现为<code class="literal">a &lt; c AND b &lt; d</code>，而结果行为等价于<code class="literal">a &lt; c OR (a = c AND b &lt; d)</code>。
+   </p></div><pre class="synopsis"><em class="replaceable"><code>row_constructor</code></em> IS DISTINCT FROM <em class="replaceable"><code>row_constructor</code></em></pre><p>   这个结构与<code class="literal">&lt;&gt;</code>行比较相似，但是它对于空值输入不会得到空值。任何空值被认为和任何非空值不相等（有区别），并且任意两个空值被认为相等（无区别）。因此结果将总是为真或为假，永远不会是空值。
+  </p><pre class="synopsis"><em class="replaceable"><code>row_constructor</code></em> IS NOT DISTINCT FROM <em class="replaceable"><code>row_constructor</code></em></pre><p>   这个结构与<code class="literal">=</code>行比较相似，但是它对于空值输入不会得到空值。任何空值被认为和任何非空值不相等（有区别），并且任意两个空值被认为相等（无区别）。因此结果将总是为真或为假，永远不会是空值。
+  </p></div><div class="sect2" id="COMPOSITE-TYPE-COMPARISON"><div class="titlepage"><div><div><h3 class="title">9.23.6. 组合类型比较</h3></div></div></div><pre class="synopsis"><em class="replaceable"><code>record</code></em> <em class="replaceable"><code>operator</code></em> <em class="replaceable"><code>record</code></em></pre><p>    SQL 规范要求在结果依赖于比较两个 NULL 值或者一个 NULL 与一个非 NULL 时逐行比较返回 NULL。<span class="productname">PostgreSQL</span>只有在比较两个行构造器（如<a class="xref" href="functions-comparisons.html#ROW-WISE-COMPARISON" title="9.23.5. 行构造器比较">第 9.23.5 节</a>）的结果或者比较一个行构造器与一个子查询的输出时才这样做（如<a class="xref" href="functions-subquery.html" title="9.22. 子查询表达式">第 9.22 节</a>中所述）。在其他比较两个组合类型值的环境中，两个 NULL 域值被认为相等，并且一个 NULL 被认为大于一个非 NULL。为了得到组合类型的一致的排序和索引行为，这样做是必要的。
+   </p><p>   每一边都会被计算并且它们会被逐行比较。当<em class="replaceable"><code>操作符</code></em>是
+   <code class="literal">=</code>、
+   <code class="literal">&lt;&gt;</code>、
+   <code class="literal">&lt;</code>、
+   <code class="literal">&lt;=</code>、
+   <code class="literal">&gt;</code>或者
+   <code class="literal">&gt;=</code>时或者具有与这些类似的语义时，允许组合类型的比较（更准确地说，如果一个操作符是一个 B 树操作符类的成员，或者是一个 B 树操作符类的<code class="literal">=</code>成员的否定词，它就可以是一个行比较操作符）。
+   上述操作符的行为与用于行构造器（见<a class="xref" href="functions-comparisons.html#ROW-WISE-COMPARISON" title="9.23.5. 行构造器比较">第 9.23.5 节</a>）的<code class="literal">IS [ NOT ] DISTINCT FROM</code>相同。
+  </p><p>   为了支持包含无默认 B 树操作符类的元素的行匹配，为组合类型比较定义了下列操作符：
+   <code class="literal">*=</code>,
+   <code class="literal">*&lt;&gt;</code>,
+   <code class="literal">*&lt;</code>,
+   <code class="literal">*&lt;=</code>,
+   <code class="literal">*&gt;</code>, and
+   <code class="literal">*&gt;=</code>.
+   这些操作符比较两行的内部二进制表达。即使两行用相等操作符的比较为真，两行也可能
+   具有不同的二进制表达。行在这些比较操作符之下的排序是决定性的，其他倒没什么意义。
+   这些操作符在内部被用于物化视图并且可能对其他如复制之类的特殊功能有用，但是它们
+   并不打算用在书写查询这类普通用途中。
+  </p></div></div><div class="navfooter"><hr /><table width="100%" summary="Navigation footer"><tr><td width="40%" align="left"><a accesskey="p" href="functions-subquery.html">上一页</a> </td><td width="20%" align="center"><a accesskey="u" href="functions.html">上一级</a></td><td width="40%" align="right"> <a accesskey="n" href="functions-srf.html">下一页</a></td></tr><tr><td width="40%" align="left" valign="top">9.22. 子查询表达式 </td><td width="20%" align="center"><a accesskey="h" href="index.html">起始页</a></td><td width="40%" align="right" valign="top"> 9.24. 集合返回函数</td></tr></table></div></body></html>

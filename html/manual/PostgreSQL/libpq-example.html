@@ -1,0 +1,448 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><title>33.21. 例子程序</title><link rel="stylesheet" type="text/css" href="stylesheet.css" /><link rev="made" href="pgsql-docs@postgresql.org" /><meta name="generator" content="DocBook XSL Stylesheets V1.79.1" /><link rel="prev" href="libpq-build.html" title="33.20. 编译 libpq 程序" /><link rel="next" href="largeobjects.html" title="第 34 章 大对象" /></head><body><div xmlns="http://www.w3.org/TR/xhtml1/transitional" class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="5" align="center">33.21. 例子程序</th></tr><tr><td width="10%" align="left"><a accesskey="p" href="libpq-build.html" title="33.20. 编译 libpq 程序">上一页</a> </td><td width="10%" align="left"><a accesskey="u" href="libpq.html" title="第 33 章 libpq - C 库">上一级</a></td><th width="60%" align="center">第 33 章 <span xmlns="http://www.w3.org/1999/xhtml" class="application">libpq</span> - C 库</th><td width="10%" align="right"><a accesskey="h" href="index.html" title="PostgreSQL 10.1 手册">起始页</a></td><td width="10%" align="right"> <a accesskey="n" href="largeobjects.html" title="第 34 章 大对象">下一页</a></td></tr></table><hr></hr></div><div class="sect1" id="LIBPQ-EXAMPLE"><div class="titlepage"><div><div><h2 class="title" style="clear: both">33.21. 例子程序</h2></div></div></div><p>   这些例子和其他例子可以在源代码发布的<code class="filename">src/test/examples</code>目录中找到。
+  </p><div class="example" id="LIBPQ-EXAMPLE-1"><p class="title"><strong>例 33.1. <span class="application">libpq</span> 例子程序 1</strong></p><div class="example-contents"><pre class="programlisting">/*
+ * testlibpq.c
+ *
+ *      测试 libpq（PostgreSQL 前端库） 的 C 版本。
+ */
+#include &lt;stdio.h&gt;
+#include &lt;stdlib.h&gt;
+#include &lt;libpq-fe.h&gt;
+
+static void
+exit_nicely(PGconn *conn)
+{
+    PQfinish(conn);
+    exit(1);
+}
+
+int
+main(int argc, char **argv)
+{
+    const char *conninfo;
+    PGconn     *conn;
+    PGresult   *res;
+    int         nFields;
+    int         i,
+                j;
+
+    /*
+     * 如果用户在命令行上提供了一个参数，将它用作连接信息串。
+     * 否则默认用设置 dbname=postgres 并且为所有其他链接参数使用环境变量或默认值。
+     */
+    if (argc &gt; 1)
+        conninfo = argv[1];
+    else
+        conninfo = "dbname = postgres";
+
+    /* 建立到数据库的一个连接 */
+    conn = PQconnectdb(conninfo);
+
+    /* 检查看后端连接是否成功建立 */
+    if (PQstatus(conn) != CONNECTION_OK)
+    {
+        fprintf(stderr, "Connection to database failed: %s",
+                PQerrorMessage(conn));
+        exit_nicely(conn);
+    }
+
+    /*
+     * 我们的测试案例这里涉及使用一个游标，对它我们必须用在一个事务块内。
+     * 我们可以在一个单一的 "select * from pg_database" 的 PQexec() 中做整个事情，
+     * 但是作为一个好的例子它太琐碎。
+     */
+
+    /* 开始一个事务块 */
+    res = PQexec(conn, "BEGIN");
+    if (PQresultStatus(res) != PGRES_COMMAND_OK)
+    {
+        fprintf(stderr, "BEGIN command failed: %s", PQerrorMessage(conn));
+        PQclear(res);
+        exit_nicely(conn);
+    }
+
+    /*
+     * 任何时候不再需要 PGresult 时，应该 PQclear 它来避免内存泄露
+     */
+    PQclear(res);
+
+    /*
+     * 从 pg_database 取得行，它是数据库的系统目录
+     */
+    res = PQexec(conn, "DECLARE myportal CURSOR FOR select * from pg_database");
+    if (PQresultStatus(res) != PGRES_COMMAND_OK)
+    {
+        fprintf(stderr, "DECLARE CURSOR failed: %s", PQerrorMessage(conn));
+        PQclear(res);
+        exit_nicely(conn);
+    }
+    PQclear(res);
+
+    res = PQexec(conn, "FETCH ALL in myportal");
+    if (PQresultStatus(res) != PGRES_TUPLES_OK)
+    {
+        fprintf(stderr, "FETCH ALL failed: %s", PQerrorMessage(conn));
+        PQclear(res);
+        exit_nicely(conn);
+    }
+
+    /* 首先，打印出属性名 */
+    nFields = PQnfields(res);
+    for (i = 0; i &lt; nFields; i++)
+        printf("%-15s", PQfname(res, i));
+    printf("\n\n");
+
+    /* 接下来，打印出行 */
+    for (i = 0; i &lt; PQntuples(res); i++)
+    {
+        for (j = 0; j &lt; nFields; j++)
+            printf("%-15s", PQgetvalue(res, i, j));
+        printf("\n");
+    }
+
+    PQclear(res);
+
+    /* 关闭入口，我们不需要考虑检查错误 */
+    res = PQexec(conn, "CLOSE myportal");
+    PQclear(res);
+
+    /* 结束事务 */
+    res = PQexec(conn, "END");
+    PQclear(res);
+
+    /* 关闭到数据库的连接并且清理 */
+    PQfinish(conn);
+
+    return 0;
+}</pre></div></div><br class="example-break" /><div class="example" id="LIBPQ-EXAMPLE-2"><p class="title"><strong>例 33.2. <span class="application">libpq</span>例子程序 2</strong></p><div class="example-contents"><pre class="programlisting">/*
+ * testlibpq2.c
+ *      测试异步通知接口
+ *
+ * 开始这个程序，然后在另一个窗口的 psql 中做
+ *   NOTIFY TBL2;
+ * 重复四次来让这个程序退出。
+ *
+ * 或者，如果你想要得到奇妙的事情，尝试：
+ * 用下列命令填充一个数据库
+ * （在 src/test/examples/testlibpq2.sql 中提供）
+ *
+ *   CREATE TABLE TBL1 (i int4);
+ *
+ *   CREATE TABLE TBL2 (i int4);
+ *
+ *   CREATE RULE r1 AS ON INSERT TO TBL1 DO
+ *     (INSERT INTO TBL2 VALUES (new.i); NOTIFY TBL2);
+ *
+ * 并且把这个做四次：
+ *
+ *   INSERT INTO TBL1 VALUES (10);
+ */
+#ifdef WIN32
+#include &lt;windows.h&gt;
+#endif
+#include &lt;stdio.h&gt;
+#include &lt;stdlib.h&gt;
+#include &lt;string.h&gt;
+#include &lt;errno.h&gt;
+#include &lt;sys/time.h&gt;
+#include &lt;sys/types.h&gt;
+#include "libpq-fe.h"
+
+static void
+exit_nicely(PGconn *conn)
+{
+    PQfinish(conn);
+    exit(1);
+}
+
+int
+main(int argc, char **argv)
+{
+    const char *conninfo;
+    PGconn     *conn;
+    PGresult   *res;
+    PGnotify   *notify;
+    int         nnotifies;
+
+    /*
+     * 用过用户在命令行上提供了一个参数，将它用作连接信息串。
+     * 否则默认用设置 dbname=postgres 并且为所有其他链接参数使用环境变量或默认值。
+     */
+    if (argc &gt; 1)
+        conninfo = argv[1];
+    else
+        conninfo = "dbname = postgres";
+
+    /* 建立一个到数据库的连接 */
+    conn = PQconnectdb(conninfo);
+
+    /* 检查后端连接是否成功建立 */
+    if (PQstatus(conn) != CONNECTION_OK)
+    {
+        fprintf(stderr, "Connection to database failed: %s",
+                PQerrorMessage(conn));
+        exit_nicely(conn);
+    }
+
+    /*
+     * 发出 LISTEN 命令启用来自规则的 NOTIFY 的通知。
+     */
+    res = PQexec(conn, "LISTEN TBL2");
+    if (PQresultStatus(res) != PGRES_COMMAND_OK)
+    {
+        fprintf(stderr, "LISTEN command failed: %s", PQerrorMessage(conn));
+        PQclear(res);
+        exit_nicely(conn);
+    }
+
+    /*
+     * 任何时候不再需要 PGresult 时，应该 PQclear 它来避免内存泄露
+     */
+    PQclear(res);
+
+    /* 在接收到四个通知后退出。 */
+    nnotifies = 0;
+    while (nnotifies &lt; 4)
+    {
+        /*
+         * 休眠到在连接上发生某些事情。我们使用 select(2) 来等待输入，但是你也可以使用 poll() 或相似的设施。
+         */
+        int         sock;
+        fd_set      input_mask;
+
+        sock = PQsocket(conn);
+
+        if (sock &lt; 0)
+            break;              /* 不应该发生 */
+
+        FD_ZERO(&amp;input_mask);
+        FD_SET(sock, &amp;input_mask);
+
+        if (select(sock + 1, &amp;input_mask, NULL, NULL, NULL) &lt; 0)
+        {
+            fprintf(stderr, "select() failed: %s\n", strerror(errno));
+            exit_nicely(conn);
+        }
+
+        /* 现在检查输入 */
+        PQconsumeInput(conn);
+        while ((notify = PQnotifies(conn)) != NULL)
+        {
+            fprintf(stderr,
+                    "ASYNC NOTIFY of '%s' received from backend PID %d\n",
+                    notify-&gt;relname, notify-&gt;be_pid);
+            PQfreemem(notify);
+            nnotifies++;
+        }
+    }
+
+    fprintf(stderr, "Done.\n");
+
+    /* 关闭到数据库的连接并且清理 */
+    PQfinish(conn);
+
+    return 0;
+}</pre></div></div><br class="example-break" /><div class="example" id="LIBPQ-EXAMPLE-3"><p class="title"><strong>例 33.3. <span class="application">libpq</span>例子程序 3</strong></p><div class="example-contents"><pre class="programlisting">/*
+ * testlibpq3.c
+ *      测试线外参数和二进制 I/O。
+ *
+ * 在运行之前，使用下列命令填充一个数据库（在 src/test/examples/testlibpq3.sql 中提供）
+ *
+ * CREATE TABLE test1 (i int4, t text, b bytea);
+ *
+ * INSERT INTO test1 values (1, 'joe''s place', '\\000\\001\\002\\003\\004');
+ * INSERT INTO test1 values (2, 'ho there', '\\004\\003\\002\\001\\000');
+ *
+ * 期待的输出是：
+ *
+ * tuple 0: got
+ *  i = (4 bytes) 1
+ *  t = (11 bytes) 'joe's place'
+ *  b = (5 bytes) \000\001\002\003\004
+ *
+ * tuple 0: got
+ *  i = (4 bytes) 2
+ *  t = (8 bytes) 'ho there'
+ *  b = (5 bytes) \004\003\002\001\000
+ */
+#ifdef WIN32
+#include &lt;windows.h&gt;
+#endif
+
+#include &lt;stdio.h&gt;
+#include &lt;stdlib.h&gt;
+#include &lt;stdint.h&gt;
+#include &lt;string.h&gt;
+#include &lt;sys/types.h&gt;
+#include "libpq-fe.h"
+
+/* for ntohl/htonl */
+#include &lt;netinet/in.h&gt;
+#include &lt;arpa/inet.h&gt;
+
+
+static void
+exit_nicely(PGconn *conn)
+{
+    PQfinish(conn);
+    exit(1);
+}
+
+/*
+ * 这个函数打印一个查询结果，该结果以二进制格式从上面的注释中定义的表中取得。
+ * 我们把它分离出来是因为 main() 函数需要使用它两次。
+ */
+static void
+show_binary_results(PGresult *res)
+{
+    int         i,
+                j;
+    int         i_fnum,
+                t_fnum,
+                b_fnum;
+
+    /* 使用 PQfnumber 来避免假定结果中域的顺序 */
+    i_fnum = PQfnumber(res, "i");
+    t_fnum = PQfnumber(res, "t");
+    b_fnum = PQfnumber(res, "b");
+
+    for (i = 0; i &lt; PQntuples(res); i++)
+    {
+        char       *iptr;
+        char       *tptr;
+        char       *bptr;
+        int         blen;
+        int         ival;
+
+        /* 得到域值（我们忽略它们为空值的可能性！） */
+        iptr = PQgetvalue(res, i, i_fnum);
+        tptr = PQgetvalue(res, i, t_fnum);
+        bptr = PQgetvalue(res, i, b_fnum);
+
+        /*
+         * INT4 的二进制表示是按照网络字节序的，我们最好强制为本地字节序。
+         */
+        ival = ntohl(*((uint32_t *) iptr));
+
+        /*
+         * TEXT 的二进制表示是文本，并且因为 libpq 会为它追加一个零字节，它将工作得和 C 字符串一样好。
+         *
+         * BYTEA 的二进制表示是一堆字节，其中可能包含嵌入的空值，因此我们必须注意域长度。
+         */
+        blen = PQgetlength(res, i, b_fnum);
+
+        printf("tuple %d: got\n", i);
+        printf(" i = (%d bytes) %d\n",
+               PQgetlength(res, i, i_fnum), ival);
+        printf(" t = (%d bytes) '%s'\n",
+               PQgetlength(res, i, t_fnum), tptr);
+        printf(" b = (%d bytes) ", blen);
+        for (j = 0; j &lt; blen; j++)
+            printf("\\%03o", bptr[j]);
+        printf("\n\n");
+    }
+}
+
+int
+main(int argc, char **argv)
+{
+    const char *conninfo;
+    PGconn     *conn;
+    PGresult   *res;
+    const char *paramValues[1];
+    int         paramLengths[1];
+    int         paramFormats[1];
+    uint32_t    binaryIntVal;
+
+    /*
+     * 如果用户在命令行上提供了一个参数，将它用作连接信息串。
+     * 否则默认用设置 dbname=postgres 并且为所有其他链接参数使用环境变量或默认值。
+     */
+    if (argc &gt; 1)
+        conninfo = argv[1];
+    else
+        conninfo = "dbname = postgres";
+
+    /* 建立一个到数据库的连接 */
+    conn = PQconnectdb(conninfo);
+
+    /* 检查看后端连接是否成功被建立 */
+    if (PQstatus(conn) != CONNECTION_OK)
+    {
+        fprintf(stderr, "Connection to database failed: %s",
+                PQerrorMessage(conn));
+        exit_nicely(conn);
+    }
+
+    /*
+     * 这个程序的要点在于用线外参数展示 PQexecParams() 的使用，以及数据的二进制传输。
+     *
+     * 第一个例子将参数作为文本传输，但是以二进制格式接收结果。
+     * 通过使用线外参数，我们能够避免使用繁杂的引用和转义，即便数据是文本。
+     * 注意我们怎么才能对参数值中的引号不做任何事情。
+     */
+
+    /* 这里是我们的线外参数值 */
+    paramValues[0] = "joe's place";
+
+    res = PQexecParams(conn,
+                       "SELECT * FROM test1 WHERE t = $1",
+                       1,       /* 一个参数 */
+                       NULL,    /* 让后端推导参数类型 */
+                       paramValues,
+                       NULL,    /* 因为文本不需要参数长度 */
+                       NULL,    /* 对所有文本参数的默认值 */
+                       1);      /* 要求二进制结果 */
+
+    if (PQresultStatus(res) != PGRES_TUPLES_OK)
+    {
+        fprintf(stderr, "SELECT failed: %s", PQerrorMessage(conn));
+        PQclear(res);
+        exit_nicely(conn);
+    }
+
+    show_binary_results(res);
+
+    PQclear(res);
+
+    /*
+     * 在第二个例子中，我们以二进制形式传输一个整数参数，并且再次以二进制形式接收结果。
+     *
+     * 尽管我们告诉 PQexecParams 我们让后端推导参数类型，我们实际上通过在查询文本中造型参数符号来强制该决定。
+     * 在发送二进制参数时，这是一种好的安全测度。
+     */
+
+    /* 将整数值 "2" 转换为网络字节序 */
+    binaryIntVal = htonl((uint32_t) 2);
+
+    /* 为 PQexecParams 设置参数数组 */
+    paramValues[0] = (char *) &amp;binaryIntVal;
+    paramLengths[0] = sizeof(binaryIntVal);
+    paramFormats[0] = 1;        /* binary */
+
+    res = PQexecParams(conn,
+                       "SELECT * FROM test1 WHERE i = $1::int4",
+                       1,       /* 一个参数 */
+                       NULL,    /* 让后端推导参数类型 */
+                       paramValues,
+                       paramLengths,
+                       paramFormats,
+                       1);      /* 要求二进制结果 */
+
+    if (PQresultStatus(res) != PGRES_TUPLES_OK)
+    {
+        fprintf(stderr, "SELECT failed: %s", PQerrorMessage(conn));
+        PQclear(res);
+        exit_nicely(conn);
+    }
+
+    show_binary_results(res);
+
+    PQclear(res);
+
+    /* 关闭到数据库的连接并清理 */
+    PQfinish(conn);
+
+    return 0;
+}</pre></div></div><br class="example-break" /></div><div class="navfooter"><hr /><table width="100%" summary="Navigation footer"><tr><td width="40%" align="left"><a accesskey="p" href="libpq-build.html">上一页</a> </td><td width="20%" align="center"><a accesskey="u" href="libpq.html">上一级</a></td><td width="40%" align="right"> <a accesskey="n" href="largeobjects.html">下一页</a></td></tr><tr><td width="40%" align="left" valign="top">33.20. 编译 <span class="application">libpq</span> 程序 </td><td width="20%" align="center"><a accesskey="h" href="index.html">起始页</a></td><td width="40%" align="right" valign="top"> 第 34 章 大对象</td></tr></table></div></body></html>

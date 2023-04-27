@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><title>31.3. 冲突</title><link rel="stylesheet" type="text/css" href="stylesheet.css" /><link rev="made" href="pgsql-docs@postgresql.org" /><meta name="generator" content="DocBook XSL Stylesheets V1.79.1" /><link rel="prev" href="logical-replication-subscription.html" title="31.2. 订阅" /><link rel="next" href="logical-replication-restrictions.html" title="31.4. 限制" /></head><body><div xmlns="http://www.w3.org/TR/xhtml1/transitional" class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="5" align="center">31.3. 冲突</th></tr><tr><td width="10%" align="left"><a accesskey="p" href="logical-replication-subscription.html" title="31.2. 订阅">上一页</a> </td><td width="10%" align="left"><a accesskey="u" href="logical-replication.html" title="第 31 章 逻辑复制">上一级</a></td><th width="60%" align="center">第 31 章 逻辑复制</th><td width="10%" align="right"><a accesskey="h" href="index.html" title="PostgreSQL 10.1 手册">起始页</a></td><td width="10%" align="right"> <a accesskey="n" href="logical-replication-restrictions.html" title="31.4. 限制">下一页</a></td></tr></table><hr></hr></div><div class="sect1" id="LOGICAL-REPLICATION-CONFLICTS"><div class="titlepage"><div><div><h2 class="title" style="clear: both">31.3. 冲突</h2></div></div></div><p>   逻辑复制的行为与普通的DML操作类似，因为即使订阅者节点本地更改了数据，
+   数据也将被更新。如果传入数据违反任何限制，复制将停止。
+   这被称为<em class="firstterm">冲突</em>。当复制<code class="command">UPDATE</code>
+   或者<code class="command">DELETE</code>操作时，丢失的数据不会产生冲突，这样的操作将被忽略。
+  </p><p>   冲突会产生错误，并会停止复制；它必须由用户手动解决。
+   有关冲突的详细信息可以在订阅者的服务器日志中找到。
+  </p><p>   解决方案可以通过更改订阅者上的数据来完成，以免它与传入的更改冲突，
+   或者跳过与现有数据冲突的事务。事务可以通过调用
+   <a class="link" href="functions-admin.html#PG-REPLICATION-ORIGIN-ADVANCE"><code class="function">pg_replication_origin_advance()</code></a>
+   函数使用<em class="parameter"><code>node_name</code></em>对应订阅名称和位置来跳过。
+   源的当前位置可以在<a class="link" href="view-pg-replication-origin-status.html" title="51.79. pg_replication_origin_status">   <code class="structname">pg_replication_origin_status</code></a>
+   系统视图中看到。
+  </p></div><div class="navfooter"><hr /><table width="100%" summary="Navigation footer"><tr><td width="40%" align="left"><a accesskey="p" href="logical-replication-subscription.html">上一页</a> </td><td width="20%" align="center"><a accesskey="u" href="logical-replication.html">上一级</a></td><td width="40%" align="right"> <a accesskey="n" href="logical-replication-restrictions.html">下一页</a></td></tr><tr><td width="40%" align="left" valign="top">31.2. 订阅 </td><td width="20%" align="center"><a accesskey="h" href="index.html">起始页</a></td><td width="40%" align="right" valign="top"> 31.4. 限制</td></tr></table></div></body></html>

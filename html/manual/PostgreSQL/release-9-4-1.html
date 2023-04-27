@@ -1,0 +1,143 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><title>E.35. 版本 9.4.1</title><link rel="stylesheet" type="text/css" href="stylesheet.css" /><link rev="made" href="pgsql-docs@postgresql.org" /><meta name="generator" content="DocBook XSL Stylesheets V1.79.1" /><link rel="prev" href="release-9-4-2.html" title="E.34. 版本 9.4.2" /><link rel="next" href="release-9-4.html" title="E.36. 版本 9.4" /></head><body><div xmlns="http://www.w3.org/TR/xhtml1/transitional" class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="5" align="center">E.35. 版本 9.4.1</th></tr><tr><td width="10%" align="left"><a accesskey="p" href="release-9-4-2.html" title="E.34. 版本 9.4.2">上一页</a> </td><td width="10%" align="left"><a accesskey="u" href="release.html" title="附录 E. 版本说明">上一级</a></td><th width="60%" align="center">附录 E. 版本说明</th><td width="10%" align="right"><a accesskey="h" href="index.html" title="PostgreSQL 10.1 手册">起始页</a></td><td width="10%" align="right"> <a accesskey="n" href="release-9-4.html" title="E.36. 版本 9.4">下一页</a></td></tr></table><hr></hr></div><div class="sect1" id="RELEASE-9-4-1"><div class="titlepage"><div><div><h2 class="title" style="clear: both">E.35. 版本 9.4.1</h2></div></div></div><div class="toc"><dl class="toc"><dt><span class="sect2"><a href="release-9-4-1.html#idp67662352">E.35.1. 迁移到版本9.4.1</a></span></dt><dt><span class="sect2"><a href="release-9-4-1.html#idp67666768">E.35.2. 修改列表</a></span></dt></dl></div><p><strong>发布日期：. </strong>2015-02-05</p><p>   这个版本包含各种自9.4.0以来的修复。关于9.4主版本的新特性信息，
+   请查看<a class="xref" href="release-9-4.html" title="E.36. 版本 9.4">第 E.36 节</a>。
+  </p><div class="sect2" id="idp67662352"><div class="titlepage"><div><div><h3 class="title">E.35.1. 迁移到版本9.4.1</h3></div></div></div><p>    运行9.4.X版本的用户不需要转储/恢复。
+   </p><p>    不过，如果你是Windows用户并且正在使用<span class="quote">“<span class="quote">Norwegian (Bokmål)</span>”</span>区域设置，
+    那么在升级替换了任何存储在<span class="productname">PostgreSQL</span>系统目录中带有纯ASCII别名
+    <span class="quote">“<span class="quote">Norwegian_Norway</span>”</span>的<span class="quote">“<span class="quote">Norwegian (Bokmål)_Norway</span>”</span>或
+    <span class="quote">“<span class="quote">norwegian-bokmal</span>”</span>地区名称之后，需要手动动作。详情请查看    
+    <a class="ulink" href="http://wiki.postgresql.org/wiki/Changes_To_Norwegian_Locale" target="_top">http://wiki.postgresql.org/wiki/Changes_To_Norwegian_Locale</a>
+   </p></div><div class="sect2" id="idp67666768"><div class="titlepage"><div><div><h3 class="title">E.35.2. 修改列表</h3></div></div></div><div class="itemizedlist"><ul class="itemizedlist" style="list-style-type: disc; "><li class="listitem"><p>      修复<code class="function">to_char()</code>中的缓冲区溢出 (Bruce Momjian)
+     </p><p>      当<code class="function">to_char()</code>处理一个数字化格式模板时，需要大量的数据，
+      <span class="productname">PostgreSQL</span>将读到缓冲区的末尾。当处理一个时间戳格式模板时，
+      <span class="productname">PostgreSQL</span>将写到缓冲区的末尾。两种情况都会令服务器崩溃。
+      我们不排除攻击导致特权提升的可能性，尽管它们看起来是不可能的。 (CVE-2015-0241)
+     </p></li><li class="listitem"><p>      修复代替者<code class="function">*printf()</code>函数中的缓冲区溢出 (Tom Lane)
+     </p><p>      <span class="productname">PostgreSQL</span>包括<code class="function">printf</code>和相关函数的替换实现。
+      在格式化浮点数（转换说明符<code class="literal">e</code>、<code class="literal">E</code>、<code class="literal">f</code>、<code class="literal">F</code>、
+      <code class="literal">g</code>或<code class="literal">G</code>），要求的精度超过500时，这个代码会超出堆栈缓冲区。
+      这会使服务器崩溃，而且我们还没有解决攻击导致权限提升的可能性。
+      一个数据库用户可以通过<code class="function">to_char()</code> SQL函数触发这样一个缓冲区溢出。
+      虽然这是唯一受到影响的内核<span class="productname">PostgreSQL</span>函数，
+      但是使用printf族函数的扩展模块可能也有风险。
+     </p><p>      这个问题主要影响Windows上的<span class="productname">PostgreSQL</span>。
+      <span class="productname">PostgreSQL</span>在其他现代系统上的时候，
+      在适当的地方使用这些函数的系统实现。
+      (CVE-2015-0242)
+     </p></li><li class="listitem"><p>      修复<code class="filename">contrib/pgcrypto</code>中的缓冲区溢出
+      (Marko Tiikkaja, Noah Misch)
+     </p><p>      在<code class="filename">pgcrypto</code>中追踪的错误的内存大小允许堆栈缓冲区溢出，
+      和在未初始化的内存内容上的不正确的依赖。缓冲区溢出情况会使服务器崩溃，
+      我们还未解决攻击导致权限提升的可能性。
+      (CVE-2015-0243)
+     </p></li><li class="listitem"><p>      修复错误后前/后端协议同步可能的丢失
+      (Heikki Linnakangas)
+     </p><p>      如果任何错误发生在服务器正在从客户端读取协议消息的时候，
+      那么服务器会丢失同步，并且不正确的尝试解释这部分消息数据为一个新的协议消息。
+      攻击者可以通过这种方式注入他自己的SQL命令，在命令参数中提交二进制数据。
+      声明超时和查询取消是最可能触发这个情景的来源。
+      特别容易遭受攻击的是使用一个超时并且仍然提交任意用户数据作为二进制查询参数的应用。
+      禁用语句超时将减少，但是不是消除，开发的风险。感谢Emil Lenngren报告这个问题。
+      (CVE-2015-0244)
+     </p></li><li class="listitem"><p>      通过约束违反错误消息修复信息泄露 (Stephen Frost)
+     </p><p>      一些服务器错误消息显示了违反约束的字段值，比如唯一约束。
+      如果用户没有在表的所有字段上拥有<code class="literal">SELECT</code>权限，
+      那么这表示用户看到了他不应该能够看到的值。调整这个代码，
+      使得该值只在它们来自SQL命令或者用户可以选取时显示。
+      (CVE-2014-8161)
+     </p></li><li class="listitem"><p>      在Windows上锁定回归测试的临时安装 (Noah Misch)
+     </p><p>      使用SSPI认证，只允许来自加载了测试套件的OS用户的连接。
+      这在Windows上关闭了安全隐患，和以前在其他平台上关闭的相同，
+      也就是说，其他用户有可能连接到测试主机。
+      (CVE-2014-0067)
+     </p></li><li class="listitem"><p>      处理Windows名为<span class="quote">“<span class="quote">Norwegian (Bokmål)</span>”</span>的区域设置
+      (Heikki Linnakangas)
+     </p><p>      非ASCII区域名是有问题的，因为不清楚它们应该用什么编码表示。
+      映射这样的区域名到纯ASCII别名<span class="quote">“<span class="quote">Norwegian_Norway</span>”</span>。
+     </p><p>      9.4.0映射有问题的名字到<span class="quote">“<span class="quote">norwegian-bokmal</span>”</span>，
+      但是结果是在所有的Windows配置上都不能工作。
+      现在建议使用<span class="quote">“<span class="quote">Norwegian_Norway</span>”</span>。
+     </p></li><li class="listitem"><p>      修复在EvalPlanQual处理中使用早已释放的内存的问题
+      (Tom Lane)
+     </p><p>      在<code class="literal">READ COMMITTED</code>模式中，锁定或者更新最近更新的行的查询会因为这个bug而崩溃。
+     </p></li><li class="listitem"><p>      在EvalPlanQual处理中尝试请求元组锁时避免可能的死锁 (Álvaro Herrera, Mark Kirkwood)
+     </p></li><li class="listitem"><p>      修复当事务尝试请求一个<code class="literal">FOR NO KEY EXCLUSIVE</code>元组锁时，
+      多个其他事务当前持有<code class="literal">FOR SHARE</code>锁时的等待失败 (Álvaro Herrera)
+     </p></li><li class="listitem"><p>      改善<code class="command">EXPLAIN</code>大范围表的性能 (Tom Lane)
+     </p></li><li class="listitem"><p>      修复<code class="type">jsonb</code> Unicode转义处理，并且因此不允许<code class="literal">\u0000</code> (Tom Lane)
+     </p><p>      以前，接受JSON Unicode转义<code class="literal">\u0000</code>，并且存储为这六个字符；
+      但是它与输入<code class="literal">\\u0000</code>的存储区分不开，导致混淆。而且，
+      在反转义文本输出中期望，比如<code class="literal">-&gt;&gt;</code>操作符，
+      序列打印为<code class="literal">\u0000</code>，这不符合将被移除的JSON转义的期望。
+      （一致的行为将需要发出一个零字节，但是<span class="productname">PostgreSQL</span>
+      不支持在文本字符串里嵌入零字节。）9.4.0包括一个不明智的尝试，
+      通过调整JSON输出转换结果改善这个行为；但是当然这不能修复基本的歧义，
+      并且因此破坏了其他Unicode转义序列的使用。恢复原来那样，
+      并且要避免内核问题，在<code class="type">jsonb</code>输入中拒绝<code class="literal">\u0000</code>。
+     </p><p>      如果一个<code class="type">jsonb</code>字段包含9.4.0存储的<code class="literal">\u0000</code>值，
+      那么它将从今以后将其读为<code class="literal">\\u0000</code>，这也是9.4.0为此存储数据的其他有效的解释。
+     </p><p>      <code class="type">json</code>类型没有存储歧义问题，但是它确实有不一致的反转义文本输出问题。
+      因此当需要转换到反转义格式时，在<code class="type">json</code>值中现在也拒绝<code class="literal">\u0000</code>。
+      这个修改没有破坏在<code class="type">json</code>字段中存储<code class="literal">\u0000</code>的能力，
+      只要该值上面没有正在进行处理。在数据库编码不是UTF8时，
+      这正好与允许的非ASCII Unicode转义的情况平行。
+     </p></li><li class="listitem"><p>      修复<code class="function">xpath()</code>中的命名空间处理 (Ali Akbar)
+     </p><p>      以前，如果命名空间声明附属于输入<code class="type">xml</code>值中的一个祖先元素，
+      而不是要被返回的指定元素，那么来自<code class="function">xpath()</code>调用的<code class="type">xml</code>
+      值将没有命名空间声明。单独的考虑该值时，传递祖先的声明，这样结果才是正确的。
+     </p></li><li class="listitem"><p>      修复范围运算符选择性估计中各种各样的疏漏 (Emre Hasegeli)
+     </p><p>      这个补丁修复极端情况<span class="quote">“<span class="quote">unexpected operator NNNN</span>”</span>规划器错误，
+      并且改善了一些其他情况的选择性估计。
+     </p></li><li class="listitem"><p>      恢复非故意的减小GIN索引条目的最大值 (Heikki Linnakangas)
+     </p><p>      9.4.0在遇到<span class="quote">“<span class="quote">索引行尺寸超出最大值</span>”</span>错误时会失败，而以前的版本接受该数据。
+     </p></li><li class="listitem"><p>      修复重复的GIN索引扫描时的查询持续内存泄露
+      (Heikki Linnakangas)
+     </p></li><li class="listitem"><p>      修复使用非零<code class="varname">gin_fuzzy_search_limit</code>时可能的崩溃 (Heikki Linnakangas)
+     </p></li><li class="listitem"><p>      逻辑解码的各种修复 (Andres Freund)
+     </p></li><li class="listitem"><p>      修复在<code class="varname">wal_log_hints</code>设置中报告修改的WAL参数修改记录不正确的重放 (Petr Jelinek)
+     </p></li><li class="listitem"><p>      修改<span class="quote">“<span class="quote">pgstat等待超时</span>”</span>警告消息为LOG级别，并且重新措辞使其更易理解 (Tom Lane)
+     </p><p>      这个消息最初以为是基本上不会发生的情况，但是它经常发生在我们的较慢buildfarm成员上，
+      实在是很烦人。将其降低到LOG级别，并且在措辞上多花费了一点精力：
+      它现在读作<span class="quote">“<span class="quote">使用旧的状态统计而不是当前的这个，因为状态收集器没有响应了</span>”</span>。
+     </p></li><li class="listitem"><p>      如果macOS的<code class="function">setlocale()</code>在主进程内部启动了一个不想要的额外线程则发出警告 (Noah Misch)
+     </p></li><li class="listitem"><p>      修复<code class="filename">/etc/passwd</code>不可读时<span class="application">libpq</span>的行为 (Tom Lane)
+     </p><p>      当执行<code class="function">PQsetdbLogin()</code>时，<span class="application">libpq</span>
+      尝试确认用户的操作系统名，这在大多数Unix平台上包括读取<code class="filename">/etc/passwd</code>。
+      到了9.4，未能做到这点被认为是一个硬伤。恢复以前的行为，
+      只在应用没有提供数据库用户名用作连接时失败。
+      这支持在缺少<code class="filename">/etc/passwd</code>文件的更改根目录环境中操作。
+     </p></li><li class="listitem"><p>      改善分析<span class="application">psql</span>的特殊变量的一致性 (Tom Lane)
+     </p><p>      允许<code class="literal">ECHO_HIDDEN</code>和<code class="literal">ON_ERROR_ROLLBACK</code>
+      的<code class="literal">on</code>和<code class="literal">off</code>有不同的拼写（比如<code class="literal">1</code>/<code class="literal">0</code>）。
+      对于不能识别的值为<code class="literal">COMP_KEYWORD_CASE</code>、<code class="literal">ECHO</code>、<code class="literal">ECHO_HIDDEN</code>、
+      <code class="literal">HISTCONTROL</code>、<code class="literal">ON_ERROR_ROLLBACK</code>和<code class="literal">VERBOSITY</code>报告一个警告。
+      识别所有这些变量大小写不敏感的值；以前是大小写敏感和大小写不敏感行为的混合。
+     </p></li><li class="listitem"><p>      修复<span class="application">pg_dump</span>，使其在事件触发器上不失败的处理评论 (Tom Lane)
+     </p></li><li class="listitem"><p>      允许并行的<span class="application">pg_dump</span>使用<code class="option">--serializable-deferrable</code> (Kevin Grittner)
+     </p></li><li class="listitem"><p>      当备用服务器提升为主服务器时，阻止<code class="literal">pg_basebackup -x/-X</code>
+      创建的WAL文件被再次归档 (Andres Freund)
+     </p></li><li class="listitem"><p>      安全的在<code class="filename">contrib/tablefunc</code>的<code class="function">connectby()</code>
+      中处理意料之外的查询结果，尤其是NULL (Michael Paquier)
+     </p><p>      如果遇到一个NULL关键值，<code class="function">connectby()</code>以前会崩溃。
+      它现在输出行，但是不会深层递归。
+     </p></li><li class="listitem"><p>      清理了很多来自Coverity静态代码分析器的警告
+      (Andres Freund, Tatsuo Ishii, Marko Kreen, Tom Lane, Michael Paquier)
+     </p><p>      这些修改大部分是为了美化，但是在某些情况下修复了极端情况的bug，
+      例如在一个超出内存失败之后是一个崩溃而不是一个适当的错误报告。
+      没有代表安全问题的。
+     </p></li><li class="listitem"><p>      允许来自<span class="application">configure</span>环境的<code class="varname">CFLAGS</code>
+      覆盖自动提供的<code class="varname">CFLAGS</code> (Tom Lane)
+      Allow <code class="varname">CFLAGS</code> from <span class="application">configure</span>'s environment
+      to override automatically-supplied <code class="varname">CFLAGS</code> (Tom Lane)
+     </p><p>      以前，<span class="application">configure</span>会根据用户提供的<code class="varname">CFLAGS</code>
+      字符串末尾添加任何它自己选择的开关。因为大多数编译器进程从左到右切换，
+      这意味着在冲突的情况下配置的选择将覆盖用户指定的标识。
+      这应该以另一种方式工作，所以调整逻辑，将用户的字符串放在末尾而不是开头。
+     </p></li><li class="listitem"><p>      让<span class="application">pg_regress</span>删除任何它根据成功退出创建的临时安装 (Tom Lane)
+     </p><p>      这导致<code class="literal">make check-world</code>时磁盘空间使用大量的减少，
+      因为该序列包含大量临时安装的创建。
+     </p></li><li class="listitem"><p>      添加CST (China Standard Time)到我们的时区缩写列表 (Tom Lane)
+     </p></li><li class="listitem"><p>      更新时区数据文件到<span class="application">tzdata</span>版本2015a，因为DST规律在智利、墨西哥发生了改变，
+      加上冰岛的历史修改。
+     </p></li></ul></div></div></div><div class="navfooter"><hr /><table width="100%" summary="Navigation footer"><tr><td width="40%" align="left"><a accesskey="p" href="release-9-4-2.html">上一页</a> </td><td width="20%" align="center"><a accesskey="u" href="release.html">上一级</a></td><td width="40%" align="right"> <a accesskey="n" href="release-9-4.html">下一页</a></td></tr><tr><td width="40%" align="left" valign="top">E.34. 版本 9.4.2 </td><td width="20%" align="center"><a accesskey="h" href="index.html">起始页</a></td><td width="40%" align="right" valign="top"> E.36. 版本 9.4</td></tr></table></div></body></html>

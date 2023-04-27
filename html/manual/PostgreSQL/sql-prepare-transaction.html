@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><title>PREPARE TRANSACTION</title><link rel="stylesheet" type="text/css" href="stylesheet.css" /><link rev="made" href="pgsql-docs@postgresql.org" /><meta name="generator" content="DocBook XSL Stylesheets V1.79.1" /><link rel="prev" href="sql-prepare.html" title="PREPARE" /><link rel="next" href="sql-reassign-owned.html" title="REASSIGN OWNED" /></head><body><div xmlns="http://www.w3.org/TR/xhtml1/transitional" class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="5" align="center">PREPARE TRANSACTION</th></tr><tr><td width="10%" align="left"><a accesskey="p" href="sql-prepare.html" title="PREPARE">上一页</a> </td><td width="10%" align="left"><a accesskey="u" href="sql-commands.html" title="SQL 命令">上一级</a></td><th width="60%" align="center">SQL 命令</th><td width="10%" align="right"><a accesskey="h" href="index.html" title="PostgreSQL 10.1 手册">起始页</a></td><td width="10%" align="right"> <a accesskey="n" href="sql-reassign-owned.html" title="REASSIGN OWNED">下一页</a></td></tr></table><hr></hr></div><div class="refentry" id="SQL-PREPARE-TRANSACTION"><div class="titlepage"></div><a id="idp48015648" class="indexterm"></a><div class="refnamediv"><h2><span class="refentrytitle">PREPARE TRANSACTION</span></h2><p>PREPARE TRANSACTION — 为两阶段提交准备当前事务</p></div><div class="refsynopsisdiv"><h2>大纲</h2><pre class="synopsis">PREPARE TRANSACTION <em class="replaceable"><code>transaction_id</code></em></pre></div><div class="refsect1" id="idp48019632"><h2>描述</h2><p>   <code class="command">PREPARE TRANSACTION</code>为两阶段提交准备
+   当前事务。在这个命令之后，该事务不再与当前会话关联。相反，它的状态
+   被完全存储在磁盘上，并且有很高的可能性它会被提交成功（即便在请求提
+   交前发生数据库崩溃）。
+  </p><p>   一旦被准备好，事务稍后就可以分别用
+   <a class="xref" href="sql-commit-prepared.html" title="COMMIT PREPARED"><span class="refentrytitle">COMMIT PREPARED</span></a>
+   或者<a class="xref" href="sql-rollback-prepared.html" title="ROLLBACK PREPARED"><span class="refentrytitle">ROLLBACK PREPARED</span></a>提交或者回滚。可以从任何
+   会话而不仅仅是执行原始事务的会话中发出这些命令。
+  </p><p>   从发出命令的会话的角度来看，<code class="command">PREPARE
+   TRANSACTION</code>不像<code class="command">ROLLBACK</code>命令：
+   在执行它之后，就没有活跃的当前事务，并且该预备事务的效果也不再可见（
+   如果该事务被提交，效果将重新变得可见）。
+  </p><p>   如果由于任何原因<code class="command">PREPARE TRANSACTION</code>
+   命令失败，它会变成一个<code class="command">ROLLBACK</code>：当前事务会被取消。
+  </p></div><div class="refsect1" id="idp48026912"><h2>参数</h2><div class="variablelist"><dl class="variablelist"><dt><span class="term"><em class="replaceable"><code>transaction_id</code></em></span></dt><dd><p>      一个任意的事务标识符，
+      <code class="command">COMMIT PREPARED</code>或者<code class="command">ROLLBACK PREPARED</code>
+      以后将用这个标识符来标识这个事务。该标识符必须写成一个字符串，
+      并且长度必须小于 200 字节。它也不能与任何当前已经准备好的事务的标识符相同。
+     </p></dd></dl></div></div><div class="refsect1" id="idp48030640"><h2>注解</h2><p>   <code class="command">PREPARE TRANSACTION</code>并不是设计为在应用或者交互式
+   会话中使用。它的目的是允许一个外部事务管理器在多个数据库或者其他事务性
+   来源之间执行原子的全局事务。除非你在编写一个事务管理器，否则你可能不会
+   用到<code class="command">PREPARE TRANSACTION</code>。
+  </p><p>   这个命令必须在一个事务块中使用。事务块用<a class="xref" href="sql-begin.html" title="BEGIN"><span class="refentrytitle">BEGIN</span></a>开始。
+  </p><p>   当前在已经执行过任何涉及到临时表、创建带
+   <code class="literal">WITH HOLD</code>的游标或者执行
+   <code class="command">LISTEN</code>、<code class="command">UNLISTEN</code>或<code class="command">NOTIFY</code>的
+   事务中，不允许<code class="command">PREPARE</code>该事务。这些特性与当前会话
+   绑定得太过紧密，所以对一个要被准备的事务来说没有什么用处。
+  </p><p>   如果用<code class="command">SET</code>（不带<code class="literal">LOCAL</code>选项）修改过事务的
+   任何运行时参数，这些效果会持续到
+   <code class="command">PREPARE TRANSACTION</code>之后，并且将不会被后续的任何
+   <code class="command">COMMIT PREPARED</code>或
+   <code class="command">ROLLBACK PREPARED</code>所影响。因此，在这一
+   方面<code class="command">PREPARE TRANSACTION</code>的行为更像
+   <code class="command">COMMIT</code>而不是<code class="command">ROLLBACK</code>。
+  </p><p>   所有当前可用的准备好事务被列在<a class="link" href="view-pg-prepared-xacts.html" title="51.77. pg_prepared_xacts"><code class="structname">pg_prepared_xacts</code></a>系统视图中。
+  </p><div class="caution"><h3 class="title">小心</h3><p>    让一个事务处于准备好状态太久是不明智的。这将会干扰
+    <code class="command">VACUUM</code>回收存储的能力，并且在极限情况下可能导致
+    数据库关闭以阻止事务 ID 回卷（见<a class="xref" href="routine-vacuuming.html#VACUUM-FOR-WRAPAROUND" title="24.1.5. 防止事务 ID 回卷失败">第 24.1.5 节</a>）。还要记住，该事务会继续持有
+     它已经持有的锁。该特性的设计用法是，只要一个外部事务管理器已经验证
+     其他数据库也准备好了要提交，一个准备好的事务将被正常地提交或者回滚。
+   </p><p>    如果没有建立一个外部事务管理器来跟踪准备好的事务并且确保它们被迅速地
+    结束，最好禁用准备好事务特性（设置
+    <a class="xref" href="runtime-config-resource.html#GUC-MAX-PREPARED-TRANSACTIONS">max_prepared_transactions</a>为零）。这将防止意外
+    地创建准备好事务，不然该事务有可能被忘记并且最终导致问题。
+   </p></div></div><div class="refsect1" id="SQL-PREPARE-TRANSACTION-EXAMPLES"><h2>例子</h2><p>   为两阶段提交准备当前事务，使用<code class="literal">foobar</code>作为事务标识符：
+
+</p><pre class="programlisting">PREPARE TRANSACTION 'foobar';</pre></div><div class="refsect1" id="idp48052384"><h2>兼容性</h2><p>   <code class="command">PREPARE TRANSACTION</code>是一种
+   <span class="productname">PostgreSQL</span>扩展。其意图是用于
+   外部事务管理系统，其中有些已经被标准涵盖（例如 X/Open XA），
+   但是那些系统的 SQL 方面未被标准化。
+  </p></div><div class="refsect1" id="idp48054656"><h2>另见</h2><span class="simplelist"><a class="xref" href="sql-commit-prepared.html" title="COMMIT PREPARED"><span class="refentrytitle">COMMIT PREPARED</span></a>, <a class="xref" href="sql-rollback-prepared.html" title="ROLLBACK PREPARED"><span class="refentrytitle">ROLLBACK PREPARED</span></a></span></div></div><div class="navfooter"><hr /><table width="100%" summary="Navigation footer"><tr><td width="40%" align="left"><a accesskey="p" href="sql-prepare.html">上一页</a> </td><td width="20%" align="center"><a accesskey="u" href="sql-commands.html">上一级</a></td><td width="40%" align="right"> <a accesskey="n" href="sql-reassign-owned.html">下一页</a></td></tr><tr><td width="40%" align="left" valign="top">PREPARE </td><td width="20%" align="center"><a accesskey="h" href="index.html">起始页</a></td><td width="40%" align="right" valign="top"> REASSIGN OWNED</td></tr></table></div></body></html>

@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><title>9.17. 条件表达式</title><link rel="stylesheet" type="text/css" href="stylesheet.css" /><link rev="made" href="pgsql-docs@postgresql.org" /><meta name="generator" content="DocBook XSL Stylesheets V1.79.1" /><link rel="prev" href="functions-sequence.html" title="9.16. 序列操作函数" /><link rel="next" href="functions-array.html" title="9.18. 数组函数和操作符" /></head><body><div xmlns="http://www.w3.org/TR/xhtml1/transitional" class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="5" align="center">9.17. 条件表达式</th></tr><tr><td width="10%" align="left"><a accesskey="p" href="functions-sequence.html" title="9.16. 序列操作函数">上一页</a> </td><td width="10%" align="left"><a accesskey="u" href="functions.html" title="第 9 章 函数和操作符">上一级</a></td><th width="60%" align="center">第 9 章 函数和操作符</th><td width="10%" align="right"><a accesskey="h" href="index.html" title="PostgreSQL 10.1 手册">起始页</a></td><td width="10%" align="right"> <a accesskey="n" href="functions-array.html" title="9.18. 数组函数和操作符">下一页</a></td></tr></table><hr></hr></div><div class="sect1" id="FUNCTIONS-CONDITIONAL"><div class="titlepage"><div><div><h2 class="title" style="clear: both">9.17. 条件表达式</h2></div></div></div><div class="toc"><dl class="toc"><dt><span class="sect2"><a href="functions-conditional.html#FUNCTIONS-CASE">9.17.1. <code class="literal">CASE</code></a></span></dt><dt><span class="sect2"><a href="functions-conditional.html#FUNCTIONS-COALESCE-NVL-IFNULL">9.17.2. <code class="literal">COALESCE</code></a></span></dt><dt><span class="sect2"><a href="functions-conditional.html#FUNCTIONS-NULLIF">9.17.3. <code class="literal">NULLIF</code></a></span></dt><dt><span class="sect2"><a href="functions-conditional.html#FUNCTIONS-GREATEST-LEAST">9.17.4. <code class="literal">GREATEST</code>和<code class="literal">LEAST</code></a></span></dt></dl></div><a id="idp13609264" class="indexterm"></a><a id="idp13609952" class="indexterm"></a><p>   本节描述在<span class="productname">PostgreSQL</span>中可用的<acronym class="acronym">SQL</acronym>兼容的条件表达式。
+  </p><div class="tip"><h3 class="title">提示</h3><p>    如果你的需求超过这些条件表达式的能力，你可能会希望用一种更富表现力的编程语言写一个存储过程。
+   </p></div><div class="sect2" id="FUNCTIONS-CASE"><div class="titlepage"><div><div><h3 class="title">9.17.1. <code class="literal">CASE</code></h3></div></div></div><p>   <acronym class="acronym">SQL</acronym> <code class="token">CASE</code>表达式是一种通用的条件表达式，类似于其它编程语言中的 if/else 语句：
+
+</p><pre class="synopsis">CASE WHEN <em class="replaceable"><code>condition</code></em> THEN <em class="replaceable"><code>result</code></em>
+     [<span class="optional">WHEN ...</span>]
+     [<span class="optional">ELSE <em class="replaceable"><code>result</code></em></span>]
+END</pre><p>
+
+   <code class="token">CASE</code>子句可以用于任何表达式可以出现的地方。每一个<em class="replaceable"><code>condition</code></em>是一个返回<code class="type">boolean</code>结果的表达式。如果结果为真，那么<code class="token">CASE</code>表达式的结果就是符合条件的<em class="replaceable"><code>result</code></em>，并且剩下的<code class="token">CASE</code>表达式不会被处理。如果条件的结果不为真，那么以相同方式搜寻任何随后的<code class="token">WHEN</code>子句。如果没有<code class="token">WHEN</code> <em class="replaceable"><code>condition</code></em>为真，那么<code class="token">CASE</code>表达式的值就是在<code class="token">ELSE</code>子句里的<em class="replaceable"><code>result</code></em>。如果省略了<code class="token">ELSE</code>子句而且没有条件为真，结果为空。
+  </p><p>    例子：
+</p><pre class="screen">SELECT * FROM test;
+
+ a
+---
+ 1
+ 2
+ 3
+
+
+SELECT a,
+       CASE WHEN a=1 THEN 'one'
+            WHEN a=2 THEN 'two'
+            ELSE 'other'
+       END
+    FROM test;
+
+ a | case
+---+-------
+ 1 | one
+ 2 | two
+ 3 | other</pre><p>
+   </p><p>   所有<em class="replaceable"><code>result</code></em>表达式的数据类型都必须可以转换成单一的输出类型。 参阅<a class="xref" href="typeconv-union-case.html" title="10.5. UNION、CASE和相关结构">第 10.5 节</a>获取细节。
+  </p><p>   下面这个<span class="quote">“<span class="quote">简单</span>”</span>形式的<code class="token">CASE</code>表达式是上述通用形式的一个变种：
+
+</p><pre class="synopsis">CASE <em class="replaceable"><code>expression</code></em>
+    WHEN <em class="replaceable"><code>value</code></em> THEN <em class="replaceable"><code>result</code></em>
+    [<span class="optional">WHEN ...</span>]
+    [<span class="optional">ELSE <em class="replaceable"><code>result</code></em></span>]
+END</pre><p>
+
+   第一个<em class="replaceable"><code>expression</code></em>会被计算，然后与所有在<code class="token">WHEN</code>子句中的每一个<em class="replaceable"><code>value</code></em>对比，直到找到一个相等的。如果没有找到匹配的，则返回在<code class="token">ELSE</code>子句中的<em class="replaceable"><code>result</code></em>（或者控制）。 这类似于 C 里的<code class="function">switch</code>语句。
+  </p><p>    上面的例子可以用简单<code class="token">CASE</code>语法来写：
+</p><pre class="screen">SELECT a,
+       CASE a WHEN 1 THEN 'one'
+              WHEN 2 THEN 'two'
+              ELSE 'other'
+       END
+    FROM test;
+
+ a | case
+---+-------
+ 1 | one
+ 2 | two
+ 3 | other</pre><p>
+   </p><p>    <code class="token">CASE</code>表达式并不计算任何无助于判断结果的子表达式。例如，下面是一个可以避免被零除错误的方法：
+</p><pre class="programlisting">SELECT ... WHERE CASE WHEN x &lt;&gt; 0 THEN y/x &gt; 1.5 ELSE false END;</pre><p>
+   </p><div class="note"><h3 class="title">注意</h3><p>     如<a class="xref" href="sql-expressions.html#SYNTAX-EXPRESS-EVAL" title="4.2.14. 表达式计算规则">第 4.2.14 节</a>中所述，在有几种情况中一个表达式的子表达式
+     会被计算多次，因此<span class="quote">“<span class="quote"><code class="token">CASE</code>只计算必要的表达式</span>”</span>这
+     一原则并非不可打破。例如一个常量子表达式<code class="literal">1/0</code>通常将会在规划时导致一次
+     除零错误，即便它位于一个执行时永远也不会进入的<code class="token">CASE</code>分支时也是
+     如此。
+    </p></div></div><div class="sect2" id="FUNCTIONS-COALESCE-NVL-IFNULL"><div class="titlepage"><div><div><h3 class="title">9.17.2. <code class="literal">COALESCE</code></h3></div></div></div><a id="idp13642000" class="indexterm"></a><a id="idp13642688" class="indexterm"></a><a id="idp13643344" class="indexterm"></a><pre class="synopsis"><code class="function">COALESCE</code>(<em class="replaceable"><code>value</code></em> [<span class="optional">, ...</span>])</pre><p>   <code class="function">COALESCE</code>函数返回它的第一个非空参数的值。当且仅当所有参数都为空时才会返回空。它常用于在为显示目的检索数据时用缺省值替换空值。例如：
+</p><pre class="programlisting">SELECT COALESCE(description, short_description, '(none)') ...</pre><p>
+   如果<code class="varname">description</code>不为空，这将会返回它的值，否则如果<code class="varname">short_description</code>非空则返回<code class="varname">short_description</code>的值，如果前两个都为空则返回<code class="literal">(none)</code>。
+  </p><p>    和<code class="token">CASE</code>表达式一样，<code class="function">COALESCE</code>将不会 计算无助于判断结果的参数；也就是说，在第一个非空参数右边的参数不会被计算。这个 SQL 标准函数提供了类似于<code class="function">NVL</code>和<code class="function">IFNULL</code>的能力，它们被用在某些其他数据库系统中。
+   </p></div><div class="sect2" id="FUNCTIONS-NULLIF"><div class="titlepage"><div><div><h3 class="title">9.17.3. <code class="literal">NULLIF</code></h3></div></div></div><a id="idp13654240" class="indexterm"></a><pre class="synopsis"><code class="function">NULLIF</code>(<em class="replaceable"><code>value1</code></em>, <em class="replaceable"><code>value2</code></em>)</pre><p>   当<em class="replaceable"><code>value1</code></em>和<em class="replaceable"><code>value2</code></em>相等时，<code class="function">NULLIF</code>返回一个空值。 否则它返回<em class="replaceable"><code>value1</code></em>。 这些可以用于执行前文给出的<code class="function">COALESCE</code>例子的逆操作：
+</p><pre class="programlisting">SELECT NULLIF(value, '(none)') ...</pre><p>
+  </p><p>   在这个例子中，如果<code class="literal">value</code>是<code class="literal">(none)</code>，将返回空值，否则返回<code class="literal">value</code>的值。
+  </p></div><div class="sect2" id="FUNCTIONS-GREATEST-LEAST"><div class="titlepage"><div><div><h3 class="title">9.17.4. <code class="literal">GREATEST</code>和<code class="literal">LEAST</code></h3></div></div></div><a id="idp13665280" class="indexterm"></a><a id="idp13665968" class="indexterm"></a><pre class="synopsis"><code class="function">GREATEST</code>(<em class="replaceable"><code>value</code></em> [<span class="optional">, ...</span>])</pre><pre class="synopsis"><code class="function">LEAST</code>(<em class="replaceable"><code>value</code></em> [<span class="optional">, ...</span>])</pre><p>    <code class="function">GREATEST</code>和<code class="function">LEAST</code>函数从一个任意的数字表达式列表里选取最大或者最小的数值。 这些表达式必须都可以转换成一个普通的数据类型，它将会是结果类型 （参阅<a class="xref" href="typeconv-union-case.html" title="10.5. UNION、CASE和相关结构">第 10.5 节</a>获取细节）。列表中的 NULL 数值将被忽略。只有所有表达式的结果都是 NULL 的时候，结果才会是 NULL。
+   </p><p>    请注意<code class="function">GREATEST</code>和<code class="function">LEAST</code>都不是 SQL 标准，但却是很常见的扩展。某些其他数据库让它们在任何参数为 NULL 时返回 NULL，而不是在所有参数都为 NULL 时才返回 NULL。
+   </p></div></div><div class="navfooter"><hr /><table width="100%" summary="Navigation footer"><tr><td width="40%" align="left"><a accesskey="p" href="functions-sequence.html">上一页</a> </td><td width="20%" align="center"><a accesskey="u" href="functions.html">上一级</a></td><td width="40%" align="right"> <a accesskey="n" href="functions-array.html">下一页</a></td></tr><tr><td width="40%" align="left" valign="top">9.16. 序列操作函数 </td><td width="20%" align="center"><a accesskey="h" href="index.html">起始页</a></td><td width="40%" align="right" valign="top"> 9.18. 数组函数和操作符</td></tr></table></div></body></html>

@@ -1,0 +1,166 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><title>7.8. WITH查询（公共表表达式）</title><link rel="stylesheet" type="text/css" href="stylesheet.css" /><link rev="made" href="pgsql-docs@postgresql.org" /><meta name="generator" content="DocBook XSL Stylesheets V1.79.1" /><link rel="prev" href="queries-values.html" title="7.7. VALUES列表" /><link rel="next" href="datatype.html" title="第 8 章 数据类型" /></head><body><div xmlns="http://www.w3.org/TR/xhtml1/transitional" class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="5" align="center">7.8. <code xmlns="http://www.w3.org/1999/xhtml" class="literal">WITH</code>查询（公共表表达式）</th></tr><tr><td width="10%" align="left"><a accesskey="p" href="queries-values.html" title="7.7. VALUES列表">上一页</a> </td><td width="10%" align="left"><a accesskey="u" href="queries.html" title="第 7 章 查询">上一级</a></td><th width="60%" align="center">第 7 章 查询</th><td width="10%" align="right"><a accesskey="h" href="index.html" title="PostgreSQL 10.1 手册">起始页</a></td><td width="10%" align="right"> <a accesskey="n" href="datatype.html" title="第 8 章 数据类型">下一页</a></td></tr></table><hr></hr></div><div class="sect1" id="QUERIES-WITH"><div class="titlepage"><div><div><h2 class="title" style="clear: both">7.8. <code class="literal">WITH</code>查询（公共表表达式）</h2></div></div></div><div class="toc"><dl class="toc"><dt><span class="sect2"><a href="queries-with.html#QUERIES-WITH-SELECT">7.8.1. <code class="literal">WITH</code>中的<code class="command">SELECT</code></a></span></dt><dt><span class="sect2"><a href="queries-with.html#QUERIES-WITH-MODIFYING">7.8.2. <code class="literal">WITH</code>中的数据修改语句</a></span></dt></dl></div><a id="idp7560816" class="indexterm"></a><a id="idp7562240" class="indexterm"></a><p>   <code class="literal">WITH</code>提供了一种方式来书写在一个大型查询中使用的辅助语句。这些语句通常被称为公共表表达式或<acronym class="acronym">CTE</acronym>，它们可以被看成是定义只在一个查询中存在的临时表。在<code class="literal">WITH</code>子句中的每一个辅助语句可以是一个<code class="command">SELECT</code>、<code class="command">INSERT</code>、<code class="command">UPDATE</code>或<code class="command">DELETE</code>，并且<code class="literal">WITH</code>子句本身也可以被附加到一个主语句，主语句也可以是<code class="command">SELECT</code>、<code class="command">INSERT</code>、<code class="command">UPDATE</code>或<code class="command">DELETE</code>。
+  </p><div class="sect2" id="QUERIES-WITH-SELECT"><div class="titlepage"><div><div><h3 class="title">7.8.1. <code class="literal">WITH</code>中的<code class="command">SELECT</code></h3></div></div></div><p>   <code class="literal">WITH</code>中<code class="command">SELECT</code>的基本价值是将复杂的查询分解称为简单的部分。一个例子：
+
+</p><pre class="programlisting">WITH regional_sales AS (
+        SELECT region, SUM(amount) AS total_sales
+        FROM orders
+        GROUP BY region
+     ), top_regions AS (
+        SELECT region
+        FROM regional_sales
+        WHERE total_sales &gt; (SELECT SUM(total_sales)/10 FROM regional_sales)
+     )
+SELECT region,
+       product,
+       SUM(quantity) AS product_units,
+       SUM(amount) AS product_sales
+FROM orders
+WHERE region IN (SELECT region FROM top_regions)
+GROUP BY region, product;</pre><p>
+
+   它只显示在高销售区域每种产品的销售总额。<code class="literal">WITH</code>子句定义了两个辅助语句<code class="structname">regional_sales</code>和<code class="structname">top_regions</code>，其中<code class="structname">regional_sales</code>的输出用在<code class="structname">top_regions</code>中而<code class="structname">top_regions</code>的输出用在主<code class="command">SELECT</code>查询。这个例子可以不用<code class="literal">WITH</code>来书写，但是我们必须要用两层嵌套的子<code class="command">SELECT</code>。使用这种方法要更简单些。
+  </p><p>   可选的<code class="literal">RECURSIVE</code>修饰符将<code class="literal">WITH</code>从单纯的句法便利变成了一种在标准SQL中不能完成的特性。通过使用<code class="literal">RECURSIVE</code>，一个<code class="literal">WITH</code>查询可以引用它自己的输出。一个非常简单的例子是计算从1到100的整数合的查询：
+
+</p><pre class="programlisting">WITH RECURSIVE t(n) AS (
+    VALUES (1)
+  UNION ALL
+    SELECT n+1 FROM t WHERE n &lt; 100
+)
+SELECT sum(n) FROM t;</pre><p>
+
+   一个递归<code class="literal">WITH</code>查询的通常形式总是一个<em class="firstterm">非递归项</em>，然后是<code class="literal">UNION</code>（或者<code class="literal">UNION ALL</code>），再然后是一个<em class="firstterm">递归项</em>，其中只有递归项能够包含对于查询自身输出的引用。这样一个查询可以被这样执行：
+  </p><div class="procedure" id="idp7590688"><p class="title"><strong>递归查询求值</strong></p><ol class="procedure" type="1"><li class="step"><p>     计算非递归项。对<code class="literal">UNION</code>（但不对<code class="literal">UNION ALL</code>），抛弃重复行。把所有剩余的行包括在递归查询的结果中，并且也把它们放在一个临时的<em class="firstterm">工作表</em>中。
+    </p></li><li class="step"><p>     只要工作表不为空，重复下列步骤：
+    </p><ol type="a" class="substeps"><li class="step"><p>       计算递归项，用当前工作表的内容替换递归自引用。对<code class="literal">UNION</code>（不是<code class="literal">UNION ALL</code>），抛弃重复行以及那些与之前结果行重复的行。将剩下的所有行包括在递归查询的结果中，并且也把它们放在一个临时的<em class="firstterm">中间表</em>中。
+      </p></li><li class="step"><p>       用中间表的内容替换工作表的内容，然后清空中间表。
+      </p></li></ol></li></ol></div><div class="note"><h3 class="title">注意</h3><p>    严格来说，这个处理是迭代而不是递归，但是<code class="literal">RECURSIVE</code>是SQL标准委员会选择的术语。
+   </p></div><p>   在上面的例子中，工作表在每一步只有一个行，并且它在连续的步骤中取值从1到100。在第100步，由于<code class="literal">WHERE</code>子句导致没有输出，因此查询终止。
+  </p><p>   递归查询通常用于处理层次或者树状结构的数据。一个有用的例子是这个用于找到一个产品的直接或间接部件的查询，只要给定一个显示了直接包含关系的表：
+
+</p><pre class="programlisting">WITH RECURSIVE included_parts(sub_part, part, quantity) AS (
+    SELECT sub_part, part, quantity FROM parts WHERE part = 'our_product'
+  UNION ALL
+    SELECT p.sub_part, p.part, p.quantity
+    FROM included_parts pr, parts p
+    WHERE p.part = pr.sub_part
+  )
+SELECT sub_part, SUM(quantity) as total_quantity
+FROM included_parts
+GROUP BY sub_part</pre><p>
+  </p><p>   在使用递归查询时，确保查询的递归部分最终将不返回元组非常重要，否则查询将会无限循环。在某些时候，使用<code class="literal">UNION</code>替代<code class="literal">UNION ALL</code>可以通过抛弃与之前输出行重复的行来达到这个目的。不过，经常有循环不涉及到完全重复的输出行：它可能只需要检查一个或几个域来看相同点之前是否达到过。处理这种情况的标准方法是计算一个已经访问过值的数组。例如，考虑下面这个使用<code class="structfield">link</code>域搜索表<code class="structname">graph</code>的查询：
+
+</p><pre class="programlisting">WITH RECURSIVE search_graph(id, link, data, depth) AS (
+        SELECT g.id, g.link, g.data, 1
+        FROM graph g
+      UNION ALL
+        SELECT g.id, g.link, g.data, sg.depth + 1
+        FROM graph g, search_graph sg
+        WHERE g.id = sg.link
+)
+SELECT * FROM search_graph;</pre><p>
+
+   如果<code class="structfield">link</code>关系包含环，这个查询将会循环。因为我们要求一个<span class="quote">“<span class="quote">depth</span>”</span>输出，仅仅将<code class="literal">UNION ALL</code> 改为<code class="literal">UNION</code>不会消除循环。反过来在我们顺着一个特定链接路径搜索时，我们需要识别我们是否再次到达了一个相同的行。我们可以项这个有循环倾向的查询增加两个列<code class="structfield">path</code>和<code class="structfield">cycle</code>：
+
+</p><pre class="programlisting">WITH RECURSIVE search_graph(id, link, data, depth, path, cycle) AS (
+        SELECT g.id, g.link, g.data, 1,
+          ARRAY[g.id],
+          false
+        FROM graph g
+      UNION ALL
+        SELECT g.id, g.link, g.data, sg.depth + 1,
+          path || g.id,
+          g.id = ANY(path)
+        FROM graph g, search_graph sg
+        WHERE g.id = sg.link AND NOT cycle
+)
+SELECT * FROM search_graph;</pre><p>
+
+   除了阻止环，数组值对于它们自己的工作显示到达任何特定行的<span class="quote">“<span class="quote">path</span>”</span>也有用。
+  </p><p>   在通常情况下如果需要检查多于一个域来识别一个环，请用行数组。例如，如果我们需要比较域<code class="structfield">f1</code>和<code class="structfield">f2</code>：
+
+</p><pre class="programlisting">WITH RECURSIVE search_graph(id, link, data, depth, path, cycle) AS (
+        SELECT g.id, g.link, g.data, 1,
+          ARRAY[ROW(g.f1, g.f2)],
+          false
+        FROM graph g
+      UNION ALL
+        SELECT g.id, g.link, g.data, sg.depth + 1,
+          path || ROW(g.f1, g.f2),
+          ROW(g.f1, g.f2) = ANY(path)
+        FROM graph g, search_graph sg
+        WHERE g.id = sg.link AND NOT cycle
+)
+SELECT * FROM search_graph;</pre><p>
+  </p><div class="tip"><h3 class="title">提示</h3><p>    在通常情况下只有一个域需要被检查来识别一个环，可以省略<code class="literal">ROW()</code>语法。这允许使用一个简单的数组而不是一个组合类型数组，可以获得效率。
+   </p></div><div class="tip"><h3 class="title">提示</h3><p>    递归查询计算算法使用宽度优先搜索顺序产生它的输出。你可以通过让外部查询<code class="literal">ORDER BY</code>一个以这种方法构建的<span class="quote">“<span class="quote">path</span>”</span>，用来以深度优先搜索顺序显示结果。
+   </p></div><p>   当你不确定查询是否可能循环时，一个测试查询的有用技巧是在父查询中放一个<code class="literal">LIMIT</code>。例如，这个查询没有<code class="literal">LIMIT</code>时会永远循环：
+
+</p><pre class="programlisting">WITH RECURSIVE t(n) AS (
+    SELECT 1
+  UNION ALL
+    SELECT n+1 FROM t
+)
+SELECT n FROM t LIMIT 100;</pre><p>
+
+   这会起作用，因为<span class="productname">PostgreSQL</span>的实现只计算<code class="literal">WITH</code>查询中被父查询实际取到的行。不推荐在生产中使用这个技巧，因为其他系统可能以不同方式工作。同样，如果你让外层查询排序递归查询的结果或者把它们连接成某种其他表，这个技巧将不会起作用，因为在这些情况下外层查询通常将尝试取得<code class="literal">WITH</code>查询的所有输出。
+  </p><p>   <code class="literal">WITH</code>查询的一个有用的特性是在每一次父查询的执行中它们只被计算一次，即使它们被父查询或兄弟<code class="literal">WITH</code>查询引用了超过一次。因此，在多个地方需要的昂贵计算可以被放在一个<code class="literal">WITH</code>查询中来避免冗余工作。另一种可能的应用是阻止不希望的多个函数计算产生副作用。但是，从另一方面来看，优化器不能将来自父查询的约束下推到<code class="literal">WITH</code>查询中而不是一个普通子查询。<code class="literal">WITH</code>查询通常将会被按照所写的方式计算，而不抑制父查询以后可能会抛弃的行（但是，如上所述，如果对查询的引用只请求有限数目的行，计算可能会提前停止）。
+  </p><p>   以上的例子只展示了和<code class="command">SELECT</code>一起使用的<code class="literal">WITH</code>，但是它可以被以相同的方式附加在<code class="command">INSERT</code>、<code class="command">UPDATE</code>或<code class="command">DELETE</code>上。在每一种情况中，它实际上提供了可在主命令中引用的临时表。
+  </p></div><div class="sect2" id="QUERIES-WITH-MODIFYING"><div class="titlepage"><div><div><h3 class="title">7.8.2. <code class="literal">WITH</code>中的数据修改语句</h3></div></div></div><p>    你可以在<code class="literal">WITH</code>中使用数据修改语句（<code class="command">INSERT</code>、<code class="command">UPDATE</code>或<code class="command">DELETE</code>）。这允许你在同一个查询中执行多个而不同操作。一个例子：
+
+</p><pre class="programlisting">WITH moved_rows AS (
+    DELETE FROM products
+    WHERE
+        "date" &gt;= '2010-10-01' AND
+        "date" &lt; '2010-11-01'
+    RETURNING *
+)
+INSERT INTO products_log
+SELECT * FROM moved_rows;</pre><p>
+
+    这个查询实际上从<code class="structname">products</code>把行移动到<code class="structname">products_log</code>。<code class="literal">WITH</code>中的<code class="command">DELETE</code>删除来自<code class="structname">products</code>的指定行，以它的<code class="literal">RETURNING</code>子句返回它们的内容，并且接着主查询读该输出并将它插入到<code class="structname">products_log</code>。
+   </p><p>    上述例子中好的一点是<code class="literal">WITH</code>子句被附加给<code class="command">INSERT</code>，而没有附加给<code class="command">INSERT</code>的子<code class="command">SELECT</code>。这是必需的，因为数据修改语句只允许出现在附加给顶层语句的<code class="literal">WITH</code>子句中。不过，普通<code class="literal">WITH</code>可见性规则应用，这样才可能从子<code class="command">SELECT</code>中引用到<code class="literal">WITH</code>语句的输出。
+   </p><p>    正如上述例子所示，<code class="literal">WITH</code>中的数据修改语句通常具有<code class="literal">RETURNING</code>子句
+	（参阅<a class="xref" href="dml-returning.html" title="6.4. 从修改的行中返回数据">第 6.4 节</a>）。它是<code class="literal">RETURNING</code>子句的输出，<span class="emphasis"><em>不是</em></span>数据修改语句的目标表，它形成了剩余查询可以引用的临时表。如果一个<code class="literal">WITH</code>中的数据修改语句缺少一个<code class="literal">RETURNING</code>子句，则它形不成临时表并且不能在剩余的查询中被引用。但是这样一个语句将被执行。一个非特殊使用的例子：
+
+</p><pre class="programlisting">WITH t AS (
+    DELETE FROM foo
+)
+DELETE FROM bar;</pre><p>
+
+    这个例子将从表<code class="structname">foo</code>和<code class="structname">bar</code>中移除所有行。被报告给客户端的受影响行的数目可能只包括从<code class="structname">bar</code>中移除的行。
+   </p><p>    数据修改语句中不允许递归自引用。在某些情况中可以采取引用一个递归<code class="literal">WITH</code>的输出来操作这个限制，例如：
+
+</p><pre class="programlisting">WITH RECURSIVE included_parts(sub_part, part) AS (
+    SELECT sub_part, part FROM parts WHERE part = 'our_product'
+  UNION ALL
+    SELECT p.sub_part, p.part
+    FROM included_parts pr, parts p
+    WHERE p.part = pr.sub_part
+  )
+DELETE FROM parts
+  WHERE part IN (SELECT part FROM included_parts);</pre><p>
+
+    这个查询将会移除一个产品的所有直接或间接子部件。
+   </p><p>    <code class="literal">WITH</code>中的数据修改语句只被执行一次，并且总是能结束，而不管主查询是否读取它们所有（或者任何）的输出。注意这和<code class="literal">WITH</code>中<code class="command">SELECT</code>的规则不同：正如前一小节所述，直到主查询要求<code class="command">SELECT</code>的输出时，<code class="command">SELECT</code>才会被执行。
+   </p><p>    The sub-statements in <code class="literal">WITH</code>中的子语句被和每一个其他子语句以及主查询并发执行。因此在使用<code class="literal">WITH</code>中的数据修改语句时，指定更新的顺序实际是以不可预测的方式发生的。所有的语句都使用同一个<em class="firstterm">snapshot</em>执行（参见<a class="xref" href="mvcc.html" title="第 13 章 并发控制">第 13 章</a>），因此它们不能<span class="quote">“<span class="quote">看见</span>”</span>在目标表上另一个执行的效果。这减轻了行更新的实际顺序的不可预见性的影响，并且意味着<code class="literal">RETURNING</code>数据是在不同<code class="literal">WITH</code>子语句和主查询之间传达改变的唯一方法。其例子
+
+</p><pre class="programlisting">WITH t AS (
+    UPDATE products SET price = price * 1.05
+    RETURNING *
+)
+SELECT * FROM products;</pre><p>
+
+    外层<code class="command">SELECT</code>可以返回在<code class="command">UPDATE</code>动作之前的原始价格，而在
+
+</p><pre class="programlisting">WITH t AS (
+    UPDATE products SET price = price * 1.05
+    RETURNING *
+)
+SELECT * FROM t;</pre><p>
+
+    外部<code class="command">SELECT</code>将返回更新过的数据。
+   </p><p>    在一个语句中试图两次更新同一行是不被支持的。只会发生一次修改，但是该办法不能很容易地（有时是不可能）可靠地预测哪一个会被执行。这也应用于删除一个已经在同一个语句中被更新过的行：只有更新被执行。因此你通常应该避免尝试在一个语句中尝试两次修改同一个行。尤其是防止书写可能影响被主语句或兄弟子语句修改的相同行。这样一个语句的效果将是不可预测的。
+   </p><p>    当前，在<code class="literal">WITH</code>中一个数据修改语句中被用作目标的任何表不能有条件规则、<code class="literal">ALSO</code>规则或<code class="literal">INSTEAD</code>规则，这些规则会扩展成为多个语句。
+   </p></div></div><div class="navfooter"><hr /><table width="100%" summary="Navigation footer"><tr><td width="40%" align="left"><a accesskey="p" href="queries-values.html">上一页</a> </td><td width="20%" align="center"><a accesskey="u" href="queries.html">上一级</a></td><td width="40%" align="right"> <a accesskey="n" href="datatype.html">下一页</a></td></tr><tr><td width="40%" align="left" valign="top">7.7. <code class="literal">VALUES</code>列表 </td><td width="20%" align="center"><a accesskey="h" href="index.html">起始页</a></td><td width="40%" align="right" valign="top"> 第 8 章 数据类型</td></tr></table></div></body></html>

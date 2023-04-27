@@ -1,0 +1,816 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><title>E.9. 版本 9.6</title><link rel="stylesheet" type="text/css" href="stylesheet.css" /><link rev="made" href="pgsql-docs@postgresql.org" /><meta name="generator" content="DocBook XSL Stylesheets V1.79.1" /><link rel="prev" href="release-9-6-1.html" title="E.8. 版本 9.6.1" /><link rel="next" href="release-9-5-10.html" title="E.10. 版本 9.5.10" /></head><body><div xmlns="http://www.w3.org/TR/xhtml1/transitional" class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="5" align="center">E.9. 版本 9.6</th></tr><tr><td width="10%" align="left"><a accesskey="p" href="release-9-6-1.html" title="E.8. 版本 9.6.1">上一页</a> </td><td width="10%" align="left"><a accesskey="u" href="release.html" title="附录 E. 版本说明">上一级</a></td><th width="60%" align="center">附录 E. 版本说明</th><td width="10%" align="right"><a accesskey="h" href="index.html" title="PostgreSQL 10.1 手册">起始页</a></td><td width="10%" align="right"> <a accesskey="n" href="release-9-5-10.html" title="E.10. 版本  9.5.10">下一页</a></td></tr></table><hr></hr></div><div class="sect1" id="RELEASE-9-6"><div class="titlepage"><div><div><h2 class="title" style="clear: both">E.9. 版本 9.6</h2></div></div></div><div class="toc"><dl class="toc"><dt><span class="sect2"><a href="release-9-6.html#idp64654448">E.9.1. 概述</a></span></dt><dt><span class="sect2"><a href="release-9-6.html#idp64662080">E.9.2. 迁移到版本9.6</a></span></dt><dt><span class="sect2"><a href="release-9-6.html#idp64715984">E.9.3. 修改列表</a></span></dt></dl></div><p><strong>发布日期. </strong>2016-09-29</p><div class="sect2" id="idp64654448"><div class="titlepage"><div><div><h3 class="title">E.9.1. 概述</h3></div></div></div><p>    <span class="productname">PostgreSQL</span> 9.6 中的主要增强包括:
+   </p><div class="itemizedlist"><ul class="itemizedlist" style="list-style-type: disc; "><li class="listitem"><p>      并行执行序列扫描、连接和聚合
+     </p></li><li class="listitem"><p>      避免在清理冻结操作期间不必要的扫描页面
+     </p></li><li class="listitem"><p>      同步复制现在允许多个备用服务器以提高可靠性
+     </p></li><li class="listitem"><p>      全文搜索现在可以搜索短语 (多个相邻的单词)
+     </p></li><li class="listitem"><p>      <code class="filename">postgres_fdw</code>现在支持远程连接、排序、
+      <code class="command">UPDATE</code>和<code class="command">DELETE</code>
+     </p></li><li class="listitem"><p>      显著的性能改进，特别是在有多个<acronym class="acronym">CPU</acronym>插槽的服务器(即:多路服务器)中的可扩展性领域
+     </p></li></ul></div><p>    上面的条目在下面的章节中有更详细的解释。
+   </p></div><div class="sect2" id="idp64662080"><div class="titlepage"><div><div><h3 class="title">E.9.2. 迁移到版本9.6</h3></div></div></div><p>    希望从以前的版本迁移数据的用户需要使用<a class="xref" href="app-pg-dumpall.html" title="pg_dumpall"><span class="refentrytitle"><span class="application">pg_dumpall</span></span></a>
+    或使用<a class="xref" href="pgupgrade.html" title="pg_upgrade"><span class="refentrytitle"><span class="application">pg_upgrade</span></span></a>转储/恢复。
+   </p><p>    版本9.6包含可能会影响与以前版本兼容性的许多更改。请注意以下不兼容性：
+   </p><div class="itemizedlist"><ul class="itemizedlist" style="list-style-type: disc; "><li class="listitem"><p>        改进<a class="link" href="monitoring-stats.html#PG-STAT-ACTIVITY-VIEW" title="表 28.3. pg_stat_activity 视图"><code class="structname">pg_stat_activity</code></a>
+        视图关于进程正在等待的信息 (Amit
+        Kapila, Ildus Kurbangaliev)
+       </p><p>        历史上，如果一个进程正在等待重量级锁，则只显示为等待。
+        现在等待轻量级锁和缓冲区引脚也显示在<code class="structname">pg_stat_activity</code>中。
+        此外，正在等待的锁的类型现在是可见的。这些改变用
+        <code class="structfield">wait_event_type</code>和<code class="structfield">wait_event</code>替换
+        <code class="structfield">waiting</code>列。
+       </p></li><li class="listitem"><p>        在<a class="link" href="functions-formatting.html#FUNCTIONS-FORMATTING-TABLE" title="表 9.23. 格式化函数"><code class="function">to_char()</code></a>中，
+        不要将减号（当需要时）作为时间相关字段的字段宽度的一部分 (Bruce Momjian)
+       </p><p>        例如，<code class="literal">to_char('-4 years'::interval, 'YY')</code>
+        现在返回<code class="literal">-04</code>而不是<code class="literal">-4</code>。
+       </p></li><li class="listitem"><p>        让<a class="link" href="functions-datetime.html#FUNCTIONS-DATETIME-TABLE" title="表 9.30. 日期/时间函数"><code class="function">extract()</code></a>
+        在处理无限输入时表现的更合理 (Vitaly Burovoy)
+       </p><p>        历史上，无论给定的字段名称如何，<code class="function">extract()</code>
+        函数在给出无限时间戳时都都返回零。让它在请求的字段是单调增加的字段时
+        （例如，<code class="literal">year</code>，<code class="literal">epoch</code>），适当的返回<code class="literal">infinity</code>
+        或<code class="literal">-infinity</code>，不是单调增加的字段时返回<code class="literal">NULL</code>
+        （例如，<code class="literal">day</code>，<code class="literal">hour</code>）。此外，
+        为错误的字段名称抛出预期的错误。
+       </p></li><li class="listitem"><p>        移除PL/pgSQL抑制<code class="command">RAISE</code>命令发出的消息的
+        <code class="literal">CONTEXT</code>的最内层行的<span class="quote">“<span class="quote">特性</span>”</span> (Pavel Stehule)
+       </p><p>        这种古老的向后兼容性已经失效了。
+       </p></li><li class="listitem"><p>        修正默认文本搜索解析器，以允许<code class="literal">email</code>和<code class="literal">host</code>
+        标记中的前导数字 (Artur Zakirov)
+       </p><p>        在大多数情况下，这将导致对文本的解析的少量更改。
+        但是如果你有这样的地址发生频繁的数据，可能值得重建依赖的<code class="type">tsvector</code>
+        列和索引，以便通过文本搜索正确地找到这种形式的地址。
+       </p></li><li class="listitem"><p>        扩展<a class="link" href="unaccent.html" title="F.44. unaccent"><code class="filename">contrib/unaccent</code></a>的标准
+        <code class="filename">unaccent.rules</code>文件，处理Unicode已知的所有可区别符号，
+        并正确展开连字符 (Thomas Munro,
+        Léonard Benedetti)
+       </p><p>        以前的版本忽略了将一些不太常见的字母转换为可区别的符号。此外，
+        连字现在扩展为单独的字母。使用此规则文件的安装可能希望重建依赖于结果的
+        <code class="type">tsvector</code>列和索引。
+       </p></li><li class="listitem"><p>        从<code class="command">CREATE ROLE</code>和相关命令中删除长期废弃的
+        <code class="literal">CREATEUSER</code>/<code class="literal">NOCREATEUSER</code>选项 (Tom Lane)
+       </p><p>        <code class="literal">CREATEUSER</code>实际上意味着<code class="literal">SUPERUSER</code>，
+        因为古老的向后兼容性原因。对于（合理地）期望它意味着
+        <code class="literal">CREATEROLE</code>的人来说，这是一个不断的混乱的来源。
+        它已被弃用十年了，所以通过删除它来解决问题。
+       </p></li><li class="listitem"><p>        将以<code class="literal">pg_</code>开头的角色名看做是保留的
+        (Stephen Frost)
+       </p><p>        现在不允许用户创建这样的角色名了。这防止了与<span class="application">initdb</span>
+        创建的内建角色冲突。
+       </p></li><li class="listitem"><p>        修改<code class="structname">information_schema</code>.<code class="structname">routines</code>
+        视图中的字段名<code class="structfield">result_cast_character_set_name</code>
+        为<code class="structfield">result_cast_char_set_name</code> (Clément
+        Prévost)
+       </p><p>        SQL:2011标准声明了较长的名字，但那看起来是个错误，
+        因为附近的列名使用的是较短的风格，并且其他
+        <code class="structname">information_schema</code>视图也是使用的较短风格。
+       </p></li><li class="listitem"><p>        <span class="application">psql</span>的<code class="option">-c</code>选项不再意味着
+        <code class="option">--no-psqlrc</code>
+        (Pavel Stehule, Catalin Iacob)
+       </p><p>        <code class="option">--no-psqlrc</code>（或者它的缩写<code class="option">-X</code>）
+        明确的获得旧的行为。这样修改的脚本仍然可以使用旧的<span class="application">psql</span>版本。
+       </p></li><li class="listitem"><p>        改进<span class="application">pg_restore</span>的<code class="option">-t</code>选项，
+        匹配关系的所有类型，不仅仅是纯表格 (Craig Ringer)
+       </p></li><li class="listitem"><p>        修改<span class="application">pg_controldata</span>和相关地方中<code class="literal">NextXID</code>
+        所使用的显示格式 (Joe Conway,
+        Bruce Momjian)
+       </p><p>        以格式<em class="replaceable"><code>number</code></em><code class="literal">:</code><em class="replaceable"><code>number</code></em>
+        显示时期和事务ID值。以前的格式<em class="replaceable"><code>number</code></em><code class="literal">/</code><em class="replaceable"><code>number</code></em>
+        容易与<acronym class="acronym">LSN</acronym>使用的混淆。
+       </p></li><li class="listitem"><p>        在适当的地方更新扩展功能以标记为并行安全 (Andreas Karlsson)
+       </p><p>        许多标准扩展已经更新，以允许它们的功能在并行查询工作进程中执行。
+        除非对每个这样的扩展（在集群的每个数据库中）应用
+        <code class="command">ALTER EXTENSION UPDATE</code>，否则这些更改不会在以前版本的数据库
+        <span class="application">pg_upgrade</span>中起作用。
+       </p></li></ul></div></div><div class="sect2" id="idp64715984"><div class="titlepage"><div><div><h3 class="title">E.9.3. 修改列表</h3></div></div></div><p>    下面你将看到<span class="productname">PostgreSQL</span> 9.6和以前主要版本之间的详细更改。
+   </p><div class="sect3" id="idp64717536"><div class="titlepage"><div><div><h4 class="title">E.9.3.1. 服务器</h4></div></div></div><div class="sect4" id="idp64717952"><div class="titlepage"><div><div><h5 class="title">E.9.3.1.1. 并行查询</h5></div></div></div><div class="itemizedlist"><ul class="itemizedlist" style="list-style-type: disc; "><li class="listitem"><p>        并行查询 (Robert Haas, Amit Kapila, David Rowley,
+        many others)
+       </p><p>        使用9.6，<span class="productname">PostgreSQL</span>引入了对大型查询的并行执行的初始支持。
+        只有严格只读的查询，其中通过顺序扫描访问驱动表可以并行化。
+        哈希连接和嵌套循环可以并行执行，聚合（支持的聚合）也可以。
+        还有很多事情要做，但这已经是一个有用的功能集。
+       </p><p>        默认情况下，并行查询执行尚未启用。要允许它，请将新配置参数
+        <a class="xref" href="runtime-config-resource.html#GUC-MAX-PARALLEL-WORKERS-PER-GATHER">max_parallel_workers_per_gather</a>设置为大于零的值。
+        通过其他新配置参数<a class="xref" href="runtime-config-query.html#GUC-FORCE-PARALLEL-MODE">force_parallel_mode</a>、
+        <a class="xref" href="runtime-config-query.html#GUC-PARALLEL-SETUP-COST">parallel_setup_cost</a>、<a class="xref" href="runtime-config-query.html#GUC-PARALLEL-TUPLE-COST">parallel_tuple_cost</a>和
+		<code class="literal">min_parallel_relation_size</code>可以对并行性的使用进行其他控制。
+       </p></li><li class="listitem"><p>        提供用于标记功能的并行安全状态的基础设施 (Robert Haas, Amit Kapila)
+       </p></li></ul></div></div><div class="sect4" id="idp64725472"><div class="titlepage"><div><div><h5 class="title">E.9.3.1.2. 索引</h5></div></div></div><div class="itemizedlist"><ul class="itemizedlist" style="list-style-type: disc; "><li class="listitem"><p>        允许<a class="link" href="gin.html" title="第 64 章 GIN 索引"><acronym class="acronym">GIN</acronym></a>索引构建，
+        有效使用大于1GB的<a class="xref" href="runtime-config-resource.html#GUC-MAINTENANCE-WORK-MEM">maintenance_work_mem</a>设置
+        (Robert Abraham, Teodor Sigaev)
+       </p></li><li class="listitem"><p>        将从GIN索引待定列表中删除的页面立即添加到自由空间映射中
+        (Jeff Janes, Teodor Sigaev)
+       </p><p>        这减少了该表不经常清空时的膨胀。
+       </p></li><li class="listitem"><p>        添加<a class="link" href="functions-admin.html#FUNCTIONS-ADMIN-INDEX" title="9.26.8. 索引维护函数"><code class="function">gin_clean_pending_list()</code></a>函数，
+        允许为GIN索引手动调用清理待定列表 (Jeff Janes)
+       </p><p>        以前，这种清理只是作为清空或分析父表的副产品。
+       </p></li><li class="listitem"><p>        改善<a class="link" href="gist.html" title="第 62 章 GiST 索引">GiST</a>索引中死索引元组的处理
+        (Anastasia Lubennikova)
+       </p><p>        当索引扫描注意到相应的堆元组死了时，标记死索引元组。当插入元组时，
+        如果需要在页面上留出空间，将删除标记为死的元组。
+       </p></li><li class="listitem"><p>        为类型<code class="type">box</code>添加一个<a class="link" href="spgist.html" title="第 63 章 SP-GiST索引">SP-GiST</a>操作符类 (Alexander Lebedev)
+       </p></li></ul></div></div><div class="sect4" id="idp64735216"><div class="titlepage"><div><div><h5 class="title">E.9.3.1.3. 排序</h5></div></div></div><div class="itemizedlist"><ul class="itemizedlist" style="list-style-type: disc; "><li class="listitem"><p>        在执行额外的排序步骤时，通过使用快速排序提升排序性能，而不是替换选择排序
+        (Peter Geoghegan)
+       </p><p>        新方法更好的使用典型缓存大小和数据卷的<acronym class="acronym">CPU</acronym>缓存。必要时，
+        可以通过新的配置参数<code class="literal">replacement_sort_tuples</code>调整行为。
+       </p></li><li class="listitem"><p>        加速同一字符串出现多次的地方的文本排序
+        (Peter Geoghegan)
+       </p></li><li class="listitem"><p>        通过使用<span class="quote">“<span class="quote">缩写的</span>”</span>的关键字加速<code class="type">uuid</code>、<code class="type">bytea</code>
+        和<code class="type">char(n)</code>字段的排序
+        (Peter Geoghegan)
+       </p><p>        缩写关键字的支持还添加到了非缺省操作符类<a class="link" href="indexes-opclass.html" title="11.9. 操作符类和操作符族"><code class="literal">text_pattern_ops</code></a>、
+        <code class="literal">varchar_pattern_ops</code>和<code class="literal">bpchar_pattern_ops</code>。
+        顺序集聚合的处理现在也可以利用缩写关键字。
+       </p></li><li class="listitem"><p>        通过在排序期间将<acronym class="acronym">TID</acronym>看做64位整数加速
+        <code class="command">CREATE INDEX CONCURRENTLY</code> (Peter
+        Geoghegan)
+       </p></li></ul></div></div><div class="sect4" id="idp64745728"><div class="titlepage"><div><div><h5 class="title">E.9.3.1.4. 锁定</h5></div></div></div><div class="itemizedlist"><ul class="itemizedlist" style="list-style-type: disc; "><li class="listitem"><p>        减少<code class="literal">ProcArrayLock</code>的争用 (Amit Kapila,
+        Robert Haas)
+       </p></li><li class="listitem"><p>        通过将缓冲区内容锁移动到缓冲区描述符中来提高性能 (Andres Freund, Simon Riggs)
+       </p></li><li class="listitem"><p>        用原子操作替换共享缓冲区头自旋锁以提高可伸缩性 (Alexander Korotkov, Andres Freund)
+       </p></li><li class="listitem"><p>        使用原子操作，而不是自旋锁来保护<code class="literal">LWLock</code>的等待队列 (Andres Freund)
+       </p></li><li class="listitem"><p>        给共享哈希表自由列表分区以减少多CPU套接字服务器上的争用 (Aleksander Alekseev)
+       </p></li><li class="listitem"><p>        在重新执行btree索引清理操作期间，减少备用服务器上的互锁 (Simon Riggs)
+       </p><p>        此更改可避免在重放此类操作时发生的大量复制延迟。
+       </p></li></ul></div></div><div class="sect4" id="idp64751696"><div class="titlepage"><div><div><h5 class="title">E.9.3.1.5. 优化器状态</h5></div></div></div><div class="itemizedlist"><ul class="itemizedlist" style="list-style-type: disc; "><li class="listitem"><p>        改善<code class="command">ANALYZE</code>对拥有许多空值的字段的估计
+        (Tomas Vondra, Alex Shulgin)
+       </p><p>        以前<code class="command">ANALYZE</code>往往低估了具有许多<code class="literal">NULL</code>列中的非
+        <code class="literal">NULL</code>不同值的数量，并且在计算最常见的值时也不准确。
+       </p></li><li class="listitem"><p>        改进规划器对一个查询结果中不同值数量的估计 (Tomas Vondra)
+       </p></li><li class="listitem"><p>        使用外键关系来推断连接谓词的选择性 (Tomas Vondra, David Rowley)
+       </p><p>        如果表<code class="literal">t</code>拥有一个外键约束，<code class="literal">(a,b) REFERENCES r (x,y)</code>，
+        那么<code class="literal">WHERE</code>条件，比如<code class="literal">t.a = r.x AND t.b = r.y</code>，
+        每<code class="literal">t</code>行不能选择超过<code class="literal">r</code>行。规划器以前认为这些<code class="literal">AND</code>
+        条件是独立的，并且经常会明显错误地估计选择性。现在它将<code class="literal">WHERE</code>
+        条件与适用的外键约束进行比较，并产生更好的估计。
+       </p></li></ul></div></div><div class="sect4" id="idp64763488"><div class="titlepage"><div><div><h5 class="title">E.9.3.1.6. <code class="command">VACUUM</code></h5></div></div></div><div class="itemizedlist"><ul class="itemizedlist" style="list-style-type: disc; "><li class="listitem"><p>        避免重新清空仅包含冻结元组的页面 (Masahiko
+        Sawada, Robert Haas, Andres Freund)
+       </p><p>        以前，防封装清理不得不访问表的每一页，甚至没有什么可做的页面。
+        现在，仅包含已冻结元组的页面在表的可见性映射中被标识，
+        并且即使在执行事务回绕预防时也可以跳过清理。
+        这应该大大降低维护包含大部分不变数据的大表的成本。
+       </p><p>        如果需要，可以使用新的<code class="literal">DISABLE_PAGE_SKIPPING</code>
+        选项强制使用vacuum来处理所有冻结的页面。通常这应该永远不需要，
+        但它可能有助于从可见性映射损坏中恢复。
+       </p></li><li class="listitem"><p>        在<code class="command">VACUUM</code>期间避免无用的堆截断尝试
+        (Jeff Janes, Tom Lane)
+       </p><p>        此更改避免在不可能截断的某些情况下采用排它表锁定。
+        主要好处是避免在备用服务器上取消不必要的查询。
+       </p></li></ul></div></div><div class="sect4" id="idp64769184"><div class="titlepage"><div><div><h5 class="title">E.9.3.1.7. 一般性能</h5></div></div></div><div class="itemizedlist"><ul class="itemizedlist" style="list-style-type: disc; "><li class="listitem"><p>        允许旧<acronym class="acronym">MVCC</acronym>快照在配置超时后失效 (Kevin Grittner)
+       </p><p>        通常，删除的元组不能通过清空去除，直到最后一个可以<span class="quote">“<span class="quote">看到</span>”</span>
+        它们的事务消失。一个长时间保持打开的事务可能导致相当大的表膨胀，
+        因为空间不能被回收。此功能允许通过新配置参数<a class="xref" href="runtime-config-resource.html#GUC-OLD-SNAPSHOT-THRESHOLD">old_snapshot_threshold</a>
+        设置基于时间的限制，确保<acronym class="acronym">MVCC</acronym>快照有效的时间。之后，
+        死的元组是移除候选者。如果一个使用过期快照的事务尝试读取可能包含此类数据的页面，
+        那么该事务将会收到错误。
+       </p></li><li class="listitem"><p>        忽略功能上依赖于其他列的<code class="literal">GROUP BY</code>列 (David Rowley)
+       </p><p>        如果<code class="literal">GROUP BY</code>子句包括非延迟主键的所有列以及同一个表的其他列，
+        那么这些其他列是多余的，并且可以从分组中删除。这在许多常见情况下节省计算。
+       </p></li><li class="listitem"><p>        当索引的<code class="literal">WHERE</code>子句引用未索引的列时，允许在部分索引上使用
+        <a class="link" href="indexes-index-only-scans.html" title="11.11. 只用索引的扫描">仅索引的扫描</a> (Tomas Vondra,
+        Kyotaro Horiguchi)
+       </p><p>        例如，由<code class="command">CREATE INDEX tidx_partial ON t（b）WHERE a&gt; 0</code>
+        定义的索引现在可以用于指定<code class="literal">WHERE a &gt; 0</code>的查询的仅索引扫描，
+        否则不使用<code class="literal">a</code>。以前，这是不允许的，因为<code class="literal">a</code>未列为索引列。
+       </p></li><li class="listitem"><p>        按排序顺序执行检查点写入 (Fabien Coelho,
+        Andres Freund)
+       </p><p>        以前，检查点写出了脏页面，不管它们在共享缓冲区中出现的顺序，
+        通常几乎是随机的。这表现不佳，特别是在旋转媒体。
+        此更改会导致按文件和块编号顺序执行检查点驱动写入，并在表空间之间进行平衡。
+       </p></li><li class="listitem"><p>        在可行的情况下，在可配置数量的写入后触发内核写回，
+        以防止脏数据在内核磁盘缓冲区中的累积 (Fabien Coelho, Andres Freund)
+       </p><p>        <span class="productname">PostgreSQL</span>将数据写入内核的磁盘缓存，从那里它将适时刷新到物理存储。
+        许多操作系统对于管理这些并且在决定刷新所有数据之前允许大量的脏数据累积是不聪明的，
+        导致新的I/O请求的长延迟，直到刷新结束。
+        这种改变尝试通过在可配置的间隔之后明确地请求数据刷新来减轻这个问题。
+       </p><p>        在Linux上，<code class="function">sync_file_range()</code>用于此目的，
+        默认情况下在Linux上启用此功能，因为该功能几乎没有缺点。
+        如果其他平台具有<code class="function">msync()</code>或<code class="function">posix_fadvise()</code>，
+        那么这个冲刷功能它们也可以使用，但是这些接口有一些不良的副作用，
+        所以该功能在非Linux平台上缺省是关闭的。
+       </p><p>        新的配置参数<a class="xref" href="runtime-config-resource.html#GUC-BACKEND-FLUSH-AFTER">backend_flush_after</a>、<a class="xref" href="runtime-config-resource.html#GUC-BGWRITER-FLUSH-AFTER">bgwriter_flush_after</a>、<a class="xref" href="runtime-config-wal.html#GUC-CHECKPOINT-FLUSH-AFTER">checkpoint_flush_after</a>和<a class="xref" href="runtime-config-wal.html#GUC-WAL-WRITER-FLUSH-AFTER">wal_writer_flush_after</a>控制该行为。
+       </p></li><li class="listitem"><p>        如果具有相同的参数和过渡函数，则通过在多个聚合中共享计算来提高聚合函数的性能
+        (David Rowley)
+       </p><p>        例如，<code class="command">SELECT AVG(x), VARIANCE(x) FROM tab</code>
+        可以为两个聚合使用单个每行计算。
+       </p></li><li class="listitem"><p>        通过检查当前事务快照（不是<code class="structname">pg_clog</code>）
+        来加快最近创建的元组的可见性测试，以决定是否应将源事务视为已提交。
+        (Jeff Janes, Tom Lane)
+       </p></li><li class="listitem"><p>        允许元组提示位比以前更快地设置 (Andres Freund)
+       </p></li><li class="listitem"><p>        提高短期准备事务的表现 (Stas
+        Kelvich, Simon Riggs, Pavan Deolasee)
+       </p><p>        在<code class="command">PREPARE TRANSACTION</code>期间，两阶段提交信息现在仅被写入
+        <acronym class="acronym">WAL</acronym>，并且将在<code class="command">COMMIT PREPARED</code>期间从<acronym class="acronym">WAL</acronym>
+        读回，如果这种情况很快发生。仅当未决事务在下一个检查点时间之前未提交或中止时，
+        才会创建单独的状态文件。
+       </p></li><li class="listitem"><p>        提高内存上下文破坏的性能 (Jan Wieck)
+       </p></li><li class="listitem"><p>        提高许多跟踪对象的资源所有者的性能
+        (Aleksander Alekseev)
+       </p></li><li class="listitem"><p>        提高<code class="type">timestamp</code>、<code class="type">time</code>和<code class="type">date</code>
+        数据类型的输出函数的速度 (David Rowley,
+        Andres Freund)
+       </p></li><li class="listitem"><p>        避免在重放采取<code class="literal">AccessExclusive</code>
+        锁定的操作期间对热备用查询进行一些不必要的取消 (Jeff Janes)
+       </p></li><li class="listitem"><p>        在存在关系的扩展锁争用时扩展关系多个块 (Dilip Kumar)
+       </p><p>        这通过减少争用提高了可伸缩性。
+       </p></li><li class="listitem"><p>        增加clog缓冲区的数量，以获得更好的可扩展性 (Amit
+        Kapila, Andres Freund)
+       </p></li><li class="listitem"><p>        通过保持简单变量的<code class="literal">ParamListInfo</code>条目始终有效，
+        加快<span class="application">PL/pgSQL</span>中的表达式求值 (Tom Lane)
+       </p></li><li class="listitem"><p>        避免在最近的Windows版本上将<code class="literal">SO_SNDBUF</code>设置降低到其默认值以下
+        (Chen Huajun)
+       </p></li><li class="listitem"><p>        在Windows上缺省禁用<a class="xref" href="runtime-config-logging.html#GUC-UPDATE-PROCESS-TITLE">update_process_title</a>
+        (Takayuki Tsunakawa)
+       </p><p>        在Windows上更新进程标题的开销比大多数其他平台大得多，
+        并且它的执行也不太有用，因为大多数Windows用户没有可以显示进程标题的工具。
+       </p></li></ul></div></div><div class="sect4" id="idp64809696"><div class="titlepage"><div><div><h5 class="title">E.9.3.1.8. 监控</h5></div></div></div><div class="itemizedlist"><ul class="itemizedlist" style="list-style-type: disc; "><li class="listitem"><p>        添加<a class="link" href="progress-reporting.html#PG-STAT-PROGRESS-VACUUM-VIEW" title="表 28.21. pg_stat_progress_vacuum 视图"><code class="structname">pg_stat_progress_vacuum</code></a>
+        系统视图以提供VACUUM操作的进度报告 (Amit Langote, Robert Haas, Vinayak Pokale, Rahila Syed)
+       </p></li><li class="listitem"><p>        添加<a class="link" href="functions-info.html#FUNCTIONS-CONTROLDATA" title="表 9.72. Control Data Functions"><code class="function">pg_control_system()</code></a>、
+        <code class="function">pg_control_checkpoint()</code>、
+        <code class="function">pg_control_recovery()</code>和
+        <code class="function">pg_control_init()</code>函数，将
+        <code class="filename">pg_control</code>字段暴露给<acronym class="acronym">SQL</acronym> (Joe Conway, Michael
+        Paquier)
+       </p></li><li class="listitem"><p>        添加<a class="link" href="view-pg-config.html" title="51.67. pg_config"><code class="structname">pg_config</code></a>
+        系统视图 (Joe Conway)
+       </p><p>        此视图公开了<span class="application">pg_config</span>命令行实用程序提供的相同信息，
+        即<span class="productname">PostgreSQL</span>的各种编译时配置信息。
+       </p></li><li class="listitem"><p>        添加<code class="structfield">confirmed_flush_lsn</code>字段到<a class="link" href="view-pg-replication-slots.html" title="51.80. pg_replication_slots"><code class="structname">pg_replication_slots</code></a>
+        系统视图 (Marko Tiikkaja)
+       </p></li><li class="listitem"><p>        添加<a class="link" href="monitoring-stats.html#PG-STAT-WAL-RECEIVER-VIEW" title="表 28.6. pg_stat_wal_receiver 视图"><code class="structname">pg_stat_wal_receiver</code></a>
+        系统视图，提供有关热备服务器<acronym class="acronym">WAL</acronym>接收器进程的状态的信息 (Michael Paquier)
+       </p></li><li class="listitem"><p>        添加<a class="link" href="functions-info.html#FUNCTIONS-INFO-SESSION-TABLE" title="表 9.60. 会话信息函数"><code class="function">pg_blocking_pids()</code></a>
+        函数，可靠地标识哪个会话阻止了哪些其他会话 (Tom Lane)
+       </p><p>        此函数返回阻塞具有给定进程ID的会话的任何会话的进程ID的数组。
+        历史上，用户已经在<code class="structname">pg_locks</code>视图上使用自连接获得了这样的信息。
+        然而，这样做是不合理的，可能仅有一点的正确性，
+        并且添加并行查询使得旧的方法完全不切实际，
+        因为锁可能被子进程而不是会话的主进程保持或等待。
+       </p></li><li class="listitem"><p>        添加函数<a class="link" href="functions-admin.html#FUNCTIONS-ADMIN-BACKUP-TABLE" title="表 9.79. 备份控制函数"><code class="function">pg_current_xlog_flush_location()</code></a>
+        暴露当前事务日志刷新位置 (Tomas Vondra)
+       </p></li><li class="listitem"><p>        添加函数<a class="link" href="functions-info.html#FUNCTIONS-INFO-SESSION-TABLE" title="表 9.60. 会话信息函数"><code class="function">pg_notification_queue_usage()</code></a>
+        报告<code class="command">NOTIFY</code>队列有多满 (Brendan Jurd)
+       </p></li><li class="listitem"><p>        限制内存上下文统计信息转储的详细程度 (Tom Lane)
+       </p><p>        在内存不足故障期间输出到postmaster
+        日志的内存使用转储现在在存在大量内存上下文时汇总统计信息，
+        而不是可能生成非常大的报告。现在还有一个<span class="quote">“<span class="quote">总计</span>”</span>汇总线。
+       </p></li></ul></div></div><div class="sect4" id="idp64833392"><div class="titlepage"><div><div><h5 class="title">E.9.3.1.9. <acronym class="acronym">认证</acronym></h5></div></div></div><div class="itemizedlist"><ul class="itemizedlist" style="list-style-type: disc; "><li class="listitem"><p>        添加<a class="link" href="auth-methods.html#AUTH-BSD" title="20.3.11. BSD 认证"><acronym class="acronym">BSD</acronym>认证方法</a>
+        允许使用<span class="systemitem">BSD</span>认证服务进行
+        <span class="productname">PostgreSQL</span>客户端认证 (Marisa Emerson)
+       </p><p>        BSD认证目前仅在<span class="systemitem">OpenBSD</span>上可用。
+       </p></li><li class="listitem"><p>        当使用<a class="link" href="auth-methods.html#AUTH-PAM" title="20.3.10. PAM 认证"><acronym class="acronym">PAM</acronym>认证</a>时，
+        通过<code class="literal">PAM_RHOST</code>项将客户端IP地址或主机名提供给
+        <acronym class="acronym">PAM</acronym>模块
+        (Grzegorz Sampolski)
+       </p></li><li class="listitem"><p>        在postmaster日志中提供详细信息，以了解更多类型的密码身份验证失败
+        (Tom Lane)
+       </p><p>        所有通常可访问的密码认证失败情况现在应该在日志中提供特定的
+        <code class="literal">DETAIL</code>字段。
+       </p></li><li class="listitem"><p>        支持长达128个字符的<a class="link" href="auth-methods.html#AUTH-RADIUS" title="20.3.8. RADIUS 认证"><acronym class="acronym">RADIUS</acronym>密码</a>
+        (Marko Tiikkaja)
+       </p></li><li class="listitem"><p>        添加新的<a class="link" href="auth-methods.html#SSPI-AUTH" title="20.3.4. SSPI 认证"><acronym class="acronym">SSPI</acronym>
+        认证</a>参数
+        <code class="varname">compat_realm</code>和<code class="varname">upn_username</code>，
+        控制在<acronym class="acronym">SSPI</acronym>认证期间是否使用<span class="productname">NetBIOS</span>或
+        <span class="productname">Kerberos</span>域名和用户名 (Christian Ullrich)
+       </p></li></ul></div></div><div class="sect4" id="idp64849264"><div class="titlepage"><div><div><h5 class="title">E.9.3.1.10. 服务器配置</h5></div></div></div><div class="itemizedlist"><ul class="itemizedlist" style="list-style-type: disc; "><li class="listitem"><p>        允许会话在处于闲置事务状态的时间过长时自动终止 (Vik Fearing)
+       </p><p>        这个行为是通过新的配置参数<a class="xref" href="runtime-config-client.html#GUC-IDLE-IN-TRANSACTION-SESSION-TIMEOUT">idle_in_transaction_session_timeout</a>
+        控制的。它可以有效的防止忘记的事务持有锁或防止vacuum清理太长时间。
+       </p></li><li class="listitem"><p>        提升<a class="xref" href="runtime-config-wal.html#GUC-CHECKPOINT-TIMEOUT">checkpoint_timeout</a>允许的最大值到24小时 (Simon Riggs)
+       </p></li><li class="listitem"><p>        允许为每个表空间设置<code class="varname">effective_io_concurrency</code>，
+        以支持不同表空间具有不同I/O特性的情况 (Julien Rouhaud)
+       </p></li><li class="listitem"><p>        添加<a class="xref" href="runtime-config-logging.html#GUC-LOG-LINE-PREFIX">log_line_prefix</a>选项<code class="literal">%n</code>
+        以Unix纪元格式打印当前时间，以毫秒为单位 (Tomas
+        Vondra, Jeff Davis)
+       </p></li><li class="listitem"><p>        添加<a class="xref" href="runtime-config-logging.html#GUC-SYSLOG-SEQUENCE-NUMBERS">syslog_sequence_numbers</a>和<a class="xref" href="runtime-config-logging.html#GUC-SYSLOG-SPLIT-MESSAGES">syslog_split_messages</a>配置参数，
+        在记录到<span class="systemitem">syslog</span>时提供对消息格式的更多控制 (Peter Eisentraut)
+       </p></li><li class="listitem"><p>        合并<a class="xref" href="runtime-config-wal.html#GUC-WAL-LEVEL">wal_level</a>配置参数的<code class="literal">archive</code>和
+        <code class="literal">hot_standby</code>值到一个新值<code class="literal">replica</code> (Peter Eisentraut)
+       </p><p>        区分这些设置不再有用，并且合并它们是朝向计划的未来简化复制设置的步骤。
+        旧名称仍被接受，但在内部转换为<code class="literal">replica</code>。
+       </p></li><li class="listitem"><p>        添加配置选项<code class="option">--with-systemd</code>，
+        在服务器启动和停止时启动调用<code class="function">sd_notify()</code> (Peter
+        Eisentraut)
+       </p><p>        这允许使用<code class="literal">notify</code>类型的<span class="application">systemd</span>服务单元，
+        这大大简化了<span class="application">systemd</span>下的<span class="productname">PostgreSQL</span>的管理。
+       </p></li><li class="listitem"><p>        如果服务器的<acronym class="acronym">SSL</acronym>密钥文件由<code class="literal">root</code>所有，
+        允许其具有组读取访问权限 (Christoph Berg)
+       </p><p>        以前，我们坚持密钥文件由运行<span class="productname">PostgreSQL</span>服务器的用户拥有，
+        但这在一些配置为集中管理证书的系统（如<span class="systemitem">Debian</span>）
+        上是不方便的。因此，请允许密钥文件由<code class="literal">root</code>
+        拥有并具有组读取访问权限的情况。由操作系统管理员确保该组不包括任何不受信任的用户。
+       </p></li></ul></div></div><div class="sect4" id="idp64872944"><div class="titlepage"><div><div><h5 class="title">E.9.3.1.11. 可靠性</h5></div></div></div><div class="itemizedlist"><ul class="itemizedlist" style="list-style-type: disc; "><li class="listitem"><p>        如果postmaster死机，则强制后端退出 (Rajeev Rastogi,
+        Robert Haas)
+       </p><p>        在正常情况下，postmaster应该总是超过其子进程。
+        如果由于某种原因postmaster死机，强制后端会话退出并出错。以前，
+        现有的后端将继续运行，直到客户端断开连接，但这是不安全和低效的。
+        它还防止新的postmaster在最后一个旧后端退出之前启动。
+        后端将在等待客户端I/O时检测到postmaster死亡，因此退出不会是即时的，
+        但应该在当前查询结束之前发生。
+       </p></li><li class="listitem"><p>        在报告约束违规故障之前检查可序列化冲突 (Thomas Munro)
+       </p><p>        当使用可序列化事务隔离时，
+        希望由于并发事务导致的任何错误应该表现为序列化失败，
+        从而提示应用程序重试可能会成功。不幸的是，
+        这并不可靠发生在由并发插入引起的重复键失败。
+        此更改确保如果应用程序在事务中较早地显式检查是否存在冲突密钥
+        （并且没有找到它），则此类错误将报告为序列化错误。
+       </p></li><li class="listitem"><p>        确保无效消息记录在<acronym class="acronym">WAL</acronym>中，即使由未分配<acronym class="acronym">XID</acronym>的事务发出
+        (Andres Freund)
+       </p><p>        这修复了备用服务器上的事务无法注意到更改（例如新索引）的一些情况。
+       </p></li><li class="listitem"><p>        防止多个进程同时尝试清除<acronym class="acronym">GIN</acronym>索引的挂起列表
+        (Teodor Sigaev, Jeff Janes)
+       </p><p>        这是故意允许的，但它会导致竞争条件，可能导致vacuum缺少需要删除的索引条目。
+       </p></li></ul></div></div></div><div class="sect3" id="idp64879792"><div class="titlepage"><div><div><h4 class="title">E.9.3.2. 复制和恢复</h4></div></div></div><div class="itemizedlist"><ul class="itemizedlist" style="list-style-type: disc; "><li class="listitem"><p>        允许同步复制支持多个同时同步备用服务器，而不只是一个
+        (Masahiko Sawada,
+        Beena Emerson, Michael Paquier, Fujii Masao, Kyotaro Horiguchi)
+       </p><p>        在认为完成之前必须确认提交的备用服务器数量，现在可以配置为
+        <a class="xref" href="runtime-config-replication.html#GUC-SYNCHRONOUS-STANDBY-NAMES">synchronous_standby_names</a>参数的一部分。
+       </p></li><li class="listitem"><p>        为配置参数<a class="xref" href="runtime-config-wal.html#GUC-SYNCHRONOUS-COMMIT">synchronous_commit</a>
+        添加新的设置<code class="literal">remote_apply</code> (Thomas Munro)
+       </p><p>        在此模式下，主服务器等待事务在备用服务器上<span class="emphasis"><em>应用</em></span>，而不是仅写入磁盘。
+        这意味着您可以依靠在备用数据库上启动的事务来查看先前由主数据库确认的所有提交。
+       </p></li><li class="listitem"><p>        向复制协议添加特性以及<a class="link" href="functions-admin.html#FUNCTIONS-REPLICATION-TABLE" title="表 9.83. 复制SQL函数"><code class="function">pg_create_physical_replication_slot()</code></a>
+        的相应选项，以允许在创建复制槽时立即预留<acronym class="acronym">WAL</acronym> (Gurjeet Singh, Michael Paquier)
+       </p><p>        这允许创建复制插槽，以确保基本备份所需的所有<acronym class="acronym">WAL</acronym>都可用。
+       </p></li><li class="listitem"><p>        添加<code class="option">--slot</code>选项到
+        <a class="link" href="app-pgbasebackup.html" title="pg_basebackup"><span class="application">pg_basebackup</span></a>
+        (Peter Eisentraut)
+       </p><p>        这让<span class="application">pg_basebackup</span>使用为<acronym class="acronym">WAL</acronym>流定义的复制槽。
+        在基本备份完成后，为常规流复制选择相同的插槽允许新备用服务器的无缝启动。
+       </p></li><li class="listitem"><p>        扩展<a class="link" href="functions-admin.html#FUNCTIONS-ADMIN-BACKUP-TABLE" title="表 9.79. 备份控制函数"><code class="function">pg_start_backup()</code></a>
+        和<code class="function">pg_stop_backup()</code>以支持非独占性备份
+        (Magnus Hagander)
+       </p></li></ul></div></div><div class="sect3" id="idp64894592"><div class="titlepage"><div><div><h4 class="title">E.9.3.3. 查询</h4></div></div></div><div class="itemizedlist"><ul class="itemizedlist" style="list-style-type: disc; "><li class="listitem"><p>        允许返回元组集的函数返回简单的<code class="literal">NULL</code> (Andrew Gierth, Tom Lane)
+       </p><p>        在<code class="literal">SELECT FROM function(...)</code>的上下文中，
+        返回一组复合值的函数先前不允许返回纯<code class="literal">NULL</code>值作为集合的一部分。
+        现在允许并且解释为一行<code class="literal">NULL</code>。这避免了极端错误，例如，
+        不嵌套复合值数组。
+       </p></li><li class="listitem"><p>        在具有多个<code class="literal">VALUES</code>行的<code class="command">INSERT</code>
+        的目标列列表中完全支持数组下标和字段选择 (Tom Lane)
+       </p><p>        以前，如果同一目标列被多次提及，这种情况会失败，例如，
+        <code class="literal">INSERT INTO tab (x[1], x[2]) VALUES (...)</code>。
+       </p></li><li class="listitem"><p>        在适当的情况下，推迟对<code class="command">SELECT</code>输出表达式的求值，
+        直到在<code class="literal">ORDER BY</code>排序之后 (Konstantin Knizhnik)
+       </p><p>        此更改确保输出列表中的易变或昂贵函数按<code class="literal">ORDER BY</code>
+        建议的顺序执行，并且在存在<code class="literal">LIMIT</code>子句时，
+        它们的计算次数不会超过所需次数。以前，
+        如果排序由索引扫描或预合并连接排序执行，则保留这些属性，
+        如果是由顶级排序执行，则不保留。
+       </p></li><li class="listitem"><p>        加宽计数器记录元组的数量，处理到64位
+        (Andreas Scherbaum)
+       </p><p>        这种改变允许命令标签，例如<code class="command">SELECT</code>，以正确地报告大于40亿的元组计数。
+        这也适用于PL/pgSQL的<code class="command">GET DIAGNOSTICS ... ROW_COUNT</code>命令。
+       </p></li><li class="listitem"><p>        避免通过<code class="literal">MULE_INTERNAL</code>编码进行编码转换 (Tom Lane)
+       </p><p>        以前，西里尔和中欧单字节编码的许多转换是通过转换到相关的
+        <code class="literal">MULE_INTERNAL</code>编码模式，然后到目标编码来完成的。
+        除了低效率，这意味着当转换遇到一个不可译的字符，
+        错误消息会混淆地抱怨无法转换<code class="literal">MULE_INTERNAL</code>，
+        而不是用户可见的编码。
+       </p></li><li class="listitem"><p>        仅当在相同角色ID下访问表时，才考虑远程执行外部表的连接 (Shigeru Hanada,
+        Ashutosh Bapat, Etsuro Fujita)
+       </p><p>        以前，外部连接下推基础构造将安全问题完全留给单个外部数据包装器，
+        但这使得<acronym class="acronym">FDW</acronym>太容易无意中创建微妙的安全漏洞。所以，
+        让核心代码确定哪个角色ID将访问每个表，并且不尝试连接下推，
+        除非角色对于所有相关关系是相同的。
+       </p></li></ul></div></div><div class="sect3" id="idp64914032"><div class="titlepage"><div><div><h4 class="title">E.9.3.4. 实用命令</h4></div></div></div><div class="itemizedlist"><ul class="itemizedlist" style="list-style-type: disc; "><li class="listitem"><p>        允许<code class="command">COPY</code>拷贝
+        <code class="literal">INSERT</code>/<code class="literal">UPDATE</code>/<code class="literal">DELETE</code>
+        ... <code class="literal">RETURNING</code>查询的输出 (Marko Tiikkaja)
+       </p><p>        以前，必须在中间写入<acronym class="acronym">CTE</acronym>以获得此结果。
+       </p></li><li class="listitem"><p>        引入<code class="command">ALTER <em class="replaceable"><code>object</code></em> DEPENDS ON
+        EXTENSION</code> (Abhijit Menon-Sen)
+       </p><p>        此命令允许将数据库对象标记为取决于扩展，因此，如果扩展被删除
+        （不需要<code class="literal">CASCADE</code>），它将被自动删除。但是，
+        该对象不是扩展的一部分，因此将被<span class="application">pg_dump</span>单独转储。
+       </p></li><li class="listitem"><p>        当对象已经在请求的模式中时，让<code class="command">ALTER <em class="replaceable"><code>object</code></em> SET SCHEMA</code>
+        不执行任何操作，而不是像过去那样对大多数对象类型抛出一个错误
+        (Marti Raudsepp)
+       </p></li><li class="listitem"><p>        向<code class="command">ALTER OPERATOR</code>添加选项以允许更改与现有运算符关联的选择性函数
+        (Yury Zhuravlev)
+       </p></li><li class="listitem"><p>        添加<code class="option">IF NOT EXISTS</code>选项到<code class="command">ALTER TABLE
+        ADD COLUMN</code> (Fabrízio de Royes Mello)
+       </p></li><li class="listitem"><p>        在设置填充因子和自动清空相关的关系选项时，降低<code class="command">ALTER TABLE</code>
+        所需的锁定强度
+        (Fabrízio de Royes Mello, Simon Riggs)
+       </p></li><li class="listitem"><p>        引入<a class="link" href="sql-create-access-method.html" title="CREATE ACCESS METHOD"><code class="command">CREATE
+        ACCESS METHOD</code></a>允许扩展创建索引访问方法 (Alexander Korotkov, Petr Jelínek)
+       </p></li><li class="listitem"><p>        添加<code class="literal">CASCADE</code>选项到<code class="command">CREATE
+        EXTENSION</code>，以自动创建所请求扩展所依赖的任意扩展 (Petr Jelínek)
+       </p></li><li class="listitem"><p>        如果任何源表有<code class="type">OID</code>字段，则<code class="command">CREATE TABLE ... LIKE</code>
+        包含一个<code class="type">OID</code>列 (Bruce Momjian)
+       </p></li><li class="listitem"><p>        如果在表创建命令中将<code class="literal">CHECK</code>约束声明为<code class="literal">NOT VALID</code>，
+        则自动将其标记为有效 (Amit Langote, Amul Sul)
+       </p><p>        这是安全的，因为表没有现有行。这与<code class="literal">FOREIGN KEY</code>
+        约束的长期行为相匹配。
+       </p></li><li class="listitem"><p>        修复<code class="command">DROP OPERATOR</code>以清除
+        <code class="structname">pg_operator</code>.<code class="structfield">oprcom</code>和
+        <code class="structname">pg_operator</code>.<code class="structfield">oprnegate</code>到废弃运算符的链接 (Roma Sokolov)
+       </p><p>        以前这样的链接保持原样，这可能在不太可能发生的事件中引起问题，
+        即废弃运算符的<code class="type">OID</code>被重用于另一运算符。
+       </p></li><li class="listitem"><p>        不要在<code class="command">EXPLAIN</code>输出中显示两次相同的子计划
+        (Tom Lane)
+       </p><p>        在某些情况下，通常涉及索引条件中的SubPlan节点，
+        <code class="command">EXPLAIN</code>将打印同一子计划的数据两次。
+       </p></li><li class="listitem"><p>        禁止在系统列上创建索引，<code class="type">OID</code>列除外 (David Rowley)
+       </p><p>        这样的索引从来不被认为是支持的，并且将非常可能不正确，
+        因为系统可以改变元组的系统列字段而不更新索引。但是，
+        以前没有错误检查来阻止它们被创建。
+       </p></li></ul></div></div><div class="sect3" id="idp64946080"><div class="titlepage"><div><div><h4 class="title">E.9.3.5. 权限管理</h4></div></div></div><div class="itemizedlist"><ul class="itemizedlist" style="list-style-type: disc; "><li class="listitem"><p>        使用权限系统管理对敏感函数的访问 (Stephen Frost)
+       </p><p>        以前，许多安全敏感的函数包含硬线检查，如果它们被非超级用户调用会抛出错误。
+        这迫使对一些相对普通任务使用超级用户角色。硬连线错误检查现在已不再有利于使
+        <span class="application">initdb</span>撤销对这些函数的默认公共<code class="literal">EXECUTE</code>特权。
+        这允许安装程序选择将此类函数的使用授予不需要所有超级用户权限的受信任角色。
+       </p></li><li class="listitem"><p>        创建一些<a class="link" href="default-roles.html" title="21.5. 默认角色">内置角色</a>，
+        可用于授予对先前仅超级用户功能的访问权限 (Stephen Frost)
+       </p><p>        目前唯一的这样的角色是<code class="literal">pg_signal_backend</code>，
+        但预期将来会有更多的被添加。
+       </p></li></ul></div></div><div class="sect3" id="idp64952016"><div class="titlepage"><div><div><h4 class="title">E.9.3.6. 数据类型</h4></div></div></div><div class="itemizedlist"><ul class="itemizedlist" style="list-style-type: disc; "><li class="listitem"><p>        改进<a class="link" href="textsearch.html" title="第 12 章 全文搜索">全文搜索</a>以支持搜索短语，也就是，
+        按照特定顺序或者特定距离彼此相邻的词素 (Teodor Sigaev, Oleg Bartunov, Dmitry Ivanov)
+       </p><p>        可以使用新的运算符<code class="literal">&lt;-&gt;</code>和<code class="literal">&lt;<em class="replaceable"><code>N</code></em>&gt;</code>
+        在<code class="type">tsquery</code>输入中指定短语搜索查询。
+        前者意味着它之前和之后的词位必须以该顺序彼此相邻。后者意味着它们必须正好相隔
+        <em class="replaceable"><code>N</code></em>个词。
+       </p></li><li class="listitem"><p>        允许省略数组片段说明符中的一个或两个边界，例如：<code class="literal">array_col[3:]</code>
+        (Yury Zhuravlev)
+       </p><p>        省略的边界被视为相应数组下标的上限或下限。
+        这允许对于许多常见用例的更简单的规范。
+       </p></li><li class="listitem"><p>        更加注意超出范围的日期和时间戳 (Vitaly
+        Burovoy)
+       </p><p>        对于非常接近实现限制的<code class="type">timestamp with time zone</code>值，
+        此更改防止意外的超出范围错误。以前，<span class="quote">“<span class="quote">相同</span>”</span>
+        值可能会被接受或不被接受，这取决于<code class="varname">timezone</code>设置，
+        意味着转储和重新加载可能在提交时已接受的值上失败。现在，
+        根据等效的<acronym class="acronym">UTC</acronym>时间而不是本地时间强制实施限制，
+        以便独立于<code class="varname">timezone</code>。
+       </p><p>        此外，<span class="productname">PostgreSQL</span>现在更加仔细地检测计算新的日期或时间戳值
+        （如<code class="type">date</code> <code class="literal">+</code> <code class="type">integer</code>）在操作中的溢出。
+       </p></li><li class="listitem"><p>        对于几何数据类型，请确保在输入和输出期间一致地处理<code class="literal">infinity</code>
+        和<code class="literal">NaN</code>分量值 (Tom Lane)
+       </p><p>        这样的值现在打印出来总是与在一个简单的<code class="type">float8</code>列中相同，
+        并且在输入上接受相同的方式。以前的行为是平台相关的。
+       </p></li><li class="listitem"><p>        升级<a class="link" href="textsearch-dictionaries.html#TEXTSEARCH-ISPELL-DICTIONARY" title="12.6.5. Ispell 词典"><code class="literal">ispell</code></a>
+        字典类型以处理现代<span class="productname">Hunspell</span>文件并支持更多语言 (Artur Zakirov)
+       </p></li><li class="listitem"><p>        在<a class="link" href="functions-matching.html#FUNCTIONS-POSIX-REGEXP" title="9.7.3. POSIX正则表达式">正则表达式</a>中实现后备约束
+        (Tom Lane)
+       </p><p>        后备约束就像前瞻约束，因为它不消耗任何文本；
+        但是它检查字符串中在当前点结束的匹配的存在（或不存在），
+        而不是从当前点开始的匹配。类似的特征存在于许多其他正则表达式引擎中。
+       </p></li><li class="listitem"><p>        在正则表达式中，如果一个明显的三位八进制转义<code class="literal">\</code><em class="replaceable"><code>nnn</code></em>
+        超过377（十进制255），则假定它是一个两位八进制转义 (Tom Lane)
+       </p><p>        这使得行为匹配当前<span class="application">Tcl</span>版本。
+       </p></li><li class="listitem"><p>        添加事务ID操作符<code class="type">xid</code> <code class="literal">&lt;&gt;</code>
+        <code class="type">xid</code>和<code class="type">xid</code> <code class="literal">&lt;&gt;</code> <code class="type">int4</code>，
+        以与相应的等式运算符保持一致 (Michael Paquier)
+       </p></li></ul></div></div><div class="sect3" id="idp64979120"><div class="titlepage"><div><div><h4 class="title">E.9.3.7. 函数</h4></div></div></div><div class="itemizedlist"><ul class="itemizedlist" style="list-style-type: disc; "><li class="listitem"><p>        添加<a class="link" href="functions-json.html#FUNCTIONS-JSON-PROCESSING-TABLE" title="表 9.46. JSON 处理函数"><code class="function">jsonb_insert()</code></a>
+        函数将一个新元素插入到一个<code class="type">jsonb</code>数组中，
+        或者一个先前不存在的键插入到<code class="type">jsonb</code>对象中
+        (Dmitry Dolgov)
+       </p></li><li class="listitem"><p>        提高类型<code class="type">numeric</code>的<code class="function">ln()</code>、<code class="function">log()</code>、
+        <code class="function">exp()</code>和<code class="function">pow()</code>函数的精度 (Dean Rasheed)
+       </p></li><li class="listitem"><p>        添加<a class="link" href="functions-math.html#FUNCTIONS-MATH-FUNC-TABLE" title="表 9.5. 数学函数"><code class="function">scale(numeric)</code></a>
+        函数，提取<code class="type">numeric</code>值的显示比例
+        (Marko Tiikkaja)
+       </p></li><li class="listitem"><p>        添加以度为单位工作的三角函数 (Dean Rasheed)
+       </p><p>        例如，<a class="link" href="functions-math.html#FUNCTIONS-MATH-TRIG-TABLE" title="表 9.7. 三角函数"><code class="function">sind()</code></a>
+        以度为单位度量其参数，而<code class="function">sin()</code>以弧度度量。
+        这些函数需要一些长度，为值提供准确的结果，其中有可以预期的确切结果，
+        例如<code class="literal">sind(30) = 0.5</code>。
+       </p></li><li class="listitem"><p>        确保三角函数根据<acronym class="acronym">POSIX</acronym>标准处理<code class="literal">infinity</code>和
+        <code class="literal">NaN</code>输入 (Dean Rasheed)
+       </p><p>        <acronym class="acronym">POSIX</acronym>标准说，这些函数应该为<code class="literal">NaN</code>输入返回
+        <code class="literal">NaN</code>，并且应该对超出范围的输入（包括<code class="literal">infinity</code>）
+        抛出错误。以前，我们的行为在不同平台上有所不同。
+       </p></li><li class="listitem"><p>        让<a class="link" href="functions-datetime.html#FUNCTIONS-DATETIME-TABLE" title="表 9.30. 日期/时间函数"><code class="function">to_timestamp(float8)</code></a>
+        转换浮点数<code class="literal">infinity</code>到时间戳<code class="literal">infinity</code> (Vitaly Burovoy)
+       </p><p>        以前它在无限输入时只是失败。
+       </p></li><li class="listitem"><p>        为<code class="type">tsvector</code>数据添加新的函数 (Stas Kelvich)
+       </p><p>        新函数是<a class="link" href="functions-textsearch.html#TEXTSEARCH-FUNCTIONS-TABLE" title="表 9.41. 文本搜索函数"><code class="function">ts_delete()</code></a>、
+        <code class="function">ts_filter()</code>、<code class="function">unnest()</code>、
+        <code class="function">tsvector_to_array()</code>、<code class="function">array_to_tsvector()</code>
+        和<code class="function">setweight()</code>的一个仅为指定词设置权重的变体。
+       </p></li><li class="listitem"><p>        允许<a class="link" href="textsearch-features.html#TEXTSEARCH-STATISTICS" title="12.4.4. 收集文档统计数据"><code class="function">ts_stat()</code></a>
+        和<a class="link" href="textsearch-features.html#TEXTSEARCH-UPDATE-TRIGGERS" title="12.4.3. 用于自动更新的触发器"><code class="function">tsvector_update_trigger()</code></a>
+        对与期望的参数类型二进制兼容的类型值进行操作，而不仅仅是该类型。
+        例如在预期<code class="type">text</code>的位置允许<code class="type">citext</code> (Teodor
+        Sigaev)
+       </p></li><li class="listitem"><p>        添加可变函数<a class="link" href="functions-comparison.html#FUNCTIONS-COMPARISON-FUNC-TABLE" title="表 9.3. 比较函数"><code class="function">num_nulls()</code></a>
+        和<code class="function">num_nonnulls()</code>，计算它们的参数为null或非null的数量
+        (Marko Tiikkaja)
+       </p><p>        一个示例用法是<code class="literal">CHECK(num_nonnulls(a,b,c) = 1)</code>，
+        它断言a，b，c中的一个不是<code class="literal">NULL</code>。
+        这些函数也可以用于计算数组中空元素或非空元素的数量。
+       </p></li><li class="listitem"><p>        添加函数<a class="link" href="functions-string.html#FUNCTIONS-STRING-OTHER" title="表 9.9. 其他字符串函数"><code class="function">parse_ident()</code></a>
+        将一个限定的，可能引用的<acronym class="acronym">SQL</acronym>标识符拆分为它的一部分 (Pavel Stehule)
+       </p></li><li class="listitem"><p>        在<a class="link" href="functions-formatting.html#FUNCTIONS-FORMATTING-TABLE" title="表 9.23. 格式化函数"><code class="function">to_number()</code></a>中，
+        将<code class="literal">V</code>格式代码解释为除以10后的<code class="literal">V</code>的小数点位数的幂 (Bruce
+        Momjian)
+       </p><p>        这使得它以与<code class="function">to_char()</code>相反的方式操作。
+       </p></li><li class="listitem"><p>        让<a class="link" href="functions-info.html#FUNCTIONS-INFO-CATALOG-TABLE" title="表 9.63. 系统目录信息函数"><code class="function">to_reg*()</code></a>
+        函数接受类型<code class="type">text</code>而不是<code class="type">cstring</code>
+        (Petr Korobeinikov)
+       </p><p>        这避免了在参数不是简单的文字常量的大多数情况下编写显式转换的需要。
+       </p></li><li class="listitem"><p>        添加<a class="link" href="functions-admin.html#FUNCTIONS-ADMIN-DBSIZE" title="表 9.84. 数据库对象尺寸函数"><code class="function">pg_size_bytes()</code></a>
+        函数将人类可读的大小字符串转换为数字 (Pavel
+        Stehule, Vitaly Burovoy, Dean Rasheed)
+       </p><p>        该函数将字符串，比如<code class="function">pg_size_pretty()</code>产生的那些，
+        转换成字节。一个示例用法是
+        <code class="literal">SELECT oid::regclass FROM pg_class WHERE
+        pg_total_relation_size(oid) &gt; pg_size_bytes('10 GB')</code>。
+       </p></li><li class="listitem"><p>        在<a class="link" href="functions-admin.html#FUNCTIONS-ADMIN-DBSIZE" title="表 9.84. 数据库对象尺寸函数"><code class="function">pg_size_pretty()</code></a>中，
+        格式化负数，使其类似于正数 (Adrian
+        Vondendriesch)
+       </p><p>        以前，负数没有缩写，只是以字节打印。
+       </p></li><li class="listitem"><p>        添加一个可选的<em class="replaceable"><code>missing_ok</code></em>参数到<a class="link" href="functions-admin.html#FUNCTIONS-ADMIN-SET-TABLE" title="表 9.77. 配置设定函数"><code class="function">current_setting()</code></a>
+        函数 (David Christensen)
+       </p><p>        这允许避免无法识别的参数名称的错误，返回<code class="literal">NULL</code>。
+       </p></li><li class="listitem"><p>        更改各种目录检查功能以对无效输入返回<code class="literal">NULL</code> (Michael Paquier)
+       </p><p>        如果给定一个无效的视图<code class="type">OID</code>，<a class="link" href="functions-info.html#FUNCTIONS-INFO-CATALOG-TABLE" title="表 9.63. 系统目录信息函数"><code class="function">pg_get_viewdef()</code></a>
+        现在返回<code class="literal">NULL</code>，并且几个类似的函数同样对坏的输入返回<code class="literal">NULL</code>。
+        以前，这种情况通常导致<span class="quote">“<span class="quote">缓存查找失败</span>”</span>错误，这不意味着在面向用户的情况下发生。
+       </p></li><li class="listitem"><p>        修复<a class="link" href="functions-admin.html#PG-REPLICATION-ORIGIN-XACT-RESET"><code class="function">pg_replication_origin_xact_reset()</code></a>
+        为没有任何参数 (Fujii Masao)
+       </p><p>        文档说它没有参数，并且C代码没有期望任何参数，但是<code class="structname">pg_proc</code>
+        中的条目错误地指定了两个参数。
+       </p></li></ul></div></div><div class="sect3" id="idp65043008"><div class="titlepage"><div><div><h4 class="title">E.9.3.8. 服务器端语言</h4></div></div></div><div class="itemizedlist"><ul class="itemizedlist" style="list-style-type: disc; "><li class="listitem"><p>        在<a class="link" href="plpgsql.html" title="第 42 章 PL/pgSQL - SQL过程语言">PL/pgSQL</a>中，在编译函数时检测不匹配的
+        <code class="command">CONTINUE</code>和<code class="command">EXIT</code>语句，而不是在执行时
+        (Jim Nasby)
+       </p></li><li class="listitem"><p>        扩展<span class="application">PL/Python</span>的错误报告和消息报告功能，
+        以允许指定除主要错误消息之外的附加消息字段 (Pavel Stehule)
+       </p></li><li class="listitem"><p>        允许PL/Python函数通过<span class="application">SPI</span>递归调用自身，
+        并修复在一个查询中调用多个设置返回PL/Python函数时的行为
+        (Alexey Grishchenko, Tom Lane)
+       </p></li><li class="listitem"><p>        修复PL/Python中的会话生命周期内存泄露 (Heikki Linnakangas,
+        Haribabu Kommi, Tom Lane)
+       </p></li><li class="listitem"><p>        使<span class="application">PL/Tcl</span>现代化以使用Tcl的<span class="quote">“<span class="quote">object</span>”</span> <acronym class="acronym">API</acronym>，
+        而不是简单的字符串 (Jim Nasby, Karl
+        Lehenbauer)
+       </p><p>        这在一些情况下可以大幅度提高性能。注意，<span class="application">PL/Tcl</span>
+        现在需要Tcl 8.4或更高版本。
+       </p></li><li class="listitem"><p>        在<span class="application">PL/Tcl</span>中，使数据库报告的错误返回Tcl的<code class="varname">errorCode</code>
+        全局变量中的其他信息 (Jim Nasby, Tom Lane)
+       </p><p>        此功能允许Tcl约定返回关于错误的辅助数据。
+       </p></li><li class="listitem"><p>        修复<span class="application">PL/Tcl</span>以执行数据库编码和<code class="literal">UTF-8</code>
+        之间的编码转换，这是Tcl期望的 (Tom Lane)
+       </p><p>        以前，当数据库编码不是<code class="literal">UTF-8</code>时，字符串不进行转换就通过，
+        导致非<code class="literal">ASCII</code>字符的不当行为。
+       </p></li></ul></div></div><div class="sect3" id="idp65058848"><div class="titlepage"><div><div><h4 class="title">E.9.3.9. 客户端接口</h4></div></div></div><div class="itemizedlist"><ul class="itemizedlist" style="list-style-type: disc; "><li class="listitem"><p>        在错误和通知消息中添加<a class="link" href="protocol-error-fields.html" title="52.8. 错误和通知消息域">严重性字段</a>
+        的非本地化版本 (Tom Lane)
+       </p><p>        此更改允许客户端代码确定错误或通知的严重性，而无需担心严重性字符串的本地化变体。
+       </p></li><li class="listitem"><p>        在<span class="application">libpq</span>中引入一个特性，从而可以抑制消息的
+        <code class="literal">CONTEXT</code>字段，否则总是或仅针对非错误消息 (Pavel Stehule)
+       </p><p>        <a class="link" href="libpq-status.html#LIBPQ-PQERRORMESSAGE"><code class="function">PQerrorMessage()</code></a>
+        的默认行为现在只打印错误的<code class="literal">CONTEXT</code>。新的函数
+        <a class="link" href="libpq-control.html#LIBPQ-PQSETERRORCONTEXTVISIBILITY"><code class="function">PQsetErrorContextVisibility()</code></a>
+        可以用来调整这个行为。
+       </p></li><li class="listitem"><p>        在<span class="application">libpq</span>中添加支持以重新生成具有不同详细程度级别的错误消息
+        (Alex Shulgin)
+       </p><p>        这是通过新函数<a class="link" href="libpq-exec.html#LIBPQ-PQRESULTVERBOSEERRORMESSAGE"><code class="function">PQresultVerboseErrorMessage()</code></a>
+        完成的。这支持<span class="application">psql</span>的新<code class="literal">\errverbose</code>功能，
+        并且可能对其他客户端有用。
+       </p></li><li class="listitem"><p>        改进<span class="application">libpq</span>的<a class="link" href="libpq-status.html#LIBPQ-PQHOST"><code class="function">PQhost()</code></a>函数以返回有用的数据，
+        用于默认的Unix套接字连接 (Tom Lane)
+       </p><p>        以前，如果没有给出显式主机规范，它将返回<code class="literal">NULL</code>；
+        现在它返回默认的套接字目录路径。
+       </p></li><li class="listitem"><p>        修复<span class="application">ecpg</span>的词法分析器以处理从预处理器指令行开始的注释中的换行符
+        (Michael Meskes)
+       </p></li></ul></div></div><div class="sect3" id="idp65076624"><div class="titlepage"><div><div><h4 class="title">E.9.3.10. 客户端应用</h4></div></div></div><div class="itemizedlist"><ul class="itemizedlist" style="list-style-type: disc; "><li class="listitem"><p>        添加<code class="option">--strict-names</code>选项到<a class="link" href="app-pgdump.html" title="pg_dump"><span class="application">pg_dump</span></a>
+        和<a class="link" href="app-pgrestore.html" title="pg_restore"><span class="application">pg_restore</span></a>
+        (Pavel Stehule)
+       </p><p>        如果没有与<code class="option">-t</code>或<code class="option">-n</code>选项的匹配，
+        则此选项会导致程序出现错误，而不是静默执行。
+       </p></li><li class="listitem"><p>        在<span class="application">pg_dump</span>中，转储系统对象的特权分配的本地更改
+        (Stephen Frost)
+       </p><p>        虽然超级用户始终可以更改内置或扩展创建对象的特权分配，
+        但此类更改以前在转储和重新加载中丢失。现在，<span class="application">pg_dump</span>
+        识别和转储这样的更改。（这只适用于从9.6或更高版本的服务器转储时）。
+       </p></li><li class="listitem"><p>        允许<span class="application">pg_dump</span>转储扩展所有模式内的非扩展所有的对象
+       (Martín Marqués)
+       </p><p>        以前，这样的对象被忽略，因为它们被错误地假定属于拥有它们的模式的扩展。
+       </p></li><li class="listitem"><p>        在<span class="application">pg_dump</span>输出中，在对象类型的对象标记中包含表名称，
+        这些对象类型仅对每个表进行唯一命名（例如，触发器） (Peter Eisentraut)
+       </p></li></ul></div><div class="sect4" id="idp65087648"><div class="titlepage"><div><div><h5 class="title">E.9.3.10.1. <a class="xref" href="app-psql.html" title="psql"><span class="refentrytitle"><span class="application">psql</span></span></a></h5></div></div></div><div class="itemizedlist"><ul class="itemizedlist" style="list-style-type: disc; "><li class="listitem"><p>        支持多个<code class="option">-c</code>和<code class="option">-f</code>命令行选项 (Pavel Stehule, Catalin Iacob)
+       </p><p>        指定的操作按照给定选项的顺序执行，然后<span class="application">psql</span>终止。
+       </p></li><li class="listitem"><p>        添加用于在交叉列表显示中打印查询结果的<code class="command">\crosstabview</code>命令
+        (Daniel Vérité)
+       </p><p>        在交叉表显示中，来自一个查询结果列的数据值放置在其列和行标题来自其他查询结果列的网格中。
+       </p></li><li class="listitem"><p>        添加<code class="literal">\errverbose</code>命令，完全详细显示最后一个服务器错误 (Alex Shulgin)
+       </p><p>        这在获得意外错误后非常有用 — 您不再需要调整<code class="varname">VERBOSITY</code>
+        变量并重新创建失败以查看默认情况下未显示的错误字段。
+       </p></li><li class="listitem"><p>        添加<code class="literal">\ev</code>和<code class="literal">\sv</code>命令以进行编辑和显示视图定义
+        (Petr Korobeinikov)
+       </p><p>        这些与用于函数的现有<code class="literal">\ef</code>和<code class="literal">\sf</code>命令并行。
+       </p></li><li class="listitem"><p>        添加执行查询的<code class="command">\gexec</code>命令，并将结果重新提交为新查询
+        (Corey Huinker)
+       </p></li><li class="listitem"><p>        允许<code class="literal">\pset C <em class="replaceable"><code>string</code></em></code>设置表标题，
+        以与<code class="literal">\C <em class="replaceable"><code>string</code></em></code>一致 (Bruce Momjian)
+       </p></li><li class="listitem"><p>        在<code class="literal">\pset expanded auto</code>模式中，
+        不要对只有一列的查询结果使用扩展格式 (Andreas Karlsson,
+        Robert Haas)
+       </p></li><li class="listitem"><p>        通过<code class="command">\watch</code>命令改进头输出
+        (Michael Paquier, Tom Lane)
+       </p><p>        包括<code class="command">\pset title</code>字符串（如果已设置），
+        并将标题的预制部分缩短为<code class="literal"><em class="replaceable"><code>timestamp</code></em> (every
+        <em class="replaceable"><code>N</code></em>s)</code>。此外，时间戳格式现在遵循
+        <span class="application">psql</span>的语言环境。
+       </p></li><li class="listitem"><p>        改进tab完成逻辑来考虑整个输入查询，而不仅仅是当前行 (Tom Lane)
+       </p><p>        以前，将命令分成多行会使需要查看早期行上的单词的tab完成规则失效。
+       </p></li><li class="listitem"><p>        tab完成行为的许多细微改进 (Peter
+        Eisentraut, Vik Fearing, Kevin Grittner, Kyotaro Horiguchi, Jeff
+        Janes, Andreas Karlsson, Fujii Masao, Thomas Munro, Masahiko
+        Sawada, Pavel Stehule)
+       </p></li><li class="listitem"><p>        添加<code class="literal">PROMPT</code>选项<code class="literal">%p</code>以插入连接的后端的进程ID
+        (Julien Rouhaud)
+       </p></li><li class="listitem"><p>        引入一个可以抑制消息的<code class="literal">CONTEXT</code>字段的功能，
+        无论是始终还是仅针对非错误消息 (Pavel Stehule)
+       </p><p>        仅为错误打印<code class="literal">CONTEXT</code>现在是默认行为。
+        这可以通过设置特殊变量<code class="varname">SHOW_CONTEXT</code>来更改。
+       </p></li><li class="listitem"><p>        让<code class="command">\df+</code>显示函数访问权限和并行安全属性
+        (Michael Paquier)
+       </p></li></ul></div></div><div class="sect4" id="idp65116016"><div class="titlepage"><div><div><h5 class="title">E.9.3.10.2. <a class="xref" href="pgbench.html" title="pgbench"><span class="refentrytitle"><span class="application">pgbench</span></span></a></h5></div></div></div><div class="itemizedlist"><ul class="itemizedlist" style="list-style-type: disc; "><li class="listitem"><p>        <span class="application">pgbench</span>脚本中的SQL命令现在以分号而不是换行符结尾
+        (Kyotaro Horiguchi, Tom Lane)
+       </p><p>        此更改允许脚本中的SQL命令跨多行。需要修改现有的自定义脚本，
+        以便在每行的末尾添加一个以前没有的分号。
+        （这样做不会破坏脚本使用旧版本的<span class="application">pgbench</span>。）
+       </p></li><li class="listitem"><p>        在反斜杠命令中的表达式中支持浮点运算，以及一些<a class="link" href="pgbench.html#PGBENCH-BUILTIN-FUNCTIONS" title="内建函数">内置函数</a> (Fabien Coelho)
+       </p></li><li class="listitem"><p>        用内置函数替换<code class="command">\setrandom</code> (Fabien
+        Coelho)
+       </p><p>        新的内置函数包括<a class="link" href="pgbench.html#PGBENCH-FUNCTIONS" title="表 241. pgbench 函数"><code class="function">random()</code></a>、
+        <code class="function">random_exponential()</code>和<code class="function">random_gaussian()</code>，
+        它们执行与<code class="command">\setrandom</code>相同的工作，但是更容易使用，
+        因为它们可以嵌入到更大的表达式中。由于这些添加已使
+        <code class="command">\setrandom</code>过时，请删除它。
+       </p></li><li class="listitem"><p>        允许调用内置脚本的多个副本，而不仅仅是自定义脚本 (Fabien Coelho)
+       </p><p>        这是通过使用新的<code class="option">-b</code>开关来实现的，
+        其工作原理与用于自定义脚本的<code class="option">-f</code>相似。
+       </p></li><li class="listitem"><p>        允许更改脚本的选择概率（权重）
+        (Fabien Coelho)
+       </p><p>        当指定多个脚本时，每个<span class="application">pgbench</span>事务随机选择一个来执行。
+        以前这总是以统一概率进行，但现在可以为不同的脚本指定不同的选择概率。
+       </p></li><li class="listitem"><p>        在多脚本运行中收集每个脚本的统计信息 (Fabien
+        Coelho)
+       </p><p>        此功能为现有的全局和每个命令统计打印输出添加了中间级别的详细信息。
+       </p></li><li class="listitem"><p>        添加<code class="option">--progress-timestamp</code>选项以使用Unix纪元时间戳报告进度，
+        而不是自运行开始以来的时间 (Fabien Coelho)
+       </p></li><li class="listitem"><p>        允许客户端连接数(<code class="option">-c</code>)不是线程数(<code class="option">-t</code>)的确切倍数
+        (Fabien Coelho)
+       </p></li><li class="listitem"><p>        使用<code class="option">-T</code>选项时，在指定时间结束时立即停止 (Fabien Coelho)
+       </p><p>        以前，指定低事务速率可能导致<span class="application">pgbench</span>等待时间明显长于指定时间。
+       </p></li></ul></div></div></div><div class="sect3" id="idp65136048"><div class="titlepage"><div><div><h4 class="title">E.9.3.11. 服务器应用</h4></div></div></div><div class="itemizedlist"><ul class="itemizedlist" style="list-style-type: disc; "><li class="listitem"><p>        改进<span class="application">initdb</span>的后引导阶段期间的错误报告 (Tom Lane)
+       </p><p>        以前，这里的错误导致报告整个输入文件为<span class="quote">“<span class="quote">失败的查询</span>”</span>；
+        现在只是报告当前查询。为了获得所需的行为，<span class="application">initdb</span>
+        的输入文件中的查询必须用空行分隔。
+       </p></li><li class="listitem"><p>        通过对所有后引导步骤仅使用一个独立后端会话来加快<span class="application">initdb</span>
+        (Tom Lane)
+       </p></li><li class="listitem"><p>        改进<a class="link" href="app-pgrewind.html" title="pg_rewind"><span class="application">pg_rewind</span></a>，
+        以便在目标时间线更改时可以工作 (Alexander
+        Korotkov)
+       </p><p>        这允许，例如将提升的备用服务器倒回到旧主控器的时间线的某个状态。
+       </p></li></ul></div></div><div class="sect3" id="idp65143088"><div class="titlepage"><div><div><h4 class="title">E.9.3.12. 源代码</h4></div></div></div><div class="itemizedlist"><ul class="itemizedlist" style="list-style-type: disc; "><li class="listitem"><p>        删除废弃的
+        <code class="function">heap_formtuple</code>/<code class="function">heap_modifytuple</code>/<code class="function">heap_deformtuple</code>
+        函数 (Peter Geoghegan)
+       </p></li><li class="listitem"><p>        添加宏使<code class="function">AllocSetContextCreate()</code>调用更简单和更安全 (Tom Lane)
+       </p><p>        为了支持使用新的宏<code class="symbol">ALLOCSET_DEFAULT_SIZES</code>，<code class="symbol">ALLOCSET_SMALL_SIZES</code>
+        或<code class="symbol">ALLOCSET_START_SMALL_SIZES</code>中的一个，
+        写出存储器上下文的各个大小调整参数现在已被弃用。然而，现有代码继续工作。
+       </p></li><li class="listitem"><p>        无条件地在头文件中使用<code class="literal">static inline</code>函数 (Andres Freund)
+       </p><p>        这可能导致非常旧的编译器警告和/或浪费代码空间，但标志性的改进似乎值得。
+       </p></li><li class="listitem"><p>        改进<span class="application">TAP</span>测试架构 (Michael
+        Paquier, Craig Ringer, Álvaro Herrera, Stephen Frost)
+       </p><p>        值得注意的是，现在可以使用此架构测试恢复方案。
+       </p></li><li class="listitem"><p>        使<code class="varname">trace_lwlocks</code>按名称标识各个锁
+        (Robert Haas)
+       </p></li><li class="listitem"><p>        改进<span class="application">psql</span>的tab完成代码架构
+        (Thomas Munro, Michael Paquier)
+       </p><p>        Tab完成规则现在比较容易编写，并且更加紧凑。
+       </p></li><li class="listitem"><p>        将<code class="structname">pg_shseclabel</code>系统目录命名为缓存，以便在连接认证期间可以访问
+        (Adam Brightwell)
+       </p><p>        核心代码不使用此目录进行身份验证，但扩展程序可能需要查阅。
+       </p></li><li class="listitem"><p>        重新构造<a class="link" href="indexam.html" title="第 60 章 索引访问方法接口定义">索引访问方法<acronym class="acronym">API</acronym></a>
+        以在<span class="application">C</span>级别隐藏其大部分 (Alexander Korotkov, Andrew Gierth)
+       </p><p>        这种变化使索引<acronym class="acronym">AM API</acronym>现代化，
+        看起来更像我们为外部数据包装器和表样本处理器采用的设计。
+        这简化了<span class="application">C</span>代码，使得在可安装扩展中定义索引访问方法更加实用。
+        结果是<code class="structname">pg_am</code>系统目录的大多数列都消失了。添加了新的
+        <a class="link" href="functions-info.html#FUNCTIONS-INFO-CATALOG-TABLE" title="表 9.63. 系统目录信息函数">检查函数</a>，
+        以允许SQL查询确定以前可从<code class="structname">pg_am</code>发现的索引AM属性。
+       </p></li><li class="listitem"><p>        添加<a class="link" href="catalog-pg-init-privs.html" title="51.28. pg_init_privs"><code class="structname">pg_init_privs</code></a>
+        系统目录以保留<span class="application">initdb</span>创建和扩展创建的对象的原始权限
+        (Stephen Frost)
+       </p><p>        这种架构允许<span class="application">pg_dump</span>
+        转储安装可能在附加到系统对象的权限中进行的更改。以前，
+        这样的更改将在转储和重新加载中丢失，但现在它们被保留。
+       </p></li><li class="listitem"><p>        更改扩展分配自定义<code class="literal">LWLocks</code>的方式
+        (Amit Kapila, Robert Haas)
+       </p><p>        <code class="function">RequestAddinLWLocks()</code>函数被删除，并被
+        <code class="function">RequestNamedLWLockTranche()</code>替换。
+        这允许更好地识别自定义<code class="literal">LWLocks</code>，并且不太容易出错。
+       </p></li><li class="listitem"><p>        改进隔离测试器以允许多个会话并发等待，从而允许测试死锁场景 (Robert Haas)
+       </p></li><li class="listitem"><p>        引入可扩展节点类型 (KaiGai Kohei)
+       </p><p>        此更改允许<span class="application">FDW</span>或自定义扫描提供程序以比先前更方便的格式将数据存储在计划树中。
+       </p></li><li class="listitem"><p>        通过生成和比较<code class="literal">Paths</code>，替换大量的自组织逻辑，
+        使规划器处理后扫描/连接查询步骤 (Tom Lane)
+       </p><p>        这种改变目前只提供边缘的用户可见的改进，但它使未来的工作在很多计划上的改进，
+        使用旧的代码结构是不切实际的。
+       </p></li><li class="listitem"><p>        支持部分聚合 (David Rowley, Simon Riggs)
+       </p><p>        该改变允许将聚合函数的计算分割成单独的部分，
+        例如使得并行工作进程可以在计算聚合上协作。在将来，
+        它可能允许跨本地和远程数据的聚合部分地发生在远程端。
+       </p></li><li class="listitem"><p>        添加通用命令进度报告工具 (Vinayak Pokale,
+        Rahila Syed, Amit Langote, Robert Haas)
+       </p></li><li class="listitem"><p>        分理出<span class="application">psql</span>的<span class="application">flex</span> lexer，
+        使其可以被其他客户端程序使用 (Tom Lane, Kyotaro
+        Horiguchi)
+       </p><p>        这消除了需要能够很好地解析SQL命令以识别命令边界的程序的代码重复。
+        以完全通用性做这个比人们所想到的更痛苦，到目前为止，
+        只有<span class="application">psql</span>真正得到了我们支持的客户端程序中的权利。
+       </p><p>        创建了一个新的源代码子目录<code class="filename">src/fe_utils/</code>
+        来保存在我们的客户端程序间共享的代码。
+        以前这种共享是通过在构建时通过符号链接或复制源文件来完成的，
+        这是丑陋的，并且需要重复编译。
+       </p></li><li class="listitem"><p>        引入<code class="literal">WaitEventSet</code> <acronym class="acronym">API</acronym>
+        以允许有效地等待通常不会从一个等待改变到下一个等待的事件集
+        (Andres Freund, Amit Kapila)
+       </p></li><li class="listitem"><p>        添加用于写入<acronym class="acronym">WAL</acronym>记录的通用接口
+        (Alexander Korotkov, Petr Jelínek, Markus Nullmeier)
+       </p><p>        此更改允许扩展使用标准布局写入<acronym class="acronym">WAL</acronym>记录以更改页面。
+        需要重放<acronym class="acronym">WAL</acronym>而不访问扩展的问题是通过普通重放代码来解决的。
+        这允许扩展实现，例如，索引访问方法，并为它们提供<acronym class="acronym">WAL</acronym>支持。
+       </p></li><li class="listitem"><p>        支持通用<acronym class="acronym">WAL</acronym>消息进行逻辑解码
+        (Petr Jelínek, Andres Freund)
+       </p><p>        此功能允许扩展插入数据到<acronym class="acronym">WAL</acronym>流，
+        可以由逻辑解码插件读取，但不连接到物理数据恢复。
+       </p></li><li class="listitem"><p>        允许SP-GiST操作符类在索引递减时存储任意的<span class="quote">“<span class="quote">遍历值</span>”</span>
+        (Alexander Lebedev, Teodor Sigaev)
+       </p><p>        这有点像<span class="quote">“<span class="quote">重建值</span>”</span>，但它可以是任何任意数据块，
+        不一定是与索引列相同的数据类型。
+       </p></li><li class="listitem"><p>        为<code class="function">ereport()</code>引入一个<code class="literal">LOG_SERVER_ONLY</code>消息级别
+        (David Steele)
+       </p><p>        这个级别像<code class="literal">LOG</code>一样，除了消息从不发送到客户端。它用于审计和类似应用。
+       </p></li><li class="listitem"><p>        提供一个<code class="filename">Makefile</code>目标来构建所有生成的头 (Michael Paquier, Tom Lane)
+       </p><p>        现在可以调用<code class="literal">submake-generated-headers</code>
+        来确保生成的后端头文件是最新的。这在可能构建为<span class="quote">“<span class="quote">独立</span>”</span>
+        的子目录中很有用。
+       </p></li><li class="listitem"><p>        支持OpenSSL 1.1.0 (Andreas Karlsson, Heikki Linnakangas)
+       </p></li></ul></div></div><div class="sect3" id="idp65195648"><div class="titlepage"><div><div><h4 class="title">E.9.3.13. 附加模块</h4></div></div></div><div class="itemizedlist"><ul class="itemizedlist" style="list-style-type: disc; "><li class="listitem"><p>        添加配置参数<code class="literal">auto_explain.sample_rate</code>以允许
+        <a class="link" href="auto-explain.html" title="F.4. auto_explain"><code class="filename">contrib/auto_explain</code></a>
+        仅捕获所有查询的可配置部分 (Craig
+        Ringer, Julien Rouhaud)
+       </p><p>        这允许减少大量查询流量的开销，同时仍然获得平均有用的信息。
+       </p></li><li class="listitem"><p>        添加基于Bloom过滤实现索引访问方法的
+        <a class="link" href="bloom.html" title="F.5. bloom"><code class="filename">contrib/bloom</code></a>模块 (Teodor
+        Sigaev, Alexander Korotkov)
+       </p><p>        这主要是非核心索引访问方法的概念验证，但它可以在其自身的查询搜索许多列时有用。
+       </p></li><li class="listitem"><p>        在<a class="link" href="cube.html" title="F.10. cube"><code class="filename">contrib/cube</code></a>中，
+        为立方体引入距离运算符，并支持在多维数据集列的GiST索引中进行kNN样式搜索
+        (Stas Kelvich)
+       </p></li><li class="listitem"><p>        让<code class="filename">contrib/hstore</code>的<a class="link" href="hstore.html#HSTORE-FUNC-TABLE" title="表 F.9. hstore 函数"><code class="function">hstore_to_jsonb_loose()</code></a>
+        和<code class="function">hstore_to_json_loose()</code>函数同意什么是数字 (Tom Lane)
+       </p><p>        以前，<code class="function">hstore_to_jsonb_loose()</code>会将数字字符串转换为<acronym class="acronym">JSON</acronym>数字，
+        而不是字符串，即使它们与数字的<acronym class="acronym">JSON</acronym>语法规范不完全匹配。
+        这与<code class="function">hstore_to_json_loose()</code>不一致，
+        因此请严格测试以匹配<acronym class="acronym">JSON</acronym>语法。
+       </p></li><li class="listitem"><p>        为<a class="link" href="intarray.html" title="F.19. intarray"><code class="filename">contrib/intarray</code></a>
+        运算符添加选择性估计函数，以改进使用这些运算符的查询计划 (Yury Zhuravlev,
+        Alexander Korotkov)
+       </p></li><li class="listitem"><p>        让<a class="link" href="pageinspect.html" title="F.23. pageinspect"><code class="filename">contrib/pageinspect</code></a>的
+        <code class="function">heap_page_items()</code>函数显示每个元组中的原始数据，
+        并添加新的函数<code class="function">tuple_data_split()</code>和
+        <code class="function">heap_page_item_attrs()</code>以检查单个元组字段 (Nikolay Shaplov)
+       </p></li><li class="listitem"><p>        向<a class="link" href="pgcrypto.html" title="F.26. pgcrypto"><code class="filename">contrib/pgcrypto</code></a>的
+        <code class="function">pgp_sym_encrypt()</code>函数中添加一个可选的S2K迭代计数参数 (Jeff Janes)
+       </p></li><li class="listitem"><p>        添加对<span class="quote">“<span class="quote">词相似性</span>”</span>的支持到
+        <a class="link" href="pgtrgm.html" title="F.32. pg_trgm"><code class="filename">contrib/pg_trgm</code></a>
+        (Alexander Korotkov, Artur Zakirov)
+       </p><p>        这些函数和运算符测量一个字符串和另一个字符串的最相似的单个字之间的相似性。
+       </p></li><li class="listitem"><p>        为<code class="filename">contrib/pg_trgm</code>的相似性阈值添加配置参数
+        <code class="varname">pg_trgm.similarity_threshold</code> (Artur Zakirov)
+       </p><p>        该阈值始终可配置，但以前由专用函数<code class="function">set_limit()</code>和
+        <code class="function">show_limit()</code>控制。那些现在已经废弃了。
+       </p></li><li class="listitem"><p>        改进<code class="filename">contrib/pg_trgm</code>的GIN运算符类，以加快索引搜索，
+        其中常用和罕见键都有出现 (Jeff Janes)
+       </p></li><li class="listitem"><p>        提高<code class="filename">contrib/pg_trgm</code> GIN索引中的相似性搜索的性能 (Christophe Fornaroli)
+       </p></li><li class="listitem"><p>        添加<a class="link" href="pgvisibility.html" title="F.33. pg_visibility"><code class="filename">contrib/pg_visibility</code></a>
+        模块以允许检查表可见性映射 (Robert Haas)
+       </p></li><li class="listitem"><p>        将<a class="link" href="sslinfo.html" title="F.38. sslinfo"><code class="function">ssl_extension_info()</code></a>
+        函数添加到<code class="filename">contrib/sslinfo</code>，
+        以打印关于用于当前连接的<code class="literal">X509</code>证书中存在的<acronym class="acronym">SSL</acronym>
+        扩展的信息 (Dmitry Voronin)
+       </p></li></ul></div><div class="sect4" id="idp65232736"><div class="titlepage"><div><div><h5 class="title">E.9.3.13.1. <a class="link" href="postgres-fdw.html" title="F.34. postgres_fdw"><code class="filename">postgres_fdw</code></a></h5></div></div></div><div class="itemizedlist"><ul class="itemizedlist" style="list-style-type: disc; "><li class="listitem"><p>        如果扩展在外部服务器的选项中列入白名单，
+        则允许发送扩展提供的操作符和函数以供远程执行 (Paul Ramsey)
+       </p><p>        当远程数据库中的兼容版本中存在扩展时，用户可以启用此功能。
+        它允许更有效地执行涉及扩展运算符的查询。
+       </p></li><li class="listitem"><p>        考虑在远程服务器上执行排序 (Ashutosh Bapat)
+       </p></li><li class="listitem"><p>        考虑在远程服务器上执行连接 (Shigeru Hanada,
+        Ashutosh Bapat)
+       </p></li><li class="listitem"><p>        如果可行，请在远程服务器上完全执行<code class="command">UPDATE</code>
+        或<code class="command">DELETE</code> (Etsuro Fujita)
+       </p><p>        以前，远程更新涉及发送<code class="command">SELECT FOR UPDATE</code>命令，
+        然后一个一个地更新或删除所选行。尽管如果操作需要任何本地处理仍然需要这样，
+        但是如果查询的所有元素可以安全地发送到远程服务器，则现在可以远程完成。
+       </p></li><li class="listitem"><p>        允许将抓取大小设置为服务器或表选项
+        (Corey Huinker)
+       </p><p>        以前，<code class="filename">postgres_fdw</code>总是从远程查询一次取出100行；现在行为是可配置的。
+       </p></li><li class="listitem"><p>        对所有映射到同一远程用户的本地用户ID使用单个外部服务器连接 (Ashutosh Bapat)
+       </p></li><li class="listitem"><p>        将查询取消请求发送到远程服务器
+        (Michael Paquier, Etsuro Fujita)
+       </p><p>        以前，本地查询取消请求不会导致已发送的远程查询提前终止。
+       </p></li></ul></div></div></div></div></div><div class="navfooter"><hr /><table width="100%" summary="Navigation footer"><tr><td width="40%" align="left"><a accesskey="p" href="release-9-6-1.html">上一页</a> </td><td width="20%" align="center"><a accesskey="u" href="release.html">上一级</a></td><td width="40%" align="right"> <a accesskey="n" href="release-9-5-10.html">下一页</a></td></tr><tr><td width="40%" align="left" valign="top">E.8. 版本 9.6.1 </td><td width="20%" align="center"><a accesskey="h" href="index.html">起始页</a></td><td width="40%" align="right" valign="top"> E.10. 版本  9.5.10</td></tr></table></div></body></html>

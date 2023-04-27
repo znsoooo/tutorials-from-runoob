@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><title>E.341. 版本 1.01</title><link rel="stylesheet" type="text/css" href="stylesheet.css" /><link rev="made" href="pgsql-docs@postgresql.org" /><meta name="generator" content="DocBook XSL Stylesheets V1.79.1" /><link rel="prev" href="release-1-02.html" title="E.340. 版本 1.02" /><link rel="next" href="release-1-0.html" title="E.342. 版本 1.0" /></head><body><div xmlns="http://www.w3.org/TR/xhtml1/transitional" class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="5" align="center">E.341. 版本 1.01</th></tr><tr><td width="10%" align="left"><a accesskey="p" href="release-1-02.html" title="E.340. 版本 1.02">上一页</a> </td><td width="10%" align="left"><a accesskey="u" href="release.html" title="附录 E. 版本说明">上一级</a></td><th width="60%" align="center">附录 E. 版本说明</th><td width="10%" align="right"><a accesskey="h" href="index.html" title="PostgreSQL 10.1 手册">起始页</a></td><td width="10%" align="right"> <a accesskey="n" href="release-1-0.html" title="E.342. 版本 1.0">下一页</a></td></tr></table><hr></hr></div><div class="sect1" id="RELEASE-1-01"><div class="titlepage"><div><div><h2 class="title" style="clear: both">E.341. 版本 1.01</h2></div></div></div><div class="toc"><dl class="toc"><dt><span class="sect2"><a href="release-1-01.html#idp84682832">E.341.1. 从版本 1.0 迁移到版本 1.01</a></span></dt><dt><span class="sect2"><a href="release-1-01.html#idp84709472">E.341.2. 修改列表</a></span></dt></dl></div><p><strong>发布日期：. </strong>1996-02-23</p><div class="sect2" id="idp84682832"><div class="titlepage"><div><div><h3 class="title">E.341.1. 从版本 1.0 迁移到版本 1.01</h3></div></div></div><p>下面信息是给那些希望将数据库从<span class="productname">Postgres95</span> 1.0 向 
+<span class="productname">Postgres95</span> 1.01 迁移的用户的一些有用信息。</p><p>如果你是刚刚安装完成 <span class="productname">Postgres95</span> 1.01 并且没有需要迁移的旧数据库，
+那么你不需要阅读下面部分。</p><p>如果要把 <span class="productname">Postgres95</span> 版本 1.0 的数据库向 <span class="productname">Postgres95</span> 
+版本 1.01 迁移，需要进行下面的步骤：</p><div class="procedure"><ol class="procedure" type="1"><li class="step"><p>把文件 <code class="filename">src/Makefile.global</code> 里的变量 <code class="symbol">NAMEDATALEN</code> 定义为16，
+<code class="symbol">OIDNAMELEN</code> 定义为 20。</p></li><li class="step"><p>决定自己是否需要以主机为基础的认证（HBA）。</p><ol type="a" class="substeps"><li class="step"><p>如果你需要这么做，你必须在顶级数据目录（通常是你的环境变量 <code class="envar">$PGDATA</code> 的值）
+里创建一个名为 <code class="literal">pg_hba</code> 的文件。
+我们在例子语法里用 <code class="filename">src/libpq/pg_hba</code> 代表。</p></li><li class="step"><p>如果你不需要这样以主机为基础的认证，你可以把 <code class="filename">src/Makefile.global</code> 里的下面这行注释掉
+</p><pre class="programlisting">HBA = 1</pre><p>要注意缺省时以主机为基础的认证（HBA）是打开的，
+而且如果你不做上面所说的步骤A或B中的其中一步，其他主机上（out-of-the-box）
+的1.01版本将不允许你与1.0的数据库联接。</p></li></ol></li><li class="step"><p>编译和安装 1.01，但是不要执行 <code class="command">initdb</code> 步骤。</p></li><li class="step"><p>在进行下一步之前，终止 1.0 的 postmaster 进程，然后备份你现有的 <code class="envar">$PGDATA</code> 目录。</p></li><li class="step"><p>把你的 <code class="envar">PGDATA</code> 环境变量设置为你的 1.0 的库（的位置），
+但是把路径设置成 1.01 的可执行文件路径。</p></li><li class="step"><p>把文件 <code class="filename"><code class="envar">$PGDATA</code>/PG_VERSION</code> 从 5.0 修改成 5.1</p></li><li class="step"><p>运行新的 1.01 的 postmaster。</p></li><li class="step"><p>把 1.01 的新的内建的函数和操作符追加到 1.0 的数据库中去。
+这一步是通过在你的 1.0 的库上运行 1.01 的服务器，并且运行附加的查询并保存到文件 1.0_to_1.01.sql 中。
+如果你的 1.0 数据库名为<code class="literal">testdb</code>，那么我们可以通过<code class="command">psql</code>
+很容易完整升级工作：
+
+</p><pre class="programlisting">% psql testdb -f 1.0_to_1.01.sql</pre><p>
+然后执行下面命令（可以从下面剪切和拷贝）：
+
+</p><pre class="programlisting">-- add builtin functions that are new to 1.01
+
+create function int4eqoid (int4, oid) returns bool as 'foo'
+language 'internal';
+create function oideqint4 (oid, int4) returns bool as 'foo'
+language 'internal';
+create function char2icregexeq (char2, text) returns bool as 'foo'
+language 'internal';
+create function char2icregexne (char2, text) returns bool as 'foo'
+language 'internal';
+create function char4icregexeq (char4, text) returns bool as 'foo'
+language 'internal';
+create function char4icregexne (char4, text) returns bool as 'foo'
+language 'internal';
+create function char8icregexeq (char8, text) returns bool as 'foo'
+language 'internal';
+create function char8icregexne (char8, text) returns bool as 'foo'
+language 'internal';
+create function char16icregexeq (char16, text) returns bool as 'foo'
+language 'internal';
+create function char16icregexne (char16, text) returns bool as 'foo'
+language 'internal';
+create function texticregexeq (text, text) returns bool as 'foo'
+language 'internal';
+create function texticregexne (text, text) returns bool as 'foo'
+language 'internal';
+
+-- add builtin functions that are new to 1.01
+
+create operator = (leftarg = int4, rightarg = oid, procedure = int4eqoid);
+create operator = (leftarg = oid, rightarg = int4, procedure = oideqint4);
+create operator ~* (leftarg = char2, rightarg = text, procedure = char2icregexeq);
+create operator !~* (leftarg = char2, rightarg = text, procedure = char2icregexne);
+create operator ~* (leftarg = char4, rightarg = text, procedure = char4icregexeq);
+create operator !~* (leftarg = char4, rightarg = text, procedure = char4icregexne);
+create operator ~* (leftarg = char8, rightarg = text, procedure = char8icregexeq);
+create operator !~* (leftarg = char8, rightarg = text, procedure = char8icregexne);
+create operator ~* (leftarg = char16, rightarg = text, procedure = char16icregexeq);
+create operator !~* (leftarg = char16, rightarg = text, procedure = char16icregexne);
+create operator ~* (leftarg = text, rightarg = text, procedure = texticregexeq);
+create operator !~* (leftarg = text, rightarg = text, procedure = texticregexne);</pre></li></ol></div></div><div class="sect2" id="idp84709472"><div class="titlepage"><div><div><h3 class="title">E.341.2. 修改列表</h3></div></div></div><pre class="programlisting">不兼容性：
+ * 1.01 向后兼容 1.0 数据库，提供了用户指导步骤，在 MIGRATION_from_1.0_to_1.01 文件中概述。
+   如果没有采取这些步骤，1.01 是不与 1.0 数据库兼容的。
+
+增强：
+ * 添加了 PQdisplayTuples() 到 libpq 并且为了使用它更改了监控器和 psql
+ * 添加了 NeXT 端口 (需要 SysVIPC 实现)
+ * 添加了 CAST .. AS ... 语法
+ * 添加了 ASC 和 DESC 关键字
+ * 添加了 'internal' 作为 CREATE FUNCTION 内部函数的可能语言，CREATE FUNCTION 内部函数是 C 函数，
+   已经静态的连接到了 Postgres 后端。
+ * 为系统标识符添加了一个新的类型 "name" （表名，属性名等）。这个替换老的 char16 类型。
+   通过在 src/Makefile.global 中的 NAMEDATALEN #define 设置。
+ * 一个可读的参考手册描述查询语言。
+ * 添加了基于主机的访问控制。一个配置文件($PGDATA/pg_hba)用来保存配置数据。
+   如果基于主机的访问控制不再需要了，注释掉 src/Makefile.global 中的 HBA=1。
+ * 更改正则表达式处理为统一的使用 Henry Spencer 的正则表达式代码，不管是什么平台。
+   正则表达式代码包含在发布中。
+ * 为大小写不敏感的正则表达式添加了函数和操作符。操作符是 ~* 和 !~*。
+ * pg_dump 为了更好的性能使用 COPY 而不是 SELECT 循环
+
+Bug 修复：
+ * 修复了一个优化器 bug ，当函数调用在 WHERE 子句中用于比较时会引起内核转储
+ * 更改所有 getuid 的使用为 geteuid ，这样就使用了有效的 uid 
+ * psql 在使用 -C 发生错误时返回非零的状态
+ * 应用了公共补丁 1-14</pre></div></div><div class="navfooter"><hr /><table width="100%" summary="Navigation footer"><tr><td width="40%" align="left"><a accesskey="p" href="release-1-02.html">上一页</a> </td><td width="20%" align="center"><a accesskey="u" href="release.html">上一级</a></td><td width="40%" align="right"> <a accesskey="n" href="release-1-0.html">下一页</a></td></tr><tr><td width="40%" align="left" valign="top">E.340. 版本 1.02 </td><td width="20%" align="center"><a accesskey="h" href="index.html">起始页</a></td><td width="40%" align="right" valign="top"> E.342. 版本 1.0</td></tr></table></div></body></html>

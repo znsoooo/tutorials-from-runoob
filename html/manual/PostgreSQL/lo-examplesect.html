@@ -1,0 +1,263 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><title>34.5. 例子程序</title><link rel="stylesheet" type="text/css" href="stylesheet.css" /><link rev="made" href="pgsql-docs@postgresql.org" /><meta name="generator" content="DocBook XSL Stylesheets V1.79.1" /><link rel="prev" href="lo-funcs.html" title="34.4. 服务器端函数" /><link rel="next" href="ecpg.html" title="第 35 章 ECPG - C 中的嵌入式 SQL" /></head><body><div xmlns="http://www.w3.org/TR/xhtml1/transitional" class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="5" align="center">34.5. 例子程序</th></tr><tr><td width="10%" align="left"><a accesskey="p" href="lo-funcs.html" title="34.4. 服务器端函数">上一页</a> </td><td width="10%" align="left"><a accesskey="u" href="largeobjects.html" title="第 34 章 大对象">上一级</a></td><th width="60%" align="center">第 34 章 大对象</th><td width="10%" align="right"><a accesskey="h" href="index.html" title="PostgreSQL 10.1 手册">起始页</a></td><td width="10%" align="right"> <a accesskey="n" href="ecpg.html" title="第 35 章 ECPG - C 中的嵌入式 SQL">下一页</a></td></tr></table><hr></hr></div><div class="sect1" id="LO-EXAMPLESECT"><div class="titlepage"><div><div><h2 class="title" style="clear: both">34.5. 例子程序</h2></div></div></div><p>     <a class="xref" href="lo-examplesect.html#LO-EXAMPLE" title="例 34.1. 用libpq操作大对象的例子程序">例 34.1</a>是一个展示<span class="application">libpq</span>中大对象接口如何使用的例子程序。部分程序被注释但仍保留在代码中，用户可以利用之。该程序可以在源代码的<code class="filename">src/test/examples/testlo.c</code>中找到。</p><div class="example" id="LO-EXAMPLE"><p class="title"><strong>例 34.1. 用<span class="application">libpq</span>操作大对象的例子程序</strong></p><div class="example-contents"><pre class="programlisting">/*-------------------------------------------------------------------------
+ *
+ * testlo.c
+ *    测试通过 libpq 使用大对象
+ *
+ * Portions Copyright (c) 1996-2016, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1994, Regents of the University of California
+ *
+ *
+ * IDENTIFICATION
+ *    src/test/examples/testlo.c
+ *
+ *-------------------------------------------------------------------------
+ */
+#include &lt;stdio.h&gt;
+#include &lt;stdlib.h&gt;
+
+#include &lt;sys/types.h&gt;
+#include &lt;sys/stat.h&gt;
+#include &lt;fcntl.h&gt;
+#include &lt;unistd.h&gt;
+
+#include "libpq-fe.h"
+#include "libpq/libpq-fs.h"
+
+#define BUFSIZE          1024
+
+/*
+ * importFile
+ *    把文件 "in_filename" 作为一个大对象 "lobjOid" 载入到数据库
+ *
+ */
+static Oid
+importFile(PGconn *conn, char *filename)
+{
+    Oid         lobjId;
+    int         lobj_fd;
+    char        buf[BUFSIZE];
+    int         nbytes,
+                tmp;
+    int         fd;
+
+    /*
+     * 打开要读入的文件
+     */
+    fd = open(filename, O_RDONLY, 0666);
+    if (fd &lt; 0)
+    {                           /* error */
+        fprintf(stderr, "cannot open unix file\"%s\"\n", filename);
+    }
+
+    /*
+     * 创建大对象
+     */
+    lobjId = lo_creat(conn, INV_READ | INV_WRITE);
+    if (lobjId == 0)
+        fprintf(stderr, "cannot create large object");
+
+    lobj_fd = lo_open(conn, lobjId, INV_WRITE);
+
+    /*
+     * 从该 Unix 文件读取并写入到大对象
+     */
+    while ((nbytes = read(fd, buf, BUFSIZE)) &gt; 0)
+    {
+        tmp = lo_write(conn, lobj_fd, buf, nbytes);
+        if (tmp &lt; nbytes)
+            fprintf(stderr, "error while reading \"%s\"", filename);
+    }
+
+    close(fd);
+    lo_close(conn, lobj_fd);
+
+    return lobjId;
+}
+
+static void
+pickout(PGconn *conn, Oid lobjId, int start, int len)
+{
+    int         lobj_fd;
+    char       *buf;
+    int         nbytes;
+    int         nread;
+
+    lobj_fd = lo_open(conn, lobjId, INV_READ);
+    if (lobj_fd &lt; 0)
+        fprintf(stderr, "cannot open large object %u", lobjId);
+
+    lo_lseek(conn, lobj_fd, start, SEEK_SET);
+    buf = malloc(len + 1);
+
+    nread = 0;
+    while (len - nread &gt; 0)
+    {
+        nbytes = lo_read(conn, lobj_fd, buf, len - nread);
+        buf[nbytes] = '\0';
+        fprintf(stderr, "&gt;&gt;&gt; %s", buf);
+        nread += nbytes;
+        if (nbytes &lt;= 0)
+            break;              /* no more data? */
+    }
+    free(buf);
+    fprintf(stderr, "\n");
+    lo_close(conn, lobj_fd);
+}
+
+static void
+overwrite(PGconn *conn, Oid lobjId, int start, int len)
+{
+    int         lobj_fd;
+    char       *buf;
+    int         nbytes;
+    int         nwritten;
+    int         i;
+
+    lobj_fd = lo_open(conn, lobjId, INV_WRITE);
+    if (lobj_fd &lt; 0)
+        fprintf(stderr, "cannot open large object %u", lobjId);
+
+    lo_lseek(conn, lobj_fd, start, SEEK_SET);
+    buf = malloc(len + 1);
+
+    for (i = 0; i &lt; len; i++)
+        buf[i] = 'X';
+    buf[i] = '\0';
+
+    nwritten = 0;
+    while (len - nwritten &gt; 0)
+    {
+        nbytes = lo_write(conn, lobj_fd, buf + nwritten, len - nwritten);
+        nwritten += nbytes;
+        if (nbytes &lt;= 0)
+        {
+            fprintf(stderr, "\nWRITE FAILED!\n");
+            break;
+        }
+    }
+    free(buf);
+    fprintf(stderr, "\n");
+    lo_close(conn, lobj_fd);
+}
+
+/*
+ * exportFile -
+ *    把大对象 "lobjOid" 导出成文件 "out_filename"
+ *
+ */
+static void
+exportFile(PGconn *conn, Oid lobjId, char *filename)
+{
+    int         lobj_fd;
+    char        buf[BUFSIZE];
+    int         nbytes,
+                tmp;
+    int         fd;
+
+    /*
+     * 打开大对象
+     */
+    lobj_fd = lo_open(conn, lobjId, INV_READ);
+    if (lobj_fd &lt; 0)
+        fprintf(stderr, "cannot open large object %u", lobjId);
+
+    /*
+     * 打开要写入的文件
+     */
+    fd = open(filename, O_CREAT | O_WRONLY | O_TRUNC, 0666);
+    if (fd &lt; 0)
+    {                           /* 错误 */
+        fprintf(stderr, "cannot open unix file\"%s\"",
+                filename);
+    }
+
+    /*
+     * 从大对象读入并写出到 Unix 文件
+     */
+    while ((nbytes = lo_read(conn, lobj_fd, buf, BUFSIZE)) &gt; 0)
+    {
+        tmp = write(fd, buf, nbytes);
+        if (tmp &lt; nbytes)
+        {
+            fprintf(stderr, "error while writing \"%s\"",
+                    filename);
+        }
+    }
+
+    lo_close(conn, lobj_fd);
+    close(fd);
+
+    return;
+}
+
+static void
+exit_nicely(PGconn *conn)
+{
+    PQfinish(conn);
+    exit(1);
+}
+
+int
+main(int argc, char **argv)
+{
+    char       *in_filename,
+               *out_filename;
+    char       *database;
+    Oid         lobjOid;
+    PGconn     *conn;
+    PGresult   *res;
+
+    if (argc != 4)
+    {
+        fprintf(stderr, "Usage: %s database_name in_filename out_filename\n",
+                argv[0]);
+        exit(1);
+    }
+
+    database = argv[1];
+    in_filename = argv[2];
+    out_filename = argv[3];
+
+    /*
+     * 设置连接
+     */
+    conn = PQsetdb(NULL, NULL, NULL, NULL, database);
+
+    /* 检查看看后端连接是否成功建立 */
+    if (PQstatus(conn) != CONNECTION_OK)
+    {
+        fprintf(stderr, "Connection to database failed: %s",
+                PQerrorMessage(conn));
+        exit_nicely(conn);
+    }
+
+    res = PQexec(conn, "begin");
+    PQclear(res);
+    printf("importing file \"%s\" ...\n", in_filename);
+/*  lobjOid = importFile(conn, in_filename); */
+    lobjOid = lo_import(conn, in_filename);
+    if (lobjOid == 0)
+        fprintf(stderr, "%s\n", PQerrorMessage(conn));
+    else
+    {
+        printf("\tas large object %u.\n", lobjOid);
+
+        printf("picking out bytes 1000-2000 of the large object\n");
+        pickout(conn, lobjOid, 1000, 1000);
+
+        printf("overwriting bytes 1000-2000 of the large object with X's\n");
+        overwrite(conn, lobjOid, 1000, 1000);
+
+        printf("exporting large object to file \"%s\" ...\n", out_filename);
+/*      exportFile(conn, lobjOid, out_filename); */
+        if (lo_export(conn, lobjOid, out_filename) &lt; 0)
+            fprintf(stderr, "%s\n", PQerrorMessage(conn));
+    }
+
+    res = PQexec(conn, "end");
+    PQclear(res);
+    PQfinish(conn);
+    return 0;
+}</pre></div></div><br class="example-break" /></div><div class="navfooter"><hr /><table width="100%" summary="Navigation footer"><tr><td width="40%" align="left"><a accesskey="p" href="lo-funcs.html">上一页</a> </td><td width="20%" align="center"><a accesskey="u" href="largeobjects.html">上一级</a></td><td width="40%" align="right"> <a accesskey="n" href="ecpg.html">下一页</a></td></tr><tr><td width="40%" align="left" valign="top">34.4. 服务器端函数 </td><td width="20%" align="center"><a accesskey="h" href="index.html">起始页</a></td><td width="40%" align="right" valign="top"> 第 35 章 <span class="application">ECPG</span> - C 中的嵌入式 <acronym class="acronym">SQL</acronym></td></tr></table></div></body></html>

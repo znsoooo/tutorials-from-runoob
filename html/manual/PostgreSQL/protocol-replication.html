@@ -1,0 +1,169 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><title>52.4. 流复制协议</title><link rel="stylesheet" type="text/css" href="stylesheet.css" /><link rev="made" href="pgsql-docs@postgresql.org" /><meta name="generator" content="DocBook XSL Stylesheets V1.79.1" /><link rel="prev" href="sasl-authentication.html" title="52.3. SASL 认证" /><link rel="next" href="protocol-logical-replication.html" title="52.5. 逻辑流式复制协议" /></head><body><div xmlns="http://www.w3.org/TR/xhtml1/transitional" class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="5" align="center">52.4. 流复制协议</th></tr><tr><td width="10%" align="left"><a accesskey="p" href="sasl-authentication.html" title="52.3. SASL 认证">上一页</a> </td><td width="10%" align="left"><a accesskey="u" href="protocol.html" title="第 52 章 前端/后端协议">上一级</a></td><th width="60%" align="center">第 52 章 前端/后端协议</th><td width="10%" align="right"><a accesskey="h" href="index.html" title="PostgreSQL 10.1 手册">起始页</a></td><td width="10%" align="right"> <a accesskey="n" href="protocol-logical-replication.html" title="52.5. 逻辑流式复制协议">下一页</a></td></tr></table><hr></hr></div><div class="sect1" id="PROTOCOL-REPLICATION"><div class="titlepage"><div><div><h2 class="title" style="clear: both">52.4. 流复制协议</h2></div></div></div><p>要启动流复制，前端在启动消息中发送<code class="literal">replication</code>参数。一个布尔值<code class="literal">true</code>会告诉后端进入到walsender模式，在其中一小组复制命令而不是SQL命令可以被发出。只有简单查询协议可以在walsender模式中使用。在启用<a class="xref" href="runtime-config-logging.html#GUC-LOG-REPLICATION-COMMANDS">log_replication_commands</a>时，服务器日志中会记录复制命令。传递<code class="literal">database</code>作为值指示 walsender 连接到<code class="literal">dbname</code>参数指定的数据库，这将允许该连接被用于来自哪个数据库的逻辑复制。</p><p> 出于测试复制命令的目的，你可以通过<span class="application">psql</span>或者任何使用<code class="literal">libpq</code>的工具使用包含<code class="literal">replication</code>选项的连接字符串建立一个复制连接，例如：
+</p><pre class="programlisting">psql "dbname=postgres replication=database" -c "IDENTIFY_SYSTEM;"</pre><p>
+ 不过更常用的是：<a class="xref" href="app-pgreceivewal.html" title="pg_receivewal"><span class="refentrytitle">pg_receivewal</span></a>（对于物理复制）或者<a class="xref" href="app-pgrecvlogical.html" title="pg_recvlogical"><span class="refentrytitle"><span class="application">pg_recvlogical</span></span></a>（对于逻辑复制）。</p><p>
+在walsender模式中可以接受的命令有：
+
+</p><div class="variablelist"><dl class="variablelist"><dt><span class="term"><code class="literal">IDENTIFY_SYSTEM</code>
+     <a id="idp57636816" class="indexterm"></a>
+    </span></dt><dd><p>      请求服务器标识它自己。服务器以一个行构成的结果集作为答复，其中包含四个域：
+     </p><p>      </p><div class="variablelist"><dl class="variablelist"><dt><span class="term">       <code class="literal">systemid</code> (<code class="type">text</code>)
+      </span></dt><dd><p>       标识该集簇的唯一的系统标识符。这可以被用来检查用于初始化后备机的基础备份是否来自于同一个集簇。
+      </p></dd><dt><span class="term">       <code class="literal">timeline</code> (<code class="type">int4</code>)
+      </span></dt><dd><p>       当前的时间线 ID。也对于检查后备机是否与主控机一致有用。
+      </p></dd><dt><span class="term">       <code class="literal">xlogpos</code> (<code class="type">text</code>)
+      </span></dt><dd><p>       当前的 WAL 刷写位置。用于得到一个在预写日志中的已知位置作为流的开始位置。
+      </p></dd><dt><span class="term">       <code class="literal">dbname</code> (<code class="type">text</code>)
+      </span></dt><dd><p>       要连接到的数据库或者空。
+      </p></dd></dl></div><p>
+     </p></dd><dt><span class="term"><code class="literal">SHOW</code> <em class="replaceable"><code>name</code></em>
+     <a id="idp57648928" class="indexterm"></a>
+    </span></dt><dd><p>      请求服务器发送运行时参数的当前设置。这与SQL命令<a class="xref" href="sql-show.html" title="SHOW"><span class="refentrytitle">SHOW</span></a>类似。
+     </p><div class="variablelist"><dl class="variablelist"><dt><span class="term"><em class="replaceable"><code>name</code></em></span></dt><dd><p>          运行时参数的名称。在<a class="xref" href="runtime-config.html" title="第 19 章 服务器配置">第 19 章</a>中记录了可用的参数。
+         </p></dd></dl></div></dd><dt><span class="term"><code class="literal">TIMELINE_HISTORY</code> <em class="replaceable"><code>tli</code></em>
+     <a id="idp57654736" class="indexterm"></a>
+    </span></dt><dd><p>      请求服务器将时间线<em class="replaceable"><code>tli</code></em>的历史文件发送过来。服务器将以一行组成的结果集作为答复，其中包含两个域：
+     </p><p>      </p><div class="variablelist"><dl class="variablelist"><dt><span class="term">       <code class="literal">filename</code> (<code class="type">text</code>)
+      </span></dt><dd><p>       时间线历史文件的文件名，例如<code class="filename">00000002.history</code>。
+      </p></dd><dt><span class="term">       <code class="literal">content</code> (<code class="type">bytea</code>)
+      </span></dt><dd><p>       时间线历史文件的内容。
+      </p></dd></dl></div><p>
+     </p></dd><dt id="PROTOCOL-REPLICATION-CREATE-SLOT"><span class="term"><code class="literal">CREATE_REPLICATION_SLOT</code> <em class="replaceable"><code>slot_name</code></em> [ <code class="literal">TEMPORARY</code> ] { <code class="literal">PHYSICAL</code> [ <code class="literal">RESERVE_WAL</code> ] | <code class="literal">LOGICAL</code> <em class="replaceable"><code>output_plugin</code></em> [ <code class="literal">EXPORT_SNAPSHOT</code> | <code class="literal">NOEXPORT_SNAPSHOT</code> | <code class="literal">USE_SNAPSHOT</code> ] }
+     <a id="idp57670048" class="indexterm"></a>
+    </span></dt><dd><p>      创建一个物理的或者逻辑的复制槽。更多关于复制槽的内容请见
+      <a class="xref" href="warm-standby.html#STREAMING-REPLICATION-SLOTS" title="26.2.6. 复制槽">第 26.2.6 节</a>。
+     </p><div class="variablelist"><dl class="variablelist"><dt><span class="term"><em class="replaceable"><code>slot_name</code></em></span></dt><dd><p>          要创建的槽的名称。必须是一个合法的复制槽名称（见
+          <a class="xref" href="warm-standby.html#STREAMING-REPLICATION-SLOTS-MANIPULATION" title="26.2.6.1. 查询和操纵复制槽">第 26.2.6.1 节</a>）。
+         </p></dd><dt><span class="term"><em class="replaceable"><code>output_plugin</code></em></span></dt><dd><p>          被用于逻辑解码的输出插件的名称（见
+          <a class="xref" href="logicaldecoding-output-plugin.html" title="48.6. 逻辑解码输出插件">第 48.6 节</a>）。
+         </p></dd><dt><span class="term"><code class="literal">TEMPORARY</code></span></dt><dd><p>         声明该复制槽是临时的。出错或会话结束时，不保存临时槽并自动将其删除。
+        </p></dd><dt><span class="term"><code class="literal">RESERVE_WAL</code></span></dt><dd><p>         指定这个物理复制槽立即保留<acronym class="acronym">WAL</acronym>。否则，只有来自流复制客户端的连接上才会保留<acronym class="acronym">WAL</acronym>。
+        </p></dd><dt><span class="term"><code class="literal">EXPORT_SNAPSHOT</code><br /></span><span class="term"><code class="literal">NOEXPORT_SNAPSHOT</code><br /></span><span class="term"><code class="literal">USE_SNAPSHOT</code></span></dt><dd><p>         决定如何处理逻辑插槽初始化期间创建的快照。默认情况下，
+		 <code class="literal">EXPORT_SNAPSHOT</code>将导出快照以用于其他会话。该选项不能在事务中使用。
+		 <code class="literal">USE_SNAPSHOT</code>将使用执行命令的当前事务的快照。
+		 该选项必须在事务中使用，并且<code class="literal">CREATE_REPLICATION_SLOT</code>
+		 必须是在该事务中运行的第一个命令。最后，<code class="literal">NOEXPORT_SNAPSHOT</code>
+		 将正常使用快照进行逻辑解码，但不会对其执行任何操作。
+        </p></dd></dl></div><p>      为了响应此命令，服务器将发送包含以下字段的单行结果集：
+
+      </p><div class="variablelist"><dl class="variablelist"><dt><span class="term"><code class="literal">slot_name</code> (<code class="type">text</code>)</span></dt><dd><p>          新创建的复制槽的名称。
+         </p></dd><dt><span class="term"><code class="literal">consistent_point</code> (<code class="type">text</code>)</span></dt><dd><p>          插槽一致的WAL位置。这是从此复制插槽开始流式传输的最早位置。
+         </p></dd><dt><span class="term"><code class="literal">snapshot_name</code> (<code class="type">text</code>)</span></dt><dd><p>          该命令导出的快照标识符。在此连接上执行新命令或复制连接关闭之前，
+		  快照有效。如果创建的插槽是物理的，则为空。
+         </p></dd><dt><span class="term"><code class="literal">output_plugin</code> (<code class="type">text</code>)</span></dt><dd><p>          新创建的复制插槽使用的输出插件的名称。如果创建的插槽是物理的，则为空。
+         </p></dd></dl></div><p>
+     </p></dd><dt><span class="term"><code class="literal">START_REPLICATION</code> [ <code class="literal">SLOT</code> <em class="replaceable"><code>slot_name</code></em> ] [ <code class="literal">PHYSICAL</code> ] <em class="replaceable"><code>XXX/XXX</code></em> [ <code class="literal">TIMELINE</code> <em class="replaceable"><code>tli</code></em> ]
+     <a id="idp57700208" class="indexterm"></a>
+    </span></dt><dd><p>      指示服务器开始启动流WAL，从 WAL 位置<em class="replaceable"><code>XXX/XXX</code></em>开始。如果<code class="literal">TIMELINE</code>选项被指定，流传送会在时间线<em class="replaceable"><code>tli</code></em>上开始，否则会选择服务器的当前时间线。服务器可以回复一个错误，例如如果被请求的WAL节已经被回收了。如果成功，服务器将会响应一个CopyBothResponse消息，并且然后开始以流的方式把WAL传送给前端。
+     </p><p>      如果通过<em class="replaceable"><code>slot_name</code></em>提供了一个槽的名称，它将被更新复制进度，这样该服务器知道哪些 WAL 段以及哪些事务（如果<code class="varname">hot_standby_feedback</code>为打开）仍然被后备机所需要。
+     </p><p>      如果客户端请求一个并非最新的时间线，但是属于服务器历史的一部分，服务器将会把该时间线上从请求点开始的所有WAL以流式传送，一直到服务器切换到另外一个时间线的点。如果客户端请求在一个老的时间线末尾进行流传送，服务器将在不进入COPY模式的情况下立即响应CommandComplete。
+     </p><p>      在流传送完一个非最新时间线上所有的WAL之后，服务器将会通过退出COPY模式来结束流。当客户端认识到这一点并也退出COPY模式时，服务器会发送一个包含一行两列的结果集，以指示在该服务器历史中的下一个时间线。第一列是下一个时间线的 ID（类型<code class="type">int8</code>），而第二列是发生切换的 WAL 位置（类型<code class="type">text</code>）。通常，切换位置是被流传送的WAL的末尾，但是在很少的情况下服务器会从旧的时间线中发送一些WAL，而该时间线是服务器本身在提示之前还没有重放的。最后，服务器发送CommandComplete消息，并且做好准备接受一个新的命令。
+     </p><p>      WAL数据以一系列CopyData消息的形式被发送（这允许其他信息穿插其中，特别是服务器可以在开始流传送后遇到失败时发送一个ErrorResponse消息）。每个从服务器到客户端的CopyData消息承载了一个下列格式之一的消息：
+     </p><p>      </p><div class="variablelist"><dl class="variablelist"><dt><span class="term">          XLogData (B)
+      </span></dt><dd><p>      </p><div class="variablelist"><dl class="variablelist"><dt><span class="term">          Byte1('w')
+      </span></dt><dd><p>          标识该消息是WAL数据。
+      </p></dd><dt><span class="term">          Int64
+      </span></dt><dd><p>          在消息中WAL数据的起始点。
+      </p></dd><dt><span class="term">          Int64
+      </span></dt><dd><p>          服务器上WAL的当前终点。
+      </p></dd><dt><span class="term">          Int64
+      </span></dt><dd><p>          在传送时服务器的系统时钟，以从2000-01-01午夜开始的微秒计。
+      </p></dd><dt><span class="term">          Byte<em class="replaceable"><code>n</code></em>
+      </span></dt><dd><p>          WAL数据流的一节。
+      </p><p>          一个WAL记录绝不会被分割到两个XLogData消息。如果一个WAL记录跨越了一个WAL页面的边界，并且因此已经被使用连续的记录分割，它可以在页面边界被分割。换句话说，第一个主要WAL记录和它的后续记录可以在不同的XLogData消息中被发送。
+      </p></dd></dl></div><p>
+      </p></dd><dt><span class="term">          主要存活消息 (B)
+      </span></dt><dd><p>      </p><div class="variablelist"><dl class="variablelist"><dt><span class="term">          Byte1('k')
+      </span></dt><dd><p>          标识该消息是一个发送者存活消息。
+      </p></dd><dt><span class="term">          Int64
+      </span></dt><dd><p>          服务器上WAL的当前终点。
+      </p></dd><dt><span class="term">          Int64
+      </span></dt><dd><p>          在传送时服务器的系统时钟，以从2000-01-01午夜开始的微秒计。
+      </p></dd><dt><span class="term">          Byte1
+      </span></dt><dd><p>          1表示客户端应该尽快回复该消息，以避免连接超时。否则为0。
+      </p></dd></dl></div><p>
+      </p></dd></dl></div><p>
+     </p><p>       接收进程可以在任何时候给发送者发送回复，回复可以使用下列消息格式之一（也在CopData消息中使用）：
+     </p><p>      </p><div class="variablelist"><dl class="variablelist"><dt><span class="term">          后备机状态更新 (F)
+      </span></dt><dd><p>      </p><div class="variablelist"><dl class="variablelist"><dt><span class="term">          Byte1('r')
+      </span></dt><dd><p>          标识该消息是一个接收者状态更新。
+      </p></dd><dt><span class="term">          Int64
+      </span></dt><dd><p>          接收到并且写入到后备机磁盘的最后一个WAL比特的位置+1。
+      </p></dd><dt><span class="term">          Int64
+      </span></dt><dd><p>          被刷入到后备机磁盘的最后一个WAL比特的位置+1。
+      </p></dd><dt><span class="term">          Int64
+      </span></dt><dd><p>          被应用在后备机上的最后一个WAL比特的位置+1。
+      </p></dd><dt><span class="term">          Int64
+      </span></dt><dd><p>          在传送时客户端的系统时钟，以从2000-01-01午夜开始的微秒计。
+      </p></dd><dt><span class="term">          Byte1
+      </span></dt><dd><p>          如果为1，客户端要求服务器马上回复这个消息。这可以被用来ping服务器以测试连接是否仍然完好。
+      </p></dd></dl></div><p>
+      </p></dd></dl></div><p>
+     </p><p>      </p><div class="variablelist"><dl class="variablelist"><dt><span class="term">          热备机反馈消息 (F)
+      </span></dt><dd><p>      </p><div class="variablelist"><dl class="variablelist"><dt><span class="term">          Byte1('h')
+      </span></dt><dd><p>          标识该消息是一个热备机反馈消息。
+      </p></dd><dt><span class="term">          Int64
+      </span></dt><dd><p>          在传送时客户端的系统时钟，以从2000-01-01午夜开始的微秒计。
+      </p></dd><dt><span class="term">          Int32
+      </span></dt><dd><p>          备用数据库的当前全局xmin，不包括来自任何复制插槽的catalog_xmin。
+		  如果此值和以下catalog_xmin均为0，则将此视为热备机反馈将不再在此连接上发送的通知。
+		  稍后的非零消息可以重新启动反馈机制。
+      </p></dd><dt><span class="term">          Int32
+      </span></dt><dd><p>          备用服务器上全局xmin xid的时代。
+      </p></dd><dt><span class="term">          Int32
+      </span></dt><dd><p>          备用数据库中任何复制插槽的最低catalog_xmin。
+		  如果备用数据库上不存在catalog_xmin或者热备份反馈被禁用，则设置为0。
+      </p></dd><dt><span class="term">          Int32
+      </span></dt><dd><p>          备用服务器上catalog_xmin xid的时代。
+      </p></dd></dl></div><p>
+      </p></dd></dl></div><p>
+     </p></dd><dt><span class="term"><code class="literal">START_REPLICATION</code> <code class="literal">SLOT</code> <em class="replaceable"><code>slot_name</code></em> <code class="literal">LOGICAL</code> <em class="replaceable"><code>XXX/XXX</code></em> [ ( <em class="replaceable"><code>option_name</code></em> [ <em class="replaceable"><code>option_value</code></em> ] [, ...] ) ]</span></dt><dd><p>      指示服务器为逻辑复制开始流式传送 WAL，从 WAL 位置<em class="replaceable"><code>XXX/XXX</code></em>开始。服务器可以回复一个错误，例如如果请求的 WAL 小节已经回环。如果成功，服务器会响应一个 CopyBothResponse 消息，并且接着开始流失传送 WAL 给前端。
+     </p><p>      消息内部的消息与<code class="literal">START_REPLICATION ... PHYSICAL</code>中记录的格式相同。
+     </p><p>      与选中槽关联的输出插件被用来处理流的输出。
+     </p><div class="variablelist"><dl class="variablelist"><dt><span class="term"><code class="literal">SLOT</code> <em class="replaceable"><code>slot_name</code></em></span></dt><dd><p>          要从哪个槽流式传送改变。这个参数是必须的，并且必须对应于一个现有的用<code class="literal">LOGICAL</code>模式的<code class="literal">CREATE_REPLICATION_SLOT</code>创建的逻辑复制槽。
+         </p></dd><dt><span class="term"><em class="replaceable"><code>XXX/XXX</code></em></span></dt><dd><p>         要开始流传送的 WAL 位置。
+        </p></dd><dt><span class="term"><em class="replaceable"><code>option_name</code></em></span></dt><dd><p>         一个传递给该槽的逻辑解码插件的选项的名称。
+        </p></dd><dt><span class="term"><em class="replaceable"><code>option_value</code></em></span></dt><dd><p>         字符串常量形式的选项值，与前面指定的选项关联。
+        </p></dd></dl></div></dd><dt><span class="term">     <code class="literal">DROP_REPLICATION_SLOT</code> <em class="replaceable"><code>slot_name</code></em> [<span class="optional"> <code class="literal">WAIT</code> </span>]
+     <a id="idp57756688" class="indexterm"></a>
+    </span></dt><dd><p>      删除一个复制槽，释放任何保留的服务器端资源。
+	  如果插槽是在walsender连接到的数据库以外的数据库中创建的逻辑插槽，则此命令将失败。
+     </p><div class="variablelist"><dl class="variablelist"><dt><span class="term"><em class="replaceable"><code>slot_name</code></em></span></dt><dd><p>          要删除的槽的名称。
+         </p></dd><dt><span class="term"><code class="literal">WAIT</code></span></dt><dd><p>         此选项会导致命令等待处于活动状态的插槽，直到它变为非活动状态，
+		 而不是默认的引发错误行为。
+        </p></dd></dl></div></dd><dt><span class="term"><code class="literal">BASE_BACKUP</code> [ <code class="literal">LABEL</code> <em class="replaceable"><code>'label'</code></em> ] [ <code class="literal">PROGRESS</code> ] [ <code class="literal">FAST</code> ] [ <code class="literal">WAL</code> ] [ <code class="literal">NOWAIT</code> ] [ <code class="literal">MAX_RATE</code> <em class="replaceable"><code>rate</code></em> ] [ <code class="literal">TABLESPACE_MAP</code> ]
+     <a id="idp57768048" class="indexterm"></a>
+    </span></dt><dd><p>      指示服务器开始流传送一个基础备份。在备份开始之前系统将自动被置于备份模式，而在备份结束时会自动被退出备份模式。可以接受下列选项：
+      </p><div class="variablelist"><dl class="variablelist"><dt><span class="term"><code class="literal">LABEL</code> <em class="replaceable"><code>'label'</code></em></span></dt><dd><p>          设置备份的标签。如果没有指定，将会使用<code class="literal">base backup</code>作为标签。标签的引号规则和<a class="xref" href="runtime-config-compatible.html#GUC-STANDARD-CONFORMING-STRINGS">standard_conforming_strings</a>开启时标准SQL字符串的一样。
+         </p></dd><dt><span class="term"><code class="literal">PROGRESS</code></span></dt><dd><p>          请求用以生成一个进度报告的信息。这将送回位于每个表空间头部的一个近似大小，它可以被用于计算流还有多久才能被完成。它通过在传输开始之前枚举所有文件大小来计算，并且可能会对性能产生一种负面影响 -- 特别情况下它可能会在流传送第一个数据之前就耗费很长时间。因为数据库文件可能在备份期间改变，这个大小只是近似的并且可能在近似计算和发送真正的文件之间增长或者收缩。
+         </p></dd><dt><span class="term"><code class="literal">FAST</code></span></dt><dd><p>          请求一个快速检查点。
+         </p></dd><dt><span class="term"><code class="literal">WAL</code></span></dt><dd><p>          在备份中包含必需的WAL段。这将把开始和停止备份之间的所有文件包括在base目录tar文件中的<code class="filename">pg_wal</code>目录中。
+         </p></dd><dt><span class="term"><code class="literal">NOWAIT</code></span></dt><dd><p>          默认情况下，备份会等待直到最后一个要求的 WAL 段被归档，或者当日至归档被禁用时发出一个警告。指定<code class="literal">NOWAIT</code>会禁用等待和警告，而让客户端负责确保所要求的日志是可用的。
+         </p></dd><dt><span class="term"><code class="literal">MAX_RATE</code> <em class="replaceable"><code>rate</code></em></span></dt><dd><p>          单位时间内从服务器传输到客户端的最大数据量限制。期望的单位是千字节每秒。如果指定了这个选项，值必须等于零或者位于 32 kB到 1 GB（包括）范围之间。如果 0 被传入或者没有指定该选项，对于传输将没有限制。
+         </p></dd><dt><span class="term"><code class="literal">TABLESPACE_MAP</code></span></dt><dd><p>          在名为<code class="filename">tablespace_map</code>的文件中包括有关<code class="filename">pg_tblspc</code>目录中存在的符号链接的信息。这个表空间映射文件包括了在目录<code class="filename">pg_tblspc</code>中存在的每一个符号链接的名字以及它的完整路径。
+         </p></dd></dl></div><p>
+     </p><p>      当备份被启动，服务器将首先发送两个普通结果集，后面会跟着一个或多个CopyResponse结果。
+     </p><p>      第一个普通结果集在一行两列中包含了备份的起始位置。第一列包含使用XLogRecPtr格式给出的开始位置，第二列包含相应的时间线ID。
+     </p><p>      第二个普通结果集中为每一个表空间都有一行。行中的域有：
+      </p><div class="variablelist"><dl class="variablelist"><dt><span class="term"><code class="literal">spcoid</code>（<code class="type">oid</code>）</span></dt><dd><p>          表空间的 OID，如果是base目录则为空。
+         </p></dd><dt><span class="term"><code class="literal">spclocation</code>（<code class="type">text</code>）</span></dt><dd><p>          表空间目录的完整路径，如果是base目录则为空。
+         </p></dd><dt><span class="term"><code class="literal">size</code>（<code class="type">int8</code>）</span></dt><dd><p>          如果进度报告被请求，这里是表空间的近似大小，否则为空。
+         </p></dd></dl></div><p>
+     </p><p>      在第二个普通结果集之后，一个或多个CopyResponse结果将被发送，一个用于主数据目录而对每一个除<code class="literal">pg_default</code>和<code class="literal">pg_global</code>之外的额外表空间也会有一个。CopyResponse结果中的数据将会使一个tar格式（遵循POSIX 1003.1-2008标准中指定的<span class="quote">“<span class="quote">ustar交换格式</span>”</span>）的表空间内容转储，不过标准中定义的两个拖尾全0块将被忽略。在tar数据完成后，一个最终普通结果集将被发送，包含了备份的WAL结束位置，格式与起始位置相同。
+     </p><p>      用于数据目录和每个表空间的tar归档将包含目录中的所有文件，不管它们是否为<span class="productname">PostgreSQL</span>文件或者是被加入的其他文件。唯一被排除的文件是：
+      </p><div class="itemizedlist"><ul class="itemizedlist compact" style="list-style-type: bullet; "><li class="listitem" style="list-style-type: disc"><p>         <code class="filename">postmaster.pid</code>
+        </p></li><li class="listitem" style="list-style-type: disc"><p>         <code class="filename">postmaster.opts</code>
+        </p></li><li class="listitem" style="list-style-type: disc"><p>         在PostgreSQL服务器运行期间创建的各种临时文件和目录，
+		 例如任何以<code class="filename">pgsql_tmp</code>开头的文件或目录。
+        </p></li><li class="listitem" style="list-style-type: disc"><p>         <code class="filename">pg_wal</code>及其子目录。如果备份运行时要求包括WAL文件，一个<code class="filename">pg_wal</code>的合成版本将被包括进来，但是只会包含那些备份工作必需的文件，而不是包含剩下的内容。
+        </p></li><li class="listitem" style="list-style-type: disc"><p>         <code class="filename">pg_dynshmem</code>、<code class="filename">pg_notify</code>、
+         <code class="filename">pg_replslot</code>、<code class="filename">pg_serial</code>、
+         <code class="filename">pg_snapshots</code>、<code class="filename">pg_stat_tmp</code>和
+         <code class="filename">pg_subtrans</code>被复制为一个空目录（即使它们是符号链接）。
+        </p></li><li class="listitem" style="list-style-type: disc"><p>         除常规文件和目录之外的其他文件，例如符号链接（除了上面列出的目录之外）
+		 和特殊设备文件，会被跳过（<code class="filename">pg_tblspc</code>中的符号链接会被保留）。
+        </p></li></ul></div><p>
+      如果服务器上的底层文件系统支持，所有者、组合文件模式都会被设置。
+     </p></dd></dl></div><p>
+</p></div><div class="navfooter"><hr /><table width="100%" summary="Navigation footer"><tr><td width="40%" align="left"><a accesskey="p" href="sasl-authentication.html">上一页</a> </td><td width="20%" align="center"><a accesskey="u" href="protocol.html">上一级</a></td><td width="40%" align="right"> <a accesskey="n" href="protocol-logical-replication.html">下一页</a></td></tr><tr><td width="40%" align="left" valign="top">52.3. SASL 认证 </td><td width="20%" align="center"><a accesskey="h" href="index.html">起始页</a></td><td width="40%" align="right" valign="top"> 52.5. 逻辑流式复制协议</td></tr></table></div></body></html>

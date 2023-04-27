@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><title>18.6. 升级一个PostgreSQL集簇</title><link rel="stylesheet" type="text/css" href="stylesheet.css" /><link rev="made" href="pgsql-docs@postgresql.org" /><meta name="generator" content="DocBook XSL Stylesheets V1.79.1" /><link rel="prev" href="server-shutdown.html" title="18.5. 关闭服务器" /><link rel="next" href="preventing-server-spoofing.html" title="18.7. 阻止服务器欺骗" /></head><body><div xmlns="http://www.w3.org/TR/xhtml1/transitional" class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="5" align="center">18.6. 升级一个<span xmlns="http://www.w3.org/1999/xhtml" class="productname">PostgreSQL</span>集簇</th></tr><tr><td width="10%" align="left"><a accesskey="p" href="server-shutdown.html" title="18.5. 关闭服务器">上一页</a> </td><td width="10%" align="left"><a accesskey="u" href="runtime.html" title="第 18 章 服务器设置和操作">上一级</a></td><th width="60%" align="center">第 18 章 服务器设置和操作</th><td width="10%" align="right"><a accesskey="h" href="index.html" title="PostgreSQL 10.1 手册">起始页</a></td><td width="10%" align="right"> <a accesskey="n" href="preventing-server-spoofing.html" title="18.7. 阻止服务器欺骗">下一页</a></td></tr></table><hr></hr></div><div class="sect1" id="UPGRADING"><div class="titlepage"><div><div><h2 class="title" style="clear: both">18.6. 升级一个<span class="productname">PostgreSQL</span>集簇</h2></div></div></div><div class="toc"><dl class="toc"><dt><span class="sect2"><a href="upgrading.html#UPGRADING-VIA-PGDUMPALL">18.6.1. 通过<span class="application">pg_dumpall</span>升级数据</a></span></dt><dt><span class="sect2"><a href="upgrading.html#UPGRADING-VIA-PG-UPGRADE">18.6.2. 通过<span class="application">pg_upgrade</span>升级数据</a></span></dt><dt><span class="sect2"><a href="upgrading.html#UPGRADING-VIA-REPLICATION">18.6.3. 通过复制升级数据</a></span></dt></dl></div><a id="idp19966704" class="indexterm"></a><a id="idp19967728" class="indexterm"></a><p>   本节讨论如何把你的数据库数据从一个<span class="productname">PostgreSQL</span>发行升级到一个更新的发行。
+  </p><p>   当前<span class="productname">PostgreSQL</span>版本号由主要版本号和次要版本号组成。
+   例如，在版本号10.1中，10是主要版本号，1是次要版本号，这意味着这将是主版本10的第一个次要版本。
+   对于<span class="productname">PostgreSQL</span>版本10.0之前的版本，版本号由三个数字组成，例如9.5.3。
+   在这些情况下，主要版本由版本号的前两个数字组（例如9.5）组成，次要版本是第三个数字，
+   例如3，这意味着这将是主要版本9.5的第三次要版本。
+  </p><p>   次要发行从来不改变内部存储格式并且总是向前并向后兼容同一主版本号中的次要发行。
+   例如版本10.1与版本10.0和版本10.6兼容。类似的，例如9.5.3与9.5.0、9.5.1和9.5.6兼容。
+   要在兼容的版本间升级，你只需要简单地在服务器关闭时替换可执行文件并重启服务器。
+   数据目录则保持不变 — 次要升级就这么简单。
+  </p><p>   对于<span class="productname">PostgreSQL</span>的<span class="emphasis"><em>主</em></span>发行， 
+   内部数据存储格式常被改变，这使升级复杂化。传统的把数据移动到
+   新主版本的方法是先转储然后重新载入到数据库，不过这可能会很慢。
+   一种更快的方式是<a class="xref" href="pgupgrade.html" title="pg_upgrade"><span class="refentrytitle"><span class="application">pg_upgrade</span></span></a>。如下文所讨论的，
+   复制方法也能被用于升级。
+  </p><p>   新的主版本也通常会引入一些用户可见的不兼容性，因此可能需要应用程序编程上的改变。所有用户可见的更改都被列在发行注记（<a class="xref" href="release.html" title="附录 E. 版本说明">附录 E</a>）中，请特别注意标有 "Migration" 的小节。如果你正在跨越几个主版本升级，一定要阅读每个中间版本的发行注记。
+  </p><p>   小心的用户在完全切换过去之前将希望在新版本上测试他们的客户端应用。因此，建立一个新旧版本的并存安装通常是一个好主意。在测试一个<span class="productname">PostgreSQL</span>主要升级时，考虑下列可能的改变类别：
+  </p><div class="variablelist"><dl class="variablelist"><dt><span class="term">管理</span></dt><dd><p>      用于管理员监控和控制服务器的功能在每一个主发行中经常会改变和增加。
+     </p></dd><dt><span class="term">SQL</span></dt><dd><p>      通常这包括新的 SQL 命令功能并且在行为上没有更改，除非在发行注记中有特别提到。
+     </p></dd><dt><span class="term">库 API</span></dt><dd><p>      通常<span class="application">libpq</span>等库值增加新功能，除非在发行注记中有特别提到。
+     </p></dd><dt><span class="term">系统目录</span></dt><dd><p>      系统目录改变通常只影响数据库管理工具。
+     </p></dd><dt><span class="term">服务器 C-语言 API</span></dt><dd><p>      这涉及到后端函数 API 中的改变，它使用 C 编程语言编写。这些改变影响引用服务器内部后端函数的代码。
+     </p></dd></dl></div><div class="sect2" id="UPGRADING-VIA-PGDUMPALL"><div class="titlepage"><div><div><h3 class="title">18.6.1. 通过<span class="application">pg_dumpall</span>升级数据</h3></div></div></div><p>    一种升级方法是从<span class="productname">PostgreSQL</span>的一个主版本转储数据并将它重新载入到另一个主版本中 — 要这样做，你必须使用<span class="application">pg_dumpall</span>这样的<span class="emphasis"><em>逻辑</em></span>备份工具，文件系统级别的备份方法将不会有用（这也阻止你在一个不兼容版本的<span class="productname">PostgreSQL</span>中使用一个数据目录，因此在一个数据目录上尝试启动一个错误的服务器版本不会造成很大的危害）。
+   </p><p>    我们推荐你从<span class="emphasis"><em>较新</em></span>版本的<span class="productname">PostgreSQL</span>中使用<span class="application">pg_dump</span>和<span class="application">pg_dumpall</span>程序，这样可以利用在这些程序中可能存在的改进。当前发行的转储程序可以读取任何 7.0 以上版本服务器中的数据。
+   </p><p>    这些指令假定你现有的安装位于<code class="filename">/usr/local/pgsql</code>目录，并且数据区域在<code class="filename">/usr/local/pgsql/data</code>。请用你的路径进行适当的替换。
+   </p><div class="procedure"><ol class="procedure" type="1"><li class="step"><p>      如果在创建一个备份，确认你的数据库没有在被更新。这不会影响备份的完整性，但是那些更改当然不会被包括在备份中。如果必要，编辑<code class="filename">/usr/local/pgsql/data/pg_hba.conf</code>文件中的权限（或等效的方法）来不允许除你之外的任何人使用数据库。关于访问控制的额外信息请见<a class="xref" href="client-authentication.html" title="第 20 章 客户端认证">第 20 章</a>。
+     </p><p>      <a id="idp19997728" class="indexterm"></a>
+
+      要备份你的数据库安装，键入：
+</p><pre class="screen"><strong class="userinput"><code>pg_dumpall &gt; <em class="replaceable"><code>outputfile</code></em></code></strong></pre><p>
+     </p><p>      要制作备份，你可以使用你正在运行版本的<span class="application">pg_dumpall</span>命令，详见<a class="xref" href="backup-dump.html#BACKUP-DUMP-ALL" title="25.1.2. 使用pg_dumpall">第 25.1.2 节</a>。但是，要得到最好的结果，试试使用<span class="productname">PostgreSQL</span> 10.1 的<span class="application">pg_dumpall</span>命令，因为这个版本包含了对旧版本的缺陷修复和改进。虽然这个建议可能看起来很奇怪，因为你还没有安装新版本，但如果你计划平行地安装新版本，遵循这个建议是很明智的。在这种情况下，你可以正常完成安装并且稍后再来传输数据。这也将减少停机时间。
+     </p></li><li class="step"><p>      关闭就服务器：
+</p><pre class="screen"><strong class="userinput"><code>pg_ctl stop</code></strong></pre><p>
+      在那些自动启动<span class="productname">PostgreSQL</span>的系统上，可能有一个启动文件将完成同样的事情。例如，在一个<span class="systemitem">Red Hat Linux</span>系统中，我们会发现这也能用：
+</p><pre class="screen"><strong class="userinput"><code>/etc/rc.d/init.d/postgresql stop</code></strong></pre><p>
+      关于启动和停止服务器的细节请见<a class="xref" href="runtime.html" title="第 18 章 服务器设置和操作">第 18 章</a>。
+     </p></li><li class="step"><p>      如果从备份恢复，重命名或删除旧的安装目录（如果它不是针对特定版本的）。重命名该目录是一个好主意，而不是删除它，因为如果你碰到问题并需要返回到它，它还存在。记住该目录可能消耗可观的磁盘空间。要重命名该目录，使用类似的命令：
+</p><pre class="screen"><strong class="userinput"><code>mv /usr/local/pgsql /usr/local/pgsql.old</code></strong></pre><p>
+     （注意将该目录作为一个单一单元移动，这样相对路径可以保持不变）。
+     </p></li><li class="step"><p>      安装新版本的<span class="productname">PostgreSQL</span>在
+      <a class="xref" href="install-procedure.html" title="16.4. 安装过程">第 16.4 节</a>.
+     </p></li><li class="step"><p>      如果需要，创建一个新的数据库集簇。记住你必须在登录到一个特殊的数据库用户账户（如果你在升级，你就已经有了这个账户）时执行这些命令。
+</p><pre class="programlisting"><strong class="userinput"><code>/usr/local/pgsql/bin/initdb -D /usr/local/pgsql/data</code></strong></pre><p>
+     </p></li><li class="step"><p>      恢复你之前的<code class="filename">pg_hba.conf</code>以及任何<code class="filename">postgresql.conf</code>修改。
+     </p></li><li class="step"><p>      启动数据库服务器，也要使用特殊的数据库用户账户：
+</p><pre class="programlisting"><strong class="userinput"><code>/usr/local/pgsql/bin/postgres -D /usr/local/pgsql/data</code></strong></pre><p>
+     </p></li><li class="step"><p>      最后，使用<span class="emphasis"><em>新的</em></span> <span class="application">psql</span>从备份恢复你的数据：
+</p><pre class="screen"><strong class="userinput"><code>/usr/local/pgsql/bin/psql -d postgres -f <em class="replaceable"><code>outputfile</code></em></code></strong></pre><p>
+     </p></li></ol></div><p>    通过在一个不同的目录中安装新的服务器并且并行地在不同的端口运行新旧两个服务器可以达到最低的停机时间。那么你可以这样用：
+
+</p><pre class="programlisting">pg_dumpall -p 5432 | psql -d postgres -p 5433</pre><p>
+    来转移你的数据。
+   </p></div><div class="sect2" id="UPGRADING-VIA-PG-UPGRADE"><div class="titlepage"><div><div><h3 class="title">18.6.2. 通过<span class="application">pg_upgrade</span>升级数据</h3></div></div></div><p>    <a class="xref" href="pgupgrade.html" title="pg_upgrade"><span class="refentrytitle"><span class="application">pg_upgrade</span></span></a>模块允许一个安装从一个
+    <span class="productname">PostgreSQL</span>主版本“就地”升级成另一个主版本。
+    升级可以在数分钟内被执行，特别是使用<code class="option">--link</code>模式时。它
+    要求和上面的<span class="application">pg_dumpall</span>相似的步骤，例如启动/停止
+    服务器、运行<span class="application">initdb</span>。<span class="application">pg_upgrade</span>
+    <a class="link" href="pgupgrade.html" title="pg_upgrade">文档</a>概述了所需的步骤。
+   </p></div><div class="sect2" id="UPGRADING-VIA-REPLICATION"><div class="titlepage"><div><div><h3 class="title">18.6.3. 通过复制升级数据</h3></div></div></div><p>    也可以使用某些复制方法来使用<span class="productname">PostgreSQL</span>的已更新版本创建一个后备服务器，例如<span class="productname">Slony</span>，它支持在不同主版本的<span class="productname">PostgreSQL</span>之间的复制。后备服务器可以在同一台计算机或者不同的计算机上。一旦它和主服务器（运行旧版本的<span class="productname">PostgreSQL</span>）同步好，你可以切换主机并且将后备服务器作为主机，然后关闭旧的数据库实例。这样一种切换使得一次升级的停机时间只有数秒。
+   </p></div></div><div class="navfooter"><hr /><table width="100%" summary="Navigation footer"><tr><td width="40%" align="left"><a accesskey="p" href="server-shutdown.html">上一页</a> </td><td width="20%" align="center"><a accesskey="u" href="runtime.html">上一级</a></td><td width="40%" align="right"> <a accesskey="n" href="preventing-server-spoofing.html">下一页</a></td></tr><tr><td width="40%" align="left" valign="top">18.5. 关闭服务器 </td><td width="20%" align="center"><a accesskey="h" href="index.html">起始页</a></td><td width="40%" align="right" valign="top"> 18.7. 阻止服务器欺骗</td></tr></table></div></body></html>

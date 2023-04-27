@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><title>2.6. 在表之间连接</title><link rel="stylesheet" type="text/css" href="stylesheet.css" /><link rev="made" href="pgsql-docs@postgresql.org" /><meta name="generator" content="DocBook XSL Stylesheets V1.79.1" /><link rel="prev" href="tutorial-select.html" title="2.5. 查询一个表" /><link rel="next" href="tutorial-agg.html" title="2.7. 聚集函数" /></head><body><div xmlns="http://www.w3.org/TR/xhtml1/transitional" class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="5" align="center">2.6. 在表之间连接</th></tr><tr><td width="10%" align="left"><a accesskey="p" href="tutorial-select.html" title="2.5. 查询一个表">上一页</a> </td><td width="10%" align="left"><a accesskey="u" href="tutorial-sql.html" title="第 2 章 SQL语言">上一级</a></td><th width="60%" align="center">第 2 章 <acronym xmlns="http://www.w3.org/1999/xhtml" class="acronym">SQL</acronym>语言</th><td width="10%" align="right"><a accesskey="h" href="index.html" title="PostgreSQL 10.1 手册">起始页</a></td><td width="10%" align="right"> <a accesskey="n" href="tutorial-agg.html" title="2.7. 聚集函数">下一页</a></td></tr></table><hr></hr></div><div class="sect1" id="TUTORIAL-JOIN"><div class="titlepage"><div><div><h2 class="title" style="clear: both">2.6. 在表之间连接</h2></div></div></div><a id="idp5367520" class="indexterm"></a><p>    到目前为止，我们的查询一次只访问一个表。查询可以一次访问多个表，或者用这种方式访问一个表而同时处理该表的多个行。 一个同时访问同一个或者不同表的多个行的查询叫<em class="firstterm">连接</em>查询。举例来说，比如你想列出所有天气记录以及相关的城市位置。要实现这个目标，我们需要拿 <code class="structname">weather</code>表每行的<code class="structfield">city</code>列和<code class="structname">cities</code>表所有行的<code class="structfield">name</code>列进行比较， 并选取那些在该值上相匹配的行对。
+    </p><div class="note"><h3 class="title">注意</h3><p>      这里只是一个概念上的模型。连接通常以比实际比较每个可能的行对更高效的方式执行， 但这些是用户看不到的。
+     </p></div><p>
+    这个任务可以用下面的查询来实现：
+
+</p><pre class="programlisting">SELECT *
+    FROM weather, cities
+    WHERE city = name;</pre><p>
+
+</p><pre class="screen">     city      | temp_lo | temp_hi | prcp |    date    |     name      | location
+---------------+---------+---------+------+------------+---------------+-----------
+ San Francisco |      46 |      50 | 0.25 | 1994-11-27 | San Francisco | (-194,53)
+ San Francisco |      43 |      57 |    0 | 1994-11-29 | San Francisco | (-194,53)
+(2 rows)</pre><p>
+
+   </p><p>    观察结果集的两个方面：
+    </p><div class="itemizedlist"><ul class="itemizedlist" style="list-style-type: disc; "><li class="listitem"><p>       没有城市Hayward的结果行。这是因为在<code class="structname">cities</code>表里面没有Hayward的匹配行，所以连接忽略 <code class="structname">weather</code>表里的不匹配行。我们稍后将看到如何修补它。
+      </p></li><li class="listitem"><p>       有两个列包含城市名字。这是正确的， 因为<code class="structname">weather</code>和<code class="structname">cities</code>表的列被串接在一起。不过，实际上我们不想要这些， 因此你将可能希望明确列出输出列而不是使用<code class="literal">*</code>：
+</p><pre class="programlisting">SELECT city, temp_lo, temp_hi, prcp, date, location
+    FROM weather, cities
+    WHERE city = name;</pre><p>
+      </p></li></ul></div><p>
+   </p><p><strong>练习：. </strong>     看看这个查询省略<code class="literal">WHERE</code>子句的语义是什么
+    </p><p>    因为这些列的名字都不一样，所以规划器自动地找出它们属于哪个表。如果在两个表里有重名的列，你需要<em class="firstterm">限定</em>列名来说明你究竟想要哪一个，如：
+
+</p><pre class="programlisting">SELECT weather.city, weather.temp_lo, weather.temp_hi,
+       weather.prcp, weather.date, cities.location
+    FROM weather, cities
+    WHERE cities.name = weather.city;</pre><p>
+
+    人们广泛认为在一个连接查询中限定所有列名是一种好的风格，这样即使未来向其中一个表里添加重名列也不会导致查询失败。
+   </p><p>    到目前为止，这种类型的连接查询也可以用下面这样的形式写出来：
+
+</p><pre class="programlisting">SELECT *
+    FROM weather INNER JOIN cities ON (weather.city = cities.name);</pre><p>
+
+    这个语法并不象上文的那个那么常用，我们在这里写出来是为了让你更容易了解后面的主题。
+   </p><p>    <a id="idp5384000" class="indexterm"></a>
+
+    现在我们将看看如何能把Hayward记录找回来。我们想让查询干的事是扫描<code class="structname">weather</code>表， 并且对每一行都找出匹配的<code class="structname">cities</code>表行。如果我们没有找到匹配的行，那么我们需要一些<span class="quote">“<span class="quote">空值</span>”</span>代替cities表的列。 这种类型的查询叫<em class="firstterm">外连接</em> （我们在此之前看到的连接都是内连接）。这样的命令看起来象这样：
+
+</p><pre class="programlisting">SELECT *
+    FROM weather LEFT OUTER JOIN cities ON (weather.city = cities.name);
+
+     city      | temp_lo | temp_hi | prcp |    date    |     name      | location
+---------------+---------+---------+------+------------+---------------+-----------
+ Hayward       |      37 |      54 |      | 1994-11-29 |               |
+ San Francisco |      46 |      50 | 0.25 | 1994-11-27 | San Francisco | (-194,53)
+ San Francisco |      43 |      57 |    0 | 1994-11-29 | San Francisco | (-194,53)
+(3 rows)</pre><p>
+
+    这个查询是一个<em class="firstterm">左外连接</em>， 因为在连接操作符左部的表中的行在输出中至少要出现一次， 而在右部的表的行只有在能找到匹配的左部表行是才被输出。 如果输出的左部表的行没有对应匹配的右部表的行，那么右部表行的列将填充空值（null）。
+   </p><p><strong>练习：. </strong>      还有右外连接和全外连接。试着找出来它们能干什么。
+    </p><p>    <a id="idp5389968" class="indexterm"></a>
+    <a id="idp5390976" class="indexterm"></a>
+
+    我们也可以把一个表和自己连接起来。这叫做<em class="firstterm">自连接</em>。 比如，假设我们想找出那些在其它天气记录的温度范围之外的天气记录。这样我们就需要拿 <code class="structname">weather</code>表里每行的<code class="structfield">temp_lo</code>和<code class="structfield">temp_hi</code>列与<code class="structname">weather</code>表里其它行的<code class="structfield">temp_lo</code>和<code class="structfield">temp_hi</code>列进行比较。我们可以用下面的查询实现这个目标：
+
+</p><pre class="programlisting">SELECT W1.city, W1.temp_lo AS low, W1.temp_hi AS high,
+    W2.city, W2.temp_lo AS low, W2.temp_hi AS high
+    FROM weather W1, weather W2
+    WHERE W1.temp_lo &lt; W2.temp_lo
+    AND W1.temp_hi &gt; W2.temp_hi;
+
+     city      | low | high |     city      | low | high
+---------------+-----+------+---------------+-----+------
+ San Francisco |  43 |   57 | San Francisco |  46 |   50
+ Hayward       |  37 |   54 | San Francisco |  46 |   50
+(2 rows)</pre><p>
+
+    在这里我们把weather表重新标记为<code class="literal">W1</code>和<code class="literal">W2</code>以区分连接的左部和右部。你还可以用这样的别名在其它查询里节约一些敲键，比如：
+</p><pre class="programlisting">SELECT *
+    FROM weather w, cities c
+    WHERE w.city = c.name;</pre><p>
+    你以后会经常碰到这样的缩写的。
+   </p></div><div class="navfooter"><hr /><table width="100%" summary="Navigation footer"><tr><td width="40%" align="left"><a accesskey="p" href="tutorial-select.html">上一页</a> </td><td width="20%" align="center"><a accesskey="u" href="tutorial-sql.html">上一级</a></td><td width="40%" align="right"> <a accesskey="n" href="tutorial-agg.html">下一页</a></td></tr><tr><td width="40%" align="left" valign="top">2.5. 查询一个表 </td><td width="20%" align="center"><a accesskey="h" href="index.html">起始页</a></td><td width="40%" align="right" valign="top"> 2.7. 聚集函数</td></tr></table></div></body></html>

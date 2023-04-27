@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><title>25.1. SQL转储</title><link rel="stylesheet" type="text/css" href="stylesheet.css" /><link rev="made" href="pgsql-docs@postgresql.org" /><meta name="generator" content="DocBook XSL Stylesheets V1.79.1" /><link rel="prev" href="backup.html" title="第 25 章 备份和恢复" /><link rel="next" href="backup-file.html" title="25.2. 文件系统级别备份" /></head><body><div xmlns="http://www.w3.org/TR/xhtml1/transitional" class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="5" align="center">25.1. <acronym xmlns="http://www.w3.org/1999/xhtml" class="acronym">SQL</acronym>转储</th></tr><tr><td width="10%" align="left"><a accesskey="p" href="backup.html" title="第 25 章 备份和恢复">上一页</a> </td><td width="10%" align="left"><a accesskey="u" href="backup.html" title="第 25 章 备份和恢复">上一级</a></td><th width="60%" align="center">第 25 章 备份和恢复</th><td width="10%" align="right"><a accesskey="h" href="index.html" title="PostgreSQL 10.1 手册">起始页</a></td><td width="10%" align="right"> <a accesskey="n" href="backup-file.html" title="25.2. 文件系统级别备份">下一页</a></td></tr></table><hr></hr></div><div class="sect1" id="BACKUP-DUMP"><div class="titlepage"><div><div><h2 class="title" style="clear: both">25.1. <acronym class="acronym">SQL</acronym>转储</h2></div></div></div><div class="toc"><dl class="toc"><dt><span class="sect2"><a href="backup-dump.html#BACKUP-DUMP-RESTORE">25.1.1. 从转储中恢复</a></span></dt><dt><span class="sect2"><a href="backup-dump.html#BACKUP-DUMP-ALL">25.1.2. 使用<span class="application">pg_dumpall</span></a></span></dt><dt><span class="sect2"><a href="backup-dump.html#BACKUP-DUMP-LARGE">25.1.3. 处理大型数据库</a></span></dt></dl></div><p>   SQL 转储方法的思想是创建一个由SQL命令组成的文件，当把这个文件回馈给服务器时，服务器将利用其中的SQL命令重建与转储时状态一样的数据库。 <span class="productname">PostgreSQL</span>为此提供了工具<a class="xref" href="app-pgdump.html" title="pg_dump"><span class="refentrytitle">pg_dump</span></a>。这个工具的基本用法是：
+</p><pre class="synopsis">pg_dump <em class="replaceable"><code>dbname</code></em> &gt; <em class="replaceable"><code>outfile</code></em></pre><p>
+   正如你所见，<span class="application">pg_dump</span>把结果输出到标准输出。我们后面将看到这样做有什么用处。
+   尽管上述命令会创建一个文本文件，<span class="application">pg_dump</span>可以用其他格式创建文件以支持并行
+   和细粒度的对象恢复控制。
+  </p><p>   <span class="application">pg_dump</span>是一个普通的<span class="productname">PostgreSQL</span>客户端应用（尽管是个
+   相当聪明的东西）。这就意味着你可以在任何可以访问该数据库的远端主机上进行备份工作。但是请记住
+   <span class="application">pg_dump</span>不会以任何特殊权限运行。具体说来，就是它必须要有你想备份的表的读
+   权限，因此为了备份整个数据库你几乎总是必须以一个数据库超级用户来运行它（如果你没有足够的特权
+   来备份整个数据库，你仍然可以使用诸如<code class="option">-n <em class="replaceable"><code>schema</code></em></code>
+   或<code class="option">-t <em class="replaceable"><code>table</code></em></code>选项来备份该数据库中你能够
+   访问的部分）。
+  </p><p>   要声明<span class="application">pg_dump</span>连接哪个数据库服务器，使用命令行选项<code class="option">-h<em class="replaceable"><code>host</code></em></code>和 <code class="option">-p <em class="replaceable"><code>port</code></em></code>。 默认主机是本地主机或你的<code class="envar">PGHOST</code>环境变量指定的主机。 类似地，默认端口是环境变量<code class="envar">PGPORT</code>或（如果<code class="envar">PGPORT</code>不存在）内建的默认值。 （服务器通常有相同的默认值，所以还算方便。）
+  </p><p>   和任何其他<span class="productname">PostgreSQL</span>客户端应用一样， <span class="application">pg_dump</span>默认使用与当前操作系统用户名同名的数据库用户名进行连接。 要使用其他名字，要么声明<code class="option">-U</code>选项，要么设置环境变量<code class="envar">PGUSER</code>。请注意<span class="application">pg_dump</span>的连接也要通过客户认证机制（在<a class="xref" href="client-authentication.html" title="第 20 章 客户端认证">第 20 章</a>里描述）。
+  </p><p>   <span class="application">pg_dump</span>对于其他备份方法的一个重要优势是，<span class="application">pg_dump</span>的输出可以很容易地在新版本的<span class="productname">PostgreSQL</span>中载入，而文件级备份和连续归档都是极度的服务器版本限定的。<span class="application">pg_dump</span>也是唯一可以将一个数据库传送到一个不同机器架构上的方法，例如从一个32位服务器到一个64位服务器。
+  </p><p>   由<span class="application">pg_dump</span>创建的备份在内部是一致的， 也就是说，转储表现了<span class="application">pg_dump</span>开始运行时刻的数据库快照，且在<span class="application">pg_dump</span>运行过程中发生的更新将不会被转储。<span class="application">pg_dump</span>工作的时候并不阻塞其他的对数据库的操作。 （但是会阻塞那些需要排它锁的操作，比如大部分形式的<code class="command">ALTER TABLE</code>）
+  </p><div class="sect2" id="BACKUP-DUMP-RESTORE"><div class="titlepage"><div><div><h3 class="title">25.1.1. 从转储中恢复</h3></div></div></div><p>    <span class="application">pg_dump</span>生成的文本文件可以由<span class="application">psql</span>程序读取。 从转储中恢复的常用命令是：
+</p><pre class="synopsis">psql <em class="replaceable"><code>dbname</code></em> &lt; <em class="replaceable"><code>infile</code></em></pre><p>
+    其中<em class="replaceable"><code>infile</code></em>就是<span class="application">pg_dump</span>命令的输出文件。这条命令不会创建数据库<em class="replaceable"><code>dbname</code></em>，你必须在执行<span class="application">psql</span>前自己从<code class="literal">template0</code>创建（例如，用命令<code class="literal">createdb -T template0 <em class="replaceable"><code>dbname</code></em></code>）。<span class="application">psql</span>支持类似<span class="application">pg_dump</span>的选项用以指定要连接的数据库服务器和要使用的用户名。 参阅<a class="xref" href="app-psql.html" title="psql"><span class="refentrytitle"><span class="application">psql</span></span></a>的手册获取更多信息。
+    非文本文件转储可以使用<a class="xref" href="app-pgrestore.html" title="pg_restore"><span class="refentrytitle">pg_restore</span></a>工具来恢复。
+   </p><p>    在开始恢复之前，转储库中对象的拥有者以及在其上被授予了权限的用户必须已经存在。如果它们不存在，那么恢复过程将无法将对象创建成具有原来的所属关系以及权限（有时候这就是你所需要的，但通常不是）。
+   </p><p>    默认情况下，<span class="application">psql</span>脚本在遇到一个SQL错误后会继续执行。你也许希望在遇到一个SQL错误后让<span class="application">psql</span>退出，那么可以设置<code class="literal">ON_ERROR_STOP</code>变量来运行<span class="application">psql</span>，这将使<span class="application">psql</span>在遇到SQL错误后退出并返回状态3：
+</p><pre class="programlisting">psql --set ON_ERROR_STOP=on dbname &lt; infile</pre><p>
+    不管怎样，你将只能得到一个部分恢复的数据库。作为另一种选择，你可以指定让整个恢复作为一个单独的事务运行，这样恢复要么完全完成要么完全回滚。这种模式可以通过向<span class="application">psql</span>传递<code class="option">-1</code>或<code class="option">--single-transaction</code>命令行选项来指定。在使用这种模式时，注意即使是很小的一个错误也会导致运行了数小时的恢复被回滚。但是，这仍然比在一个部分恢复后手工清理复杂的数据库要更好。
+   </p><p>    <span class="application">pg_dump</span>和<span class="application">psql</span>读写管道的能力使得直接从一个服务器转储一个数据库到另一个服务器成为可能，例如：
+</p><pre class="programlisting">pg_dump -h <em class="replaceable"><code>host1</code></em> <em class="replaceable"><code>dbname</code></em> | psql -h <em class="replaceable"><code>host2</code></em> <em class="replaceable"><code>dbname</code></em></pre><p>
+   </p><div class="important"><h3 class="title">重要</h3><p>     <span class="application">pg_dump</span>产生的转储是相对于<code class="literal">template0</code>。这意味着在<code class="literal">template1</code>中加入的任何语言、过程等都会被<span class="application">pg_dump</span>转储。结果是，如果在恢复时使用的是一个自定义的<code class="literal">template1</code>，你必须从<code class="literal">template0</code>创建一个空的数据库，正如上面的例子所示。
+    </p></div><p>    一旦完成恢复，在每个数据库上运行<a class="xref" href="sql-analyze.html" title="ANALYZE"><span class="refentrytitle">ANALYZE</span></a>是明智的举动，这样优化器就有有用的统计数据了，更多信息参见<a class="xref" href="routine-vacuuming.html#VACUUM-FOR-STATISTICS" title="24.1.3. 更新规划器统计信息">第 24.1.3 节</a>和<a class="xref" href="routine-vacuuming.html#AUTOVACUUM" title="24.1.6. 自动清理后台进程">第 24.1.6 节</a>。更多关于如何有效地向<span class="productname">PostgreSQL</span>里装载大量数据的建议， 请参考<a class="xref" href="populate.html" title="14.4. 填充一个数据库">第 14.4 节</a>。
+   </p></div><div class="sect2" id="BACKUP-DUMP-ALL"><div class="titlepage"><div><div><h3 class="title">25.1.2. 使用<span class="application">pg_dumpall</span></h3></div></div></div><p>    <span class="application">pg_dump</span>每次只转储一个数据库，而且它不会转储关于角色或表空间（因为它们是集簇范围的）的信息。为了支持方便地转储一个数据库集簇的全部内容，提供了<a class="xref" href="app-pg-dumpall.html" title="pg_dumpall"><span class="refentrytitle"><span class="application">pg_dumpall</span></span></a>程序。<span class="application">pg_dumpall</span>备份一个给定集簇中的每一个数据库，并且也保留了集簇范围的数据，如角色和表空间定义。该命令的基本用法是：
+</p><pre class="synopsis">pg_dumpall &gt; <em class="replaceable"><code>outfile</code></em></pre><p>
+    转储的结果可以使用<span class="application">psql</span>恢复：
+</p><pre class="synopsis">psql -f <em class="replaceable"><code>infile</code></em> postgres</pre><p>
+    （实际上，你可以指定恢复到任何已有数据库名，但是如果你正在将转储载入到一个空集簇中则通常要用（<code class="literal">postgres</code>）。在恢复一个<span class="application">pg_dumpall</span>转储时常常需要具有数据库超级用户访问权限，因为它需要恢复角色和表空间信息。如果你在使用表空间，请确保转储中的表空间路径适合于新的安装。
+   </p><p>    <span class="application">pg_dumpall</span>工作时会发出命令重新创建角色、表空间和空数据库，接着为每一个数据库<span class="application">pg_dump</span>。这意味着每个数据库自身是一致的，但是不同数据库的快照并不同步。
+   </p><p>    集簇范围的数据可以使用<span class="application">pg_dumpall</span>的<code class="option">--globals-only</code>选项来单独转储。如果在单个数据库上运行<span class="application">pg_dump</span>命令，上述做法对于完全备份整个集簇是必需的。
+   </p></div><div class="sect2" id="BACKUP-DUMP-LARGE"><div class="titlepage"><div><div><h3 class="title">25.1.3. 处理大型数据库</h3></div></div></div><p>    在一些具有最大文件尺寸限制的操作系统上创建大型的<span class="application">pg_dump</span>输出文件可能会出现问题。幸运地是，<span class="application">pg_dump</span>可以写出到标准输出，因此你可以使用标准Unix工具来处理这种潜在的问题。有几种可能的方法：
+   </p><p><strong>使用压缩转储。. </strong>     你可以使用你喜欢的压缩程序，例如<span class="application">gzip</span>：
+
+</p><pre class="programlisting">pg_dump <em class="replaceable"><code>dbname</code></em> | gzip &gt; <em class="replaceable"><code>filename</code></em>.gz</pre><p>
+
+     恢复：
+
+</p><pre class="programlisting">gunzip -c <em class="replaceable"><code>filename</code></em>.gz | psql <em class="replaceable"><code>dbname</code></em></pre><p>
+
+     或者：
+
+</p><pre class="programlisting">cat <em class="replaceable"><code>filename</code></em>.gz | gunzip | psql <em class="replaceable"><code>dbname</code></em></pre><p>
+    </p><p><strong>使用<code class="command">split</code>。. </strong>     <code class="command">split</code>命令允许你将输出分割成较小的文件以便能够适应底层文件系统的尺寸要求。例如，让每一块的大小为1兆字节：
+
+</p><pre class="programlisting">pg_dump <em class="replaceable"><code>dbname</code></em> | split -b 1m - <em class="replaceable"><code>filename</code></em></pre><p>
+
+     恢复：
+
+</p><pre class="programlisting">cat <em class="replaceable"><code>filename</code></em>* | psql <em class="replaceable"><code>dbname</code></em></pre><p>
+    </p><p><strong>使用<span class="application">pg_dump</span>的自定义转储格式。. </strong>     如果<span class="productname">PostgreSQL</span>所在的系统上安装了<span class="application">zlib</span>压缩库，自定义转储格式将在写出数据到输出文件时对其压缩。这将产生和使用<code class="command">gzip</code>时差不多大小的转储文件，但是这种方式的一个优势是其中的表可以被有选择地恢复。下面的命令使用自定义转储格式来转储一个数据库：
+
+</p><pre class="programlisting">pg_dump -Fc <em class="replaceable"><code>dbname</code></em> &gt; <em class="replaceable"><code>filename</code></em></pre><p>
+
+     自定义格式的转储不是<span class="application">psql</span>的脚本，只能通过<span class="application">pg_restore</span>恢复，例如：
+
+</p><pre class="programlisting">pg_restore -d <em class="replaceable"><code>dbname</code></em> <em class="replaceable"><code>filename</code></em></pre><p>
+
+     详情请参阅<a class="xref" href="app-pgdump.html" title="pg_dump"><span class="refentrytitle">pg_dump</span></a>和<a class="xref" href="app-pgrestore.html" title="pg_restore"><span class="refentrytitle">pg_restore</span></a>。
+    </p><p>    对于非常大型的数据库，你可能需要将<code class="command">split</code>配合其他两种方法之一进行使用。
+   </p><p><strong>使用<span class="application">pg_dump</span>的并行转储特性。. </strong>     为了加快转储一个大型数据库的速度，你可以使用<span class="application">pg_dump</span>的并行模式。它将同时转储多个表。你可以使用<code class="command">-j</code>参数控制并行度。并行转储只支持“目录”归档格式。
+
+</p><pre class="programlisting">pg_dump -j <em class="replaceable"><code>num</code></em> -F d -f <em class="replaceable"><code>out.dir</code></em> <em class="replaceable"><code>dbname</code></em></pre><p>
+
+     你可以使用<code class="command">pg_restore -j</code>来以并行方式恢复一个转储。它只能适合于“自定义”归档或者“目录”归档，但不管归档是否由<code class="command">pg_dump -j</code>创建。
+    </p></div></div><div class="navfooter"><hr /><table width="100%" summary="Navigation footer"><tr><td width="40%" align="left"><a accesskey="p" href="backup.html">上一页</a> </td><td width="20%" align="center"><a accesskey="u" href="backup.html">上一级</a></td><td width="40%" align="right"> <a accesskey="n" href="backup-file.html">下一页</a></td></tr><tr><td width="40%" align="left" valign="top">第 25 章 备份和恢复 </td><td width="20%" align="center"><a accesskey="h" href="index.html">起始页</a></td><td width="40%" align="right" valign="top"> 25.2. 文件系统级别备份</td></tr></table></div></body></html>

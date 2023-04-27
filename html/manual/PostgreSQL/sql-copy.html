@@ -1,0 +1,413 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><title>COPY</title><link rel="stylesheet" type="text/css" href="stylesheet.css" /><link rev="made" href="pgsql-docs@postgresql.org" /><meta name="generator" content="DocBook XSL Stylesheets V1.79.1" /><link rel="prev" href="sql-commit-prepared.html" title="COMMIT PREPARED" /><link rel="next" href="sql-create-access-method.html" title="CREATE ACCESS METHOD" /></head><body><div xmlns="http://www.w3.org/TR/xhtml1/transitional" class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="5" align="center">COPY</th></tr><tr><td width="10%" align="left"><a accesskey="p" href="sql-commit-prepared.html" title="COMMIT PREPARED">上一页</a> </td><td width="10%" align="left"><a accesskey="u" href="sql-commands.html" title="SQL 命令">上一级</a></td><th width="60%" align="center">SQL 命令</th><td width="10%" align="right"><a accesskey="h" href="index.html" title="PostgreSQL 10.1 手册">起始页</a></td><td width="10%" align="right"> <a accesskey="n" href="sql-create-access-method.html" title="CREATE ACCESS METHOD">下一页</a></td></tr></table><hr></hr></div><div class="refentry" id="SQL-COPY"><div class="titlepage"></div><a id="idp42161216" class="indexterm"></a><div class="refnamediv"><h2><span class="refentrytitle">COPY</span></h2><p>COPY — 在一个文件和一个表之间复制数据</p></div><div class="refsynopsisdiv"><h2>大纲</h2><pre class="synopsis">COPY <em class="replaceable"><code>table_name</code></em> [ ( <em class="replaceable"><code>column_name</code></em> [, ...] ) ]
+    FROM { '<em class="replaceable"><code>filename</code></em>' | PROGRAM '<em class="replaceable"><code>command</code></em>' | STDIN }
+    [ [ WITH ] ( <em class="replaceable"><code>option</code></em> [, ...] ) ]
+
+COPY { <em class="replaceable"><code>table_name</code></em> [ ( <em class="replaceable"><code>column_name</code></em> [, ...] ) ] | ( <em class="replaceable"><code>query</code></em> ) }
+    TO { '<em class="replaceable"><code>filename</code></em>' | PROGRAM '<em class="replaceable"><code>command</code></em>' | STDOUT }
+    [ [ WITH ] ( <em class="replaceable"><code>option</code></em> [, ...] ) ]
+
+<span class="phrase">其中 <em class="replaceable"><code>option</code></em> 可以是下列之一：</span>
+
+    FORMAT <em class="replaceable"><code>format_name</code></em>
+    OIDS [ <em class="replaceable"><code>boolean</code></em> ]
+    FREEZE [ <em class="replaceable"><code>boolean</code></em> ]
+    DELIMITER '<em class="replaceable"><code>delimiter_character</code></em>'
+    NULL '<em class="replaceable"><code>null_string</code></em>'
+    HEADER [ <em class="replaceable"><code>boolean</code></em> ]
+    QUOTE '<em class="replaceable"><code>quote_character</code></em>'
+    ESCAPE '<em class="replaceable"><code>escape_character</code></em>'
+    FORCE_QUOTE { ( <em class="replaceable"><code>column_name</code></em> [, ...] ) | * }
+    FORCE_NOT_NULL ( <em class="replaceable"><code>column_name</code></em> [, ...] )
+    FORCE_NULL ( <em class="replaceable"><code>column_name</code></em> [, ...] )
+    ENCODING '<em class="replaceable"><code>encoding_name</code></em>'</pre></div><div class="refsect1" id="idp42182480"><h2>描述</h2><p>   <code class="command">COPY</code>在
+   <span class="productname">PostgreSQL</span>表和标准文件系统文件之间
+   移动数据。<code class="command">COPY TO</code>把一个表的内容复制
+   <span class="emphasis"><em>到</em></span>一个文件，而<code class="command">COPY FROM</code>
+   则<span class="emphasis"><em>从</em></span>一个文件复制数据到一个表（把数据追加到表中原有数
+   据）。<code class="command">COPY TO</code>也能复制一个
+   <code class="command">SELECT</code>查询的结果。
+  </p><p>   如果指定了一个列列表，<code class="command">COPY</code>将只把指定列的
+   数据复制到文件或者从文件复制数据到指定列。如果表中有列不在列列表中，
+   <code class="command">COPY FROM</code>将会为那些列插入默认值。
+  </p><p>   带一个文件名的<code class="command">COPY</code>指示
+   <span class="productname">PostgreSQL</span>服务器直接从一个文件读取
+   或者写入到一个文件。该文件必须是
+   <span class="productname">PostgreSQL</span>用户（运行服务器的用户 ID）
+   可访问的并且应该以服务器的视角来指定其名称。当指定了
+   <code class="literal">PROGRAM</code>时，服务器执行给定的命令并且从该程序的标准
+   输出读取或者写入到该程序的标准输入。该程序必须以服务器的视角指定，并且
+   必须是<span class="productname">PostgreSQL</span>用户可执行的。在指定
+   <code class="literal">STDIN</code>或者<code class="literal">STDOUT</code>时，数据会通过客
+   户端和服务器之间的连接传输。
+  </p></div><div class="refsect1" id="idp42196208"><h2>参数</h2><div class="variablelist"><dl class="variablelist"><dt><span class="term"><em class="replaceable"><code>table_name</code></em></span></dt><dd><p>      一个现有表的名称（可以是模式限定的）。
+     </p></dd><dt><span class="term"><em class="replaceable"><code>column_name</code></em></span></dt><dd><p>      可选的要被复制的列列表。如果没有指定列列表，则该表的所有列都会被复制。
+     </p></dd><dt><span class="term"><em class="replaceable"><code>query</code></em></span></dt><dd><p>      其结果要被复制的<a class="xref" href="sql-select.html" title="SELECT"><span class="refentrytitle">SELECT</span></a>、
+      <a class="xref" href="sql-values.html" title="VALUES"><span class="refentrytitle">VALUES</span></a>、
+      <a class="xref" href="sql-insert.html" title="INSERT"><span class="refentrytitle">INSERT</span></a>、<a class="xref" href="sql-update.html" title="UPDATE"><span class="refentrytitle">UPDATE</span></a>或者
+      <a class="xref" href="sql-delete.html" title="DELETE"><span class="refentrytitle">DELETE</span></a>命令。注意查询周围的圆括号是必要的。
+     </p><p>      对于<code class="command">INSERT</code>、<code class="command">UPDATE</code>以及
+      <code class="command">DELETE</code>查询，必须提供一个 RETURNING 子句并且
+      目标关系不能具有会扩展成多条语句的条件规则、
+      <code class="literal">ALSO</code>规则或者<code class="literal">INSTEAD</code>规则。
+     </p></dd><dt><span class="term"><em class="replaceable"><code>filename</code></em></span></dt><dd><p>      输入或者输出文件的路径名。一个输入文件的名称可以是一个绝对或相对路径，
+      但一个输出文件的名称必须是绝对路径。Windows 用户可能需要使用一个
+       <code class="literal">E''</code>字符串并且双写路径名称中使用的任何反斜线。
+     </p></dd><dt><span class="term"><code class="literal">PROGRAM</code></span></dt><dd><p>      一个要执行的命令。在<code class="command">COPY FROM</code>中，输入
+      将从该命令的标准输出读取，而在<code class="command">COPY TO</code>中，输出会
+      写入到该命令的标准输入。
+     </p><p>      注意该命令是由 shell 调用，因此如果你需要传递任何来自不可信来源的
+      参数给 shell 命令，你必须小心地剥离那些可能对 shell 有特殊意义的特殊
+      字符。出于安全原因，最好使用一个固定的命令字符串，或者至少避免传递
+      任何用户输入到其中。
+     </p></dd><dt><span class="term"><code class="literal">STDIN</code></span></dt><dd><p>      指定输入来自客户端应用。
+     </p></dd><dt><span class="term"><code class="literal">STDOUT</code></span></dt><dd><p>      指定输出会去到客户端应用。
+     </p></dd><dt><span class="term"><em class="replaceable"><code>boolean</code></em></span></dt><dd><p>      指定选中的选项是应该被关闭还是打开。可以写<code class="literal">TRUE</code>、
+      <code class="literal">ON</code>或<code class="literal">1</code>来启用选项，写
+      <code class="literal">FALSE</code>、<code class="literal">OFF</code>或<code class="literal">0</code>禁用它。
+      <em class="replaceable"><code>boolean</code></em>值也可以被省略，
+      那样会假定为<code class="literal">TRUE</code>。
+     </p></dd><dt><span class="term"><code class="literal">FORMAT</code></span></dt><dd><p>      选择要读取或者写入的数据格式：
+      <code class="literal">text</code>、
+      <code class="literal">csv</code>（逗号分隔值）或者<code class="literal">binary</code>。
+      默认是<code class="literal">text</code>。
+     </p></dd><dt><span class="term"><code class="literal">OIDS</code></span></dt><dd><p>      指定为每一行复制 OID（如果为一个没有 OID 的表指定了
+      <code class="literal">OIDS</code>或者正在复制的是一个<em class="replaceable"><code>查询</code></em>，则会出现错误）。
+     </p></dd><dt><span class="term"><code class="literal">FREEZE</code></span></dt><dd><p>      请求复制已经完成了行冻结的数据，就好像在运行
+      <code class="command">VACUUM FREEZE</code>命令之后复制。这是为了初始
+      数据载入的性能而设计的。只有被载入表已经在当前子事务中被创建
+      或截断、该事务中没有游标打开并且该事务没有持有更旧的快照时，
+      行才会被冻结。
+     </p><p>      注意一旦成功地载入，所有其他会话将能立即看到该数据。这违背了
+      普通的 MVCC 可见性规则，指定该选项的用户应该注意这可能会导致
+      的潜在问题。
+     </p></dd><dt><span class="term"><code class="literal">DELIMITER</code></span></dt><dd><p>      指定分隔文件每行中各列的字符。文本格式中默认是一个制表符，
+      而<code class="literal">CSV</code>格式中默认是一个逗号。这必须是一个单一
+      的单字节字符。使用<code class="literal">binary</code>格式时不允许这个选项。
+     </p></dd><dt><span class="term"><code class="literal">NULL</code></span></dt><dd><p>      指定表示一个空值的字符串。文本格式中默认是
+      <code class="literal">\N</code>（反斜线-N），<code class="literal">CSV</code>格式中默认
+      是一个未加引用的空串。在你不想区分空值和空串的情况下，即使在文本
+      格式中你也可能更喜欢空串。使用<code class="literal">binary</code>格式时不允许这
+      个选项。
+     </p><div class="note"><h3 class="title">注意</h3><p>       在使用<code class="command">COPY FROM</code>时，任何匹配
+       这个串的数据项将被存储为空值，因此你应该确定你使用的是和
+       <code class="command">COPY TO</code>时相同的串。
+      </p></div></dd><dt><span class="term"><code class="literal">HEADER</code></span></dt><dd><p>      指定文件包含标题行，其中有每一列的名称。在输出时，第一行包含
+      来自表的列名。在输入时，第一行会被忽略。只有使用
+      <code class="literal">CSV</code>格式时才允许这个选项。
+     </p></dd><dt><span class="term"><code class="literal">QUOTE</code></span></dt><dd><p>      指定一个数据值被引用时使用的引用字符。默认是双引号。
+      这必须是一个单一的单字节字符。只有使用
+      <code class="literal">CSV</code>格式时才允许这个选项。
+     </p></dd><dt><span class="term"><code class="literal">ESCAPE</code></span></dt><dd><p>      指定应该出现在一个匹配<code class="literal">QUOTE</code>值的数据字符之前
+      的字符。默认和<code class="literal">QUOTE</code>值一样（这样如果引用字符
+      出现在数据中，它会被双写）。这必须是一个单一的单字节字符。
+      只有使用<code class="literal">CSV</code>格式时才允许这个选项。
+     </p></dd><dt><span class="term"><code class="literal">FORCE_QUOTE</code></span></dt><dd><p>      强制必须对每个指定列中的所有非<code class="literal">NULL</code>值使用引用。
+      <code class="literal">NULL</code>输出不会被引用。如果指定了<code class="literal">*</code>，
+      所有列的非<code class="literal">NULL</code>值都将被引用。只有在
+      <code class="command">COPY TO</code>中使用<code class="literal">CSV</code>格式时才允许
+      这个选项。
+     </p></dd><dt><span class="term"><code class="literal">FORCE_NOT_NULL</code></span></dt><dd><p>      不要把指定列的值与空值串匹配。在空值串就是空串的默认情况下，
+      这意味着空串将被读作长度为零的字符串而不是空值（即使它们没有
+      被引用）。只有在<code class="command">COPY FROM</code>中使用
+      <code class="literal">CSV</code>格式时才允许这个选项。
+     </p></dd><dt><span class="term"><code class="literal">FORCE_NULL</code></span></dt><dd><p>      将指定列的值与空值串匹配（即使它已经被加上引号），并且在找到
+      匹配时将该值设置为<code class="literal">NULL</code>。在空值串就是空串的默认
+      情况下，这会把一个被引用的空串转换为 NULL。
+      只有在<code class="command">COPY FROM</code>中使用
+      <code class="literal">CSV</code>格式时才允许这个选项。
+     </p></dd><dt><span class="term"><code class="literal">ENCODING</code></span></dt><dd><p>      指定文件被以<em class="replaceable"><code>encoding_name</code></em>编码。如果省略
+      这个选项，将使用当前的客户端编码。详见下文的注解。
+     </p></dd></dl></div></div><div class="refsect1" id="idp42265568"><h2>输出</h2><p>   在成功完成时，一个<code class="command">COPY</code>命令会返回一个形为
+</p><pre class="screen">COPY <em class="replaceable"><code>count</code></em></pre><p>
+   的命令标签。
+   <em class="replaceable"><code>count</code></em>是被复制
+   的行数。
+  </p><div class="note"><h3 class="title">注意</h3><p>    如果命令不是<code class="literal">COPY ... TO STDOUT</code>或者等效的
+    <span class="application">psql</span>元命令<code class="literal">\copy ... to stdout</code>，
+    <span class="application">psql</span>将只打印这个命令标签。这是为了防止弄混
+    命令标签和刚刚打印的数据。
+   </p></div></div><div class="refsect1" id="idp42272528"><h2>注解</h2><p>    <code class="command">COPY TO</code>只能被用于纯粹的表，不能用于视图。
+    不过你可以写<code class="literal">COPY (SELECT * FROM
+    <em class="replaceable"><code>viewname</code></em>) TO ...</code>
+	拷贝一个视图的当前内容。
+   </p><p>    <code class="command">COPY FROM</code>可以被用于纯粹的表和具有
+	<code class="literal">INSTEAD OF INSERT</code>触发器的视图。
+   </p><p>    <code class="command">COPY</code>只处理提到的表，它不会从子表复制
+    数据或者复制数据到子表中。例如
+    <code class="literal">COPY <em class="replaceable"><code>table</code></em> TO</code>
+    会显示与<code class="literal">SELECT * FROM ONLY <em class="replaceable"><code>table</code></em></code>相同的数据。而<code class="literal">COPY
+    (SELECT * FROM <em class="replaceable"><code>table</code></em>) TO ...</code>
+    可以被用来转储一个继承层次中的所有数据。
+   </p><p>    你必须拥有被<code class="command">COPY TO</code>读取的表上的选择特权，
+    以及被<code class="command">COPY FROM</code>插入的表上的插入特权。
+    拥有在命令中列出的列上的特权就足够了。
+   </p><p>    如果对表启用行级安全性，则相关的<code class="command">SELECT</code>
+	策略将应用于<code class="literal">COPY <em class="replaceable"><code>table</code></em> TO</code>语句。
+	目前，具有行级安全性的表不支持<code class="command">COPY FROM</code>。
+	改为使用等效的<code class="command">INSERT</code>语句。
+   </p><p>    <code class="command">COPY</code>命令中提到的文件会被服务器（而不是
+    客户端应用）直接读取或写入。因此它们必须位于数据库服务器（不是客户
+    端）的机器上或者是数据库服务器可以访问的。它们必须是
+    <span class="productname">PostgreSQL</span>用户（运行服务器的用户 
+    ID）可访问的并且是可读或者可写的。类似地，用<code class="literal">PROGRAM</code>
+    指定的命令也会由服务器（不是客户端应用）直接执行，它也必须是
+    <span class="productname">PostgreSQL</span>用户可以执行的。
+    只允许数据库超级用户<code class="command">COPY</code>一个文件或者命令，
+    因为它允许读取或者写入服务器有特权访问的任何文件。
+   </p><p>    不要把<code class="command">COPY</code>和
+    <span class="application">psql</span>指令
+    <code class="command"><a class="link" href="app-psql.html#APP-PSQL-META-COMMANDS-COPY">\copy</a></code>
+    弄混。<code class="command">\copy</code>会调用
+    <code class="command">COPY FROM STDIN</code>或者<code class="command">COPY TO
+    STDOUT</code>，然后读取/存储一个
+    <span class="application">psql</span>客户端可访问的文件中的数据。
+    因此，在使用<code class="command">\copy</code>时，文件的可访
+    问性和访问权利取决于客户端而不是服务器。
+   </p><p>    我们推荐在<code class="command">COPY</code>中使用的文件名总是
+    指定为一个绝对路径。在<code class="command">COPY TO</code>的
+    情况下服务器会强制这一点，但是对于
+    <code class="command">COPY FROM</code>你可以选择从一个用相对
+    路径指定的文件中读取。该路径将根据服务器进程（而不是客户端）
+    的工作目录（通常是集簇的数据目录）解释。
+   </p><p>    用<code class="literal">PROGRAM</code>执行一个命令可能会受到操作系统
+    的访问控制机制（如 SELinux）的限制。
+   </p><p>    <code class="command">COPY FROM</code>将调用目标表上的任何触发器
+    和检查约束。但是它不会调用规则。
+   </p><p>    对于标识列，<code class="command">COPY FROM</code>命令将始终写入输入数据中提供的列值，
+	就像<code class="command">INSERT</code>选项<code class="literal">OVERRIDING SYSTEM VALUE</code>。
+   </p><p>    <code class="command">COPY</code>输入和输出受到
+    <code class="varname">DateStyle</code>的影响。为了确保到其他
+    可能使用非默认<code class="varname">DateStyle</code>设置的
+    <span class="productname">PostgreSQL</span>安装的可移植性，在使用
+    <code class="command">COPY TO</code>前应该把
+    <code class="varname">DateStyle</code>设置为<code class="literal">ISO</code>。避免转储把
+    <code class="varname">IntervalStyle</code>设置为
+    <code class="literal">sql_standard</code>的数据也是一个好主意，因为负的区间值可能会
+    被具有不同<code class="varname">IntervalStyle</code>设置的服务器解释错误。
+   </p><p>    即使数据会被服务器直接从一个文件读取或者写入一个文件而不通过
+    客户端，输入数据也会被根据<code class="literal">ENCODING</code>选项或者当前
+    客户端编码解释，并且输出数据会被根据<code class="literal">ENCODING</code>或
+    者当前客户端编码进行编码。
+   </p><p>    <code class="command">COPY</code>会在第一个错误处停止操作。这在
+    <code class="command">COPY TO</code>的情况下不会导致问题，但是
+    在<code class="command">COPY FROM</code>中目标表将已经收到了一
+    些行。这些行将不会变得可见或者可访问，但是它们仍然占据磁盘空间。
+    如果在一次大型的复制操作中出现错误，这可能浪费相当可观的磁盘空间。
+    你可能希望调用<code class="command">VACUUM</code>来恢复被浪费的
+    空间。
+   </p><p>    <code class="literal">FORCE_NULL</code>和<code class="literal">FORCE_NOT_NULL</code>可以被同时
+    用在同一列上。这会导致把已被引用的空值串转换为空值并且把未引用的空值
+    串转换为空串。
+   </p></div><div class="refsect1" id="idp42320976"><h2>文件格式</h2><div class="refsect2" id="idp42321392"><h3>文本格式</h3><p>    在使用<code class="literal">text</code>格式时，读取或写入的是一个文本文件，
+    其中每一行就是表中的一行。一行中的列被定界字符分隔。列值
+    本身是由输出函数产生的或者是可被输入函数接受的属于每个属性
+    数据类型的字符串。在为空值的列的位置使用指定的空值串。如果
+    输入文件的任何行包含比预期更多或者更少的列，
+    <code class="command">COPY FROM</code>将会抛出一个错误。如
+    果指定了<code class="literal">OIDS</code>，在处理用户数据列之前，
+    会从第一列读取 OID 或者把 OID 写入第一列。
+   </p><p>    数据的结束可以表示为一个只包含反斜线-点号（<code class="literal">\.</code>）的
+    单一行。从一个文件读取时，数据结束标记并不是必要的，因为文件
+    结束符就已经足够用了。只有使用 3.0 客户端协议之前的客户端应用
+    复制数据时才需要它。
+   </p><p>    反斜线字符（<code class="literal">\</code>）可以被用在
+    <code class="command">COPY</code>数据中来引用被用作行或者列定界符的
+    字符。特别地，如果下列字符作为一个列值的一部分出现，它们
+    <span class="emphasis"><em>必须</em></span>被前置一个反斜线：反斜线本身、新行、回车以及
+    当前的定界符字符。
+   </p><p>    <code class="command">COPY TO</code>会不加任何反斜线返回指定的空值串。
+    相反，<code class="command">COPY FROM</code>会在移除反斜线之前把输入
+    与空值串相匹配。因此，一个空值串（例如<code class="literal">\N</code>）不会与实
+    际的数据值<code class="literal">\N</code>（它会被表示为<code class="literal">\\N</code>）搞混。
+   </p><p>    <code class="command">COPY FROM</code>识别下列特殊的反斜线序列：
+
+   </p><div class="informaltable"><table class="informaltable" border="1"><colgroup><col /><col /></colgroup><thead><tr><th>序列</th><th>表示</th></tr></thead><tbody><tr><td><code class="literal">\b</code></td><td>退格 (ASCII 8)</td></tr><tr><td><code class="literal">\f</code></td><td>换页 (ASCII 12)</td></tr><tr><td><code class="literal">\n</code></td><td>新行 (ASCII 10)</td></tr><tr><td><code class="literal">\r</code></td><td>回车 (ASCII 13)</td></tr><tr><td><code class="literal">\t</code></td><td>制表 (ASCII 9)</td></tr><tr><td><code class="literal">\v</code></td><td>纵向制表 (ASCII 11)</td></tr><tr><td><code class="literal">\</code><em class="replaceable"><code>digits</code></em></td><td>反斜线后跟一到三个十进制位表示该数字代码对应的字符</td></tr><tr><td><code class="literal">\x</code><em class="replaceable"><code>digits</code></em></td><td>反斜线加<code class="literal">x</code>后跟一到三个十六进制位表示该数字代码对应的字符</td></tr></tbody></table></div><p>
+
+    当前，<code class="command">COPY TO</code>不会发出一个十进制或十六进制位
+    反斜线序列，但是它确实把上面列出的其他序列用于那些控制字符。
+   </p><p>    任何上述表格中没有提到的其他反斜线字符将被当作表示其本身。不过，要注意
+    增加不必要的反斜线，因为那可能意外地产生一个匹配数据结束标记（
+    <code class="literal">\.</code>）或者空值串（默认是<code class="literal">\N</code>）的字符串。这些字符串
+    将在完成任何其他反斜线处理之前被识别。
+   </p><p>    强烈建议产生<code class="command">COPY</code>数据的应用把数据新行和回车分别
+    转换为<code class="literal">\n</code>和<code class="literal">\r</code>序列。当前可以把一个数据回车表示为
+    一个反斜线和回车，把一个数据新行表示为一个反斜线和新行。不过，未来的发行
+    可能不会接受这些表示。如果在不同的机器之间（例如从 Unix 到 Windows）
+    传输<code class="command">COPY</code>文件，它们也很容易受到破坏。
+   </p><p>    <code class="command">COPY TO</code>将用一个 Unix 风格的新行（
+    <span class="quote">“<span class="quote"><code class="literal">\n</code></span>”</span>）终止每一行。运行在 Microsoft Windows
+    上的服务器则会输出回车/新行（<span class="quote">“<span class="quote"><code class="literal">\r\n</code></span>”</span>），不过只对
+    <code class="command">COPY</code>到一个服务器文件这样做。为了做到跨平台一致，
+    <code class="command">COPY TO STDOUT</code>总是发送<span class="quote">“<span class="quote"><code class="literal">\n</code></span>”</span>而
+    不管服务器平台是什么。<code class="command">COPY FROM</code>能够处理以
+    新行、回车或者回车/新行结尾的行。为了减少由作为数据的未加反斜线的新行
+    或者回车带来的风险，如果输出中的行结束并不完全相似，
+    <code class="command">COPY FROM</code>将会抱怨。
+   </p></div><div class="refsect2" id="idp42358640"><h3>CSV 格式</h3><p>    这种格式选项被用于导入和导出很多其他程序（例如电子表格）使用的逗号
+    分隔值（<code class="literal">CSV</code>）文件格式。不同于
+    <span class="productname">PostgreSQL</span>标准文本格式使用的转义
+    规则，它产生并且识别一般的 CSV 转义机制。
+   </p><p>    每个记录中的值用<code class="literal">DELIMITER</code>字符分隔。如果值包含
+    定界符字符、<code class="literal">QUOTE</code>字符、<code class="literal">NULL</code>字符串、
+    一个回车或者换行字符，那么整个值会被加上<code class="literal">QUOTE</code>字符
+    作为前缀或者后缀，并且在该值内<code class="literal">QUOTE</code>字符或者
+    <code class="literal">ESCAPE</code>字符的任何一次出现之前放上转义字符。在输出
+    指定列中非<code class="literal">NULL</code>值时，还可以使用
+    <code class="literal">FORCE_QUOTE</code>来强制加上引用。
+   </p><p>    <code class="literal">CSV</code>格式没有标准方式来区分<code class="literal">NULL</code>值和空字符串。
+    <span class="productname">PostgreSQL</span>的<code class="command">COPY</code>用引用来处理
+    这种区分工作。<code class="literal">NULL</code>被按照<code class="literal">NULL</code>参数字符串输出
+    并且不会被引用，而匹配<code class="literal">NULL</code>参数字符串的非<code class="literal">NULL</code>
+    值会被加上引用。例如，使用默认设置时，<code class="literal">NULL</code>被写作一个未
+    被引用的空字符串，而一个空字符串数据值会被写成带双引号（<code class="literal">""</code>）。
+    值的读取遵循类似的规则。你可以用<code class="literal">FORCE_NOT_NULL</code>来防止
+    对指定列的<code class="literal">NULL</code>输入比较。你还可以使用
+    <code class="literal">FORCE_NULL</code>把带引用的空值字符串数据值转换成<code class="literal">NULL</code>。
+   </p><p>    因为反斜线在<code class="literal">CSV</code>格式中不是一种特殊字符，数据结束标记
+    <code class="literal">\.</code>也可以作为一个数据值出现。为了避免任何解释误会，在
+    一行上作为孤项出现的<code class="literal">\.</code>数据值输出时会自动被引用，并且
+    输入时如果被引用，则不会被解释为数据结束标记。如果正在载入一个由
+    另一个应用创建的文件并且其中具有一个未被引用的列且可能具有
+    <code class="literal">\.</code>值，你可能需要在输入文件中引用该值。
+   </p><div class="note"><h3 class="title">注意</h3><p>     <code class="literal">CSV</code>格式中，所有字符都是有意义的。一个被空白或者其他
+     非 <code class="literal">DELIMITER</code>字符围绕的引用值将包括那些字符。在导入
+     来自用空白填充<code class="literal">CSV</code>行到固定长度的系统的数据时，这可能
+     会导致错误。如果出现这种情况，在导入数据到
+     <span class="productname">PostgreSQL</span>之前，你可能需要预处理该
+     <code class="literal">CSV</code>文件以移除拖尾的空白。
+    </p></div><div class="note"><h3 class="title">注意</h3><p>     CSV 格式将识别并且产生带有包含嵌入的回车和换行的引用值的 CSV 
+     文件。因此文件并不限于文本格式文件的每个表行一行的形式。
+    </p></div><div class="note"><h3 class="title">注意</h3><p>     很多程序会产生奇怪的甚至偶尔是不合常理的 CSV 文件，因此该文件
+     格式更像是一种习惯而不是标准。因此你可能会碰到一些无法使用这种
+     机制导入的文件，并且<code class="command">COPY</code>也可能产生其他程序无
+     法处理的文件。
+    </p></div></div><div class="refsect2" id="idp42388176"><h3>二进制格式</h3><p>    <code class="literal">binary</code>格式选项导致所有数据被以二进制格式
+    而不是文本格式存储/读取。它比文本和<code class="literal">CSV</code>格式要
+    快一些，但是二进制格式文件在不同的机器架构和
+    <span class="productname">PostgreSQL</span>版本之间的可移
+    植性要差些。还有，二进制格式与数据格式非常相关。例如不能从
+    一个<code class="type">smallint</code>列中输出二进制数据并且把它读入到一个
+    <code class="type">integer</code>列中，虽然这样做在文本格式中是可行的。
+   </p><p>    <code class="literal">binary</code>人间格式由一个文件头、零个或者更多个包含
+    行数据的元组以及一个文件尾构成。头部和数据都以网络字节序表示。
+   </p><div class="note"><h3 class="title">注意</h3><p>     7.4 之前的<span class="productname">PostgreSQL</span>发行
+     使用一种不同的二进制文件格式。
+    </p></div><div class="refsect3" id="idp42394560"><h4>文件头</h4><p>     文件头由 15 字节的固定域构成，后面跟着一个变长的头部扩展区。
+     固定域有：
+
+    </p><div class="variablelist"><dl class="variablelist"><dt><span class="term">签名</span></dt><dd><p>11-字节的序列<code class="literal">PGCOPY\n\377\r\n\0</code> — 注意
+零字节是签名的一个必要的部分（该签名是为了能容易地发现文件被
+无法正确处理 8 位字符编码的传输所破坏。这个签名将被行尾翻译过
+滤器、删除零字节、删除高位或者奇偶修改等改变）。
+       </p></dd><dt><span class="term">标志域</span></dt><dd><p>32-位整数位掩码，用以表示该文件格式的重要方面。位被编号为
+从 0 （<acronym class="acronym">LSB</acronym>）到 31（<acronym class="acronym">MSB</acronym>）。
+注意这个域以网络字节序存放（最高有效位在前），所有该文件格式
+中使用的整数域都是这样。16-31 位被保留用来表示严重的文件格式
+问题， 读取者如果在这个范围内发现预期之外的被设置位，它应该
+中止。0-15 位被保留用来表示向后兼容的格式问题，读取者应该简单
+地略过这个范围内任何预期之外的被设置位。当前只定义了一个标志
+位，其他位必须为零：
+        </p><div class="variablelist"><dl class="variablelist"><dt><span class="term">位 16</span></dt><dd><p>            如果为 1，表示数据中包含 OID；如果为 0，则不包含
+           </p></dd></dl></div></dd><dt><span class="term">头部扩展区长度</span></dt><dd><p>32-为整数，表示头部剩余部分的以字节计的长度，不包括其本身。
+当前，这个长度为零，并且其后就紧跟着第一个元组。未来对该
+格式的更改可能会允许在头部中表示额外的数据。如果读取者不知
+道要对头部扩展区数据做什么，可以安静地跳过它。
+       </p></dd></dl></div><p>
+    </p><p>头部扩展区域被预期包含一个能自我解释的块的序列。
+该标志域并不想告诉读取者扩展数据是什么。详细的
+头部扩展内容的设计留给后来的发行去做。
+    </p><p>     这种设计允许向后兼容的头部增加（增加头部扩展块或者设置低位标志位）以及
+     非向后兼容的更改（设置高位标志位来表示这类更改并且在需要时向扩展区域
+     中增加支持数据）。
+    </p></div><div class="refsect3" id="idp42404576"><h4>元组</h4><p>每一个元组由一个表示元组中域数量的 16 位整数计数开始（当前，一个表中
+的所有元组都应该具有相同的计数，但是这可能不会总是为真）。然后是元组
+中的每一个域，它是一个 32 位的长度字，后面则跟随着这么多个字节的域数
+据（长度字不包括其本身，并且可以是零）。作为一种特殊情况，-1 表示一个
+NULL 域值。在 NULL 情况下，后面不会跟随值字节。
+    </p><p>在域之间没有对齐填充或者任何其他额外的数据。
+    </p><p>当前，一个二进制格式文件中的所有数据值都被假设为二进制格式（格式代码一）。
+可以预见未来的扩展可能会增加一个允许独立指定各列的格式代码的头部域。
+    </p><p>要为实际的元组数据决定合适的二进制格式，你应该参考
+<span class="productname">PostgreSQL</span>源码，特别是用于各列
+数据类型的<code class="function">*send</code>和<code class="function">*recv</code>函数（通常可
+以在源码的<code class="filename">src/backend/utils/adt/</code>目录中找到
+这些函数）。
+    </p><p>如果文件中包含 OID，OID 域会紧跟在域计数字之后。它是一个普通域，
+不过它没有被包含在域计数中。特别地，它有一个长度字 — 这将
+允许容易地处理 4 字节和 8 字节 OID 的选择，并且将允许在需要时把
+OID 显示为空值。
+    </p></div><div class="refsect3" id="idp42397184"><h4>文件尾</h4><p>     文件位由一个包含 -1 的 16 位整数字组成。这很容易与一个
+     元组的域计数字区分开。
+    </p><p>     如果一个域计数字不是 -1 也不是期望的列数，读取者应该报告错误。
+     这提供了一种针对某种数据不同步的额外检查。
+    </p></div></div></div><div class="refsect1" id="idp42412832"><h2>示例</h2><p>   下面的例子使用竖线（<code class="literal">|</code>）作为域定界符把一个表复制到客户端：
+</p><pre class="programlisting">COPY country TO STDOUT (DELIMITER '|');</pre><p>
+  </p><p>   从一个文件中复制数据到<code class="literal">country</code>表中：
+</p><pre class="programlisting">COPY country FROM '/usr1/proj/bray/sql/country_data';</pre><p>
+  </p><p>   只把名称以 'A' 开头的国家复制到一个文件中：
+</p><pre class="programlisting">COPY (SELECT * FROM country WHERE country_name LIKE 'A%') TO '/usr1/proj/bray/sql/a_list_countries.copy';</pre><p>
+  </p><p>   要复制到一个压缩文件中，你可以用管道把输出导到一个外部压缩程序：
+</p><pre class="programlisting">COPY country TO PROGRAM 'gzip &gt; /usr1/proj/bray/sql/country_data.gz';</pre><p>
+  </p><p>   这里是一个适合于从<code class="literal">STDIN</code>复制到表中的数据：
+</p><pre class="programlisting">AF      AFGHANISTAN
+AL      ALBANIA
+DZ      ALGERIA
+ZM      ZAMBIA
+ZW      ZIMBABWE</pre><p>
+   注意每一行上的空白实际是一个制表符。
+  </p><p>   下面是用二进制格式输出的相同数据。该数据是用 Unix 工具
+   <code class="command">od -c</code>过滤后显示的。该表具有三列，
+   第一列类型是<code class="type">char(2)</code>，第二列类型是<code class="type">text</code>，
+   第三列类型是<code class="type">integer</code>。所有行在第三列都是空值。
+</p><pre class="programlisting">0000000   P   G   C   O   P   Y  \n 377  \r  \n  \0  \0  \0  \0  \0  \0
+0000020  \0  \0  \0  \0 003  \0  \0  \0 002   A   F  \0  \0  \0 013   A
+0000040   F   G   H   A   N   I   S   T   A   N 377 377 377 377  \0 003
+0000060  \0  \0  \0 002   A   L  \0  \0  \0 007   A   L   B   A   N   I
+0000100   A 377 377 377 377  \0 003  \0  \0  \0 002   D   Z  \0  \0  \0
+0000120 007   A   L   G   E   R   I   A 377 377 377 377  \0 003  \0  \0
+0000140  \0 002   Z   M  \0  \0  \0 006   Z   A   M   B   I   A 377 377
+0000160 377 377  \0 003  \0  \0  \0 002   Z   W  \0  \0  \0  \b   Z   I
+0000200   M   B   A   B   W   E 377 377 377 377 377 377</pre></div><div class="refsect1" id="idp42425024"><h2>兼容性</h2><p>   SQL 标准中没有<code class="command">COPY</code>语句。
+  </p><p>   下列语法用于<span class="productname">PostgreSQL</span> 9.0 之前的版本，
+   并且仍然被支持：
+
+</p><pre class="synopsis">COPY <em class="replaceable"><code>table_name</code></em> [ ( <em class="replaceable"><code>column_name</code></em> [, ...] ) ]
+    FROM { '<em class="replaceable"><code>filename</code></em>' | STDIN }
+    [ [ WITH ]
+          [ BINARY ]
+          [ OIDS ]
+          [ DELIMITER [ AS ] '<em class="replaceable"><code>delimiter</code></em>' ]
+          [ NULL [ AS ] '<em class="replaceable"><code>null string</code></em>' ]
+          [ CSV [ HEADER ]
+                [ QUOTE [ AS ] '<em class="replaceable"><code>quote</code></em>' ]
+                [ ESCAPE [ AS ] '<em class="replaceable"><code>escape</code></em>' ]
+                [ FORCE NOT NULL <em class="replaceable"><code>column_name</code></em> [, ...] ] ] ]
+
+COPY { <em class="replaceable"><code>table_name</code></em> [ ( <em class="replaceable"><code>column_name</code></em> [, ...] ) ] | ( <em class="replaceable"><code>query</code></em> ) }
+    TO { '<em class="replaceable"><code>filename</code></em>' | STDOUT }
+    [ [ WITH ]
+          [ BINARY ]
+          [ OIDS ]
+          [ DELIMITER [ AS ] '<em class="replaceable"><code>delimiter</code></em>' ]
+          [ NULL [ AS ] '<em class="replaceable"><code>null string</code></em>' ]
+          [ CSV [ HEADER ]
+                [ QUOTE [ AS ] '<em class="replaceable"><code>quote</code></em>' ]
+                [ ESCAPE [ AS ] '<em class="replaceable"><code>escape</code></em>' ]
+                [ FORCE QUOTE { <em class="replaceable"><code>column_name</code></em> [, ...] | * } ] ] ]</pre><p>
+
+   注意在这种语法中，<code class="literal">BINARY</code>和<code class="literal">CSV</code>被视作独立的关键词，
+   而不是<code class="literal">FORMAT</code>选项的参数。
+  </p><p>   下列语法用于<span class="productname">PostgreSQL</span> 7.3 之前的版本，
+   并且仍然被支持：
+
+</p><pre class="synopsis">COPY [ BINARY ] <em class="replaceable"><code>table_name</code></em> [ WITH OIDS ]
+    FROM { '<em class="replaceable"><code>filename</code></em>' | STDIN }
+    [ [USING] DELIMITERS '<em class="replaceable"><code>delimiter</code></em>' ]
+    [ WITH NULL AS '<em class="replaceable"><code>null string</code></em>' ]
+
+COPY [ BINARY ] <em class="replaceable"><code>table_name</code></em> [ WITH OIDS ]
+    TO { '<em class="replaceable"><code>filename</code></em>' | STDOUT }
+    [ [USING] DELIMITERS '<em class="replaceable"><code>delimiter</code></em>' ]
+    [ WITH NULL AS '<em class="replaceable"><code>null string</code></em>' ]</pre></div></div><div class="navfooter"><hr /><table width="100%" summary="Navigation footer"><tr><td width="40%" align="left"><a accesskey="p" href="sql-commit-prepared.html">上一页</a> </td><td width="20%" align="center"><a accesskey="u" href="sql-commands.html">上一级</a></td><td width="40%" align="right"> <a accesskey="n" href="sql-create-access-method.html">下一页</a></td></tr><tr><td width="40%" align="left" valign="top">COMMIT PREPARED </td><td width="20%" align="center"><a accesskey="h" href="index.html">起始页</a></td><td width="40%" align="right" valign="top"> CREATE ACCESS METHOD</td></tr></table></div></body></html>

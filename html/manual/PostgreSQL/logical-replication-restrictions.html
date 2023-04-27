@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><title>31.4. 限制</title><link rel="stylesheet" type="text/css" href="stylesheet.css" /><link rev="made" href="pgsql-docs@postgresql.org" /><meta name="generator" content="DocBook XSL Stylesheets V1.79.1" /><link rel="prev" href="logical-replication-conflicts.html" title="31.3. 冲突" /><link rel="next" href="logical-replication-architecture.html" title="31.5. 架构" /></head><body><div xmlns="http://www.w3.org/TR/xhtml1/transitional" class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="5" align="center">31.4. 限制</th></tr><tr><td width="10%" align="left"><a accesskey="p" href="logical-replication-conflicts.html" title="31.3. 冲突">上一页</a> </td><td width="10%" align="left"><a accesskey="u" href="logical-replication.html" title="第 31 章 逻辑复制">上一级</a></td><th width="60%" align="center">第 31 章 逻辑复制</th><td width="10%" align="right"><a accesskey="h" href="index.html" title="PostgreSQL 10.1 手册">起始页</a></td><td width="10%" align="right"> <a accesskey="n" href="logical-replication-architecture.html" title="31.5. 架构">下一页</a></td></tr></table><hr></hr></div><div class="sect1" id="LOGICAL-REPLICATION-RESTRICTIONS"><div class="titlepage"><div><div><h2 class="title" style="clear: both">31.4. 限制</h2></div></div></div><p>   逻辑复制目前有以下限制或缺少的功能。 这些可能会在未来的版本中解决。
+  </p><div class="itemizedlist"><ul class="itemizedlist" style="list-style-type: disc; "><li class="listitem"><p>     不复制数据库模式和DDL命令。初始模式可以使用<code class="literal">pg_dump --schema-only</code>
+	 手动复制。后续的模式更改需要手动保持同步。（但是请注意，
+	 两端的架构不需要完全相同。）当实时数据库中的模式定义更改时，逻辑复制是健壮的：
+	 当模式在发布者上发生更改并且复制的数据开始到达订阅者但不符合表模式，
+	 复制将错误，直到模式更新。在很多情况下，
+	 间歇性错误可以通过首先将附加模式更改应用于订阅者来避免。
+    </p></li><li class="listitem"><p>     不复制序列数据。序列支持的序列或标识列中的数据当然会作为表的一部分被复制，
+	 但序列本身仍然会显示订阅者的起始值。如果订阅者被用作只读数据库，
+	 那么这通常不成问题。但是，如果打算对订阅者数据库进行某种切换或故障切换，
+	 则需要将序列更新为最新值，方法是从发布者复制当前数据
+	 （可能使用<code class="command">pg_dump</code>）或者从表中确定足够高的值。
+    </p></li><li class="listitem"><p>     不复制<code class="command">TRUNCATE</code>命令。当然，可以通过使用<code class="command">DELETE</code>
+	 来解决。为了避免意外的<code class="command">TRUNCATE</code>调用，可以撤销表的
+	 <code class="literal">TRUNCATE</code>权限。
+    </p></li><li class="listitem"><p>     不复制大对象（参阅<a class="xref" href="largeobjects.html" title="第 34 章 大对象">第 34 章</a>）。
+	 没有什么解决办法，除非在普通表中存储数据。
+    </p></li><li class="listitem"><p>     复制只能从基表到基表。也就是说，发布和订阅端的表必须是普通表，而不是视图，
+	 物化视图，分区根表或外部表。对于分区，您可以一对一地复制分区层次结构，
+	 但目前不能复制到不同的分区设置。尝试复制基表以外的表将导致错误。
+    </p></li></ul></div></div><div class="navfooter"><hr /><table width="100%" summary="Navigation footer"><tr><td width="40%" align="left"><a accesskey="p" href="logical-replication-conflicts.html">上一页</a> </td><td width="20%" align="center"><a accesskey="u" href="logical-replication.html">上一级</a></td><td width="40%" align="right"> <a accesskey="n" href="logical-replication-architecture.html">下一页</a></td></tr><tr><td width="40%" align="left" valign="top">31.3. 冲突 </td><td width="20%" align="center"><a accesskey="h" href="index.html">起始页</a></td><td width="40%" align="right" valign="top"> 31.5. 架构</td></tr></table></div></body></html>

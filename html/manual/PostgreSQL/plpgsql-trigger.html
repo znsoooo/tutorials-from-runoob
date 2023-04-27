@@ -1,0 +1,342 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><title>42.9. 触发器过程</title><link rel="stylesheet" type="text/css" href="stylesheet.css" /><link rev="made" href="pgsql-docs@postgresql.org" /><meta name="generator" content="DocBook XSL Stylesheets V1.79.1" /><link rel="prev" href="plpgsql-errors-and-messages.html" title="42.8. 错误和消息" /><link rel="next" href="plpgsql-implementation.html" title="42.10. PL/pgSQL的内部" /></head><body><div xmlns="http://www.w3.org/TR/xhtml1/transitional" class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="5" align="center">42.9. 触发器过程</th></tr><tr><td width="10%" align="left"><a accesskey="p" href="plpgsql-errors-and-messages.html" title="42.8. 错误和消息">上一页</a> </td><td width="10%" align="left"><a accesskey="u" href="plpgsql.html" title="第 42 章 PL/pgSQL - SQL过程语言">上一级</a></td><th width="60%" align="center">第 42 章 <span xmlns="http://www.w3.org/1999/xhtml" class="application">PL/pgSQL</span> - <acronym xmlns="http://www.w3.org/1999/xhtml" class="acronym">SQL</acronym>过程语言</th><td width="10%" align="right"><a accesskey="h" href="index.html" title="PostgreSQL 10.1 手册">起始页</a></td><td width="10%" align="right"> <a accesskey="n" href="plpgsql-implementation.html" title="42.10. PL/pgSQL的内部">下一页</a></td></tr></table><hr></hr></div><div class="sect1" id="PLPGSQL-TRIGGER"><div class="titlepage"><div><div><h2 class="title" style="clear: both">42.9. 触发器过程</h2></div></div></div><div class="toc"><dl class="toc"><dt><span class="sect2"><a href="plpgsql-trigger.html#PLPGSQL-DML-TRIGGER">42.9.1. 数据改变的触发器</a></span></dt><dt><span class="sect2"><a href="plpgsql-trigger.html#PLPGSQL-EVENT-TRIGGER">42.9.2. 事件触发器</a></span></dt></dl></div><a id="idp36987504" class="indexterm"></a><p>   <span class="application">PL/pgSQL</span>可以被用来在数据更改或者数据库事件上定义触发器过程。触发器过程用<code class="command">CREATE FUNCTION</code>命令创建，它被声明为一个没有参数并且返回类型为<code class="type">trigger</code>（对于数据更改触发器）或者<code class="type">event_trigger</code>（对于数据库事件触发器）的函数。名为<code class="varname">PG_<em class="replaceable"><code>something</code></em></code>的特殊局部变量将被自动创建用以描述触发该调用的条件。
+  </p><div class="sect2" id="PLPGSQL-DML-TRIGGER"><div class="titlepage"><div><div><h3 class="title">42.9.1. 数据改变的触发器</h3></div></div></div><p>    一个<a class="link" href="triggers.html" title="第 38 章 触发器">数据更改触发器</a>被声明为一个没有参数并且返回类型为<code class="type">trigger</code>的函数。注意，如下所述，即便该函数准备接收一些在<code class="command">CREATE TRIGGER</code>中指定的参数 — 这类参数通过<code class="varname">TG_ARGV</code>传递，也必须把它声明为没有参数。
+  </p><p>   当一个<span class="application">PL/pgSQL</span>函数当做触发器调用时，在顶层块会自动创建一些特殊变量。它们是：
+
+   </p><div class="variablelist"><dl class="variablelist"><dt><span class="term"><code class="varname">NEW</code></span></dt><dd><p>       数据类型是<code class="type">RECORD</code>；该变量为行级触发器中的<code class="command">INSERT</code>/<code class="command">UPDATE</code>操作保持新数据行。在语句级别的触发器以及<code class="command">DELETE</code>操作，这个变量未被赋值。
+      </p></dd><dt><span class="term"><code class="varname">OLD</code></span></dt><dd><p>       数据类型是<code class="type">RECORD</code>；该变量为行级触发器中的<code class="command">UPDATE</code>/<code class="command">DELETE</code>操作保持新数据行。在语句级别的触发器以及<code class="command">INSERT</code>操作，这个变量未被赋值。
+      </p></dd><dt><span class="term"><code class="varname">TG_NAME</code></span></dt><dd><p>       数据类型是<code class="type">name</code>；该变量包含实际触发的触发器名。
+      </p></dd><dt><span class="term"><code class="varname">TG_WHEN</code></span></dt><dd><p>       数据类型是<code class="type">text</code>；是值为<code class="literal">BEFORE</code>、<code class="literal">AFTER</code>或<code class="literal">INSTEAD OF</code>的一个字符串，取决于触发器的定义。
+      </p></dd><dt><span class="term"><code class="varname">TG_LEVEL</code></span></dt><dd><p>       数据类型是<code class="type">text</code>；是值为<code class="literal">ROW</code>或<code class="literal">STATEMENT</code>的一个字符串，取决于触发器的定义。
+      </p></dd><dt><span class="term"><code class="varname">TG_OP</code></span></dt><dd><p>       数据类型是<code class="type">text</code>；是值为<code class="literal">INSERT</code>、<code class="literal">UPDATE</code>、<code class="literal">DELETE</code>或<code class="literal">TRUNCATE</code>的一个字符串，它说明触发器是为哪个操作引发。
+      </p></dd><dt><span class="term"><code class="varname">TG_RELID</code></span></dt><dd><p>       数据类型是<code class="type">oid</code>；是导致触发器调用的表的对象 ID。
+      </p></dd><dt><span class="term"><code class="varname">TG_RELNAME</code></span></dt><dd><p>       数据类型是<code class="type">name</code>；是导致触发器调用的表的名称。现在已经被废弃，并且可能在未来的一个发行中消失。使用<code class="literal">TG_TABLE_NAME</code>替代。
+      </p></dd><dt><span class="term"><code class="varname">TG_TABLE_NAME</code></span></dt><dd><p>       数据类型是<code class="type">name</code>；是导致触发器调用的表的名称。
+      </p></dd><dt><span class="term"><code class="varname">TG_TABLE_SCHEMA</code></span></dt><dd><p>       数据类型是<code class="type">name</code>；是导致触发器调用的表所在的模式名。
+      </p></dd><dt><span class="term"><code class="varname">TG_NARGS</code></span></dt><dd><p>       数据类型是<code class="type">integer</code>；在<code class="command">CREATE TRIGGER</code>语句中给触发器过程的参数数量。
+      </p></dd><dt><span class="term"><code class="varname">TG_ARGV[]</code></span></dt><dd><p>       数据类型是<code class="type">text</code>数组；来自<code class="command">CREATE TRIGGER</code>语句的参数。索引从 0 开始记数。非法索引（小于 0 或者大于等于<code class="varname">tg_nargs</code>）会导致返回一个空值。
+      </p></dd></dl></div><p>
+  </p><p>    一个触发器函数必须返回<code class="symbol">NULL</code>或者是一个与触发器为之引发的表结构完全相同的记录/行值。
+   </p><p>    <code class="literal">BEFORE</code>引发的行级触发器可以返回一个空来告诉触发器管理器跳过对该行剩下的操作（即后续的触发器将不再被引发，并且不会对该行发生<code class="command">INSERT</code>/<code class="command">UPDATE</code>/<code class="command">DELETE</code>)。如果返回了一个非空值，那么对该行值会继续操作。返回不同于原始<code class="varname">NEW</code>的行值将修改将要被插入或更新的行。因此，如果该触发器函数想要触发动作正常成功而不修改行值，<code class="varname">NEW</code>（或者另一个相等的值）必须被返回。要修改将被存储的行，可以直接在<code class="varname">NEW</code>中替换单一值并且返回修改后的<code class="varname">NEW</code>，或者构建一个全新的记录/行来返回。在一个<code class="command">DELETE</code>上的前触发器情况下，返回值没有直接效果，但是它必须为非空以允许触发器动作继续下去。注意<code class="varname">NEW</code>在<code class="command">DELETE</code>触发器中是空值，因此返回它通常没有意义。在<code class="command">DELETE</code>中的常用方法是返回<code class="varname">OLD</code>.
+   </p><p>    <code class="literal">INSTEAD OF</code>触发器（总是行级触发器，并且可能只被用于视图）能够返回空来表示它们没有执行任何更新，并且对该行剩余的操作可以被跳过（即后续的触发器不会被引发，并且该行不会被计入外围<code class="command">INSERT</code>/<code class="command">UPDATE</code>/<code class="command">DELETE</code>的行影响状态中）。否则一个非空值应该被返回用以表示该触发器执行了所请求的操作。对于<code class="command">INSERT</code> 和<code class="command">UPDATE</code>操作，返回值应该是<code class="varname">NEW</code>，触发器函数可能对它进行了修改来支持<code class="command">INSERT RETURNING</code>和<code class="command">UPDATE RETURNING</code>（这也将影响被传递给任何后续触发器的行值，或者被传递给带有<code class="literal">ON CONFLICT DO UPDATE</code>的<code class="command">INSERT</code>语句中一个特殊的<code class="varname">EXCLUDED</code>别名引用）。对于<code class="command">DELETE</code>操作，返回值应该是<code class="varname">OLD</code>。
+   </p><p>    一个<code class="literal">AFTER</code>行级触发器或一个<code class="literal">BEFORE</code>或<code class="literal">AFTER</code>语句级触发器的返回值总是会被忽略，它可能也是空。不过，任何这些类型的触发器可能仍会通过抛出一个错误来中止整个操作。
+   </p><p>    <a class="xref" href="plpgsql-trigger.html#PLPGSQL-TRIGGER-EXAMPLE" title="例 42.3. 一个 PL/pgSQL 触发器过程">例 42.3</a>展示了<span class="application">PL/pgSQL</span>中一个触发器过程的例子。
+   </p><div class="example" id="PLPGSQL-TRIGGER-EXAMPLE"><p class="title"><strong>例 42.3. 一个 <span class="application">PL/pgSQL</span> 触发器过程</strong></p><div class="example-contents"><p>     这个例子触发器保证：任何时候一个行在表中被插入或更新时，当前用户名和时间也会被标记在该行中。并且它会检查给出了一个雇员的姓名以及薪水是一个正值。
+    </p><pre class="programlisting">CREATE TABLE emp (
+    empname text,
+    salary integer,
+    last_date timestamp,
+    last_user text
+);
+
+CREATE FUNCTION emp_stamp() RETURNS trigger AS $emp_stamp$
+    BEGIN
+        -- 检查给出了 empname 以及 salary
+        IF NEW.empname IS NULL THEN
+            RAISE EXCEPTION 'empname cannot be null';
+        END IF;
+        IF NEW.salary IS NULL THEN
+            RAISE EXCEPTION '% cannot have null salary', NEW.empname;
+        END IF;
+
+        -- 谁会倒贴钱为我们工作？
+        IF NEW.salary &lt; 0 THEN
+            RAISE EXCEPTION '% cannot have a negative salary', NEW.empname;
+        END IF;
+
+        -- 记住谁在什么时候改变了工资单
+        NEW.last_date := current_timestamp;
+        NEW.last_user := current_user;
+        RETURN NEW;
+    END;
+$emp_stamp$ LANGUAGE plpgsql;
+
+CREATE TRIGGER emp_stamp BEFORE INSERT OR UPDATE ON emp
+    FOR EACH ROW EXECUTE PROCEDURE emp_stamp();</pre></div></div><br class="example-break" /><p>    另一种记录对表的改变的方法涉及到创建一个新表来为每一个发生的插入、更新或删除保持一行。这种方法可以被认为是对一个表的改变的审计。<a class="xref" href="plpgsql-trigger.html#PLPGSQL-TRIGGER-AUDIT-EXAMPLE" title="例 42.4. 一个用于审计的 PL/pgSQL 触发器过程">例 42.4</a>展示了<span class="application">PL/pgSQL</span>中一个审计触发器过程的例子。
+   </p><div class="example" id="PLPGSQL-TRIGGER-AUDIT-EXAMPLE"><p class="title"><strong>例 42.4. 一个用于审计的 <span class="application">PL/pgSQL</span> 触发器过程</strong></p><div class="example-contents"><p>     这个例子触发器保证了在<code class="literal">emp</code>表上的任何插入、更新或删除一行的动作都被记录（即审计）在<code class="literal">emp_audit</code>表中。当前时间和用户名会被记录到行中，还有在其上执行的操作类型。
+    </p><pre class="programlisting">CREATE TABLE emp (
+    empname           text NOT NULL,
+    salary            integer
+);
+
+CREATE TABLE emp_audit(
+    operation         char(1)   NOT NULL,
+    stamp             timestamp NOT NULL,
+    userid            text      NOT NULL,
+    empname           text      NOT NULL,
+    salary integer
+);
+
+CREATE OR REPLACE FUNCTION process_emp_audit() RETURNS TRIGGER AS $emp_audit$
+    BEGIN
+        --
+        -- 在 emp_audit 中创建一行来反映 emp 上执行的动作，
+        -- 使用特殊变量 TG_OP 来得到操作。
+        --
+        IF (TG_OP = 'DELETE') THEN
+            INSERT INTO emp_audit SELECT 'D', now(), user, OLD.*;
+        ELSIF (TG_OP = 'UPDATE') THEN
+            INSERT INTO emp_audit SELECT 'U', now(), user, NEW.*;
+        ELSIF (TG_OP = 'INSERT') THEN
+            INSERT INTO emp_audit SELECT 'I', now(), user, NEW.*;
+        END IF;
+        RETURN NULL; -- 因为这是一个 AFTER 触发器，结果被忽略
+    END;
+$emp_audit$ LANGUAGE plpgsql;
+
+CREATE TRIGGER emp_audit
+AFTER INSERT OR UPDATE OR DELETE ON emp
+    FOR EACH ROW EXECUTE PROCEDURE process_emp_audit();</pre></div></div><br class="example-break" /><p>    前一个例子的一种变体使用一个视图将主表连接到审计表来展示每一项最后被修改是什么时间。这种方法还是记录了对于表修改的完整审查跟踪，但是也提供了审查跟踪的一个简化视图，只为每一个项显示从审查跟踪生成的最后修改时间戳。<a class="xref" href="plpgsql-trigger.html#PLPGSQL-VIEW-TRIGGER-AUDIT-EXAMPLE" title="例 42.5. 一个用于审计的 PL/pgSQL 视图触发器过程">例 42.5</a>展示了在<span class="application">PL/pgSQL</span>中一个视图上审计触发器的例子。
+   </p><div class="example" id="PLPGSQL-VIEW-TRIGGER-AUDIT-EXAMPLE"><p class="title"><strong>例 42.5. 一个用于审计的 <span class="application">PL/pgSQL</span> 视图触发器过程</strong></p><div class="example-contents"><p>     这个例子在视图上使用了一个触发器让它变得可更新，并且确保视图中一行的任何插入、更新或删除被记录（即审计）在<code class="literal">emp_audit</code>表中。当前时间和用户名会被与执行的操作类型一起记录，并且该视图会显示每一行的最后修改时间。
+    </p><pre class="programlisting">CREATE TABLE emp (
+    empname           text PRIMARY KEY,
+    salary            integer
+);
+
+CREATE TABLE emp_audit(
+    operation         char(1)   NOT NULL,
+    userid            text      NOT NULL,
+    empname           text      NOT NULL,
+    salary            integer,
+    stamp             timestamp NOT NULL
+);
+
+CREATE VIEW emp_view AS
+    SELECT e.empname,
+           e.salary,
+           max(ea.stamp) AS last_updated
+      FROM emp e
+      LEFT JOIN emp_audit ea ON ea.empname = e.empname
+     GROUP BY 1, 2;
+
+CREATE OR REPLACE FUNCTION update_emp_view() RETURNS TRIGGER AS $$
+    BEGIN
+        --
+        -- 执行 emp 上所要求的操作，并且在 emp_audit 中创建一行来反映对 emp 的改变。
+        --
+        IF (TG_OP = 'DELETE') THEN
+            DELETE FROM emp WHERE empname = OLD.empname;
+            IF NOT FOUND THEN RETURN NULL; END IF;
+
+            OLD.last_updated = now();
+            INSERT INTO emp_audit VALUES('D', user, OLD.*);
+            RETURN OLD;
+        ELSIF (TG_OP = 'UPDATE') THEN
+            UPDATE emp SET salary = NEW.salary WHERE empname = OLD.empname;
+            IF NOT FOUND THEN RETURN NULL; END IF;
+
+            NEW.last_updated = now();
+            INSERT INTO emp_audit VALUES('U', user, NEW.*);
+            RETURN NEW;
+        ELSIF (TG_OP = 'INSERT') THEN
+            INSERT INTO emp VALUES(NEW.empname, NEW.salary);
+
+            NEW.last_updated = now();
+            INSERT INTO emp_audit VALUES('I', user, NEW.*);
+            RETURN NEW;
+        END IF;
+    END;
+$$ LANGUAGE plpgsql;
+
+CREATE TRIGGER emp_audit
+INSTEAD OF INSERT OR UPDATE OR DELETE ON emp_view
+    FOR EACH ROW EXECUTE PROCEDURE update_emp_view();</pre></div></div><br class="example-break" /><p>    触发器的一种用法是维护一个表的另一个汇总表。作为结果的汇总表可以用来在特定查询中替代原始表 — 通常会大量减少运行时间。这种技术常用于数据仓库中，在其中被度量或被观察数据的表（称为事实表）可能会极度大。<a class="xref" href="plpgsql-trigger.html#PLPGSQL-TRIGGER-SUMMARY-EXAMPLE" title="例 42.6. 一个 PL/pgSQL 用于维护汇总表的触发器过程">例 42.6</a>展示了<span class="application">PL/pgSQL</span>中一个为数据仓库事实表维护汇总表的触发器过程的例子。
+   </p><div class="example" id="PLPGSQL-TRIGGER-SUMMARY-EXAMPLE"><p class="title"><strong>例 42.6. 一个 <span class="application">PL/pgSQL</span> 用于维护汇总表的触发器过程</strong></p><div class="example-contents"><p>     这里详述的模式有一部分是基于 Ralph Kimball 所作的<span class="emphasis"><em>The Data Warehouse Toolkit</em></span>中的<span class="emphasis"><em>Grocery Store</em></span>例子。
+    </p><pre class="programlisting">--
+-- 主表 - 时间维度和销售事实。
+--
+CREATE TABLE time_dimension (
+    time_key                    integer NOT NULL,
+    day_of_week                 integer NOT NULL,
+    day_of_month                integer NOT NULL,
+    month                       integer NOT NULL,
+    quarter                     integer NOT NULL,
+    year                        integer NOT NULL
+);
+CREATE UNIQUE INDEX time_dimension_key ON time_dimension(time_key);
+
+CREATE TABLE sales_fact (
+    time_key                    integer NOT NULL,
+    product_key                 integer NOT NULL,
+    store_key                   integer NOT NULL,
+    amount_sold                 numeric(12,2) NOT NULL,
+    units_sold                  integer NOT NULL,
+    amount_cost                 numeric(12,2) NOT NULL
+);
+CREATE INDEX sales_fact_time ON sales_fact(time_key);
+
+--
+-- 汇总表 - 按时间汇总销售
+--
+CREATE TABLE sales_summary_bytime (
+    time_key                    integer NOT NULL,
+    amount_sold                 numeric(15,2) NOT NULL,
+    units_sold                  numeric(12) NOT NULL,
+    amount_cost                 numeric(15,2) NOT NULL
+);
+CREATE UNIQUE INDEX sales_summary_bytime_key ON sales_summary_bytime(time_key);
+
+--
+-- 在 UPDATE、INSERT、DELETE 时修改汇总列的函数和触发器。
+--
+CREATE OR REPLACE FUNCTION maint_sales_summary_bytime() RETURNS TRIGGER
+AS $maint_sales_summary_bytime$
+    DECLARE
+        delta_time_key          integer;
+        delta_amount_sold       numeric(15,2);
+        delta_units_sold        numeric(12);
+        delta_amount_cost       numeric(15,2);
+    BEGIN
+
+        -- 算出增量/减量数。
+        IF (TG_OP = 'DELETE') THEN
+
+            delta_time_key = OLD.time_key;
+            delta_amount_sold = -1 * OLD.amount_sold;
+            delta_units_sold = -1 * OLD.units_sold;
+            delta_amount_cost = -1 * OLD.amount_cost;
+
+        ELSIF (TG_OP = 'UPDATE') THEN
+
+            -- 禁止更改 the time_key 的更新-
+            -- （可能不会太麻烦，因为大部分的更改是用 DELETE + INSERT 完成的）。
+            IF ( OLD.time_key != NEW.time_key) THEN
+                RAISE EXCEPTION 'Update of time_key : % -&gt; % not allowed',
+                                                      OLD.time_key, NEW.time_key;
+            END IF;
+
+            delta_time_key = OLD.time_key;
+            delta_amount_sold = NEW.amount_sold - OLD.amount_sold;
+            delta_units_sold = NEW.units_sold - OLD.units_sold;
+            delta_amount_cost = NEW.amount_cost - OLD.amount_cost;
+
+        ELSIF (TG_OP = 'INSERT') THEN
+
+            delta_time_key = NEW.time_key;
+            delta_amount_sold = NEW.amount_sold;
+            delta_units_sold = NEW.units_sold;
+            delta_amount_cost = NEW.amount_cost;
+
+        END IF;
+
+
+        -- 插入或更新带有新值的汇总行。
+        &lt;&lt;insert_update&gt;&gt;
+        LOOP
+            UPDATE sales_summary_bytime
+                SET amount_sold = amount_sold + delta_amount_sold,
+                    units_sold = units_sold + delta_units_sold,
+                    amount_cost = amount_cost + delta_amount_cost
+                WHERE time_key = delta_time_key;
+
+            EXIT insert_update WHEN found;
+
+            BEGIN
+                INSERT INTO sales_summary_bytime (
+                            time_key,
+                            amount_sold,
+                            units_sold,
+                            amount_cost)
+                    VALUES (
+                            delta_time_key,
+                            delta_amount_sold,
+                            delta_units_sold,
+                            delta_amount_cost
+                           );
+
+                EXIT insert_update;
+
+            EXCEPTION
+                WHEN UNIQUE_VIOLATION THEN
+                    -- 什么也不做
+            END;
+        END LOOP insert_update;
+
+        RETURN NULL;
+
+    END;
+$maint_sales_summary_bytime$ LANGUAGE plpgsql;
+
+CREATE TRIGGER maint_sales_summary_bytime
+AFTER INSERT OR UPDATE OR DELETE ON sales_fact
+    FOR EACH ROW EXECUTE PROCEDURE maint_sales_summary_bytime();
+
+INSERT INTO sales_fact VALUES(1,1,1,10,3,15);
+INSERT INTO sales_fact VALUES(1,2,1,20,5,35);
+INSERT INTO sales_fact VALUES(2,2,1,40,15,135);
+INSERT INTO sales_fact VALUES(2,3,1,10,1,13);
+SELECT * FROM sales_summary_bytime;
+DELETE FROM sales_fact WHERE product_key = 1;
+SELECT * FROM sales_summary_bytime;
+UPDATE sales_fact SET units_sold = units_sold * 2;
+SELECT * FROM sales_summary_bytime;</pre></div></div><br class="example-break" /><p>    <code class="literal">AFTER</code>触发器还可以使用<em class="firstterm">转换表</em>来检查由触发语句更改的整个行集。
+	<code class="command">CREATE TRIGGER</code>命令为一个或两个转换表分配名称，
+	然后该函数可以将这些名称称为只读临时表。
+	<a class="xref" href="plpgsql-trigger.html#PLPGSQL-TRIGGER-AUDIT-TRANSITION-EXAMPLE" title="例 42.7. 审计转换表">例 42.7</a>显示了一个例子。
+   </p><div class="example" id="PLPGSQL-TRIGGER-AUDIT-TRANSITION-EXAMPLE"><p class="title"><strong>例 42.7. 审计转换表</strong></p><div class="example-contents"><p>     此示例产生与<a class="xref" href="plpgsql-trigger.html#PLPGSQL-TRIGGER-AUDIT-EXAMPLE" title="例 42.4. 一个用于审计的 PL/pgSQL 触发器过程">例 42.4</a>相同的结果，
+	 但不是使用每行都触发的触发器，而是使用一个触发器，
+	 该语句在一个转换表中收集相关信息后触发一次语句。当调用语句修改了很多行时，
+	 这可能比行触发方法快得多。请注意，我们必须为每种事件做出单独的触发器声明，
+	 因为对于每种情况，<code class="literal">REFERENCING</code>子句必须不同。但是，如果我们选择，
+	 这并不能阻止我们使用单个触发器功能。（实际上，使用三个单独的函数可能会更好，
+	 并避免在<code class="varname">TG_OP</code>上运行时测试。）
+    </p><pre class="programlisting">CREATE TABLE emp (
+    empname           text NOT NULL,
+    salary            integer
+);
+
+CREATE TABLE emp_audit(
+    operation         char(1)   NOT NULL,
+    stamp             timestamp NOT NULL,
+    userid            text      NOT NULL,
+    empname           text      NOT NULL,
+    salary integer
+);
+
+CREATE OR REPLACE FUNCTION process_emp_audit() RETURNS TRIGGER AS $emp_audit$
+    BEGIN
+        --
+        -- 在emp_audit中创建行以反映在emp上执行的操作，
+        -- 利用特殊变量TG_OP来计算操作。
+        --
+        IF (TG_OP = 'DELETE') THEN
+            INSERT INTO emp_audit
+                SELECT 'D', now(), user, o.* FROM old_table o;
+        ELSIF (TG_OP = 'UPDATE') THEN
+            INSERT INTO emp_audit
+                SELECT 'U', now(), user, n.* FROM new_table n;
+        ELSIF (TG_OP = 'INSERT') THEN
+            INSERT INTO emp_audit
+                SELECT 'I', now(), user, n.* FROM new_table n;
+        END IF;
+        RETURN NULL; -- 忽略结果，因为这是一个AFTER触发器
+    END;
+$emp_audit$ LANGUAGE plpgsql;
+
+CREATE TRIGGER emp_audit_ins
+    AFTER INSERT ON emp
+    REFERENCING NEW TABLE AS new_table
+    FOR EACH STATEMENT EXECUTE PROCEDURE process_emp_audit();
+CREATE TRIGGER emp_audit_upd
+    AFTER UPDATE ON emp
+    REFERENCING OLD TABLE AS old_table NEW TABLE AS new_table
+    FOR EACH STATEMENT EXECUTE PROCEDURE process_emp_audit();
+CREATE TRIGGER emp_audit_del
+    AFTER DELETE ON emp
+    REFERENCING OLD TABLE AS old_table
+    FOR EACH STATEMENT EXECUTE PROCEDURE process_emp_audit();</pre></div></div><br class="example-break" /></div><div class="sect2" id="PLPGSQL-EVENT-TRIGGER"><div class="titlepage"><div><div><h3 class="title">42.9.2. 事件触发器</h3></div></div></div><p>    <span class="application">PL/pgSQL</span>可以被用来定义<a class="link" href="event-triggers.html" title="第 39 章 事件触发器">事件触发器</a>。<span class="productname">PostgreSQL</span>要求一个可以作为事件触发器调用的过程必须被声明为一个没有参数并且返回类型为<code class="literal">event_trigger</code>的函数。
+   </p><p>    当一个<span class="application">PL/pgSQL</span>函数被作为一个事件触发器调用，在顶层块中会自动创建一些特殊变量。它们是：
+
+   </p><div class="variablelist"><dl class="variablelist"><dt><span class="term"><code class="varname">TG_EVENT</code></span></dt><dd><p>       数据类型是<code class="type">text</code>；它是一个表示引发触发器的事件的字符串。
+      </p></dd><dt><span class="term"><code class="varname">TG_TAG</code></span></dt><dd><p>       数据类型是<code class="type">text</code>；它是一个变量，包含了该触发器为之引发的命令标签。
+      </p></dd></dl></div><p>
+  </p><p>    <a class="xref" href="plpgsql-trigger.html#PLPGSQL-EVENT-TRIGGER-EXAMPLE" title="例 42.8. 一个 PL/pgSQL 事件触发器过程">例 42.8</a>展示了<span class="application">PL/pgSQL</span>中一个事件触发器过程的例子。
+   </p><div class="example" id="PLPGSQL-EVENT-TRIGGER-EXAMPLE"><p class="title"><strong>例 42.8. 一个 <span class="application">PL/pgSQL</span> 事件触发器过程</strong></p><div class="example-contents"><p>     这个例子触发器在受支持命令每一次被执行时会简单地抛出一个<code class="literal">NOTICE</code>消息。
+    </p><pre class="programlisting">CREATE OR REPLACE FUNCTION snitch() RETURNS event_trigger AS $$
+BEGIN
+    RAISE NOTICE 'snitch: % %', tg_event, tg_tag;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE EVENT TRIGGER snitch ON ddl_command_start EXECUTE PROCEDURE snitch();</pre></div></div><br class="example-break" /></div></div><div class="navfooter"><hr /><table width="100%" summary="Navigation footer"><tr><td width="40%" align="left"><a accesskey="p" href="plpgsql-errors-and-messages.html">上一页</a> </td><td width="20%" align="center"><a accesskey="u" href="plpgsql.html">上一级</a></td><td width="40%" align="right"> <a accesskey="n" href="plpgsql-implementation.html">下一页</a></td></tr><tr><td width="40%" align="left" valign="top">42.8. 错误和消息 </td><td width="20%" align="center"><a accesskey="h" href="index.html">起始页</a></td><td width="40%" align="right" valign="top"> 42.10. <span class="application">PL/pgSQL</span>的内部</td></tr></table></div></body></html>

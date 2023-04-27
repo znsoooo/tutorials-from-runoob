@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><title>54.2. 给编程者</title><link rel="stylesheet" type="text/css" href="stylesheet.css" /><link rev="made" href="pgsql-docs@postgresql.org" /><meta name="generator" content="DocBook XSL Stylesheets V1.79.1" /><link rel="prev" href="nls-translator.html" title="54.1. 给翻译者" /><link rel="next" href="plhandler.html" title="第 55 章 编写一个过程语言处理器" /></head><body><div xmlns="http://www.w3.org/TR/xhtml1/transitional" class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="5" align="center">54.2. 给编程者</th></tr><tr><td width="10%" align="left"><a accesskey="p" href="nls-translator.html" title="54.1. 给翻译者">上一页</a> </td><td width="10%" align="left"><a accesskey="u" href="nls.html" title="第 54 章 本国语言支持">上一级</a></td><th width="60%" align="center">第 54 章 本国语言支持</th><td width="10%" align="right"><a accesskey="h" href="index.html" title="PostgreSQL 10.1 手册">起始页</a></td><td width="10%" align="right"> <a accesskey="n" href="plhandler.html" title="第 55 章 编写一个过程语言处理器">下一页</a></td></tr></table><hr></hr></div><div class="sect1" id="NLS-PROGRAMMER"><div class="titlepage"><div><div><h2 class="title" style="clear: both">54.2. 给编程者</h2></div></div></div><div class="toc"><dl class="toc"><dt><span class="sect2"><a href="nls-programmer.html#NLS-MECHANICS">54.2.1. 技术</a></span></dt><dt><span class="sect2"><a href="nls-programmer.html#NLS-GUIDELINES">54.2.2. 消息书写指南</a></span></dt></dl></div><div class="sect2" id="NLS-MECHANICS"><div class="titlepage"><div><div><h3 class="title">54.2.1. 技术</h3></div></div></div><p>   这一节描述如何在<span class="productname">PostgreSQL</span>发布中的一个程序或库中实现本地语言支持。当前，这些知识只适用于 C 程序。
+  </p><div class="procedure" id="idp58530832"><p class="title"><strong>为一个程序增加 NLS 支持</strong></p><ol class="procedure" type="1"><li class="step"><p>     将这里的代码插入到该程序的启动序列中：
+</p><pre class="programlisting">#ifdef ENABLE_NLS
+#include &lt;locale.h&gt;
+#endif
+
+...
+
+#ifdef ENABLE_NLS
+setlocale(LC_ALL, "");
+bindtextdomain("<em class="replaceable"><code>progname</code></em>", LOCALEDIR);
+textdomain("<em class="replaceable"><code>progname</code></em>");
+#endif</pre><p>
+     （<em class="replaceable"><code>程序名</code></em>实际上可以自由选择）。
+    </p></li><li class="step"><p>     不管在哪里找到一个可被翻译的消息，需要插入一个<code class="function">gettext()</code>调用，例如：
+</p><pre class="programlisting">fprintf(stderr, "panic level %d\n", lvl);</pre><p>
+     将被改成：
+</p><pre class="programlisting">fprintf(stderr, gettext("panic level %d\n"), lvl);</pre><p>
+     （如果 NLS 支持没有被配置，<code class="symbol">gettext</code>被定义为一个空操作）。
+    </p><p>     这容易增加很多混乱。一种常用的捷径是：
+</p><pre class="programlisting">#define _(x) gettext(x)</pre><p>
+     如果该程序通过一个或几个函数（例如后端中的<code class="function">ereport()</code>）完成他的大部分通信，则有另一种可行的解决方案。那么你可以在所有输入字符串上都内部调用这个函数<code class="function">gettext</code>。
+    </p></li><li class="step"><p>     在程序源码的目录中增加一个文件<code class="filename">nls.mk</code>。这个文件将被读作一个 makefile。其中要创建下列变量赋值：
+
+     </p><div class="variablelist"><dl class="variablelist"><dt><span class="term"><code class="varname">CATALOG_NAME</code></span></dt><dd><p>         程序名，如<code class="function">textdomain()</code>调用中所提供的。
+        </p></dd><dt><span class="term"><code class="varname">AVAIL_LANGUAGES</code></span></dt><dd><p>         提供的翻译列表 — 初始为空。
+        </p></dd><dt><span class="term"><code class="varname">GETTEXT_FILES</code></span></dt><dd><p>         包含可翻译字符串的文件列表，即那些被用<code class="function">gettext</code>或另一种替代方案标记的文件。最终，这将包括该程序近乎所有的源文件。如果这个列表太长你可以让第一个<span class="quote">“<span class="quote">file</span>”</span>变成一个<code class="literal">+</code>并且第二个词变成一个包含那些文件名的文件，第二个词指向的文件中每个文件名一行。
+        </p></dd><dt><span class="term"><code class="varname">GETTEXT_TRIGGERS</code></span></dt><dd><p>         为翻译者产生在其上工作的消息目录的工具需要知道，哪些函数调用包含可翻译的字符串。默认情况下，只有<code class="function">gettext()</code>调用是已知的。如果你使用<code class="function">_</code>或其他标识符，你需要在这里列出它们。如果可翻译的字符串不是第一个参数，该条目需要是形式<code class="literal">func:2</code>（用于第二个参数）。如果你有一个支持复数消息的函数，该条目应该看起来像<code class="literal">func:1,2</code>（标识单数和复数消息参数）。
+        </p></dd></dl></div><p>
+    </p></li></ol></div><p>   构建系统将自动处理消息目录的编译和安装。
+  </p></div><div class="sect2" id="NLS-GUIDELINES"><div class="titlepage"><div><div><h3 class="title">54.2.2. 消息书写指南</h3></div></div></div><p>   下面是一些书写已于翻译的消息的指南。
+
+   </p><div class="itemizedlist"><ul class="itemizedlist" style="list-style-type: disc; "><li class="listitem"><p>      不要在运行时构建句子，如：
+</p><pre class="programlisting">printf("Files were %s.\n", flag ? "copied" : "removed");</pre><p>
+      该句子中的词序可能在其他语言中完全不同。同样，即使你记得在每一个片段上调用<code class="function">gettext()</code>，片段也可能不会被独立翻译得很好。更好的方式是复制一点代码，这样每个消息将被以一个整体被翻译。只有数字、文件名和这样的运行时变量才应该被在运行时插入到一个消息文本中。
+     </p></li><li class="listitem"><p>      由于类似的原因，下面的例子也不会工作：
+</p><pre class="programlisting">printf("copied %d file%s", n, n!=1 ? "s" : "");</pre><p>
+      因为它假定了复数形式。如果你发现了这个问题，你可以这样解决它：
+</p><pre class="programlisting">if (n==1)
+    printf("copied 1 file");
+else
+    printf("copied %d files", n):</pre><p>
+      然后会失望。某些语言有多于两种形式，使用某些古怪的规则。通常最好设计消息来避免一次性避免该问题，例如像这样：
+</p><pre class="programlisting">printf("number of copied files: %d", n);</pre><p>
+     </p><p>      如果你真的想要构建一个正确的复数消息，有对此的支持，但是有点笨拙。当在<code class="function">ereport()</code>中产生一个主要或细节错误消息时，你可以这样写一些东西：
+</p><pre class="programlisting">errmsg_plural("copied %d file",
+              "copied %d files",
+              n,
+              n)</pre><p>
+      第一个参数是适用于英语单数形式的格式字符串，第二个参数是适用于英语复数形式的格式字符串，并且第三个参数是控制使用哪种复数形式的整数。后续参数针对每个格式字符串按照常规被格式化（通常，复数控制值也将是要被格式化的值之一，因此它必须被写两次）。在英语中只有<em class="replaceable"><code>n</code></em>是否唯一有关系，但是在其他语言中可以有多种不同的复数形式。翻译者将两种英语形式看成一组并且有机会提供多个替补字符串，基于<em class="replaceable"><code>n</code></em>的运行时值会选择其中合适的那一个。
+     </p><p>      如果你需要复数化一个不直接进入到<code class="function">errmsg</code>或<code class="function">errdetail</code>报告的消息，你必须使用底层函数<code class="function">ngettext</code>。见 gettext 文档。
+     </p></li><li class="listitem"><p>      如果你想要与翻译者沟通（例如关于一个消息如何在其他输出上对齐），在该字符串出现的地方之前放上一个以<code class="literal">translator</code>开始的注释，例如：
+</p><pre class="programlisting">/* translator: This message is not what it seems to be. */</pre><p>
+      这些注释被复制到消息目录文件中，这样翻译者可以看到它们。
+     </p></li></ul></div><p>
+  </p></div></div><div class="navfooter"><hr /><table width="100%" summary="Navigation footer"><tr><td width="40%" align="left"><a accesskey="p" href="nls-translator.html">上一页</a> </td><td width="20%" align="center"><a accesskey="u" href="nls.html">上一级</a></td><td width="40%" align="right"> <a accesskey="n" href="plhandler.html">下一页</a></td></tr><tr><td width="40%" align="left" valign="top">54.1. 给翻译者 </td><td width="20%" align="center"><a accesskey="h" href="index.html">起始页</a></td><td width="40%" align="right" valign="top"> 第 55 章 编写一个过程语言处理器</td></tr></table></div></body></html>

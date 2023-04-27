@@ -1,0 +1,120 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><title>ALTER OPERATOR FAMILY</title><link rel="stylesheet" type="text/css" href="stylesheet.css" /><link rev="made" href="pgsql-docs@postgresql.org" /><meta name="generator" content="DocBook XSL Stylesheets V1.79.1" /><link rel="prev" href="sql-alteropclass.html" title="ALTER OPERATOR CLASS" /><link rel="next" href="sql-alterpolicy.html" title="ALTER POLICY" /></head><body><div xmlns="http://www.w3.org/TR/xhtml1/transitional" class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="5" align="center">ALTER OPERATOR FAMILY</th></tr><tr><td width="10%" align="left"><a accesskey="p" href="sql-alteropclass.html" title="ALTER OPERATOR CLASS">上一页</a> </td><td width="10%" align="left"><a accesskey="u" href="sql-commands.html" title="SQL 命令">上一级</a></td><th width="60%" align="center">SQL 命令</th><td width="10%" align="right"><a accesskey="h" href="index.html" title="PostgreSQL 10.1 手册">起始页</a></td><td width="10%" align="right"> <a accesskey="n" href="sql-alterpolicy.html" title="ALTER POLICY">下一页</a></td></tr></table><hr></hr></div><div class="refentry" id="SQL-ALTEROPFAMILY"><div class="titlepage"></div><a id="idp40530432" class="indexterm"></a><div class="refnamediv"><h2><span class="refentrytitle">ALTER OPERATOR FAMILY</span></h2><p>ALTER OPERATOR FAMILY — 更改一个操作符族的定义</p></div><div class="refsynopsisdiv"><h2>大纲</h2><pre class="synopsis">ALTER OPERATOR FAMILY <em class="replaceable"><code>name</code></em> USING <em class="replaceable"><code>index_method</code></em> ADD
+  {  OPERATOR <em class="replaceable"><code>strategy_number</code></em> <em class="replaceable"><code>operator_name</code></em> ( <em class="replaceable"><code>op_type</code></em>, <em class="replaceable"><code>op_type</code></em> )
+              [ FOR SEARCH | FOR ORDER BY <em class="replaceable"><code>sort_family_name</code></em> ]
+   | FUNCTION <em class="replaceable"><code>support_number</code></em> [ ( <em class="replaceable"><code>op_type</code></em> [ , <em class="replaceable"><code>op_type</code></em> ] ) ]
+              <em class="replaceable"><code>function_name</code></em> [ ( <em class="replaceable"><code>argument_type</code></em> [, ...] ) ]
+  } [, ... ]
+
+ALTER OPERATOR FAMILY <em class="replaceable"><code>name</code></em> USING <em class="replaceable"><code>index_method</code></em> DROP
+  {  OPERATOR <em class="replaceable"><code>strategy_number</code></em> ( <em class="replaceable"><code>op_type</code></em> [ , <em class="replaceable"><code>op_type</code></em> ] )
+   | FUNCTION <em class="replaceable"><code>support_number</code></em> ( <em class="replaceable"><code>op_type</code></em> [ , <em class="replaceable"><code>op_type</code></em> ] )
+  } [, ... ]
+
+ALTER OPERATOR FAMILY <em class="replaceable"><code>name</code></em> USING <em class="replaceable"><code>index_method</code></em>
+    RENAME TO <em class="replaceable"><code>new_name</code></em>
+
+ALTER OPERATOR FAMILY <em class="replaceable"><code>name</code></em> USING <em class="replaceable"><code>index_method</code></em>
+    OWNER TO { <em class="replaceable"><code>new_owner</code></em> | CURRENT_USER | SESSION_USER }
+
+ALTER OPERATOR FAMILY <em class="replaceable"><code>name</code></em> USING <em class="replaceable"><code>index_method</code></em>
+    SET SCHEMA <em class="replaceable"><code>new_schema</code></em></pre></div><div class="refsect1" id="idp40552400"><h2>描述</h2><p>   <code class="command">ALTER OPERATOR FAMILY</code>更改一个操作符族
+   的定义。你能增加操作符以及支持函数到该家族、从该族中移除它们或者更改
+   该族的名称或者拥有者。
+  </p><p>   在用<code class="command">ALTER OPERATOR FAMILY</code>增加操作符和
+   支持函数到一个族中时，它们不是族内任何特定操作符类的组成部分，而只是
+   <span class="quote">“<span class="quote">松散</span>”</span>地存在于该族中。这表示这些操作符和函数与该族的语义兼
+   容，但是没有被任何特定索引的正确功能所要求（所要求的操作符和函数应该
+   被作为一个操作符类的一部分声明，见<a class="xref" href="sql-createopclass.html" title="CREATE OPERATOR CLASS"><span class="refentrytitle">CREATE OPERATOR CLASS</span></a>）。
+   <span class="productname">PostgreSQL</span>将允许一个族的松散成员在
+   任何时候被从该族中删除，但是在删除一个操作符类的成员之前，必须已经删
+   除整个类以及依赖于该成员的索引。具有代表性的是，单一数据类型操作符和
+   函数是操作符类的一部分，因为在特定数据类型上的索引需要它们的支持。而
+   多数据类型操作符和函数则被作为该族的松散成员。
+  </p><p>   要使用<code class="command">ALTER OPERATOR FAMILY</code>，你必须是超级用户（
+   做这样的限制是因为一个错误的操作符族定义可能会迷惑服务器甚至让它崩溃）。
+  </p><p>   <code class="command">ALTER OPERATOR FAMILY</code>目前不检测操作符族
+   定义是否包括该索引方法所要求的所有操作符和函数，也不检查操作符和函数是
+   否形成了一个有理的集合。定义一个合法的操作符族是用户的责任。
+  </p><p>   进一步的信息请参考<a class="xref" href="xindex.html" title="37.14. 索引的接口扩展">第 37.14 节</a>。
+  </p></div><div class="refsect1" id="idp40561344"><h2>参数</h2><div class="variablelist"><dl class="variablelist"><dt><span class="term"><em class="replaceable"><code>name</code></em></span></dt><dd><p>      一个现有操作符族的名称（可以是模式限定的）。
+     </p></dd><dt><span class="term"><em class="replaceable"><code>index_method</code></em></span></dt><dd><p>      这个操作符族所应用的索引方法的名称。
+     </p></dd><dt><span class="term"><em class="replaceable"><code>strategy_number</code></em></span></dt><dd><p>      与该操作符族相关的一个操作符的索引方法策略号。
+     </p></dd><dt><span class="term"><em class="replaceable"><code>operator_name</code></em></span></dt><dd><p>      与该操作符族相关的一个操作符的名称（可以是模式限定的）。
+     </p></dd><dt><span class="term"><em class="replaceable"><code>op_type</code></em></span></dt><dd><p>      在一个<code class="literal">OPERATOR</code>子句中指定该操作符的操作数数据类型，
+      或者用<code class="literal">NONE</code>来表示一个左一元或者右一元操作符。不同于
+      <code class="command">CREATE OPERATOR CLASS</code>中类似的语法，操作数数据
+      类型总是必须被指定。
+     </p><p>      在一个<code class="literal">ADD FUNCTION</code>子句中指定该函数意图支持的操作数
+      数据类型（如果不同于该函数的输入数据类型）。对于 B-树比较函数和哈希
+      函数，有必要指定<em class="replaceable"><code>op_type</code></em>，因为该函数的输入数据类型
+      总是正确的。对于 B-树排序支持函数和 GiST、SP-GiST 和 GIN 操作符类中
+      的所有函数，有必要指定该函数要使用的操作数数据类型。
+     </p><p>      在一个<code class="literal">DROP FUNCTION</code>子句中，必须指定该函数要支持的操
+      作数数据类型。
+     </p></dd><dt><span class="term"><em class="replaceable"><code>sort_family_name</code></em></span></dt><dd><p>      一个现有<code class="literal">btree</code>操作符族的名称（可能是模式限定的），
+      它描述与一个排序操作符相关的排序顺序。
+     </p><p>      如果既没有指定<code class="literal">FOR SEARCH</code>也没有指定<code class="literal">FOR ORDER BY</code>，
+      默认值是<code class="literal">FOR SEARCH</code>。
+     </p></dd><dt><span class="term"><em class="replaceable"><code>support_number</code></em></span></dt><dd><p>      一个与该操作符族相关的函数的索引方法支持过程编号。
+     </p></dd><dt><span class="term"><em class="replaceable"><code>function_name</code></em></span></dt><dd><p>      作为该操作符族的一种索引方法支持过程的函数的名称（可以是模式限定的）。
+	  如果没有指定参数列表，则该名称必须在其模式中唯一。
+     </p></dd><dt><span class="term"><em class="replaceable"><code>argument_type</code></em></span></dt><dd><p>      该函数的参数数据类型。
+     </p></dd><dt><span class="term"><em class="replaceable"><code>new_name</code></em></span></dt><dd><p>      该操作符族的新名称。
+     </p></dd><dt><span class="term"><em class="replaceable"><code>new_owner</code></em></span></dt><dd><p>      该操作符族的新拥有者。
+     </p></dd><dt><span class="term"><em class="replaceable"><code>new_schema</code></em></span></dt><dd><p>      该操作符族的新模式。
+     </p></dd></dl></div><p>   <code class="literal">OPERATOR</code>和<code class="literal">FUNCTION</code>子句可以以任何顺序出现。
+  </p></div><div class="refsect1" id="idp40588672"><h2>注解</h2><p>   注意<code class="literal">DROP</code>语法只通过策略或者支持号以及输入数据类型指定该
+   操作符族中的<span class="quote">“<span class="quote">slot</span>”</span>。占用这个槽的操作符或函数的名称不会被提及。
+   还有，对于<code class="literal">DROP FUNCTION</code>，要指定的类型是该函数意图支持
+   的输入数据类型。对于 GiST、SP-GiST 以及 GIN 索引，可能无需对该函数的
+   实际输入参数类型做任何事情。
+  </p><p>   因为索引机制在使用函数之前不会检查其上的访问权限，包括一个操作符族中的
+   函数或操作符都等同于授予了其上的公共执行权限。这对于操作符族中很有用的
+   这类函数来说，这通常不成问题。
+  </p><p>   操作符应该由 SQL 函数定义。一个 SQL 函数很可能被内联到调用查询中，这将
+   阻止优化器识别出该查询匹配一个索引。
+  </p><p>   在<span class="productname">PostgreSQL</span> 8.4 之前，
+   <code class="literal">OPERATOR</code>子句可以包括一个<code class="literal">RECHECK</code>选项。这不再
+   被支持，因为一个索引操作符是否为<span class="quote">“<span class="quote">lossy</span>”</span>现在会在运行时即时决定。
+   这允许高效地处理一个操作符可能或者不可能为有损的情况。
+  </p></div><div class="refsect1" id="idp40596096"><h2>示例</h2><p>   下列示例命令为一个操作符族增加跨数据类型的操作符和支持函数，该操
+   作符族已经包含用于数据类型<code class="type">int4</code>以及<code class="type">int2</code>的 B-树
+   操作符类。
+  </p><pre class="programlisting">ALTER OPERATOR FAMILY integer_ops USING btree ADD
+
+  -- int4 vs int2
+  OPERATOR 1 &lt; (int4, int2) ,
+  OPERATOR 2 &lt;= (int4, int2) ,
+  OPERATOR 3 = (int4, int2) ,
+  OPERATOR 4 &gt;= (int4, int2) ,
+  OPERATOR 5 &gt; (int4, int2) ,
+  FUNCTION 1 btint42cmp(int4, int2) ,
+
+  -- int2 vs int4
+  OPERATOR 1 &lt; (int2, int4) ,
+  OPERATOR 2 &lt;= (int2, int4) ,
+  OPERATOR 3 = (int2, int4) ,
+  OPERATOR 4 &gt;= (int2, int4) ,
+  OPERATOR 5 &gt; (int2, int4) ,
+  FUNCTION 1 btint24cmp(int2, int4) ;</pre><p>   再次移除这些项：
+  </p><pre class="programlisting">ALTER OPERATOR FAMILY integer_ops USING btree DROP
+
+  -- int4 vs int2
+  OPERATOR 1 (int4, int2) ,
+  OPERATOR 2 (int4, int2) ,
+  OPERATOR 3 (int4, int2) ,
+  OPERATOR 4 (int4, int2) ,
+  OPERATOR 5 (int4, int2) ,
+  FUNCTION 1 (int4, int2) ,
+
+  -- int2 vs int4
+  OPERATOR 1 (int2, int4) ,
+  OPERATOR 2 (int2, int4) ,
+  OPERATOR 3 (int2, int4) ,
+  OPERATOR 4 (int2, int4) ,
+  OPERATOR 5 (int2, int4) ,
+  FUNCTION 1 (int2, int4) ;</pre></div><div class="refsect1" id="idp40600864"><h2>兼容性</h2><p>   在 SQL 标准中没有
+   <code class="command">ALTER OPERATOR FAMILY</code>语句。
+  </p></div><div class="refsect1" id="idp40602336"><h2>另见</h2><span class="simplelist"><a class="xref" href="sql-createopfamily.html" title="CREATE OPERATOR FAMILY"><span class="refentrytitle">CREATE OPERATOR FAMILY</span></a>, <a class="xref" href="sql-dropopfamily.html" title="DROP OPERATOR FAMILY"><span class="refentrytitle">DROP OPERATOR FAMILY</span></a>, <a class="xref" href="sql-createopclass.html" title="CREATE OPERATOR CLASS"><span class="refentrytitle">CREATE OPERATOR CLASS</span></a>, <a class="xref" href="sql-alteropclass.html" title="ALTER OPERATOR CLASS"><span class="refentrytitle">ALTER OPERATOR CLASS</span></a>, <a class="xref" href="sql-dropopclass.html" title="DROP OPERATOR CLASS"><span class="refentrytitle">DROP OPERATOR CLASS</span></a></span></div></div><div class="navfooter"><hr /><table width="100%" summary="Navigation footer"><tr><td width="40%" align="left"><a accesskey="p" href="sql-alteropclass.html">上一页</a> </td><td width="20%" align="center"><a accesskey="u" href="sql-commands.html">上一级</a></td><td width="40%" align="right"> <a accesskey="n" href="sql-alterpolicy.html">下一页</a></td></tr><tr><td width="40%" align="left" valign="top">ALTER OPERATOR CLASS </td><td width="20%" align="center"><a accesskey="h" href="index.html">起始页</a></td><td width="40%" align="right" valign="top"> ALTER POLICY</td></tr></table></div></body></html>

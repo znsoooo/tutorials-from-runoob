@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><title>第 57 章 编写一种表采样方法</title><link rel="stylesheet" type="text/css" href="stylesheet.css" /><link rev="made" href="pgsql-docs@postgresql.org" /><meta name="generator" content="DocBook XSL Stylesheets V1.79.1" /><link rel="prev" href="fdw-row-locking.html" title="56.5. 外部数据包装器中的行锁定" /><link rel="next" href="tablesample-support-functions.html" title="57.1. 采样方法支持函数" /></head><body><div xmlns="http://www.w3.org/TR/xhtml1/transitional" class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="5" align="center">第 57 章 编写一种表采样方法</th></tr><tr><td width="10%" align="left"><a accesskey="p" href="fdw-row-locking.html" title="56.5. 外部数据包装器中的行锁定">上一页</a> </td><td width="10%" align="left"><a accesskey="u" href="internals.html" title="部分 VII. 内部">上一级</a></td><th width="60%" align="center">部分 VII. 内部</th><td width="10%" align="right"><a accesskey="h" href="index.html" title="PostgreSQL 10.1 手册">起始页</a></td><td width="10%" align="right"> <a accesskey="n" href="tablesample-support-functions.html" title="57.1. 采样方法支持函数">下一页</a></td></tr></table><hr></hr></div><div class="chapter" id="TABLESAMPLE-METHOD"><div class="titlepage"><div><div><h2 class="title">第 57 章 编写一种表采样方法</h2></div></div></div><div class="toc"><p><strong>目录</strong></p><dl class="toc"><dt><span class="sect1"><a href="tablesample-support-functions.html">57.1. 采样方法支持函数</a></span></dt></dl></div><a id="idp59115264" class="indexterm"></a><a id="idp59116432" class="indexterm"></a><p>  <span class="productname">PostgreSQL</span>的<code class="literal">TABLESAMPLE</code>子句实现支持
+  在 SQL 标准要求的<code class="literal">BERNOULLI</code>和<code class="literal">SYSTEM</code>方法之
+  外自定义表采样方法。采样方法决定了使用<code class="literal">TABLESAMPLE</code>子句时
+  表的哪些行会被选择。
+ </p><p>  在 SQL 层上，一种表采样方法被表达为一个 SQL 函数（通常用 C 实现），
+  其签名是：
+</p><pre class="programlisting">method_name(internal) RETURNS tsm_handler</pre><p>
+  函数的名称是出现在<code class="literal">TABLESAMPLE</code>子句中的同一个方法名称。
+  <code class="type">internal</code>参数是不起作用的（总是值为零），它仅仅是为了阻止
+  直接从 SQL 命令中调用该函数。函数的结果必须是一个 palloc 好的
+  <code class="type">TsmRoutine</code>结构，它包含了该采样方法的支持函数的指针。
+  这些支持函数是纯 C 函数并且对于 SQL 层面不可见也不可调用。支持函数见
+  <a class="xref" href="tablesample-support-functions.html" title="57.1. 采样方法支持函数">第 57.1 节</a>。
+ </p><p>  除了函数指针之外，<code class="type">TsmRoutine</code>结构必须提供这些额外的域：
+ </p><div class="variablelist"><dl class="variablelist"><dt><span class="term"><code class="literal">List *parameterTypes</code></span></dt><dd><p>     这是一个 OID 列表，它包含了使用这种采样方法时<code class="literal">TABLESAMPLE</code>
+     子句接受的参数的数据类型 OID。例如，对于内建方法，这个列表只包含一个值
+     为<code class="literal">FLOAT4OID</code>的项，它表示采样的百分数。自定义采样方法可以有
+     更多或者不同的参数。
+    </p></dd><dt><span class="term"><code class="literal">bool repeatable_across_queries</code></span></dt><dd><p>     如果为<code class="literal">true</code>，当每次查询时给出相同的参数和
+     <code class="literal">REPEATABLE</code>种子值且表内容没有改变时，采样方法可以在
+     连续的查询中给出相同的采样。当这个域为<code class="literal">false</code>时，不能把
+     <code class="literal">REPEATABLE</code>子句用于这种采样方法。
+    </p></dd><dt><span class="term"><code class="literal">bool repeatable_across_scans</code></span></dt><dd><p>     如果为<code class="literal">true</code>，这种采样方法在同一个查询的连续扫描中给出
+     相同的采样（假定参数、种子值和快照都不变）。当这个域为
+     <code class="literal">false</code>时，规划器将不会选择要求扫描被采样表多于一次的计划，
+     因为那会导致不一致的查询输出。
+    </p></dd></dl></div><p>  <code class="type">TsmRoutine</code>结构类型被声明在
+  <code class="filename">src/include/access/tsmapi.h</code>中，需要更多细节可以参考该文件。
+ </p><p>  在尝试编写自己的采样方法时，包括在标准发布中的表采样方法是很好的参考。内建
+  采样方法的源代码树可见<code class="filename">src/backend/access/tablesample</code>子目录，
+  在<code class="filename">contrib</code>子目录中可以找到额外的方法。
+ </p></div><div class="navfooter"><hr /><table width="100%" summary="Navigation footer"><tr><td width="40%" align="left"><a accesskey="p" href="fdw-row-locking.html">上一页</a> </td><td width="20%" align="center"><a accesskey="u" href="internals.html">上一级</a></td><td width="40%" align="right"> <a accesskey="n" href="tablesample-support-functions.html">下一页</a></td></tr><tr><td width="40%" align="left" valign="top">56.5. 外部数据包装器中的行锁定 </td><td width="20%" align="center"><a accesskey="h" href="index.html">起始页</a></td><td width="40%" align="right" valign="top"> 57.1. 采样方法支持函数</td></tr></table></div></body></html>

@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><title>ALTER TABLESPACE</title><link rel="stylesheet" type="text/css" href="stylesheet.css" /><link rev="made" href="pgsql-docs@postgresql.org" /><meta name="generator" content="DocBook XSL Stylesheets V1.79.1" /><link rel="prev" href="sql-altertable.html" title="ALTER TABLE" /><link rel="next" href="sql-altertsconfig.html" title="ALTER TEXT SEARCH CONFIGURATION" /></head><body><div xmlns="http://www.w3.org/TR/xhtml1/transitional" class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="5" align="center">ALTER TABLESPACE</th></tr><tr><td width="10%" align="left"><a accesskey="p" href="sql-altertable.html" title="ALTER TABLE">上一页</a> </td><td width="10%" align="left"><a accesskey="u" href="sql-commands.html" title="SQL 命令">上一级</a></td><th width="60%" align="center">SQL 命令</th><td width="10%" align="right"><a accesskey="h" href="index.html" title="PostgreSQL 10.1 手册">起始页</a></td><td width="10%" align="right"> <a accesskey="n" href="sql-altertsconfig.html" title="ALTER TEXT SEARCH CONFIGURATION">下一页</a></td></tr></table><hr></hr></div><div class="refentry" id="SQL-ALTERTABLESPACE"><div class="titlepage"></div><a id="idp41446048" class="indexterm"></a><div class="refnamediv"><h2><span class="refentrytitle">ALTER TABLESPACE</span></h2><p>ALTER TABLESPACE — 更改一个表空间的定义</p></div><div class="refsynopsisdiv"><h2>大纲</h2><pre class="synopsis">ALTER TABLESPACE <em class="replaceable"><code>name</code></em> RENAME TO <em class="replaceable"><code>new_name</code></em>
+ALTER TABLESPACE <em class="replaceable"><code>name</code></em> OWNER TO { <em class="replaceable"><code>new_owner</code></em> | CURRENT_USER | SESSION_USER }
+ALTER TABLESPACE <em class="replaceable"><code>name</code></em> SET ( <em class="replaceable"><code>tablespace_option</code></em> = <em class="replaceable"><code>value</code></em> [, ... ] )
+ALTER TABLESPACE <em class="replaceable"><code>name</code></em> RESET ( <em class="replaceable"><code>tablespace_option</code></em> [, ... ] )</pre></div><div class="refsect1" id="idp41454336"><h2>描述</h2><p>   <code class="command">ALTER TABLESPACE</code>可以被用于更改一个
+   表空间的定义。
+  </p><p>   要更改一个表空间的定义，你必须拥有它。要修改拥有者，你还必须是
+   新拥有角色的一个直接或间接成员（注意超级用户自动拥有这些特权）。
+  </p></div><div class="refsect1" id="idp41456432"><h2>参数</h2><div class="variablelist"><dl class="variablelist"><dt><span class="term"><em class="replaceable"><code>name</code></em></span></dt><dd><p>      一个现有表空间的名称。
+     </p></dd><dt><span class="term"><em class="replaceable"><code>new_name</code></em></span></dt><dd><p>      该表空间的新名称。新名称不能以<code class="literal">pg_</code>开始，因为这类名称被
+      保留用于系统表空间。
+     </p></dd><dt><span class="term"><em class="replaceable"><code>new_owner</code></em></span></dt><dd><p>      该表空间的新拥有者。
+     </p></dd><dt><span class="term"><em class="replaceable"><code>tablespace_option</code></em></span></dt><dd><p>      要设置或者重置的一个表空间参数。当前，唯一可用的参数是
+      <code class="varname">seq_page_cost</code>、<code class="varname">random_page_cost</code>和<code class="varname">effective_io_concurrency</code>。
+      为一个特定表空间设定这两个参数值将覆盖规划器对从该表空间中的表读取
+      页面代价的估计值，这些估计值由具有相同名称配置参数建立（见
+      <a class="xref" href="runtime-config-query.html#GUC-SEQ-PAGE-COST">seq_page_cost</a>、
+      <a class="xref" href="runtime-config-query.html#GUC-RANDOM-PAGE-COST">random_page_cost</a>、<a class="xref" href="runtime-config-resource.html#GUC-EFFECTIVE-IO-CONCURRENCY">effective_io_concurrency</a>）。如果一个表空间位于一个比
+      其余 I/O 子系统更快或者更慢的磁盘上时，这些参数就能派上用场。
+     </p></dd></dl></div></div><div class="refsect1" id="idp41466960"><h2>示例</h2><p>   将表空间<code class="literal">index_space</code>重命名为<code class="literal">fast_raid</code>：
+</p><pre class="programlisting">ALTER TABLESPACE index_space RENAME TO fast_raid;</pre><p>
+  </p><p>   更改表空间<code class="literal">index_space</code>的拥有者：
+</p><pre class="programlisting">ALTER TABLESPACE index_space OWNER TO mary;</pre></div><div class="refsect1" id="idp41471456"><h2>兼容性</h2><p>   在 SQL 标准中没有
+   <code class="command">ALTER TABLESPACE</code>语句。
+  </p></div><div class="refsect1" id="idp41472928"><h2>另见</h2><span class="simplelist"><a class="xref" href="sql-createtablespace.html" title="CREATE TABLESPACE"><span class="refentrytitle">CREATE TABLESPACE</span></a>, <a class="xref" href="sql-droptablespace.html" title="DROP TABLESPACE"><span class="refentrytitle">DROP TABLESPACE</span></a></span></div></div><div class="navfooter"><hr /><table width="100%" summary="Navigation footer"><tr><td width="40%" align="left"><a accesskey="p" href="sql-altertable.html">上一页</a> </td><td width="20%" align="center"><a accesskey="u" href="sql-commands.html">上一级</a></td><td width="40%" align="right"> <a accesskey="n" href="sql-altertsconfig.html">下一页</a></td></tr><tr><td width="40%" align="left" valign="top">ALTER TABLE </td><td width="20%" align="center"><a accesskey="h" href="index.html">起始页</a></td><td width="40%" align="right" valign="top"> ALTER TEXT SEARCH CONFIGURATION</td></tr></table></div></body></html>

@@ -1,0 +1,161 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><title>19.5. 预写式日志</title><link rel="stylesheet" type="text/css" href="stylesheet.css" /><link rev="made" href="pgsql-docs@postgresql.org" /><meta name="generator" content="DocBook XSL Stylesheets V1.79.1" /><link rel="prev" href="runtime-config-resource.html" title="19.4. 资源消耗" /><link rel="next" href="runtime-config-replication.html" title="19.6. 复制" /></head><body><div xmlns="http://www.w3.org/TR/xhtml1/transitional" class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="5" align="center">19.5. 预写式日志</th></tr><tr><td width="10%" align="left"><a accesskey="p" href="runtime-config-resource.html" title="19.4. 资源消耗">上一页</a> </td><td width="10%" align="left"><a accesskey="u" href="runtime-config.html" title="第 19 章 服务器配置">上一级</a></td><th width="60%" align="center">第 19 章 服务器配置</th><td width="10%" align="right"><a accesskey="h" href="index.html" title="PostgreSQL 10.1 手册">起始页</a></td><td width="10%" align="right"> <a accesskey="n" href="runtime-config-replication.html" title="19.6. 复制">下一页</a></td></tr></table><hr></hr></div><div class="sect1" id="RUNTIME-CONFIG-WAL"><div class="titlepage"><div><div><h2 class="title" style="clear: both">19.5. 预写式日志</h2></div></div></div><div class="toc"><dl class="toc"><dt><span class="sect2"><a href="runtime-config-wal.html#RUNTIME-CONFIG-WAL-SETTINGS">19.5.1. 设置</a></span></dt><dt><span class="sect2"><a href="runtime-config-wal.html#RUNTIME-CONFIG-WAL-CHECKPOINTS">19.5.2. 检查点</a></span></dt><dt><span class="sect2"><a href="runtime-config-wal.html#RUNTIME-CONFIG-WAL-ARCHIVING">19.5.3. 归档</a></span></dt></dl></div><p>    参阅<a class="xref" href="wal-configuration.html" title="30.4. WAL配置">第 30.4 节</a>获取调节这些设置的额外信息。
+   </p><div class="sect2" id="RUNTIME-CONFIG-WAL-SETTINGS"><div class="titlepage"><div><div><h3 class="title">19.5.1. 设置</h3></div></div></div><div class="variablelist"><dl class="variablelist"><dt id="GUC-WAL-LEVEL"><span class="term"><code class="varname">wal_level</code> (<code class="type">enum</code>)
+      <a id="idp20747040" class="indexterm"></a>
+	  </span></dt><dd><p>        <code class="varname">wal_level</code>决定多少信息写入到 WAL 中。默认值是<code class="literal">replica</code>，
+		它写入足够的数据以支持WAL归档和复制，包括在备用服务器上运行只读查询。
+		<code class="literal">minimal</code>删除除了从崩溃或立即关闭中恢复所需的信息之外的所有日志记录。
+		最后，<code class="literal">logical</code>会增加支持逻辑解码所需的信息。每个层次包括所有更低层次
+        记录的信息。这个参数只能在服务器启动时设置。
+       </p><p>        在<code class="literal">minimal</code>级别中，某些批量操作的 WAL 日志可以被安全地跳过，这可以使那些操作更快（见<a class="xref" href="populate.html#POPULATE-PITR" title="14.4.7. 禁用 WAL 归档和流复制">第 14.4.7 节</a>）。这种优化可以应用的操作包括：
+        </p><table border="0" summary="Simple list" class="simplelist"><tr><td><code class="command">CREATE TABLE AS</code></td></tr><tr><td><code class="command">CREATE INDEX</code></td></tr><tr><td><code class="command">CLUSTER</code></td></tr><tr><td><code class="command">COPY</code>到在同一个事务中被创建或截断的表中</td></tr></table><p>
+        但最少的 WAL 不会包括足够的信息来从基础备份和 WAL 日志中重建数据，因此，要启用 WAL 归档（<a class="xref" href="runtime-config-wal.html#GUC-ARCHIVE-MODE">archive_mode</a>）和流复制，必须使用<code class="literal">replica</code>或更高级别。
+       </p><p>        在<code class="literal">logical</code>层，与<code class="literal">replica</code>相同的信息会被记录，外加上
+        允许从 WAL 抽取逻辑修改集所需的信息。使用级别
+        <code class="literal">logical</code>将增加 WAL 容量，特别是如果为了<code class="literal">REPLICA IDENTITY FULL</code>配置了很多表并且执行了很多<code class="command">UPDATE</code>和<code class="command">DELETE</code>
+        语句时。
+       </p><p>        在9.6之前的版本中，此参数还允许值<code class="literal">archive</code>和
+		<code class="literal">hot_standby</code>。这些仍然被接受，
+		但映射到<code class="literal">replica</code>。
+       </p></dd><dt id="GUC-FSYNC"><span class="term"><code class="varname">fsync</code> (<code class="type">boolean</code>)
+      <a id="idp20767792" class="indexterm"></a>
+	  </span></dt><dd><p>        如果打开这个参数，<span class="productname">PostgreSQL</span>服务器将尝试确保更新被物理地写入到磁盘，做法是发出<code class="function">fsync()</code>系统调用或者使用多种等价的方法（见<a class="xref" href="runtime-config-wal.html#GUC-WAL-SYNC-METHOD">wal_sync_method</a>）。这保证了数据库集簇在一次操作系统或者硬件崩溃后能恢复到一个一致的状态。
+       </p><p>        虽然关闭<code class="varname">fsync</code>常常可以得到性能上的收益，但当发生断电或系统崩溃时可能造成不可恢复的数据损坏。因此，只有在能很容易地从外部数据中重建整个数据库时才建议关闭<code class="varname">fsync</code>。
+       </p><p>        能安全关闭<code class="varname">fsync</code>的环境的例子包括从一个备份文件中初始加载一个新数据库集簇、使用一个数据库集簇来在数据库被删掉并重建之后处理一批数据，或者一个被经常重建并却不用于失效备援的只读数据库克隆。单独的高质量硬件不足以成为关闭<code class="varname">fsync</code>的理由。
+       </p><p>        当把<code class="varname">fsync</code>从关闭改成打开时，为了可靠的恢复，需要强制在内核中的所有被修改的缓冲区进入持久化存储。这可以在多个时机来完成：在集簇被关闭时或在<code class="varname">fsync</code>因为运行<code class="command">initdb --sync-only</code>而打开时、运行<code class="command">sync</code>时、卸载文件系统时或者重启服务器时。
+       </p><p>        在很多情况下，为不重要的事务关闭<a class="xref" href="runtime-config-wal.html#GUC-SYNCHRONOUS-COMMIT">synchronous_commit</a>可以提供很多关闭<code class="varname">fsync</code>的潜在性能收益，并不会有的同时， 关闭fsync可以提供很多潜在的性能优势，而不会有伴随着的数据损坏风险。
+       </p><p>        <code class="varname">fsync</code>只能在<code class="filename">postgresql.conf</code>文件中或在服务器命令行上设置。如果你关闭这个参数，请也考虑关闭<a class="xref" href="runtime-config-wal.html#GUC-FULL-PAGE-WRITES">full_page_writes</a>。
+       </p></dd><dt id="GUC-SYNCHRONOUS-COMMIT"><span class="term"><code class="varname">synchronous_commit</code> (<code class="type">enum</code>)
+      <a id="idp20783168" class="indexterm"></a>
+	  </span></dt><dd><p>        指定在命令返回<span class="quote">“<span class="quote">success</span>”</span>指示给客户端之前，一个事务是否需要等待 WAL 记录被写入磁盘。合法的值是<code class="literal">on</code>、<code class="literal">remote_apply</code>、<code class="literal">remote_write</code>、<code class="literal">local</code>和<code class="literal">off</code>。默认的并且安全的设置是<code class="literal">on</code>。当设置为<code class="literal">off</code>时，在向客户端报告成功和真正保证事务不会被服务器崩溃威胁之间会有延迟（最大的延迟是<a class="xref" href="runtime-config-wal.html#GUC-WAL-WRITER-DELAY">wal_writer_delay</a>的三倍）。不同于<a class="xref" href="runtime-config-wal.html#GUC-FSYNC">fsync</a>，将这个参数设置为<code class="literal">off</code>不会产生数据库不一致性的风险：一个操作系统或数据库崩溃可能会造成一些最近据说已提交的事务丢失，但数据库状态是一致的，就像这些事务已经被干净地中止。因此，当性能比完全确保事务的持久性更重要时，关闭<code class="varname">synchronous_commit</code>可以作为一个有效的代替手段。更多讨论见<a class="xref" href="wal-async-commit.html" title="30.3. 异步提交">第 30.3 节</a>。
+       </p><p>        如果<a class="xref" href="runtime-config-replication.html#GUC-SYNCHRONOUS-STANDBY-NAMES">synchronous_standby_names</a>被设置，这个参数也控制事务提交是否将等待事务的 WAL 记录被复制到后备服务器上。当这个参数被设置为<code class="literal">on</code>时，直到来自于当前同步的后备服务器的一个回复指示该后备服务器已经收到了事务的提交记录并将其刷入了磁盘，主服务器上的事务才会提交。这保证事务将不会被丢失，除非主服务器和后备服务器都遭受到了数据库存储损坏的问题。
+		当设置为<code class="literal">remote_apply</code>&gt;时，提交将等待，
+		直到来自当前同步备用数据库的回复表明它们已收到事务的提交记录并应用它，
+		以便它对备用数据库上的查询可见。
+		当这个参数被设置为<code class="literal">remote_write</code>时，提交将等待，直到来自当前同步的后备服务器的一个回复指示该服务器已经收到了该事务的提交记录并且已经把该记录写出到后备服务器的操作系统，但是该数据并不一定到达了后备服务器上的稳定存储。这种设置足以保证数据在后备服务器的<span class="productname">PostgreSQL</span>实例崩溃时得以保存，但是不能保证后备服务器遭受操作系统级别崩溃时数据能被保持。
+		最后，设置<code class="literal">local</code>会导致提交等待本地刷新到磁盘，
+		但不会进行复制。当使用同步复制时通常不需要这样做，
+		但是为了完整性而提供。
+       </p><p>        当使用同步复制时，它将对等待本地刷写磁盘和 WAL 记录复制很敏感，或者对允许事务异步提交很敏感。不过，设置<code class="literal">local</code>可以用于希望等待本地刷写磁盘但不等待同步复制的事务。如果没有设置<code class="varname">synchronous_standby_names</code>，设置<code class="literal">on</code>、<code class="literal">remote_write</code>和<code class="literal">local</code>都提供了同样的同步级别：事务提交只等待本地刷写磁盘。
+       </p><p>        这个参数可以随时被修改；任何一个事务的行为由其提交时生效的设置决定。因此，可以同步提交一些事务，同时异步提交其他事务。例如，当默认是相反时，实现一个单一多语句事务的异步提交，在事务中发出<code class="command">SET LOCAL synchronous_commit TO OFF</code>。
+       </p></dd><dt id="GUC-WAL-SYNC-METHOD"><span class="term"><code class="varname">wal_sync_method</code> (<code class="type">enum</code>)
+      <a id="idp20808400" class="indexterm"></a>
+	  </span></dt><dd><p>        用来向强制 WAL 更新到磁盘的方法。如果<code class="varname">fsync</code>是关闭的，那么这个设置就不相关，因为 WAL 文件更新将根本不会被强制。可能的值是：
+       </p><div class="itemizedlist"><ul class="itemizedlist" style="list-style-type: disc; "><li class="listitem"><p>         <code class="literal">open_datasync</code>（用<code class="function">open()</code>选项<code class="symbol">O_DSYNC</code>写 WAL 文件）
+        </p></li><li class="listitem"><p>         <code class="literal">fdatasync</code>（在每次提交时调用<code class="function">fdatasync()</code>）
+        </p></li><li class="listitem"><p>         <code class="literal">fsync</code>（在每次提交时调用<code class="function">fsync()</code>）
+        </p></li><li class="listitem"><p>         <code class="literal">fsync_writethrough</code>（在每次提交时调用<code class="function">fsync()</code>，强制任何磁盘写高速缓存的直通写）
+        </p></li><li class="listitem"><p>         <code class="literal">open_sync</code>（用<code class="function">open()</code>选项<code class="symbol">O_SYNC</code>写 WAL 文件）
+        </p></li></ul></div><p>        <code class="literal">open_</code>* 选项也可以使用<code class="literal">O_DIRECT</code>（如果可用）。不是在所有平台上都能使用所有这些选择。默认值是列表中第一个被平台支持的那个， 不过<code class="literal">fdatasync</code>是 Linux 中的默认值。默认值不一定是最理想的；有可能需要修改这个设置或系统配置的其他方面来创建一个崩溃-安全的配置，或达到最佳性能。这些方面在<a class="xref" href="wal-reliability.html" title="30.1. 可靠性">第 30.1 节</a>中讨论。这个参数只能在<code class="filename">postgresql.conf</code>文件中或在服务器命令行上设置。
+       </p></dd><dt id="GUC-FULL-PAGE-WRITES"><span class="term"><code class="varname">full_page_writes</code> (<code class="type">boolean</code>)
+      <a id="idp20827024" class="indexterm"></a>
+	  </span></dt><dd><p>        当这个参数为打开时，<span class="productname">PostgreSQL</span>服务器在一个检查点之后的页面的第一次修改期间将每个页面的全部内容写到  WAL 中。这么做是因为在操作系统崩溃期间正在处理的一次页写入可能只有部分完成，从而导致在一个磁盘页面中混合有新旧数据。在崩溃后的恢复期间，通常存储在 WAL 中的行级改变数据不足以完全恢复这样一个页面。存储完整的页面映像可以保证页面被正确存储，但代价是增加了必须被写入 WAL 的数据量（因为 WAL 重放总是从一个检查点开始，所以在检查点后每个页面的第一次改变时这样做就够了。因此，一种减小全页面写开销的方法是增加检查点间隔参数值）。
+       </p><p>        把这个参数关闭会加快正常操作，但是在系统失败后可能导致不可恢复的数据损坏，或者静默的数据损坏。其风险类似于关闭<code class="varname">fsync</code>， 但是风险较小。并且只有在可关闭<code class="varname">fsync</code>的情况下才应该关闭它。
+       </p><p>        关闭这个选项并不影响用于时间点恢复（PITR）的 WAL 归档使用（见<a class="xref" href="continuous-archiving.html" title="25.3. 连续归档和时间点恢复（PITR）">第 25.3 节</a>）。
+       </p><p>        这个参数只能在<code class="filename">postgresql.conf</code>文件中或在服务器命令行上设置。默认值是<code class="literal">on</code>。
+       </p></dd><dt id="GUC-WAL-LOG-HINTS"><span class="term"><code class="varname">wal_log_hints</code> (<code class="type">boolean</code>)
+      <a id="idp20836896" class="indexterm"></a>
+      </span></dt><dd><p>        当这个参数为<code class="literal">on</code>时，<span class="productname">PostgreSQL</span>服务器一个检查点之后页面被第一次修改期间把该磁盘页面的整个内容都写入 WAL，即使对所谓的提示位做非关键修改也会这样做。
+       </p><p>        如果启用了数据校验和，提示位更新总是会被 WAL 记录并且这个设置会被忽略。你可以使用这个
+        设置测试如果你的数据库启用了数据校验和，会有多少额外的 WAL 记录发生。
+       </p><p>        这个参数只能在服务器启动时设置。默认值是<code class="literal">off</code>。
+       </p></dd><dt id="GUC-WAL-COMPRESSION"><span class="term"><code class="varname">wal_compression</code> (<code class="type">boolean</code>)
+      <a id="idp20843760" class="indexterm"></a>
+      </span></dt><dd><p>        当这个参数为<code class="literal">on</code>，
+        <a class="xref" href="runtime-config-wal.html#GUC-FULL-PAGE-WRITES">full_page_writes</a>为on，或者基础备份中，
+        <span class="productname">PostgreSQL</span>服务器压缩完整页面图片到WAL中。
+        在WAL回放中解压压缩的页面图片。缺省值为<code class="literal">off</code>。
+        只有超级用户可以修改这个设置。 
+       </p><p>       开启这个参数可以减少WAL量而不增加不可恢复数据丢失的风险，
+       但是增加了WAL日志压缩以及WAL回放解压过程中一些额外CPU成本开销。
+       </p></dd><dt id="GUC-WAL-BUFFERS"><span class="term"><code class="varname">wal_buffers</code> (<code class="type">integer</code>)
+      <a id="idp20850736" class="indexterm"></a>
+	  </span></dt><dd><p>        用于还未写入磁盘的 WAL 数据的共享内存量。默认值 -1 选择等于<a class="xref" href="runtime-config-resource.html#GUC-SHARED-BUFFERS">shared_buffers</a>的 1/32 的尺寸（大约3%），但是不小于<code class="literal">64kB</code>也不大于 WAL 段的尺寸（通常为<code class="literal">16MB</code>）。如果自动的选择太大或太小可以手工设置该值，但是任何小于<code class="literal">32kB</code>的正值都将被当作<code class="literal">32kB</code>。这个参数只能在服务器启动时设置。
+       </p><p>        在每次事务提交时，WAL 缓冲区的内容被写出到磁盘，因此极大的值不可能提供显著的收益。不过，把这个值设置为几个兆字节可以在一个繁忙的服务器（其中很多客户端会在同一时间提交）上提高写性能。由默认设置 -1 选择的自动调节将在大部分情况下得到合理的结果。
+       </p></dd><dt id="GUC-WAL-WRITER-DELAY"><span class="term"><code class="varname">wal_writer_delay</code> (<code class="type">integer</code>)
+      <a id="idp20858896" class="indexterm"></a>
+	  </span></dt><dd><p>        指定WAL编写器刷新WAL的频率。在刷新WAL之后，
+		它会睡眠<code class="varname">wal_writer_delay</code>毫秒，除非被异步提交的事务唤醒。
+		如果最后一次刷新发生的时间小于<code class="varname">wal_writer_delay</code>毫秒前，
+		并且从上一次刷写发生以来产生了小于WAL的<code class="varname"> wal_writer_flush_after </code>个字节，
+		则WAL仅写入操作系统，而不刷新到磁盘。
+		默认值是 200 毫秒（<code class="literal">200ms</code>）。需要注意的是，在许多系统上，有效的休眠延迟解析度是 10 毫秒；将<code class="varname">wal_writer_delay</code>设置为不是 10 的倍数将得到把它设置为下一个 10 的倍数同样的效果。这个参数只能在<code class="filename">postgresql.conf</code>文件中或在服务器命令行上设置。
+       </p></dd><dt id="GUC-WAL-WRITER-FLUSH-AFTER"><span class="term"><code class="varname">wal_writer_flush_after</code> (<code class="type">integer</code>)
+      <a id="idp20866192" class="indexterm"></a>
+      </span></dt><dd><p>        指定 WAL 写入器刷写 WAL 的频繁程度。
+        如果上一次刷写发生在少于<code class="varname">wal_writer_delay</code>
+        毫秒以前并且从上一次刷写发生以来产生了少于<code class="varname">wal_writer_flush_after</code>
+        字节的 WAL，WAL 将只被写入到操作系统，而不刷新到磁盘。如果
+        <code class="varname">wal_writer_flush_after</code>被设置为<code class="literal">0</code>，
+        则 WAL 数据立即被刷新。默认是<code class="literal">1MB</code>。
+        这个参数只能在<code class="filename">postgresql.conf</code>文件中或者服务器命令行上设置。 
+       </p></dd><dt id="GUC-COMMIT-DELAY"><span class="term"><code class="varname">commit_delay</code> (<code class="type">integer</code>)
+      <a id="idp20873632" class="indexterm"></a>
+	  </span></dt><dd><p>        在一次 WAL 刷写被发起之前，<code class="varname">commit_delay</code>增加一个时间延迟，以微秒计。如果系统负载足够高，使得在一个给定间隔内有额外的事务准备好提交，那么通过允许更多事务通过一个单次 WAL 刷写来提交能够提高组提交的吞吐量。但是，它也把每次 WAL 刷写的潜伏期增加到了最多<code class="varname">commit_delay</code>微秒。因为如果没有其他事务准备好提交，就会浪费一次延迟，只有在当一次刷写将要被发起时有至少<code class="varname">commit_siblings</code>个其他活动事务时，才会执行一次延迟。另外，如果<code class="varname">fsync</code>被禁用，则将不会执行任何延迟。默认的<code class="varname">commit_delay</code>是零（无延迟）。只有超级用户才能修改这个设置。
+       </p><p>        在<span class="productname">PostgreSQL</span>的 9.3 发布之前，<code class="varname">commit_delay</code>的行为不同并且效果更差：它只影响提交，而不是所有 WAL 刷写，并且即使在 WAL 刷写马上就要完成时也会等待一整个配置的延迟。从<span class="productname">PostgreSQL</span> 9.3 中开始，第一个准备好刷写的进程会等待配置的间隔，而后续的进程只等到领先者完成刷写操作。
+       </p></dd><dt id="GUC-COMMIT-SIBLINGS"><span class="term"><code class="varname">commit_siblings</code> (<code class="type">integer</code>)
+      <a id="idp20882800" class="indexterm"></a>
+	  </span></dt><dd><p>        在执行<code class="varname">commit_delay</code>延迟时，要求的并发活动事务的最小数目。大一些的值会导致在延迟间隔期间更可能有至少另外一个事务准备好提交。默认值是五个事务。
+       </p></dd></dl></div></div><div class="sect2" id="RUNTIME-CONFIG-WAL-CHECKPOINTS"><div class="titlepage"><div><div><h3 class="title">19.5.2. 检查点</h3></div></div></div><div class="variablelist"><dl class="variablelist"><dt id="GUC-CHECKPOINT-TIMEOUT"><span class="term"><code class="varname">checkpoint_timeout</code> (<code class="type">integer</code>)
+      <a id="idp20887840" class="indexterm"></a>
+	  </span></dt><dd><p>        自动 WAL 检查点之间的最长时间，以秒计。
+        有效值在30秒和1天之间。
+        默认是 5 分钟（<code class="literal">5min</code>）。
+        增加这个参数的值会增加崩溃恢复所需的时间。
+        这个参数只能在<code class="filename">postgresql.conf</code>文件中或在服务器命令行上设置。
+       </p></dd><dt id="GUC-CHECKPOINT-COMPLETION-TARGET"><span class="term"><code class="varname">checkpoint_completion_target</code> (<code class="type">floating point</code>)
+      <a id="idp20893072" class="indexterm"></a>
+	  </span></dt><dd><p>        指定检查点完成的目标，作为检查点之间总时间的一部分。默认是 0.5。
+
+        这个参数只能在<code class="filename">postgresql.conf</code>文件中或在服务器命令行上设置。
+       </p></dd><dt id="GUC-CHECKPOINT-FLUSH-AFTER"><span class="term"><code class="varname">checkpoint_flush_after</code> (<code class="type">integer</code>)
+      <a id="idp20897520" class="indexterm"></a>
+      </span></dt><dd><p>        在执行检查点时，只要有<code class="varname">checkpoint_flush_after</code>字节被写入，
+        就尝试强制 OS 把这些写发送到底层存储。
+        这样做将会限制内核页面高速缓存中的脏数据数量，
+        降低在检查点末尾发出<code class="function">fsync</code>或者 OS 在后台大批量写回数据时被卡住的可能性。
+        那常常会导致大幅度压缩的事务延迟，但是也有一些情况
+        （特别是负载超过<a class="xref" href="runtime-config-resource.html#GUC-SHARED-BUFFERS">shared_buffers</a>但小于 OS 页面高速缓存）
+        的性能会降低。这种设置可能会在某些平台上没有效果。合法的范围在
+        <code class="literal">0</code>（禁用强制写回）和<code class="literal">2MB</code>之间。
+        Linux 上的默认值是<code class="literal">256kB</code>，其他平台上是<code class="literal">0</code>
+        （如果<code class="symbol">BLCKSZ</code>不是8kB，默认值和最大值会等比例缩放）。
+        这个参数只能在<code class="filename">postgresql.conf</code>文件中或者服务器命令行上设置。 
+       </p></dd><dt id="GUC-CHECKPOINT-WARNING"><span class="term"><code class="varname">checkpoint_warning</code> (<code class="type">integer</code>)
+      <a id="idp20907376" class="indexterm"></a></span></dt><dd><p>        如果由于填充检查点段文件导致的检查点之间的间隔低于这个参数表示的秒数，那么就向服务器日志写一个消息（它建议增加<code class="varname">max_wal_size</code>的值）。默认值是 30 秒（<code class="literal">30s</code>）。零则关闭警告。如果<code class="varname">checkpoint_timeout</code>低于<code class="varname">checkpoint_warning</code>，则不会有警告产生。这个参数只能在<code class="filename">postgresql.conf</code>文件中或在服务器命令行上设置。
+       </p></dd><dt id="GUC-MAX-WAL-SIZE"><span class="term"><code class="varname">max_wal_size</code> (<code class="type">integer</code>)
+      <a id="idp20913824" class="indexterm"></a>
+      </span></dt><dd><p>        在自动WAL检查点使得WAL增长到最大尺寸。这是软限制；特殊情况下WAL大小可以超过
+        <code class="varname">max_wal_size</code>，如重负载下，错误<code class="varname">archive_command</code>，或者
+        较大<code class="varname">wal_keep_segments</code>的设置。缺省是1GB。
+        增加这个参数会延长崩溃恢复所需要的时间。
+        这个参数只能在<code class="filename">postgresql.conf</code>文件或者服务器命令行上设置。
+       </p></dd><dt id="GUC-MIN-WAL-SIZE"><span class="term"><code class="varname">min_wal_size</code> (<code class="type">integer</code>)
+      <a id="idp20919696" class="indexterm"></a>
+      </span></dt><dd><p>        只要WAL磁盘使用率低于这个设置，旧的WAL文件总数被回收，以供将来检查点使用。而不是删除。
+        这可以用来确保预留足够的WAL空间处理WAL使用中的峰值，比如当运行大批量工作时。
+        缺省是80MB。这个参数只能在<code class="filename">postgresql.conf</code>文件或者
+        服务器命令行上设置。
+       </p></dd></dl></div></div><div class="sect2" id="RUNTIME-CONFIG-WAL-ARCHIVING"><div class="titlepage"><div><div><h3 class="title">19.5.3. 归档</h3></div></div></div><div class="variablelist"><dl class="variablelist"><dt id="GUC-ARCHIVE-MODE"><span class="term"><code class="varname">archive_mode</code> (<code class="type">enum</code>)
+      <a id="idp20925456" class="indexterm"></a></span></dt><dd><p>        当启用<code class="varname">archive_mode</code>时，
+        可以通过设置<a class="xref" href="runtime-config-wal.html#GUC-ARCHIVE-COMMAND">archive_command</a>命令将完成的 
+        WAL段发送到归档存储。
+        除了<code class="literal">off</code>，要禁用两种模式<code class="literal">on</code>和
+        <code class="literal">always</code>。在正常操作过程中，两种模式没有区别，但是
+        当设置为<code class="literal">always</code>时，归档恢复或者待机模式中激活WAL归档。
+        在<code class="literal">always</code>模式中，
+        从归档中恢复所有文件或者再次归档使用流复制传输的文件。
+        参阅<a class="xref" href="warm-standby.html#CONTINUOUS-ARCHIVING-IN-STANDBY" title="26.2.9. 后备服务器中的持续归档">第 26.2.9 节</a>获取详情。
+       
+       </p><p>        <code class="varname">archive_mode</code>和<code class="varname">archive_command</code>
+        是独立的变量，这样可以在不影响归档模式的前提下修改
+        <code class="varname">archive_command</code>。这个参数只能在服务器启动时设置。
+        当<code class="varname">wal_level</code>被设置为<code class="literal">minimal</code>时，
+        <code class="varname">archive_mode</code>不能被启用。 
+       </p></dd><dt id="GUC-ARCHIVE-COMMAND"><span class="term"><code class="varname">archive_command</code> (<code class="type">string</code>)
+      <a id="idp20938128" class="indexterm"></a></span></dt><dd><p>        本地 shell 命令被执行来归档一个完成的 WAL 文件段。字符串中的任何<code class="literal">%p</code>被替换成要被归档的文件的路径名， 而<code class="literal">%f</code>只被文件名替换（路径名是相对于服务器的工作目录， 即集簇的数据目录）。如果要在命令里嵌入一个真正的<code class="literal">%</code>字符，可以使用<code class="literal">%%</code>。有一点很重要，该命令只在成功时返回一个零作为退出状态。更多信息请见<a class="xref" href="continuous-archiving.html#BACKUP-ARCHIVING-WAL" title="25.3.1. 建立WAL归档">第 25.3.1 节</a>。
+       </p><p>        这个参数只能在<code class="filename">postgresql.conf</code>文件中或在服务器命令行上设置。除非服务器启动时启用了<code class="varname">archive_mode</code>，否则它会被忽略。如果<code class="varname">archive_mode</code>被启用时，<code class="varname">archive_command</code>是一个空字符串（默认），WAL 归档会被临时禁用，但服务器仍会继续累计 WAL 段文件，期待着一个命令被提供。将<code class="varname">archive_command</code>设置为一个只返回真但不做任何事的命令（例如<code class="literal">/bin/true</code>或 Windows 上的<code class="literal">REM</code>）实际上会禁用归档，也会打破归档恢复所需的 WAL 文件链，因此只有在极少数情况下才能用。
+       </p></dd><dt id="GUC-ARCHIVE-TIMEOUT"><span class="term"><code class="varname">archive_timeout</code> (<code class="type">integer</code>)
+      <a id="idp20950080" class="indexterm"></a></span></dt><dd><p>        <a class="xref" href="runtime-config-wal.html#GUC-ARCHIVE-COMMAND">archive_command</a>仅在已完成的 WAL 段上调用。因此，如果你的服务器只产生很少的 WAL 流量（或产生流量的周期很长），那么在事务完成和它被安全地记录到归档存储之间将有一个很长的延迟。为了限制未归档数据存在的时间，你可以设置<code class="varname">archive_timeout</code>来强制服务器来周期性地切换到一个新的 WAL 段文件。当这个参数被设置为大于零时，只要从上次段文件切换后过了参数所设置的那么多秒并且已经有过任何数据库活动，包括一个单一检查点（如果没有数据库活动则跳过检查点），服务器将切换到一个新的段文件。注意，由于强制切换而提早关闭的被归档文件仍然与完整的归档文件长度相同。因此，使用非常短的<code class="varname">archive_timeout</code>是不明智的 — 它将占用巨大的归档存储。一分钟左右的<code class="varname">archive_timeout</code>设置通常比较合理。如果你希望数据能被更快地从主服务器上复制下来，你应该考虑使用流复制而不是归档。这个参数只能在<code class="filename">postgresql.conf</code>文件中或在服务器命令行上设置。
+       </p></dd></dl></div></div></div><div class="navfooter"><hr /><table width="100%" summary="Navigation footer"><tr><td width="40%" align="left"><a accesskey="p" href="runtime-config-resource.html">上一页</a> </td><td width="20%" align="center"><a accesskey="u" href="runtime-config.html">上一级</a></td><td width="40%" align="right"> <a accesskey="n" href="runtime-config-replication.html">下一页</a></td></tr><tr><td width="40%" align="left" valign="top">19.4. 资源消耗 </td><td width="20%" align="center"><a accesskey="h" href="index.html">起始页</a></td><td width="40%" align="right" valign="top"> 19.6. 复制</td></tr></table></div></body></html>

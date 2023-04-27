@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><title>1.3. 创建一个数据库</title><link rel="stylesheet" type="text/css" href="stylesheet.css" /><link rev="made" href="pgsql-docs@postgresql.org" /><meta name="generator" content="DocBook XSL Stylesheets V1.79.1" /><link rel="prev" href="tutorial-arch.html" title="1.2. 架构基础" /><link rel="next" href="tutorial-accessdb.html" title="1.4. 访问数据库" /></head><body><div xmlns="http://www.w3.org/TR/xhtml1/transitional" class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="5" align="center">1.3. 创建一个数据库</th></tr><tr><td width="10%" align="left"><a accesskey="p" href="tutorial-arch.html" title="1.2. 架构基础">上一页</a> </td><td width="10%" align="left"><a accesskey="u" href="tutorial-start.html" title="第 1 章 从头开始">上一级</a></td><th width="60%" align="center">第 1 章 从头开始</th><td width="10%" align="right"><a accesskey="h" href="index.html" title="PostgreSQL 10.1 手册">起始页</a></td><td width="10%" align="right"> <a accesskey="n" href="tutorial-accessdb.html" title="1.4. 访问数据库">下一页</a></td></tr></table><hr></hr></div><div class="sect1" id="TUTORIAL-CREATEDB"><div class="titlepage"><div><div><h2 class="title" style="clear: both">1.3. 创建一个数据库</h2></div></div></div><a id="idp5194272" class="indexterm"></a><a id="idp5195392" class="indexterm"></a><p>    看看你能否访问数据库服务器的第一个例子就是试着创建一个数据库。 一台运行着的<span class="productname">PostgreSQL</span>服务器可以管理许多数据库。 通常我们会为每个项目和每个用户单独使用一个数据库。
+   </p><p>    你的站点管理员可能已经为你创建了可以使用的数据库。
+    如果这样你就可以省略这一步， 并且跳到下一节。
+   </p><p>    要创建一个新的数据库，在我们这个例子里叫<code class="literal">mydb</code>，你可以使用下面的命令：
+</p><pre class="screen"><code class="prompt">$</code> <strong class="userinput"><code>createdb mydb</code></strong></pre><p>
+    如果不产生任何响应则表示该步骤成功，你可以跳过本节的剩余部分。
+   </p><p>    如果你看到类似下面这样的信息：
+</p><pre class="screen">createdb: command not found</pre><p>
+    那么就是<span class="productname">PostgreSQL</span>没有安装好。或者是根本没安装， 或者是你的shell搜索路径没有设置正确。尝试用绝对路径调用该命令试试：
+</p><pre class="screen"><code class="prompt">$</code> <strong class="userinput"><code>/usr/local/pgsql/bin/createdb mydb</code></strong></pre><p>
+    在你的站点上这个路径可能不一样。和你的站点管理员联系或者看看安装指导获取正确的位置。
+   </p><p>    另外一种响应可能是这样：
+</p><pre class="screen">createdb: could not connect to database postgres: could not connect to server: No such file or directory
+        Is the server running locally and accepting
+        connections on Unix domain socket "/tmp/.s.PGSQL.5432"?</pre><p>
+    这意味着该服务器没有启动，或者没有按照<code class="command">createdb</code>预期地启动。同样， 你也要查看安装指导或者咨询管理员。
+   </p><p>    另外一个响应可能是这样：
+</p><pre class="screen">createdb: could not connect to database postgres: FATAL:  role "joe" does not exist</pre><p>
+    在这里提到了你自己的登录名。如果管理员没有为你创建<span class="productname">PostgreSQL</span>用户帐号， 就会发生这些现象。（<span class="productname">PostgreSQL</span>用户帐号和操作系统用户帐号是不同的。） 如果你是管理员，参阅<a class="xref" href="user-manag.html" title="第 21 章 数据库角色">第 21 章</a>获取创建用户帐号的帮助。 你需要变成安装<span class="productname">PostgreSQL</span>的操作系统用户的身份（通常是 <code class="literal">postgres</code>）才能创建第一个用户帐号。 也有可能是赋予你的<span class="productname">PostgreSQL</span>用户名和你的操作系统用户名不同； 这种情况下，你需要使用<code class="option">-U</code>选项或者使用<code class="envar">PGUSER</code>环境变量指定你的<span class="productname">PostgreSQL</span>用户名。
+   </p><p>    如果你有个数据库用户帐号，但是没有创建数据库所需要的权限，那么你会看到下面的信息：
+</p><pre class="screen">createdb: database creation failed: ERROR:  permission denied to create database</pre><p>
+    并非所有用户都被许可创建新数据库。 如果<span class="productname">PostgreSQL</span>拒绝为你创建数据库， 那么你需要让站点管理员赋予你创建数据库的权限。出现这种情况时请咨询你的站点管理员。 如果你自己安装了<span class="productname">PostgreSQL</span>， 那么你应该以你启动数据库服务器的用户身份登录然后参考手册完成权限的赋予工作。
+
+    <a href="#ftn.idp5216320" class="footnote"><sup class="footnote" id="idp5216320">[1]</sup></a>
+   </p><p>    你还可以用其它名字创建数据库。<span class="productname">PostgreSQL</span>允许你在一个站点上创建任意数量的数据库。 数据库名必须是以字母开头并且小于 63 个字符长。 一个方便的做法是创建和你当前用户名同名的数据库。 许多工具假设该数据库名为缺省数据库名，所以这样可以节省你的敲键。 要创建这样的数据库，只需要键入：
+</p><pre class="screen"><code class="prompt">$</code> <strong class="userinput"><code>createdb</code></strong></pre><p>
+   </p><p>    如果你再也不想使用你的数据库了，那么你可以删除它。 比如，如果你是数据库<code class="literal">mydb</code>的所有人（创建人）， 那么你就可以用下面的命令删除它：
+</p><pre class="screen"><code class="prompt">$</code> <strong class="userinput"><code>dropdb mydb</code></strong></pre><p>
+    （对于这条命令而言，数据库名不是缺省的用户名，因此你就必须声明它） 。这个动作将在物理上把所有与该数据库相关的文件都删除并且不可取消， 因此做这中操作之前一定要考虑清楚。
+   </p><p>    更多关于<code class="command">createdb</code>和<code class="command">dropdb</code>的信息可以分别在<a class="xref" href="app-createdb.html" title="createdb"><span class="refentrytitle"><span class="application">createdb</span></span></a>和<a class="xref" href="app-dropdb.html" title="dropdb"><span class="refentrytitle"><span class="application">dropdb</span></span></a>中找到。
+   </p><div class="footnotes"><br /><hr style="width:100; text-align:left;margin-left: 0" /><div id="ftn.idp5216320" class="footnote"><p><a href="#idp5216320" class="para"><sup class="para">[1] </sup></a>      为什么这么做的解释：<span class="productname">PostgreSQL</span>用户名是和操作系统用户账号分开的。 如果你连接到一个数据库时，你可以选择以何种<span class="productname">PostgreSQL</span>用户名进行联接； 如果你不选择，那么缺省就是你的当前操作系统账号。 如果这样，那么总有一个与操作系统用户同名的<span class="productname">PostgreSQL</span>用户账号用于启动服务器， 并且通常这个用户都有创建数据库的权限。如果你不想以该用户身份登录， 那么你也可以在任何地方声明一个<code class="option">-U</code>选项以选择一个用于连接的<span class="productname">PostgreSQL</span>用户名。
+     </p></div></div></div><div class="navfooter"><hr /><table width="100%" summary="Navigation footer"><tr><td width="40%" align="left"><a accesskey="p" href="tutorial-arch.html">上一页</a> </td><td width="20%" align="center"><a accesskey="u" href="tutorial-start.html">上一级</a></td><td width="40%" align="right"> <a accesskey="n" href="tutorial-accessdb.html">下一页</a></td></tr><tr><td width="40%" align="left" valign="top">1.2. 架构基础 </td><td width="20%" align="center"><a accesskey="h" href="index.html">起始页</a></td><td width="40%" align="right" valign="top"> 1.4. 访问数据库</td></tr></table></div></body></html>

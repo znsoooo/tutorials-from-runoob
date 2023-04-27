@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><title>F.1. adminpack</title><link rel="stylesheet" type="text/css" href="stylesheet.css" /><link rev="made" href="pgsql-docs@postgresql.org" /><meta name="generator" content="DocBook XSL Stylesheets V1.79.1" /><link rel="prev" href="contrib.html" title="附录 F. 额外提供的模块" /><link rel="next" href="amcheck.html" title="F.2. amcheck" /></head><body><div xmlns="http://www.w3.org/TR/xhtml1/transitional" class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="5" align="center">F.1. adminpack</th></tr><tr><td width="10%" align="left"><a accesskey="p" href="contrib.html" title="附录 F. 额外提供的模块">上一页</a> </td><td width="10%" align="left"><a accesskey="u" href="contrib.html" title="附录 F. 额外提供的模块">上一级</a></td><th width="60%" align="center">附录 F. 额外提供的模块</th><td width="10%" align="right"><a accesskey="h" href="index.html" title="PostgreSQL 10.1 手册">起始页</a></td><td width="10%" align="right"> <a accesskey="n" href="amcheck.html" title="F.2. amcheck">下一页</a></td></tr></table><hr></hr></div><div class="sect1" id="ADMINPACK"><div class="titlepage"><div><div><h2 class="title" style="clear: both">F.1. adminpack</h2></div></div></div><a id="idp84766672" class="indexterm"></a><p>  <code class="filename">adminpack</code>提供了一些支持函数，<span class="application">pgAdmin</span>和其他管理工具会用这些函数来提供额外的功能，例如服务器日志文件的远程管理。只有超级用户才能使用全部这些函数。
+ </p><p>  <a class="xref" href="adminpack.html#FUNCTIONS-ADMINPACK-TABLE" title="表 F.1. adminpack 函数">表 F.1</a>中展示的函数提供了向运行
+  着服务器的机器上的文件进行写入的途径（另见
+  <a class="xref" href="functions-admin.html#FUNCTIONS-ADMIN-GENFILE-TABLE" title="表 9.88. 通用文件访问函数">表 9.88</a>中的函数，它们提供了
+  只读的访问途径）。只有位于数据库集簇目录中的文件才能被访问，不过相对
+  路径和绝对路径都可以使用。
+ </p><div class="table" id="FUNCTIONS-ADMINPACK-TABLE"><p class="title"><strong>表 F.1. <code class="filename">adminpack</code> 函数</strong></p><div class="table-contents"><table class="table" summary="adminpack 函数" border="1"><colgroup><col /><col /><col /></colgroup><thead><tr><th>名称</th><th>返回类型</th><th>描述</th></tr></thead><tbody><tr><td><code class="function">pg_catalog.pg_file_write(filename text, data text, append boolean)</code></td><td><code class="type">bigint</code></td><td>      向一个文本文件写入或者追加
+     </td></tr><tr><td><code class="function">pg_catalog.pg_file_rename(oldname text, newname text [<span class="optional">, archivename text</span>])</code></td><td><code class="type">boolean</code></td><td>      重命名一个文件
+     </td></tr><tr><td><code class="function">pg_catalog.pg_file_unlink(filename text)</code></td><td><code class="type">boolean</code></td><td>      移除一个文件
+     </td></tr><tr><td><code class="function">pg_catalog.pg_logdir_ls()</code></td><td><code class="type">setof record</code></td><td>      列出在<code class="varname">log_directory</code>目录中的日志文件
+     </td></tr></tbody></table></div></div><br class="table-break" /><a id="idp84781984" class="indexterm"></a><p>  <code class="function">pg_file_write</code>把指定的<em class="parameter"><code>data</code></em>写入到由
+  <em class="parameter"><code>filename</code></em>命名的文件中。如果<em class="parameter"><code>append</code></em>
+  为假，文件不能已经存在。如果<em class="parameter"><code>append</code></em>为真，该文件
+  可能已经存在，并且如果存在就会被追加。这个函数返回写入的字节数。
+ </p><a id="idp84786720" class="indexterm"></a><p>  <code class="function">pg_file_rename</code>重命名一个文件。如果
+  <em class="parameter"><code>archivename</code></em>被省略或者为 NULL，它简单地把
+  <em class="parameter"><code>oldname</code></em>重命名为<em class="parameter"><code>newname</code></em>（不能
+  已经存在）。如果提供了<em class="parameter"><code>archivename</code></em>，该函数首先把
+  <em class="parameter"><code>newname</code></em>重命名为<em class="parameter"><code>archivename</code></em>（不
+  能已经存在），然后把<em class="parameter"><code>oldname</code></em>重命名为
+  <em class="parameter"><code>newname</code></em>。当第二次重命名失败时，这个函数会在报告
+  错误之前尝试把<em class="parameter"><code>archivename</code></em>重命名成
+  <em class="parameter"><code>newname</code></em>。成功时函数返回真，如果源文件不存在或者
+  不可写则返回假，其他情况下会抛出错误。
+ </p><a id="idp84795872" class="indexterm"></a><p>  <code class="function">pg_file_unlink</code>移除指定的文件。成功时函数返回真，
+  如果指定的文件不存在或者<code class="function">unlink()</code>调用失败则返回
+  假，其他情况下会抛出错误。
+ </p><a id="idp84798384" class="indexterm"></a><p>  <code class="function">pg_logdir_ls</code>返回<a class="xref" href="runtime-config-logging.html#GUC-LOG-DIRECTORY">log_directory</a>
+  目录中所有日志文件的开始时间戳以及路径名。要使用这个函数，
+  <a class="xref" href="runtime-config-logging.html#GUC-LOG-FILENAME">log_filename</a>参数必须具有其默认设置（
+  <code class="literal">postgresql-%Y-%m-%d_%H%M%S.log</code>）。
+ </p><p>  The functions shown
+  in 
+  <a class="xref" href="adminpack.html#FUNCTIONS-ADMINPACK-DEPRECATED-TABLE" title="表 F.2. 废弃的 adminpack 函数">表 F.2</a>中展示的函数
+  已经被废弃，新的应用不应该使用它们，而是使用
+  <a class="xref" href="functions-admin.html#FUNCTIONS-ADMIN-SIGNAL-TABLE" title="表 9.78. 服务器信号函数">表 9.78</a>和
+  <a class="xref" href="functions-admin.html#FUNCTIONS-ADMIN-GENFILE-TABLE" title="表 9.88. 通用文件访问函数">表 9.88</a>中所示的那些函数。在
+  <code class="filename">adminpack</code>中提供这些函数只是为了兼容旧版本的
+  <span class="application">pgAdmin</span>。
+ </p><div class="table" id="FUNCTIONS-ADMINPACK-DEPRECATED-TABLE"><p class="title"><strong>表 F.2. 废弃的 <code class="filename">adminpack</code> 函数</strong></p><div class="table-contents"><table class="table" summary="废弃的 adminpack 函数" border="1"><colgroup><col /><col /><col /></colgroup><thead><tr><th>名称</th><th>返回类型</th><th>描述</th></tr></thead><tbody><tr><td><code class="function">pg_catalog.pg_file_read(filename text, offset bigint, nbytes bigint)</code></td><td><code class="type">text</code></td><td>      <code class="function">pg_read_file()</code>的另一个名字
+     </td></tr><tr><td><code class="function">pg_catalog.pg_file_length(filename text)</code></td><td><code class="type">bigint</code></td><td>      和<code class="function">pg_stat_file()</code>返回的<code class="structfield">size</code>列一样
+     </td></tr><tr><td><code class="function">pg_catalog.pg_logfile_rotate()</code></td><td><code class="type">integer</code></td><td>      Alternate name for 
+      <code class="function">pg_rotate_logfile()</code>的另一个名字，但是要注意它返回
+      整数 0 或者 1 而不是<code class="type">boolean</code>
+     </td></tr></tbody></table></div></div><br class="table-break" /></div><div class="navfooter"><hr /><table width="100%" summary="Navigation footer"><tr><td width="40%" align="left"><a accesskey="p" href="contrib.html">上一页</a> </td><td width="20%" align="center"><a accesskey="u" href="contrib.html">上一级</a></td><td width="40%" align="right"> <a accesskey="n" href="amcheck.html">下一页</a></td></tr><tr><td width="40%" align="left" valign="top">附录 F. 额外提供的模块 </td><td width="20%" align="center"><a accesskey="h" href="index.html">起始页</a></td><td width="40%" align="right" valign="top"> F.2. amcheck</td></tr></table></div></body></html>

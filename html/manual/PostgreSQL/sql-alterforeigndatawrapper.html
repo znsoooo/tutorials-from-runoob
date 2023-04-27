@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><title>ALTER FOREIGN DATA WRAPPER</title><link rel="stylesheet" type="text/css" href="stylesheet.css" /><link rev="made" href="pgsql-docs@postgresql.org" /><meta name="generator" content="DocBook XSL Stylesheets V1.79.1" /><link rel="prev" href="sql-alterextension.html" title="ALTER EXTENSION" /><link rel="next" href="sql-alterforeigntable.html" title="ALTER FOREIGN TABLE" /></head><body><div xmlns="http://www.w3.org/TR/xhtml1/transitional" class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="5" align="center">ALTER FOREIGN DATA WRAPPER</th></tr><tr><td width="10%" align="left"><a accesskey="p" href="sql-alterextension.html" title="ALTER EXTENSION">上一页</a> </td><td width="10%" align="left"><a accesskey="u" href="sql-commands.html" title="SQL 命令">上一级</a></td><th width="60%" align="center">SQL 命令</th><td width="10%" align="right"><a accesskey="h" href="index.html" title="PostgreSQL 10.1 手册">起始页</a></td><td width="10%" align="right"> <a accesskey="n" href="sql-alterforeigntable.html" title="ALTER FOREIGN TABLE">下一页</a></td></tr></table><hr></hr></div><div class="refentry" id="SQL-ALTERFOREIGNDATAWRAPPER"><div class="titlepage"></div><a id="idp40016336" class="indexterm"></a><div class="refnamediv"><h2><span class="refentrytitle">ALTER FOREIGN DATA WRAPPER</span></h2><p>ALTER FOREIGN DATA WRAPPER — 更改一个外部数据包装器的定义</p></div><div class="refsynopsisdiv"><h2>大纲</h2><pre class="synopsis">ALTER FOREIGN DATA WRAPPER <em class="replaceable"><code>name</code></em>
+    [ HANDLER <em class="replaceable"><code>handler_function</code></em> | NO HANDLER ]
+    [ VALIDATOR <em class="replaceable"><code>validator_function</code></em> | NO VALIDATOR ]
+    [ OPTIONS ( [ ADD | SET | DROP ] <em class="replaceable"><code>option</code></em> ['<em class="replaceable"><code>value</code></em>'] [, ... ]) ]
+ALTER FOREIGN DATA WRAPPER <em class="replaceable"><code>name</code></em> OWNER TO { <em class="replaceable"><code>new_owner</code></em> | CURRENT_USER | SESSION_USER }
+ALTER FOREIGN DATA WRAPPER <em class="replaceable"><code>name</code></em> RENAME TO <em class="replaceable"><code>new_name</code></em></pre></div><div class="refsect1" id="idp40025808"><h2>描述</h2><p>   <code class="command">ALTER FOREIGN DATA WRAPPER</code>更改一个
+   外部数据包装器的定义。该命令的第一种形式用于更改外部数据包装器的
+   支持函数或者一般选项（至少要求一个子句）。第二种形式更改外部数据包
+   装器的拥有者。
+  </p><p>   只有超级用户能修改外部数据包装器。此外，只有超级用户能够拥有外部数
+   据包装器。
+  </p></div><div class="refsect1" id="idp40027968"><h2>参数</h2><div class="variablelist"><dl class="variablelist"><dt><span class="term"><em class="replaceable"><code>name</code></em></span></dt><dd><p>      一个已有的外部数据包装器的名称。
+     </p></dd><dt><span class="term"><code class="literal">HANDLER <em class="replaceable"><code>handler_function</code></em></code></span></dt><dd><p>      为外部数据包装器指定一个新的处理器函数。
+     </p></dd><dt><span class="term"><code class="literal">NO HANDLER</code></span></dt><dd><p>      用于指定该外部数据包装器不再具有一个处理器函数。
+     </p><p>      注意使用没有处理器的外部数据包装器的外部表不能被访问。
+     </p></dd><dt><span class="term"><code class="literal">VALIDATOR <em class="replaceable"><code>validator_function</code></em></code></span></dt><dd><p>      为外部数据包装器指定一个新的验证器函数。
+     </p><p>      注意，新的验证器可能会认为该外部数据包装器或者依赖于它的独立服务器
+      的已有选项、用户映射、外部表无效。<span class="productname">PostgreSQL</span>
+      不会做这种检查。在使用修改过的外部数据包装器之前确认这些选项正确是
+      用户的责任。不过，在这个<code class="command">ALTER FOREIGN DATA
+      WRAPPER</code>命令中指定的选项将会被使用新的验证器检查。
+     </p></dd><dt><span class="term"><code class="literal">NO VALIDATOR</code></span></dt><dd><p>      用于指定该外部数据包装器不再拥有一个验证器函数。
+     </p></dd><dt><span class="term"><code class="literal">OPTIONS ( [ ADD | SET | DROP ] <em class="replaceable"><code>option</code></em> ['<em class="replaceable"><code>value</code></em>'] [, ... ] )</code></span></dt><dd><p>      为该外部数据包装器更改选项。<code class="literal">ADD</code>、<code class="literal">SET</code>
+      以及<code class="literal">DROP</code>指定要被执行的动作。如果没有显式地指定操作，
+      将假定为<code class="literal">ADD</code>。选项名称必须唯一，选项名称和值（如果有）
+      也会使用该外部数据包装器的验证器函数来验证。
+     </p></dd><dt><span class="term"><em class="replaceable"><code>new_owner</code></em></span></dt><dd><p>      该外部数据包装器的新拥有者的用户名。
+     </p></dd><dt><span class="term"><em class="replaceable"><code>new_name</code></em></span></dt><dd><p>      该外部数据包装器的新名称。
+     </p></dd></dl></div></div><div class="refsect1" id="idp40047712"><h2>示例</h2><p>   更改一个外部数据包装器<code class="literal">dbi</code>，增加选项
+   <code class="literal">foo</code>并删除<code class="literal">bar</code>：
+</p><pre class="programlisting">ALTER FOREIGN DATA WRAPPER dbi OPTIONS (ADD foo '1', DROP 'bar');</pre><p>
+  </p><p>   把外部数据包装器<code class="literal">dbi</code>的验证器改为
+   <code class="literal">bob.myvalidator</code>：
+</p><pre class="programlisting">ALTER FOREIGN DATA WRAPPER dbi VALIDATOR bob.myvalidator;</pre></div><div class="refsect1" id="idp40053664"><h2>兼容性</h2><p>   <code class="command">ALTER FOREIGN DATA WRAPPER</code>符合
+   ISO/IEC 9075-9 (SQL/MED)。不过<code class="literal">HANDLER</code>、
+   <code class="literal">VALIDATOR</code>、<code class="literal">OWNER TO</code>
+   以及<code class="literal">RENAME</code>子句是扩展。
+  </p></div><div class="refsect1" id="idp40057984"><h2>另见</h2><span class="simplelist"><a class="xref" href="sql-createforeigndatawrapper.html" title="CREATE FOREIGN DATA WRAPPER"><span class="refentrytitle">CREATE FOREIGN DATA WRAPPER</span></a>, <a class="xref" href="sql-dropforeigndatawrapper.html" title="DROP FOREIGN DATA WRAPPER"><span class="refentrytitle">DROP FOREIGN DATA WRAPPER</span></a></span></div></div><div class="navfooter"><hr /><table width="100%" summary="Navigation footer"><tr><td width="40%" align="left"><a accesskey="p" href="sql-alterextension.html">上一页</a> </td><td width="20%" align="center"><a accesskey="u" href="sql-commands.html">上一级</a></td><td width="40%" align="right"> <a accesskey="n" href="sql-alterforeigntable.html">下一页</a></td></tr><tr><td width="40%" align="left" valign="top">ALTER EXTENSION </td><td width="20%" align="center"><a accesskey="h" href="index.html">起始页</a></td><td width="40%" align="right" valign="top"> ALTER FOREIGN TABLE</td></tr></table></div></body></html>

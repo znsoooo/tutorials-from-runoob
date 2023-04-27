@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><title>F.13. dict_xsyn</title><link rel="stylesheet" type="text/css" href="stylesheet.css" /><link rev="made" href="pgsql-docs@postgresql.org" /><meta name="generator" content="DocBook XSL Stylesheets V1.79.1" /><link rel="prev" href="dict-int.html" title="F.12. dict_int" /><link rel="next" href="earthdistance.html" title="F.14. earthdistance" /></head><body><div xmlns="http://www.w3.org/TR/xhtml1/transitional" class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="5" align="center">F.13. dict_xsyn</th></tr><tr><td width="10%" align="left"><a accesskey="p" href="dict-int.html" title="F.12. dict_int">上一页</a> </td><td width="10%" align="left"><a accesskey="u" href="contrib.html" title="附录 F. 额外提供的模块">上一级</a></td><th width="60%" align="center">附录 F. 额外提供的模块</th><td width="10%" align="right"><a accesskey="h" href="index.html" title="PostgreSQL 10.1 手册">起始页</a></td><td width="10%" align="right"> <a accesskey="n" href="earthdistance.html" title="F.14. earthdistance">下一页</a></td></tr></table><hr></hr></div><div class="sect1" id="DICT-XSYN"><div class="titlepage"><div><div><h2 class="title" style="clear: both">F.13. dict_xsyn</h2></div></div></div><div class="toc"><dl class="toc"><dt><span class="sect2"><a href="dict-xsyn.html#idp85608064">F.13.1. 配置</a></span></dt><dt><span class="sect2"><a href="dict-xsyn.html#idp85626736">F.13.2. 用法</a></span></dt></dl></div><a id="idp85605824" class="indexterm"></a><p>  <code class="filename">dict_xsyn</code>（扩展同义词字典）是一个附加全文搜索字典模板的例子。这种字典类型将词替换为它们的同义词分组，并且让使用其任一同义词进行搜索变得可能。
+ </p><div class="sect2" id="idp85608064"><div class="titlepage"><div><div><h3 class="title">F.13.1. 配置</h3></div></div></div><p>   一个<code class="literal">dict_xsyn</code>词典接受以下选项：
+  </p><div class="itemizedlist"><ul class="itemizedlist" style="list-style-type: disc; "><li class="listitem"><p>     <code class="literal">matchorig</code>控制该词典是否接受原生词。默认为<code class="literal">true</code>。
+    </p></li><li class="listitem"><p>     <code class="literal">matchsynonyms</code>控制该词典是否接受同义词。默认为<code class="literal">false</code>。
+    </p></li><li class="listitem"><p>     <code class="literal">keeporig</code>控制原生词是否被包括在词典的输出中。默认为<code class="literal">true</code>。
+    </p></li><li class="listitem"><p>     <code class="literal">keepsynonyms</code>控制同义词是否被包括在词典的输出中。默认为<code class="literal">true</code>。
+    </p></li><li class="listitem"><p>     <code class="literal">rules</code>是包含同义词列表的文件的基本名。这个文件必须被存储在<code class="filename">$SHAREDIR/tsearch_data/</code>（其中<code class="literal">$SHAREDIR</code>表示<span class="productname">PostgreSQL</span>安装的共享数据目录）中。它的名称必须以<code class="literal">.rules</code>结束（这不包括在<code class="literal">rules</code>参数中）。
+    </p></li></ul></div><p>   规则文件具有下面的格式：
+  </p><div class="itemizedlist"><ul class="itemizedlist" style="list-style-type: disc; "><li class="listitem"><p>     每一行表示一个单一词的同义词分组，它在该行中首先被给出。同义词被空白分隔，这样：
+</p><pre class="programlisting">word syn1 syn2 syn3</pre><p>
+    </p></li><li class="listitem"><p>     井号（<code class="literal">#</code>）是注释定界符。它可以出现在一行中的任何位置。该行的剩余部分将被跳过。
+    </p></li></ul></div><p>   例如，可以看看安装在<code class="filename">$SHAREDIR/tsearch_data/</code>中的<code class="filename">xsyn_sample.rules</code>。
+  </p></div><div class="sect2" id="idp85626736"><div class="titlepage"><div><div><h3 class="title">F.13.2. 用法</h3></div></div></div><p>   安装<code class="literal">dict_xsyn</code>扩展会用默认参数创建一个文本搜索模板<code class="literal">xsyn_template</code>以及一个基于它的词典<code class="literal">xsyn</code>。你可以修改参数，例如
+
+</p><pre class="programlisting">mydb# ALTER TEXT SEARCH DICTIONARY xsyn (RULES='my_rules', KEEPORIG=false);
+ALTER TEXT SEARCH DICTIONARY</pre><p>
+
+   或者基于该模板创建新的词典。
+  </p><p>   要测试该词典，你可以尝试
+
+</p><pre class="programlisting">mydb=# SELECT ts_lexize('xsyn', 'word');
+      ts_lexize
+-----------------------
+ {syn1,syn2,syn3}
+
+mydb# ALTER TEXT SEARCH DICTIONARY xsyn (RULES='my_rules', KEEPORIG=true);
+ALTER TEXT SEARCH DICTIONARY
+
+mydb=# SELECT ts_lexize('xsyn', 'word');
+      ts_lexize
+-----------------------
+ {word,syn1,syn2,syn3}
+
+mydb# ALTER TEXT SEARCH DICTIONARY xsyn (RULES='my_rules', KEEPORIG=false, MATCHSYNONYMS=true);
+ALTER TEXT SEARCH DICTIONARY
+
+mydb=# SELECT ts_lexize('xsyn', 'syn1');
+      ts_lexize
+-----------------------
+ {syn1,syn2,syn3}
+
+mydb# ALTER TEXT SEARCH DICTIONARY xsyn (RULES='my_rules', KEEPORIG=true, MATCHORIG=false, KEEPSYNONYMS=false);
+ALTER TEXT SEARCH DICTIONARY
+
+mydb=# SELECT ts_lexize('xsyn', 'syn1');
+      ts_lexize
+-----------------------
+ {word}</pre><p>
+
+   现实世界的用法将涉及将它包括在一个<a class="xref" href="textsearch.html" title="第 12 章 全文搜索">第 12 章</a>中描述的文本搜索配置中。看起来像这样：
+
+</p><pre class="programlisting">ALTER TEXT SEARCH CONFIGURATION english
+    ALTER MAPPING FOR word, asciiword WITH xsyn, english_stem;</pre><p>
+
+  </p></div></div><div class="navfooter"><hr /><table width="100%" summary="Navigation footer"><tr><td width="40%" align="left"><a accesskey="p" href="dict-int.html">上一页</a> </td><td width="20%" align="center"><a accesskey="u" href="contrib.html">上一级</a></td><td width="40%" align="right"> <a accesskey="n" href="earthdistance.html">下一页</a></td></tr><tr><td width="40%" align="left" valign="top">F.12. dict_int </td><td width="20%" align="center"><a accesskey="h" href="index.html">起始页</a></td><td width="40%" align="right" valign="top"> F.14. earthdistance</td></tr></table></div></body></html>

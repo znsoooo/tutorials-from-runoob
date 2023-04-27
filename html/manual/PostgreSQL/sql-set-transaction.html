@@ -1,0 +1,124 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><title>SET TRANSACTION</title><link rel="stylesheet" type="text/css" href="stylesheet.css" /><link rev="made" href="pgsql-docs@postgresql.org" /><meta name="generator" content="DocBook XSL Stylesheets V1.79.1" /><link rel="prev" href="sql-set-session-authorization.html" title="SET SESSION AUTHORIZATION" /><link rel="next" href="sql-show.html" title="SHOW" /></head><body><div xmlns="http://www.w3.org/TR/xhtml1/transitional" class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="5" align="center">SET TRANSACTION</th></tr><tr><td width="10%" align="left"><a accesskey="p" href="sql-set-session-authorization.html" title="SET SESSION AUTHORIZATION">上一页</a> </td><td width="10%" align="left"><a accesskey="u" href="sql-commands.html" title="SQL 命令">上一级</a></td><th width="60%" align="center">SQL 命令</th><td width="10%" align="right"><a accesskey="h" href="index.html" title="PostgreSQL 10.1 手册">起始页</a></td><td width="10%" align="right"> <a accesskey="n" href="sql-show.html" title="SHOW">下一页</a></td></tr></table><hr></hr></div><div class="refentry" id="SQL-SET-TRANSACTION"><div class="titlepage"></div><a id="idp49438384" class="indexterm"></a><a id="idp49439424" class="indexterm"></a><a id="idp49440400" class="indexterm"></a><a id="idp49441376" class="indexterm"></a><div class="refnamediv"><h2><span class="refentrytitle">SET TRANSACTION</span></h2><p>SET TRANSACTION — 设置当前事务的特性</p></div><div class="refsynopsisdiv"><h2>大纲</h2><pre class="synopsis">SET TRANSACTION <em class="replaceable"><code>transaction_mode</code></em> [, ...]
+SET TRANSACTION SNAPSHOT <em class="replaceable"><code>snapshot_id</code></em>
+SET SESSION CHARACTERISTICS AS TRANSACTION <em class="replaceable"><code>transaction_mode</code></em> [, ...]
+
+<span class="phrase">其中 <em class="replaceable"><code>transaction_mode</code></em> 是下列之一：</span>
+
+    ISOLATION LEVEL { SERIALIZABLE | REPEATABLE READ | READ COMMITTED | READ UNCOMMITTED }
+    READ WRITE | READ ONLY
+    [ NOT ] DEFERRABLE</pre></div><div class="refsect1" id="idp49448256"><h2>描述</h2><p>   <code class="command">SET TRANSACTION</code>命令设置当前
+   会话的特性。<code class="command">SET SESSION
+   CHARACTERISTICS</code>设置一个会话后续事务的默认
+   事务特性。在个体事务中可以用
+   <code class="command">SET TRANSACTION</code>覆盖这些默认值。
+  </p><p>   可用的事务特性是事务隔离级别、事务访问模式（读/写或只读）以及
+   可延迟模式。此外，可以选择一个快照，不过只能用于当前事务而不能
+   作为会话默认值。
+  </p><p>   一个事务的隔离级别决定当其他事务并行运行时该事务能看见什么数据：
+
+   </p><div class="variablelist"><dl class="variablelist"><dt><span class="term"><code class="literal">READ COMMITTED</code></span></dt><dd><p>       一个语句只能看到在它开始前提交的行。这是默认值。
+      </p></dd><dt><span class="term"><code class="literal">REPEATABLE READ</code></span></dt><dd><p>       当前事务的所有语句只能看到这个事务中执行的第一个查询或者
+       数据修改语句之前提交的行。
+      </p></dd><dt><span class="term"><code class="literal">SERIALIZABLE</code></span></dt><dd><p>       当前事务的所有语句只能看到这个事务中执行的第一个查询或者
+       数据修改语句之前提交的行。如果并发的可序列化事务间的读写
+       模式可能导致一种那些事务串行（一次一个）执行时不可能出现
+       的情况，其中之一将会被回滚并且得到一个
+       <code class="literal">serialization_failure</code>错误。
+      </p></dd></dl></div><p>
+
+   SQL 标准定义了一种额外的级别：<code class="literal">READ
+   UNCOMMITTED</code>。在
+   <span class="productname">PostgreSQL</span>中<code class="literal">READ
+   UNCOMMITTED</code>被视作
+   <code class="literal">READ COMMITTED</code>。
+  </p><p>   一个事务执行了第一个查询或者数据修改语句（
+   <code class="command">SELECT</code>、
+   <code class="command">INSERT</code>、<code class="command">DELETE</code>、
+   <code class="command">UPDATE</code>、<code class="command">FETCH</code>或
+   <code class="command">COPY</code>）之后就无法更改事务隔离级别。
+   更多有关事务隔离级别和并发控制的信息可见<a class="xref" href="mvcc.html" title="第 13 章 并发控制">第 13 章</a>。
+  </p><p>   事务的访问模式决定该事务是否为读/写或者只读。读/写是默认值。
+   当一个事务为只读时，如果 SQL 命令
+   <code class="literal">INSERT</code>、<code class="literal">UPDATE</code>、
+   <code class="literal">DELETE</code>和<code class="literal">COPY FROM</code>
+   要写的表不是一个临时表，则它们不被允许。不允许
+   <code class="literal">CREATE</code>、<code class="literal">ALTER</code>以及
+   <code class="literal">DROP</code>命令。不允许<code class="literal">COMMENT</code>、
+   <code class="literal">GRANT</code>、<code class="literal">REVOKE</code>、
+   <code class="literal">TRUNCATE</code>。如果<code class="literal">EXPLAIN ANALYZE</code>
+   和<code class="literal">EXECUTE</code>要执行的命令是上述命令之一，
+   则它们也不被允许。这是一种高层的只读概念，它不能阻止所有对
+   磁盘的写入。
+  </p><p>   只有事务也是<code class="literal">SERIALIZABLE</code>以及
+   <code class="literal">READ ONLY</code>时，<code class="literal">DEFERRABLE</code>
+   事务属性才会有效。当一个事务的所有这三个属性都被选择时，该事务在
+   第一次获取其快照时可能会阻塞，在那之后它运行时就不会有
+   <code class="literal">SERIALIZABLE</code>事务的开销并且不会有任何牺牲或者
+   被一次序列化失败取消的风险。这种模式很适合于长时间运行的报表或者
+   备份。
+  </p><p>   <code class="literal">SET TRANSACTION SNAPSHOT</code>命令允许新的事务
+   使用与一个现有事务相同的<em class="firstterm">快照</em>运行。已经存在的事务
+   必须已经把它的快照用<code class="literal">pg_export_snapshot</code>函数（
+   见<a class="xref" href="functions-admin.html#FUNCTIONS-SNAPSHOT-SYNCHRONIZATION" title="9.26.5. 快照同步函数">第 9.26.5 节</a>）导出。
+   该函数会返回一个快照标识符，<code class="literal">SET TRANSACTION
+   SNAPSHOT</code>需要被给定一个快照标识符来指定要导入的快照。
+   在这个命令中该标识符必须被写成一个字符串，例如
+   <code class="literal">'000003A1-1'</code>。
+   <code class="literal">SET TRANSACTION SNAPSHOT</code>只能在一个事务的
+   开始执行，并且要在该事务的第一个查询或者数据修改语句（
+   <code class="command">SELECT</code>、
+   <code class="command">INSERT</code>、<code class="command">DELETE</code>、
+   <code class="command">UPDATE</code>、<code class="command">FETCH</code>或
+   <code class="command">COPY</code>）之前执行。此外，该事务必须已经被设置
+   为<code class="literal">SERIALIZABLE</code>或者
+   <code class="literal">REPEATABLE READ</code>隔离级别（否则，该快照将被立刻抛弃，
+   因为<code class="literal">READ COMMITTED</code>模式会为每一个命令取一个新快照）。
+   如果导入事务使用了<code class="literal">SERIALIZABLE</code>隔离级别，那么导入快照
+   的事务必须也使用该隔离级别。还有，一个非只读可序列化事务不能导入来自只读
+   事务的快照。
+  </p></div><div class="refsect1" id="idp49493488"><h2>注解</h2><p>   如果执行<code class="command">SET TRANSACTION</code>之前没有
+   <code class="command">START TRANSACTION</code>或者
+   <code class="command">BEGIN</code>，它会发出一个警告并且不会有任何效果。
+  </p><p>   可以通过在<code class="command">BEGIN</code>或者
+   <code class="command">START TRANSACTION</code>中指定想要的<em class="replaceable"><code>transaction_modes</code></em>来省掉
+   <code class="command">SET TRANSACTION</code>。但是在
+   <code class="command">SET TRANSACTION SNAPSHOT</code>中该选项不可用。
+  </p><p>   会话默认的事务模式也可以通过设置配置参数
+   <a class="xref" href="runtime-config-client.html#GUC-DEFAULT-TRANSACTION-ISOLATION">default_transaction_isolation</a>、
+   <a class="xref" href="runtime-config-client.html#GUC-DEFAULT-TRANSACTION-READ-ONLY">default_transaction_read_only</a>和
+   <a class="xref" href="runtime-config-client.html#GUC-DEFAULT-TRANSACTION-DEFERRABLE">default_transaction_deferrable</a>来设置（实际上
+   <code class="command">SET SESSION CHARACTERISTICS</code>只是用
+   <code class="command">SET</code>设置这些变量的等效体）。这意味着可以通过配置文件、
+   <code class="command">ALTER DATABASE</code>等方式设置默认值。详见
+   <a class="xref" href="runtime-config.html" title="第 19 章 服务器配置">第 19 章</a>。
+  </p></div><div class="refsect1" id="idp49506032"><h2>示例</h2><p>   要用一个已经存在的事务的同一快照开始一个新事务，首先要从该现有
+   事务导出快照。这将会返回快照标识符，例如：
+
+</p><pre class="programlisting">BEGIN TRANSACTION ISOLATION LEVEL REPEATABLE READ;
+SELECT pg_export_snapshot();
+ pg_export_snapshot
+---------------------
+ 00000003-0000001B-1
+(1 row)</pre><p>
+
+   然后在一个新开始的事务的开头把该快照标识符用在一个
+   <code class="command">SET TRANSACTION
+   SNAPSHOT</code>命令中：
+
+</p><pre class="programlisting">BEGIN TRANSACTION ISOLATION LEVEL REPEATABLE READ;
+SET TRANSACTION SNAPSHOT '00000003-0000001B-1';</pre></div><div class="refsect1" id="R1-SQL-SET-TRANSACTION-3"><h2>兼容性</h2><p>   <acronym class="acronym">SQL</acronym>标准中定义了这些命令，不过
+   <code class="literal">DEFERRABLE</code>事务模式和
+   <code class="command">SET TRANSACTION SNAPSHOT</code>形式除外，这两者是
+   <span class="productname">PostgreSQL</span>扩展。
+  </p><p>   <code class="literal">SERIALIZABLE</code>是标准中默认的事务隔离级别。在
+   <span class="productname">PostgreSQL</span>中默认值是普通的
+   <code class="literal">READ COMMITTED</code>，但是你可以按上述的方式更改。
+  </p><p>   在 SQL 标准中，可以用这些命令设置一个其他的事务特性：诊断区域
+   的尺寸。这个概念与嵌入式 SQL 有关，并且因此没有在
+   <span class="productname">PostgreSQL</span>服务器中实现。
+  </p><p>   SQL 标准要求连续的<em class="replaceable"><code>transaction_modes</code></em>之间有逗号，
+   但是出于历史原因
+   <span class="productname">PostgreSQL</span>允许省略逗号。
+  </p></div></div><div class="navfooter"><hr /><table width="100%" summary="Navigation footer"><tr><td width="40%" align="left"><a accesskey="p" href="sql-set-session-authorization.html">上一页</a> </td><td width="20%" align="center"><a accesskey="u" href="sql-commands.html">上一级</a></td><td width="40%" align="right"> <a accesskey="n" href="sql-show.html">下一页</a></td></tr><tr><td width="40%" align="left" valign="top">SET SESSION AUTHORIZATION </td><td width="20%" align="center"><a accesskey="h" href="index.html">起始页</a></td><td width="40%" align="right" valign="top"> SHOW</td></tr></table></div></body></html>

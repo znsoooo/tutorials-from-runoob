@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><title>39.3. 用 C 编写事件触发器函数</title><link rel="stylesheet" type="text/css" href="stylesheet.css" /><link rev="made" href="pgsql-docs@postgresql.org" /><meta name="generator" content="DocBook XSL Stylesheets V1.79.1" /><link rel="prev" href="event-trigger-matrix.html" title="39.2. 事件触发器触发矩阵" /><link rel="next" href="event-trigger-example.html" title="39.4. 一个完整的事件触发器例子" /></head><body><div xmlns="http://www.w3.org/TR/xhtml1/transitional" class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="5" align="center">39.3. 用 C 编写事件触发器函数</th></tr><tr><td width="10%" align="left"><a accesskey="p" href="event-trigger-matrix.html" title="39.2. 事件触发器触发矩阵">上一页</a> </td><td width="10%" align="left"><a accesskey="u" href="event-triggers.html" title="第 39 章 事件触发器">上一级</a></td><th width="60%" align="center">第 39 章 事件触发器</th><td width="10%" align="right"><a accesskey="h" href="index.html" title="PostgreSQL 10.1 手册">起始页</a></td><td width="10%" align="right"> <a accesskey="n" href="event-trigger-example.html" title="39.4. 一个完整的事件触发器例子">下一页</a></td></tr></table><hr></hr></div><div class="sect1" id="EVENT-TRIGGER-INTERFACE"><div class="titlepage"><div><div><h2 class="title" style="clear: both">39.3. 用 C 编写事件触发器函数</h2></div></div></div><a id="idp35373552" class="indexterm"></a><p>    这一节描述了事件触发器函数接口的低层细节。只有在用 C 编写事件
+    触发器函数时才需要用到这里的信息。如果使用更高层的语言，那么
+    这些细节已经被处理好了。在大部分情况下都应该优先考虑使用过程
+    语言来编写你的事件触发器。每一种过程语言的文档都解释了如何用
+    它编写事件触发器。
+   </p><p>    事件触发器函数必须使用<span class="quote">“<span class="quote">版本 1</span>”</span>的函数管理器接口。
+   </p><p>    当一个函数被事件触发器管理器调用时，向它传递的并不是普通参数，
+    而是一个指向<code class="structname">EventTriggerData</code>结构的
+    <span class="quote">“<span class="quote">context</span>”</span>指针。C 函数可以通过执行以下宏来检查它是否
+    被事件触发器管理器调用：
+</p><pre class="programlisting">CALLED_AS_EVENT_TRIGGER(fcinfo)</pre><p>
+    这个宏会被扩展为：
+</p><pre class="programlisting">((fcinfo)-&gt;context != NULL &amp;&amp; IsA((fcinfo)-&gt;context, EventTriggerData))</pre><p>
+    如果这个宏返回真，那么就可以安全地把
+    <code class="literal">fcinfo-&gt;context</code>造型为类型<code class="literal">EventTriggerData
+    *</code>并且使用所指向的<code class="structname">EventTriggerData</code>结构。
+    函数<span class="emphasis"><em>不能</em></span>修改
+    <code class="structname">EventTriggerData</code>结构以及它指向的任何内容。
+   </p><p>    <code class="structname">struct EventTriggerData</code>在
+    <code class="filename">commands/event_trigger.h</code>中定义：
+
+</p><pre class="programlisting">typedef struct EventTriggerData
+{
+    NodeTag     type;
+    const char *event;      /* 事件名称 */
+    Node       *parsetree;  /* 解析树 */
+    const char *tag;        /* 命令标签 */
+} EventTriggerData;</pre><p>
+
+    其中的成员定义如下：
+
+    </p><div class="variablelist"><dl class="variablelist"><dt><span class="term"><code class="structfield">type</code></span></dt><dd><p>        总是<code class="literal">T_EventTriggerData</code>。
+       </p></dd><dt><span class="term"><code class="structfield">event</code></span></dt><dd><p>        描述要为其调用这个函数的事件，可以是
+        <code class="literal">"ddl_command_start"</code>、<code class="literal">"ddl_command_end"</code>、
+        <code class="literal">"sql_drop"</code>、<code class="literal">"table_rewrite"</code>之一。
+        这些事件的含义请见<a class="xref" href="event-trigger-definition.html" title="39.1. 事件触发器行为总览">第 39.1 节</a>。
+       </p></dd><dt><span class="term"><code class="structfield">parsetree</code></span></dt><dd><p>        该命令的解析树的指针。其细节可以参考 PostgreSQL 的源代码。
+        解析树结构可能会在未经通知的情况下改变。
+       </p></dd><dt><span class="term"><code class="structfield">tag</code></span></dt><dd><p>        与事件触发器的事件相关联的命令标签，例如
+        <code class="literal">"CREATE FUNCTION"</code>。
+       </p></dd></dl></div><p>
+   </p><p>    一个事件触发器函数必须返回一个<code class="symbol">NULL</code>指针（
+    <span class="emphasis"><em>不是</em></span>一个 SQL 空值，也就是不要把
+    <em class="parameter"><code>isNull</code></em>设置为真）。
+   </p></div><div class="navfooter"><hr /><table width="100%" summary="Navigation footer"><tr><td width="40%" align="left"><a accesskey="p" href="event-trigger-matrix.html">上一页</a> </td><td width="20%" align="center"><a accesskey="u" href="event-triggers.html">上一级</a></td><td width="40%" align="right"> <a accesskey="n" href="event-trigger-example.html">下一页</a></td></tr><tr><td width="40%" align="left" valign="top">39.2. 事件触发器触发矩阵 </td><td width="20%" align="center"><a accesskey="h" href="index.html">起始页</a></td><td width="40%" align="right" valign="top"> 39.4. 一个完整的事件触发器例子</td></tr></table></div></body></html>

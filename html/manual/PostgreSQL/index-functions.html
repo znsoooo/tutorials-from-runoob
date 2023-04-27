@@ -1,0 +1,127 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><title>60.2. 索引访问方法函数</title><link rel="stylesheet" type="text/css" href="stylesheet.css" /><link rev="made" href="pgsql-docs@postgresql.org" /><meta name="generator" content="DocBook XSL Stylesheets V1.79.1" /><link rel="prev" href="index-api.html" title="60.1. 索引的基本 API 结构" /><link rel="next" href="index-scanning.html" title="60.3. 索引扫描" /></head><body><div xmlns="http://www.w3.org/TR/xhtml1/transitional" class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="5" align="center">60.2. 索引访问方法函数</th></tr><tr><td width="10%" align="left"><a accesskey="p" href="index-api.html" title="60.1. 索引的基本 API 结构">上一页</a> </td><td width="10%" align="left"><a accesskey="u" href="indexam.html" title="第 60 章 索引访问方法接口定义">上一级</a></td><th width="60%" align="center">第 60 章 索引访问方法接口定义</th><td width="10%" align="right"><a accesskey="h" href="index.html" title="PostgreSQL 10.1 手册">起始页</a></td><td width="10%" align="right"> <a accesskey="n" href="index-scanning.html" title="60.3. 索引扫描">下一页</a></td></tr></table><hr></hr></div><div class="sect1" id="INDEX-FUNCTIONS"><div class="titlepage"><div><div><h2 class="title" style="clear: both">60.2. 索引访问方法函数</h2></div></div></div><p>   索引访问方法必须在<code class="structname">IndexAmRoutine</code>中提供的索引构造和维护函数有：
+  </p><pre class="programlisting">IndexBuildResult *
+ambuild (Relation heapRelation,
+         Relation indexRelation,
+         IndexInfo *indexInfo);</pre><p>
+   创建一个新索引。索引关系已经被物理创建，但是是空的。必须用索引访问方法要求的固定数据填充它，外加所有已经在表里的行的项。通常，<code class="function">ambuild</code>函数会调用<code class="function">IndexBuildHeapScan()</code>来扫描表以获取现有元组并计算需要被插入到索引的键。该函数必须返回一个已分配内存的结构，其中包含关于新索引的统计信息。
+  </p><pre class="programlisting">void
+ambuildempty (Relation indexRelation);</pre><p>
+   构建一个空索引，并且把它写入到给定关系的初始化分叉中（
+   <code class="symbol">INIT_FORKNUM</code>）。只会为不做日志的索引调用这个方法，被写入到
+   初始化分叉的空索引在每次服务器启动时将被复制到主关系分叉中。
+  </p><pre class="programlisting">bool
+aminsert (Relation indexRelation,
+          Datum *values,
+          bool *isnull,
+          ItemPointer heap_tid,
+          Relation heapRelation,
+          IndexUniqueCheck checkUnique,
+          IndexInfo *indexInfo);</pre><p>
+   向现有索引插入一个新元组。<code class="literal">values</code>和<code class="literal">isnull</code>数组给出需要被索引的键值，而<code class="literal">heap_tid</code>是要被索引的 TID。 如果该访问方法支持唯一索引（它的<code class="structfield">amcanunique</code>标志为真），那么<code class="literal">checkUnique</code>指示要执行的唯一性检查类型。这根据唯一约束是否为可推迟的而变化，详见<a class="xref" href="index-unique-checks.html" title="60.5. 索引唯一性检查">第 60.5 节</a>。通常在执行唯一性检查时访问方法仅需要<code class="literal">heapRelation</code>参数（因为那时它将不得不到堆中验证元组的存活性）。
+  </p><p>   该函数的布尔结果值仅仅在<code class="literal">checkUnique</code>为<code class="literal">UNIQUE_CHECK_PARTIAL</code>时才有意义。这种情况下一个 TRUE 结果意味着这个新项是已知唯一的，反之 FALSE 意味着它可能不 是唯一的（并且一个延迟的唯一性校验必须是预定的）。对于其他情况，建议使用一个常量 FALSE 结果。
+  </p><p>   有些索引可能不会索引所有元组。如果元组不被索引，<code class="function">aminsert</code>应该仅返回而什么都不做。
+  </p><p>   如果索引AM希望在SQL语句内的连续索引插入中缓存数据，
+   则它可以在<code class="literal">indexInfo-&gt;ii_Context</code>中分配空间，
+   并在<code class="literal">indexInfo-&gt;ii_AmCache</code>中存储指向数据的指针（最初将为NULL）。
+  </p><pre class="programlisting">IndexBulkDeleteResult *
+ambulkdelete (IndexVacuumInfo *info,
+              IndexBulkDeleteResult *stats,
+              IndexBulkDeleteCallback callback,
+              void *callback_state);</pre><p>
+   从索引中删除元组。这是一个<span class="quote">“<span class="quote">批量删除</span>”</span>操作，它的意图是通过扫描整个索引并检查每个项看它是否需要被删除。被传递进来的<code class="literal">callback</code>函数必须被调用（调用风格是：<code class="literal">callback(<em class="replaceable"><code>TID</code></em>, callback_state) returns bool</code>）来判断任何其引用的 TID 标识的索引项是否需要删除。必须返回 NULL 或者是一个 palloc 过的、 包含删除操作效果的统计信息的结构。如果不需要向<code class="function">amvacuumcleanup</code>传递信息，返回 NULL 也是 OK 的。
+  </p><p>   由于<code class="varname">maintenance_work_mem</code>被限制，在删除多行的时候<code class="function">ambulkdelete</code>可能需要被调用多次。<code class="literal">stats</code>参数是对这个索引上一次调用的结果（在一个<code class="command">VACUUM</code>操作中第一次调用时是 NULL）。这将允许 AM 在整个操作过程中积累统计信息。典型的，如果被传递的<code class="literal">stats</code>非空，<code class="function">ambulkdelete</code>将会修改并返回相同的结构。
+  </p><pre class="programlisting">IndexBulkDeleteResult *
+amvacuumcleanup (IndexVacuumInfo *info,
+                 IndexBulkDeleteResult *stats);</pre><p>
+   在一个<code class="command">VACUUM</code>操作（零个或更多次<code class="function">ambulkdelete</code>调用）后清空。虽然不必做任何返回索引统计信息之外的事情，但是它可能执行批量清理，例如回收空索引页面。<code class="literal">stats</code>是最后一次<code class="function">ambulkdelete</code> 调用返回的东西或者 NULL（如果没有元组需要删除而未调用<code class="function">ambulkdelete</code>）。如果结果不是 NULL，那么它必须是一个已经被 palloc 的结构。它包含的统计信息将用于更新<code class="structname">pg_class</code>并且由<code class="command">VACUUM</code>报 告（如果给出了<code class="literal">VERBOSE</code>）。如果索引在<code class="command">VACUUM</code>操作期间根本没有改变，那么返回 NULL 也是可以的，否则必须返回正确的统计信息。
+  </p><p>   从<span class="productname">PostgreSQL</span> 8.4 开始，<code class="function">amvacuumcleanup</code>将也会在一个<code class="command">ANALYZE</code>操作结束时被调用。这种情况中<code class="literal">stats</code>总是 NULL 并且任何返回值都将会被忽略。这种情况可以通过检测<code class="literal">info-&gt;analyze_only</code>来区分。我们建议，在这样的调用中访问方法除了做插入后的清理之外什么也不做，并且那是仅仅是在一个自动清理工作者进程中。
+  </p><pre class="programlisting">bool
+amcanreturn (Relation indexRelation, int attno);</pre><p>
+   通过返回型为一个<code class="structname">IndexTuple</code>的索引项的被索引列值，检查索引是否能在给定列上支持<a class="link" href="indexes-index-only-scans.html" title="11.11. 只用索引的扫描"><em class="firstterm">只用索引的扫描</em></a>。属性编号从 1 开始编号，即第一列的 attno 是 1。如果支持返回 TRUE，否则返回 FALSE。如果访问方法 完全不支持只用索引的扫描，其<code class="structname">IndexAmRoutine</code>结构中的<code class="structfield">amcanreturn</code>域可以被设置为 NULL。
+  </p><pre class="programlisting">void
+amcostestimate (PlannerInfo *root,
+                IndexPath *path,
+                double loop_count,
+                Cost *indexStartupCost,
+                Cost *indexTotalCost,
+                Selectivity *indexSelectivity,
+                double *indexCorrelation);</pre><p>
+   估计一次索引扫描的开销。这个函数在下面的<a class="xref" href="index-cost-estimation.html" title="60.6. 索引开销估计函数">第 60.6 节</a>中有完整的讨论。
+  </p><pre class="programlisting">bytea *
+amoptions (ArrayType *reloptions,
+           bool validate);</pre><p>
+   分析和验证一个索引的 reloptions 数组。仅当一个索引存在非空 reloptions 数组时才会被调用。<em class="parameter"><code>reloptions</code></em>是一个<code class="type">text</code>数组，包含<em class="replaceable"><code>name</code></em><code class="literal">=</code><em class="replaceable"><code>value</code></em>形式的项。 该函数应当构建一个<code class="type">bytea</code>值，该值将被拷贝进索引的 relcache 项的<code class="structfield">rd_options</code>域。<code class="type">bytea</code>值的数据内容是开放由访问方法定义的， 大部分的标准访问方法都使用<code class="structname">StdRdOptions</code>结构。当<em class="parameter"><code>validate</code></em>为真时，如果任何一个选项都不可识别或者含有非法值，该函数都应当报告一个适当的错误消息；当<em class="parameter"><code>validate</code></em>为假时，非法 项应该被安静地忽略（当正在载入的选项已经在<code class="structname">pg_catalog</code>中时， <em class="parameter"><code>validate</code></em>为假；仅在访问方法已经改变了选项的规则时才可能找 到非法项，并且在此情况下忽略废弃的项是合适的）。如果想要默认行为，那么返回 NULL 也 OK。
+  </p><pre class="programlisting">bool
+amproperty (Oid index_oid, int attno,
+            IndexAMProperty prop, const char *propname,
+            bool *res, bool *isnull);</pre><p>
+   <code class="function">amproperty</code>方法允许索引方法覆盖<code class="function">pg_index_column_has_property</code>和相关函数的默认行为。如果访问方法对于索引性质查询没有指定特殊的行为，其<code class="structname">IndexAmRoutine</code>结构的<code class="structfield">amproperty</code>域可以被设置为 NULL。否则，对于<code class="function">pg_indexam_has_property</code>调用会使用均为 0 的<em class="parameter"><code>index_oid</code></em>和<em class="parameter"><code>attno</code></em>参数来调用<code class="function">amproperty</code>方法；对于<code class="function">pg_index_has_property</code>调用会使用有效的<em class="parameter"><code>index_oid</code></em>和为 0 的<em class="parameter"><code>attno</code></em>参数来调用<code class="function">amproperty</code>方法；对于<code class="function">pg_index_column_has_property</code>调用会使用有效的<em class="parameter"><code>index_oid</code></em>以及大于零的<em class="parameter"><code>attno</code></em>参数来调用<code class="function">amproperty</code>方法。<em class="parameter"><code>prop</code></em>是用于标识被测试性质的枚举值，而<em class="parameter"><code>propname</code></em>是原始的性质名称字符串。如果核心代码不能识别该性质名称，则<em class="parameter"><code>prop</code></em>为<code class="literal">AMPROP_UNKNOWN</code>。访问方法可以通过检查<em class="parameter"><code>propname</code></em>是否匹配（为与核心代码一致，使用<code class="function">pg_strcasecmp</code>来匹配）来定义自定义性质名称；对于核心代码已知的名称，最好检查<em class="parameter"><code>prop</code></em>。
+   如果<code class="structfield">amproperty</code>方法返回<code class="literal">true</code>则表示它已经确定了性质测试的结果：它必定会设置<code class="literal">*res</code>为要返回的布尔值，如果要返回 NULL 则设置<code class="literal">*isnull</code>为<code class="literal">true</code>（两个被引用的变量在调用之前要被初始化为<code class="literal">false</code>）。如果<code class="structfield">amproperty</code>方法返回<code class="literal">false</code>则核心代码将会用其通常的逻辑来确定性质测试的结果。
+  </p><p>   支持排序操作符的访问方法应该实现<code class="literal">AMPROP_DISTANCE_ORDERABLE</code>性质测试，因为核心代码不知道如何做该测试并且会返回 NULL。如果有比打开索引并调用<code class="structfield">amcanreturn</code>（这是核心代码的默认行为）更廉价的方法来做<code class="literal">AMPROP_RETURNABLE</code>测试，最好也实现它。默认行为应该对所有其他标准性质是符合要求的。
+  </p><pre class="programlisting">bool
+amvalidate (Oid opclassoid);</pre><p>
+   只要访问方法能够，为指定的操作符类验证系统目录项。例如，这可能包括所有所需支持函数所提供的测试。如果该 opclass 不合法，<code class="function">amvalidate</code>函数必须返回假。所存在的问题应由<code class="function">ereport</code>消息报告。
+  </p><p>   当然，索引的目的是支持扫描那些匹配一个可索引<code class="literal">WHERE</code>情况的元组，常常也被称为<em class="firstterm">限定词</em>或<em class="firstterm">扫描键</em>。索引扫描的语义在下面的<a class="xref" href="index-scanning.html" title="60.3. 索引扫描">第 60.3 节</a>中有完整的描述。一个索引访问方法可以支持<span class="quote">“<span class="quote">普通</span>”</span>索引扫描、<span class="quote">“<span class="quote">位图</span>”</span>索引扫描或者两者。一个索引访问方法必须或可能提供的与扫描相关的函数是：
+  </p><pre class="programlisting">IndexScanDesc
+ambeginscan (Relation indexRelation,
+             int nkeys,
+             int norderbys);</pre><p>
+   为一个索引扫描做准备。<code class="literal">nkeys</code>和<code class="literal">norderbys</code>参数说明要被用在扫描中的条件和排序操作符的数目，它们可以用于空间分配目的。注意扫描键的实际值还没有被提供。结果必须是一个 palloc 过的结构。由于实现的原因，索引访问方法<span class="emphasis"><em>必须</em></span>通过调用<code class="function">RelationGetIndexScan()</code>来创建这个结构。在大多数情况中，<code class="function">ambeginscan</code>除了做这个调用和获取锁之外不会做很多工作，索引扫描启动中有趣的部分在<code class="function">amrescan</code>中。
+  </p><pre class="programlisting">void
+amrescan (IndexScanDesc scan,
+          ScanKey keys,
+          int nkeys,
+          ScanKey orderbys,
+          int norderbys);</pre><p>
+   开始或者重新开始一个索引扫描，可能使用的是一个新的扫描键（要想使用之前传递的键重新开始，给<code class="literal">keys</code> 和/或<code class="literal">orderbys</code>传递 NULL）。请注意，使用的键或排序操作符的个数不能大于传递给<code class="function">ambeginscan</code>的个数。实际上这个重新开始特性的使用场景是：在一个嵌套循环连接选取了一个新的 outer 元组时，因此需要一个新的键比较值，但扫描键结构仍然保持相同。
+  </p><pre class="programlisting">boolean
+amgettuple (IndexScanDesc scan,
+            ScanDirection direction);</pre><p>
+   在给定扫描中取下一个元组，向给定方向移动（在索引中向前或者向后）。如果取到了元组，则返回 TRUE，如果取到匹配的元组，返回 FALSE。在 TRUE 的情况中，该元组的 TID 被存储在<code class="literal">scan</code>结构中。请注意<span class="quote">“<span class="quote">成功</span>”</span>只 意味着索引包含一个匹配扫描键的项，并不意味该元组仍然在堆中存在， 或者是能够通过调用者的快照测试。在成功时，<code class="function">amgettuple</code>也必须把<code class="literal">scan-&gt;xs_recheck</code>设 置成 TRUE 或者 FALSE。FALSE 意味着它确定索引项匹配扫描键。TRUE 意味着它并不确定，而且必须在取得堆元组之后对它重新检查扫描键表示的条件。 这条规定支持<span class="quote">“<span class="quote">有损的</span>”</span>索引操作符。注意重新检查仅仅对扫描条件扩展；一个部分索引谓语（如果有）从不被<code class="function">amgettuple</code>调用者重新检查。
+  </p><p>   如果索引支持<a class="link" href="indexes-index-only-scans.html" title="11.11. 只用索引的扫描">只用索引扫描</a>（即<code class="function">amcanreturn</code>对它返回 TRUE），则在成功时 AM 也必须检查<code class="literal">scan-&gt;xs_want_itup</code>，并且如果检查为真它必须返回索引项的原始被索引数据。数据可以以存储在<code class="literal">scan-&gt;xs_itup</code>中的<code class="structname">IndexTuple</code>指针的形式返回，按照元组描述符<code class="literal">scan-&gt;xs_itupdesc</code>来解释；
+   或者以存储在<code class="literal">scan-&gt;xs_hitup</code>中的<code class="structname">HeapTuple</code>指针的形式返回，
+   按照元组描述符<code class="literal">scan-&gt;xs_hitupdesc</code>来解释。
+   （后面这种形式应该在重建数据可能不适合<code class="structname">IndexTuple</code>时使用。）
+   在任何一种情况下，由指针引用的数据的管理是访问方法的责任。至少在为扫描下一次调用<code class="function">amgettuple</code>、<code class="function">amrescan</code>或<code class="function">amendscan</code>之前，该数据必须是完好的。
+  </p><p>   如果访问方法支持<span class="quote">“<span class="quote">普通</span>”</span>索引扫描，只需要提供<code class="function">amgettuple</code>函数。如果不支持，它的<code class="structname">IndexAmRoutine</code>结构的<code class="structfield">amgettuple</code>域必须被设置为 NULL。
+  </p><pre class="programlisting">int64
+amgetbitmap (IndexScanDesc scan,
+             TIDBitmap *tbm);</pre><p>
+   在给定扫描中取所有元组并且把它们添加到调用者提供的<code class="type">TIDBitmap</code>中（即，把元组 ID 的集合 OR 到已经存在于位图中的东西里面）。返回被取得的元组的数量（这可能仅仅是一个近似计数，例如一些 AM 不会去重）。在把元组 ID 插入到位图时，<code class="function">amgetbitmap</code>可以指明对指定元组 ID 要求重新检查扫描条件。这与<code class="function">amgettuple</code>的 <code class="literal">xs_recheck</code>输出参数类似。注意：在当前的实现中，这个特性的支持是和对位图本身有损存储的支持合并在一起的，并且调用者会对可重新检查的元组检查扫描条件和部分索引谓词（如果有）。但是，那不会总是真的。<code class="function">amgetbitmap</code>和 <code class="function">amgettuple</code>不能被用于同一个索引扫描；正如<a class="xref" href="index-scanning.html" title="60.3. 索引扫描">第 60.3 节</a>中所解释的，在使用<code class="function">amgetbitmap</code>时也有其他的限制条件。
+  </p><p>   如果访问方法支持<span class="quote">“<span class="quote">bitmap</span>”</span>索引扫描，则仅需要提供<code class="function">amgetbitmap</code>函数。如果不支持，它的<code class="structname">IndexAmRoutine</code>结构中的<code class="structfield">amgetbitmap</code>域必须被设置为 NULL。
+  </p><pre class="programlisting">void
+amendscan (IndexScanDesc scan);</pre><p>
+   结束扫描并释放资源。不应该释放<code class="literal">scan</code>结构本身，但访问方法内部使用的任何锁或者 pin 都应该被释放。
+  </p><pre class="programlisting">void
+ammarkpos (IndexScanDesc scan);</pre><p>
+   标记当前扫描位置。访问方法只需要支持每个扫描里面有一个被标记的扫描位置。
+  </p><p>   <code class="function">ammarkpos</code>函数只有在访问方法支持有序扫描时才需要提供。如果不支持，则访问方法的<code class="structname">IndexAmRoutine</code>结构的<code class="structfield">ammarkpos</code>域可以设置为 NULL。
+  </p><pre class="programlisting">void
+amrestrpos (IndexScanDesc scan);</pre><p>
+   把扫描恢复到最近标记的位置。
+  </p><p>   <code class="function">amrestrpos</code>函数只有在访问方法支持有序扫描时才需要提供。如果不支持，则访问方法的<code class="structname">IndexAmRoutine</code>结构的<code class="structfield">amrestrpos</code>域可以设置为 NULL。
+  </p><p>   除了支持普通索引扫描外，某些类型的索引可能希望支持<em class="firstterm">并行索引扫描</em>，
+   这允许多个后端协作执行索引扫描。索引访问方法应该安排一些事情，
+   以便每个合作进程返回将由普通的非并行索引扫描执行的元组的子集，
+   但以这样的方式这些子集的并集等于将通过普通的非并行索引扫描返回的元组集合。
+   此外，虽然不需要通过并行扫描返回的元组的全局排序，
+   但每个协作后端内返回的元组的子集的排序必须与请求的排序相匹配。
+   可以实现下列函数来支持并行索引扫描：
+  </p><pre class="programlisting">Size
+amestimateparallelscan (void);</pre><p>
+   估计并返回执行并行扫描所需的访问方法的动态共享内存的字节数。
+   （这个数字不包括<code class="structname">ParallelIndexScanDescData</code>中AM独立数据所需的空间量）。
+  </p><p>   对于不支持并行扫描的访问方法或所需的额外存储字节数为零的访问方法，没有必要实现此功能。
+  </p><pre class="programlisting">void
+aminitparallelscan (void *target);</pre><p>
+   这个函数将被调用来在并行扫描开始时初始化动态共享内存。
+   <em class="parameter"><code>target</code></em>将指向至少以前由<code class="function">amestimateparallelscan</code>返回的字节数，
+   并且该函数可以使用该空间量来存储它希望的任何数据。
+  </p><p>   对于不支持并行扫描的访问方法或者在所需的共享内存空间不需要初始化的情况下，没有必要实现此功能。
+  </p><pre class="programlisting">void
+amparallelrescan (IndexScanDesc scan);</pre><p>
+   如果必须重新启动并行索引扫描，则会调用此函数（如果已实现）。
+   它应该重置由<code class="function">aminitparallelscan</code>设置的任何共享状态，以便扫描从头开始重新开始。
+  </p></div><div class="navfooter"><hr /><table width="100%" summary="Navigation footer"><tr><td width="40%" align="left"><a accesskey="p" href="index-api.html">上一页</a> </td><td width="20%" align="center"><a accesskey="u" href="indexam.html">上一级</a></td><td width="40%" align="right"> <a accesskey="n" href="index-scanning.html">下一页</a></td></tr><tr><td width="40%" align="left" valign="top">60.1. 索引的基本 API 结构 </td><td width="20%" align="center"><a accesskey="h" href="index.html">起始页</a></td><td width="40%" align="right" valign="top"> 60.3. 索引扫描</td></tr></table></div></body></html>

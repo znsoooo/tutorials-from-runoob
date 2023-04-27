@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><title>53.4. 其他编码习惯</title><link rel="stylesheet" type="text/css" href="stylesheet.css" /><link rev="made" href="pgsql-docs@postgresql.org" /><meta name="generator" content="DocBook XSL Stylesheets V1.79.1" /><link rel="prev" href="error-style-guide.html" title="53.3. 错误消息风格指导" /><link rel="next" href="nls.html" title="第 54 章 本国语言支持" /></head><body><div xmlns="http://www.w3.org/TR/xhtml1/transitional" class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="5" align="center">53.4. 其他编码习惯</th></tr><tr><td width="10%" align="left"><a accesskey="p" href="error-style-guide.html" title="53.3. 错误消息风格指导">上一页</a> </td><td width="10%" align="left"><a accesskey="u" href="source.html" title="第 53 章 PostgreSQL编码习惯">上一级</a></td><th width="60%" align="center">第 53 章 PostgreSQL编码习惯</th><td width="10%" align="right"><a accesskey="h" href="index.html" title="PostgreSQL 10.1 手册">起始页</a></td><td width="10%" align="right"> <a accesskey="n" href="nls.html" title="第 54 章 本国语言支持">下一页</a></td></tr></table><hr></hr></div><div class="sect1" id="SOURCE-CONVENTIONS"><div class="titlepage"><div><div><h2 class="title" style="clear: both">53.4. 其他编码习惯</h2></div></div></div><div class="simplesect" id="idp58454992"><div class="titlepage"><div><div><h3 class="title">C 标准</h3></div></div></div><p>     <span class="productname">PostgreSQL</span>中的代码应该只依赖于 C89 标准中的语言特性。这意味着遵循 C89 的编译器肯定能编译 postgres，至少除开少数平台依赖问题之外。 如果提供了回退机制，也可以使用来自后续 C 标准版本的特性或者编译器相关的特性。
+    </p><p>     例如虽然<code class="literal">static inline</code>和<code class="literal">_StaticAssert()</code>来自于新版的 C 标准，但是<span class="productname">PostgreSQL</span>中仍然用到了它们。如果它们不可用，我们分别会回退到定义没有内联的函数以及使用兼容 C89 的替代品来执行相同的检查（但是会发出晦涩的消息）。
+    </p></div><div class="simplesect" id="idp58459328"><div class="titlepage"><div><div><h3 class="title">类函数的宏以及内联函数</h3></div></div></div><p>     带有参数的宏以及<code class="literal">static inline</code>函数都可能被使用。当类似如下情况写作宏时会有多次计算风险或者宏可能非常长时，使用后者会更好。
+</p><pre class="programlisting">#define Max(x, y)       ((x) &gt; (y) ? (x) : (y))</pre><p>
+     在其他情况下只能使用宏，或者说使用宏至少更容易。例如，由于多种类型的表达式需要被传递给宏。
+    </p><p>     当一个内联函数的定义引用只在后端中可用的符号（即变量、函数）时，从前端代码引用该函数时该函数可能不可见。
+</p><pre class="programlisting">#ifndef FRONTEND
+static inline MemoryContext
+MemoryContextSwitchTo(MemoryContext context)
+{
+    MemoryContext old = CurrentMemoryContext;
+
+    CurrentMemoryContext = context;
+    return old;
+}
+#endif   /* FRONTEND */</pre><p>
+     在这个例子中，<code class="literal">CurrentMemoryContext</code>只在后端中可用，但该函数引用了它并且该函数因此被<code class="literal">#ifndef FRONTEND</code>隐藏。之所以存在这条规则，是因为即使内联函数中包含的符号没有被使用，有些编译器也会发出对它们的引用。
+    </p></div><div class="simplesect" id="idp58465184"><div class="titlepage"><div><div><h3 class="title">编写信号处理器</h3></div></div></div><p>     为了能适合在信号处理器中运行，代码必须被非常仔细地编写。根本问题是，除非被阻塞，信号处理器能在任何时候打断代码。如果信号处理器内部的代码使用和外面代码相同的状态，很可能会出现混乱。例如，可以想想如果一个信号处理器试图取得已经在被打断代码中持有的锁时会发生什么。
+    </p><p>     除特殊安排的代码之外，在信号处理器中只应该调用对异步信号安全的函数（如 POSIX 中定义的那样）并且只访问<code class="literal">volatile sig_atomic_t</code>类型的变量。一些<code class="command">postgres</code>中的函数也被视作是信号安全的，其中很重要的一个是<code class="function">SetLatch()</code>。
+    </p><p>     在大部分情况下，信号处理器应该只提示一个信号已经到达，并且使用一个 latch 唤醒运行在处理器之外的代码。这样一个处理器的例子如下：
+</p><pre class="programlisting">static void
+handle_sighup(SIGNAL_ARGS)
+{
+    int         save_errno = errno;
+
+    got_SIGHUP = true;
+    SetLatch(MyLatch);
+
+    errno = save_errno;
+}</pre><p>
+     <code class="varname">errno</code>会被保存并且恢复，因为<code class="function">SetLatch()</code>可能会更改它。如果不这样做，当前正在观测<code class="varname">errno</code>的被中断代码可能会看到错误的值。
+    </p></div></div><div class="navfooter"><hr /><table width="100%" summary="Navigation footer"><tr><td width="40%" align="left"><a accesskey="p" href="error-style-guide.html">上一页</a> </td><td width="20%" align="center"><a accesskey="u" href="source.html">上一级</a></td><td width="40%" align="right"> <a accesskey="n" href="nls.html">下一页</a></td></tr><tr><td width="40%" align="left" valign="top">53.3. 错误消息风格指导 </td><td width="20%" align="center"><a accesskey="h" href="index.html">起始页</a></td><td width="40%" align="right" valign="top"> 第 54 章 本国语言支持</td></tr></table></div></body></html>

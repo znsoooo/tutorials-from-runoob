@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><title>ALTER SERVER</title><link rel="stylesheet" type="text/css" href="stylesheet.css" /><link rev="made" href="pgsql-docs@postgresql.org" /><meta name="generator" content="DocBook XSL Stylesheets V1.79.1" /><link rel="prev" href="sql-altersequence.html" title="ALTER SEQUENCE" /><link rel="next" href="sql-alterstatistics.html" title="ALTER STATISTICS" /></head><body><div xmlns="http://www.w3.org/TR/xhtml1/transitional" class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="5" align="center">ALTER SERVER</th></tr><tr><td width="10%" align="left"><a accesskey="p" href="sql-altersequence.html" title="ALTER SEQUENCE">上一页</a> </td><td width="10%" align="left"><a accesskey="u" href="sql-commands.html" title="SQL 命令">上一级</a></td><th width="60%" align="center">SQL 命令</th><td width="10%" align="right"><a accesskey="h" href="index.html" title="PostgreSQL 10.1 手册">起始页</a></td><td width="10%" align="right"> <a accesskey="n" href="sql-alterstatistics.html" title="ALTER STATISTICS">下一页</a></td></tr></table><hr></hr></div><div class="refentry" id="SQL-ALTERSERVER"><div class="titlepage"></div><a id="idp40915264" class="indexterm"></a><div class="refnamediv"><h2><span class="refentrytitle">ALTER SERVER</span></h2><p>ALTER SERVER — 更改一个外部服务器的定义</p></div><div class="refsynopsisdiv"><h2>大纲</h2><pre class="synopsis">ALTER SERVER <em class="replaceable"><code>name</code></em> [ VERSION '<em class="replaceable"><code>new_version</code></em>' ]
+    [ OPTIONS ( [ ADD | SET | DROP ] <em class="replaceable"><code>option</code></em> ['<em class="replaceable"><code>value</code></em>'] [, ... ] ) ]
+ALTER SERVER <em class="replaceable"><code>name</code></em> OWNER TO { <em class="replaceable"><code>new_owner</code></em> | CURRENT_USER | SESSION_USER }
+ALTER SERVER <em class="replaceable"><code>name</code></em> RENAME TO <em class="replaceable"><code>new_name</code></em></pre></div><div class="refsect1" id="idp40923856"><h2>描述</h2><p>   <code class="command">ALTER SERVER</code>更改一个外部服务器的定义。
+   第一种形式更改该服务器的版本字符串或者该服务器的一般选项（至少要求
+   一个子句）。第二种形式更改该服务器的拥有者。
+  </p><p>   要修改该服务器，你必须是它的拥有者。此外为了修改拥有者，你必须拥有
+   该服务器并且是新拥有角色的一个直接或者间接成员，并且你必须具有该服
+   务器的外部数据包装器上的<code class="literal">USAGE</code>特权（注意超级用户自动
+   满足所有这些政策）。
+  </p></div><div class="refsect1" id="idp40926976"><h2>参数</h2><div class="variablelist"><dl class="variablelist"><dt><span class="term"><em class="replaceable"><code>name</code></em></span></dt><dd><p>      一个现有服务器的名称。
+     </p></dd><dt><span class="term"><em class="replaceable"><code>new_version</code></em></span></dt><dd><p>      新的服务器版本。
+     </p></dd><dt><span class="term"><code class="literal">OPTIONS ( [ ADD | SET | DROP ] <em class="replaceable"><code>option</code></em> ['<em class="replaceable"><code>value</code></em>'] [, ... ] )</code></span></dt><dd><p>      更改该服务器的选项。<code class="literal">ADD</code>、<code class="literal">SET</code>和
+      <code class="literal">DROP</code>指定要执行的动作。如果没有显式地指定操作，
+      将会假定为<code class="literal">ADD</code>。选项名称必须唯一，名称和值也会
+      使用该服务器的外部数据包装器库进行验证。
+     </p></dd><dt><span class="term"><em class="replaceable"><code>new_owner</code></em></span></dt><dd><p>      该外部服务器的新拥有者的用户名。
+     </p></dd><dt><span class="term"><em class="replaceable"><code>new_name</code></em></span></dt><dd><p>      该外部服务器的新名称。
+     </p></dd></dl></div></div><div class="refsect1" id="idp40938464"><h2>示例</h2><p>   修改服务器<code class="literal">foo</code>，增加连接选项：
+</p><pre class="programlisting">ALTER SERVER foo OPTIONS (host 'foo', dbname 'foodb');</pre><p>
+  </p><p>   修改服务器<code class="literal">foo</code>，更改版本、更改<code class="literal">host</code>选项：
+</p><pre class="programlisting">ALTER SERVER foo VERSION '8.4' OPTIONS (SET host 'baz');</pre></div><div class="refsect1" id="idp40942944"><h2>兼容性</h2><p>   <code class="command">ALTER SERVER</code>符合 ISO/IEC 9075-9 (SQL/MED)。
+   <code class="literal">OWNER TO</code>和<code class="literal">RENAME</code>形式是
+   PostgreSQL 扩展。
+  </p></div><div class="refsect1" id="idp40945808"><h2>另见</h2><span class="simplelist"><a class="xref" href="sql-createserver.html" title="CREATE SERVER"><span class="refentrytitle">CREATE SERVER</span></a>, <a class="xref" href="sql-dropserver.html" title="DROP SERVER"><span class="refentrytitle">DROP SERVER</span></a></span></div></div><div class="navfooter"><hr /><table width="100%" summary="Navigation footer"><tr><td width="40%" align="left"><a accesskey="p" href="sql-altersequence.html">上一页</a> </td><td width="20%" align="center"><a accesskey="u" href="sql-commands.html">上一级</a></td><td width="40%" align="right"> <a accesskey="n" href="sql-alterstatistics.html">下一页</a></td></tr><tr><td width="40%" align="left" valign="top">ALTER SEQUENCE </td><td width="20%" align="center"><a accesskey="h" href="index.html">起始页</a></td><td width="40%" align="right" valign="top"> ALTER STATISTICS</td></tr></table></div></body></html>

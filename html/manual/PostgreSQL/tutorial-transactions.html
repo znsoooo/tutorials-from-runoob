@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><title>3.4. 事务</title><link rel="stylesheet" type="text/css" href="stylesheet.css" /><link rev="made" href="pgsql-docs@postgresql.org" /><meta name="generator" content="DocBook XSL Stylesheets V1.79.1" /><link rel="prev" href="tutorial-fk.html" title="3.3. 外键" /><link rel="next" href="tutorial-window.html" title="3.5. 窗口函数" /></head><body><div xmlns="http://www.w3.org/TR/xhtml1/transitional" class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="5" align="center">3.4. 事务</th></tr><tr><td width="10%" align="left"><a accesskey="p" href="tutorial-fk.html" title="3.3. 外键">上一页</a> </td><td width="10%" align="left"><a accesskey="u" href="tutorial-advanced.html" title="第 3 章 高级特性">上一级</a></td><th width="60%" align="center">第 3 章 高级特性</th><td width="10%" align="right"><a accesskey="h" href="index.html" title="PostgreSQL 10.1 手册">起始页</a></td><td width="10%" align="right"> <a accesskey="n" href="tutorial-window.html" title="3.5. 窗口函数">下一页</a></td></tr></table><hr></hr></div><div class="sect1" id="TUTORIAL-TRANSACTIONS"><div class="titlepage"><div><div><h2 class="title" style="clear: both">3.4. 事务</h2></div></div></div><a id="idp5467456" class="indexterm"></a><p>    <em class="firstterm">事务</em>是所有数据库系统的基础概念。事务最重要的一点是它将多个步骤捆绑成了一个单一的、要么全完成要么全不完成的操作。步骤之间的中间状态对于其他并发事务是不可见的，并且如果有某些错误发生导致事务不能完成，则其中任何一个步骤都不会对数据库造成影响。
+   </p><p>    例如，考虑一个保存着多个客户账户余额和支行总存款额的银行数据库。假设我们希望记录一笔从Alice的账户到Bob的账户的额度为100.00美元的转账。在最大程度地简化后，涉及到的SQL命令是：
+
+</p><pre class="programlisting">UPDATE accounts SET balance = balance - 100.00
+    WHERE name = 'Alice';
+UPDATE branches SET balance = balance - 100.00
+    WHERE name = (SELECT branch_name FROM accounts WHERE name = 'Alice');
+UPDATE accounts SET balance = balance + 100.00
+    WHERE name = 'Bob';
+UPDATE branches SET balance = balance + 100.00
+    WHERE name = (SELECT branch_name FROM accounts WHERE name = 'Bob');</pre><p>
+   </p><p>    这些命令的细节在这里并不重要，关键点是为了完成这个相当简单的操作涉及到多个独立的更新。我们的银行职员希望确保这些更新要么全部发生，或者全部不发生。当然不能发生因为系统错误导致Bob收到100美元而Alice并未被扣款的情况。Alice当然也不希望自己被扣款而Bob没有收到钱。我们需要一种保障，当操作中途某些错误发生时已经执行的步骤不会产生效果。将这些更新组织成一个<em class="firstterm">事务</em>就可以给我们这种保障。一个事务被称为是<em class="firstterm">原子的</em>：从其他事务的角度来看，它要么整个发生要么完全不发生。
+   </p><p>    我们同样希望能保证一旦一个事务被数据库系统完成并认可，它就被永久地记录下来且即便其后发生崩溃也不会被丢失。例如，如果我们正在记录Bob的一次现金提款，我们当然不希望他刚走出银行大门，对他账户的扣款就消失。一个事务型数据库保证一个事务在被报告为完成之前它所做的所有更新都被记录在持久存储（即磁盘）。
+   </p><p>    事务型数据库的另一个重要性质与原子更新的概念紧密相关：当多个事务并发运行时，每一个都不能看到其他事务未完成的修改。例如，如果一个事务正忙着总计所有支行的余额，它不会只包括Alice的支行的扣款而不包括Bob的支行的存款，或者反之。所以事务的全做或全不做并不只体现在它们对数据库的持久影响，也体现在它们发生时的可见性。一个事务所做的更新在它完成之前对于其他事务是不可见的，而之后所有的更新将同时变得可见。
+   </p><p>    在<span class="productname">PostgreSQL</span>中，开启一个事务需要将SQL命令用<code class="command">BEGIN</code>和<code class="command">COMMIT</code>命令包围起来。因此我们的银行事务看起来会是这样：
+
+</p><pre class="programlisting">BEGIN;
+UPDATE accounts SET balance = balance - 100.00
+    WHERE name = 'Alice';
+-- etc etc
+COMMIT;</pre><p>
+   </p><p>    如果，在事务执行中我们并不想提交（或许是我们注意到Alice的余额不足），我们可以发出<code class="command">ROLLBACK</code>命令而不是<code class="command">COMMIT</code>命令，这样所有目前的更新将会被取消。
+   </p><p>    <span class="productname">PostgreSQL</span>实际上将每一个SQL语句都作为一个事务来执行。如果我们没有发出<code class="command">BEGIN</code>命令，则每个独立的语句都会被加上一个隐式的<code class="command">BEGIN</code>以及（如果成功）<code class="command">COMMIT</code>来包围它。一组被<code class="command">BEGIN</code>和<code class="command">COMMIT</code>包围的语句也被称为一个<em class="firstterm">事务块</em>。
+   </p><div class="note"><h3 class="title">注意</h3><p>     某些客户端库会自动发出<code class="command">BEGIN</code>和<code class="command">COMMIT</code>命令，因此我们可能会在不被告知的情况下得到事务块的效果。具体请查看所使用的接口文档。
+    </p></div><p>    也可以利用<em class="firstterm">保存点</em>来以更细的粒度来控制一个事务中的语句。保存点允许我们有选择性地放弃事务的一部分而提交剩下的部分。在使用<code class="command">SAVEPOINT</code>定义一个保存点后，我们可以在必要时利用<code class="command">ROLLBACK TO</code>回滚到该保存点。该事务中位于保存点和回滚点之间的数据库修改都会被放弃，但是早于该保存点的修改则会被保存。
+   </p><p>    在回滚到保存点之后，它的定义依然存在，因此我们可以多次回滚到它。反过来，如果确定不再需要回滚到特定的保存点，它可以被释放以便系统释放一些资源。记住不管是释放保存点还是回滚到保存点都会释放定义在该保存点之后的所有其他保存点。
+   </p><p>    所有这些都发生在一个事务块内，因此这些对于其他数据库会话都不可见。当提交整个事务块时，被提交的动作将作为一个单元变得对其他会话可见，而被回滚的动作则永远不会变得可见。
+   </p><p>    记住那个银行数据库，假设我们从Alice的账户扣款100美元，然后存款到Bob的账户，结果直到最后才发现我们应该存到Wally的账户。我们可以通过使用保存点来做这件事：
+
+</p><pre class="programlisting">BEGIN;
+UPDATE accounts SET balance = balance - 100.00
+    WHERE name = 'Alice';
+SAVEPOINT my_savepoint;
+UPDATE accounts SET balance = balance + 100.00
+    WHERE name = 'Bob';
+-- oops ... forget that and use Wally's account
+ROLLBACK TO my_savepoint;
+UPDATE accounts SET balance = balance + 100.00
+    WHERE name = 'Wally';
+COMMIT;</pre><p>
+   </p><p>    当然，这个例子是被过度简化的，但是在一个事务块中使用保存点存在很多种控制可能性。此外，<code class="command">ROLLBACK TO</code>是唯一的途径来重新控制一个由于错误被系统置为中断状态的事务块，而不是完全回滚它并重新启动。
+   </p></div><div class="navfooter"><hr /><table width="100%" summary="Navigation footer"><tr><td width="40%" align="left"><a accesskey="p" href="tutorial-fk.html">上一页</a> </td><td width="20%" align="center"><a accesskey="u" href="tutorial-advanced.html">上一级</a></td><td width="40%" align="right"> <a accesskey="n" href="tutorial-window.html">下一页</a></td></tr><tr><td width="40%" align="left" valign="top">3.3. 外键 </td><td width="20%" align="center"><a accesskey="h" href="index.html">起始页</a></td><td width="40%" align="right" valign="top"> 3.5. 窗口函数</td></tr></table></div></body></html>

@@ -1,0 +1,1358 @@
+<!Doctype html>
+<html>
+<head>
+	<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+	<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+	<title>1.6 快速排序 | 菜鸟教程</title>
+
+  <meta name='robots' content='max-image-preview:large' />
+<link rel='stylesheet' id='classic-theme-styles-css' href='http://www.runoob.com/wp-includes/css/classic-themes.min.css?ver=6.2' type='text/css' media='all' />
+<link rel="canonical" href="http://www.runoob.com/w3cnote/quick-sort-2.html" />
+<meta name="keywords" content="1.6 快速排序">
+<meta name="description" content="快速排序是由东尼·霍尔所发展的一种排序算法。在平均状况下，排序 n 个项目要 Ο(nlogn) 次比较。在最坏状况下则需要 Ο(n2) 次比较，但这种状况并不常见。事实上，快速排序通常明显比其他 Ο(nlogn) 算法更快，因为它的内部循环（inner loop）可以在大部分的架构上很有效率地被实现出来。 快速排序使用分治法（Divide and conquer）策略来把一个串行（list）分为两个子串行（sub-lists）。 快速排..">
+		
+	<link rel="shortcut icon" href="https://static.runoob.com/images/favicon.ico">
+	<link rel="stylesheet" href="/wp-content/themes/runoob/style.css?v=1.170" type="text/css" media="all" />	
+	<link rel="stylesheet" href="https://cdn.staticfile.org/font-awesome/4.7.0/css/font-awesome.min.css" media="all" />	
+  <!--[if gte IE 9]><!-->
+  <script src="https://cdn.staticfile.org/jquery/2.0.3/jquery.min.js"></script>
+  <!--<![endif]-->
+  <!--[if lt IE 9]>
+     <script src="https://cdn.staticfile.org/jquery/1.9.1/jquery.min.js"></script>
+     <script src="https://cdn.staticfile.org/html5shiv/r29/html5.min.js"></script>
+  <![endif]-->
+  <link rel="apple-touch-icon" href="https://static.runoob.com/images/icon/mobile-icon.png"/>
+  <meta name="apple-mobile-web-app-title" content="菜鸟教程">
+</head>
+<body>
+
+<!--  头部 -->
+<div class="container logo-search">
+
+  <div class="col search row-search-mobile">
+    <form action="index.php">
+      <input class="placeholder" placeholder="搜索……" name="s" autocomplete="off">
+      
+    </form>
+  </div>
+
+  <div class="row">
+    <div class="col logo">
+      <h1><a href="/">菜鸟教程 -- 学的不仅是技术，更是梦想！</a></h1>
+    </div>
+        <div class="col right-list"> 
+    <button class="btn btn-responsive-nav btn-inverse" data-toggle="collapse" data-target=".nav-main-collapse" id="pull" style=""> <i class="fa fa-navicon"></i> </button>
+    </div>
+        
+    <div class="col search search-desktop last">
+      <div class="search-input" >
+      <form action="//www.runoob.com/" target="_blank">
+        <input class="placeholder" id="s" name="s" placeholder="搜索……"  autocomplete="off" style="height: 44px;">
+      </form>
+      
+      </div>
+    </div>
+  </div>
+</div>
+
+
+
+<!-- 导航栏 -->
+<div class="container navigation">
+    <div class="row">
+        <div class="col nav">
+            
+
+                        <ul class="pc-nav" id="note-nav">
+                <li><a href="//www.runoob.com/">首页</a></li>
+                <li><a href="/w3cnote">笔记首页</a></li>
+                <li><a href="/w3cnote/android-tutorial-intro.html" title="Android 基础入门教程">Android</a></li>
+                <li><a href="/w3cnote/es6-tutorial.html" title="ES6 教程">ES6 教程</a></li>
+                <li><a href="/w3cnote/ten-sorting-algorithm.html" title="排序算法">排序算法</a></li>
+                <li><a href="/w3cnote/hadoop-tutorial.html" title="Hadoop 教程">Hadoop</a></li>
+                <li><a href="/w3cnote/zookeeper-tutorial.html" title="Zookeeper 教程">Zookeeper</a></li>
+                <li><a href="/w3cnote/verilog-tutorial.html" title="Verilog 教程">Verilog</a></li>
+                <li><a href="/w3cnote_genre/code" title="编程技术">编程技术</a></li> 
+                <li><a href="/w3cnote_genre/coderlife" title="程序员人生">程序员人生</a></li>
+                
+                <!--<li><a href="javascript:;" class="runoob-pop">登录</a></li>
+                
+                
+                        <li>
+                <a style="font-weight:bold;" href="https://www.runoob.com/linux/linux-tutorial.html#yunserver" target="_blank" onclick="_hmt.push(['_trackEvent', 'aliyun', 'click', 'aliyun'])" title="kkb">云服务器</a>
+                </li>
+                <li><a href="http://gk.link/a/104mQ" target="_blank" style="font-weight: bold;"onclick="_hmt.push(['_trackEvent', '极客时间', 'click', 'jike'])" title="我的圈子">极客时间</a></li>
+            
+                
+                <li><a target="_blank" href="/shoppinglist" rel="nofollow">知识店铺</a></li> 
+        -->
+            </ul>
+                        
+              
+            <ul class="mobile-nav">
+                <li><a href="/w3cnote">首页</a></li>
+                <li><a href="/w3cnote_genre/android" target="_blank" title="Android 基础入门教程">Android</a></li>
+                <li><a href="/w3cnote/es6-tutorial.html" target="_blank" title="ES6 教程">ES6</a></li>
+                <li><a href="/w3cnote_genre/joke" target="_blank" title="程序员笑话">逗乐</a></li>
+                
+                <a href="javascript:void(0)" class="search-reveal">Search</a> 
+            </ul>
+            
+        </div>
+    </div>
+</div>
+
+
+<!--  内容  -->
+<div class="container main">
+	<div class="row">
+
+		<div class="col middle-column big-middle-column">
+	 			<div class="article">
+			<div class="article-heading">
+				<h2>1.6 快速排序</h2>				<h3><em>分类</em> <a href="/w3cnote_genre/algorithm" title="算法" >算法</a> </h3>
+			</div>
+			<div class="article-body note-body">
+				<div class="article-intro">
+					<p>快速排序是由东尼·霍尔所发展的一种排序算法。在平均状况下，排序 n 个项目要 Ο(nlogn) 次比较。在最坏状况下则需要 Ο(n2) 次比较，但这种状况并不常见。事实上，快速排序通常明显比其他 Ο(nlogn) 算法更快，因为它的内部循环（inner loop）可以在大部分的架构上很有效率地被实现出来。</p>
+<p>快速排序使用分治法（Divide and conquer）策略来把一个串行（list）分为两个子串行（sub-lists）。</p>
+<p>快速排序又是一种分而治之思想在排序算法上的典型应用。本质上来看，快速排序应该算是在冒泡排序基础上的递归分治法。</p>
+<p>快速排序的名字起的是简单粗暴，因为一听到这个名字你就知道它存在的意义，就是快，而且效率高！它是处理大数据最快的排序算法之一了。虽然 Worst Case 的时间复杂度达到了 O(n²)，但是人家就是优秀，在大多数情况下都比平均时间复杂度为 O(n logn) 的排序算法表现要更好，可是这是为什么呢，我也不知道。好在我的强迫症又犯了，查了 N 多资料终于在《算法艺术与信息学竞赛》上找到了满意的答案：</p>
+<blockquote>
+<p>快速排序的最坏运行情况是 O(n²)，比如说顺序数列的快排。但它的平摊期望时间是 O(nlogn)，且 O(nlogn) 记号中隐含的常数因子很小，比复杂度稳定等于 O(nlogn) 的归并排序要小很多。所以，对绝大多数顺序性较弱的随机数列而言，快速排序总是优于归并排序。</p>
+</blockquote>
+
+<h3>1. 算法步骤</h3>
+
+<ol>
+<li>
+<p>从数列中挑出一个元素，称为 "基准"（pivot）;</p>
+</li>
+<li>
+<p>重新排序数列，所有元素比基准值小的摆放在基准前面，所有元素比基准值大的摆在基准的后面（相同的数可以到任一边）。在这个分区退出之后，该基准就处于数列的中间位置。这个称为分区（partition）操作；</p>
+</li>
+<li>
+<p>递归地（recursive）把小于基准值元素的子数列和大于基准值元素的子数列排序；</p>
+</li>
+</ol>
+
+<h3>2. 动图演示</h3>
+
+<p><img decoding="async" src="//www.runoob.com/wp-content/uploads/2019/03/quickSort.gif" alt="" /></p>
+<hr>
+<h2>代码实现</h2>
+
+<h3>JavaScript</h3>
+
+<div class="example"><h2 class="example">实例</h2> <div class="example_code">
+<span style="color: #000066; font-weight: bold;">function</span> quickSort<span style="color: #009900;">&#40;</span>arr<span style="color: #339933;">,</span> left<span style="color: #339933;">,</span> right<span style="color: #009900;">&#41;</span> <span style="color: #009900;">&#123;</span><br />
+&nbsp; &nbsp; <span style="color: #000066; font-weight: bold;">var</span> len <span style="color: #339933;">=</span> arr.<span style="color: #660066;">length</span><span style="color: #339933;">,</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; partitionIndex<span style="color: #339933;">,</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; left <span style="color: #339933;">=</span> <span style="color: #000066; font-weight: bold;">typeof</span> left <span style="color: #339933;">!=</span> <span style="color: #3366CC;">'number'</span> <span style="color: #339933;">?</span> <span style="color: #CC0000;">0</span> <span style="color: #339933;">:</span> left<span style="color: #339933;">,</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; right <span style="color: #339933;">=</span> <span style="color: #000066; font-weight: bold;">typeof</span> right <span style="color: #339933;">!=</span> <span style="color: #3366CC;">'number'</span> <span style="color: #339933;">?</span> len <span style="color: #339933;">-</span> <span style="color: #CC0000;">1</span> <span style="color: #339933;">:</span> right<span style="color: #339933;">;</span><br />
+<br />
+&nbsp; &nbsp; <span style="color: #000066; font-weight: bold;">if</span> <span style="color: #009900;">&#40;</span>left <span style="color: #339933;">&lt;</span> right<span style="color: #009900;">&#41;</span> <span style="color: #009900;">&#123;</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; partitionIndex <span style="color: #339933;">=</span> partition<span style="color: #009900;">&#40;</span>arr<span style="color: #339933;">,</span> left<span style="color: #339933;">,</span> right<span style="color: #009900;">&#41;</span><span style="color: #339933;">;</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; quickSort<span style="color: #009900;">&#40;</span>arr<span style="color: #339933;">,</span> left<span style="color: #339933;">,</span> partitionIndex<span style="color: #339933;">-</span><span style="color: #CC0000;">1</span><span style="color: #009900;">&#41;</span><span style="color: #339933;">;</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; quickSort<span style="color: #009900;">&#40;</span>arr<span style="color: #339933;">,</span> partitionIndex<span style="color: #339933;">+</span><span style="color: #CC0000;">1</span><span style="color: #339933;">,</span> right<span style="color: #009900;">&#41;</span><span style="color: #339933;">;</span><br />
+&nbsp; &nbsp; <span style="color: #009900;">&#125;</span><br />
+&nbsp; &nbsp; <span style="color: #000066; font-weight: bold;">return</span> arr<span style="color: #339933;">;</span><br />
+<span style="color: #009900;">&#125;</span><br />
+<br />
+<span style="color: #000066; font-weight: bold;">function</span> partition<span style="color: #009900;">&#40;</span>arr<span style="color: #339933;">,</span> left <span style="color: #339933;">,</span>right<span style="color: #009900;">&#41;</span> <span style="color: #009900;">&#123;</span> &nbsp; &nbsp; <span style="color: #006600; font-style: italic;">// 分区操作</span><br />
+&nbsp; &nbsp; <span style="color: #000066; font-weight: bold;">var</span> pivot <span style="color: #339933;">=</span> left<span style="color: #339933;">,</span> &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;<span style="color: #006600; font-style: italic;">// 设定基准值（pivot）</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; index <span style="color: #339933;">=</span> pivot <span style="color: #339933;">+</span> <span style="color: #CC0000;">1</span><span style="color: #339933;">;</span><br />
+&nbsp; &nbsp; <span style="color: #000066; font-weight: bold;">for</span> <span style="color: #009900;">&#40;</span><span style="color: #000066; font-weight: bold;">var</span> i <span style="color: #339933;">=</span> index<span style="color: #339933;">;</span> i <span style="color: #339933;">&lt;=</span> right<span style="color: #339933;">;</span> i<span style="color: #339933;">++</span><span style="color: #009900;">&#41;</span> <span style="color: #009900;">&#123;</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; <span style="color: #000066; font-weight: bold;">if</span> <span style="color: #009900;">&#40;</span>arr<span style="color: #009900;">&#91;</span>i<span style="color: #009900;">&#93;</span> <span style="color: #339933;">&lt;</span> arr<span style="color: #009900;">&#91;</span>pivot<span style="color: #009900;">&#93;</span><span style="color: #009900;">&#41;</span> <span style="color: #009900;">&#123;</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; swap<span style="color: #009900;">&#40;</span>arr<span style="color: #339933;">,</span> i<span style="color: #339933;">,</span> index<span style="color: #009900;">&#41;</span><span style="color: #339933;">;</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; index<span style="color: #339933;">++;</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; <span style="color: #009900;">&#125;</span> &nbsp; &nbsp; &nbsp; &nbsp;<br />
+&nbsp; &nbsp; <span style="color: #009900;">&#125;</span><br />
+&nbsp; &nbsp; swap<span style="color: #009900;">&#40;</span>arr<span style="color: #339933;">,</span> pivot<span style="color: #339933;">,</span> index <span style="color: #339933;">-</span> <span style="color: #CC0000;">1</span><span style="color: #009900;">&#41;</span><span style="color: #339933;">;</span><br />
+&nbsp; &nbsp; <span style="color: #000066; font-weight: bold;">return</span> index<span style="color: #339933;">-</span><span style="color: #CC0000;">1</span><span style="color: #339933;">;</span><br />
+<span style="color: #009900;">&#125;</span><br />
+<br />
+<span style="color: #000066; font-weight: bold;">function</span> swap<span style="color: #009900;">&#40;</span>arr<span style="color: #339933;">,</span> i<span style="color: #339933;">,</span> j<span style="color: #009900;">&#41;</span> <span style="color: #009900;">&#123;</span><br />
+&nbsp; &nbsp; <span style="color: #000066; font-weight: bold;">var</span> temp <span style="color: #339933;">=</span> arr<span style="color: #009900;">&#91;</span>i<span style="color: #009900;">&#93;</span><span style="color: #339933;">;</span><br />
+&nbsp; &nbsp; arr<span style="color: #009900;">&#91;</span>i<span style="color: #009900;">&#93;</span> <span style="color: #339933;">=</span> arr<span style="color: #009900;">&#91;</span>j<span style="color: #009900;">&#93;</span><span style="color: #339933;">;</span><br />
+&nbsp; &nbsp; arr<span style="color: #009900;">&#91;</span>j<span style="color: #009900;">&#93;</span> <span style="color: #339933;">=</span> temp<span style="color: #339933;">;</span><br />
+<span style="color: #009900;">&#125;</span><br />
+<span style="color: #000066; font-weight: bold;">function</span> partition2<span style="color: #009900;">&#40;</span>arr<span style="color: #339933;">,</span> low<span style="color: #339933;">,</span> high<span style="color: #009900;">&#41;</span> <span style="color: #009900;">&#123;</span><br />
+&nbsp; let pivot <span style="color: #339933;">=</span> arr<span style="color: #009900;">&#91;</span>low<span style="color: #009900;">&#93;</span><span style="color: #339933;">;</span><br />
+&nbsp; while <span style="color: #009900;">&#40;</span>low <span style="color: #339933;">&lt;</span> high<span style="color: #009900;">&#41;</span> <span style="color: #009900;">&#123;</span><br />
+&nbsp; &nbsp; while <span style="color: #009900;">&#40;</span>low <span style="color: #339933;">&lt;</span> high <span style="color: #339933;">&amp;&amp;</span> arr<span style="color: #009900;">&#91;</span>high<span style="color: #009900;">&#93;</span> <span style="color: #339933;">&gt;</span> pivot<span style="color: #009900;">&#41;</span> <span style="color: #009900;">&#123;</span><br />
+&nbsp; &nbsp; &nbsp; <span style="color: #339933;">--</span>high<span style="color: #339933;">;</span><br />
+&nbsp; &nbsp; <span style="color: #009900;">&#125;</span><br />
+&nbsp; &nbsp; arr<span style="color: #009900;">&#91;</span>low<span style="color: #009900;">&#93;</span> <span style="color: #339933;">=</span> arr<span style="color: #009900;">&#91;</span>high<span style="color: #009900;">&#93;</span><span style="color: #339933;">;</span><br />
+&nbsp; &nbsp; while <span style="color: #009900;">&#40;</span>low <span style="color: #339933;">&lt;</span> high <span style="color: #339933;">&amp;&amp;</span> arr<span style="color: #009900;">&#91;</span>low<span style="color: #009900;">&#93;</span> <span style="color: #339933;">&lt;=</span> pivot<span style="color: #009900;">&#41;</span> <span style="color: #009900;">&#123;</span><br />
+&nbsp; &nbsp; &nbsp; <span style="color: #339933;">++</span>low<span style="color: #339933;">;</span><br />
+&nbsp; &nbsp; <span style="color: #009900;">&#125;</span><br />
+&nbsp; &nbsp; arr<span style="color: #009900;">&#91;</span>high<span style="color: #009900;">&#93;</span> <span style="color: #339933;">=</span> arr<span style="color: #009900;">&#91;</span>low<span style="color: #009900;">&#93;</span><span style="color: #339933;">;</span><br />
+&nbsp; <span style="color: #009900;">&#125;</span><br />
+&nbsp; arr<span style="color: #009900;">&#91;</span>low<span style="color: #009900;">&#93;</span> <span style="color: #339933;">=</span> pivot<span style="color: #339933;">;</span><br />
+&nbsp; <span style="color: #000066; font-weight: bold;">return</span> low<span style="color: #339933;">;</span><br />
+<span style="color: #009900;">&#125;</span><br />
+<br />
+<span style="color: #000066; font-weight: bold;">function</span> quickSort2<span style="color: #009900;">&#40;</span>arr<span style="color: #339933;">,</span> low<span style="color: #339933;">,</span> high<span style="color: #009900;">&#41;</span> <span style="color: #009900;">&#123;</span><br />
+&nbsp; <span style="color: #000066; font-weight: bold;">if</span> <span style="color: #009900;">&#40;</span>low <span style="color: #339933;">&lt;</span> high<span style="color: #009900;">&#41;</span> <span style="color: #009900;">&#123;</span><br />
+&nbsp; &nbsp; let pivot <span style="color: #339933;">=</span> partition2<span style="color: #009900;">&#40;</span>arr<span style="color: #339933;">,</span> low<span style="color: #339933;">,</span> high<span style="color: #009900;">&#41;</span><span style="color: #339933;">;</span><br />
+&nbsp; &nbsp; quickSort2<span style="color: #009900;">&#40;</span>arr<span style="color: #339933;">,</span> low<span style="color: #339933;">,</span> pivot <span style="color: #339933;">-</span> <span style="color: #CC0000;">1</span><span style="color: #009900;">&#41;</span><span style="color: #339933;">;</span><br />
+&nbsp; &nbsp; quickSort2<span style="color: #009900;">&#40;</span>arr<span style="color: #339933;">,</span> pivot <span style="color: #339933;">+</span> <span style="color: #CC0000;">1</span><span style="color: #339933;">,</span> high<span style="color: #009900;">&#41;</span><span style="color: #339933;">;</span><br />
+&nbsp; <span style="color: #009900;">&#125;</span><br />
+&nbsp; <span style="color: #000066; font-weight: bold;">return</span> arr<span style="color: #339933;">;</span><br />
+<span style="color: #009900;">&#125;</span><br />
+</div></div>
+
+<h3>Python</h3>
+<div class="example"><h2 class="example">实例</h2> <div class="example_code">
+<span style="color: Green;font-weight:bold;">def</span> quickSort<span style="color: Olive;">&#40;</span>arr<span style="color: Gray;">,</span> left<span style="color: Gray;">=</span><span style="color: Teal;">None</span><span style="color: Gray;">,</span> right<span style="color: Gray;">=</span><span style="color: Teal;">None</span><span style="color: Olive;">&#41;</span>:<br />
+&nbsp; &nbsp; left <span style="color: Gray;">=</span> <span style="color: Maroon;">0</span> <span style="color: Green;font-weight:bold;">if</span> <span style="color: Green;font-weight:bold;">not</span> <span style="color: Teal;">isinstance</span><span style="color: Olive;">&#40;</span>left<span style="color: Gray;">,</span><span style="color: Olive;">&#40;</span><span style="color: Teal;">int</span><span style="color: Gray;">,</span> <span style="color: Teal;">float</span><span style="color: Olive;">&#41;</span><span style="color: Olive;">&#41;</span> <span style="color: Green;font-weight:bold;">else</span> left<br />
+&nbsp; &nbsp; right <span style="color: Gray;">=</span> <span style="color: Teal;">len</span><span style="color: Olive;">&#40;</span>arr<span style="color: Olive;">&#41;</span>-<span style="color: Maroon;">1</span> <span style="color: Green;font-weight:bold;">if</span> <span style="color: Green;font-weight:bold;">not</span> <span style="color: Teal;">isinstance</span><span style="color: Olive;">&#40;</span>right<span style="color: Gray;">,</span><span style="color: Olive;">&#40;</span><span style="color: Teal;">int</span><span style="color: Gray;">,</span> <span style="color: Teal;">float</span><span style="color: Olive;">&#41;</span><span style="color: Olive;">&#41;</span> <span style="color: Green;font-weight:bold;">else</span> right<br />
+&nbsp; &nbsp; <span style="color: Green;font-weight:bold;">if</span> left <span style="color: Gray;">&lt;</span> right:<br />
+&nbsp; &nbsp; &nbsp; &nbsp; partitionIndex <span style="color: Gray;">=</span> partition<span style="color: Olive;">&#40;</span>arr<span style="color: Gray;">,</span> left<span style="color: Gray;">,</span> right<span style="color: Olive;">&#41;</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; quickSort<span style="color: Olive;">&#40;</span>arr<span style="color: Gray;">,</span> left<span style="color: Gray;">,</span> partitionIndex-<span style="color: Maroon;">1</span><span style="color: Olive;">&#41;</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; quickSort<span style="color: Olive;">&#40;</span>arr<span style="color: Gray;">,</span> partitionIndex+<span style="color: Maroon;">1</span><span style="color: Gray;">,</span> right<span style="color: Olive;">&#41;</span><br />
+&nbsp; &nbsp; <span style="color: Green;font-weight:bold;">return</span> arr<br />
+<br />
+<span style="color: Green;font-weight:bold;">def</span> partition<span style="color: Olive;">&#40;</span>arr<span style="color: Gray;">,</span> left<span style="color: Gray;">,</span> right<span style="color: Olive;">&#41;</span>:<br />
+&nbsp; &nbsp; pivot <span style="color: Gray;">=</span> left<br />
+&nbsp; &nbsp; index <span style="color: Gray;">=</span> pivot+<span style="color: Maroon;">1</span><br />
+&nbsp; &nbsp; i <span style="color: Gray;">=</span> index<br />
+&nbsp; &nbsp; <span style="color: Green;font-weight:bold;">while</span> &nbsp;i <span style="color: Gray;">&lt;=</span> right:<br />
+&nbsp; &nbsp; &nbsp; &nbsp; <span style="color: Green;font-weight:bold;">if</span> arr<span style="color: Olive;">&#91;</span>i<span style="color: Olive;">&#93;</span> <span style="color: Gray;">&lt;</span> arr<span style="color: Olive;">&#91;</span>pivot<span style="color: Olive;">&#93;</span>:<br />
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; swap<span style="color: Olive;">&#40;</span>arr<span style="color: Gray;">,</span> i<span style="color: Gray;">,</span> index<span style="color: Olive;">&#41;</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; index+<span style="color: Gray;">=</span><span style="color: Maroon;">1</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; i+<span style="color: Gray;">=</span><span style="color: Maroon;">1</span><br />
+&nbsp; &nbsp; swap<span style="color: Olive;">&#40;</span>arr<span style="color: Gray;">,</span>pivot<span style="color: Gray;">,</span>index-<span style="color: Maroon;">1</span><span style="color: Olive;">&#41;</span><br />
+&nbsp; &nbsp; <span style="color: Green;font-weight:bold;">return</span> index-<span style="color: Maroon;">1</span><br />
+<br />
+<span style="color: Green;font-weight:bold;">def</span> swap<span style="color: Olive;">&#40;</span>arr<span style="color: Gray;">,</span> i<span style="color: Gray;">,</span> j<span style="color: Olive;">&#41;</span>:<br />
+&nbsp; &nbsp; arr<span style="color: Olive;">&#91;</span>i<span style="color: Olive;">&#93;</span><span style="color: Gray;">,</span> arr<span style="color: Olive;">&#91;</span>j<span style="color: Olive;">&#93;</span> <span style="color: Gray;">=</span> arr<span style="color: Olive;">&#91;</span>j<span style="color: Olive;">&#93;</span><span style="color: Gray;">,</span> arr<span style="color: Olive;">&#91;</span>i<span style="color: Olive;">&#93;</span><br />
+</div></div>
+
+<h3>Go</h3>
+
+<div class="example"><h2 class="example">实例</h2> <div class="example_code">
+<span style="color: #993333;">func</span> quickSort<span style="color: #339933;">(</span>arr <span style="color: #339933;">[]</span><span style="color: #993333;">int</span><span style="color: #339933;">)</span> <span style="color: #339933;">[]</span><span style="color: #993333;">int</span> <span style="color: #339933;">{</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; <span style="color: #b1b100; font-weight: bold;">return</span> _quickSort<span style="color: #339933;">(</span>arr<span style="color: #339933;">,</span> <span style="color: #cc66cc;">0</span><span style="color: #339933;">,</span> <span style="color: #000066;">len</span><span style="color: #339933;">(</span>arr<span style="color: #339933;">)</span><span style="color: #339933;">-</span><span style="color: #cc66cc;">1</span><span style="color: #339933;">)</span><br />
+<span style="color: #339933;">}</span><br />
+<br />
+<span style="color: #993333;">func</span> _quickSort<span style="color: #339933;">(</span>arr <span style="color: #339933;">[]</span><span style="color: #993333;">int</span><span style="color: #339933;">,</span> left<span style="color: #339933;">,</span> right <span style="color: #993333;">int</span><span style="color: #339933;">)</span> <span style="color: #339933;">[]</span><span style="color: #993333;">int</span> <span style="color: #339933;">{</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; <span style="color: #b1b100; font-weight: bold;">if</span> left &lt; right <span style="color: #339933;">{</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; partitionIndex <span style="color: #339933;">:=</span> partition<span style="color: #339933;">(</span>arr<span style="color: #339933;">,</span> left<span style="color: #339933;">,</span> right<span style="color: #339933;">)</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; _quickSort<span style="color: #339933;">(</span>arr<span style="color: #339933;">,</span> left<span style="color: #339933;">,</span> partitionIndex<span style="color: #339933;">-</span><span style="color: #cc66cc;">1</span><span style="color: #339933;">)</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; _quickSort<span style="color: #339933;">(</span>arr<span style="color: #339933;">,</span> partitionIndex<span style="color: #339933;">+</span><span style="color: #cc66cc;">1</span><span style="color: #339933;">,</span> right<span style="color: #339933;">)</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; <span style="color: #339933;">}</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; <span style="color: #b1b100; font-weight: bold;">return</span> arr<br />
+<span style="color: #339933;">}</span><br />
+<br />
+<span style="color: #993333;">func</span> partition<span style="color: #339933;">(</span>arr <span style="color: #339933;">[]</span><span style="color: #993333;">int</span><span style="color: #339933;">,</span> left<span style="color: #339933;">,</span> right <span style="color: #993333;">int</span><span style="color: #339933;">)</span> <span style="color: #993333;">int</span> <span style="color: #339933;">{</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; pivot <span style="color: #339933;">:=</span> left<br />
+&nbsp; &nbsp; &nbsp; &nbsp; index <span style="color: #339933;">:=</span> pivot <span style="color: #339933;">+</span> <span style="color: #cc66cc;">1</span><br />
+<br />
+&nbsp; &nbsp; &nbsp; &nbsp; <span style="color: #b1b100; font-weight: bold;">for</span> <span style="">i</span> <span style="color: #339933;">:=</span> index<span style="color: #339933;">;</span> <span style="">i</span> &lt;<span style="color: #339933;">=</span> right<span style="color: #339933;">;</span> <span style="">i</span><span style="color: #339933;">++</span> <span style="color: #339933;">{</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; <span style="color: #b1b100; font-weight: bold;">if</span> arr<span style="color: #339933;">[</span><span style="">i</span><span style="color: #339933;">]</span> &lt; arr<span style="color: #339933;">[</span>pivot<span style="color: #339933;">]</span> <span style="color: #339933;">{</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; swap<span style="color: #339933;">(</span>arr<span style="color: #339933;">,</span> <span style="">i</span><span style="color: #339933;">,</span> index<span style="color: #339933;">)</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; index <span style="color: #339933;">+=</span> <span style="color: #cc66cc;">1</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; <span style="color: #339933;">}</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; <span style="color: #339933;">}</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; swap<span style="color: #339933;">(</span>arr<span style="color: #339933;">,</span> pivot<span style="color: #339933;">,</span> index<span style="color: #339933;">-</span><span style="color: #cc66cc;">1</span><span style="color: #339933;">)</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; <span style="color: #b1b100; font-weight: bold;">return</span> index <span style="color: #339933;">-</span> <span style="color: #cc66cc;">1</span><br />
+<span style="color: #339933;">}</span><br />
+<br />
+<span style="color: #993333;">func</span> swap<span style="color: #339933;">(</span>arr <span style="color: #339933;">[]</span><span style="color: #993333;">int</span><span style="color: #339933;">,</span> <span style="">i</span><span style="color: #339933;">,</span> j <span style="color: #993333;">int</span><span style="color: #339933;">)</span> <span style="color: #339933;">{</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; arr<span style="color: #339933;">[</span><span style="">i</span><span style="color: #339933;">],</span> arr<span style="color: #339933;">[</span>j<span style="color: #339933;">]</span> <span style="color: #339933;">=</span> arr<span style="color: #339933;">[</span>j<span style="color: #339933;">],</span> arr<span style="color: #339933;">[</span><span style="">i</span><span style="color: #339933;">]</span><br />
+<span style="color: #339933;">}</span><br />
+</div></div>
+
+<h3>C++</h3>
+
+ <div class="example"><h2 class="example">实例</h2> <div class="example_code">
+<span style="color: #666666;">//严蔚敏《数据结构》标准分割函数</span><br />
+&nbsp;<span style="color: #05a;">int</span> Paritition1<span style="color: #008000;">&#40;</span><span style="color: #05a;">int</span> A<span style="color: #008000;">&#91;</span><span style="color: #008000;">&#93;</span>, <span style="color: #05a;">int</span> low, <span style="color: #05a;">int</span> high<span style="color: #008000;">&#41;</span> <span style="color: #008000;">&#123;</span><br />
+&nbsp; &nbsp;<span style="color: #05a;">int</span> pivot <span style="color: #000080;">=</span> A<span style="color: #008000;">&#91;</span>low<span style="color: #008000;">&#93;</span><span style="color: #008080;">;</span><br />
+&nbsp; &nbsp;<span style="color: #05a;">while</span> <span style="color: #008000;">&#40;</span>low <span style="color: #000080;">&lt;</span> high<span style="color: #008000;">&#41;</span> <span style="color: #008000;">&#123;</span><br />
+&nbsp; &nbsp; &nbsp;<span style="color: #05a;">while</span> <span style="color: #008000;">&#40;</span>low <span style="color: #000080;">&lt;</span> high <span style="color: #000040;">&amp;&amp;</span> A<span style="color: #008000;">&#91;</span>high<span style="color: #008000;">&#93;</span> <span style="color: #000080;">&gt;=</span> pivot<span style="color: #008000;">&#41;</span> <span style="color: #008000;">&#123;</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp;<span style="color: #000040;">--</span>high<span style="color: #008080;">;</span><br />
+&nbsp; &nbsp; &nbsp;<span style="color: #008000;">&#125;</span><br />
+&nbsp; &nbsp; &nbsp;A<span style="color: #008000;">&#91;</span>low<span style="color: #008000;">&#93;</span> <span style="color: #000080;">=</span> A<span style="color: #008000;">&#91;</span>high<span style="color: #008000;">&#93;</span><span style="color: #008080;">;</span><br />
+&nbsp; &nbsp; &nbsp;<span style="color: #05a;">while</span> <span style="color: #008000;">&#40;</span>low <span style="color: #000080;">&lt;</span> high <span style="color: #000040;">&amp;&amp;</span> A<span style="color: #008000;">&#91;</span>low<span style="color: #008000;">&#93;</span> <span style="color: #000080;">&lt;=</span> pivot<span style="color: #008000;">&#41;</span> <span style="color: #008000;">&#123;</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp;<span style="color: #000040;">++</span>low<span style="color: #008080;">;</span><br />
+&nbsp; &nbsp; &nbsp;<span style="color: #008000;">&#125;</span><br />
+&nbsp; &nbsp; &nbsp;A<span style="color: #008000;">&#91;</span>high<span style="color: #008000;">&#93;</span> <span style="color: #000080;">=</span> A<span style="color: #008000;">&#91;</span>low<span style="color: #008000;">&#93;</span><span style="color: #008080;">;</span><br />
+&nbsp; &nbsp;<span style="color: #008000;">&#125;</span><br />
+&nbsp; &nbsp;A<span style="color: #008000;">&#91;</span>low<span style="color: #008000;">&#93;</span> <span style="color: #000080;">=</span> pivot<span style="color: #008080;">;</span><br />
+&nbsp; &nbsp;<span style="color: #05a;">return</span> low<span style="color: #008080;">;</span><br />
+&nbsp;<span style="color: #008000;">&#125;</span><br />
+<br />
+&nbsp;<span style="color: #05a;">void</span> QuickSort<span style="color: #008000;">&#40;</span><span style="color: #05a;">int</span> A<span style="color: #008000;">&#91;</span><span style="color: #008000;">&#93;</span>, <span style="color: #05a;">int</span> low, <span style="color: #05a;">int</span> high<span style="color: #008000;">&#41;</span> <span style="color: #666666;">//快排母函数</span><br />
+&nbsp;<span style="color: #008000;">&#123;</span><br />
+&nbsp; &nbsp;<span style="color: #05a;">if</span> <span style="color: #008000;">&#40;</span>low <span style="color: #000080;">&lt;</span> high<span style="color: #008000;">&#41;</span> <span style="color: #008000;">&#123;</span><br />
+&nbsp; &nbsp; &nbsp;<span style="color: #05a;">int</span> pivot <span style="color: #000080;">=</span> Paritition1<span style="color: #008000;">&#40;</span>A, low, high<span style="color: #008000;">&#41;</span><span style="color: #008080;">;</span><br />
+&nbsp; &nbsp; &nbsp;QuickSort<span style="color: #008000;">&#40;</span>A, low, pivot <span style="color: #000040;">-</span> <span style="color: #0000dd;">1</span><span style="color: #008000;">&#41;</span><span style="color: #008080;">;</span><br />
+&nbsp; &nbsp; &nbsp;QuickSort<span style="color: #008000;">&#40;</span>A, pivot <span style="color: #000040;">+</span> <span style="color: #0000dd;">1</span>, high<span style="color: #008000;">&#41;</span><span style="color: #008080;">;</span><br />
+&nbsp; &nbsp;<span style="color: #008000;">&#125;</span><br />
+&nbsp;<span style="color: #008000;">&#125;</span><br />
+</div></div>
+
+<h3>Java</h3>
+
+<div class="example"><h2 class="example">实例</h2> <div class="example_code">
+<span style="color: #000000; font-weight: bold;">public</span> <span style="color: #000000; font-weight: bold;">class</span> QuickSort <span style="color: #000000; font-weight: bold;">implements</span> IArraySort <span style="color: #009900;">&#123;</span><br />
+<br />
+&nbsp; &nbsp; @Override<br />
+&nbsp; &nbsp; <span style="color: #000000; font-weight: bold;">public</span> <span style="color: #000066; font-weight: bold;">int</span><span style="color: #009900;">&#91;</span><span style="color: #009900;">&#93;</span> sort<span style="color: #009900;">&#40;</span><span style="color: #000066; font-weight: bold;">int</span><span style="color: #009900;">&#91;</span><span style="color: #009900;">&#93;</span> sourceArray<span style="color: #009900;">&#41;</span> <span style="color: #000000; font-weight: bold;">throws</span> <span style="color: #003399;">Exception</span> <span style="color: #009900;">&#123;</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; <span style="color: #666666; font-style: italic;">// 对 arr 进行拷贝，不改变参数内容</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; <span style="color: #000066; font-weight: bold;">int</span><span style="color: #009900;">&#91;</span><span style="color: #009900;">&#93;</span> arr <span style="color: #339933;">=</span> <span style="color: #003399;">Arrays</span>.<span style="color: #006633;">copyOf</span><span style="color: #009900;">&#40;</span>sourceArray, sourceArray.<span style="color: #006633;">length</span><span style="color: #009900;">&#41;</span><span style="color: #339933;">;</span><br />
+<br />
+&nbsp; &nbsp; &nbsp; &nbsp; <span style="color: #000000; font-weight: bold;">return</span> quickSort<span style="color: #009900;">&#40;</span>arr, <span style="color: #cc66cc;">0</span>, arr.<span style="color: #006633;">length</span> <span style="color: #339933;">-</span> <span style="color: #cc66cc;">1</span><span style="color: #009900;">&#41;</span><span style="color: #339933;">;</span><br />
+&nbsp; &nbsp; <span style="color: #009900;">&#125;</span><br />
+<br />
+&nbsp; &nbsp; <span style="color: #000000; font-weight: bold;">private</span> <span style="color: #000066; font-weight: bold;">int</span><span style="color: #009900;">&#91;</span><span style="color: #009900;">&#93;</span> quickSort<span style="color: #009900;">&#40;</span><span style="color: #000066; font-weight: bold;">int</span><span style="color: #009900;">&#91;</span><span style="color: #009900;">&#93;</span> arr, <span style="color: #000066; font-weight: bold;">int</span> left, <span style="color: #000066; font-weight: bold;">int</span> right<span style="color: #009900;">&#41;</span> <span style="color: #009900;">&#123;</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; <span style="color: #000000; font-weight: bold;">if</span> <span style="color: #009900;">&#40;</span>left <span style="color: #339933;">&lt;</span> right<span style="color: #009900;">&#41;</span> <span style="color: #009900;">&#123;</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; <span style="color: #000066; font-weight: bold;">int</span> partitionIndex <span style="color: #339933;">=</span> partition<span style="color: #009900;">&#40;</span>arr, left, right<span style="color: #009900;">&#41;</span><span style="color: #339933;">;</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; quickSort<span style="color: #009900;">&#40;</span>arr, left, partitionIndex <span style="color: #339933;">-</span> <span style="color: #cc66cc;">1</span><span style="color: #009900;">&#41;</span><span style="color: #339933;">;</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; quickSort<span style="color: #009900;">&#40;</span>arr, partitionIndex <span style="color: #339933;">+</span> <span style="color: #cc66cc;">1</span>, right<span style="color: #009900;">&#41;</span><span style="color: #339933;">;</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; <span style="color: #009900;">&#125;</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; <span style="color: #000000; font-weight: bold;">return</span> arr<span style="color: #339933;">;</span><br />
+&nbsp; &nbsp; <span style="color: #009900;">&#125;</span><br />
+<br />
+&nbsp; &nbsp; <span style="color: #000000; font-weight: bold;">private</span> <span style="color: #000066; font-weight: bold;">int</span> partition<span style="color: #009900;">&#40;</span><span style="color: #000066; font-weight: bold;">int</span><span style="color: #009900;">&#91;</span><span style="color: #009900;">&#93;</span> arr, <span style="color: #000066; font-weight: bold;">int</span> left, <span style="color: #000066; font-weight: bold;">int</span> right<span style="color: #009900;">&#41;</span> <span style="color: #009900;">&#123;</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; <span style="color: #666666; font-style: italic;">// 设定基准值（pivot）</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; <span style="color: #000066; font-weight: bold;">int</span> pivot <span style="color: #339933;">=</span> left<span style="color: #339933;">;</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; <span style="color: #000066; font-weight: bold;">int</span> index <span style="color: #339933;">=</span> pivot <span style="color: #339933;">+</span> <span style="color: #cc66cc;">1</span><span style="color: #339933;">;</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; <span style="color: #000000; font-weight: bold;">for</span> <span style="color: #009900;">&#40;</span><span style="color: #000066; font-weight: bold;">int</span> i <span style="color: #339933;">=</span> index<span style="color: #339933;">;</span> i <span style="color: #339933;">&lt;=</span> right<span style="color: #339933;">;</span> i<span style="color: #339933;">++</span><span style="color: #009900;">&#41;</span> <span style="color: #009900;">&#123;</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; <span style="color: #000000; font-weight: bold;">if</span> <span style="color: #009900;">&#40;</span>arr<span style="color: #009900;">&#91;</span>i<span style="color: #009900;">&#93;</span> <span style="color: #339933;">&lt;</span> arr<span style="color: #009900;">&#91;</span>pivot<span style="color: #009900;">&#93;</span><span style="color: #009900;">&#41;</span> <span style="color: #009900;">&#123;</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; swap<span style="color: #009900;">&#40;</span>arr, i, index<span style="color: #009900;">&#41;</span><span style="color: #339933;">;</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; index<span style="color: #339933;">++;</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; <span style="color: #009900;">&#125;</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; <span style="color: #009900;">&#125;</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; swap<span style="color: #009900;">&#40;</span>arr, pivot, index <span style="color: #339933;">-</span> <span style="color: #cc66cc;">1</span><span style="color: #009900;">&#41;</span><span style="color: #339933;">;</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; <span style="color: #000000; font-weight: bold;">return</span> index <span style="color: #339933;">-</span> <span style="color: #cc66cc;">1</span><span style="color: #339933;">;</span><br />
+&nbsp; &nbsp; <span style="color: #009900;">&#125;</span><br />
+<br />
+&nbsp; &nbsp; <span style="color: #000000; font-weight: bold;">private</span> <span style="color: #000066; font-weight: bold;">void</span> swap<span style="color: #009900;">&#40;</span><span style="color: #000066; font-weight: bold;">int</span><span style="color: #009900;">&#91;</span><span style="color: #009900;">&#93;</span> arr, <span style="color: #000066; font-weight: bold;">int</span> i, <span style="color: #000066; font-weight: bold;">int</span> j<span style="color: #009900;">&#41;</span> <span style="color: #009900;">&#123;</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; <span style="color: #000066; font-weight: bold;">int</span> temp <span style="color: #339933;">=</span> arr<span style="color: #009900;">&#91;</span>i<span style="color: #009900;">&#93;</span><span style="color: #339933;">;</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; arr<span style="color: #009900;">&#91;</span>i<span style="color: #009900;">&#93;</span> <span style="color: #339933;">=</span> arr<span style="color: #009900;">&#91;</span>j<span style="color: #009900;">&#93;</span><span style="color: #339933;">;</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; arr<span style="color: #009900;">&#91;</span>j<span style="color: #009900;">&#93;</span> <span style="color: #339933;">=</span> temp<span style="color: #339933;">;</span><br />
+&nbsp; &nbsp; <span style="color: #009900;">&#125;</span><br />
+<br />
+<span style="color: #009900;">&#125;</span><br />
+</div></div>
+
+<h3>PHP</h3>
+
+
+<div class="example"><h2 class="example">实例</h2> <div class="example_code">
+<span style="color: #000000; ">function</span> quickSort<span style="color: #164;">&#40;</span><span style="color: #05a;">$arr</span><span style="color: #164;">&#41;</span><br />
+<span style="color: #164;">&#123;</span><br />
+&nbsp; &nbsp; <span style="color: #708;">if</span> <span style="color: #164;">&#40;</span><span style="color: #990000;">count</span><span style="color: #164;">&#40;</span><span style="color: #05a;">$arr</span><span style="color: #164;">&#41;</span> <span style="color: #000000;">&lt;=</span> <span style="color: #164;">1</span><span style="color: #164;">&#41;</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; <span style="color: #708;">return</span> <span style="color: #05a;">$arr</span><span style="color: #000000;">;</span><br />
+&nbsp; &nbsp; <span style="color: #05a;">$middle</span> <span style="color: #000000;">=</span> <span style="color: #05a;">$arr</span><span style="color: #164;">&#91;</span><span style="color: #164;">0</span><span style="color: #164;">&#93;</span><span style="color: #000000;">;</span><br />
+&nbsp; &nbsp; <span style="color: #05a;">$leftArray</span> <span style="color: #000000;">=</span> <span style="color: #990000;">array</span><span style="color: #164;">&#40;</span><span style="color: #164;">&#41;</span><span style="color: #000000;">;</span><br />
+&nbsp; &nbsp; <span style="color: #05a;">$rightArray</span> <span style="color: #000000;">=</span> <span style="color: #990000;">array</span><span style="color: #164;">&#40;</span><span style="color: #164;">&#41;</span><span style="color: #000000;">;</span><br />
+<br />
+&nbsp; &nbsp; <span style="color: #708;">for</span> <span style="color: #164;">&#40;</span><span style="color: #05a;">$i</span> <span style="color: #000000;">=</span> <span style="color: #164;">1</span><span style="color: #000000;">;</span> <span style="color: #05a;">$i</span> <span style="color: #000000;">&lt;</span> <span style="color: #990000;">count</span><span style="color: #164;">&#40;</span><span style="color: #05a;">$arr</span><span style="color: #164;">&#41;</span><span style="color: #000000;">;</span> <span style="color: #05a;">$i</span><span style="color: #000000;">++</span><span style="color: #164;">&#41;</span> <span style="color: #164;">&#123;</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; <span style="color: #708;">if</span> <span style="color: #164;">&#40;</span><span style="color: #05a;">$arr</span><span style="color: #164;">&#91;</span><span style="color: #05a;">$i</span><span style="color: #164;">&#93;</span> <span style="color: #000000;">&gt;</span> <span style="color: #05a;">$middle</span><span style="color: #164;">&#41;</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; <span style="color: #05a;">$rightArray</span><span style="color: #164;">&#91;</span><span style="color: #164;">&#93;</span> <span style="color: #000000;">=</span> <span style="color: #05a;">$arr</span><span style="color: #164;">&#91;</span><span style="color: #05a;">$i</span><span style="color: #164;">&#93;</span><span style="color: #000000;">;</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; <span style="color: #708;">else</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; <span style="color: #05a;">$leftArray</span><span style="color: #164;">&#91;</span><span style="color: #164;">&#93;</span> <span style="color: #000000;">=</span> <span style="color: #05a;">$arr</span><span style="color: #164;">&#91;</span><span style="color: #05a;">$i</span><span style="color: #164;">&#93;</span><span style="color: #000000;">;</span><br />
+&nbsp; &nbsp; <span style="color: #164;">&#125;</span><br />
+&nbsp; &nbsp; <span style="color: #05a;">$leftArray</span> <span style="color: #000000;">=</span> quickSort<span style="color: #164;">&#40;</span><span style="color: #05a;">$leftArray</span><span style="color: #164;">&#41;</span><span style="color: #000000;">;</span><br />
+&nbsp; &nbsp; <span style="color: #05a;">$leftArray</span><span style="color: #164;">&#91;</span><span style="color: #164;">&#93;</span> <span style="color: #000000;">=</span> <span style="color: #05a;">$middle</span><span style="color: #000000;">;</span><br />
+<br />
+&nbsp; &nbsp; <span style="color: #05a;">$rightArray</span> <span style="color: #000000;">=</span> quickSort<span style="color: #164;">&#40;</span><span style="color: #05a;">$rightArray</span><span style="color: #164;">&#41;</span><span style="color: #000000;">;</span><br />
+&nbsp; &nbsp; <span style="color: #708;">return</span> <span style="color: #990000;">array_merge</span><span style="color: #164;">&#40;</span><span style="color: #05a;">$leftArray</span><span style="color: #000000;">,</span> <span style="color: #05a;">$rightArray</span><span style="color: #164;">&#41;</span><span style="color: #000000;">;</span><br />
+<span style="color: #164;">&#125;</span><br />
+</div></div>
+
+<h3>C</h3>
+
+<div class="example"><h2 class="example">实例</h2> <div class="example_code">
+<span style="color: #993333;">typedef</span> <span style="color: #993333;">struct</span> _Range <span style="color: #000;">&#123;</span><br />
+&nbsp; &nbsp; <span style="color: #993333;">int</span> start<span style="color: #339933;">,</span> end<span style="color: #339933;">;</span><br />
+<span style="color: #000;">&#125;</span> Range<span style="color: #339933;">;</span><br />
+<br />
+Range new_Range<span style="color: #000;">&#40;</span><span style="color: #993333;">int</span> s<span style="color: #339933;">,</span> <span style="color: #993333;">int</span> e<span style="color: #000;">&#41;</span> <span style="color: #000;">&#123;</span><br />
+&nbsp; &nbsp; Range r<span style="color: #339933;">;</span><br />
+&nbsp; &nbsp; r.<span style="color: #202020;">start</span> <span style="color: #339933;">=</span> s<span style="color: #339933;">;</span><br />
+&nbsp; &nbsp; r.<span style="color: #202020;">end</span> <span style="color: #339933;">=</span> e<span style="color: #339933;">;</span><br />
+&nbsp; &nbsp; <span style="color: #708;">return</span> r<span style="color: #339933;">;</span><br />
+<span style="color: #000;">&#125;</span><br />
+<br />
+<span style="color: #993333;">void</span> swap<span style="color: #000;">&#40;</span><span style="color: #993333;">int</span> <span style="color: #339933;">*</span>x<span style="color: #339933;">,</span> <span style="color: #993333;">int</span> <span style="color: #339933;">*</span>y<span style="color: #000;">&#41;</span> <span style="color: #000;">&#123;</span><br />
+&nbsp; &nbsp; <span style="color: #993333;">int</span> t <span style="color: #339933;">=</span> <span style="color: #339933;">*</span>x<span style="color: #339933;">;</span><br />
+&nbsp; &nbsp; <span style="color: #339933;">*</span>x <span style="color: #339933;">=</span> <span style="color: #339933;">*</span>y<span style="color: #339933;">;</span><br />
+&nbsp; &nbsp; <span style="color: #339933;">*</span>y <span style="color: #339933;">=</span> t<span style="color: #339933;">;</span><br />
+<span style="color: #000;">&#125;</span><br />
+<br />
+<span style="color: #993333;">void</span> quick_sort<span style="color: #000;">&#40;</span><span style="color: #993333;">int</span> arr<span style="color: #000;">&#91;</span><span style="color: #000;">&#93;</span><span style="color: #339933;">,</span> <span style="color: #993333;">const</span> <span style="color: #993333;">int</span> len<span style="color: #000;">&#41;</span> <span style="color: #000;">&#123;</span><br />
+&nbsp; &nbsp; <span style="color: #708;">if</span> <span style="color: #000;">&#40;</span>len <span style="color: #339933;">&lt;=</span> <span style="color: #164;">0</span><span style="color: #000;">&#41;</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; <span style="color: #708;">return</span><span style="color: #339933;">;</span> <span style="color: #666666; font-style: italic;">// 避免len等於負值時引發段錯誤（Segment Fault）</span><br />
+&nbsp; &nbsp; <span style="color: #666666; font-style: italic;">// r[]模擬列表,p為數量,r[p++]為push,r[--p]為pop且取得元素</span><br />
+&nbsp; &nbsp; Range r<span style="color: #000;">&#91;</span>len<span style="color: #000;">&#93;</span><span style="color: #339933;">;</span><br />
+&nbsp; &nbsp; <span style="color: #993333;">int</span> p <span style="color: #339933;">=</span> <span style="color: #164;">0</span><span style="color: #339933;">;</span><br />
+&nbsp; &nbsp; r<span style="color: #000;">&#91;</span>p<span style="color: #339933;">++</span><span style="color: #000;">&#93;</span> <span style="color: #339933;">=</span> new_Range<span style="color: #000;">&#40;</span><span style="color: #164;">0</span><span style="color: #339933;">,</span> len <span style="color: #339933;">-</span> <span style="color: #164;">1</span><span style="color: #000;">&#41;</span><span style="color: #339933;">;</span><br />
+&nbsp; &nbsp; <span style="color: #708;">while</span> <span style="color: #000;">&#40;</span>p<span style="color: #000;">&#41;</span> <span style="color: #000;">&#123;</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; Range range <span style="color: #339933;">=</span> r<span style="color: #000;">&#91;</span><span style="color: #339933;">--</span>p<span style="color: #000;">&#93;</span><span style="color: #339933;">;</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; <span style="color: #708;">if</span> <span style="color: #000;">&#40;</span>range.<span style="color: #202020;">start</span> <span style="color: #339933;">&gt;=</span> range.<span style="color: #202020;">end</span><span style="color: #000;">&#41;</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; <span style="color: #708;">continue</span><span style="color: #339933;">;</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; <span style="color: #993333;">int</span> mid <span style="color: #339933;">=</span> arr<span style="color: #000;">&#91;</span><span style="color: #000;">&#40;</span>range.<span style="color: #202020;">start</span> <span style="color: #339933;">+</span> range.<span style="color: #202020;">end</span><span style="color: #000;">&#41;</span> <span style="color: #339933;">/</span> <span style="color: #164;">2</span><span style="color: #000;">&#93;</span><span style="color: #339933;">;</span> <span style="color: #666666; font-style: italic;">// 選取中間點為基準點</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; <span style="color: #993333;">int</span> left <span style="color: #339933;">=</span> range.<span style="color: #202020;">start</span><span style="color: #339933;">,</span> right <span style="color: #339933;">=</span> range.<span style="color: #202020;">end</span><span style="color: #339933;">;</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; <span style="color: #708;">do</span> <span style="color: #000;">&#123;</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; <span style="color: #708;">while</span> <span style="color: #000;">&#40;</span>arr<span style="color: #000;">&#91;</span>left<span style="color: #000;">&#93;</span> <span style="color: #339933;">&lt;</span> mid<span style="color: #000;">&#41;</span> <span style="color: #339933;">++</span>left<span style="color: #339933;">;</span> &nbsp; <span style="color: #666666; font-style: italic;">// 檢測基準點左側是否符合要求</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; <span style="color: #708;">while</span> <span style="color: #000;">&#40;</span>arr<span style="color: #000;">&#91;</span>right<span style="color: #000;">&#93;</span> <span style="color: #339933;">&gt;</span> mid<span style="color: #000;">&#41;</span> <span style="color: #339933;">--</span>right<span style="color: #339933;">;</span> <span style="color: #666666; font-style: italic;">//檢測基準點右側是否符合要求</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; <span style="color: #708;">if</span> <span style="color: #000;">&#40;</span>left <span style="color: #339933;">&lt;=</span> right<span style="color: #000;">&#41;</span> <span style="color: #000;">&#123;</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; swap<span style="color: #000;">&#40;</span><span style="color: #339933;">&amp;</span>arr<span style="color: #000;">&#91;</span>left<span style="color: #000;">&#93;</span><span style="color: #339933;">,</span> <span style="color: #339933;">&amp;</span>arr<span style="color: #000;">&#91;</span>right<span style="color: #000;">&#93;</span><span style="color: #000;">&#41;</span><span style="color: #339933;">;</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; left<span style="color: #339933;">++;</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; right<span style="color: #339933;">--;</span> &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; <span style="color: #666666; font-style: italic;">// 移動指針以繼續</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; <span style="color: #000;">&#125;</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; <span style="color: #000;">&#125;</span> <span style="color: #708;">while</span> <span style="color: #000;">&#40;</span>left <span style="color: #339933;">&lt;=</span> right<span style="color: #000;">&#41;</span><span style="color: #339933;">;</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; <span style="color: #708;">if</span> <span style="color: #000;">&#40;</span>range.<span style="color: #202020;">start</span> <span style="color: #339933;">&lt;</span> right<span style="color: #000;">&#41;</span> r<span style="color: #000;">&#91;</span>p<span style="color: #339933;">++</span><span style="color: #000;">&#93;</span> <span style="color: #339933;">=</span> new_Range<span style="color: #000;">&#40;</span>range.<span style="color: #202020;">start</span><span style="color: #339933;">,</span> right<span style="color: #000;">&#41;</span><span style="color: #339933;">;</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; <span style="color: #708;">if</span> <span style="color: #000;">&#40;</span>range.<span style="color: #202020;">end</span> <span style="color: #339933;">&gt;</span> left<span style="color: #000;">&#41;</span> r<span style="color: #000;">&#91;</span>p<span style="color: #339933;">++</span><span style="color: #000;">&#93;</span> <span style="color: #339933;">=</span> new_Range<span style="color: #000;">&#40;</span>left<span style="color: #339933;">,</span> range.<span style="color: #202020;">end</span><span style="color: #000;">&#41;</span><span style="color: #339933;">;</span><br />
+&nbsp; &nbsp; <span style="color: #000;">&#125;</span><br />
+<span style="color: #000;">&#125;</span><br />
+</div></div>
+
+<p><strong>递归法</strong></p>
+
+
+<div class="example"><h2 class="example">实例</h2> <div class="example_code">
+<span style="color: #993333;">void</span> swap<span style="color: #000;">&#40;</span><span style="color: #993333;">int</span> <span style="color: #339933;">*</span>x<span style="color: #339933;">,</span> <span style="color: #993333;">int</span> <span style="color: #339933;">*</span>y<span style="color: #000;">&#41;</span> <span style="color: #000;">&#123;</span><br />
+&nbsp; &nbsp; <span style="color: #993333;">int</span> t <span style="color: #339933;">=</span> <span style="color: #339933;">*</span>x<span style="color: #339933;">;</span><br />
+&nbsp; &nbsp; <span style="color: #339933;">*</span>x <span style="color: #339933;">=</span> <span style="color: #339933;">*</span>y<span style="color: #339933;">;</span><br />
+&nbsp; &nbsp; <span style="color: #339933;">*</span>y <span style="color: #339933;">=</span> t<span style="color: #339933;">;</span><br />
+<span style="color: #000;">&#125;</span><br />
+<br />
+<span style="color: #993333;">void</span> quick_sort_recursive<span style="color: #000;">&#40;</span><span style="color: #993333;">int</span> arr<span style="color: #000;">&#91;</span><span style="color: #000;">&#93;</span><span style="color: #339933;">,</span> <span style="color: #993333;">int</span> start<span style="color: #339933;">,</span> <span style="color: #993333;">int</span> end<span style="color: #000;">&#41;</span> <span style="color: #000;">&#123;</span><br />
+&nbsp; &nbsp; <span style="color: #708;">if</span> <span style="color: #000;">&#40;</span>start <span style="color: #339933;">&gt;=</span> end<span style="color: #000;">&#41;</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; <span style="color: #708;">return</span><span style="color: #339933;">;</span><br />
+&nbsp; &nbsp; <span style="color: #993333;">int</span> mid <span style="color: #339933;">=</span> arr<span style="color: #000;">&#91;</span>end<span style="color: #000;">&#93;</span><span style="color: #339933;">;</span><br />
+&nbsp; &nbsp; <span style="color: #993333;">int</span> left <span style="color: #339933;">=</span> start<span style="color: #339933;">,</span> right <span style="color: #339933;">=</span> end <span style="color: #339933;">-</span> <span style="color: #164;">1</span><span style="color: #339933;">;</span><br />
+&nbsp; &nbsp; <span style="color: #708;">while</span> <span style="color: #000;">&#40;</span>left <span style="color: #339933;">&lt;</span> right<span style="color: #000;">&#41;</span> <span style="color: #000;">&#123;</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; <span style="color: #708;">while</span> <span style="color: #000;">&#40;</span>arr<span style="color: #000;">&#91;</span>left<span style="color: #000;">&#93;</span> <span style="color: #339933;">&lt;</span> mid <span style="color: #339933;">&amp;&amp;</span> left <span style="color: #339933;">&lt;</span> right<span style="color: #000;">&#41;</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; left<span style="color: #339933;">++;</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; <span style="color: #708;">while</span> <span style="color: #000;">&#40;</span>arr<span style="color: #000;">&#91;</span>right<span style="color: #000;">&#93;</span> <span style="color: #339933;">&gt;=</span> mid <span style="color: #339933;">&amp;&amp;</span> left <span style="color: #339933;">&lt;</span> right<span style="color: #000;">&#41;</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; right<span style="color: #339933;">--;</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; swap<span style="color: #000;">&#40;</span><span style="color: #339933;">&amp;</span>arr<span style="color: #000;">&#91;</span>left<span style="color: #000;">&#93;</span><span style="color: #339933;">,</span> <span style="color: #339933;">&amp;</span>arr<span style="color: #000;">&#91;</span>right<span style="color: #000;">&#93;</span><span style="color: #000;">&#41;</span><span style="color: #339933;">;</span><br />
+&nbsp; &nbsp; <span style="color: #000;">&#125;</span><br />
+&nbsp; &nbsp; <span style="color: #708;">if</span> <span style="color: #000;">&#40;</span>arr<span style="color: #000;">&#91;</span>left<span style="color: #000;">&#93;</span> <span style="color: #339933;">&gt;=</span> arr<span style="color: #000;">&#91;</span>end<span style="color: #000;">&#93;</span><span style="color: #000;">&#41;</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; swap<span style="color: #000;">&#40;</span><span style="color: #339933;">&amp;</span>arr<span style="color: #000;">&#91;</span>left<span style="color: #000;">&#93;</span><span style="color: #339933;">,</span> <span style="color: #339933;">&amp;</span>arr<span style="color: #000;">&#91;</span>end<span style="color: #000;">&#93;</span><span style="color: #000;">&#41;</span><span style="color: #339933;">;</span><br />
+&nbsp; &nbsp; <span style="color: #708;">else</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; left<span style="color: #339933;">++;</span><br />
+&nbsp; &nbsp; <span style="color: #708;">if</span> <span style="color: #000;">&#40;</span>left<span style="color: #000;">&#41;</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; quick_sort_recursive<span style="color: #000;">&#40;</span>arr<span style="color: #339933;">,</span> start<span style="color: #339933;">,</span> left <span style="color: #339933;">-</span> <span style="color: #164;">1</span><span style="color: #000;">&#41;</span><span style="color: #339933;">;</span><br />
+&nbsp; &nbsp; quick_sort_recursive<span style="color: #000;">&#40;</span>arr<span style="color: #339933;">,</span> left <span style="color: #339933;">+</span> <span style="color: #164;">1</span><span style="color: #339933;">,</span> end<span style="color: #000;">&#41;</span><span style="color: #339933;">;</span><br />
+<span style="color: #000;">&#125;</span><br />
+<br />
+<span style="color: #993333;">void</span> quick_sort<span style="color: #000;">&#40;</span><span style="color: #993333;">int</span> arr<span style="color: #000;">&#91;</span><span style="color: #000;">&#93;</span><span style="color: #339933;">,</span> <span style="color: #993333;">int</span> len<span style="color: #000;">&#41;</span> <span style="color: #000;">&#123;</span><br />
+&nbsp; &nbsp; quick_sort_recursive<span style="color: #000;">&#40;</span>arr<span style="color: #339933;">,</span> <span style="color: #164;">0</span><span style="color: #339933;">,</span> len <span style="color: #339933;">-</span> <span style="color: #164;">1</span><span style="color: #000;">&#41;</span><span style="color: #339933;">;</span><br />
+<span style="color: #000;">&#125;</span><br />
+</div></div>
+
+<h3>C++</h3>
+
+<p><strong>函数法</strong></p>
+
+<pre>sort(a,a + n);// 排序a[0]-a[n-1]的所有数.</pre>
+
+<p>迭代法</p>
+
+<div class="example"><h2 class="example">实例</h2> <div class="example_code">
+<span style="color: #666666;">// 参考：http://www.dutor.net/index.php/2011/04/recursive-iterative-quick-sort/</span><br />
+<span style="color: #05a;">struct</span> Range <span style="color: #008000;">&#123;</span><br />
+&nbsp; &nbsp; <span style="color: #05a;">int</span> start, end<span style="color: #008080;">;</span><br />
+&nbsp; &nbsp; Range<span style="color: #008000;">&#40;</span><span style="color: #05a;">int</span> s <span style="color: #000080;">=</span> <span style="color: #0000dd;">0</span>, <span style="color: #05a;">int</span> e <span style="color: #000080;">=</span> <span style="color: #0000dd;">0</span><span style="color: #008000;">&#41;</span> <span style="color: #008000;">&#123;</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; start <span style="color: #000080;">=</span> s, end <span style="color: #000080;">=</span> e<span style="color: #008080;">;</span><br />
+&nbsp; &nbsp; <span style="color: #008000;">&#125;</span><br />
+<span style="color: #008000;">&#125;</span><span style="color: #008080;">;</span><br />
+<span style="color: #05a;">template</span> <span style="color: #000080;">&lt;</span><span style="color: #05a;">typename</span> T<span style="color: #000080;">&gt;</span> <span style="color: #666666;">// 整數或浮點數皆可使用,若要使用物件(class)時必須設定&quot;小於&quot;(&lt;)、&quot;大於&quot;(&gt;)、&quot;不小於&quot;(&gt;=)的運算子功能</span><br />
+<span style="color: #05a;">void</span> quick_sort<span style="color: #008000;">&#40;</span>T arr<span style="color: #008000;">&#91;</span><span style="color: #008000;">&#93;</span>, <span style="color: #05a;">const</span> <span style="color: #05a;">int</span> len<span style="color: #008000;">&#41;</span> <span style="color: #008000;">&#123;</span><br />
+&nbsp; &nbsp; <span style="color: #05a;">if</span> <span style="color: #008000;">&#40;</span>len <span style="color: #000080;">&lt;=</span> <span style="color: #0000dd;">0</span><span style="color: #008000;">&#41;</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; <span style="color: #05a;">return</span><span style="color: #008080;">;</span> <span style="color: #666666;">// 避免len等於負值時宣告堆疊陣列當機</span><br />
+&nbsp; &nbsp; <span style="color: #666666;">// r[]模擬堆疊,p為數量,r[p++]為push,r[--p]為pop且取得元素</span><br />
+&nbsp; &nbsp; Range r<span style="color: #008000;">&#91;</span>len<span style="color: #008000;">&#93;</span><span style="color: #008080;">;</span><br />
+&nbsp; &nbsp; <span style="color: #05a;">int</span> p <span style="color: #000080;">=</span> <span style="color: #0000dd;">0</span><span style="color: #008080;">;</span><br />
+&nbsp; &nbsp; r<span style="color: #008000;">&#91;</span>p<span style="color: #000040;">++</span><span style="color: #008000;">&#93;</span> <span style="color: #000080;">=</span> Range<span style="color: #008000;">&#40;</span><span style="color: #0000dd;">0</span>, len <span style="color: #000040;">-</span> <span style="color: #0000dd;">1</span><span style="color: #008000;">&#41;</span><span style="color: #008080;">;</span><br />
+&nbsp; &nbsp; <span style="color: #05a;">while</span> <span style="color: #008000;">&#40;</span>p<span style="color: #008000;">&#41;</span> <span style="color: #008000;">&#123;</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; Range range <span style="color: #000080;">=</span> r<span style="color: #008000;">&#91;</span><span style="color: #000040;">--</span>p<span style="color: #008000;">&#93;</span><span style="color: #008080;">;</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; <span style="color: #05a;">if</span> <span style="color: #008000;">&#40;</span>range.<span style="color: #007788;">start</span> <span style="color: #000080;">&gt;=</span> range.<span style="color: #007788;">end</span><span style="color: #008000;">&#41;</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; <span style="color: #05a;">continue</span><span style="color: #008080;">;</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; T mid <span style="color: #000080;">=</span> arr<span style="color: #008000;">&#91;</span>range.<span style="color: #007788;">end</span><span style="color: #008000;">&#93;</span><span style="color: #008080;">;</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; <span style="color: #05a;">int</span> left <span style="color: #000080;">=</span> range.<span style="color: #007788;">start</span>, right <span style="color: #000080;">=</span> range.<span style="color: #007788;">end</span> <span style="color: #000040;">-</span> <span style="color: #0000dd;">1</span><span style="color: #008080;">;</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; <span style="color: #05a;">while</span> <span style="color: #008000;">&#40;</span>left <span style="color: #000080;">&lt;</span> right<span style="color: #008000;">&#41;</span> <span style="color: #008000;">&#123;</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; <span style="color: #05a;">while</span> <span style="color: #008000;">&#40;</span>arr<span style="color: #008000;">&#91;</span>left<span style="color: #008000;">&#93;</span> <span style="color: #000080;">&lt;</span> mid <span style="color: #000040;">&amp;&amp;</span> left <span style="color: #000080;">&lt;</span> right<span style="color: #008000;">&#41;</span> left<span style="color: #000040;">++</span><span style="color: #008080;">;</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; <span style="color: #05a;">while</span> <span style="color: #008000;">&#40;</span>arr<span style="color: #008000;">&#91;</span>right<span style="color: #008000;">&#93;</span> <span style="color: #000080;">&gt;=</span> mid <span style="color: #000040;">&amp;&amp;</span> left <span style="color: #000080;">&lt;</span> right<span style="color: #008000;">&#41;</span> right<span style="color: #000040;">--</span><span style="color: #008080;">;</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; std<span style="color: #008080;">::</span><span style="color: #007788;">swap</span><span style="color: #008000;">&#40;</span>arr<span style="color: #008000;">&#91;</span>left<span style="color: #008000;">&#93;</span>, arr<span style="color: #008000;">&#91;</span>right<span style="color: #008000;">&#93;</span><span style="color: #008000;">&#41;</span><span style="color: #008080;">;</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; <span style="color: #008000;">&#125;</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; <span style="color: #05a;">if</span> <span style="color: #008000;">&#40;</span>arr<span style="color: #008000;">&#91;</span>left<span style="color: #008000;">&#93;</span> <span style="color: #000080;">&gt;=</span> arr<span style="color: #008000;">&#91;</span>range.<span style="color: #007788;">end</span><span style="color: #008000;">&#93;</span><span style="color: #008000;">&#41;</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; std<span style="color: #008080;">::</span><span style="color: #007788;">swap</span><span style="color: #008000;">&#40;</span>arr<span style="color: #008000;">&#91;</span>left<span style="color: #008000;">&#93;</span>, arr<span style="color: #008000;">&#91;</span>range.<span style="color: #007788;">end</span><span style="color: #008000;">&#93;</span><span style="color: #008000;">&#41;</span><span style="color: #008080;">;</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; <span style="color: #05a;">else</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; left<span style="color: #000040;">++</span><span style="color: #008080;">;</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; r<span style="color: #008000;">&#91;</span>p<span style="color: #000040;">++</span><span style="color: #008000;">&#93;</span> <span style="color: #000080;">=</span> Range<span style="color: #008000;">&#40;</span>range.<span style="color: #007788;">start</span>, left <span style="color: #000040;">-</span> <span style="color: #0000dd;">1</span><span style="color: #008000;">&#41;</span><span style="color: #008080;">;</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; r<span style="color: #008000;">&#91;</span>p<span style="color: #000040;">++</span><span style="color: #008000;">&#93;</span> <span style="color: #000080;">=</span> Range<span style="color: #008000;">&#40;</span>left <span style="color: #000040;">+</span> <span style="color: #0000dd;">1</span>, range.<span style="color: #007788;">end</span><span style="color: #008000;">&#41;</span><span style="color: #008080;">;</span><br />
+&nbsp; &nbsp; <span style="color: #008000;">&#125;</span><br />
+<span style="color: #008000;">&#125;</span><br />
+</div></div>
+
+<p><strong>递归法</strong></p>
+
+<div class="example"><h2 class="example">实例</h2> <div class="example_code">
+<span style="color: #05a;">template</span> <span style="color: #000080;">&lt;</span><span style="color: #05a;">typename</span> T<span style="color: #000080;">&gt;</span><br />
+<span style="color: #05a;">void</span> quick_sort_recursive<span style="color: #008000;">&#40;</span>T arr<span style="color: #008000;">&#91;</span><span style="color: #008000;">&#93;</span>, <span style="color: #05a;">int</span> start, <span style="color: #05a;">int</span> end<span style="color: #008000;">&#41;</span> <span style="color: #008000;">&#123;</span><br />
+&nbsp; &nbsp; <span style="color: #05a;">if</span> <span style="color: #008000;">&#40;</span>start <span style="color: #000080;">&gt;=</span> end<span style="color: #008000;">&#41;</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; <span style="color: #05a;">return</span><span style="color: #008080;">;</span><br />
+&nbsp; &nbsp; T mid <span style="color: #000080;">=</span> arr<span style="color: #008000;">&#91;</span>end<span style="color: #008000;">&#93;</span><span style="color: #008080;">;</span><br />
+&nbsp; &nbsp; <span style="color: #05a;">int</span> left <span style="color: #000080;">=</span> start, right <span style="color: #000080;">=</span> end <span style="color: #000040;">-</span> <span style="color: #0000dd;">1</span><span style="color: #008080;">;</span><br />
+&nbsp; &nbsp; <span style="color: #05a;">while</span> <span style="color: #008000;">&#40;</span>left <span style="color: #000080;">&lt;</span> right<span style="color: #008000;">&#41;</span> <span style="color: #008000;">&#123;</span> <span style="color: #666666;">//在整个范围内搜寻比枢纽元值小或大的元素，然后将左侧元素与右侧元素交换</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; <span style="color: #05a;">while</span> <span style="color: #008000;">&#40;</span>arr<span style="color: #008000;">&#91;</span>left<span style="color: #008000;">&#93;</span> <span style="color: #000080;">&lt;</span> mid <span style="color: #000040;">&amp;&amp;</span> left <span style="color: #000080;">&lt;</span> right<span style="color: #008000;">&#41;</span> <span style="color: #666666;">//试图在左侧找到一个比枢纽元更大的元素</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; left<span style="color: #000040;">++</span><span style="color: #008080;">;</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; <span style="color: #05a;">while</span> <span style="color: #008000;">&#40;</span>arr<span style="color: #008000;">&#91;</span>right<span style="color: #008000;">&#93;</span> <span style="color: #000080;">&gt;=</span> mid <span style="color: #000040;">&amp;&amp;</span> left <span style="color: #000080;">&lt;</span> right<span style="color: #008000;">&#41;</span> <span style="color: #666666;">//试图在右侧找到一个比枢纽元更小的元素</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; right<span style="color: #000040;">--</span><span style="color: #008080;">;</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; std<span style="color: #008080;">::</span><span style="color: #007788;">swap</span><span style="color: #008000;">&#40;</span>arr<span style="color: #008000;">&#91;</span>left<span style="color: #008000;">&#93;</span>, arr<span style="color: #008000;">&#91;</span>right<span style="color: #008000;">&#93;</span><span style="color: #008000;">&#41;</span><span style="color: #008080;">;</span> <span style="color: #666666;">//交换元素</span><br />
+&nbsp; &nbsp; <span style="color: #008000;">&#125;</span><br />
+&nbsp; &nbsp; <span style="color: #05a;">if</span> <span style="color: #008000;">&#40;</span>arr<span style="color: #008000;">&#91;</span>left<span style="color: #008000;">&#93;</span> <span style="color: #000080;">&gt;=</span> arr<span style="color: #008000;">&#91;</span>end<span style="color: #008000;">&#93;</span><span style="color: #008000;">&#41;</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; std<span style="color: #008080;">::</span><span style="color: #007788;">swap</span><span style="color: #008000;">&#40;</span>arr<span style="color: #008000;">&#91;</span>left<span style="color: #008000;">&#93;</span>, arr<span style="color: #008000;">&#91;</span>end<span style="color: #008000;">&#93;</span><span style="color: #008000;">&#41;</span><span style="color: #008080;">;</span><br />
+&nbsp; &nbsp; <span style="color: #05a;">else</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; left<span style="color: #000040;">++</span><span style="color: #008080;">;</span><br />
+&nbsp; &nbsp; quick_sort_recursive<span style="color: #008000;">&#40;</span>arr, start, left <span style="color: #000040;">-</span> <span style="color: #0000dd;">1</span><span style="color: #008000;">&#41;</span><span style="color: #008080;">;</span><br />
+&nbsp; &nbsp; quick_sort_recursive<span style="color: #008000;">&#40;</span>arr, left <span style="color: #000040;">+</span> <span style="color: #0000dd;">1</span>, end<span style="color: #008000;">&#41;</span><span style="color: #008080;">;</span><br />
+<span style="color: #008000;">&#125;</span><br />
+<span style="color: #05a;">template</span> <span style="color: #000080;">&lt;</span><span style="color: #05a;">typename</span> T<span style="color: #000080;">&gt;</span> <span style="color: #666666;">//整數或浮點數皆可使用,若要使用物件(class)時必須設定&quot;小於&quot;(&lt;)、&quot;大於&quot;(&gt;)、&quot;不小於&quot;(&gt;=)的運算子功能</span><br />
+<span style="color: #05a;">void</span> quick_sort<span style="color: #008000;">&#40;</span>T arr<span style="color: #008000;">&#91;</span><span style="color: #008000;">&#93;</span>, <span style="color: #05a;">int</span> len<span style="color: #008000;">&#41;</span> <span style="color: #008000;">&#123;</span><br />
+&nbsp; &nbsp; quick_sort_recursive<span style="color: #008000;">&#40;</span>arr, <span style="color: #0000dd;">0</span>, len <span style="color: #000040;">-</span> <span style="color: #0000dd;">1</span><span style="color: #008000;">&#41;</span><span style="color: #008080;">;</span><br />
+<span style="color: #008000;">&#125;</span><br />
+</div></div>
+
+
+
+<blockquote><p>参考地址:</p>
+<p>https://github.com/hustcc/JS-Sorting-Algorithm/blob/master/6.quickSort.md</p>
+<p>https://zh.wikipedia.org/wiki/%E5%BF%AB%E9%80%9F%E6%8E%92%E5%BA%8F</p></blockquote>
+
+
+				</div>
+			</div>
+			<div class="previous-next-links">
+			<div class="previous-design-link">← <a href="http://www.runoob.com/w3cnote/merge-sort.html" rel="prev"> 1.5 归并排序</a> </div>
+			<div class="next-design-link"><a href="http://www.runoob.com/w3cnote/heap-sort.html" rel="next"> 1.7 堆排序</a> →</div>
+			</div>
+			<style>
+.wrapper {
+  /*text-transform: uppercase; */
+  background: #ececec;
+  color: #555;
+  cursor: help;
+  font-family: "Gill Sans", Impact, sans-serif;
+  font-size: 20px;
+  position: relative;
+  text-align: center;
+  width: 200px;
+  -webkit-transform: translateZ(0); /* webkit flicker fix */
+  -webkit-font-smoothing: antialiased; /* webkit text rendering fix */
+}
+
+.wrapper .tooltip {
+  white-space: nowrap;
+  font-size: 14px;
+  text-align: left;
+  background: #96b97d;
+  bottom: 100%;
+  color: #fff;
+  display: block;
+  left: -25px;
+  margin-bottom: 15px;
+  opacity: 0;
+  padding: 14px;
+  pointer-events: none;
+  position: absolute;
+  
+  -webkit-transform: translateY(10px);
+     -moz-transform: translateY(10px);
+      -ms-transform: translateY(10px);
+       -o-transform: translateY(10px);
+          transform: translateY(10px);
+  -webkit-transition: all .25s ease-out;
+     -moz-transition: all .25s ease-out;
+      -ms-transition: all .25s ease-out;
+       -o-transition: all .25s ease-out;
+          transition: all .25s ease-out;
+  -webkit-box-shadow: 2px 2px 6px rgba(0, 0, 0, 0.28);
+     -moz-box-shadow: 2px 2px 6px rgba(0, 0, 0, 0.28);
+      -ms-box-shadow: 2px 2px 6px rgba(0, 0, 0, 0.28);
+       -o-box-shadow: 2px 2px 6px rgba(0, 0, 0, 0.28);
+          box-shadow: 2px 2px 6px rgba(0, 0, 0, 0.28);
+}
+.tooltip a {
+	color:#fff;
+}
+/* This bridges the gap so you can mouse into the tooltip without it disappearing */
+.wrapper .tooltip:before {
+  bottom: -20px;
+  content: " ";
+  display: block;
+  height: 20px;
+  left: 0;
+  position: absolute;
+  width: 100%;
+}  
+
+/* CSS Triangles - see Trevor's post */
+.wrapper .tooltip:after {
+  border-left: solid transparent 10px;
+  border-right: solid transparent 10px;
+  border-top: solid #96b97d 10px;
+  bottom: -10px;
+  content: " ";
+  height: 0;
+  left: 20%;
+  margin-left: -13px;
+  position: absolute;
+  width: 0;
+}
+.wrapper .tooltip1 {
+	margin-left: 50px;
+	padding-top: 0px;
+}
+/*
+.wrapper:hover .tooltip {
+  opacity: 1;
+  pointer-events: auto;
+  -webkit-transform: translateY(0px);
+     -moz-transform: translateY(0px);
+      -ms-transform: translateY(0px);
+       -o-transform: translateY(0px);
+          transform: translateY(0px);
+}
+*/
+/* IE can just show/hide with no transition */
+.lte8 .wrapper .tooltip {
+  display: none;
+}
+
+.lte8 .wrapper:hover .tooltip {
+  display: block;
+}
+
+</style>
+
+<link rel="stylesheet" href="https://static.runoob.com/assets/upvotejs/dist/upvotejs/upvotejs.css">
+<script src="https://static.runoob.com/assets/upvotejs/dist/upvotejs/upvotejs.vanilla.js"></script>
+<script src="https://static.runoob.com/assets/upvotejs/dist/upvotejs/upvotejs.jquery.js"></script>
+<div class="title" id="comments">
+	<h2 class="">
+    <div class="altblock">
+				<i style="font-size:28px;margin-top: 8px;" class="fa fa-plus-square" aria-hidden="true"></i>
+		    </div>
+    <span class="mw-headline" id="qa_headline">3  篇笔记</span>
+	<span class="mw-headline" id="user_add_note" style="float:right;line-height: 62px;padding-right: 14px;"><i class="fa fa-pencil-square-o" aria-hidden="true"></i>  写笔记</span>
+    </h2>
+</div>
+
+<div id="postcomments"  style="display:none;" >
+	<ol class="commentlist">
+		<li class="comment even thread-even depth-1" id="comment-57608"><span class="comt-f">#0</span><div class="comt-avatar wrapper"><i style="font-size:36px;" class="fa fa-user-circle" aria-hidden="true"></i><div class="tooltip"><p><i class="fa fa-user" aria-hidden="true"></i>&nbsp;&nbsp;&nbsp;艾孜尔江</p><p><i class="fa fa-envelope" aria-hidden="true"></i>&nbsp;&nbsp;bju***ft@sina.com</p></div><div id="runoobvote-id-57608" data-commid = "57608" class="upvotejs"><a class="upvote"></a> <span class="count">47</span></div></div><div class="comt-main" id="div-comment-57608"><p>上方没有C#实现，我补充一下，如下所示：</p>
+
+<pre>//快速排序（目标数组，数组的起始位置，数组的终止位置）
+static void QuickSort(int[] array, int left = 0, int right = -1)
+{
+    if (right.Equals(-1)) right = array.Length - 1;
+    try
+    {
+        int keyValuePosition;   //记录关键值的下标
+        //当传递的目标数组含有两个以上的元素时，进行递归调用。（即：当传递的目标数组只含有一个元素时，此趟排序结束）
+        if (left &lt; right)
+        {
+            keyValuePosition = Partion(array, left, right);  //获取关键值的下标（快排的核心）
+            QuickSort(array, left, keyValuePosition - 1);    //递归调用，快排划分出来的左区间
+            QuickSort(array, keyValuePosition + 1, right);   //递归调用，快排划分出来的右区间
+        }
+    }
+    catch (Exception ex)
+    {
+        Console.WriteLine("Exception: {0}", ex);
+    }
+}
+
+///快速排序的核心部分：确定关键值在数组中的位置，以此将数组划分成左右两区间，关键值游离在外。（返回关键值应在数组中的下标）
+static int Partion(int[] array, int left, int right)
+{
+    int leftIndex = left;        //记录目标数组的起始位置（后续动态的左侧下标）
+    int rightIndex = right;      //记录目标数组的结束位置（后续动态的右侧下标）
+    int keyValue = array[left];  //数组的第一个元素作为关键值
+    int temp;
+    //当 （左侧动态下标 == 右侧动态下标） 时跳出循环
+    while (leftIndex &lt; rightIndex)
+    {
+        while (leftIndex &lt; rightIndex &amp;&amp; array[leftIndex] &lt;= keyValue)  //左侧动态下标逐渐增加，直至找到大于keyValue的下标
+        {
+            leftIndex++;
+        }
+        while (leftIndex &lt; rightIndex &amp;&amp; array[rightIndex] &gt; keyValue)  //右侧动态下标逐渐减小，直至找到小于或等于keyValue的下标
+        {
+            rightIndex--;
+        }
+        if (leftIndex &lt; rightIndex)  //如果leftIndex &lt; rightIndex，则交换左右动态下标所指定的值；当leftIndex==rightIndex时，跳出整个循环
+        {
+            temp = array[leftIndex];
+            array[leftIndex] = array[rightIndex];
+            array[rightIndex] = temp;
+        }
+    }
+
+    //当左右两个动态下标相等时（即：左右下标指向同一个位置），此时便可以确定keyValue的准确位置
+    temp = keyValue;
+    if (temp &lt; array[rightIndex])   //当keyValue &lt; 左右下标同时指向的值，将keyValue与rightIndex - 1指向的值交换，并返回rightIndex - 1
+    {
+        array[left] = array[rightIndex - 1];
+        array[rightIndex - 1] = temp;
+        return rightIndex - 1;
+    }
+    else //当keyValue &gt;= 左右下标同时指向的值，将keyValue与rightIndex指向的值交换，并返回rightIndex
+    {
+        array[left] = array[rightIndex];
+        array[rightIndex] = temp;
+        return rightIndex;
+    }
+}</pre><div class="comt-meta wrapper"><span class="comt-author"><a target="_blank" href="javascript:;">艾孜尔江</a><div class="tooltip tooltip1"><p><i class="fa fa-user" aria-hidden="true"></i>&nbsp;&nbsp;&nbsp;艾孜尔江</p><p><i class="fa fa-envelope" aria-hidden="true"></i>&nbsp;&nbsp;bju***ft@sina.com</p></div></span>3年前 (2020-10-08)</div></div></li><!-- #comment-## -->
+<li class="comment odd alt thread-odd thread-alt depth-1" id="comment-59428"><span class="comt-f">#0</span><div class="comt-avatar wrapper"><i style="font-size:36px;" class="fa fa-user-circle" aria-hidden="true"></i><div class="tooltip"><p><i class="fa fa-user" aria-hidden="true"></i>&nbsp;&nbsp;&nbsp;霍旺</p><p><i class="fa fa-envelope" aria-hidden="true"></i>&nbsp;&nbsp;xxx***x@aliyun.com</p></div><div id="runoobvote-id-59428" data-commid = "59428" class="upvotejs"><a class="upvote"></a> <span class="count">14</span></div></div><div class="comt-main" id="div-comment-59428"><p>补充 scala 实现版本：</p>
+
+<pre>/**  
+* @Auther: huowang 
+* @Date: 19:34:47 2020/12/10  
+* @DES:  分区交换算法（快速排序发）  
+* @Modified By:  
+*/
+object PartitionExchange {
+
+  /**    
+   * 分区内切割    
+   * @param arr    
+   * @param left    
+   * @param right    
+   * @return    
+  */  
+def partition(arr:Array[Int],left:Int,right: Int):Int={
+    // 获取基准元素 直接选取最右侧一个元素为基准元素   
+    val pv=arr(right)
+
+    // 把最左边一个索引作为堆叠索引   
+     var storeIndex=left
+    //操作数组 -1是因为 最右边一个元素是基准元素  
+   for (i &lt;- left to right-1 ){
+       if(arr(i)&lt;=pv){
+         //把小于基准元素的元素 都堆到集合左端        
+          swap(arr,storeIndex,i)
+         // 把用于堆叠索引往前移动一个  
+          storeIndex=storeIndex+1 
+      }
+      //如果出现了比基准元素大的元素,那么则不会移动堆叠索引  
+      // 但是如果之后又出现了比基准元素小的元素,那边会与这个大的元素交换位置
+      // 进而使大的元素永远出现在堆叠索引右侧
+    }
+    // 这里最有右的元素,其实是基准元素,我们把基准元素和最后堆叠索引对应的元素调换位置
+    // 这样基准元素左边就都是大于它的元素了  
+     swap(arr,right,storeIndex)
+    // 返回堆叠索引位置,目前堆叠索引指向的就是基准元素 
+     storeIndex
+  }
+
+def quicksort(arr:Array[Int],left: Int,right: Int):Array[Int]={
+
+    if(right&gt;left){
+      // 左右索引不重合 
+     // 随便选择一个元素作为基准 就选择最左边的吧 
+     var pivotIndex=0 
+     // 切割返回基准元素 
+     pivotIndex= partition(arr,left,right)
+      // 递归对切割形成的两个子集进行排序 
+      quicksort(arr,left,pivotIndex-1)
+      quicksort(arr,pivotIndex,right)
+    }
+    arr
+  }
+
+
+  /**    
+    * 调换 a b 元素在数组中的位置    
+    * @param arr    
+    * @param a    
+    * @param b    
+    */  
+def swap(arr:Array[Int],a:Int,b:Int)={
+    val tmp=arr(a)
+    arr(a)=arr(b)
+    arr(b)=tmp
+  }
+
+def main(args: Array[String]): Unit = {
+    // 测试
+    val arr=Array(5, 2, 9,11,3,6,8,4,0,0)
+    val arrNew=quicksort(arr,0,arr.size-1)
+    println(arrNew.toList.mkString(","))
+
+  }
+}</pre><div class="comt-meta wrapper"><span class="comt-author"><a target="_blank" href="javascript:;">霍旺</a><div class="tooltip tooltip1"><p><i class="fa fa-user" aria-hidden="true"></i>&nbsp;&nbsp;&nbsp;霍旺</p><p><i class="fa fa-envelope" aria-hidden="true"></i>&nbsp;&nbsp;xxx***x@aliyun.com</p></div></span>2年前 (2020-12-11)</div></div></li><!-- #comment-## -->
+<li class="comment even thread-even depth-1" id="comment-69836"><span class="comt-f">#0</span><div class="comt-avatar wrapper"><i style="font-size:36px;" class="fa fa-user-circle" aria-hidden="true"></i><div class="tooltip"><p><i class="fa fa-user" aria-hidden="true"></i>&nbsp;&nbsp;&nbsp;melodyEcho</p><p><i class="fa fa-envelope" aria-hidden="true"></i>&nbsp;&nbsp;157***0633@qq.com</p></div><div id="runoobvote-id-69836" data-commid = "69836" class="upvotejs"><a class="upvote"></a> <span class="count">5</span></div></div><div class="comt-main" id="div-comment-69836"><p>补充一下迭代法的 python 实现：</p>
+
+<pre>def _partition(array:list, start:int, end:int) -&gt; int:
+    """
+    将数组指定片段进行左右划分，首先选择中位元素为中值。\n
+    比中位元素小的置于其左，与中位元素相等或比中位元素大的置于其右，\n
+    最后返回中位元素的下标位置。
+    """
+    # 以中位元素为中值划分，尽量避免极端情况
+    mid = (start + end) &gt;&gt; 1
+    array[start], array[mid] = array[mid], array[start]
+    
+    # 划分的实现
+    i, j = start, end
+    x = array[start]
+    while (i &lt; j):
+        if (i &lt; j and array[j] &gt;= x): j -= 1
+        array[i] = array[j]
+        if (i &lt; j and array[i] &lt; x): i += 1
+        array[j] = array[i]
+    array[i] = x
+
+    return i
+
+
+def quickSort(array:list) -&gt; list:
+    """
+    迭代法快速排序，队列结构辅助实现。
+    """
+    sorted_array = array.copy()
+    length = len(sorted_array)
+    # 使用队列保存每次划分的二元组：(起始下标，终止下标)
+    queue = []
+    queue.append((0, length - 1))
+
+    # 队列为空，则所有划分操作执行完毕
+    while len(queue):
+        left, right = queue.pop(0)
+        pos = _partition(sorted_array, left, right)
+        # 默认长度为 1 的序列有序，那么区间长度 &gt; 1 才需要划分，才需要保存到队列中
+        if (left &lt; pos - 1): queue.append((left, pos - 1))
+        if (pos + 1 &lt; right): queue.append((pos + 1, right))
+    
+    return sorted_array
+
+
+if __name__ == "__main__":
+    array = [21, -17, 1, -27, 41, 17, -5, -49]
+    sorted_array = quickSort(array)
+    print("排序前：{array1}\n排序后：{array2}".format(array1=array, array2=sorted_array))</pre><div class="comt-meta wrapper"><span class="comt-author"><a target="_blank" href="javascript:;">melodyEcho</a><div class="tooltip tooltip1"><p><i class="fa fa-user" aria-hidden="true"></i>&nbsp;&nbsp;&nbsp;melodyEcho</p><p><i class="fa fa-envelope" aria-hidden="true"></i>&nbsp;&nbsp;157***0633@qq.com</p></div></span>1年前 (2022-01-23)</div></div></li><!-- #comment-## -->
+	</ol>
+	<div class="pagenav">
+			</div>
+</div>
+<div id="respond" class="no_webshot"> 
+		<div class="comment-signarea" style="display:none; padding: 20px 20px;"> 
+	<h3 class="text-muted" id="share_code" style="color: #799961;"><i class="fa fa-pencil-square-o" aria-hidden="true"></i> 点我分享笔记</h3>
+	<!--
+	<p style="font-size:14px;">笔记需要是本篇文章的内容扩展！</p><br>
+	<p style="font-size:12px;"><a href="//www.runoob.com/tougao" target="_blank">文章投稿，可点击这里</a></p>
+	<p style="font-size:14px;"><a href="/w3cnote/runoob-user-test-intro.html#invite" target="_blank">注册邀请码获取方式</a></p>
+		<h3 class="text-muted"><i class="fa fa-info-circle" aria-hidden="true"></i> 分享笔记前必须<a href="javascript:;" class="runoob-pop">登录</a>！</h3>
+		<p><a href="/w3cnote/runoob-user-test-intro.html#invite" target="_blank">注册邀请码获取方式</a></p>-->
+	</div>
+		
+	<form action="/wp-content/themes/runoob/option/addnote.php" method="post" id="commentform" style="display:none;">
+		<div class="comt">
+			<div class="comt-title">
+				<i style="font-size:36px;" class="fa fa-user-circle" aria-hidden="true"></i>				<p><a id="cancel-comment-reply-link" href="javascript:;">取消</a></p>
+			</div>
+			<div class="comt-box">
+			<div id="mded"></div>
+			
+				<div class="comt-ctrl">
+					<div class="comt-tips"><input type='hidden' name='comment_post_ID' value='21435' id='comment_post_ID' />
+<input type='hidden' name='comment_parent' id='comment_parent' value='0' />
+</div>
+					<button type="submit" name="submit" id="submit" tabindex="5"><i class="fa fa-pencil" aria-hidden="true"></i> 分享笔记</button>
+				</div>
+			</div>
+		
+				
+					<div class="comt-comterinfo"> 
+						<ul id="comment-author-info">
+							<li class="form-inline"><label class="hide" for="author">昵称</label><input class="ipt" type="text" name="author" id="author" value="" tabindex="2" placeholder="昵称"><span class="text-muted">昵称 (必填)</span></li>
+							<li class="form-inline"><label class="hide" for="email">邮箱</label><input class="ipt" type="text" name="email" id="email" value="" tabindex="3" placeholder="邮箱"><span class="text-muted">邮箱 (必填)</span></li>
+							<li class="form-inline"><label class="hide" for="url">引用地址</label><input class="ipt" type="text" name="url" id="url" value="" tabindex="4" placeholder="引用地址"><span class="text-muted">引用地址</span></li>
+						</ul>
+					</div>
+				
+			
+		</div>
+
+	</form>
+	</div>
+<script type="text/javascript">
+$(function() {
+	//初始化编辑器
+	
+	var editor = new Simditor({
+	  textarea: $('#mded'),
+	  placeholder: '写笔记...',
+	  upload:false,
+	 // upload: {url:'/api/comment_upload_file.php',params: null,fileKey: 'upload_file',connectionCount: 1,leaveConfirm: '文件正在上传，您确定离开?'},
+	  defaultImage: 'https://www.runoob.com/images/logo.png',
+	  codeLanguages: '',
+	  autosave: 'editor-content',
+	  toolbar: [  'bold','code','ul','ol','image' ]
+	});
+	editor.on('selectionchanged', function() {
+		$(".code-popover").hide();
+	});
+
+	// 提交数据
+	$("#share_code").click(function() {
+		$(".comment-signarea").hide();
+		$("#commentform").show();
+		
+	});
+	$("#user_add_note").click(function() {
+		$(".comment-signarea").hide();
+		$("#commentform").show();
+		$('html, body').animate({
+       	    scrollTop: $("#respond").offset().top
+    	}, 200);
+	});
+
+	// 提交笔记
+	var commentform=$('#commentform');
+	commentform.prepend('<div id="comment-status" style="display:none;" ></div>');
+	var statusdiv=$('#comment-status');
+	
+	commentform.submit(function(e){
+		e.preventDefault();
+		var noteContent = editor.getValue();
+		// console.log(noteContent);
+		noteContent = noteContent.replace(/<pre><code>/g,"<pre>");
+		noteContent = noteContent.replace(/<\/code><\/pre>/g,"</pre>");
+		
+		// 系列化表单数据
+		var comment_parent = 0;
+		var is_user_logged_in = $("#is_user_logged_in").val();
+		var comment_post_ID =  21435;
+		var _wp_unfiltered_html_comment = $("#_wp_unfiltered_html_comment").val();
+		var comment = noteContent;
+		var author = $("#author").val();
+		var url = $("#url").val();
+		var email = $("#email").val();
+		if(isBlank(author) && is_user_logged_in==0) {
+			statusdiv.html('<p  class="ajax-error">请输入昵称！</p>').show();
+		} else if(isBlank(email)  && is_user_logged_in==0) {
+			statusdiv.html('<p  class="ajax-error">请输入邮箱！</p>').show();
+		} else {
+			// var formdata=commentform.serialize() + "&comment=" + noteContent ;
+			// 添加状态信息
+			statusdiv.html('<p>Processing...</p>').show();
+			// 获取表单提交地址
+			var formurl=commentform.attr('action');
+			
+			// 异步提交
+			$.ajax({
+					type: 'post',
+					url: formurl,
+					dataType:'json',
+					data: {"comment_parent":comment_parent,"comment_post_ID":comment_post_ID, "_wp_unfiltered_html_comment":_wp_unfiltered_html_comment,"comment":comment,"url":url, "email":email,"author":author},
+					error: function(XMLHttpRequest, textStatus, errorThrown){
+					statusdiv.html('<p class="ajax-error" >数据不完整或表单提交太快了！</p>').show();
+				},
+				success: function(data, textStatus){
+					if(data.errorno=="0") {
+						$("#submit").prop('disabled', true);
+						statusdiv.html('<p class="ajax-success" >笔记已提交审核，感谢分享笔记！</p>').show();
+						alert('笔记已提交审核，感谢分享笔记！');
+					}else{
+						statusdiv.html('<p class="ajax-error" >'+data.msg+'</p>').show();
+					}
+					commentform.find('textarea[name=comment]').val('');
+				}
+			});
+			setTimeout(function(){
+		        $("#submit").prop('disabled', false);
+		    }, 10*1000);
+		}
+		return false;
+
+	});
+	$(".comt-author").click(function() {
+		href = $(this).children("a").attr("href");
+		if(href.indexOf("/note/")!=-1) {
+			var win = window.open(href, '_blank');
+  			win.focus();
+		}
+	});
+	$(".comt-meta span").hover(function(){
+		$(this).children(".tooltip").css({ "opacity": 1, "pointer-events": "auto"});
+	},function(){
+		$(this).children(".tooltip").removeAttr("style");
+	});
+	/*
+	$(".wrapper i").hover(function(){
+		$(this).siblings(".tooltip").css({ "opacity": 1, "pointer-events": "auto"});
+	},function(){
+		$(this).siblings(".tooltip").css({ "opacity": 0, "pointer-events": "auto"});
+	});
+	*/
+	//Upvote.create('runoobvote-id', {callback: vote_callback});
+	var ajaxurl = 'https://www.runoob.com/wp-admin/admin-ajax.php';
+	var callback = function(data) {
+		//console.log($('#runoobvote-id').upvote('upvoted'));
+		//console.log($('#runoobvote-id').upvote('downvoted'));
+		//console.log(data);
+		_vote_action = data.action;
+		id_arr = data.id.split('-');
+		um_id= id_arr[2];
+		//console.log(um_id);
+		
+		var re = /^[1-9]+/;
+		if (re.test(um_id)) { 
+			var ajax_data = {
+				_vote_action: _vote_action,
+				action: "pinglun_zan",
+				um_id: um_id,
+				um_action: "ding"
+			};
+			//console.log(ajax_data);
+			$.post(ajaxurl,ajax_data,function(status){
+				//if(status.vote_num>999) {
+				//	_voteHtml = '<span style="display: block; text-align: center;font-size: 20px; color: #6a737c; margin: 8px 0;">'+kFormatter(status.vote_num) +'</span>';
+				//	$("#runoobvote-id-" + um_id + " .count").hide().after(_voteHtml);
+				//}
+				
+			});
+		}
+	};
+	if($('#comments').length && $('.upvotejs').length){
+		$('.upvotejs').upvote({id: 21435, callback: callback});
+	
+		$.post(ajaxurl,{"action":"pinglun_zan","postid":21435},function(data){  
+			$(data).each(function(key,value) {
+				$("#runoobvote-id-" + value.commid + " .upvote").addClass(value.upvotejs_class);
+				$("#runoobvote-id-" + value.commid + " .downvote").addClass(value.downvote_class);
+				$("#runoobvote-id-" + value.commid + " .count").text(value.upvote_count);
+			})
+		},'json');
+		
+	}
+	
+	
+});
+function isBlank(str) {
+    return (!str || /^\s*$/.test(str));
+}
+function kFormatter(num) {
+	// return num;
+    return Math.abs(num) > 999 ? Math.sign(num)*((Math.abs(num)/1000).toFixed(1)) + 'k' : Math.sign(num)*Math.abs(num)
+}
+
+</script>
+
+<link rel="stylesheet" href="/wp-content/themes/runoob/assets/css/qa.css?1.44">
+<link rel="stylesheet" type="text/css" href="https://cdn.staticfile.org/simditor/2.3.6/styles/simditor.min.css" />
+<script type="text/javascript" src="https://static.runoob.com/assets/simditor/2.3.6/scripts/module.js"></script>
+<script type="text/javascript" src="//static.runoob.com/assets/simditor/2.3.6/scripts/hotkeys.js"></script>
+<script type="text/javascript" src="//static.runoob.com/assets/simditor/2.3.6/scripts/uploader.js"></script>
+<script type="text/javascript" src="https://cdn.staticfile.org/simditor/2.3.6/lib/simditor.min.js"></script>
+<script type="text/javascript" src="https://static.runoob.com/assets/simditor/2.3.6/scripts/simditor-autosave.js"></script>
+			<div class="article-heading-ad" id="w3cnote-ad728">
+			<script async src="//pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script>
+			<!-- 移动版 自动调整 -->
+			<ins class="adsbygoogle"
+			     style="display:inline-block;min-width:300px;max-width:970px;width:100%;height:90px"
+			     data-ad-client="ca-pub-5751451760833794"
+			     data-ad-slot="1691338467"
+			     data-ad-format="horizontal"></ins>
+			<script>
+			(adsbygoogle = window.adsbygoogle || []).push({});
+			</script>
+			</div>
+			<style>
+@media screen and (max-width: 768px) {
+	#w3cnote-ad728 {
+		display: none;
+	}
+}
+p.note-author {
+    border-bottom: 1px solid #ddd;
+    font-size: 18px;
+    font-weight: bold;
+    color: #78a15a;
+    padding-bottom: 2px;
+    margin-bottom: 4px;
+}
+</style>
+<script>
+var aid = 21435;
+</script>
+	</div>
+		
+	</div>
+	<div class="listcol last right-column">
+
+	<script type="text/javascript">
+jQuery(document).ready(function ($){
+	var total = $(".membership li").length;
+	var left_list = '';
+	href = window.location.href;
+	
+	$(".membership li").each(function(index, value){
+
+		left_list += $(this).html();
+
+		cur_href = $(this).find("a").attr("href");
+		cur_obj = $(this);
+		
+		if(href.match(cur_href) != null) {
+			if(index==0) {
+				$(".previous-design-link").hide();
+			}
+			if(index==(total-1)) {
+				$(".next-design-link").hide();
+			}
+			prev_href = cur_obj.prev("li").find("a").attr("href");
+			prev_title = cur_obj.prev("li").find("a").attr("title");
+
+			next_href = cur_obj.next("li").find("a").attr("href");
+			next_title = cur_obj.next("li").find("a").attr("title");
+			if(prev_title) {
+				$(".previous-design-link a").attr("href", prev_href);
+				$(".previous-design-link a").attr("title", prev_title);
+				$(".previous-design-link a").text(prev_title);
+			} else {
+				$(".previous-design-link").html("");
+			}
+
+			if(next_title) {
+				$(".next-design-link a").attr("href", next_href);
+				$(".next-design-link a").attr("title", next_title);
+				$(".next-design-link a").text(next_title);
+			} else {
+				$(".next-design-link").html("");
+			}
+		}
+	});
+
+	$("#leftcolumn").html(left_list);
+});
+	</script>
+	<div class="sidebar-box cate-list">
+	<div class="sidebar-box recommend-here list-link">
+	<a href="javascript:void(0);">算法系列</a>	</div>
+	
+	<ul class="membership">
+		
+	<li><a target="_top" data-id="21423" title="1.0 十大经典排序算法" href="http://www.runoob.com/w3cnote/ten-sorting-algorithm.html" >1.0 十大经典排序算法</a></li>
+	
+		
+	<li><a target="_top" data-id="21425" title="1.1 冒泡排序" href="http://www.runoob.com/w3cnote/bubble-sort.html" >1.1 冒泡排序</a></li>
+	
+		
+	<li><a target="_top" data-id="21427" title="1.2 选择排序" href="http://www.runoob.com/w3cnote/selection-sort.html" >1.2 选择排序</a></li>
+	
+		
+	<li><a target="_top" data-id="21429" title="1.3 插入排序" href="http://www.runoob.com/w3cnote/insertion-sort.html" >1.3 插入排序</a></li>
+	
+		
+	<li><a target="_top" data-id="21431" title="1.4 希尔排序" href="http://www.runoob.com/w3cnote/shell-sort.html" >1.4 希尔排序</a></li>
+	
+		
+	<li><a target="_top" data-id="21433" title="1.5 归并排序" href="http://www.runoob.com/w3cnote/merge-sort.html" >1.5 归并排序</a></li>
+	
+		<li>
+	1.6 快速排序	</li>
+	
+		
+	<li><a target="_top" data-id="21437" title="1.7 堆排序" href="http://www.runoob.com/w3cnote/heap-sort.html" >1.7 堆排序</a></li>
+	
+		
+	<li><a target="_top" data-id="21440" title="1.8 计数排序" href="http://www.runoob.com/w3cnote/counting-sort.html" >1.8 计数排序</a></li>
+	
+		
+	<li><a target="_top" data-id="21442" title="1.9 桶排序" href="http://www.runoob.com/w3cnote/bucket-sort.html" >1.9 桶排序</a></li>
+	
+		
+	<li><a target="_top" data-id="21445" title="1.10 基数排序" href="http://www.runoob.com/w3cnote/radix-sort.html" >1.10 基数排序</a></li>
+	
+	</ul></div>	</div>
+</div>
+
+
+<!-- 底部 -->
+<div id="footer" class="mar-t50">
+   <div class="runoob-block">
+    <div class="runoob cf">
+     <dl>
+      <dt>
+       在线实例
+      </dt>
+      <dd>
+       &middot;<a target="_blank" href="/html/html-examples.html">HTML 实例</a>
+      </dd>
+      <dd>
+       &middot;<a target="_blank" href="/css/css-examples.html">CSS 实例</a>
+      </dd>
+      <dd>
+       &middot;<a target="_blank" href="/js/js-examples.html">JavaScript 实例</a>
+      </dd>
+      <dd>
+       &middot;<a target="_blank" href="/ajx/ajax-examples.html">Ajax 实例</a>
+      </dd>
+       <dd>
+       &middot;<a target="_blank" href="/jquery/jquery-examples.html">jQuery 实例</a>
+      </dd>
+      <dd>
+       &middot;<a target="_blank" href="/xml/xml-examples.html">XML 实例</a>
+      </dd>
+      <dd>
+       &middot;<a target="_blank" href="/java/java-examples.html">Java 实例</a>
+      </dd>
+     
+     </dl>
+     <dl>
+      <dt>
+      字符集&工具
+      </dt>
+      <dd>
+       &middot; <a target="_blank" href="/charsets/html-charsets.html">HTML 字符集设置</a>
+      </dd>
+      <dd>
+       &middot; <a target="_blank" href="/tags/html-ascii.html">HTML ASCII 字符集</a>
+      </dd>
+     <dd>
+       &middot; <a target="_blank" href="https://c.runoob.com/front-end/6939/">JS 混淆/加密</a>
+      </dd> 
+      <dd>
+       &middot; <a target="_blank" href="https://c.runoob.com/front-end/6232/">PNG/JPEG 图片压缩</a>
+      </dd>
+      <dd>
+       &middot; <a target="_blank" href="/tags/html-colorpicker.html">HTML 拾色器</a>
+      </dd>
+      <dd>
+       &middot; <a target="_blank" href="//c.runoob.com/front-end/53">JSON 格式化工具</a>
+      </dd>
+      <dd>
+       &middot; <a target="_blank" href="//c.runoob.com/front-end/6680/">随机数生成器</a>
+      </dd>
+     </dl>
+     <dl>
+      <dt>
+       最新更新
+      </dt>
+                   <dd>
+       &middot;
+      <a href="http://www.runoob.com/matplotlib/matplotlib-imread.html" title="Matplotlib imread() 方法">Matplotlib imre...</a>
+      </dd>
+              <dd>
+       &middot;
+      <a href="http://www.runoob.com/matplotlib/matplotlib-imsave.html" title="Matplotlib imsave() 方法">Matplotlib imsa...</a>
+      </dd>
+              <dd>
+       &middot;
+      <a href="http://www.runoob.com/matplotlib/matplotlib-imshow.html" title="Matplotlib imshow() 方法">Matplotlib imsh...</a>
+      </dd>
+              <dd>
+       &middot;
+      <a href="http://www.runoob.com/matplotlib/matplotlib-hist.html" title="Matplotlib 直方图">Matplotlib 直方图</a>
+      </dd>
+              <dd>
+       &middot;
+      <a href="http://www.runoob.com/python3/python-func-object.html" title="Python object() 函数">Python object()...</a>
+      </dd>
+              <dd>
+       &middot;
+      <a href="http://www.runoob.com/python3/python-ai-draw.html" title="Python AI 绘画">Python AI 绘画</a>
+      </dd>
+              <dd>
+       &middot;
+      <a href="http://www.runoob.com/w3cnote/cursor-editor.html" title="神辅助 Cursor 编辑器，加入 GPT-4 让编码更轻松！">神辅助 Cursor ...</a>
+      </dd>
+             </dl>
+     <dl>
+      <dt>
+       站点信息
+      </dt>
+      <dd>
+       &middot;
+       <a target="_blank" href="mailto:admin@runoob.com" rel="external nofollow">意见反馈</a>
+       </dd>
+      <dd>
+       &middot;
+      <a target="_blank" href="/disclaimer">免责声明</a>
+       </dd>
+      <dd>
+       &middot;
+       <a target="_blank" href="/aboutus">关于我们</a>
+       </dd>
+      <dd>
+       &middot;
+      <a target="_blank" href="/archives">文章归档</a>
+      </dd>
+    
+     </dl>
+    
+     <div class="search-share">
+      <div class="app-download">
+        <div>
+         <strong>关注微信</strong>
+        </div>
+      </div>
+      <div class="share">
+      <img width="128" height="128" src="/wp-content/themes/runoob/assets/images/qrcode.png" />
+       </div>
+     </div>
+     
+    </div>
+   </div>
+   <div class="w-1000 copyright">
+     Copyright &copy; 2013-2023    <strong><a href="//www.runoob.com/" target="_blank">菜鸟教程</a></strong>&nbsp;
+    <strong><a href="//www.runoob.com/" target="_blank">runoob.com</a></strong> All Rights Reserved. 备案号：<a target="_blank" rel="nofollow" href="https://beian.miit.gov.cn/">闽ICP备15012807号-1</a>
+   </div>
+  </div>
+  <div class="fixed-btn">
+    <a class="go-top" href="javascript:void(0)" title="返回顶部"> <i class="fa fa-angle-up"></i></a>
+    <a class="qrcode"  href="javascript:void(0)" title="关注我们"><i class="fa fa-qrcode"></i></a>
+    <a class="writer" style="display:none" href="javascript:void(0)"   title="标记/收藏"><i class="fa fa-star" aria-hidden="true"></i></a>
+    <!-- qrcode modal -->
+    <div id="bottom-qrcode" class="modal panel-modal hide fade in">
+      <h4>微信关注</h4>
+      <div class="panel-body"><img alt="微信关注" width="128" height="128" src="/wp-content/themes/runoob/assets/images/qrcode.png"></div> 
+    </div>
+  </div>
+
+ <div style="display:none;">
+<script async src="https://www.googletagmanager.com/gtag/js?id=UA-84264393-2"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+
+  gtag('config', 'UA-84264393-2');
+</script>
+<script>
+var _hmt = _hmt || [];
+(function() {
+  var hm = document.createElement("script");
+  hm.src = "https://hm.baidu.com/hm.js?3eec0b7da6548cf07db3bc477ea905ee";
+  var s = document.getElementsByTagName("script")[0]; 
+  s.parentNode.insertBefore(hm, s);
+})();
+</script>
+
+</div>
+<script>
+window.jsui={
+    www: 'https://www.runoob.com',
+    uri: 'https://www.runoob.com/wp-content/themes/runoob'
+};
+</script>
+
+<script src="https://static.runoob.com/assets/libs/hl/run_prettify.js"></script>
+<script src="/wp-content/themes/runoob/assets/js/main.min.js?v=1.156"></script>
+
+</body>
+</html>

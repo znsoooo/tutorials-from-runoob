@@ -1,0 +1,197 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><title>44.1. PL/Perl 函数和参数</title><link rel="stylesheet" type="text/css" href="stylesheet.css" /><link rev="made" href="pgsql-docs@postgresql.org" /><meta name="generator" content="DocBook XSL Stylesheets V1.79.1" /><link rel="prev" href="plperl.html" title="第 44 章 PL/Perl - Perl 过程语言" /><link rel="next" href="plperl-data.html" title="44.2. PL/Perl 中的数据值" /></head><body><div xmlns="http://www.w3.org/TR/xhtml1/transitional" class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="5" align="center">44.1. PL/Perl 函数和参数</th></tr><tr><td width="10%" align="left"><a accesskey="p" href="plperl.html" title="第 44 章 PL/Perl - Perl 过程语言">上一页</a> </td><td width="10%" align="left"><a accesskey="u" href="plperl.html" title="第 44 章 PL/Perl - Perl 过程语言">上一级</a></td><th width="60%" align="center">第 44 章 PL/Perl - Perl 过程语言</th><td width="10%" align="right"><a accesskey="h" href="index.html" title="PostgreSQL 10.1 手册">起始页</a></td><td width="10%" align="right"> <a accesskey="n" href="plperl-data.html" title="44.2. PL/Perl 中的数据值">下一页</a></td></tr></table><hr></hr></div><div class="sect1" id="PLPERL-FUNCS"><div class="titlepage"><div><div><h2 class="title" style="clear: both">44.1. PL/Perl 函数和参数</h2></div></div></div><p>   要用 PL/Perl 语言创建一个函数，可使用标准的
+   <a class="xref" href="sql-createfunction.html" title="CREATE FUNCTION"><span class="refentrytitle">CREATE FUNCTION</span></a>语法：
+
+</p><pre class="programlisting">CREATE FUNCTION <em class="replaceable"><code>funcname</code></em> (<em class="replaceable"><code>argument-types</code></em>) RETURNS <em class="replaceable"><code>return-type</code></em> AS $$
+    # PL/Perl 函数体
+$$ LANGUAGE plperl;</pre><p>
+
+   函数的主体就是普通的 Perl 代码。事实上，PL/Perl 的粘合代码会把它
+   包裹在一个 Perl 子程序中。一个 PL/Perl 函数会在一种标量上下文中
+   被调用，因此它无法返回列表。如下文所述，可以通过返回引用来返回
+   非标量值（数组、记录和集合）。
+  </p><p>   PL/Perl 也支持用<a class="xref" href="sql-do.html" title="DO"><span class="refentrytitle">DO</span></a>语句调用的匿名代码块：
+
+</p><pre class="programlisting">DO $$
+    # PL/Perl 代码
+$$ LANGUAGE plperl;</pre><p>
+
+   一个匿名代码块没有参数，并且它返回的任何值都会被抛弃。否则
+   其行为就像一个函数。
+  </p><div class="note"><h3 class="title">注意</h3><p>    在 Perl 中使用命名嵌套子程序是有危险的，特别是当它们在作用域内
+    引用局部变量时。因为 PL/Perl 函数被包装成一个子程序，任何放在
+    其中的命名子程序都会被嵌套。总之，创建通过 coderef 调用的匿名
+    子程序要安全得多。更多信息可见
+    <span class="citerefentry"><span class="refentrytitle">perldiag</span></span>手册页
+    中的<code class="literal">Variable "%s" will not stay shared</code>以及
+    <code class="literal">Variable "%s" is not available</code>，或者在互联网上
+    搜索<span class="quote">“<span class="quote">perl nested named subroutine</span>”</span>。
+   </p></div><p>   The syntax of the 
+   <code class="command">CREATE FUNCTION</code>命令的语法要求函数
+   体被写作一个字符串常量。通常对字符串常量使用美元引用（见
+   <a class="xref" href="sql-syntax-lexical.html#SQL-SYNTAX-DOLLAR-QUOTING" title="4.1.2.4. 美元引用的字符串常量">第 4.1.2.4 节</a>）最方便。如果选择使用
+   转义字符串语法<code class="literal">E''</code>，必须双写任何在函数体中使用的单引号
+   （<code class="literal">'</code>）和反斜线（<code class="literal">\</code>）（见
+   <a class="xref" href="sql-syntax-lexical.html#SQL-SYNTAX-STRINGS" title="4.1.2.1. 字符串常量">第 4.1.2.1 节</a>）。
+  </p><p>   参数和结果的处理和在任何其他 Perl 子程序中一样：参数被传递到
+   <code class="varname">@_</code>中，并且结果值用<code class="literal">return</code>
+   返回或者把函数中计算的最后一个表达式作为结果值。
+  </p><p>   例如，一个返回两个整数值中较大值的函数可以定义为：
+
+</p><pre class="programlisting">CREATE FUNCTION perl_max (integer, integer) RETURNS integer AS $$
+    if ($_[0] &gt; $_[1]) { return $_[0]; }
+    return $_[1];
+$$ LANGUAGE plperl;</pre><p>
+  </p><div class="note"><h3 class="title">注意</h3><p>      参数将被从数据库的编码转换到 PL/Perl 中使用的 UTF-8，返回时再从
+      UTF-8 转回到数据库编码。
+    </p></div><p>   如果一个 SQL 空值<a id="idp37697776" class="indexterm"></a>被传给一个函数，在
+   Perl 中该参数值将呈现为<span class="quote">“<span class="quote">undefined</span>”</span>。上述函数定义对于
+   空输入的行为不太好（实际上，它会把它们当作零）。我们可以为函数
+   定义增加<code class="literal">STRICT</code>让<span class="productname">PostgreSQL</span>
+   干得更合理：如果空值被传入，函数将根本不会被调用，而只是自动
+   返回一个空结果。另外一种方式，我们可以在函数体中检查未定义的
+   输入。例如，假设我们想让带有一个空参数或者一个非空参数的
+   <code class="function">perl_max</code>返回非空参数而不是空值：
+
+</p><pre class="programlisting">CREATE FUNCTION perl_max (integer, integer) RETURNS integer AS $$
+    my ($x, $y) = @_;
+    if (not defined $x) {
+        return undef if not defined $y;
+        return $y;
+    }
+    return $x if not defined $y;
+    return $x if $x &gt; $y;
+    return $y;
+$$ LANGUAGE plperl;</pre><p>
+   如上所述，要从一个 PL/Perl 函数返回一个 SQL 空值，就返回一个未定义值。
+   不管函数是严格的还是非严格的都可以这样做。
+  </p><p>   一个非引用的函数参数中的任何东西都是一个串，是相关数据类型的标准
+   <span class="productname">PostgreSQL</span>外部文本表达。在普通
+   数字或文本类型的情况下，Perl 将会做正确的事情并且程序员通常不需要
+   操心。不过，在其他情况下将需要被转换成在 Perl 中更可用的形式。例如，
+   <code class="function">decode_bytea</code>函数可以被用来把类型
+   <code class="type">bytea</code>的参数转换成未转义的二进制形式。
+  </p><p>   类似地，回传给<span class="productname">PostgreSQL</span>的值必须
+   是外部文本表达格式。例如，<code class="function">encode_bytea</code>
+   函数可以被用来转义二进制数据得到类型<code class="type">bytea</code>的返回值。
+  </p><p>   Perl 可以把<span class="productname">PostgreSQL</span>数组返回为对
+   Perl 数组的引用。这里有一个例子：
+
+</p><pre class="programlisting">CREATE OR REPLACE function returns_array()
+RETURNS text[][] AS $$
+    return [['a"b','c,d'],['e\\f','g']];
+$$ LANGUAGE plperl;
+
+select returns_array();</pre><p>
+  </p><p>   Perl 把<span class="productname">PostgreSQL</span>数组作为被 bless 过的
+   <code class="type">PostgreSQL::InServer::ARRAY</code>对象传递。这个对象可以被当作
+   一个数组引用或者一个串，允许为了向后兼容性与为 9.1 以下版本的
+   <span class="productname">PostgreSQL</span>编写的 Perl 代码一起运行。
+   例如：
+
+</p><pre class="programlisting">CREATE OR REPLACE FUNCTION concat_array_elements(text[]) RETURNS TEXT AS $$
+    my $arg = shift;
+    my $result = "";
+    return undef if (!defined $arg);
+
+    # as an array reference
+    for (@$arg) {
+        $result .= $_;
+    }
+
+    # also works as a string
+    $result .= $arg;
+
+    return $result;
+$$ LANGUAGE plperl;
+
+SELECT concat_array_elements(ARRAY['PL','/','Perl']);</pre><p>
+
+  </p><div class="note"><h3 class="title">注意</h3><p>    多维数组被以一种对每一个 Perl 程序员都公认的方法表示为对较低维引用数组
+    的引用。
+   </p></div><p>
+  </p><p>   组合类型参数被作为哈希的引用传递给函数。哈希的键是组合类型的
+   属性名。这里是一个例子：
+
+</p><pre class="programlisting">CREATE TABLE employee (
+    name text,
+    basesalary integer,
+    bonus integer
+);
+
+CREATE FUNCTION empcomp(employee) RETURNS integer AS $$
+    my ($emp) = @_;
+    return $emp-&gt;{basesalary} + $emp-&gt;{bonus};
+$$ LANGUAGE plperl;
+
+SELECT name, empcomp(employee.*) FROM employee;</pre><p>
+  </p><p>   PL/Perl 函数可以使用相同的方法返回组合类型：返回具有所要求属性的
+   哈希的引用。例如：
+
+</p><pre class="programlisting">CREATE TYPE testrowperl AS (f1 integer, f2 text, f3 text);
+
+CREATE OR REPLACE FUNCTION perl_row() RETURNS testrowperl AS $$
+    return {f2 =&gt; 'hello', f1 =&gt; 1, f3 =&gt; 'world'};
+$$ LANGUAGE plperl;
+
+SELECT * FROM perl_row();</pre><p>
+
+   任何所要求结果数据类型中不存在于哈希中的列将被返回为空值。
+  </p><p>    PL/Perl 函数也能返回标量或者组合类型集合。为了加速启动并且避免在
+    内存中让整个结果集排队等候，我们通常希望能一次返回一行。可以按
+    下文所说的用<code class="function">return_next</code>来这样做。注意在
+    最后一次<code class="function">return_next</code>后，必须放上
+    <code class="literal">return</code>或者<code class="literal">return
+    undef</code>（后者更好）。
+
+</p><pre class="programlisting">CREATE OR REPLACE FUNCTION perl_set_int(int)
+RETURNS SETOF INTEGER AS $$
+    foreach (0..$_[0]) {
+        return_next($_);
+    }
+    return undef;
+$$ LANGUAGE plperl;
+
+SELECT * FROM perl_set_int(5);
+
+CREATE OR REPLACE FUNCTION perl_set()
+RETURNS SETOF testrowperl AS $$
+    return_next({ f1 =&gt; 1, f2 =&gt; 'Hello', f3 =&gt; 'World' });
+    return_next({ f1 =&gt; 2, f2 =&gt; 'Hello', f3 =&gt; 'PostgreSQL' });
+    return_next({ f1 =&gt; 3, f2 =&gt; 'Hello', f3 =&gt; 'PL/Perl' });
+    return undef;
+$$ LANGUAGE plperl;</pre><p>
+
+    对于小结果集，可以返回到一个数组的引用，该数组分别包含用于
+    简单类型、数组类型和组合类型的标量、数组引用或者哈希引用。
+    这里有一些简单的例子把整个结果集作为数组引用返回：
+
+</p><pre class="programlisting">CREATE OR REPLACE FUNCTION perl_set_int(int) RETURNS SETOF INTEGER AS $$
+    return [0..$_[0]];
+$$ LANGUAGE plperl;
+
+SELECT * FROM perl_set_int(5);
+
+CREATE OR REPLACE FUNCTION perl_set() RETURNS SETOF testrowperl AS $$
+    return [
+        { f1 =&gt; 1, f2 =&gt; 'Hello', f3 =&gt; 'World' },
+        { f1 =&gt; 2, f2 =&gt; 'Hello', f3 =&gt; 'PostgreSQL' },
+        { f1 =&gt; 3, f2 =&gt; 'Hello', f3 =&gt; 'PL/Perl' }
+    ];
+$$ LANGUAGE plperl;
+
+SELECT * FROM perl_set();</pre><p>
+  </p><p>   如果你想要对你的代码使用<code class="literal">strict</code>编译指示，有几种选项可用。
+   对于临时的全局使用，你可以<code class="command">SET</code>
+   <code class="literal">plperl.use_strict</code>为真。这将影响后续
+   <span class="application">PL/Perl</span>函数的编译，但是对当前会话中已经编译过的
+   函数没有影响。对于持久的全局使用，可以在
+   <code class="filename">postgresql.conf</code>文件中设置
+   <code class="literal">plperl.use_strict</code>为真。
+  </p><p>   对于在特定函数中的持久使用，可以简单地把
+</p><pre class="programlisting">use strict;</pre><p>
+   放在函数体的顶层。
+  </p><p>  如果 Perl 版本是 5.10.0 或者更高，也可以<code class="function">使用</code>
+  <code class="literal">feature</code>编译指示。
+  </p></div><div class="navfooter"><hr /><table width="100%" summary="Navigation footer"><tr><td width="40%" align="left"><a accesskey="p" href="plperl.html">上一页</a> </td><td width="20%" align="center"><a accesskey="u" href="plperl.html">上一级</a></td><td width="40%" align="right"> <a accesskey="n" href="plperl-data.html">下一页</a></td></tr><tr><td width="40%" align="left" valign="top">第 44 章 PL/Perl - Perl 过程语言 </td><td width="20%" align="center"><a accesskey="h" href="index.html">起始页</a></td><td width="40%" align="right" valign="top"> 44.2. PL/Perl 中的数据值</td></tr></table></div></body></html>

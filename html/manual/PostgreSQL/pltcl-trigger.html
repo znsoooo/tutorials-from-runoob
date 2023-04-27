@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><title>43.6. PL/Tcl 中的触发器过程</title><link rel="stylesheet" type="text/css" href="stylesheet.css" /><link rev="made" href="pgsql-docs@postgresql.org" /><meta name="generator" content="DocBook XSL Stylesheets V1.79.1" /><link rel="prev" href="pltcl-dbaccess.html" title="43.5. 从 PL/Tcl 访问数据库" /><link rel="next" href="pltcl-event-trigger.html" title="43.7. PL/Tcl 中的事件触发器过程" /></head><body><div xmlns="http://www.w3.org/TR/xhtml1/transitional" class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="5" align="center">43.6. PL/Tcl 中的触发器过程</th></tr><tr><td width="10%" align="left"><a accesskey="p" href="pltcl-dbaccess.html" title="43.5. 从 PL/Tcl 访问数据库">上一页</a> </td><td width="10%" align="left"><a accesskey="u" href="pltcl.html" title="第 43 章 PL/Tcl - Tcl 过程语言">上一级</a></td><th width="60%" align="center">第 43 章 PL/Tcl - Tcl 过程语言</th><td width="10%" align="right"><a accesskey="h" href="index.html" title="PostgreSQL 10.1 手册">起始页</a></td><td width="10%" align="right"> <a accesskey="n" href="pltcl-event-trigger.html" title="43.7. PL/Tcl 中的事件触发器过程">下一页</a></td></tr></table><hr></hr></div><div class="sect1" id="PLTCL-TRIGGER"><div class="titlepage"><div><div><h2 class="title" style="clear: both">43.6. PL/Tcl 中的触发器过程</h2></div></div></div><a id="idp37556368" class="indexterm"></a><p>     触发器过程也可以用 PL/Tcl 编写。<span class="productname">PostgreSQL</span>要求能作为触发器被调用的过程必须被声明为一个没有参数并且返回类型为<code class="literal">trigger</code>的函数。
+    </p><p>     来自于触发器管理器的信息通过下列变量被传递给过程体：
+
+     </p><div class="variablelist"><dl class="variablelist"><dt><span class="term"><code class="varname">$TG_name</code></span></dt><dd><p>         <code class="command">CREATE TRIGGER</code>语句中触发器的名字。
+        </p></dd><dt><span class="term"><code class="varname">$TG_relid</code></span></dt><dd><p>         导致触发器过程被调用的表的对象 ID。
+        </p></dd><dt><span class="term"><code class="varname">$TG_table_name</code></span></dt><dd><p>         导致触发器过程被调用的表的名字。
+        </p></dd><dt><span class="term"><code class="varname">$TG_table_schema</code></span></dt><dd><p>         导致触发器过程被调用的表所在的模式。
+        </p></dd><dt><span class="term"><code class="varname">$TG_relatts</code></span></dt><dd><p>         表列名的 Tcl 列表，前面放上一个空列表元素。因此用<span class="application">Tcl</span>的<code class="function">lsearch</code>命令在该列表中查找一个列名返回的元素编号会从 1 开始（对于第一列），这和<span class="productname">PostgreSQL</span>中的自定义编号是同样的方式（空列表元数也出现在被删除的列的位置上，这样其右边的列的属性编号才是正确的）。
+        </p></dd><dt><span class="term"><code class="varname">$TG_when</code></span></dt><dd><p>         可以为<code class="literal">BEFORE</code>、<code class="literal">AFTER</code>或者<code class="literal">INSTEAD OF</code>，具体的选择取决于触发器事件的类型。
+        </p></dd><dt><span class="term"><code class="varname">$TG_level</code></span></dt><dd><p>         可以为<code class="literal">ROW</code>或者<code class="literal">STATEMENT</code>，取决于触发器事件的类型。
+        </p></dd><dt><span class="term"><code class="varname">$TG_op</code></span></dt><dd><p>         可以为<code class="literal">INSERT</code>、<code class="literal">UPDATE</code>、<code class="literal">DELETE</code>或者<code class="literal">TRUNCATE</code>，取决于触发器事件的类型。
+        </p></dd><dt><span class="term"><code class="varname">$NEW</code></span></dt><dd><p>         对于<code class="command">INSERT</code>或者<code class="command">UPDATE</code>动作是一个包含着新表行值的关联数组，对于<code class="command">DELETE</code>为空。该数组以列名为索引。为空的列不会出现在数组中。对于语句级触发器这个变量不会被设置。
+        </p></dd><dt><span class="term"><code class="varname">$OLD</code></span></dt><dd><p>         对于<code class="command">UPDATE</code>或者<code class="command">DELETE</code>动作是一个包含着新表行值的关联数组，对于<code class="command">INSERT</code>为空。该数组以列名为索引。为空的列不会出现在数组中。对于语句级触发器这个变量不会被设置。
+        </p></dd><dt><span class="term"><code class="varname">$args</code></span></dt><dd><p>         在<code class="command">CREATE TRIGGER</code>语句中对过程给出的参数的 Tcl 列表。在过程体中也可以用<code class="literal">$1</code> ... <code class="literal">$<em class="replaceable"><code>n</code></em></code>来访问这些参数。
+        </p></dd></dl></div><p>
+    </p><p>     触发器过程的返回值可以是<code class="literal">OK</code>或者<code class="literal">SKIP</code>，
+	 还可以是一个列名/值对的列表。如果返回值是<code class="literal">OK</code>，引发触发器的操作
+	 （<code class="command">INSERT</code>/<code class="command">UPDATE</code>/<code class="command">DELETE</code>）将正常继续。
+	 <code class="literal">SKIP</code>告诉触发器管理器禁止对这一行的操作。如果返回的是列表，
+	 它告诉 PL/Tcl 返回一个被修改行给触发器管理器；
+	 修改后的行的内容由列表中的列名和值指定。列表中未提及的任何列都设置为空。
+	 返回修改后的行仅对行级的<code class="literal">BEFORE</code> <code class="command">INSERT</code>或者
+	 <code class="command">UPDATE</code>触发器有意义，对这些触发器将插入被修改行而不是插入
+	 <code class="varname">$NEW</code>中给定的行；或者对于行级<code class="literal">INSTEAD OF</code> <code class="command">INSERT</code>
+	 或者<code class="command">UPDATE</code>触发器也有意义，在其中返回的行被用作
+	 <code class="command">INSERT RETURNING</code>以及<code class="command">UPDATE RETURNING</code>子句的源数据。
+	 在行级<code class="literal">BEFORE</code> <code class="command">DELETE</code>或<code class="literal">INSTEAD
+     OF</code> <code class="command">DELETE</code>触发器中，返回修改后的行和返回<code class="literal">OK</code>有相同的影响，
+	 即操作继续。所有其他类型的触发器都忽略触发器返回值。
+    </p><div class="tip"><h3 class="title">提示</h3><p>      结果列表可以使用<code class="literal">array get</code> Tcl命令从修改过的元组的数组表示中获得。
+     </p></div><p>     这里有一个触发器过程的例子，它用一个表中的整数值来跟踪在行上被执行的更新数。对于被插入的新行，该值被初始化为 0 并且之后在每一次更新操作时被加一。
+
+</p><pre class="programlisting">CREATE FUNCTION trigfunc_modcount() RETURNS trigger AS $$
+    switch $TG_op {
+        INSERT {
+            set NEW($1) 0
+        }
+        UPDATE {
+            set NEW($1) $OLD($1)
+            incr NEW($1)
+        }
+        default {
+            return OK
+        }
+    }
+    return [array get NEW]
+$$ LANGUAGE pltcl;
+
+CREATE TABLE mytab (num integer, description text, modcnt integer);
+
+CREATE TRIGGER trig_mytab_modcount BEFORE INSERT OR UPDATE ON mytab
+    FOR EACH ROW EXECUTE PROCEDURE trigfunc_modcount('modcnt');</pre><p>
+
+     注意触发器过程本身不知道列名，列名由触发器参数提供。这让触发器过程可以被重用于不同的表。
+    </p></div><div class="navfooter"><hr /><table width="100%" summary="Navigation footer"><tr><td width="40%" align="left"><a accesskey="p" href="pltcl-dbaccess.html">上一页</a> </td><td width="20%" align="center"><a accesskey="u" href="pltcl.html">上一级</a></td><td width="40%" align="right"> <a accesskey="n" href="pltcl-event-trigger.html">下一页</a></td></tr><tr><td width="40%" align="left" valign="top">43.5. 从 PL/Tcl 访问数据库 </td><td width="20%" align="center"><a accesskey="h" href="index.html">起始页</a></td><td width="40%" align="right" valign="top"> 43.7. PL/Tcl 中的事件触发器过程</td></tr></table></div></body></html>

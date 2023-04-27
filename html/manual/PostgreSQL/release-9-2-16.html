@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><title>E.66. 版本 9.2.16</title><link rel="stylesheet" type="text/css" href="stylesheet.css" /><link rev="made" href="pgsql-docs@postgresql.org" /><meta name="generator" content="DocBook XSL Stylesheets V1.79.1" /><link rel="prev" href="release-9-2-17.html" title="E.65. 版本 9.2.17" /><link rel="next" href="release-9-2-15.html" title="E.67. 版本 9.2.15" /></head><body><div xmlns="http://www.w3.org/TR/xhtml1/transitional" class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="5" align="center">E.66. 版本 9.2.16</th></tr><tr><td width="10%" align="left"><a accesskey="p" href="release-9-2-17.html" title="E.65. 版本 9.2.17">上一页</a> </td><td width="10%" align="left"><a accesskey="u" href="release.html" title="附录 E. 版本说明">上一级</a></td><th width="60%" align="center">附录 E. 版本说明</th><td width="10%" align="right"><a accesskey="h" href="index.html" title="PostgreSQL 10.1 手册">起始页</a></td><td width="10%" align="right"> <a accesskey="n" href="release-9-2-15.html" title="E.67. 版本 9.2.15">下一页</a></td></tr></table><hr></hr></div><div class="sect1" id="RELEASE-9-2-16"><div class="titlepage"><div><div><h2 class="title" style="clear: both">E.66. 版本 9.2.16</h2></div></div></div><div class="toc"><dl class="toc"><dt><span class="sect2"><a href="release-9-2-16.html#idp70581952">E.66.1. 迁移到版本9.2.16</a></span></dt><dt><span class="sect2"><a href="release-9-2-16.html#idp70583872">E.66.2. 修改列表</a></span></dt></dl></div><p><strong>发布日期: </strong>2016-03-31</p><p>   这个版本包含各种自9.2.15以来的修复。关于9.2主版本的新特性信息，
+   请查看<a class="xref" href="release-9-2.html" title="E.82. 版本9.2">第 E.82 节</a>。
+  </p><div class="sect2" id="idp70581952"><div class="titlepage"><div><div><h3 class="title">E.66.1. 迁移到版本9.2.16</h3></div></div></div><p>    对于运行9.2.X的用户，不需要转储/恢复。
+   </p><p>    不过，如果你是从一个早于9.2.11的版本升级而来，请查看<a class="xref" href="release-9-2-11.html" title="E.71. 版本 9.2.11">第 E.71 节</a>。
+   </p></div><div class="sect2" id="idp70583872"><div class="titlepage"><div><div><h3 class="title">E.66.2. 修改列表</h3></div></div></div><div class="itemizedlist"><ul class="itemizedlist" style="list-style-type: disc; "><li class="listitem"><p>      修复索引的<code class="literal">ROW()</code>比较中NULL索引项的不正确处理
+      (Tom Lane)
+     </p><p>      使用行比较的索引搜索比如<code class="literal">ROW(a, b) &gt;
+      ROW('x', 'y')</code>将在到达<code class="structfield">b</code>列中的NULL条目时停止，
+      忽略可能存在与<code class="structfield">a</code>的稍后值相关联的非NULL <code class="structfield">b</code>值的事实。
+     </p></li><li class="listitem"><p>      避免由于重命名文件之前或之后没有适当的
+      <code class="function">fsync()</code>调用，导致不太可能的数据丢失情况 (Michael Paquier,
+      Tomas Vondra, Andres Freund)
+     </p></li><li class="listitem"><p>      正确处理在服务器启动期间<code class="literal">pg_subtrans</code>接近XID wraparound的情况
+      (Jeff Janes)
+     </p></li><li class="listitem"><p>      修复由于多次尝试释放<code class="function">localeconv()</code>
+      输出字符串而导致的极端崩溃 (Tom Lane)
+     </p></li><li class="listitem"><p>      修复<code class="literal">ispell</code>字典的附加文件的解析
+      (Tom Lane)
+     </p><p>      如果附加文件包含字节长度在大小写折叠期间变化的字符，
+      例如土耳其语在UTF8区域设置中的<code class="literal">I</code>，则代码可能会出错。
+     </p></li><li class="listitem"><p>      避免使用<code class="function">sscanf()</code>解析<code class="literal">ispell</code>
+      字典文件 (Artur Zakirov)
+     </p><p>      这避免了FreeBSD派生平台上的可移植性问题(包括 macOS)。
+     </p></li><li class="listitem"><p>      避免在具有支持AVX2 CPU的旧版Windows版本（在7SP1/2008R2SP1之前）上崩溃，
+      并使用Visual Studio 2013完成Postgres构建
+      (Christian Ullrich)
+     </p><p>      这是Visual Studio 2013运行库中的一个错误的解决方法，
+      Microsoft已经声明他们不会在该版本中修复。
+     </p></li><li class="listitem"><p>      修复<span class="application">psql</span>的tab完成逻辑，以正确处理多字节字符
+      (Kyotaro Horiguchi, Robert Haas)
+     </p></li><li class="listitem"><p>      为<code class="literal">SECURITY LABEL</code>修复<span class="application">psql</span>的tab完成
+      (Tom Lane)
+     </p><p>      在<code class="literal">SECURITY LABEL</code>之后键入TAB可能会导致崩溃或提供不适当的关键字。
+     </p></li><li class="listitem"><p>      如果在命令行中没有指定，则让<span class="application">pg_ctl</span>从<code class="envar">PGCTLTIMEOUT</code>
+      环境变量中接受一个等待超时 (Noah Misch)
+     </p><p>      通过允许他们对postmaster启动和关闭全局指定一个长于正常的超时，
+      可以方便测试较慢的buildfarm成员。
+     </p></li><li class="listitem"><p>      修复<span class="application">pg_ctl</span>中Windows服务状态的不正确测试
+      (Manuel Mathar)
+     </p><p>      上一组小版本尝试修复<span class="application">pg_ctl</span>
+      以正确确定是否将日志消息发送到Windows事件日志，但是测试弄反了。
+     </p></li><li class="listitem"><p>      修复<span class="application">pgbench</span>以正确的处理<code class="literal">-C</code>
+      和<code class="literal">-M prepared</code>选项的组合 (Tom Lane)
+     </p></li><li class="listitem"><p>      在PL/Perl中，将空的Postgres数组正确的翻译为空的Perl数组
+      (Alex Hunsaker)
+     </p></li><li class="listitem"><p>      使PL/Python处理不是有效Python标识符的函数名称 (Jim Nasby)
+     </p></li><li class="listitem"><p>      修复<code class="filename">contrib/pgstattuple</code>的<code class="function">pgstatindex()</code>
+      函数返回的多个统计错误 (Tom Lane)
+     </p></li><li class="listitem"><p>      删除MSVC构建中对<code class="literal">psed</code>的依赖，因为核心Perl不再提供它了
+      (Michael Paquier, Andrew Dunstan)
+     </p></li><li class="listitem"><p>      更新时区数据文件为<span class="application">tzdata</span> release 2016c，
+      因为阿塞拜疆、智利、海地、巴勒斯坦和俄罗斯(Altai, Astrakhan,
+      Kirov, Sakhalin, Ulyanovsk 区域)的DST法律变更，加上立陶宛、
+      摩尔多瓦和俄罗斯(Kaliningrad, Samara, Volgograd)的历史更正。
+     </p></li></ul></div></div></div><div class="navfooter"><hr /><table width="100%" summary="Navigation footer"><tr><td width="40%" align="left"><a accesskey="p" href="release-9-2-17.html">上一页</a> </td><td width="20%" align="center"><a accesskey="u" href="release.html">上一级</a></td><td width="40%" align="right"> <a accesskey="n" href="release-9-2-15.html">下一页</a></td></tr><tr><td width="40%" align="left" valign="top">E.65. 版本 9.2.17 </td><td width="20%" align="center"><a accesskey="h" href="index.html">起始页</a></td><td width="40%" align="right" valign="top"> E.67. 版本 9.2.15</td></tr></table></div></body></html>

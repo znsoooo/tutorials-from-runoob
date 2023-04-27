@@ -1,0 +1,100 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><title>F.5. bloom</title><link rel="stylesheet" type="text/css" href="stylesheet.css" /><link rev="made" href="pgsql-docs@postgresql.org" /><meta name="generator" content="DocBook XSL Stylesheets V1.79.1" /><link rel="prev" href="auto-explain.html" title="F.4. auto_explain" /><link rel="next" href="btree-gin.html" title="F.6. btree_gin" /></head><body><div xmlns="http://www.w3.org/TR/xhtml1/transitional" class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="5" align="center">F.5. bloom</th></tr><tr><td width="10%" align="left"><a accesskey="p" href="auto-explain.html" title="F.4. auto_explain">上一页</a> </td><td width="10%" align="left"><a accesskey="u" href="contrib.html" title="附录 F. 额外提供的模块">上一级</a></td><th width="60%" align="center">附录 F. 额外提供的模块</th><td width="10%" align="right"><a accesskey="h" href="index.html" title="PostgreSQL 10.1 手册">起始页</a></td><td width="10%" align="right"> <a accesskey="n" href="btree-gin.html" title="F.6. btree_gin">下一页</a></td></tr></table><hr></hr></div><div class="sect1" id="BLOOM"><div class="titlepage"><div><div><h2 class="title" style="clear: both">F.5. bloom</h2></div></div></div><div class="toc"><dl class="toc"><dt><span class="sect2"><a href="bloom.html#idp84960752">F.5.1. 参数</a></span></dt><dt><span class="sect2"><a href="bloom.html#idp84968800">F.5.2. 例子</a></span></dt><dt><span class="sect2"><a href="bloom.html#idp84985616">F.5.3. 操作符类接口</a></span></dt><dt><span class="sect2"><a href="bloom.html#idp84987792">F.5.4. 限制</a></span></dt><dt><span class="sect2"><a href="bloom.html#idp84991312">F.5.5. 作者</a></span></dt></dl></div><a id="idp84955392" class="indexterm"></a><p>  <code class="literal">bloom</code>提供了一种基于<a class="ulink" href="http://en.wikipedia.org/wiki/Bloom_filter" target="_top">布鲁姆过滤器</a>的索引访问方法。
+ </p><p>  布鲁姆过滤器是一种空间高效的数据结构，它被用来测试一个元素是否为一个集合的成员。在索引访问方法的情况下，它可以通过尺寸在索引创建时决定的签名来快速地排除不匹配的元组。
+ </p><p>  签名是被索引属性的一种有损表达，并且因此容易报告伪肯定，也就是说对于一个不在集合中的元素有可能报告该元素在集合中。因此索引搜索结果必须使用来自堆项的实际属性值进行再次检查。较大的签名可以降低伪肯定的几率并且减少无用的堆访问的次数，但是这显然会让索引更大且扫描起来更慢。
+ </p><p>  当表具有很多属性并且查询可能会测试其中任意组合时，这种类型的索引最有用。传统的 btree 索引比布鲁姆索引更快，但是需要很多 btree 索引来支持所有可能的查询，而对于布鲁姆索引来说只需要一个即可。不过要注意 bloom 索引只支持等值查询，而 btree 索引还能执行不等和范围搜索。
+ </p><div class="sect2" id="idp84960752"><div class="titlepage"><div><div><h3 class="title">F.5.1. 参数</h3></div></div></div><p>   <code class="literal">bloom</code>索引在其<code class="literal">WITH</code>子句中接受下列参数：
+  </p><div class="variablelist"><dl class="variablelist"><dt><span class="term"><code class="literal">length</code></span></dt><dd><p>      每个签名（索引项）的长度位数。默认是<code class="literal">80</code>位，最长是<code class="literal">4096</code>位。
+     </p></dd></dl></div><div class="variablelist"><dl class="variablelist"><dt><span class="term"><code class="literal">col1 — col32</code></span></dt><dd><p>      从每一个索引列产生的位数。每个参数的名字表示它所控制的索引列的编号。默认是<code class="literal">2</code>位，最大是<code class="literal">4095</code>位。没有实际使用的索引列的参数会被忽略。
+     </p></dd></dl></div></div><div class="sect2" id="idp84968800"><div class="titlepage"><div><div><h3 class="title">F.5.2. 例子</h3></div></div></div><p>   这是一个创建布鲁姆索引的例子：
+  </p><pre class="programlisting">CREATE INDEX bloomidx ON tbloom USING bloom (i1,i2,i3)
+       WITH (length=80, col1=2, col2=2, col3=4);</pre><p>   该索引是用长度为 80 位的签名所创建，其中属性 i1 和 i2 被映射为 2 位，属性 i3 被映射为 4 位。我们可以省略<code class="literal">length</code>、<code class="literal">col1</code>和<code class="literal">col2</code>说明，因为它们都有默认值。
+  </p><p>   这里是布鲁姆索引定义和使用的更完整的例子，其中还与等效的 btree 做了对比。布鲁姆索引比 btree 索引更小，并且效率更高。
+  </p><pre class="programlisting">=# CREATE TABLE tbloom AS
+   SELECT
+     (random() * 1000000)::int as i1,
+     (random() * 1000000)::int as i2,
+     (random() * 1000000)::int as i3,
+     (random() * 1000000)::int as i4,
+     (random() * 1000000)::int as i5,
+     (random() * 1000000)::int as i6
+   FROM
+  generate_series(1,10000000);
+SELECT 10000000
+=# CREATE INDEX bloomidx ON tbloom USING bloom (i1, i2, i3, i4, i5, i6);
+CREATE INDEX
+=# SELECT pg_size_pretty(pg_relation_size('bloomidx'));
+ pg_size_pretty
+----------------
+ 153 MB
+(1 row)
+=# CREATE index btreeidx ON tbloom (i1, i2, i3, i4, i5, i6);
+CREATE INDEX
+=# SELECT pg_size_pretty(pg_relation_size('btreeidx'));
+ pg_size_pretty
+----------------
+ 387 MB
+(1 row)</pre><p>   在这个大表上的顺序扫描需要很长时间：
+</p><pre class="programlisting">=# EXPLAIN ANALYZE SELECT * FROM tbloom WHERE i2 = 898732 AND i5 = 123451;
+                                                 QUERY PLAN
+------------------------------------------------------------------------------------------------------------
+ Seq Scan on tbloom  (cost=0.00..213694.08 rows=1 width=24) (actual time=1445.438..1445.438 rows=0 loops=1)
+   Filter: ((i2 = 898732) AND (i5 = 123451))
+   Rows Removed by Filter: 10000000
+ Planning time: 0.177 ms
+ Execution time: 1445.473 ms
+(5 rows)</pre><p>
+  </p><p>   因此规划器通常将尽可能选择索引扫描。使用 btree 索引，我们可以得到这样的结果：
+</p><pre class="programlisting">=# EXPLAIN ANALYZE SELECT * FROM tbloom WHERE i2 = 898732 AND i5 = 123451;
+                                                           QUERY PLAN
+--------------------------------------------------------------------------------------------------------------------------------
+ Index Only Scan using btreeidx on tbloom  (cost=0.56..298311.96 rows=1 width=24) (actual time=445.709..445.709 rows=0 loops=1)
+   Index Cond: ((i2 = 898732) AND (i5 = 123451))
+   Heap Fetches: 0
+ Planning time: 0.193 ms
+ Execution time: 445.770 ms
+(5 rows)</pre><p>
+  </p><p>   在处理这类搜索时，bloom 比 btree 表现得更好：
+</p><pre class="programlisting">=# EXPLAIN ANALYZE SELECT * FROM tbloom WHERE i2 = 898732 AND i5 = 123451;
+                                                        QUERY PLAN
+---------------------------------------------------------------------------------------------------------------------------
+ Bitmap Heap Scan on tbloom  (cost=178435.39..178439.41 rows=1 width=24) (actual time=76.698..76.698 rows=0 loops=1)
+   Recheck Cond: ((i2 = 898732) AND (i5 = 123451))
+   Rows Removed by Index Recheck: 2439
+   Heap Blocks: exact=2408
+   -&gt;  Bitmap Index Scan on bloomidx  (cost=0.00..178435.39 rows=1 width=0) (actual time=72.455..72.455 rows=2439 loops=1)
+         Index Cond: ((i2 = 898732) AND (i5 = 123451))
+ Planning time: 0.475 ms
+ Execution time: 76.778 ms
+(8 rows)</pre><p>
+   注意其中相对较大的伪肯定数：有 2439 行被选中进行堆访问但实际却不匹配查询。我们可以通过指定更大的签名长度来减少这种情况。在这个例子中，用<code class="literal">length=200</code>创建索引可以把伪肯定数减小到 55，但是这同时会使索引尺寸翻倍（306MB）并且最终使这个查询变慢（总体 125 ms）。
+  </p><p>   现在，btree 搜索的主要问题是，当搜索条件不约束前几个索引列时，btree 的效率不好。对于 btree 更好的策略是在每一列上创建一个独立的索引。那么规划器将选择这样的计划：
+</p><pre class="programlisting">=# EXPLAIN ANALYZE SELECT * FROM tbloom WHERE i2 = 898732 AND i5 = 123451;
+                                                          QUERY PLAN
+------------------------------------------------------------------------------------------------------------------------------
+ Bitmap Heap Scan on tbloom  (cost=9.29..13.30 rows=1 width=24) (actual time=0.148..0.148 rows=0 loops=1)
+   Recheck Cond: ((i5 = 123451) AND (i2 = 898732))
+   -&gt;  BitmapAnd  (cost=9.29..9.29 rows=1 width=0) (actual time=0.145..0.145 rows=0 loops=1)
+         -&gt;  Bitmap Index Scan on tbloom_i5_idx  (cost=0.00..4.52 rows=11 width=0) (actual time=0.089..0.089 rows=10 loops=1)
+               Index Cond: (i5 = 123451)
+         -&gt;  Bitmap Index Scan on tbloom_i2_idx  (cost=0.00..4.52 rows=11 width=0) (actual time=0.048..0.048 rows=8 loops=1)
+               Index Cond: (i2 = 898732)
+ Planning time: 2.049 ms
+ Execution time: 0.280 ms
+(9 rows)</pre><p>
+   尽管这个查询运行起来比在其中任一单个索引上都快，但是我们在索引尺寸上付出了很大的代价。每一个单列 btree 索引占用 214 MB，因此总的空间会超过 1.2GB，这是布鲁姆索引所使用的空间的 8 倍。
+  </p></div><div class="sect2" id="idp84985616"><div class="titlepage"><div><div><h3 class="title">F.5.3. 操作符类接口</h3></div></div></div><p>   用于布鲁姆索引的操作符类只要一个用于被索引数据类型的哈希函数以及一个用于搜索的等值操作符。这个例子展示了用于<code class="type">text</code>数据类型的操作符类定义：
+  </p><pre class="programlisting">CREATE OPERATOR CLASS text_ops
+DEFAULT FOR TYPE text USING bloom AS
+    OPERATOR    1   =(text, text),
+    FUNCTION    1   hashtext(text);</pre></div><div class="sect2" id="idp84987792"><div class="titlepage"><div><div><h3 class="title">F.5.4. 限制</h3></div></div></div><p>   </p><div class="itemizedlist"><ul class="itemizedlist" style="list-style-type: disc; "><li class="listitem"><p>      在模块中只包括了用于<code class="type">int4</code>以及<code class="type">text</code>的操作符类。
+     </p></li><li class="listitem"><p>      搜索只支持<code class="literal">=</code>操作符。但是未来可以为带合并和交集操作的数组增加支持。
+     </p></li></ul></div><p>
+  </p></div><div class="sect2" id="idp84991312"><div class="titlepage"><div><div><h3 class="title">F.5.5. 作者</h3></div></div></div><p>   Teodor Sigaev <code class="email">&lt;<a class="email" href="mailto:teodor@postgrespro.ru">teodor@postgrespro.ru</a>&gt;</code>,
+   Postgres Professional, Moscow, Russia
+  </p><p>   Alexander Korotkov <code class="email">&lt;<a class="email" href="mailto:a.korotkov@postgrespro.ru">a.korotkov@postgrespro.ru</a>&gt;</code>,
+   Postgres Professional, Moscow, Russia
+  </p><p>   Oleg Bartunov <code class="email">&lt;<a class="email" href="mailto:obartunov@postgrespro.ru">obartunov@postgrespro.ru</a>&gt;</code>,
+   Postgres Professional, Moscow, Russia
+  </p></div></div><div class="navfooter"><hr /><table width="100%" summary="Navigation footer"><tr><td width="40%" align="left"><a accesskey="p" href="auto-explain.html">上一页</a> </td><td width="20%" align="center"><a accesskey="u" href="contrib.html">上一级</a></td><td width="40%" align="right"> <a accesskey="n" href="btree-gin.html">下一页</a></td></tr><tr><td width="40%" align="left" valign="top">F.4. auto_explain </td><td width="20%" align="center"><a accesskey="h" href="index.html">起始页</a></td><td width="40%" align="right" valign="top"> F.6. btree_gin</td></tr></table></div></body></html>

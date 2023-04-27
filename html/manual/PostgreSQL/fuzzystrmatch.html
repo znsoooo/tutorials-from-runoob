@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><title>F.16. fuzzystrmatch</title><link rel="stylesheet" type="text/css" href="stylesheet.css" /><link rev="made" href="pgsql-docs@postgresql.org" /><meta name="generator" content="DocBook XSL Stylesheets V1.79.1" /><link rel="prev" href="file-fdw.html" title="F.15. file_fdw" /><link rel="next" href="hstore.html" title="F.17. hstore" /></head><body><div xmlns="http://www.w3.org/TR/xhtml1/transitional" class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="5" align="center">F.16. fuzzystrmatch</th></tr><tr><td width="10%" align="left"><a accesskey="p" href="file-fdw.html" title="F.15. file_fdw">上一页</a> </td><td width="10%" align="left"><a accesskey="u" href="contrib.html" title="附录 F. 额外提供的模块">上一级</a></td><th width="60%" align="center">附录 F. 额外提供的模块</th><td width="10%" align="right"><a accesskey="h" href="index.html" title="PostgreSQL 10.1 手册">起始页</a></td><td width="10%" align="right"> <a accesskey="n" href="hstore.html" title="F.17. hstore">下一页</a></td></tr></table><hr></hr></div><div class="sect1" id="FUZZYSTRMATCH"><div class="titlepage"><div><div><h2 class="title" style="clear: both">F.16. fuzzystrmatch</h2></div></div></div><div class="toc"><dl class="toc"><dt><span class="sect2"><a href="fuzzystrmatch.html#idp85747760">F.16.1. Soundex</a></span></dt><dt><span class="sect2"><a href="fuzzystrmatch.html#idp85756656">F.16.2. Levenshtein</a></span></dt><dt><span class="sect2"><a href="fuzzystrmatch.html#idp85768048">F.16.3. Metaphone</a></span></dt><dt><span class="sect2"><a href="fuzzystrmatch.html#idp85773536">F.16.4. 双 Metaphone</a></span></dt></dl></div><a id="idp85742336" class="indexterm"></a><p>  <code class="filename">fuzzystrmatch</code>模块提供多个函数来判断字符串之间的相似性和距离。
+ </p><div class="caution"><h3 class="title">小心</h3><p>   当前，<code class="function">soundex</code>、<code class="function">metaphone</code>、<code class="function">dmetaphone</code>和<code class="function">dmetaphone_alt</code>函数使用多字节编码（例如 UTF-8）下工作得不好。
+  </p></div><div class="sect2" id="idp85747760"><div class="titlepage"><div><div><h3 class="title">F.16.1. Soundex</h3></div></div></div><p>   语音表示法系统是一种将相似发音的名字转换成相同的代码来匹配它们的方法。这最初由美国国家统计局在 1880 年、1900 年和 1910 年使用。注意语音表示法对于非英语名称不是很有用。
+  </p><p>   <code class="filename">fuzzystrmatch</code>模块提供了两个函数用于语音表示法代码：
+  </p><a id="idp85749968" class="indexterm"></a><a id="idp85750656" class="indexterm"></a><pre class="synopsis">soundex(text) 返回 text
+difference(text, text) 返回 int</pre><p>   <code class="function">soundex</code>函数将一个字符串转换成它的语音表示法代码。<code class="function">difference</code>函数将两个字符串转换成它们的语音表示法代码并且接着报告能匹配代码位置的数量。由于语音表示法代码具有四个字符，结果可以从零到四，零表示没有匹配而四表示完全匹配（因此这个函数的命名并不适当 — <code class="function">similarity</code>才是更合适的名称）。
+  </p><p>   这里有一些例子：
+  </p><pre class="programlisting">SELECT soundex('hello world!');
+
+SELECT soundex('Anne'), soundex('Ann'), difference('Anne', 'Ann');
+SELECT soundex('Anne'), soundex('Andrew'), difference('Anne', 'Andrew');
+SELECT soundex('Anne'), soundex('Margaret'), difference('Anne', 'Margaret');
+
+CREATE TABLE s (nm text);
+
+INSERT INTO s VALUES ('john');
+INSERT INTO s VALUES ('joan');
+INSERT INTO s VALUES ('wobbly');
+INSERT INTO s VALUES ('jack');
+
+SELECT * FROM s WHERE soundex(nm) = soundex('john');
+
+SELECT * FROM s WHERE difference(s.nm, 'john') &gt; 2;</pre></div><div class="sect2" id="idp85756656"><div class="titlepage"><div><div><h3 class="title">F.16.2. Levenshtein</h3></div></div></div><p>   这个函数计算两个字符串之间的编辑距离。
+  </p><a id="idp85757472" class="indexterm"></a><a id="idp85758160" class="indexterm"></a><pre class="synopsis">levenshtein(text source, text target, int ins_cost, int del_cost, int sub_cost) 返回 int
+levenshtein(text source, text target) 返回 int
+levenshtein_less_equal(text source, text target, int ins_cost, int del_cost, int sub_cost, int max_d) 返回 int
+levenshtein_less_equal(text source, text target, int max_d) 返回 int</pre><p>   <code class="literal">source</code>以及<code class="literal">target</code>都可以是任何非空字符串，
+   最长为 255 个字符。代价参数分别指定一个字符插入、删除或替换的开销。
+   你可以像这个函数的第二种版本那样忽略代价参数，那样它们都会默认为 1。
+  </p><p>   <code class="function">levenshtein_less_equal</code>是 Levenshtein 函数的速度更快
+   的版本，它被用于只对小距离感兴趣的情况。如果实际距离小于等于<code class="literal">max_d</code>，
+   那么<code class="function">levenshtein_less_equal</code>返回正确的距离。否则它返回某个
+   大于<code class="literal">max_d</code>的值。如果<code class="literal">max_d</code>是负值，那么其行为等同于
+   <code class="function">levenshtein</code>。
+  </p><p>   例子：
+  </p><pre class="screen">test=# SELECT levenshtein('GUMBO', 'GAMBOL');
+ levenshtein
+-------------
+           2
+(1 row)
+
+test=# SELECT levenshtein('GUMBO', 'GAMBOL', 2,1,1);
+ levenshtein
+-------------
+           3
+(1 row)
+
+test=# SELECT levenshtein_less_equal('extensive', 'exhaustive',2);
+ levenshtein_less_equal
+------------------------
+                      3
+(1 row)
+
+test=# SELECT levenshtein_less_equal('extensive', 'exhaustive',4);
+ levenshtein_less_equal
+------------------------
+                      4
+(1 row)</pre></div><div class="sect2" id="idp85768048"><div class="titlepage"><div><div><h3 class="title">F.16.3. Metaphone</h3></div></div></div><p>   和 Soundex 相似，Metaphone 的思想是构建一个输入字符串的一种代码。如果两个字符串具有相同的代码则认为它们相似。
+  </p><p>   这个函数计算一个输入字符串的变音位代码：
+  </p><a id="idp85769456" class="indexterm"></a><pre class="synopsis">metaphone(text source, int max_output_length) 返回 text</pre><p>   <code class="literal">source</code>必须是一个非空字符串，最大长度为 255 个字符。<code class="literal">max_output_length</code>设置输出的变音位代码的最大长度，如果超长，输出会被截断到这个长度。
+  </p><p>   例子：
+  </p><pre class="screen">test=# SELECT metaphone('GUMBO', 4);
+ metaphone
+-----------
+ KM
+(1 row)</pre></div><div class="sect2" id="idp85773536"><div class="titlepage"><div><div><h3 class="title">F.16.4. 双 Metaphone</h3></div></div></div><p>   双变音位系统为一个给定输入字符串计算两个<span class="quote">“<span class="quote">听起来像的</span>”</span>字符串 — 一个<span class="quote">“<span class="quote">主要</span>”</span>代码和一个<span class="quote">“<span class="quote">次要</span>”</span>代码。在大部分情况下它们是相同的，但是对于非英语名称它们可能有一点不同，这取决于发音。这些函数计算主要和次要代码：
+  </p><a id="idp85775888" class="indexterm"></a><a id="idp85776576" class="indexterm"></a><pre class="synopsis">dmetaphone(text source) 返回 text
+dmetaphone_alt(text source) 返回 text</pre><p>   对输入字符串没有长度限制。
+  </p><p>   例子：
+  </p><pre class="screen">test=# select dmetaphone('gumbo');
+ dmetaphone
+------------
+ KMP
+(1 row)</pre></div></div><div class="navfooter"><hr /><table width="100%" summary="Navigation footer"><tr><td width="40%" align="left"><a accesskey="p" href="file-fdw.html">上一页</a> </td><td width="20%" align="center"><a accesskey="u" href="contrib.html">上一级</a></td><td width="40%" align="right"> <a accesskey="n" href="hstore.html">下一页</a></td></tr><tr><td width="40%" align="left" valign="top">F.15. file_fdw </td><td width="20%" align="center"><a accesskey="h" href="index.html">起始页</a></td><td width="40%" align="right" valign="top"> F.17. hstore</td></tr></table></div></body></html>

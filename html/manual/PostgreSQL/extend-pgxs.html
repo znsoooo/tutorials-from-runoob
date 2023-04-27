@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><title>37.16. 扩展的构建基础设施</title><link rel="stylesheet" type="text/css" href="stylesheet.css" /><link rev="made" href="pgsql-docs@postgresql.org" /><meta name="generator" content="DocBook XSL Stylesheets V1.79.1" /><link rel="prev" href="extend-extensions.html" title="37.15. 打包相关对象到一个扩展中" /><link rel="next" href="triggers.html" title="第 38 章 触发器" /></head><body><div xmlns="http://www.w3.org/TR/xhtml1/transitional" class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="5" align="center">37.16. 扩展的构建基础设施</th></tr><tr><td width="10%" align="left"><a accesskey="p" href="extend-extensions.html" title="37.15. 打包相关对象到一个扩展中">上一页</a> </td><td width="10%" align="left"><a accesskey="u" href="extend.html" title="第 37 章 扩展 SQL">上一级</a></td><th width="60%" align="center">第 37 章 扩展 <acronym xmlns="http://www.w3.org/1999/xhtml" class="acronym">SQL</acronym></th><td width="10%" align="right"><a accesskey="h" href="index.html" title="PostgreSQL 10.1 手册">起始页</a></td><td width="10%" align="right"> <a accesskey="n" href="triggers.html" title="第 38 章 触发器">下一页</a></td></tr></table><hr></hr></div><div class="sect1" id="EXTEND-PGXS"><div class="titlepage"><div><div><h2 class="title" style="clear: both">37.16. 扩展的构建基础设施</h2></div></div></div><a id="idp34573632" class="indexterm"></a><p>    如果你正在考虑发布你的<span class="productname">PostgreSQL</span>扩展模块，为它们建立一个可移植的构建系统实在是相当困难。因此<span class="productname">PostgreSQL</span>安装为扩展提供了一种被称为<acronym class="acronym">PGXS</acronym>构建基础设施，因此简单的扩展模块能够在一个已经安装的服务器上简单地编译。<acronym class="acronym">PGXS</acronym>主要是为了包括 C 代码的扩展而设计，不过它也能用于纯 SQL 的扩展。注意<acronym class="acronym">PGXS</acronym>并不想成为一种用于构建任何与<span class="productname">PostgreSQL</span>交互的软件的通用构建系统框架。它只是简单地把简单服务器扩展模块的公共构建规则自动化。对于更复杂的包，你可能需要编写你自己的构建系统。
+   </p><p>    要把<acronym class="acronym">PGXS</acronym>基础设施用于你的扩展，你必须编写一个简单的 makefile。在这个 makefile 中，你需要设置一些变量并且把它们包括在全局的<acronym class="acronym">PGXS</acronym> makefile 中。这里有一个例子，它构建一个名为<code class="literal">isbn_issn</code>的扩展模块，其中包括一个含有 C 代码的共享库、一个扩展控制文件、一个 SQL 脚本以及一个文档文件：
+</p><pre class="programlisting">MODULES = isbn_issn
+EXTENSION = isbn_issn
+DATA = isbn_issn--1.0.sql
+DOCS = README.isbn_issn
+
+PG_CONFIG = pg_config
+PGXS := $(shell $(PG_CONFIG) --pgxs)
+include $(PGXS)</pre><p>
+    最后三行应该总是相同的。在这个文件的前面部分，你要对变量赋值或者增加自定义的<span class="application">make</span>规则。
+   </p><p>    设置这三个变量之一来指定要构建什么：
+
+    </p><div class="variablelist"><dl class="variablelist"><dt><span class="term"><code class="varname">MODULES</code></span></dt><dd><p>        要从源文件构建的具有相同词干的共享库对象的列表（不要在这个列表中包括库后缀）
+       </p></dd><dt><span class="term"><code class="varname">MODULE_big</code></span></dt><dd><p>        一个要从多个源文件中构建的共享库（在<code class="varname">OBJS</code>中列出对象文件）
+       </p></dd><dt><span class="term"><code class="varname">PROGRAM</code></span></dt><dd><p>        一个要构建的可执行程序（在<code class="varname">OBJS</code>中列出对象文件）
+       </p></dd></dl></div><p>
+
+    还可以设置下列变量：
+
+    </p><div class="variablelist"><dl class="variablelist"><dt><span class="term"><code class="varname">EXTENSION</code></span></dt><dd><p>        扩展名称；你必须为每一个名称提供一个<code class="literal"><em class="replaceable"><code>extension</code></em>.control</code>文件，它将被安装到<code class="literal"><em class="replaceable"><code>prefix</code></em>/share/extension</code>中
+       </p></dd><dt><span class="term"><code class="varname">MODULEDIR</code></span></dt><dd><p>        subdirectory of <code class="literal"><em class="replaceable"><code>prefix</code></em>/share</code>的子目录，DATA 和 DOCS 文件会被安装到其中（如果没有设置，设置了<code class="varname">EXTENSION</code>时默认为<code class="literal">extension</code>，没有设置<code class="varname">EXTENSION</code>时默认为<code class="literal">contrib</code>）
+       </p></dd><dt><span class="term"><code class="varname">DATA</code></span></dt><dd><p>        要安装到<code class="literal"><em class="replaceable"><code>prefix</code></em>/share/$MODULEDIR</code>中的随机文件
+       </p></dd><dt><span class="term"><code class="varname">DATA_built</code></span></dt><dd><p>        要安装到<code class="literal"><em class="replaceable"><code>prefix</code></em>/share/$MODULEDIR</code>中的随机文件，它们需要先被构建
+       </p></dd><dt><span class="term"><code class="varname">DATA_TSEARCH</code></span></dt><dd><p>        要安装到<code class="literal"><em class="replaceable"><code>prefix</code></em>/share/tsearch_data</code>中的随机文件
+       </p></dd><dt><span class="term"><code class="varname">DOCS</code></span></dt><dd><p>        要安装到<code class="literal"><em class="replaceable"><code>prefix</code></em>/doc/$MODULEDIR</code>中的随机文件
+       </p></dd><dt><span class="term"><code class="varname">SCRIPTS</code></span></dt><dd><p>        要安装到<code class="literal"><em class="replaceable"><code>prefix</code></em>/bin</code>中的脚本文件（非二进制）
+       </p></dd><dt><span class="term"><code class="varname">SCRIPTS_built</code></span></dt><dd><p>        要安装到<code class="literal"><em class="replaceable"><code>prefix</code></em>/bin</code>中的脚本文件（非二进制），它们需要先被构建
+       </p></dd><dt><span class="term"><code class="varname">REGRESS</code></span></dt><dd><p>        回归测试案例（不带后缀）的列表，见下文
+       </p></dd><dt><span class="term"><code class="varname">REGRESS_OPTS</code></span></dt><dd><p>        要传递给<span class="application">pg_regress</span>的附加开关
+       </p></dd><dt><span class="term"><code class="varname">NO_INSTALLCHECK</code></span></dt><dd><p>        不要定义<code class="literal">installcheck</code>目标，例如，如果测试需要特殊配置，
+		或者不要使用<span class="application">pg_regress</span>
+       </p></dd><dt><span class="term"><code class="varname">EXTRA_CLEAN</code></span></dt><dd><p>        要在<code class="literal">make clean</code>中移除的额外文件
+       </p></dd><dt><span class="term"><code class="varname">PG_CPPFLAGS</code></span></dt><dd><p>        将被加到<code class="varname">CPPFLAGS</code>
+       </p></dd><dt><span class="term"><code class="varname">PG_LIBS</code></span></dt><dd><p>        将被加到<code class="varname">PROGRAM</code>链接行
+       </p></dd><dt><span class="term"><code class="varname">SHLIB_LINK</code></span></dt><dd><p>        将被加到<code class="varname">MODULE_big</code>链接行
+       </p></dd><dt><span class="term"><code class="varname">PG_CONFIG</code></span></dt><dd><p>        要在其中构建的<span class="productname">PostgreSQL</span>安装的<span class="application">pg_config</span>程序的路径（通常只用在你的<code class="varname">PATH</code>中的第一个<code class="literal">pg_config</code>）
+       </p></dd></dl></div><p>
+   </p><p>    把这个 makefile 作为<code class="literal">Makefile</code>放在保存你扩展的目录中。然后你可以执行<code class="literal">make</code>进行编译，并且接着<code class="literal">make install</code>来安装你的模块。默认情况下，该模块会为在你的<code class="varname">PATH</code>中找到的第一个<code class="command">pg_config</code>程序所对应的<span class="productname">PostgreSQL</span>安装编译和安装。你可以通过在 makefile 中或者<code class="literal">make</code>命令行中设置<code class="varname">PG_CONFIG</code>指向另一个<code class="command">pg_config</code>程序来使用一个不同的安装。
+   </p><p>    如果你想保持编译目录独立，你也可以在你的扩展所属的源代码树之外的目录中运行
+    <code class="literal">make</code>。 这个过程也被称为一个
+    <a id="idp34630640" class="indexterm"></a><em class="firstterm">VPATH</em>
+    编译。下面是做法：
+</p><pre class="programlisting">mkdir build_dir
+cd build_dir
+make -f /path/to/extension/source/tree/Makefile
+make -f /path/to/extension/source/tree/Makefile install</pre><p>
+   </p><p>    此外，你可以以对核心代码所作的方式一样为 VPATH 设置一个目录。一种方式是使用核心脚本
+    <code class="filename">config/prep_buildtree</code>。一旦这样做，你可以这样设置
+    <code class="literal">make</code>变量<code class="varname">VPATH</code>：
+</p><pre class="programlisting">make VPATH=/path/to/extension/source/tree
+make VPATH=/path/to/extension/source/tree install</pre><p>
+    这个过程可以在很多种目录布局下工作。
+   </p><p>    列举在<code class="varname">REGRESS</code>变量中的脚本会被用来对你的扩展进行回归测试，回归测试可以在做完<code class="literal">make install</code>之后用<code class="literal">make installcheck</code>调用。要让这能够工作，你必须已经有一个运行着的<span class="productname">PostgreSQL</span>服务器。列举在<code class="varname">REGRESS</code>中的脚本文件必须在你扩展目录的名为<code class="literal">sql/</code>的子目录中出现。这些文件必须带有扩展<code class="literal">.sql</code>，但扩展不能被包括在 makefile 的<code class="varname">REGRESS</code>列表中。对每一个测试还应该在名为<code class="literal">expected/</code>的子目录中有一个包含预期输出的文件，它具有和脚本文件相同的词干并带有扩展<code class="literal">.out</code>。<code class="literal">make installcheck</code>会用<span class="application">psql</span>执行每一个测试脚本，并且将得到结果输出与相应的预期输出比较。任何区别都将以<code class="command">diff -c</code>格式写入到文件<code class="literal">regression.diffs</code>中。注意尝试运行一个不带预期文件的测试将被报告为<span class="quote">“<span class="quote">故障</span>”</span>，因此确保你拥有所有的预期文件。
+   </p><div class="tip"><h3 class="title">提示</h3><p>     创建预期文件最简单的方法是创建空文件，然后做一次测试运行（这当然将报告区别）。检查在<code class="literal">results/</code>目录中找到的实际结果文件，如果它们符合你的预期则把它们复制到<code class="literal">expected/</code>中。
+    </p></div></div><div class="navfooter"><hr /><table width="100%" summary="Navigation footer"><tr><td width="40%" align="left"><a accesskey="p" href="extend-extensions.html">上一页</a> </td><td width="20%" align="center"><a accesskey="u" href="extend.html">上一级</a></td><td width="40%" align="right"> <a accesskey="n" href="triggers.html">下一页</a></td></tr><tr><td width="40%" align="left" valign="top">37.15. 打包相关对象到一个扩展中 </td><td width="20%" align="center"><a accesskey="h" href="index.html">起始页</a></td><td width="40%" align="right" valign="top"> 第 38 章 触发器</td></tr></table></div></body></html>

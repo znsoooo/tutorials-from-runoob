@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><title>DROP AGGREGATE</title><link rel="stylesheet" type="text/css" href="stylesheet.css" /><link rev="made" href="pgsql-docs@postgresql.org" /><meta name="generator" content="DocBook XSL Stylesheets V1.79.1" /><link rel="prev" href="sql-drop-access-method.html" title="DROP ACCESS METHOD" /><link rel="next" href="sql-dropcast.html" title="DROP CAST" /></head><body><div xmlns="http://www.w3.org/TR/xhtml1/transitional" class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="5" align="center">DROP AGGREGATE</th></tr><tr><td width="10%" align="left"><a accesskey="p" href="sql-drop-access-method.html" title="DROP ACCESS METHOD">上一页</a> </td><td width="10%" align="left"><a accesskey="u" href="sql-commands.html" title="SQL 命令">上一级</a></td><th width="60%" align="center">SQL 命令</th><td width="10%" align="right"><a accesskey="h" href="index.html" title="PostgreSQL 10.1 手册">起始页</a></td><td width="10%" align="right"> <a accesskey="n" href="sql-dropcast.html" title="DROP CAST">下一页</a></td></tr></table><hr></hr></div><div class="refentry" id="SQL-DROPAGGREGATE"><div class="titlepage"></div><a id="idp46217232" class="indexterm"></a><div class="refnamediv"><h2><span class="refentrytitle">DROP AGGREGATE</span></h2><p>DROP AGGREGATE — 移除一个聚集函数</p></div><div class="refsynopsisdiv"><h2>大纲</h2><pre class="synopsis">DROP AGGREGATE [ IF EXISTS ] <em class="replaceable"><code>name</code></em> ( <em class="replaceable"><code>aggregate_signature</code></em> ) [, ...] [ CASCADE | RESTRICT ]
+
+<span class="phrase">这里<em class="replaceable"><code>aggregate_signature</code></em>是：</span>
+
+* |
+[ <em class="replaceable"><code>argmode</code></em> ] [ <em class="replaceable"><code>argname</code></em> ] <em class="replaceable"><code>argtype</code></em> [ , ... ] |
+[ [ <em class="replaceable"><code>argmode</code></em> ] [ <em class="replaceable"><code>argname</code></em> ] <em class="replaceable"><code>argtype</code></em> [ , ... ] ] ORDER BY [ <em class="replaceable"><code>argmode</code></em> ] [ <em class="replaceable"><code>argname</code></em> ] <em class="replaceable"><code>argtype</code></em> [ , ... ]</pre></div><div class="refsect1" id="idp46226352"><h2>描述</h2><p>   <code class="command">DROP AGGREGATE</code>移除一个现有的
+   聚集函数。要执行这个命令，当前用户必须是该聚集函数的拥有者。
+  </p></div><div class="refsect1" id="idp46227840"><h2>参数</h2><div class="variablelist"><dl class="variablelist"><dt><span class="term"><code class="literal">IF EXISTS</code></span></dt><dd><p>      如果该聚集不存在则不要抛出一个错误，而是发出一个提示。
+     </p></dd><dt><span class="term"><em class="replaceable"><code>name</code></em></span></dt><dd><p>      一个现有聚集函数的名称（可以是模式限定的）。
+     </p></dd><dt><span class="term"><em class="replaceable"><code>argmode</code></em></span></dt><dd><p>      一个参数的模式：<code class="literal">IN</code>或<code class="literal">VARIADIC</code>。
+      如果被忽略，默认值是<code class="literal">IN</code>。
+     </p></dd><dt><span class="term"><em class="replaceable"><code>argname</code></em></span></dt><dd><p>      一个参数的名称。注意<code class="command">DROP AGGREGATE</code>
+      并不真正关心参数名称，因为决定聚集函数的身份时只需要参数数据类型。
+     </p></dd><dt><span class="term"><em class="replaceable"><code>argtype</code></em></span></dt><dd><p>      该聚集函数所操作的一个输入数据类型。要引用一个零参数的聚集函数，写
+      <code class="literal">*</code>来替代参数说明列表。要引用一个有序集聚集函数，在直接和
+      聚集参数说明之间写上<code class="literal">ORDER BY</code>。
+     </p></dd><dt><span class="term"><code class="literal">CASCADE</code></span></dt><dd><p>      自动删除依赖于该聚集函数的对象（例如使用它的视图），然后删除所有
+      依赖于那些对象的对象（见<a class="xref" href="ddl-depend.html" title="5.13. 依赖跟踪">第 5.13 节</a>）。
+     </p></dd><dt><span class="term"><code class="literal">RESTRICT</code></span></dt><dd><p>      如果有任何对象依赖于该聚集函数，则拒绝删除它。这是默认值。
+     </p></dd></dl></div></div><div class="refsect1" id="idp46243328"><h2>注解</h2><p>    <a class="xref" href="sql-alteraggregate.html" title="ALTER AGGREGATE"><span class="refentrytitle">ALTER AGGREGATE</span></a>下描述了另一种引用有序集聚集的语法。
+   </p></div><div class="refsect1" id="idp46244752"><h2>示例</h2><p>   要为类型<code class="type">integer</code>移除聚集函数<code class="literal">myavg</code>：
+</p><pre class="programlisting">DROP AGGREGATE myavg(integer);</pre><p>
+  </p><p>   要移除假想集聚集函数<code class="literal">myrank</code>，该函数接收一个排序列的
+   任意列表和直接参数的一个匹配的列表：
+</p><pre class="programlisting">DROP AGGREGATE myrank(VARIADIC "any" ORDER BY VARIADIC "any");</pre><p>
+  </p><p>   要在一个命令中删除多个聚合函数：
+</p><pre class="programlisting">DROP AGGREGATE myavg(integer), myavg(bigint);</pre></div><div class="refsect1" id="idp46250160"><h2>兼容性</h2><p>   在 SQL 标准中没有<code class="command">DROP AGGREGATE</code>语句。
+  </p></div><div class="refsect1" id="idp46251616"><h2>另见</h2><span class="simplelist"><a class="xref" href="sql-alteraggregate.html" title="ALTER AGGREGATE"><span class="refentrytitle">ALTER AGGREGATE</span></a>, <a class="xref" href="sql-createaggregate.html" title="CREATE AGGREGATE"><span class="refentrytitle">CREATE AGGREGATE</span></a></span></div></div><div class="navfooter"><hr /><table width="100%" summary="Navigation footer"><tr><td width="40%" align="left"><a accesskey="p" href="sql-drop-access-method.html">上一页</a> </td><td width="20%" align="center"><a accesskey="u" href="sql-commands.html">上一级</a></td><td width="40%" align="right"> <a accesskey="n" href="sql-dropcast.html">下一页</a></td></tr><tr><td width="40%" align="left" valign="top">DROP ACCESS METHOD </td><td width="20%" align="center"><a accesskey="h" href="index.html">起始页</a></td><td width="40%" align="right" valign="top"> DROP CAST</td></tr></table></div></body></html>

@@ -1,0 +1,318 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><title>9.9. 时间/日期函数和操作符</title><link rel="stylesheet" type="text/css" href="stylesheet.css" /><link rev="made" href="pgsql-docs@postgresql.org" /><meta name="generator" content="DocBook XSL Stylesheets V1.79.1" /><link rel="prev" href="functions-formatting.html" title="9.8. 数据类型格式化函数" /><link rel="next" href="functions-enum.html" title="9.10. 枚举支持函数" /></head><body><div xmlns="http://www.w3.org/TR/xhtml1/transitional" class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="5" align="center">9.9. 时间/日期函数和操作符</th></tr><tr><td width="10%" align="left"><a accesskey="p" href="functions-formatting.html" title="9.8. 数据类型格式化函数">上一页</a> </td><td width="10%" align="left"><a accesskey="u" href="functions.html" title="第 9 章 函数和操作符">上一级</a></td><th width="60%" align="center">第 9 章 函数和操作符</th><td width="10%" align="right"><a accesskey="h" href="index.html" title="PostgreSQL 10.1 手册">起始页</a></td><td width="10%" align="right"> <a accesskey="n" href="functions-enum.html" title="9.10. 枚举支持函数">下一页</a></td></tr></table><hr></hr></div><div class="sect1" id="FUNCTIONS-DATETIME"><div class="titlepage"><div><div><h2 class="title" style="clear: both">9.9. 时间/日期函数和操作符</h2></div></div></div><div class="toc"><dl class="toc"><dt><span class="sect2"><a href="functions-datetime.html#FUNCTIONS-DATETIME-EXTRACT">9.9.1. <code class="function">EXTRACT</code>, <code class="function">date_part</code></a></span></dt><dt><span class="sect2"><a href="functions-datetime.html#FUNCTIONS-DATETIME-TRUNC">9.9.2. <code class="function">date_trunc</code></a></span></dt><dt><span class="sect2"><a href="functions-datetime.html#FUNCTIONS-DATETIME-ZONECONVERT">9.9.3. <code class="literal">AT TIME ZONE</code></a></span></dt><dt><span class="sect2"><a href="functions-datetime.html#FUNCTIONS-DATETIME-CURRENT">9.9.4. 当前日期/时间</a></span></dt><dt><span class="sect2"><a href="functions-datetime.html#FUNCTIONS-DATETIME-DELAY">9.9.5. 延时执行</a></span></dt></dl></div><p>   <a class="xref" href="functions-datetime.html#FUNCTIONS-DATETIME-TABLE" title="表 9.30. 日期/时间函数">表 9.30</a>展示了可用于处理日期/时间值的函数，其细节在随后的小节中描述。<a class="xref" href="functions-datetime.html#OPERATORS-DATETIME-TABLE" title="表 9.29. 日期/时间操作符">表 9.29</a>演示了基本算术操作符 （<code class="literal">+</code>、<code class="literal">*</code>等）的行为。 而与格式化相关的函数，可以参考<a class="xref" href="functions-formatting.html" title="9.8. 数据类型格式化函数">第 9.8 节</a>。你应该很熟悉<a class="xref" href="datatype-datetime.html" title="8.5. 日期/时间类型">第 8.5 节</a>中的日期/时间数据类型的背景知识。
+  </p><p>   所有下文描述的接受<code class="type">time</code>或<code class="type">timestamp</code>输入的函数和操作符实际上都有两种变体： 一种接收<code class="type">time with time zone</code>或<code class="type">timestamp with time zone</code>， 另外一种接受<code class="type">time without time zone</code>或者 <code class="type">timestamp without time zone</code>。为了简化，这些变种没有被独立地展示。此外，<code class="literal">+</code>和<code class="literal">*</code>操作符都是可交换的操作符对（例如，date + integer 和 integer + date）；我们只显示其中一个。
+  </p><div class="table" id="OPERATORS-DATETIME-TABLE"><p class="title"><strong>表 9.29. 日期/时间操作符</strong></p><div class="table-contents"><table class="table" summary="日期/时间操作符" border="1"><colgroup><col /><col /><col /></colgroup><thead><tr><th>操作符</th><th>例子</th><th>结果</th></tr></thead><tbody><tr><td> <code class="literal">+</code> </td><td><code class="literal">date '2001-09-28' + integer '7'</code></td><td><code class="literal">date '2001-10-05'</code></td></tr><tr><td> <code class="literal">+</code> </td><td><code class="literal">date '2001-09-28' + interval '1 hour'</code></td><td><code class="literal">timestamp '2001-09-28 01:00:00'</code></td></tr><tr><td> <code class="literal">+</code> </td><td><code class="literal">date '2001-09-28' + time '03:00'</code></td><td><code class="literal">timestamp '2001-09-28 03:00:00'</code></td></tr><tr><td> <code class="literal">+</code> </td><td><code class="literal">interval '1 day' + interval '1 hour'</code></td><td><code class="literal">interval '1 day 01:00:00'</code></td></tr><tr><td> <code class="literal">+</code> </td><td><code class="literal">timestamp '2001-09-28 01:00' + interval '23 hours'</code></td><td><code class="literal">timestamp '2001-09-29 00:00:00'</code></td></tr><tr><td> <code class="literal">+</code> </td><td><code class="literal">time '01:00' + interval '3 hours'</code></td><td><code class="literal">time '04:00:00'</code></td></tr><tr><td> <code class="literal">-</code> </td><td><code class="literal">- interval '23 hours'</code></td><td><code class="literal">interval '-23:00:00'</code></td></tr><tr><td> <code class="literal">-</code> </td><td><code class="literal">date '2001-10-01' - date '2001-09-28'</code></td><td><code class="literal">integer '3'</code> (days)</td></tr><tr><td> <code class="literal">-</code> </td><td><code class="literal">date '2001-10-01' - integer '7'</code></td><td><code class="literal">date '2001-09-24'</code></td></tr><tr><td> <code class="literal">-</code> </td><td><code class="literal">date '2001-09-28' - interval '1 hour'</code></td><td><code class="literal">timestamp '2001-09-27 23:00:00'</code></td></tr><tr><td> <code class="literal">-</code> </td><td><code class="literal">time '05:00' - time '03:00'</code></td><td><code class="literal">interval '02:00:00'</code></td></tr><tr><td> <code class="literal">-</code> </td><td><code class="literal">time '05:00' - interval '2 hours'</code></td><td><code class="literal">time '03:00:00'</code></td></tr><tr><td> <code class="literal">-</code> </td><td><code class="literal">timestamp '2001-09-28 23:00' - interval '23 hours'</code></td><td><code class="literal">timestamp '2001-09-28 00:00:00'</code></td></tr><tr><td> <code class="literal">-</code> </td><td><code class="literal">interval '1 day' - interval '1 hour'</code></td><td><code class="literal">interval '1 day -01:00:00'</code></td></tr><tr><td> <code class="literal">-</code> </td><td><code class="literal">timestamp '2001-09-29 03:00' - timestamp '2001-09-27 12:00'</code></td><td><code class="literal">interval '1 day 15:00:00'</code></td></tr><tr><td> <code class="literal">*</code> </td><td><code class="literal">900 * interval '1 second'</code></td><td><code class="literal">interval '00:15:00'</code></td></tr><tr><td> <code class="literal">*</code> </td><td><code class="literal">21 * interval '1 day'</code></td><td><code class="literal">interval '21 days'</code></td></tr><tr><td> <code class="literal">*</code> </td><td><code class="literal">double precision '3.5' * interval '1 hour'</code></td><td><code class="literal">interval '03:30:00'</code></td></tr><tr><td> <code class="literal">/</code> </td><td><code class="literal">interval '1 hour' / double precision '1.5'</code></td><td><code class="literal">interval '00:40:00'</code></td></tr></tbody></table></div></div><br class="table-break" /><div class="table" id="FUNCTIONS-DATETIME-TABLE"><p class="title"><strong>表 9.30. 日期/时间函数</strong></p><div class="table-contents"><table class="table" summary="日期/时间函数" border="1"><colgroup><col /><col /><col /><col /><col /></colgroup><thead><tr><th>函数</th><th>返回类型</th><th>描述</th><th>例子</th><th>结果</th></tr></thead><tbody><tr><td>         <a id="idp11863744" class="indexterm"></a>
+         <code class="literal"><code class="function">age(<code class="type">timestamp</code>, <code class="type">timestamp</code>)</code></code>
+        </td><td><code class="type">interval</code></td><td>减去参数，生成一个使用年、月（而不是只用日）的<span class="quote">“<span class="quote">符号化</span>”</span>的结果</td><td><code class="literal">age(timestamp '2001-04-10', timestamp '1957-06-13')</code></td><td><code class="literal">43 年 9 月 27 日</code></td></tr><tr><td><code class="literal"><code class="function">age(<code class="type">timestamp</code>)</code></code></td><td><code class="type">interval</code></td><td>从<code class="function">current_date</code>（在午夜）减去</td><td><code class="literal">age(timestamp '1957-06-13')</code></td><td><code class="literal">43 years 8 mons 3 days</code></td></tr><tr><td>         <a id="idp11873856" class="indexterm"></a>
+         <code class="literal"><code class="function">clock_timestamp()</code></code>
+        </td><td><code class="type">timestamp with time zone</code></td><td>当前日期和时间（在语句执行期间变化）；见<a class="xref" href="functions-datetime.html#FUNCTIONS-DATETIME-CURRENT" title="9.9.4. 当前日期/时间">第 9.9.4 节</a>
+        </td><td> </td><td> </td></tr><tr><td>         <a id="idp11877888" class="indexterm"></a>
+         <code class="literal"><code class="function">current_date</code></code>
+        </td><td><code class="type">date</code></td><td>当前日期；见<a class="xref" href="functions-datetime.html#FUNCTIONS-DATETIME-CURRENT" title="9.9.4. 当前日期/时间">第 9.9.4 节</a>
+        </td><td> </td><td> </td></tr><tr><td>         <a id="idp11881808" class="indexterm"></a>
+         <code class="literal"><code class="function">current_time</code></code>
+        </td><td><code class="type">time with time zone</code></td><td>当前时间（一天中的时间）；见<a class="xref" href="functions-datetime.html#FUNCTIONS-DATETIME-CURRENT" title="9.9.4. 当前日期/时间">第 9.9.4 节</a>
+        </td><td> </td><td> </td></tr><tr><td>         <a id="idp11885760" class="indexterm"></a>
+         <code class="literal"><code class="function">current_timestamp</code></code>
+        </td><td><code class="type">timestamp with time zone</code></td><td>当前日期和时间（当前事务开始时）；见<a class="xref" href="functions-datetime.html#FUNCTIONS-DATETIME-CURRENT" title="9.9.4. 当前日期/时间">第 9.9.4 节</a>
+        </td><td> </td><td> </td></tr><tr><td>         <a id="idp11889728" class="indexterm"></a>
+         <code class="literal"><code class="function">date_part(<code class="type">text</code>, <code class="type">timestamp</code>)</code></code>
+        </td><td><code class="type">double precision</code></td><td>获得子域（等价于<code class="function">extract</code>）；见<a class="xref" href="functions-datetime.html#FUNCTIONS-DATETIME-EXTRACT" title="9.9.1. EXTRACT, date_part">第 9.9.1 节</a>
+        </td><td><code class="literal">date_part('hour', timestamp '2001-02-16 20:38:40')</code></td><td><code class="literal">20</code></td></tr><tr><td><code class="literal"><code class="function">date_part(<code class="type">text</code>, <code class="type">interval</code>)</code></code></td><td><code class="type">double precision</code></td><td>获得子域（等价于<code class="function">extract</code>）；见<a class="xref" href="functions-datetime.html#FUNCTIONS-DATETIME-EXTRACT" title="9.9.1. EXTRACT, date_part">第 9.9.1 节</a>
+        </td><td><code class="literal">date_part('month', interval '2 years 3 months')</code></td><td><code class="literal">3</code></td></tr><tr><td>         <a id="idp11901872" class="indexterm"></a>
+         <code class="literal"><code class="function">date_trunc(<code class="type">text</code>, <code class="type">timestamp</code>)</code></code>
+        </td><td><code class="type">timestamp</code></td><td>截断到指定精度；另见<a class="xref" href="functions-datetime.html#FUNCTIONS-DATETIME-TRUNC" title="9.9.2. date_trunc">第 9.9.2 节</a>
+        </td><td><code class="literal">date_trunc('hour', timestamp '2001-02-16 20:38:40')</code></td><td><code class="literal">2001-02-16 20:00:00</code></td></tr><tr><td><code class="literal"><code class="function">date_trunc(<code class="type">text</code>, <code class="type">interval</code>)</code></code></td><td><code class="type">interval</code></td><td>截断到指定精度；另见<a class="xref" href="functions-datetime.html#FUNCTIONS-DATETIME-TRUNC" title="9.9.2. date_trunc">第 9.9.2 节</a>
+        </td><td><code class="literal">date_trunc('hour', interval '2 days 3 hours 40 minutes')</code></td><td><code class="literal">2 days 03:00:00</code></td></tr><tr><td>         <a id="idp11912768" class="indexterm"></a>
+         <code class="literal"><code class="function">extract</code>(<em class="parameter"><code>field</code></em> from
+         <code class="type">timestamp</code>)</code>
+        </td><td><code class="type">double precision</code></td><td>获得子域；见<a class="xref" href="functions-datetime.html#FUNCTIONS-DATETIME-EXTRACT" title="9.9.1. EXTRACT, date_part">第 9.9.1 节</a>
+        </td><td><code class="literal">extract(hour from timestamp '2001-02-16 20:38:40')</code></td><td><code class="literal">20</code></td></tr><tr><td><code class="literal"><code class="function">extract</code>(<em class="parameter"><code>field</code></em> from
+         <code class="type">interval</code>)</code></td><td><code class="type">double precision</code></td><td>获得子域；见<a class="xref" href="functions-datetime.html#FUNCTIONS-DATETIME-EXTRACT" title="9.9.1. EXTRACT, date_part">第 9.9.1 节</a>
+        </td><td><code class="literal">extract(month from interval '2 years 3 months')</code></td><td><code class="literal">3</code></td></tr><tr><td>         <a id="idp11924304" class="indexterm"></a>
+         <code class="literal"><code class="function">isfinite(<code class="type">date</code>)</code></code>
+        </td><td><code class="type">boolean</code></td><td>测试有限日期（不是+/-无限）</td><td><code class="literal">isfinite(date '2001-02-16')</code></td><td><code class="literal">true</code></td></tr><tr><td><code class="literal"><code class="function">isfinite(<code class="type">timestamp</code>)</code></code></td><td><code class="type">boolean</code></td><td>测试有限时间戳（不是+/-无限）</td><td><code class="literal">isfinite(timestamp '2001-02-16 21:28:30')</code></td><td><code class="literal">true</code></td></tr><tr><td><code class="literal"><code class="function">isfinite(<code class="type">interval</code>)</code></code></td><td><code class="type">boolean</code></td><td>测试有限间隔</td><td><code class="literal">isfinite(interval '4 hours')</code></td><td><code class="literal">true</code></td></tr><tr><td>         <a id="idp11936576" class="indexterm"></a>
+         <code class="literal"><code class="function">justify_days(<code class="type">interval</code>)</code></code>
+        </td><td><code class="type">interval</code></td><td>调整间隔这样30天时间周期可以表示为月</td><td><code class="literal">justify_days(interval '35 days')</code></td><td><code class="literal">1 mon 5 days</code></td></tr><tr><td>         <a id="idp11941408" class="indexterm"></a>
+         <code class="literal"><code class="function">justify_hours(<code class="type">interval</code>)</code></code>
+        </td><td><code class="type">interval</code></td><td>调整间隔这样24小时时间周期可以表示为日</td><td><code class="literal">justify_hours(interval '27 hours')</code></td><td><code class="literal">1 day 03:00:00</code></td></tr><tr><td>         <a id="idp11946256" class="indexterm"></a>
+         <code class="literal"><code class="function">justify_interval(<code class="type">interval</code>)</code></code>
+        </td><td><code class="type">interval</code></td><td>使用<code class="function">justify_days</code>和<code class="function">justify_hours</code>调整间隔，使用额外的符号调整</td><td><code class="literal">justify_interval(interval '1 mon -1 hour')</code></td><td><code class="literal">29 days 23:00:00</code></td></tr><tr><td>         <a id="idp11952544" class="indexterm"></a>
+         <code class="literal"><code class="function">localtime</code></code>
+        </td><td><code class="type">time</code></td><td>当前时间（一天中的时间）；见<a class="xref" href="functions-datetime.html#FUNCTIONS-DATETIME-CURRENT" title="9.9.4. 当前日期/时间">第 9.9.4 节</a>
+        </td><td> </td><td> </td></tr><tr><td>         <a id="idp11956544" class="indexterm"></a>
+         <code class="literal"><code class="function">localtimestamp</code></code>
+        </td><td><code class="type">timestamp</code></td><td>当前日期和时间（当前事务的开始）；见<a class="xref" href="functions-datetime.html#FUNCTIONS-DATETIME-CURRENT" title="9.9.4. 当前日期/时间">第 9.9.4 节</a>
+        </td><td> </td><td> </td></tr><tr><td>         <a id="idp11960496" class="indexterm"></a>
+         <code class="literal">            <code class="function">             make_date(<em class="parameter"><code>year</code></em> <code class="type">int</code>,
+             <em class="parameter"><code>month</code></em> <code class="type">int</code>,
+             <em class="parameter"><code>day</code></em> <code class="type">int</code>)
+            </code>
+         </code>
+        </td><td><code class="type">date</code></td><td>         从年、月、日域创建日期
+        </td><td><code class="literal">make_date(2013, 7, 15)</code></td><td><code class="literal">2013-07-15</code></td></tr><tr><td>         <a id="idp11968480" class="indexterm"></a>
+         <code class="literal">          <code class="function">           make_interval(<em class="parameter"><code>years</code></em> <code class="type">int</code> DEFAULT 0,
+           <em class="parameter"><code>months</code></em> <code class="type">int</code> DEFAULT 0,
+           <em class="parameter"><code>weeks</code></em> <code class="type">int</code> DEFAULT 0,
+           <em class="parameter"><code>days</code></em> <code class="type">int</code> DEFAULT 0,
+           <em class="parameter"><code>hours</code></em> <code class="type">int</code> DEFAULT 0,
+           <em class="parameter"><code>mins</code></em> <code class="type">int</code> DEFAULT 0,
+           <em class="parameter"><code>secs</code></em> <code class="type">double precision</code> DEFAULT 0.0)
+          </code>
+         </code>
+        </td><td><code class="type">interval</code></td><td>         从年、月、周、日、时、分、秒域创建 interval
+        </td><td><code class="literal">make_interval(days =&gt; 10)</code></td><td><code class="literal">10 days</code></td></tr><tr><td>         <a id="idp11981024" class="indexterm"></a>
+         <code class="literal">          <code class="function">           make_time(<em class="parameter"><code>hour</code></em> <code class="type">int</code>,
+           <em class="parameter"><code>min</code></em> <code class="type">int</code>,
+           <em class="parameter"><code>sec</code></em> <code class="type">double precision</code>)
+          </code>
+         </code>
+        </td><td><code class="type">time</code></td><td>         从时、分、秒域创建时间
+        </td><td><code class="literal">make_time(8, 15, 23.5)</code></td><td><code class="literal">08:15:23.5</code></td></tr><tr><td>         <a id="idp11989056" class="indexterm"></a>
+         <code class="literal">          <code class="function">           make_timestamp(<em class="parameter"><code>year</code></em> <code class="type">int</code>,
+           <em class="parameter"><code>month</code></em> <code class="type">int</code>,
+           <em class="parameter"><code>day</code></em> <code class="type">int</code>,
+           <em class="parameter"><code>hour</code></em> <code class="type">int</code>,
+           <em class="parameter"><code>min</code></em> <code class="type">int</code>,
+           <em class="parameter"><code>sec</code></em> <code class="type">double precision</code>)
+          </code>
+         </code>
+        </td><td><code class="type">timestamp</code></td><td>         从年、月、日、时、分、秒域创建时间戳
+        </td><td><code class="literal">make_timestamp(2013, 7, 15, 8, 15, 23.5)</code></td><td><code class="literal">2013-07-15 08:15:23.5</code></td></tr><tr><td>         <a id="idp12000416" class="indexterm"></a>
+         <code class="literal">          <code class="function">           make_timestamptz(<em class="parameter"><code>year</code></em> <code class="type">int</code>,
+           <em class="parameter"><code>month</code></em> <code class="type">int</code>,
+           <em class="parameter"><code>day</code></em> <code class="type">int</code>,
+           <em class="parameter"><code>hour</code></em> <code class="type">int</code>,
+           <em class="parameter"><code>min</code></em> <code class="type">int</code>,
+           <em class="parameter"><code>sec</code></em> <code class="type">double precision</code>,
+           [<span class="optional"> <em class="parameter"><code>timezone</code></em> <code class="type">text</code> </span>])
+          </code>
+         </code>
+        </td><td><code class="type">timestamp with time zone</code></td><td>         从年、月、日、时、分、秒域创建带时区的时间戳。如果没有指定<em class="parameter"><code>timezone</code></em>，
+         则使用当前时区。
+        </td><td><code class="literal">make_timestamptz(2013, 7, 15, 8, 15, 23.5)</code></td><td><code class="literal">2013-07-15 08:15:23.5+01</code></td></tr><tr><td>         <a id="idp12014128" class="indexterm"></a>
+         <code class="literal"><code class="function">now()</code></code>
+        </td><td><code class="type">timestamp with time zone</code></td><td>当前日期和时间（当前事务的开始）；见<a class="xref" href="functions-datetime.html#FUNCTIONS-DATETIME-CURRENT" title="9.9.4. 当前日期/时间">第 9.9.4 节</a>
+        </td><td> </td><td> </td></tr><tr><td>         <a id="idp12018112" class="indexterm"></a>
+         <code class="literal"><code class="function">statement_timestamp()</code></code>
+        </td><td><code class="type">timestamp with time zone</code></td><td>当前日期和时间（当前事务的开始）；见<a class="xref" href="functions-datetime.html#FUNCTIONS-DATETIME-CURRENT" title="9.9.4. 当前日期/时间">第 9.9.4 节</a>
+        </td><td> </td><td> </td></tr><tr><td>         <a id="idp12022080" class="indexterm"></a>
+         <code class="literal"><code class="function">timeofday()</code></code>
+        </td><td><code class="type">text</code></td><td>当前日期和时间（像<code class="function">clock_timestamp</code>，但是作为一个<code class="type">text</code>字符串）；见<a class="xref" href="functions-datetime.html#FUNCTIONS-DATETIME-CURRENT" title="9.9.4. 当前日期/时间">第 9.9.4 节</a>
+        </td><td> </td><td> </td></tr><tr><td>         <a id="idp12027184" class="indexterm"></a>
+         <code class="literal"><code class="function">transaction_timestamp()</code></code>
+        </td><td><code class="type">timestamp with time zone</code></td><td>当前日期和时间（当前事务的开始）；见<a class="xref" href="functions-datetime.html#FUNCTIONS-DATETIME-CURRENT" title="9.9.4. 当前日期/时间">第 9.9.4 节</a>
+        </td><td> </td><td> </td></tr><tr><td>         <a id="idp12031152" class="indexterm"></a>
+         <code class="literal"><code class="function">to_timestamp(<code class="type">double precision</code>)</code></code>
+        </td><td><code class="type">timestamp with time zone</code></td><td>把 Unix 时间（从 1970-01-01 00:00:00+00 开始的秒）转换成 timestamp</td><td><code class="literal">to_timestamp(1284352323)</code></td><td><code class="literal">2010-09-13 04:32:03+00</code></td></tr></tbody></table></div></div><br class="table-break" /><p>    <a id="idp12035856" class="indexterm"></a>
+    除了这些函数以外，还支持 SQL 操作符<code class="literal">OVERLAPS</code>：
+</p><pre class="synopsis">(<em class="replaceable"><code>start1</code></em>, <em class="replaceable"><code>end1</code></em>) OVERLAPS (<em class="replaceable"><code>start2</code></em>, <em class="replaceable"><code>end2</code></em>)
+(<em class="replaceable"><code>start1</code></em>, <em class="replaceable"><code>length1</code></em>) OVERLAPS (<em class="replaceable"><code>start2</code></em>, <em class="replaceable"><code>length2</code></em>)</pre><p>
+    这个表达式在两个时间域（用它们的端点定义）重叠的时候得到真，当它们不重叠时得到假。端点可以用一对日期、时间或者时间戳来指定；或者是用一个后面跟着一个间隔的日期、时间或时间戳来指定。当一对值被提供时，起点或终点都可以被写在前面，<code class="literal">OVERLAPS</code>会自动地把较早的值作为起点。每一个时间段被认为是表示半开的间隔<em class="replaceable"><code>start</code></em> <code class="literal">&lt;=</code> <em class="replaceable"><code>time</code></em> <code class="literal">&lt;</code> <em class="replaceable"><code>end</code></em>，除非<em class="replaceable"><code>start</code></em>和<em class="replaceable"><code>end</code></em>相等，这种情况下它表示单个时间实例。例如这表示两个只有一个共同端点的时间段不重叠。
+   </p><pre class="screen">SELECT (DATE '2001-02-16', DATE '2001-12-21') OVERLAPS
+       (DATE '2001-10-30', DATE '2002-10-30');
+<em class="lineannotation"><span class="lineannotation">结果：</span></em><code class="computeroutput">true</code>
+SELECT (DATE '2001-02-16', INTERVAL '100 days') OVERLAPS
+       (DATE '2001-10-30', DATE '2002-10-30');
+<em class="lineannotation"><span class="lineannotation">结果：</span></em><code class="computeroutput">false</code>
+SELECT (DATE '2001-10-29', DATE '2001-10-30') OVERLAPS
+       (DATE '2001-10-30', DATE '2001-10-31');
+<em class="lineannotation"><span class="lineannotation">结果：</span></em><code class="computeroutput">false</code>
+SELECT (DATE '2001-10-30', DATE '2001-10-30') OVERLAPS
+       (DATE '2001-10-30', DATE '2001-10-31');
+<em class="lineannotation"><span class="lineannotation">结果：</span></em><code class="computeroutput">true</code></pre><p>   当把一个<code class="type">interval</code>值添加到<code class="type">timestamp with time zone</code>上（或从中减去）时， days 部分会按照指定的天数增加或减少<code class="type">timestamp with time zone</code>的日期。 对于横跨夏令时的变化（当会话的时区被设置为可识别DST的时区时），这意味着<code class="literal">interval '1 day'</code>并 不一定等于<code class="literal">interval '24 hours'</code>。例如，当会话的时区设置为<code class="literal">CST7CDT</code>时，<code class="literal">timestamp with time zone '2005-04-02 12:00-07' + interval '1 day' </code>的结果是<code class="literal">timestamp with time zone '2005-04-03 12:00-06'</code>，而将<code class="literal">interval '24 hours'</code>增加到相同的初始<code class="type">timestamp with time zone</code>的结果 则是<code class="literal">timestamp with time zone '2005-04-03 13:00-06'</code>， 因为<code class="literal">CST7CDT</code>时区在<code class="literal">2005-04-03 02:00</code>有一个夏令时变更。
+  </p><p>   注意<code class="function">age</code>返回的<code class="literal">月数</code>域可能有歧义，因为不同的月份有不同的天数。 <span class="productname">PostgreSQL</span>的方法是当计算部分月数时，采用两个日期中较早的月。例如：<code class="literal">age('2004-06-01', '2004-04-30')</code>使用4月份得到<code class="literal">1 mon 1 day</code>，而用5月分时会得到<code class="literal">1 mon 2 days</code>，因为5月有31天，而4月只有30天。
+  </p><p>   日期和时间戳的减法也可能会很复杂。执行减法的一种概念上很简单的方法是，使用
+   <code class="literal">EXTRACT(EPOCH FROM ...)</code>把每个值都转换成秒数，然后执行减法，
+   这样会得到两个值之间的<span class="emphasis"><em>秒</em></span>数。这种方法将会适应每个月中天数、
+   时区改变和夏令时调整。使用<span class="quote">“<span class="quote"><code class="literal">-</code></span>”</span>操作符的日期或时间
+   戳减法会返回值之间的天数（24小时）以及时/分/秒，也会做同样的调整。
+   <code class="function">age</code>函数会返回年、月、日以及时/分/秒，执行按域的减法，然后对
+   负值域进行调整。下面的查询展示了这些方法的不同。例子中的结果由
+   <code class="literal">timezone = 'US/Eastern'</code>产生，这使得两个使用的日期之间存在着夏令
+   时的变化：
+  </p><pre class="screen">SELECT EXTRACT(EPOCH FROM timestamptz '2013-07-01 12:00:00') -
+       EXTRACT(EPOCH FROM timestamptz '2013-03-01 12:00:00');
+<em class="lineannotation"><span class="lineannotation">Result: </span></em><code class="computeroutput">10537200</code>
+SELECT (EXTRACT(EPOCH FROM timestamptz '2013-07-01 12:00:00') -
+        EXTRACT(EPOCH FROM timestamptz '2013-03-01 12:00:00'))
+        / 60 / 60 / 24;
+<em class="lineannotation"><span class="lineannotation">Result: </span></em><code class="computeroutput">121.958333333333</code>
+SELECT timestamptz '2013-07-01 12:00:00' - timestamptz '2013-03-01 12:00:00';
+<em class="lineannotation"><span class="lineannotation">Result: </span></em><code class="computeroutput">121 days 23:00:00</code>
+SELECT age(timestamptz '2013-07-01 12:00:00', timestamptz '2013-03-01 12:00:00');
+<em class="lineannotation"><span class="lineannotation">Result: </span></em><code class="computeroutput">4 mons</code></pre><div class="sect2" id="FUNCTIONS-DATETIME-EXTRACT"><div class="titlepage"><div><div><h3 class="title">9.9.1. <code class="function">EXTRACT</code>, <code class="function">date_part</code></h3></div></div></div><a id="idp12076352" class="indexterm"></a><a id="idp12077040" class="indexterm"></a><pre class="synopsis">EXTRACT(<em class="replaceable"><code>field</code></em> FROM <em class="replaceable"><code>source</code></em>)</pre><p>    <code class="function">extract</code>函数从日期/时间值中抽取子域，例如年或者小时等。<em class="replaceable"><code>source</code></em>必须是一个类型 <code class="type">timestamp</code>、<code class="type">time</code>或<code class="type">interval</code>的值表达式（类型为<code class="type">date</code>的表达式将被造型为 <code class="type">timestamp</code>，并且因此也可以被同样使用）。<em class="replaceable"><code>field</code></em>是一个标识符或者字符串，它指定从源值中抽取的域。<code class="function">extract</code>函数返回类型为<code class="type">double precision</code>的值。 下列值是有效的域名字∶
+
+    
+    </p><div class="variablelist"><dl class="variablelist"><dt><span class="term"><code class="literal">century</code></span></dt><dd><p>        世纪
+       </p><pre class="screen">SELECT EXTRACT(CENTURY FROM TIMESTAMP '2000-12-16 12:21:13');
+<em class="lineannotation"><span class="lineannotation">结果：</span></em><code class="computeroutput">20</code>
+SELECT EXTRACT(CENTURY FROM TIMESTAMP '2001-02-16 20:38:40');
+<em class="lineannotation"><span class="lineannotation">结果：</span></em><code class="computeroutput">21</code></pre><p>        第一个世纪从 0001-01-01 00:00:00 AD 开始， 尽管那时候人们还不知道这是第一个世纪。这个定义适用于所有使用格里高利历法的国家。其中没有 0 世纪，我们直接从公元前 1 世纪到公元 1 世纪。
+        
+        如果你认为这个不合理，那么请把抱怨发给：罗马圣彼得教堂，梵蒂冈，教皇收。
+       </p></dd><dt><span class="term"><code class="literal">day</code></span></dt><dd><p>        对于<code class="type">timestamp</code>值，是（月份）里的日域（1-31）；对于<code class="type">interval</code>值，是日数
+       </p><pre class="screen">SELECT EXTRACT(DAY FROM TIMESTAMP '2001-02-16 20:38:40');
+<em class="lineannotation"><span class="lineannotation">结果：</span></em><code class="computeroutput">16</code>
+
+SELECT EXTRACT(DAY FROM INTERVAL '40 days 1 minute');
+<em class="lineannotation"><span class="lineannotation">结果：</span></em><code class="computeroutput">40</code></pre></dd><dt><span class="term"><code class="literal">decade</code></span></dt><dd><p>        年份域除以10
+       </p><pre class="screen">SELECT EXTRACT(DECADE FROM TIMESTAMP '2001-02-16 20:38:40');
+<em class="lineannotation"><span class="lineannotation">结果：</span></em><code class="computeroutput">200</code></pre></dd><dt><span class="term"><code class="literal">dow</code></span></dt><dd><p>        一周中的日，从周日（<code class="literal">0</code>）到周六（<code class="literal">6</code>）
+       </p><pre class="screen">SELECT EXTRACT(DOW FROM TIMESTAMP '2001-02-16 20:38:40');
+<em class="lineannotation"><span class="lineannotation">结果：</span></em><code class="computeroutput">5</code></pre><p>        请注意，<code class="function">extract</code>的一周中的日和<code class="function">to_char(..., 'D')</code>函数不同。
+       </p></dd><dt><span class="term"><code class="literal">doy</code></span></dt><dd><p>        一年的第几天（1 -365/366）
+       </p><pre class="screen">SELECT EXTRACT(DOY FROM TIMESTAMP '2001-02-16 20:38:40');
+<em class="lineannotation"><span class="lineannotation">结果：</span></em><code class="computeroutput">47</code></pre></dd><dt><span class="term"><code class="literal">epoch</code></span></dt><dd><p>        对于<code class="type">timestamp with time zone</code>值， 是自 1970-01-01 00:00:00 UTC 以来的秒数（结果可能是负数）； 对于<code class="type">date</code> and <code class="type">timestamp</code>值，是自本地时间 1970-01-01 00:00:00 以来的描述；对于<code class="type">interval</code>值，它是时间间隔的总秒数。
+       </p><pre class="screen">SELECT EXTRACT(EPOCH FROM TIMESTAMP WITH TIME ZONE '2001-02-16 20:38:40.12-08');
+<em class="lineannotation"><span class="lineannotation">结果：</span></em><code class="computeroutput">982384720.12</code>
+
+SELECT EXTRACT(EPOCH FROM INTERVAL '5 days 3 hours');
+<em class="lineannotation"><span class="lineannotation">结果：</span></em><code class="computeroutput">442800</code></pre><p>        下面是把纪元值转换回时间戳的方法：
+       </p><pre class="screen">SELECT to_timestamp(982384720.12);
+<em class="lineannotation"><span class="lineannotation">结果: </span></em><code class="computeroutput">2001-02-17 04:38:40.12+00</code></pre></dd><dt><span class="term"><code class="literal">hour</code></span></dt><dd><p>        小时域（0 - 23）
+       </p><pre class="screen">SELECT EXTRACT(HOUR FROM TIMESTAMP '2001-02-16 20:38:40');
+<em class="lineannotation"><span class="lineannotation">结果：</span></em><code class="computeroutput">20</code></pre></dd><dt><span class="term"><code class="literal">isodow</code></span></dt><dd><p>        一周中的日，从周一（<code class="literal">1</code>）到周日（<code class="literal">7</code>）
+       </p><pre class="screen">SELECT EXTRACT(ISODOW FROM TIMESTAMP '2001-02-18 20:38:40');
+<em class="lineannotation"><span class="lineannotation">结果：</span></em><code class="computeroutput">7</code></pre><p>        除了周日，这和<code class="literal">dow</code>相同。这符合<acronym class="acronym">ISO</acronym> 8601 中一周中的日的编号。
+       </p></dd><dt><span class="term"><code class="literal">isoyear</code></span></dt><dd><p>        日期所落在的<acronym class="acronym">ISO</acronym> 8601 周编号的年（不适用于间隔）
+       </p><pre class="screen">SELECT EXTRACT(ISOYEAR FROM DATE '2006-01-01');
+<em class="lineannotation"><span class="lineannotation">结果：</span></em><code class="computeroutput">2005</code>
+SELECT EXTRACT(ISOYEAR FROM DATE '2006-01-02');
+<em class="lineannotation"><span class="lineannotation">结果：</span></em><code class="computeroutput">2006</code></pre><p>        每一个<acronym class="acronym">ISO</acronym> 8601 周编号的年都开始于包含1月4日的那一周的周一，在早的1月或迟的12月中<acronym class="acronym">ISO</acronym>年可能和格里高利年不同。更多信息见<code class="literal">week</code>域。
+       </p><p>        这个域不能用于 PostgreSQL 8.3之前的版本。
+       </p></dd><dt><span class="term"><code class="literal">microseconds</code></span></dt><dd><p>        秒域，包括小数部分，乘以 1,000,000。请注意它包括全部的秒
+       </p><pre class="screen">SELECT EXTRACT(MICROSECONDS FROM TIME '17:12:28.5');
+<em class="lineannotation"><span class="lineannotation">结果：</span></em><code class="computeroutput">28500000</code></pre></dd><dt><span class="term"><code class="literal">millennium</code></span></dt><dd><p>        千年
+       </p><pre class="screen">SELECT EXTRACT(MILLENNIUM FROM TIMESTAMP '2001-02-16 20:38:40');
+<em class="lineannotation"><span class="lineannotation">结果：</span></em><code class="computeroutput">3</code></pre><p>        19xx的年份在第二个千年里。第三个千年从 2001 年 1 月 1 日开始。
+       </p></dd><dt><span class="term"><code class="literal">milliseconds</code></span></dt><dd><p>        秒域，包括小数部分，乘以 1000。请注意它包括完整的秒。
+       </p><pre class="screen">SELECT EXTRACT(MILLISECONDS FROM TIME '17:12:28.5');
+<em class="lineannotation"><span class="lineannotation">结果：</span></em><code class="computeroutput">28500</code></pre></dd><dt><span class="term"><code class="literal">minute</code></span></dt><dd><p>        分钟域（0 - 59）
+       </p><pre class="screen">SELECT EXTRACT(MINUTE FROM TIMESTAMP '2001-02-16 20:38:40');
+<em class="lineannotation"><span class="lineannotation">结果：</span></em><code class="computeroutput">38</code></pre></dd><dt><span class="term"><code class="literal">month</code></span></dt><dd><p>        对于<code class="type">timestamp</code>值，它是一年里的月份数（1 - 12）； 对于<code class="type">interval</code>值，它是月的数目，然后对 12 取模（0 - 11）
+       </p><pre class="screen">SELECT EXTRACT(MONTH FROM TIMESTAMP '2001-02-16 20:38:40');
+<em class="lineannotation"><span class="lineannotation">结果：</span></em><code class="computeroutput">2</code>
+
+SELECT EXTRACT(MONTH FROM INTERVAL '2 years 3 months');
+<em class="lineannotation"><span class="lineannotation">结果：</span></em><code class="computeroutput">3</code>
+
+SELECT EXTRACT(MONTH FROM INTERVAL '2 years 13 months');
+<em class="lineannotation"><span class="lineannotation">结果：</span></em><code class="computeroutput">1</code></pre></dd><dt><span class="term"><code class="literal">quarter</code></span></dt><dd><p>        该天所在的该年的季度（1 - 4）
+       </p><pre class="screen">SELECT EXTRACT(QUARTER FROM TIMESTAMP '2001-02-16 20:38:40');
+<em class="lineannotation"><span class="lineannotation">结果：</span></em><code class="computeroutput">1</code></pre></dd><dt><span class="term"><code class="literal">second</code></span></dt><dd><p>        秒域，包括小数部分（0 - 59<a href="#ftn.idp12149472" class="footnote"><sup class="footnote" id="idp12149472">[7]</sup></a>）
+       </p><pre class="screen">SELECT EXTRACT(SECOND FROM TIMESTAMP '2001-02-16 20:38:40');
+<em class="lineannotation"><span class="lineannotation">结果：</span></em><code class="computeroutput">40</code>
+
+SELECT EXTRACT(SECOND FROM TIME '17:12:28.5');
+<em class="lineannotation"><span class="lineannotation">结果：</span></em><code class="computeroutput">28.5</code></pre></dd><dt><span class="term"><code class="literal">timezone</code></span></dt><dd><p>        与 UTC 的时区偏移，以秒记。正数对应 UTC 东边的时区，负数对应 UTC 西边的时区（从技术上来看，<span class="productname">PostgreSQL</span>使用<acronym class="acronym">UT1</acronym>，因为闰秒没有被处理）。
+       </p></dd><dt><span class="term"><code class="literal">timezone_hour</code></span></dt><dd><p>        时区偏移的小时部分。
+       </p></dd><dt><span class="term"><code class="literal">timezone_minute</code></span></dt><dd><p>        时区偏移的分钟部分。
+       </p></dd><dt><span class="term"><code class="literal">week</code></span></dt><dd><p>        该天在所在的<acronym class="acronym">ISO</acronym> 8601 周编号的年份里是第几周。根据定义， 一年的第一周包含该年的 1月 4 日并且 ISO 周从星期一开始。换句话说，一年的第一个星期四在第一周。
+       </p><p>        在 ISO 周编号系统中，早的 1 月的日期可能位于前一年的第五十二或者第五十三周，而迟的 12 月的日期可能位于下一年的第一周。例如， <code class="literal">2005-01-01</code>位于 2004 年的第五十三周，并且<code class="literal">2006-01-01</code>位于 2005 年的第五十二周，而<code class="literal">2012-12-31</code>位于 2013 年的第一周。我们推荐把<code class="literal">isoyear</code>域和<code class="literal">week</code>一起使用来得到一致的结果。
+       </p><pre class="screen">SELECT EXTRACT(WEEK FROM TIMESTAMP '2001-02-16 20:38:40');
+<em class="lineannotation"><span class="lineannotation">结果：</span></em><code class="computeroutput">7</code></pre></dd><dt><span class="term"><code class="literal">year</code></span></dt><dd><p>        年份域。要记住这里没有<code class="literal">0 AD</code>，所以从<code class="literal">AD</code>年里抽取<code class="literal">BC</code>年应该小心处理。
+       </p><pre class="screen">SELECT EXTRACT(YEAR FROM TIMESTAMP '2001-02-16 20:38:40');
+<em class="lineannotation"><span class="lineannotation">结果：</span></em><code class="computeroutput">2001</code></pre></dd></dl></div><p>
+   </p><div class="note"><h3 class="title">注意</h3><p>    当输入值是+/-无穷时，<code class="function">extract</code>为单调递增域(<code class="literal">epoch</code>、
+     <code class="literal">julian</code>、<code class="literal">year</code>、<code class="literal">isoyear</code>、
+     <code class="literal">decade</code>、<code class="literal">century</code>和<code class="literal">millennium</code>)
+     返回+/-无穷。对其他域返回NULL。<span class="productname">PostgreSQL</span> 9.6
+     之前的版本对所有情况下的无限输入都返回零。
+   </p></div><p>
+    <code class="function">extract</code>函数主要的用途是做计算性处理。
+    对于用于显示的日期/时间值格式化，参阅<a class="xref" href="functions-formatting.html" title="9.8. 数据类型格式化函数">第 9.8 节</a>。
+   </p><p>    在传统的<span class="productname">Ingres</span>上建模的<code class="function">date_part</code>函数等价于<acronym class="acronym">SQL</acronym>标准函数<code class="function">extract</code>：
+</p><pre class="synopsis">date_part('<em class="replaceable"><code>field</code></em>', <em class="replaceable"><code>source</code></em>)</pre><p>
+    请注意这里的<em class="replaceable"><code>field</code></em>参数必须是一个串值，而不是一个名字。有效的<code class="function">date_part</code>域名 和<code class="function">extract</code>相同。
+   </p><pre class="screen">SELECT date_part('day', TIMESTAMP '2001-02-16 20:38:40');
+<em class="lineannotation"><span class="lineannotation">结果：</span></em><code class="computeroutput">16</code>
+
+SELECT date_part('hour', INTERVAL '4 hours 3 minutes');
+<em class="lineannotation"><span class="lineannotation">结果：</span></em><code class="computeroutput">4</code></pre></div><div class="sect2" id="FUNCTIONS-DATETIME-TRUNC"><div class="titlepage"><div><div><h3 class="title">9.9.2. <code class="function">date_trunc</code></h3></div></div></div><a id="idp12189808" class="indexterm"></a><p>    <code class="function">date_trunc</code>函数在概念上和用于数字的<code class="function">trunc</code>函数类似。
+   </p><pre class="synopsis">date_trunc('<em class="replaceable"><code>field</code></em>', <em class="replaceable"><code>source</code></em>)</pre><p>
+    <em class="replaceable"><code>source</code></em>是类型<code class="type">timestamp</code>或<code class="type">interval</code>的值表达式（类型<code class="type">date</code>和 <code class="type">time</code>的值都分别被自动转换成<code class="type">timestamp</code>或者<code class="type">interval</code>）。<em class="replaceable"><code>field</code></em>选择对输入值选用什么样的精度进行截断。返回的值是<code class="type">timestamp</code>类型或者所有小于选定的 精度的域都设置为零（或者一，对于日期和月份）的<code class="type">interval</code>。
+   </p><p>    <em class="replaceable"><code>field</code></em>的有效值是∶
+    </p><table border="0" summary="Simple list" class="simplelist"><tr><td><code class="literal">microseconds</code></td></tr><tr><td><code class="literal">milliseconds</code></td></tr><tr><td><code class="literal">second</code></td></tr><tr><td><code class="literal">minute</code></td></tr><tr><td><code class="literal">hour</code></td></tr><tr><td><code class="literal">day</code></td></tr><tr><td><code class="literal">week</code></td></tr><tr><td><code class="literal">month</code></td></tr><tr><td><code class="literal">quarter</code></td></tr><tr><td><code class="literal">year</code></td></tr><tr><td><code class="literal">decade</code></td></tr><tr><td><code class="literal">century</code></td></tr><tr><td><code class="literal">millennium</code></td></tr></table><p>
+   </p><p>    例子：
+</p><pre class="screen">SELECT date_trunc('hour', TIMESTAMP '2001-02-16 20:38:40');
+<em class="lineannotation"><span class="lineannotation">结果：</span></em><code class="computeroutput">2001-02-16 20:00:00</code>
+
+SELECT date_trunc('year', TIMESTAMP '2001-02-16 20:38:40');
+<em class="lineannotation"><span class="lineannotation">结果：</span></em><code class="computeroutput">2001-01-01 00:00:00</code></pre><p>
+   </p></div><div class="sect2" id="FUNCTIONS-DATETIME-ZONECONVERT"><div class="titlepage"><div><div><h3 class="title">9.9.3. <code class="literal">AT TIME ZONE</code></h3></div></div></div><a id="idp12212816" class="indexterm"></a><a id="idp12213792" class="indexterm"></a><p>    <code class="literal">AT TIME ZONE</code>结构允许把时间戳转换成不同的时区。<a class="xref" href="functions-datetime.html#FUNCTIONS-DATETIME-ZONECONVERT-TABLE" title="表 9.31. AT TIME ZONE Variants">表 9.31</a>展示了其变体。
+   </p><div class="table" id="FUNCTIONS-DATETIME-ZONECONVERT-TABLE"><p class="title"><strong>表 9.31. <code class="literal">AT TIME ZONE</code> Variants</strong></p><div class="table-contents"><table class="table" summary="AT TIME ZONE Variants" border="1"><colgroup><col /><col /><col /></colgroup><thead><tr><th>表达式</th><th>返回类型</th><th>描述</th></tr></thead><tbody><tr><td>         <code class="literal"><code class="type">timestamp without time zone</code> AT TIME ZONE <em class="replaceable"><code>zone</code></em></code>
+        </td><td><code class="type">timestamp with time zone</code></td><td>把给定的<span class="emphasis"><em>不带时区</em></span>的时间戳当作位于指定时区的时间对待</td></tr><tr><td>         <code class="literal"><code class="type">timestamp with time zone</code> AT TIME ZONE <em class="replaceable"><code>zone</code></em></code>
+        </td><td><code class="type">timestamp without time zone</code></td><td>把给定的<span class="emphasis"><em>带时区</em></span>的时间戳转换到新的时区，不带时区指定</td></tr><tr><td>         <code class="literal"><code class="type">time with time zone</code> AT TIME ZONE <em class="replaceable"><code>zone</code></em></code>
+        </td><td><code class="type">time with time zone</code></td><td>把给定的<span class="emphasis"><em>带时区</em></span>的时间转换到新时区</td></tr></tbody></table></div></div><br class="table-break" /><p>    在这些表达式里，我们需要的时区<em class="replaceable"><code>zone</code></em>可以指定为文本串（例如，<code class="literal">'PST'</code>）或者一个间隔 （例如，<code class="literal">INTERVAL '-08:00'</code>）。 在文本情况下，可用的时区名字可以用<a class="xref" href="datatype-datetime.html#DATATYPE-TIMEZONES" title="8.5.3.  时区">第 8.5.3 节</a>中描述的任何方式指定。
+   </p><p>    例子（假设本地时区是<code class="literal">PST8PDT</code>）：
+</p><pre class="screen">SELECT TIMESTAMP '2001-02-16 20:38:40' AT TIME ZONE 'MST';
+<em class="lineannotation"><span class="lineannotation">结果：</span></em><code class="computeroutput">2001-02-16 19:38:40-08</code>
+
+SELECT TIMESTAMP WITH TIME ZONE '2001-02-16 20:38:40-05' AT TIME ZONE 'MST';
+<em class="lineannotation"><span class="lineannotation">结果：</span></em><code class="computeroutput">2001-02-16 18:38:40</code></pre><p>
+    第一个例子接受一个无时区的时间戳然后把它解释成 MST 时间（UTC-7），然后这个时间转换为 PST（UTC-8）来显示。 第二个例子接受一个指定为 EST（UTC-5）的时间戳，然后把它 转换成 MST（UTC-7）的当地时间。
+   </p><p>    函数<code class="literal"><code class="function">timezone</code>(<em class="replaceable"><code>zone</code></em>, <em class="replaceable"><code>timestamp</code></em>)</code>等效于 SQL 兼容的结构<code class="literal"><em class="replaceable"><code>timestamp</code></em> AT TIME ZONE <em class="replaceable"><code>zone</code></em></code>。
+   </p></div><div class="sect2" id="FUNCTIONS-DATETIME-CURRENT"><div class="titlepage"><div><div><h3 class="title">9.9.4. 当前日期/时间</h3></div></div></div><a id="idp12239792" class="indexterm"></a><a id="idp12240768" class="indexterm"></a><p>    <span class="productname">PostgreSQL</span>提供了许多返回当前日期和时间的函数。这些 SQL 标准的函数全部都按照当前事务的开始时刻返回值：
+</p><pre class="synopsis">CURRENT_DATE
+CURRENT_TIME
+CURRENT_TIMESTAMP
+CURRENT_TIME(<em class="replaceable"><code>precision</code></em>)
+CURRENT_TIMESTAMP(<em class="replaceable"><code>precision</code></em>)
+LOCALTIME
+LOCALTIMESTAMP
+LOCALTIME(<em class="replaceable"><code>precision</code></em>)
+LOCALTIMESTAMP(<em class="replaceable"><code>precision</code></em>)</pre><p>
+    </p><p>     <code class="function">CURRENT_TIME</code>和<code class="function">CURRENT_TIMESTAMP</code>传递带有时区的值；<code class="function">LOCALTIME</code>和<code class="function">LOCALTIMESTAMP</code>传递的值不带时区。
+    </p><p>     <code class="function">CURRENT_TIME</code>、<code class="function">CURRENT_TIMESTAMP</code>、<code class="function">LOCALTIME</code>和 <code class="function">LOCALTIMESTAMP</code>可以有选择地接受一个精度参数， 该精度导致结果的秒域被园整为指定小数位。如果没有精度参数，结果将被给予所能得到的全部精度。
+    </p><p>    一些例子：
+</p><pre class="screen">SELECT CURRENT_TIME;
+<em class="lineannotation"><span class="lineannotation">结果：</span></em><code class="computeroutput">14:39:53.662522-05</code>
+
+SELECT CURRENT_DATE;
+<em class="lineannotation"><span class="lineannotation">结果：</span></em><code class="computeroutput">2001-12-23</code>
+
+SELECT CURRENT_TIMESTAMP;
+<em class="lineannotation"><span class="lineannotation">结果：</span></em><code class="computeroutput">2001-12-23 14:39:53.662522-05</code>
+
+SELECT CURRENT_TIMESTAMP(2);
+<em class="lineannotation"><span class="lineannotation">结果：</span></em><code class="computeroutput">2001-12-23 14:39:53.66-05</code>
+
+SELECT LOCALTIMESTAMP;
+<em class="lineannotation"><span class="lineannotation">结果：</span></em><code class="computeroutput">2001-12-23 14:39:53.662522</code></pre><p>
+   </p><p>    因为这些函数全部都按照当前事务的开始时刻返回结果，所以它们的值在事务运行的整个期间内都不改变。 我们认为这是一个特性：目的是为了允许一个事务在<span class="quote">“<span class="quote">当前</span>”</span>时间上有一致的概念， 这样在同一个事务里的多个修改可以保持同样的时间戳。
+   </p><div class="note"><h3 class="title">注意</h3><p>     许多其它数据库系统可能会更频繁地推进这些值。
+    </p></div><p>    <span class="productname">PostgreSQL</span>同样也提供了返回当前语句开始时间的函数， 它们会返回函数被调用时的真实当前时间。这些非 SQL 标准的函数列表如下：
+</p><pre class="synopsis">transaction_timestamp()
+statement_timestamp()
+clock_timestamp()
+timeofday()
+now()</pre><p>
+   </p><p>    <code class="function">transaction_timestamp()</code>等价于<code class="function">CURRENT_TIMESTAMP</code>，但是其命名清楚地反映了它的返回值。<code class="function">statement_timestamp()</code>返回当前语句的开始时刻（更准确的说是收到 客户端最后一条命令的时间）。<code class="function">statement_timestamp()</code>和<code class="function">transaction_timestamp()</code>在一个事务的第一条命令期间返回值相同，但是在随后的命令中却不一定相同。 <code class="function">clock_timestamp()</code>返回真正的当前时间，因此它的值甚至在同一条 SQL 命令中都会变化。<code class="function">timeofday()</code>是一个有历史原因的<span class="productname">PostgreSQL</span>函数。和<code class="function">clock_timestamp()</code>相似，<code class="function">timeofday()</code>也返回真实的当前时间，但是它的结果是一个格式化的<code class="type">text</code>串，而不是<code class="type">timestamp with time zone</code>值。<code class="function">now()</code>是<span class="productname">PostgreSQL</span>的一个传统，等效于<code class="function">transaction_timestamp()</code>。
+   </p><p>    所有日期/时间类型还接受特殊的文字值<code class="literal">now</code>，用于指定当前的日期和时间（重申，被解释为当前事务的开始时刻）。 因此，下面三个都返回相同的结果：
+</p><pre class="programlisting">SELECT CURRENT_TIMESTAMP;
+SELECT now();
+SELECT TIMESTAMP 'now';  -- 对于和 DEFAULT 一起使用是不正确的</pre><p>
+   </p><div class="tip"><h3 class="title">提示</h3><p>      在创建表期间指定一个<code class="literal">DEFAULT</code>子句时，你不会希望使用第三种形式。系统将在分析这个常量的时候把<code class="literal">now</code>转换为一个<code class="type">timestamp</code>， 这样需要默认值时就会得到创建表的时间！而前两种形式要到实际使用缺省值的时候才被计算， 因为它们是函数调用。因此它们可以给出每次插入行的时刻。
+     </p></div></div><div class="sect2" id="FUNCTIONS-DATETIME-DELAY"><div class="titlepage"><div><div><h3 class="title">9.9.5. 延时执行</h3></div></div></div><a id="idp12277984" class="indexterm"></a><a id="idp12278672" class="indexterm"></a><a id="idp12279360" class="indexterm"></a><a id="idp12280048" class="indexterm"></a><a id="idp12280736" class="indexterm"></a><p>    下面的这些函数可以用于让服务器进程延时执行：
+</p><pre class="synopsis">pg_sleep(<em class="replaceable"><code>seconds</code></em>)
+pg_sleep_for(<code class="type">interval</code>)
+pg_sleep_until(<code class="type">timestamp with time zone</code>)</pre><p>
+
+    <code class="function">pg_sleep</code>让当前的会话进程休眠<em class="replaceable"><code>seconds</code></em>
+    秒以后再执行。<em class="replaceable"><code>seconds</code></em>是一个<code class="type">double precision</code>
+    类型的值，所以可以指定带小数的秒数。<code class="function">pg_sleep_for</code>是针对用
+    <code class="type">interval</code>指定的较长休眠时间的函数。<code class="function">pg_sleep_until</code>
+    则可以用来休眠到一个指定的时刻唤醒。例如：
+
+</p><pre class="programlisting">SELECT pg_sleep(1.5);
+SELECT pg_sleep_for('5 minutes');
+SELECT pg_sleep_until('tomorrow 03:00');</pre><p>
+   </p><div class="note"><h3 class="title">注意</h3><p>      有效的休眠时间间隔精度是平台相关的，通常 0.01 秒是通用值。休眠延迟将至少持续指
+      定的时长， 也有可能由于服务器负荷而比指定的时间长。特别地，
+      <code class="function">pg_sleep_until</code>并不保证能刚好在指定的时刻被唤醒，但它不会
+      在比指定时刻早的时候醒来。
+     </p></div><div class="warning"><h3 class="title">警告</h3><p>      请确保在调用<code class="function">pg_sleep</code>或者其变体时，你的会话没有持有不必要
+      的锁。否则其它会话可能必须等待你的休眠会话，因而减慢整个系统速度。
+     </p></div></div><div class="footnotes"><br /><hr style="width:100; text-align:left;margin-left: 0" /><div id="ftn.idp12149472" class="footnote"><p><a href="#idp12149472" class="simpara"><sup class="simpara">[7] </sup></a>如果操作系统实现了闰秒，则为60</p></div></div></div><div class="navfooter"><hr /><table width="100%" summary="Navigation footer"><tr><td width="40%" align="left"><a accesskey="p" href="functions-formatting.html">上一页</a> </td><td width="20%" align="center"><a accesskey="u" href="functions.html">上一级</a></td><td width="40%" align="right"> <a accesskey="n" href="functions-enum.html">下一页</a></td></tr><tr><td width="40%" align="left" valign="top">9.8. 数据类型格式化函数 </td><td width="20%" align="center"><a accesskey="h" href="index.html">起始页</a></td><td width="40%" align="right" valign="top"> 9.10. 枚举支持函数</td></tr></table></div></body></html>

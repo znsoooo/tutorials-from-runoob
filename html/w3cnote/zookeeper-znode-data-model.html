@@ -1,0 +1,474 @@
+<!Doctype html>
+<html>
+<head>
+	<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+	<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+	<title>5.0 ZooKeeper 数据模型 znode 结构详解 | 菜鸟教程</title>
+
+  <meta name='robots' content='max-image-preview:large' />
+<link rel='stylesheet' id='classic-theme-styles-css' href='http://www.runoob.com/wp-includes/css/classic-themes.min.css?ver=6.2' type='text/css' media='all' />
+<link rel="canonical" href="http://www.runoob.com/w3cnote/zookeeper-znode-data-model.html" />
+<meta name="keywords" content="5.0 ZooKeeper 数据模型 znode 结构详解">
+<meta name="description" content="数据模型 在 zookeeper 中，可以说 zookeeper 中的所有存储的数据是由 znode 组成的，节点也称为 znode，并以 key/value 形式存储数据。 整体结构类似于 linux 文件系统的模式以树形结构存储。其中根路径以 / 开头。     进入 zookeeper 安装的 bin 目录，通过sh  zkCli.sh打开命令行终端，执行 &#039;ls /&#039; 命令显示：  $ ls / $ ls /..">
+		
+	<link rel="shortcut icon" href="https://static.runoob.com/images/favicon.ico">
+	<link rel="stylesheet" href="/wp-content/themes/runoob/style.css?v=1.170" type="text/css" media="all" />	
+	<link rel="stylesheet" href="https://cdn.staticfile.org/font-awesome/4.7.0/css/font-awesome.min.css" media="all" />	
+  <!--[if gte IE 9]><!-->
+  <script src="https://cdn.staticfile.org/jquery/2.0.3/jquery.min.js"></script>
+  <!--<![endif]-->
+  <!--[if lt IE 9]>
+     <script src="https://cdn.staticfile.org/jquery/1.9.1/jquery.min.js"></script>
+     <script src="https://cdn.staticfile.org/html5shiv/r29/html5.min.js"></script>
+  <![endif]-->
+  <link rel="apple-touch-icon" href="https://static.runoob.com/images/icon/mobile-icon.png"/>
+  <meta name="apple-mobile-web-app-title" content="菜鸟教程">
+</head>
+<body>
+
+<!--  头部 -->
+<div class="container logo-search">
+
+  <div class="col search row-search-mobile">
+    <form action="index.php">
+      <input class="placeholder" placeholder="搜索……" name="s" autocomplete="off">
+      
+    </form>
+  </div>
+
+  <div class="row">
+    <div class="col logo">
+      <h1><a href="/">菜鸟教程 -- 学的不仅是技术，更是梦想！</a></h1>
+    </div>
+        <div class="col right-list"> 
+    <button class="btn btn-responsive-nav btn-inverse" data-toggle="collapse" data-target=".nav-main-collapse" id="pull" style=""> <i class="fa fa-navicon"></i> </button>
+    </div>
+        
+    <div class="col search search-desktop last">
+      <div class="search-input" >
+      <form action="//www.runoob.com/" target="_blank">
+        <input class="placeholder" id="s" name="s" placeholder="搜索……"  autocomplete="off" style="height: 44px;">
+      </form>
+      
+      </div>
+    </div>
+  </div>
+</div>
+
+
+
+<!-- 导航栏 -->
+<div class="container navigation">
+    <div class="row">
+        <div class="col nav">
+            
+
+                        <ul class="pc-nav" id="note-nav">
+                <li><a href="//www.runoob.com/">首页</a></li>
+                <li><a href="/w3cnote">笔记首页</a></li>
+                <li><a href="/w3cnote/android-tutorial-intro.html" title="Android 基础入门教程">Android</a></li>
+                <li><a href="/w3cnote/es6-tutorial.html" title="ES6 教程">ES6 教程</a></li>
+                <li><a href="/w3cnote/ten-sorting-algorithm.html" title="排序算法">排序算法</a></li>
+                <li><a href="/w3cnote/hadoop-tutorial.html" title="Hadoop 教程">Hadoop</a></li>
+                <li><a href="/w3cnote/zookeeper-tutorial.html" title="Zookeeper 教程">Zookeeper</a></li>
+                <li><a href="/w3cnote/verilog-tutorial.html" title="Verilog 教程">Verilog</a></li>
+                <li><a href="/w3cnote_genre/code" title="编程技术">编程技术</a></li> 
+                <li><a href="/w3cnote_genre/coderlife" title="程序员人生">程序员人生</a></li>
+                
+                <!--<li><a href="javascript:;" class="runoob-pop">登录</a></li>
+                
+                
+                        <li>
+                <a style="font-weight:bold;" href="https://www.runoob.com/linux/linux-tutorial.html#yunserver" target="_blank" onclick="_hmt.push(['_trackEvent', 'aliyun', 'click', 'aliyun'])" title="kkb">云服务器</a>
+                </li>
+                <li><a href="http://gk.link/a/104mQ" target="_blank" style="font-weight: bold;"onclick="_hmt.push(['_trackEvent', '极客时间', 'click', 'jike'])" title="我的圈子">极客时间</a></li>
+            
+                
+                <li><a target="_blank" href="/shoppinglist" rel="nofollow">知识店铺</a></li> 
+        -->
+            </ul>
+                        
+              
+            <ul class="mobile-nav">
+                <li><a href="/w3cnote">首页</a></li>
+                <li><a href="/w3cnote_genre/android" target="_blank" title="Android 基础入门教程">Android</a></li>
+                <li><a href="/w3cnote/es6-tutorial.html" target="_blank" title="ES6 教程">ES6</a></li>
+                <li><a href="/w3cnote_genre/joke" target="_blank" title="程序员笑话">逗乐</a></li>
+                
+                <a href="javascript:void(0)" class="search-reveal">Search</a> 
+            </ul>
+            
+        </div>
+    </div>
+</div>
+
+
+<!--  内容  -->
+<div class="container main">
+	<div class="row">
+
+		<!--  Android 基础入门教程 start  -->
+	<div class="col left-column" style="display:none;">
+		<div class="tab">Zookeeper 教程</div>
+		<div class="sidebar-box gallery-list">
+			<div class="design" id="leftcolumn">  
+			</div> 
+		</div> 
+	</div>
+	<!--  Android 基础入门教程 end  -->
+		<div class="col middle-column big-middle-column">
+	 			<div class="article">
+			<div class="article-heading">
+				<h2>5.0 ZooKeeper 数据模型 znode 结构详解</h2>				<h3><em>分类</em> <a href="/w3cnote_genre/zookeeper" title="Zookeeper 教程" >Zookeeper 教程</a> </h3>
+			</div>
+			<div class="article-body note-body">
+				<div class="article-intro">
+					<h3>数据模型</h3><p>
+在 zookeeper 中，可以说 zookeeper 中的所有存储的数据是由 znode 组成的，节点也称为 znode，并以 key/value 形式存储数据。</p>
+<p>整体结构类似于 linux 文件系统的模式以树形结构存储。其中根路径以 <span class="marked">/</span> 开头。</p>
+    进入 zookeeper 安装的 bin 目录，通过sh  zkCli.sh打开命令行终端，执行 "ls /" 命令显示：
+<pre>
+$ ls /
+$ ls /zookeeper
+$ ls /zookeeper/quota
+</pre>
+
+<p><img decoding="async" src="https://www.runoob.com/wp-content/uploads/2020/09/data-model-01.png"></p>
+<p>
+我们直观的看到此时存储的数据在根目录下存在 runoob 和 zookeeper 两个节点，zookeeper 节点下存在 quota 这个节点。</p>
+
+<p><img decoding="async" src="https://www.runoob.com/wp-content/uploads/2020/09/data-model-02.png"></p>
+<p>runoob 节点是在我们之前章节创建，并且通过 java 客户端设置值 0，现在我们在命令行终端执行 <span class="marked">get /runoob</span> 显示此节点的属性。</p>
+<pre>$ get /runoob</pre>
+
+<p><img decoding="async" src="https://www.runoob.com/wp-content/uploads/2020/09/data-model-03.png"></p>
+<p>其中第一行显示的 0 是该节点的 value 值。</p>
+
+<h3>Znode 的状态属性</h3>
+<table class="reference"><thead><tr><th>cZxid</th><th>创建节点时的事务ID</th></tr></thead><tbody><tr><td>ctime</td><td>创建节点时的时间</td></tr><tr><td>mZxid</td><td>最后修改节点时的事务ID</td></tr><tr><td>mtime</td><td>最后修改节点时的时间</td></tr><tr><td>pZxid</td><td>表示该节点的子节点列表最后一次修改的事务ID，添加子节点或删除子节点就会影响子节点列表，但是修改子节点的数据内容则不影响该ID<strong>（注意，只有子节点列表变更了才会变更pzxid，子节点内容变更不会影响pzxid）</strong></td></tr><tr><td>cversion</td><td>子节点版本号，子节点每次修改版本号加1</td></tr><tr><td>dataversion</td><td>数据版本号，数据每次修改该版本号加1</td></tr><tr><td>aclversion</td><td>权限版本号，权限每次修改该版本号加1</td></tr><tr><td>ephemeralOwner</td><td>创建该临时节点的会话的sessionID。<strong>（*</strong>*如果该节点是持久节点，那么这个属性值为0）**</td></tr><tr><td>dataLength</td><td>该节点的数据长度</td></tr><tr><td>numChildren</td><td>该节点拥有子节点的数量<strong>（只统计直接子节点的数量）</strong></td></tr></tbody></table>
+<p>了解上面状态属性值，我们对 <strong>/runoob</strong> 节点做一次修改，执行命令 <span class="marked">set /runoob 1</span> ，如下图所示:</p>
+<pre>$ set /runoob 1</pre>
+<p><img decoding="async" src="https://www.runoob.com/wp-content/uploads/2020/09/data-model-04.png"></p>
+<p>对比上面结果，可以看到 mZxid、mtime、dataVersion 都发生了变化。</p>
+<p>在 <strong>/runoob</strong> 节点下，我们再添加一子节点，执行：</p>
+<pre>$ create -e  /runoob/child  0
+$ get /runoob</pre>
+<p><strong>提示：</strong>更多命令使用后面章节会详解介绍。</p>
+<p>执行完终端命令行显示:</p>
+<p><img decoding="async" src="https://www.runoob.com/wp-content/uploads/2020/09/data-model-05.png"></p>
+ 
+<p>可见 <strong>/runoob</strong> 节点的 pZxid、cversion、numChildren 都发生了相应的改变。</p>
+
+
+				</div>
+			</div>
+			<div class="previous-next-links">
+			<div class="previous-design-link">← <a href="http://www.runoob.com/w3cnote/zookeeper-java-setup.html" rel="prev"> 4.0 Zookeeper Java 客户端搭建</a> </div>
+			<div class="next-design-link"><a href="http://www.runoob.com/w3cnote/zookeeper-session.html" rel="next"> 6.0 Zookeeper session 基本原理</a> →</div>
+			</div>
+						<div class="article-heading-ad" id="w3cnote-ad728">
+			<script async src="//pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script>
+			<!-- 移动版 自动调整 -->
+			<ins class="adsbygoogle"
+			     style="display:inline-block;min-width:300px;max-width:970px;width:100%;height:90px"
+			     data-ad-client="ca-pub-5751451760833794"
+			     data-ad-slot="1691338467"
+			     data-ad-format="horizontal"></ins>
+			<script>
+			(adsbygoogle = window.adsbygoogle || []).push({});
+			</script>
+			</div>
+			<style>
+@media screen and (max-width: 768px) {
+	#w3cnote-ad728 {
+		display: none;
+	}
+}
+p.note-author {
+    border-bottom: 1px solid #ddd;
+    font-size: 18px;
+    font-weight: bold;
+    color: #78a15a;
+    padding-bottom: 2px;
+    margin-bottom: 4px;
+}
+</style>
+<script>
+var aid = 22764;
+</script>
+	</div>
+		
+	</div>
+	<div class="listcol last right-column">
+
+	<script type="text/javascript">
+jQuery(document).ready(function ($){
+	var total = $(".membership li").length;
+	var left_list = '';
+	href = window.location.href;
+	
+	$(".membership li").each(function(index, value){
+
+		left_list += $(this).html();
+
+		cur_href = $(this).find("a").attr("href");
+		cur_obj = $(this);
+		
+		if(href.match(cur_href) != null) {
+			if(index==0) {
+				$(".previous-design-link").hide();
+			}
+			if(index==(total-1)) {
+				$(".next-design-link").hide();
+			}
+			prev_href = cur_obj.prev("li").find("a").attr("href");
+			prev_title = cur_obj.prev("li").find("a").attr("title");
+
+			next_href = cur_obj.next("li").find("a").attr("href");
+			next_title = cur_obj.next("li").find("a").attr("title");
+			if(prev_title) {
+				$(".previous-design-link a").attr("href", prev_href);
+				$(".previous-design-link a").attr("title", prev_title);
+				$(".previous-design-link a").text(prev_title);
+			} else {
+				$(".previous-design-link").html("");
+			}
+
+			if(next_title) {
+				$(".next-design-link a").attr("href", next_href);
+				$(".next-design-link a").attr("title", next_title);
+				$(".next-design-link a").text(next_title);
+			} else {
+				$(".next-design-link").html("");
+			}
+		}
+	});
+
+	$("#leftcolumn").html(left_list);
+});
+	</script>
+	<div class="sidebar-box cate-list">
+	<div class="sidebar-box recommend-here list-link">
+	<a href="javascript:void(0);">Zookeeper 教程</a>	</div>
+	
+	<ul class="membership">
+		
+	<li><a target="_top" data-id="22726" title="1.0 Zookeeper 教程" href="http://www.runoob.com/w3cnote/zookeeper-tutorial.html" >1.0 Zookeeper 教程</a></li>
+	
+		
+	<li><a target="_top" data-id="22725" title="2.0 Zookeeper 安装配置" href="http://www.runoob.com/w3cnote/zookeeper-setup.html" >2.0 Zookeeper 安装配置</a></li>
+	
+		
+	<li><a target="_top" data-id="22745" title="3.0 Zookeeper  linux 服务端集群搭建步骤" href="http://www.runoob.com/w3cnote/zookeeper-linux-cluster.html" >3.0 Zookeeper  linux 服务端集群搭建步骤</a></li>
+	
+		
+	<li><a target="_top" data-id="22757" title="4.0 Zookeeper Java 客户端搭建" href="http://www.runoob.com/w3cnote/zookeeper-java-setup.html" >4.0 Zookeeper Java 客户端搭建</a></li>
+	
+		<li>
+	5.0 ZooKeeper 数据模型 znode 结构详解	</li>
+	
+		
+	<li><a target="_top" data-id="22770" title="6.0 Zookeeper session 基本原理" href="http://www.runoob.com/w3cnote/zookeeper-session.html" >6.0 Zookeeper session 基本原理</a></li>
+	
+		
+	<li><a target="_top" data-id="22775" title="7.0 Zookeeper 客户端基础命令使用" href="http://www.runoob.com/w3cnote/zookeeper-bs-command.html" >7.0 Zookeeper 客户端基础命令使用</a></li>
+	
+		
+	<li><a target="_top" data-id="22803" title="8.0 Zookeeper 四字命令" href="http://www.runoob.com/w3cnote/zookeeper-sc-4lw.html" >8.0 Zookeeper 四字命令</a></li>
+	
+		
+	<li><a target="_top" data-id="22810" title="9.0 Zookeeper 节点特性" href="http://www.runoob.com/w3cnote/zookeeper-node-feature.html" >9.0 Zookeeper 节点特性</a></li>
+	
+		
+	<li><a target="_top" data-id="22819" title="10.0 Zookeeper 权限控制 ACL" href="http://www.runoob.com/w3cnote/zookeeper-acl.html" >10.0 Zookeeper 权限控制 ACL</a></li>
+	
+		
+	<li><a target="_top" data-id="22824" title="11.0 Zookeeper watcher 事件机制原理剖析" href="http://www.runoob.com/w3cnote/zookeeper-watcher.html" >11.0 Zookeeper watcher 事件机制原理剖析</a></li>
+	
+		
+	<li><a target="_top" data-id="22841" title="12.0 Zookeeper 数据同步流程" href="http://www.runoob.com/w3cnote/zookeeper-data-sync.html" >12.0 Zookeeper 数据同步流程</a></li>
+	
+		
+	<li><a target="_top" data-id="22843" title="13.0 Zookeeper Leader 选举原理" href="http://www.runoob.com/w3cnote/zookeeper-leader.html" >13.0 Zookeeper Leader 选举原理</a></li>
+	
+		
+	<li><a target="_top" data-id="22845" title="14.0 Zookeeper 分布式锁实现原理" href="http://www.runoob.com/w3cnote/zookeeper-locks.html" >14.0 Zookeeper 分布式锁实现原理</a></li>
+	
+	</ul></div>	</div>
+</div>
+
+
+<!-- 底部 -->
+<div id="footer" class="mar-t50">
+   <div class="runoob-block">
+    <div class="runoob cf">
+     <dl>
+      <dt>
+       在线实例
+      </dt>
+      <dd>
+       &middot;<a target="_blank" href="/html/html-examples.html">HTML 实例</a>
+      </dd>
+      <dd>
+       &middot;<a target="_blank" href="/css/css-examples.html">CSS 实例</a>
+      </dd>
+      <dd>
+       &middot;<a target="_blank" href="/js/js-examples.html">JavaScript 实例</a>
+      </dd>
+      <dd>
+       &middot;<a target="_blank" href="/ajx/ajax-examples.html">Ajax 实例</a>
+      </dd>
+       <dd>
+       &middot;<a target="_blank" href="/jquery/jquery-examples.html">jQuery 实例</a>
+      </dd>
+      <dd>
+       &middot;<a target="_blank" href="/xml/xml-examples.html">XML 实例</a>
+      </dd>
+      <dd>
+       &middot;<a target="_blank" href="/java/java-examples.html">Java 实例</a>
+      </dd>
+     
+     </dl>
+     <dl>
+      <dt>
+      字符集&工具
+      </dt>
+      <dd>
+       &middot; <a target="_blank" href="/charsets/html-charsets.html">HTML 字符集设置</a>
+      </dd>
+      <dd>
+       &middot; <a target="_blank" href="/tags/html-ascii.html">HTML ASCII 字符集</a>
+      </dd>
+     <dd>
+       &middot; <a target="_blank" href="https://c.runoob.com/front-end/6939/">JS 混淆/加密</a>
+      </dd> 
+      <dd>
+       &middot; <a target="_blank" href="https://c.runoob.com/front-end/6232/">PNG/JPEG 图片压缩</a>
+      </dd>
+      <dd>
+       &middot; <a target="_blank" href="/tags/html-colorpicker.html">HTML 拾色器</a>
+      </dd>
+      <dd>
+       &middot; <a target="_blank" href="//c.runoob.com/front-end/53">JSON 格式化工具</a>
+      </dd>
+      <dd>
+       &middot; <a target="_blank" href="//c.runoob.com/front-end/6680/">随机数生成器</a>
+      </dd>
+     </dl>
+     <dl>
+      <dt>
+       最新更新
+      </dt>
+                   <dd>
+       &middot;
+      <a href="http://www.runoob.com/matplotlib/matplotlib-imread.html" title="Matplotlib imread() 方法">Matplotlib imre...</a>
+      </dd>
+              <dd>
+       &middot;
+      <a href="http://www.runoob.com/matplotlib/matplotlib-imsave.html" title="Matplotlib imsave() 方法">Matplotlib imsa...</a>
+      </dd>
+              <dd>
+       &middot;
+      <a href="http://www.runoob.com/matplotlib/matplotlib-imshow.html" title="Matplotlib imshow() 方法">Matplotlib imsh...</a>
+      </dd>
+              <dd>
+       &middot;
+      <a href="http://www.runoob.com/matplotlib/matplotlib-hist.html" title="Matplotlib 直方图">Matplotlib 直方图</a>
+      </dd>
+              <dd>
+       &middot;
+      <a href="http://www.runoob.com/python3/python-func-object.html" title="Python object() 函数">Python object()...</a>
+      </dd>
+              <dd>
+       &middot;
+      <a href="http://www.runoob.com/python3/python-ai-draw.html" title="Python AI 绘画">Python AI 绘画</a>
+      </dd>
+              <dd>
+       &middot;
+      <a href="http://www.runoob.com/w3cnote/cursor-editor.html" title="神辅助 Cursor 编辑器，加入 GPT-4 让编码更轻松！">神辅助 Cursor ...</a>
+      </dd>
+             </dl>
+     <dl>
+      <dt>
+       站点信息
+      </dt>
+      <dd>
+       &middot;
+       <a target="_blank" href="mailto:admin@runoob.com" rel="external nofollow">意见反馈</a>
+       </dd>
+      <dd>
+       &middot;
+      <a target="_blank" href="/disclaimer">免责声明</a>
+       </dd>
+      <dd>
+       &middot;
+       <a target="_blank" href="/aboutus">关于我们</a>
+       </dd>
+      <dd>
+       &middot;
+      <a target="_blank" href="/archives">文章归档</a>
+      </dd>
+    
+     </dl>
+    
+     <div class="search-share">
+      <div class="app-download">
+        <div>
+         <strong>关注微信</strong>
+        </div>
+      </div>
+      <div class="share">
+      <img width="128" height="128" src="/wp-content/themes/runoob/assets/images/qrcode.png" />
+       </div>
+     </div>
+     
+    </div>
+   </div>
+   <div class="w-1000 copyright">
+     Copyright &copy; 2013-2023    <strong><a href="//www.runoob.com/" target="_blank">菜鸟教程</a></strong>&nbsp;
+    <strong><a href="//www.runoob.com/" target="_blank">runoob.com</a></strong> All Rights Reserved. 备案号：<a target="_blank" rel="nofollow" href="https://beian.miit.gov.cn/">闽ICP备15012807号-1</a>
+   </div>
+  </div>
+  <div class="fixed-btn">
+    <a class="go-top" href="javascript:void(0)" title="返回顶部"> <i class="fa fa-angle-up"></i></a>
+    <a class="qrcode"  href="javascript:void(0)" title="关注我们"><i class="fa fa-qrcode"></i></a>
+    <a class="writer" style="display:none" href="javascript:void(0)"   title="标记/收藏"><i class="fa fa-star" aria-hidden="true"></i></a>
+    <!-- qrcode modal -->
+    <div id="bottom-qrcode" class="modal panel-modal hide fade in">
+      <h4>微信关注</h4>
+      <div class="panel-body"><img alt="微信关注" width="128" height="128" src="/wp-content/themes/runoob/assets/images/qrcode.png"></div> 
+    </div>
+  </div>
+
+ <div style="display:none;">
+<script async src="https://www.googletagmanager.com/gtag/js?id=UA-84264393-2"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+
+  gtag('config', 'UA-84264393-2');
+</script>
+<script>
+var _hmt = _hmt || [];
+(function() {
+  var hm = document.createElement("script");
+  hm.src = "https://hm.baidu.com/hm.js?3eec0b7da6548cf07db3bc477ea905ee";
+  var s = document.getElementsByTagName("script")[0]; 
+  s.parentNode.insertBefore(hm, s);
+})();
+</script>
+
+</div>
+<script>
+window.jsui={
+    www: 'https://www.runoob.com',
+    uri: 'https://www.runoob.com/wp-content/themes/runoob'
+};
+</script>
+
+<script src="https://static.runoob.com/assets/libs/hl/run_prettify.js"></script>
+<script src="/wp-content/themes/runoob/assets/js/main.min.js?v=1.156"></script>
+
+</body>
+</html>

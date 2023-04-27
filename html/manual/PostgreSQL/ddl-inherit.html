@@ -1,0 +1,118 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><title>5.9. 继承</title><link rel="stylesheet" type="text/css" href="stylesheet.css" /><link rev="made" href="pgsql-docs@postgresql.org" /><meta name="generator" content="DocBook XSL Stylesheets V1.79.1" /><link rel="prev" href="ddl-schemas.html" title="5.8. 模式" /><link rel="next" href="ddl-partitioning.html" title="5.10. 表分区" /></head><body><div xmlns="http://www.w3.org/TR/xhtml1/transitional" class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="5" align="center">5.9. 继承</th></tr><tr><td width="10%" align="left"><a accesskey="p" href="ddl-schemas.html" title="5.8. 模式">上一页</a> </td><td width="10%" align="left"><a accesskey="u" href="ddl.html" title="第 5 章 数据定义">上一级</a></td><th width="60%" align="center">第 5 章 数据定义</th><td width="10%" align="right"><a accesskey="h" href="index.html" title="PostgreSQL 10.1 手册">起始页</a></td><td width="10%" align="right"> <a accesskey="n" href="ddl-partitioning.html" title="5.10. 表分区">下一页</a></td></tr></table><hr></hr></div><div class="sect1" id="DDL-INHERIT"><div class="titlepage"><div><div><h2 class="title" style="clear: both">5.9. 继承</h2></div></div></div><div class="toc"><dl class="toc"><dt><span class="sect2"><a href="ddl-inherit.html#DDL-INHERIT-CAVEATS">5.9.1. 警告</a></span></dt></dl></div><a id="idp6621536" class="indexterm"></a><a id="idp6622224" class="indexterm"></a><p>   <span class="productname">PostgreSQL</span>实现了表继承，这对数据库设计者来说是一种有用的工具（SQL:1999及其后的版本定义了一种类型继承特性，但和这里介绍的继承有很大的不同）。
+  </p><p>   让我们从一个例子开始：假设我们要为城市建立一个数据模型。每一个州有很多城市，但是只有一个首府。我们希望能够快速地检索任何特定州的首府城市。这可以通过创建两个表来实现：一个用于州首府，另一个用于不是首府的城市。然而，当我们想要查看一个城市的数据（不管它是不是一个首府）时会发生什么？继承特性将有助于解决这个问题。我们可以将<code class="structname">capitals</code>表定义为继承自<code class="structname">cities</code>表：
+
+</p><pre class="programlisting">CREATE TABLE cities (
+    name            text,
+    population      float,
+    altitude        int     -- in feet
+);
+
+CREATE TABLE capitals (
+    state           char(2)
+) INHERITS (cities);</pre><p>
+
+   在这种情况下，<code class="structname">capitals</code>表<em class="firstterm">继承</em>了它的父表<code class="structname">cities</code>的所有列。州首府还有一个额外的列<code class="structfield">state</code>用来表示它所属的州。
+  </p><p>   在<span class="productname">PostgreSQL</span>中，一个表可以从0个或者多个其他表继承，而对一个表的查询则可以引用一个表的所有行或者该表的所有行加上它所有的后代表。默认情况是后一种行为。例如，下面的查询将查找所有海拔高于500尺的城市的名称，包括州首府：
+
+</p><pre class="programlisting">SELECT name, altitude
+    FROM cities
+    WHERE altitude &gt; 500;</pre><p>
+
+   对于来自<span class="productname">PostgreSQL</span>教程（见<a class="xref" href="tutorial-sql-intro.html" title="2.1. 引言">第 2.1 节</a>）的例子数据，它将返回：
+
+</p><pre class="programlisting">   name    | altitude
+-----------+----------
+ Las Vegas |     2174
+ Mariposa  |     1953
+ Madison   |      845</pre><p>
+  </p><p>   在另一方面，下面的查询将找到海拔超过500尺且不是州首府的所有城市：
+
+</p><pre class="programlisting">SELECT name, altitude
+    FROM ONLY cities
+    WHERE altitude &gt; 500;
+
+   name    | altitude
+-----------+----------
+ Las Vegas |     2174
+ Mariposa  |     1953</pre><p>
+  </p><p>   这里的<code class="literal">ONLY</code>关键词指示查询只被应用于<code class="structname">cities</code>上，而其他在继承层次中位于<code class="structname">cities</code>之下的其他表都不会被该查询涉及。很多我们已经讨论过的命令（如<code class="command">SELECT</code>、<code class="command">UPDATE</code>和<code class="command">DELETE</code>）都支持<code class="literal">ONLY</code>关键词。
+  </p><p>   我们也可以在表名后写上一个<code class="literal">*</code>来显式地将后代表包括在查询范围内：
+
+</p><pre class="programlisting">SELECT name, altitude
+    FROM cities*
+    WHERE altitude &gt; 500;</pre><p>
+
+   <code class="literal">*</code>并不是必须的，因为这种行为总是默认的。
+   但是，仍支持此语法以与更改默认值的旧版本兼容。
+  </p><p>   在某些情况下，我们可能希望知道一个特定行来自于哪个表。每个表中的系统列<code class="structfield">tableoid</code>可以告诉我们行来自于哪个表：
+
+</p><pre class="programlisting">SELECT c.tableoid, c.name, c.altitude
+FROM cities c
+WHERE c.altitude &gt; 500;</pre><p>
+
+   将会返回：
+
+</p><pre class="programlisting"> tableoid |   name    | altitude
+----------+-----------+----------
+   139793 | Las Vegas |     2174
+   139793 | Mariposa  |     1953
+   139798 | Madison   |      845</pre><p>
+
+   （如果重新生成这个结果，可能会得到不同的OID数字。）通过与<code class="structname">pg_class</code>进行连接可以看到实际的表名：
+
+</p><pre class="programlisting">SELECT p.relname, c.name, c.altitude
+FROM cities c, pg_class p
+WHERE c.altitude &gt; 500 AND c.tableoid = p.oid;</pre><p>
+
+   将会返回：
+
+</p><pre class="programlisting"> relname  |   name    | altitude
+----------+-----------+----------
+ cities   | Las Vegas |     2174
+ cities   | Mariposa  |     1953
+ capitals | Madison   |      845</pre><p>
+  </p><p>   另一种得到同样效果的方法是使用<code class="type">regclass</code>别名类型，
+   它将象征性地打印出表的 OID：
+
+</p><pre class="programlisting">SELECT c.tableoid::regclass, c.name, c.altitude
+FROM cities c
+WHERE c.altitude &gt; 500;</pre><p>
+  </p><p>   继承不会自动地将来自<code class="command">INSERT</code>或<code class="command">COPY</code>命令的数据传播到继承层次中的其他表中。在我们的例子中，下面的<code class="command">INSERT</code>语句将会失败：
+</p><pre class="programlisting">INSERT INTO cities (name, population, altitude, state)
+VALUES ('Albany', NULL, NULL, 'NY');</pre><p>
+   我们也许希望数据能被以某种方式被引入到<code class="structname">capitals</code>表中，但是这不会发生：<code class="command">INSERT</code>总是向指定的表中插入。在某些情况下，可以通过使用一个规则（见<a class="xref" href="rules.html" title="第 40 章 规则系统">第 40 章</a>）来将插入动作重定向。但是这对上面的情况并没有帮助，因为<code class="structname">cities</code>表根本就不包含<code class="structfield">state</code>列，因而这个命令将在触发规则之前就被拒绝。
+  </p><p>   父表上的所有检查约束和非空约束都将自动被它的后代所继承，
+   除非使用 <code class="literal">NO INHERIT</code>子句明确指定。其他类型的约束（唯一、主键和外键约束）则不会被继承。
+  </p><p>   一个表可以从超过一个的父表继承，在这种情况下它拥有父表们所定义的列的并集。任何定义在子表上的列也会被加入到其中。如果在这个集合中出现重名列，那么这些列将被<span class="quote">“<span class="quote">合并</span>”</span>，这样在子表中只会有一个这样的列。重名列能被合并的前提是这些列必须具有相同的数据类型，否则会导致错误。
+   以类似的方式合并可继承检查约束和非空约束。因此，例如，
+   如果其来自的列定义中的任何一个被标记为非空，则合并列将被标记为非空。
+   如果检查约束具有相同的名称，则检查约束将被合并，并且如果条件不同，合并将失败。
+  </p><p>   表继承通常是在子表被创建时建立，使用<a class="xref" href="sql-createtable.html" title="CREATE TABLE"><span class="refentrytitle">CREATE TABLE</span></a>语句的<code class="literal">INHERITS</code>子句。一个已经被创建的表也可以另外一种方式增加一个新的父亲关系，使用<a class="xref" href="sql-altertable.html" title="ALTER TABLE"><span class="refentrytitle">ALTER TABLE</span></a>的<code class="literal">INHERIT</code>变体。要这样做，新的子表必须已经包括和父表相同名称和数据类型的列。子表还必须包括和父表相同的检查约束和检查表达式。相似地，一个继承链接也可以使用<code class="command">ALTER TABLE</code>的 <code class="literal">NO INHERIT</code>变体从一个子表中移除。动态增加和移除继承链接可以用于实现表划分（见<a class="xref" href="ddl-partitioning.html" title="5.10. 表分区">第 5.10 节</a>）。
+  </p><p>   一种创建一个未来将被用做子女的新表的方法是在<code class="command">CREATE
+   TABLE</code>中使用<code class="literal">LIKE</code>子句。这将创建一个和源表具有相同列的新表。如果源表上定义有任何<code class="literal">CHECK</code>约束，<code class="literal">LIKE</code>的<code class="literal">INCLUDING CONSTRAINTS</code>选项可以用来让新的子表也包含和父表相同的约束。
+  </p><p>   当有任何一个子表存在时，父表不能被删除。当子表的列或者检查约束继承于父表时，它们也不能被删除或修改。如果希望移除一个表和它的所有后代，一种简单的方法是使用<code class="literal">CASCADE</code>选项删除父表（见<a class="xref" href="ddl-depend.html" title="5.13. 依赖跟踪">第 5.13 节</a>）。
+  </p><p>   <a class="xref" href="sql-altertable.html" title="ALTER TABLE"><span class="refentrytitle">ALTER TABLE</span></a>将会把列的数据定义或检查约束上的任何变化沿着继承层次向下传播。同样，删除被其他表依赖的列只能使用<code class="literal">CASCADE</code>选项。<code class="command">ALTER TABLE</code>对于重名列的合并和拒绝遵循与<code class="command">CREATE TABLE</code>同样的规则。
+  </p><p>   继承的查询只对父表执行访问权限检查。因此，例如，在<code class="structname">cities</code>
+   表上授予<code class="literal">UPDATE</code>权限意味着也更新<code class="structname">capitals</code>
+   表中的行的权限，当它们通过<code class="structname">cities</code>访问时。
+   这说明了这些数据（也）在父表中。但是，如果没有额外的授权，
+   不能直接更新<code class="structname">capitals</code>表。类似的，在继承查询期间，
+   父表的行安全策略（请参阅<a class="xref" href="ddl-rowsecurity.html" title="5.7. 行安全性策略">第 5.7 节</a>）
+   将应用到来自子表的行。子表的策略（如果有的话）仅在查询中显式指定该表时应用；
+   在这种情况下，任何附属于其父母的策略都将被忽略。
+  </p><p>   外部表（见<a class="xref" href="ddl-foreign-data.html" title="5.11. 外部数据">第 5.11 节</a>）也可以是继承层次
+   中的一部分，即可以作为父表也可以作为子表，就像常规表一样。如果
+   一个外部表是继承层次的一部分，那么任何不被该外部表支持的操作也
+   不被整个层次所支持。
+  </p><div class="sect2" id="DDL-INHERIT-CAVEATS"><div class="titlepage"><div><div><h3 class="title">5.9.1. 警告</h3></div></div></div><p>   注意并非所有的SQL命令都能工作在继承层次上。用于数据查询、数据修改或模式修改（例如<code class="literal">SELECT</code>、<code class="literal">UPDATE</code>、<code class="literal">DELETE</code>、大部分<code class="literal">ALTER TABLE</code>的变体，但<code class="literal">INSERT</code>或<code class="literal">ALTER TABLE ... RENAME</code>不在此列）的命令会默认将子表包含在内并且支持<code class="literal">ONLY</code>记号来排除子表。负责数据库维护和调整的命令（如<code class="literal">REINDEX</code>、<code class="literal">VACUUM</code>）只工作在独立的、物理的表上并且不支持在继承层次上的递归。每个命令相应的行为请参见它们的参考页（<a class="xref" href="sql-commands.html" title="SQL 命令">SQL 命令</a>）。
+  </p><p>   继承特性的一个严肃的限制是索引（包括唯一约束）和外键约束值应用在单个表上而非它们的继承子女。在外键约束的引用端和被引用端都是这样。因此，按照上面的例子：
+
+   </p><div class="itemizedlist"><ul class="itemizedlist" style="list-style-type: disc; "><li class="listitem"><p>      如果我们声明<code class="structname">cities</code>.<code class="structfield">name</code>为<code class="literal">UNIQUE</code>或者<code class="literal">PRIMARY KEY</code>，这将不会阻止<code class="structname">capitals</code>表中拥有和<code class="structname">cities</code>中城市同名的行。而且这些重复的行将会默认显示在<code class="structname">cities</code>的查询中。事实上，<code class="structname">capitals</code>在默认情况下是根本不能拥有唯一约束的，并且因此能够包含多个同名的行。我们可以为<code class="structname">capitals</code>增加一个唯一约束，但这无法阻止相对于<code class="structname">cities</code>的重复。
+     </p></li><li class="listitem"><p>      相似地，如果我们指定<code class="structname">cities</code>.<code class="structfield">name</code> <code class="literal">REFERENCES</code>某个其他表，该约束不会自动地传播到<code class="structname">capitals</code>。在此种情况下，我们可以变通地在<code class="structname">capitals</code>上手工创建一个相同的<code class="literal">REFERENCES</code>约束。
+     </p></li><li class="listitem"><p>      指定另一个表的列<code class="literal">REFERENCES cities(name)</code>将允许其他表包含城市名称，但不会包含首府名称。这对于这个例子不是一个好的变通方案。
+     </p></li></ul></div><p>
+
+   这些不足可能还将存在于某些未来的发布中，但是同时在决定继承是否对我们的应用有用时需要相当小心。
+  </p></div></div><div class="navfooter"><hr /><table width="100%" summary="Navigation footer"><tr><td width="40%" align="left"><a accesskey="p" href="ddl-schemas.html">上一页</a> </td><td width="20%" align="center"><a accesskey="u" href="ddl.html">上一级</a></td><td width="40%" align="right"> <a accesskey="n" href="ddl-partitioning.html">下一页</a></td></tr><tr><td width="40%" align="left" valign="top">5.8. 模式 </td><td width="20%" align="center"><a accesskey="h" href="index.html">起始页</a></td><td width="40%" align="right" valign="top"> 5.10. 表分区</td></tr></table></div></body></html>

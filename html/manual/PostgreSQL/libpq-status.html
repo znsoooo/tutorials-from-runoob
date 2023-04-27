@@ -1,0 +1,186 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><title>33.2. 连接状态函数</title><link rel="stylesheet" type="text/css" href="stylesheet.css" /><link rev="made" href="pgsql-docs@postgresql.org" /><meta name="generator" content="DocBook XSL Stylesheets V1.79.1" /><link rel="prev" href="libpq-connect.html" title="33.1. 数据库连接控制函数" /><link rel="next" href="libpq-exec.html" title="33.3. 命令执行函数" /></head><body><div xmlns="http://www.w3.org/TR/xhtml1/transitional" class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="5" align="center">33.2. 连接状态函数</th></tr><tr><td width="10%" align="left"><a accesskey="p" href="libpq-connect.html" title="33.1. 数据库连接控制函数">上一页</a> </td><td width="10%" align="left"><a accesskey="u" href="libpq.html" title="第 33 章 libpq - C 库">上一级</a></td><th width="60%" align="center">第 33 章 <span xmlns="http://www.w3.org/1999/xhtml" class="application">libpq</span> - C 库</th><td width="10%" align="right"><a accesskey="h" href="index.html" title="PostgreSQL 10.1 手册">起始页</a></td><td width="10%" align="right"> <a accesskey="n" href="libpq-exec.html" title="33.3. 命令执行函数">下一页</a></td></tr></table><hr></hr></div><div class="sect1" id="LIBPQ-STATUS"><div class="titlepage"><div><div><h2 class="title" style="clear: both">33.2. 连接状态函数</h2></div></div></div><p>   这些函数可以被用来询问一个已有数据库连接对象的状态。
+  </p><div class="tip"><h3 class="title">提示</h3><p>    <a id="idp27235632" class="indexterm"></a>
+    <a id="idp27236448" class="indexterm"></a>
+    <span class="application">libpq</span>应用程序员应该小心地维护<code class="structname">PGconn</code>抽象。使用下面描述的访问函数来理解<code class="structname">PGconn</code>的内容。我们不推荐使用<code class="filename">libpq-int.h</code>引用内部的<code class="structname">PGconn</code>域，因为它们可能在未来改变。
+   </p></div><p>   下列函数返回一个连接所建立的参数值。
+   这些值在连接的生命期中是固定的。如果使用了多个主机连接字符串，
+   则如果使用同一个<code class="structname">PGconn</code>对象建立了一个新的连接，
+   <code class="function">PQhost</code>、<code class="function">PQport</code>和<code class="function">PQpass</code>的值可以改变。
+   其他值在<code class="structname">PGconn</code>对象的生命期中是固定的。
+
+   </p><div class="variablelist"><dl class="variablelist"><dt id="LIBPQ-PQDB"><span class="term">      <code class="function">PQdb</code>
+      <a id="idp27245536" class="indexterm"></a>
+     </span></dt><dd><p>       返回该连接的数据库名。
+</p><pre class="synopsis">char *PQdb(const PGconn *conn);</pre><p>
+      </p></dd><dt id="LIBPQ-PQUSER"><span class="term">      <code class="function">PQuser</code>
+      <a id="idp27249088" class="indexterm"></a>
+     </span></dt><dd><p>       返回该连接的用户名。
+</p><pre class="synopsis">char *PQuser(const PGconn *conn);</pre><p>
+      </p></dd><dt id="LIBPQ-PQPASS"><span class="term">      <code class="function">PQpass</code>
+      <a id="idp27252576" class="indexterm"></a>
+     </span></dt><dd><p>       返回该连接的口令。
+</p><pre class="synopsis">char *PQpass(const PGconn *conn);</pre><p>
+      </p></dd><dt id="LIBPQ-PQHOST"><span class="term">      <code class="function">PQhost</code>
+      <a id="idp27256112" class="indexterm"></a>
+     </span></dt><dd><p>       返回该连接的服务器主机名。
+</p><pre class="synopsis">char *PQhost(const PGconn *conn);</pre><p>
+      </p></dd><dt id="LIBPQ-PQPORT"><span class="term">      <code class="function">PQport</code>
+      <a id="idp27259616" class="indexterm"></a>
+     </span></dt><dd><p>       返回该连接的端口。
+
+</p><pre class="synopsis">char *PQport(const PGconn *conn);</pre><p>
+      </p></dd><dt id="LIBPQ-PQTTY"><span class="term">      <code class="function">PQtty</code>
+      <a id="idp27263168" class="indexterm"></a>
+     </span></dt><dd><p>       返回该连接的调试<acronym class="acronym">TTY</acronym>（这已被废弃，因为服务器不再关心<acronym class="acronym">TTY</acronym>设置，但这个函数保持了向后兼容）。
+
+</p><pre class="synopsis">char *PQtty(const PGconn *conn);</pre><p>
+      </p></dd><dt id="LIBPQ-PQOPTIONS"><span class="term">      <code class="function">PQoptions</code>
+      <a id="idp27267584" class="indexterm"></a>
+     </span></dt><dd><p>       返回被传递给连接请求的命令行选项。
+</p><pre class="synopsis">char *PQoptions(const PGconn *conn);</pre><p>
+      </p></dd></dl></div><p>
+  </p><p>   下列函数返回会随着在<code class="structname">PGconn</code>对象上执行的操作改变的状态数据。
+
+   </p><div class="variablelist"><dl class="variablelist"><dt id="LIBPQ-PQSTATUS"><span class="term">      <code class="function">PQstatus</code>
+      <a id="idp27272176" class="indexterm"></a>
+     </span></dt><dd><p>       返回该连接的状态。
+</p><pre class="synopsis">ConnStatusType PQstatus(const PGconn *conn);</pre><p>
+      </p><p>       该状态可以是一系列值之一。不过，其中只有两个在一个异步连接过程之外可见：<code class="literal">CONNECTION_OK</code>和<code class="literal">CONNECTION_BAD</code>。一个到数据库的完好连接的状态为<code class="literal">CONNECTION_OK</code>。一个失败的连接尝试则由状态<code class="literal">CONNECTION_BAD</code>表示。通常，一个 OK 状态将一直保持到<code class="function">PQfinish</code>，但是一次通信失败可能导致该状态过早地改变为<code class="literal">CONNECTION_BAD</code>。在那种情况下，该应用可以通过调用<code class="function">PQreset</code>尝试恢复。
+      </p><p>       关于其他可能会被返回的状态代码，请见<code class="function">PQconnectStartParams</code>、<code class="function">PQconnectStart</code>和<code class="function">PQconnectPoll</code>的条目。
+      </p></dd><dt id="LIBPQ-PQTRANSACTIONSTATUS"><span class="term">      <code class="function">PQtransactionStatus</code>
+      <a id="idp27284032" class="indexterm"></a>
+     </span></dt><dd><p>       返回服务器的当前事务内状态。
+
+</p><pre class="synopsis">PGTransactionStatusType PQtransactionStatus(const PGconn *conn);</pre><p>
+
+       该状态可能是<code class="literal">PQTRANS_IDLE</code>（当前空闲）、
+       <code class="literal">PQTRANS_ACTIVE</code>（一个命令运行中）、
+       <code class="literal">PQTRANS_INTRANS</code>（空闲，处于一个合法的事务块中）
+       或者<code class="literal">PQTRANS_INERROR</code>（空闲，处于一个失败的事务块中）。
+       如果该连接损坏，将会报告<code class="literal">PQTRANS_UNKNOWN</code>。
+       只有当一个查询已经被发送给服务器并且还没有完成时，才会报告<code class="literal">PQTRANS_ACTIVE</code>。
+      </p></dd><dt id="LIBPQ-PQPARAMETERSTATUS"><span class="term">      <code class="function">PQparameterStatus</code>
+      <a id="idp27292208" class="indexterm"></a>
+     </span></dt><dd><p>       查找服务器的一个当前参数设置。
+
+</p><pre class="synopsis">const char *PQparameterStatus(const PGconn *conn, const char *paramName);</pre><p>
+
+       某一参数值会被服务器在连接开始或值改变时自动报告。<code class="function">PQparameterStatus</code>可以被用来询问这些设置。它为已知的参数返回当前值，为未知的参数返回<code class="symbol">NULL</code>。
+      </p><p>       自当前发布开始会被报告的参数包括
+       <code class="varname">server_version</code>、
+       <code class="varname">server_encoding</code>、
+       <code class="varname">client_encoding</code>、
+       <code class="varname">application_name</code>、
+       <code class="varname">is_superuser</code>、
+       <code class="varname">session_authorization</code>、
+       <code class="varname">DateStyle</code>、
+       <code class="varname">IntervalStyle</code>、
+       <code class="varname">TimeZone</code>、
+       <code class="varname">integer_datetimes</code>以及
+       <code class="varname">standard_conforming_strings</code>（
+       <code class="varname">server_encoding</code>、<code class="varname">TimeZone</code>以及<code class="varname">integer_datetimes</code>在 8.0 以前的发布中不被报告；<code class="varname">standard_conforming_strings</code>在 8.1 以前的发布中不被报告；<code class="varname">IntervalStyle</code>在 8.4 以前的发布中不被报告；<code class="varname">application_name</code>在 9.0 以前的发布中不被报告）。注意
+       <code class="varname">server_version</code>、
+       <code class="varname">server_encoding</code>以及
+       <code class="varname">integer_datetimes</code>在启动之后无法改变。
+      </p><p>       3.0 之前协议的服务器不报告参数设置，但是<span class="application">libpq</span>包括获得<code class="varname">server_version</code>以及<code class="varname">client_encoding</code>值的逻辑。我们鼓励应用使用<code class="function">PQparameterStatus</code>而不是<span class="foreignphrase"><em class="foreignphrase">ad hoc</em></span>代码来确定这些值（不过注意在一个 3.0 之前的连接上，连接开始后通过<code class="command">SET</code>改变<code class="varname">client_encoding</code>不会被<code class="function">PQparameterStatus</code>反映）。对于<code class="varname">server_version</code>（另见<code class="function">PQserverVersion</code>），它以一种数字形式返回信息，这样更容易进行比较。
+      </p><p>       如果没有为<code class="varname">standard_conforming_strings</code>报告值，应用能假设它是<code class="literal">off</code>，也就是说反斜线会被视为字符串中的转义。还有，这个参数的存在可以被作为转义字符串语法（<code class="literal">E'...'</code>）被接受的指示。
+      </p><p>       尽管被返回的指针被声明成<code class="literal">const</code>，它事实上指向与<code class="literal">PGconn</code>结构相关的可变存储。假定该指针在查询之间保持有效是不明智的。
+      </p></dd><dt id="LIBPQ-PQPROTOCOLVERSION"><span class="term">      <code class="function">PQprotocolVersion</code>
+      <a id="idp27317312" class="indexterm"></a>
+     </span></dt><dd><p>       询问所使用的 前端/后端协议。
+</p><pre class="synopsis">int PQprotocolVersion(const PGconn *conn);</pre><p>
+       应用可能希望用这个函数来确定某些特性是否被支持。当前，可能值是 2（2.0 协议）、3（3.0 协议）或零（连接损坏）。协议版本在连接启动完成后将不会改变，但是理论上在连接重置期间是可以改变的。当与<span class="productname">PostgreSQL</span> 7.4 或以后的服务器通信时通常使用 3.0 协议，7.4 之前的服务器只支持协议 2.0（协议 1.0 已被废弃并且不再被<span class="application">libpq</span>支持）。
+      </p></dd><dt id="LIBPQ-PQSERVERVERSION"><span class="term">      <code class="function">PQserverVersion</code>
+      <a id="idp27323136" class="indexterm"></a>
+     </span></dt><dd><p>       返回一个表示服务器版本的整数。
+</p><pre class="synopsis">int PQserverVersion(const PGconn *conn);</pre><p>
+      </p><p>       应用可能会使用这个函数来决定它们连接到的数据库服务器的版本。
+	   结果是通过将服务器的主要版本号乘以10000并添加次要版本号形成的。
+	   例如，版本10.1将返回100001，版本11.0将返回110000。如果连接不正确，则返回零。
+      </p><p>       在主版本10之前，<span class="productname">PostgreSQL</span>使用三部分版本号，
+	   前两部分代表主要版本。对于这些版本，<code class="function">PQserverVersion</code>
+	   对每个部分使用两个数字；例如版本9.1.5将返回90105，版本9.2.0将返回90200。
+      </p><p>       因此，为确定功能兼容性，应用程序应将<code class="function">PQserverVersion</code>
+	   的结果除以100而不是10000，以确定逻辑主要版本号。在所有发行版系列中，
+	   只有最后两位数字在次版本（错误修复版本）之间有所不同。
+      </p></dd><dt id="LIBPQ-PQERRORMESSAGE"><span class="term">      <code class="function">PQerrorMessage</code>
+      <a id="idp27331104" class="indexterm"></a>
+     </span></dt><dd><p>       <a id="idp27332304" class="indexterm"></a>返回连接上的一个操作最近产生的错误消息。
+
+</p><pre class="synopsis">char *PQerrorMessage(const PGconn *conn);</pre><p>
+
+      </p><p>       几乎所有的<span class="application">libpq</span>在失败时都会为<code class="function">PQerrorMessage</code>设置一个消息。注意按照<span class="application">libpq</span>习惯，一个非空<code class="function">PQerrorMessage</code>结果由多行构成，并且将包括一个尾部新行。调用者不应该直接释放结果。当相关的<code class="structname">PGconn</code>句柄被传递给<code class="function">PQfinish</code>时，它将被释放。在<code class="literal">PGconn</code>结构上的多个操作之间，不能指望结果字符串会保持不变。
+      </p></dd><dt id="LIBPQ-PQSOCKET"><span class="term"><code class="function">PQsocket</code><a id="idp27340384" class="indexterm"></a></span></dt><dd><p>       获得到服务器连接套接字的文件描述符号。一个合法的描述符将会大于等于零。结果为 -1 表示当前没有打开服务器连接（在普通操作期间这将不会改变，但是在连接设置或重置期间可能改变）。
+
+</p><pre class="synopsis">int PQsocket(const PGconn *conn);</pre><p>
+
+      </p></dd><dt id="LIBPQ-PQBACKENDPID"><span class="term"><code class="function">PQbackendPID</code><a id="idp27344000" class="indexterm"></a></span></dt><dd><p>       返回处理这个连接的后端进程的进程<acronym class="acronym">ID</acronym>（PID）。<a id="idp27345616" class="indexterm"></a>
+
+</p><pre class="synopsis">int PQbackendPID(const PGconn *conn);</pre><p>
+      </p><p>       后端<acronym class="acronym">PID</acronym>有助于调试目的并且可用于与<code class="command">NOTIFY</code>消息（它包括发出提示的后端进程的<acronym class="acronym">PID</acronym>）进行比较。注意<acronym class="acronym">PID</acronym>属于一个在数据库服务器主机上执行的进程，而不是本地主机进程！
+      </p></dd><dt id="LIBPQ-PQCONNECTIONNEEDSPASSWORD"><span class="term"><code class="function">PQconnectionNeedsPassword</code><a id="idp27351456" class="indexterm"></a></span></dt><dd><p>       如果连接认证方法要求一个口令但没有可用的口令，返回真（1）。否则返回假（0）。
+
+</p><pre class="synopsis">int PQconnectionNeedsPassword(const PGconn *conn);</pre><p>
+      </p><p>       这个函数可以在连接尝试失败后被应用于决定是否向用户提示要求一个口令。
+      </p></dd><dt id="LIBPQ-PQCONNECTIONUSEDPASSWORD"><span class="term"><code class="function">PQconnectionUsedPassword</code><a id="idp27355328" class="indexterm"></a></span></dt><dd><p>       如果连接认证方法使用一个口令，返回真（1）。否则返回假（0）。
+
+</p><pre class="synopsis">int PQconnectionUsedPassword(const PGconn *conn);</pre><p>
+      </p><p>       这个函数能在一次连接尝试失败或成功后用于检测该服务器是否要求一个口令。
+      </p></dd></dl></div><p>
+  </p><p>    以下函数返回与SSL相关的信息。此信息通常在连接建立后不会更改。
+
+    </p><div class="variablelist"><dl class="variablelist"><dt id="LIBPQ-PQSSLINUSE"><span class="term"><code class="function">PQsslInUse</code><a id="idp27359840" class="indexterm"></a></span></dt><dd><p>        如果连接使用SSL，则返回true（1），否则返回false（0）。
+</p><pre class="synopsis">int PQsslInUse(const PGconn *conn);</pre><p>
+      </p></dd><dt id="LIBPQ-PQSSLATTRIBUTE"><span class="term"><code class="function">PQsslAttribute</code><a id="idp27363088" class="indexterm"></a></span></dt><dd><p>        返回关于连接的SSL相关的信息。
+
+</p><pre class="synopsis">const char *PQsslAttribute(const PGconn *conn, const char *attribute_name);</pre><p>
+      </p><p>       可用属性的列表因使用的SSL库和连接类型而异。如果某个属性不可用，则返回NULL。
+      </p><p>       以下属性通常可用：
+       </p><div class="variablelist"><dl class="variablelist"><dt><span class="term"><code class="literal">library</code></span></dt><dd><p>            正在使用的SSL实现的名称。(目前，只实现了<code class="literal">"OpenSSL"</code>)
+           </p></dd><dt><span class="term"><code class="literal">protocol</code></span></dt><dd><p>             正在使用的SSL/TLS版本。常见值为<code class="literal">"TLSv1"</code>、
+             <code class="literal">"TLSv1.1"</code>和<code class="literal">"TLSv1.2"</code>，
+             但如果使用某些其他协议，实现可能返回其他字符串。
+           </p></dd><dt><span class="term"><code class="literal">key_bits</code></span></dt><dd><p>            加密算法使用的密钥位数。
+           </p></dd><dt><span class="term"><code class="literal">cipher</code></span></dt><dd><p>            使用的密码组的短名称，例如<code class="literal">"DHE-RSA-DES-CBC3-SHA"</code>。
+            这些名称特定于每个SSL实现的。
+           </p></dd><dt><span class="term"><code class="literal">compression</code></span></dt><dd><p>            如果正在使用SSL压缩，则返回压缩算法的名称，如果使用了压缩但不知道算法，
+            则为“on”。如果不使用压缩，则返回“off”。
+           </p></dd></dl></div><p>
+      </p></dd><dt id="LIBPQ-PQSSLATTRIBUTENAMES"><span class="term"><code class="function">PQsslAttributeNames</code><a id="idp27378176" class="indexterm"></a></span></dt><dd><p>       返回可用的SSL属性名称数组。该数组由NULL指针终止。
+</p><pre class="synopsis">const char * const * PQsslAttributeNames(const PGconn *conn);</pre><p>
+      </p></dd><dt id="LIBPQ-PQSSLSTRUCT"><span class="term"><code class="function">PQsslStruct</code><a id="idp27381344" class="indexterm"></a></span></dt><dd><p>       返回指向描述连接的特定于SSL实现的对象的指针。
+</p><pre class="synopsis">void *PQsslStruct(const PGconn *conn, const char *struct_name);</pre><p>
+      </p><p>       可用的结构取决于正在使用的SSL实现。对于OpenSSL，有一个结构，
+       可用名称为“OpenSSL”，它返回一个指向OpenSSL <code class="literal">SSL</code>结构的指针。
+       要使用这个函数，可以使用下列代码：
+
+</p><pre class="programlisting">#include &lt;libpq-fe.h&gt;
+#include &lt;openssl/ssl.h&gt;
+
+...
+
+    SSL *ssl;
+
+    dbconn = PQconnectdb(...);
+    ...
+
+    ssl = PQsslStruct(dbconn, "OpenSSL");
+    if (ssl)
+    {
+        /* use OpenSSL functions to access ssl */
+    }</pre><p>
+      </p><p>       这个结构可以被用来验证加密级别、检查服务器证书等等。
+       关于这个结构可参考<span class="productname">OpenSSL</span>文档。
+      </p></dd><dt id="LIBPQ-PQGETSSL"><span class="term"><code class="function">PQgetssl</code><a id="idp27388272" class="indexterm"></a></span></dt><dd><p>       <a id="idp27389344" class="indexterm"></a>
+       返回在连接中使用的 SSL 结构，如果没有使用 SSL 则返回空。
+
+</p><pre class="synopsis">void *PQgetssl(const PGconn *conn);</pre><p>
+      </p><p>       此函数等效于<code class="literal">PQsslStruct(conn, "OpenSSL")</code>。
+       它不应该在新的应用程序中使用，因为返回的结构是特定于OpenSSL的，
+       并且如果使用了另一个SSL实现则返回的结构将不可用。要检查一个连接是否使用了SSL，
+       请调用<code class="function">PQsslInUse</code>，有关连接的更多详细信息，
+       请使用<code class="function">PQsslAttribute</code>。
+      </p></dd></dl></div><p>
+  </p></div><div class="navfooter"><hr /><table width="100%" summary="Navigation footer"><tr><td width="40%" align="left"><a accesskey="p" href="libpq-connect.html">上一页</a> </td><td width="20%" align="center"><a accesskey="u" href="libpq.html">上一级</a></td><td width="40%" align="right"> <a accesskey="n" href="libpq-exec.html">下一页</a></td></tr><tr><td width="40%" align="left" valign="top">33.1. 数据库连接控制函数 </td><td width="20%" align="center"><a accesskey="h" href="index.html">起始页</a></td><td width="40%" align="right" valign="top"> 33.3. 命令执行函数</td></tr></table></div></body></html>

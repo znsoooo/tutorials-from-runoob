@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><title>52.5. 逻辑流式复制协议</title><link rel="stylesheet" type="text/css" href="stylesheet.css" /><link rev="made" href="pgsql-docs@postgresql.org" /><meta name="generator" content="DocBook XSL Stylesheets V1.79.1" /><link rel="prev" href="protocol-replication.html" title="52.4. 流复制协议" /><link rel="next" href="protocol-message-types.html" title="52.6. 消息数据类型" /></head><body><div xmlns="http://www.w3.org/TR/xhtml1/transitional" class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="5" align="center">52.5. 逻辑流式复制协议</th></tr><tr><td width="10%" align="left"><a accesskey="p" href="protocol-replication.html" title="52.4. 流复制协议">上一页</a> </td><td width="10%" align="left"><a accesskey="u" href="protocol.html" title="第 52 章 前端/后端协议">上一级</a></td><th width="60%" align="center">第 52 章 前端/后端协议</th><td width="10%" align="right"><a accesskey="h" href="index.html" title="PostgreSQL 10.1 手册">起始页</a></td><td width="10%" align="right"> <a accesskey="n" href="protocol-message-types.html" title="52.6. 消息数据类型">下一页</a></td></tr></table><hr></hr></div><div class="sect1" id="PROTOCOL-LOGICAL-REPLICATION"><div class="titlepage"><div><div><h2 class="title" style="clear: both">52.5. 逻辑流式复制协议</h2></div></div></div><div class="toc"><dl class="toc"><dt><span class="sect2"><a href="protocol-logical-replication.html#PROTOCOL-LOGICAL-REPLICATION-PARAMS">52.5.1. 逻辑流式复制参数</a></span></dt><dt><span class="sect2"><a href="protocol-logical-replication.html#PROTOCOL-LOGICAL-MESSAGES">52.5.2. 逻辑复制协议消息</a></span></dt><dt><span class="sect2"><a href="protocol-logical-replication.html#PROTOCOL-LOGICAL-MESSAGES-FLOW">52.5.3. 逻辑复制协议消息流</a></span></dt></dl></div><p>  本节介绍逻辑复制协议，它是由<code class="literal">START_REPLICATION</code>
+  <code class="literal">SLOT</code> <em class="replaceable"><code>slot_name</code></em>
+  <code class="literal">LOGICAL</code>复制命令启动的消息流。
+ </p><p>  逻辑流式复制协议建立在物理流式复制协议的基元上。
+ </p><div class="sect2" id="PROTOCOL-LOGICAL-REPLICATION-PARAMS"><div class="titlepage"><div><div><h3 class="title">52.5.1. 逻辑流式复制参数</h3></div></div></div><p>   逻辑复制<code class="literal">START_REPLICATION</code>命令接受下列参数：
+
+   </p><div class="variablelist"><dl class="variablelist"><dt><span class="term">      proto_version
+     </span></dt><dd><p>       协议版本。当前仅支持版本<code class="literal">1</code>。
+      </p></dd><dt><span class="term">      publication_names
+     </span></dt><dd><p>       逗号分隔的要订阅的发布名称列表（接收更改）。
+	   单个发布名称被视为标准对象名称，并可根据需要引用。
+      </p></dd></dl></div><p>
+
+  </p></div><div class="sect2" id="PROTOCOL-LOGICAL-MESSAGES"><div class="titlepage"><div><div><h3 class="title">52.5.2. 逻辑复制协议消息</h3></div></div></div><p>   单个协议消息在以下小节中讨论。
+   单独的消息在<a class="xref" href="protocol-logicalrep-message-formats.html" title="52.9. 逻辑复制消息格式">第 52.9 节</a>中描述。
+  </p><p>   所有顶级协议消息都以消息类型字节开头。虽然在代码中表示为字符，
+   但这是一个带符号的字节，没有关联的编码。
+  </p><p>   由于流式复制协议提供消息长度，因此顶层协议消息不需要在头中嵌入一个长度。
+  </p></div><div class="sect2" id="PROTOCOL-LOGICAL-MESSAGES-FLOW"><div class="titlepage"><div><div><h3 class="title">52.5.3. 逻辑复制协议消息流</h3></div></div></div><p>   除了<code class="literal">START_REPLICATION</code>命令和重放进度消息之外，
+   所有信息仅从后端流向前端。
+  </p><p>   逻辑复制协议逐个发送单个事务。
+   这意味着一对Begin和Commit消息之间的所有消息都属于同一个事务。
+  </p><p>   每个发送的事务包含零个或多个DML消息（插入、更新、删除）。在级联设置的情况下，
+   它也可以包含起始消息。起始消息表明事务发起于不同的复制节点。
+   由于逻辑复制协议范围内的复制节点几乎可以做任何事情，唯一的标识符是起始名称。
+   下游负责根据需要处理（如果需要）。起始消息始终在事务中的任何DML消息之前发送。
+  </p><p>   每个DML消息都包含一个任意的关系ID，它可以映射到Relation消息中的ID。
+   Relation消息描述给定关系的模式。Relation消息是为给定关系发送的，
+   因为它是我们第一次在当前会话中为给定关系发送DML消息，
+   或者是因为自从发送最后一个Relation消息以来关系定义已更改。
+   该协议假定客户端能够为尽可能多的关系缓存元数据。
+  </p></div></div><div class="navfooter"><hr /><table width="100%" summary="Navigation footer"><tr><td width="40%" align="left"><a accesskey="p" href="protocol-replication.html">上一页</a> </td><td width="20%" align="center"><a accesskey="u" href="protocol.html">上一级</a></td><td width="40%" align="right"> <a accesskey="n" href="protocol-message-types.html">下一页</a></td></tr><tr><td width="40%" align="left" valign="top">52.4. 流复制协议 </td><td width="20%" align="center"><a accesskey="h" href="index.html">起始页</a></td><td width="40%" align="right" valign="top"> 52.6. 消息数据类型</td></tr></table></div></body></html>

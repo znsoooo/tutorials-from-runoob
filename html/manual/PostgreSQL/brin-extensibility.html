@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><title>65.3. 可扩展性</title><link rel="stylesheet" type="text/css" href="stylesheet.css" /><link rev="made" href="pgsql-docs@postgresql.org" /><meta name="generator" content="DocBook XSL Stylesheets V1.79.1" /><link rel="prev" href="brin-builtin-opclasses.html" title="65.2. 内建操作符类" /><link rel="next" href="storage.html" title="第 66 章 数据库物理存储" /></head><body><div xmlns="http://www.w3.org/TR/xhtml1/transitional" class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="5" align="center">65.3. 可扩展性</th></tr><tr><td width="10%" align="left"><a accesskey="p" href="brin-builtin-opclasses.html" title="65.2. 内建操作符类">上一页</a> </td><td width="10%" align="left"><a accesskey="u" href="brin.html" title="第 65 章 BRIN 索引">上一级</a></td><th width="60%" align="center">第 65 章 BRIN 索引</th><td width="10%" align="right"><a accesskey="h" href="index.html" title="PostgreSQL 10.1 手册">起始页</a></td><td width="10%" align="right"> <a accesskey="n" href="storage.html" title="第 66 章 数据库物理存储">下一页</a></td></tr></table><hr></hr></div><div class="sect1" id="BRIN-EXTENSIBILITY"><div class="titlepage"><div><div><h2 class="title" style="clear: both">65.3. 可扩展性</h2></div></div></div><p>  <acronym class="acronym">BRIN</acronym>接口具有高层的抽象，要求访问方法实现者只需
+  实现被访问的数据类型的语义。<acronym class="acronym">BRIN</acronym>层本身会负责并
+  发、日志以及对索引结构的搜索。
+ </p><p>  让一种<acronym class="acronym">BRIN</acronym>访问方法能够工作要做的全部事情是实现
+  几个用户定义的方法， 它们定义存储在索引中的摘要值的行为以及它们和扫描键
+  的交互。简而言之，<acronym class="acronym">BRIN</acronym>很好地把可扩展性和通用性、
+  代码重用以及干净的接口结合在了一起。
+ </p><p>  <acronym class="acronym">BRIN</acronym>的一个操作符类必须提供四种方法：
+
+  </p><div class="variablelist"><dl class="variablelist"><dt><span class="term"><code class="function">BrinOpcInfo *opcInfo(Oid type_oid)</code></span></dt><dd><p>      返回有关被索引列的摘要数据的内部信息。返回值必须指向一个已经 palloc
+      的<code class="structname">BrinOpcInfo</code>，该结构的定义是：
+</p><pre class="programlisting">typedef struct BrinOpcInfo
+{
+    /* 这个 opclass 的一个索引列中存储的列数 */
+    uint16      oi_nstored;
+
+    /* 该 opclass 私有用途的不透明指针 */
+    void       *oi_opaque;
+
+    /* 被存储列的类型缓冲项 */
+    TypeCacheEntry *oi_typcache[FLEXIBLE_ARRAY_MEMBER];
+} BrinOpcInfo;</pre><p>
+      <code class="structname">BrinOpcInfo</code>.<code class="structfield">oi_opaque</code>可以被操作符类
+      例程用来在索引扫描期间在支持过程之间传递信息。
+     </p></dd><dt><span class="term"><code class="function">bool consistent(BrinDesc *bdesc, BrinValues *column,
+       ScanKey key)</code></span></dt><dd><p>      返回 ScanKey 是否和一个范围的被索引值一致。要使用的索引号作为
+      扫描键的一部分传递。
+     </p></dd><dt><span class="term"><code class="function">bool addValue(BrinDesc *bdesc, BrinValues *column,
+       Datum newval, bool isnull)</code></span></dt><dd><p>      给定一个索引元组和一个被索引值，修改该元组的指示属性让该元组能额外地表
+      示新的值。如果对该元组做出了任何修改，就返回<code class="literal">true</code>。
+     </p></dd><dt><span class="term"><code class="function">bool unionTuples(BrinDesc *bdesc, BrinValues *a,
+       BrinValues *b)</code></span></dt><dd><p>      联合两个索引元组。给定两个索引元组，修改第一个的指示属性让它能表示
+      两个元组。第二个元组不会被修改。
+     </p></dd></dl></div><p>
+
+  核心发布中包括了对两种类型的操作符类的支持：minmax 和 inclusion。
+  发布中也酌情为核心中的数据类型提供了使用它们的操作符类定义。用户可以用等效
+  的定义为其他数据类型定义额外的操作符类，而不需要编写任何源代码，只需要声明
+  一些适当的目录项就足够了。注意有关操作符策略的语义的假设是嵌在支持过程的源
+  代码中的。
+ </p><p>  实现完全不同的语义的操作符类也是可能的，只要提供上述的四个主要支持过程的实
+  现即可。注意在主要发行版之间的向后兼容性是不被保证的：例如，在以后的发行中
+  可能要求额外的支持过程。
+ </p><p>  要为一种实现了线性有序集的数据类型编写一个操作符类，可以使用 minmax 支持过
+  程配上对应的操作符（如<a class="xref" href="brin-extensibility.html#BRIN-EXTENSIBILITY-MINMAX-TABLE" title="表 65.2. Minmax 操作符类的过程和支持编号">表 65.2</a>所示）。
+  所有的操作符类成员（过程和操作符）都是强制性的。
+ </p><div class="table" id="BRIN-EXTENSIBILITY-MINMAX-TABLE"><p class="title"><strong>表 65.2. Minmax 操作符类的过程和支持编号</strong></p><div class="table-contents"><table class="table" summary="Minmax 操作符类的过程和支持编号" border="1"><colgroup><col /><col /></colgroup><thead><tr><th>操作符类成员</th><th>对象</th></tr></thead><tbody><tr><td>支持过程 1</td><td>内部函数<code class="function">brin_minmax_opcinfo()</code></td></tr><tr><td>支持过程 2</td><td>内部函数<code class="function">brin_minmax_add_value()</code></td></tr><tr><td>支持过程 3</td><td>内部函数<code class="function">brin_minmax_consistent()</code></td></tr><tr><td>支持过程 4</td><td>内部函数<code class="function">brin_minmax_union()</code></td></tr><tr><td>操作符策略 1</td><td>小于操作符</td></tr><tr><td>操作符策略 2</td><td>小于等于操作符</td></tr><tr><td>操作符策略 3</td><td>等于操作符</td></tr><tr><td>操作符策略 4</td><td>大于等于操作符</td></tr><tr><td>操作符策略 5</td><td>大于操作符</td></tr></tbody></table></div></div><br class="table-break" /><p>  要为值被包括在另一种类型的复杂数据类型编写操作符类，可以使用 inclusion 支持
+  过程配上相应的操作符（如
+  <a class="xref" href="brin-extensibility.html#BRIN-EXTENSIBILITY-INCLUSION-TABLE" title="表 65.3. Inclusion 操作符类的过程和支持编号">表 65.3</a>所示）。它只要求一个
+  可用任何语言编写的附加函数。可以定义更多函数来提供额外的功能。所有的
+  操作符都是可选的。如该表中的依赖性所示，某些操作符需要其他操作符。
+ </p><div class="table" id="BRIN-EXTENSIBILITY-INCLUSION-TABLE"><p class="title"><strong>表 65.3. Inclusion 操作符类的过程和支持编号</strong></p><div class="table-contents"><table class="table" summary="Inclusion 操作符类的过程和支持编号" border="1"><colgroup><col /><col /><col /></colgroup><thead><tr><th>操作符类成员</th><th>对象</th><th>依赖性</th></tr></thead><tbody><tr><td>支持过程 1</td><td>内部函数<code class="function">brin_inclusion_opcinfo()</code></td><td> </td></tr><tr><td>支持过程 2</td><td>内部函数<code class="function">brin_inclusion_add_value()</code></td><td> </td></tr><tr><td>支持过程 3</td><td>内部函数<code class="function">brin_inclusion_consistent()</code></td><td> </td></tr><tr><td>支持过程 4</td><td>内部函数<code class="function">brin_inclusion_union()</code></td><td> </td></tr><tr><td>支持过程 11</td><td>合并两个元素的函数</td><td> </td></tr><tr><td>支持过程 12</td><td>可选函数，检查两个元素是否可以合并</td><td> </td></tr><tr><td>支持过程 13</td><td>可选函数，检查一个元素是否被包含在另一个中</td><td> </td></tr><tr><td>支持过程 14</td><td>optional function to check whether an element is empty</td><td> </td></tr><tr><td>操作符策略 1</td><td>位于左边操作符 left-of</td><td>操作符策略 4</td></tr><tr><td>操作符策略 2</td><td>不超过左边操作符 does-not-extend-to-the-right-of</td><td>操作符策略 5</td></tr><tr><td>操作符策略 3</td><td>重叠操作符</td><td> </td></tr><tr><td>操作符策略 4</td><td>不超过左边操作符 does-not-extend-to-the-left-of</td><td>操作符策略 1</td></tr><tr><td>操作符策略 5</td><td>位于右边操作符 right-of</td><td>操作符策略 2</td></tr><tr><td>操作符策略 6, 18</td><td>相同或者等于操作符</td><td>操作符策略 7</td></tr><tr><td>操作符策略 7, 13, 16, 24, 25</td><td>包含或等于操作符</td><td> </td></tr><tr><td>操作符策略 8, 14, 26, 27</td><td>被包含或等于操作符</td><td>操作符策略 3</td></tr><tr><td>操作符策略 9</td><td>不超过上边操作符 does-not-extend-above</td><td>操作符策略 11</td></tr><tr><td>操作符策略 10</td><td>操作符 is-below</td><td>操作符策略 12</td></tr><tr><td>Operator Strategy 11</td><td>在上面操作符 is-above</td><td>操作符策略 9</td></tr><tr><td>操作符策略 12</td><td>不超过下面操作符 does-not-extend-below</td><td>操作符策略 10</td></tr><tr><td>操作符策略 20</td><td>小于操作符</td><td>操作符策略 4</td></tr><tr><td>操作符策略 21</td><td>小于等于操作符</td><td>操作符策略 4</td></tr><tr><td>操作符策略 22</td><td>大于操作符</td><td>操作符策略 1</td></tr><tr><td>操作符策略 23</td><td>大于等于操作符</td><td>操作符策略 1</td></tr></tbody></table></div></div><br class="table-break" /><p>    支持过程编号 1-10 被保留给 BRIN 的内部函数，因此 SQL 层面的函数从
+    编号 11 开始。支持函数编号 11 是用于构建该索引的主要函数。它应该接
+    受两个具有和操作符类相同数据类型的参数并且返回它们的并集。如果
+    inclusion 操作符类定义时用了<code class="literal">STORAGE</code>参数，则它可以存储具有
+    不同数据类型的合并值。该并集函数的返回值应该匹配
+    <code class="literal">STORAGE</code>的数据类型。
+ </p><p>    支持过程编号 12 和 14 被提供用来支持内建数据类型的不规则性。过程编号
+    12 被用来支持来自不同地址族的不能合并的网络地址。过程编号 14 被用来
+    支持空范围。过程编号 13 是可选的，但是我们推荐提供它。它允许在新值
+    被传递给并集函数前对其进行检查。因为 BRIN 框架在并集没有改变时可以
+    越过某些操作，所以使用这个函数可以提升索引性能。
+ </p><p>    minmax 和 inclusion 操作符类都支持跨数据类型操作符，不过如果要支持
+    会让依赖性变得更加复杂。minmax 操作符类要求用具有同样数据类型的
+    参数来定义一个完全的操作符集合。它允许通过定义额外的操作符集合来
+    支持附加的数据类型。如
+    <a class="xref" href="brin-extensibility.html#BRIN-EXTENSIBILITY-INCLUSION-TABLE" title="表 65.3. Inclusion 操作符类的过程和支持编号">表 65.3</a>中所示，
+    inclusion 操作符类的操作符策略是依赖于另一种操作符策略的（或者和它们
+    自身相同的操作符策略）。它们要求定义依赖性操作符时，把
+    <code class="literal">STORAGE</code>数据类型作为左手边参数并且让其他支持的数据类型
+    作为右手边的参数。minmax 的例子可见
+    <code class="literal">float4_minmax_ops</code>，inclusion 的例子是
+    <code class="literal">box_inclusion_ops</code>。
+ </p></div><div class="navfooter"><hr /><table width="100%" summary="Navigation footer"><tr><td width="40%" align="left"><a accesskey="p" href="brin-builtin-opclasses.html">上一页</a> </td><td width="20%" align="center"><a accesskey="u" href="brin.html">上一级</a></td><td width="40%" align="right"> <a accesskey="n" href="storage.html">下一页</a></td></tr><tr><td width="40%" align="left" valign="top">65.2. 内建操作符类 </td><td width="20%" align="center"><a accesskey="h" href="index.html">起始页</a></td><td width="40%" align="right" valign="top"> 第 66 章 数据库物理存储</td></tr></table></div></body></html>

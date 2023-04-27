@@ -1,0 +1,200 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><title>16.4. 安装过程</title><link rel="stylesheet" type="text/css" href="stylesheet.css" /><link rev="made" href="pgsql-docs@postgresql.org" /><meta name="generator" content="DocBook XSL Stylesheets V1.79.1" /><link rel="prev" href="install-getsource.html" title="16.3. 获取源码" /><link rel="next" href="install-post.html" title="16.5. 安装后设置" /></head><body><div xmlns="http://www.w3.org/TR/xhtml1/transitional" class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="5" align="center">16.4. 安装过程</th></tr><tr><td width="10%" align="left"><a accesskey="p" href="install-getsource.html" title="16.3. 获取源码">上一页</a> </td><td width="10%" align="left"><a accesskey="u" href="installation.html" title="第 16 章   从源代码安装">上一级</a></td><th width="60%" align="center">第 16 章   从源代码安装</th><td width="10%" align="right"><a accesskey="h" href="index.html" title="PostgreSQL 10.1 手册">起始页</a></td><td width="10%" align="right"> <a accesskey="n" href="install-post.html" title="16.5. 安装后设置">下一页</a></td></tr></table><hr></hr></div><div class="sect1" id="INSTALL-PROCEDURE"><div class="titlepage"><div><div><h2 class="title" style="clear: both">16.4. 安装过程</h2></div></div></div><div class="procedure"><ol class="procedure" type="1"><li class="step" id="CONFIGURE"><p class="title"><strong>配置</strong></p><a id="idp18841088" class="indexterm"></a><p>    安装过程的第一步就是为你的系统配置源代码树并选择你喜欢的选项。这个工作是通过运行<code class="filename">configure</code>脚本实现的，对于默认安装，你只需要简单地输入：
+</p><pre class="screen"><strong class="userinput"><code>./configure</code></strong></pre><p>
+    该脚本将运行一些测试来决定一些系统相关的变量， 并检测你的操作系统的特殊设置，并且最后将在编译树中创建一些文件以记录它找到了什么。如果你想保持编译目录的独立，你也可以在一个源码树之外的目录中运行<code class="filename">configure</code> 。这个过程也被称为一个<a id="idp18846048" class="indexterm"></a><em class="firstterm">VPATH</em>编译。做法如下：
+</p><pre class="screen"><strong class="userinput"><code>mkdir build_dir</code></strong>
+<strong class="userinput"><code>cd build_dir</code></strong>
+<strong class="userinput"><code>/path/to/source/tree/configure [options go here]</code></strong>
+<strong class="userinput"><code>make</code></strong></pre><p>
+   </p><p>    默认设置将编译服务器和辅助程序，还有只需要 C 编译器的所有客户端程序和接口。默认时所有文件都将安装到<code class="filename">/usr/local/pgsql</code>。
+   </p><p>    你可以通过给出下面的<code class="filename">configure</code>命令行选项中的一个或更多的选项来自定义编译和安装过程：
+
+     </p><div class="variablelist"><dl class="variablelist"><dt><span class="term"><code class="option">--prefix=<em class="replaceable"><code>PREFIX</code></em></code></span></dt><dd><p>         把所有文件装在目录<em class="replaceable"><code>PREFIX</code></em>中而不是<code class="filename">/usr/local/pgsql</code>中。 实际的文件会安装到数个子目录中；没有一个文件会直接安装到<em class="replaceable"><code>PREFIX</code></em>目录里。
+        </p><p>         如果你有特殊需要，你还可以用下面的选项自定义不同的子目录的位置。 不过，如果你把这些设置保留默认，那么安装将是可重定位的，意思是你可以在安装过后移动目录（<code class="literal">man</code>和<code class="literal">doc</code>位置不受此影响）。
+        </p><p>         对于可重定位的安装，你可能需要使用<code class="filename">configure</code>的<code class="literal">--disable-rpath</code>选项。 还有，你需要告诉操作系统如何找到共享库。
+        </p></dd><dt><span class="term"><code class="option">--exec-prefix=<em class="replaceable"><code>EXEC-PREFIX</code></em></code></span></dt><dd><p>         你可以把体系相关的文件安装到一个不同的前缀下（<em class="replaceable"><code>EXEC-PREFIX</code></em>），而不是<em class="replaceable"><code>PREFIX</code></em>中设置的地方。 这样做可以比较方便地在不同主机之间共享体系相关的文件。 如果你省略这些，那么<em class="replaceable"><code>EXEC-PREFIX</code></em>就会被设置为等于 <em class="replaceable"><code>PREFIX</code></em>并且体系相关和体系无关的文件都会安装到同一棵目录树下，这也可能是你想要的。
+        </p></dd><dt><span class="term"><code class="option">--bindir=<em class="replaceable"><code>DIRECTORY</code></em></code></span></dt><dd><p>         为可执行程序指定目录。默认是<code class="filename"><em class="replaceable"><code>EXEC-PREFIX</code></em>/bin</code>， 通常也就是<code class="filename">/usr/local/pgsql/bin</code>。
+        </p></dd><dt><span class="term"><code class="option">--sysconfdir=<em class="replaceable"><code>DIRECTORY</code></em></code></span></dt><dd><p>         用于各种各样配置文件的目录，默认为<code class="filename"><em class="replaceable"><code>PREFIX</code></em>/etc</code>。
+        </p></dd><dt><span class="term"><code class="option">--libdir=<em class="replaceable"><code>DIRECTORY</code></em></code></span></dt><dd><p>         设置安装库和动态装载模块的目录。默认是<code class="filename"><em class="replaceable"><code>EXEC-PREFIX</code></em>/lib</code>。
+        </p></dd><dt><span class="term"><code class="option">--includedir=<em class="replaceable"><code>DIRECTORY</code></em></code></span></dt><dd><p>         C 和 C++ 头文件的目录。默认是<code class="filename"><em class="replaceable"><code>PREFIX</code></em>/include</code>。
+        </p></dd><dt><span class="term"><code class="option">--datarootdir=<em class="replaceable"><code>DIRECTORY</code></em></code></span></dt><dd><p>         设置多种只读数据文件的根目录。这只为后面的某些选项设置默认值。默认值为<code class="filename"><em class="replaceable"><code>PREFIX</code></em>/share</code>。
+        </p></dd><dt><span class="term"><code class="option">--datadir=<em class="replaceable"><code>DIRECTORY</code></em></code></span></dt><dd><p>         设置被安装的程序使用的只读数据文件的目录。默认值为<code class="filename"><em class="replaceable"><code>DATAROOTDIR</code></em></code>。注意这不会对你的数据库文件被放置的位置产生任何影响。
+        </p></dd><dt><span class="term"><code class="option">--localedir=<em class="replaceable"><code>DIRECTORY</code></em></code></span></dt><dd><p>         设置安装区域数据的目录，特别是消息翻译目录文件。默认值为<code class="filename"><em class="replaceable"><code>DATAROOTDIR</code></em>/locale</code>。
+        </p></dd><dt><span class="term"><code class="option">--mandir=<em class="replaceable"><code>DIRECTORY</code></em></code></span></dt><dd><p>         <span class="productname">PostgreSQL</span>自带的手册页将安装到这个目录，它们被安装在相应的<code class="filename">man<em class="replaceable"><code>x</code></em></code>子目录里。 默认是<code class="filename"><em class="replaceable"><code>DATAROOTDIR</code></em>/man</code>。
+        </p></dd><dt><span class="term"><code class="option">--docdir=<em class="replaceable"><code>DIRECTORY</code></em></code></span></dt><dd><p>         设置安装文档文件的根目录，<span class="quote">“<span class="quote">man</span>”</span>页不包含在内。这只为后续选项设置默认值。这个选项的默认值为<code class="filename"><em class="replaceable"><code>DATAROOTDIR</code></em>/doc/postgresql</code>。
+        </p></dd><dt><span class="term"><code class="option">--htmldir=<em class="replaceable"><code>DIRECTORY</code></em></code></span></dt><dd><p>         <span class="productname">PostgreSQL</span>的HTML格式的文档将被安装在这个目录中。默认值为<code class="filename"><em class="replaceable"><code>DATAROOTDIR</code></em></code>。
+        </p></dd></dl></div><p>
+
+     </p><div class="note"><h3 class="title">注意</h3><p>       为了让<span class="productname">PostgreSQL</span>能够安装在一些共享的安装位置（例如<code class="filename">/usr/local/include</code>）， 同时又不至于和系统其它部分产生名字空间干扰，我们特别做了一些处理。 首先，安装脚本会自动给<code class="varname">datadir</code>、<code class="varname">sysconfdir</code>和<code class="varname">docdir</code>后面附加上<span class="quote">“<span class="quote"><code class="literal">/postgresql</code></span>”</span>字符串， 除非展开的完整路径名已经包含字符串<span class="quote">“<span class="quote"><code class="literal">postgres</code></span>”</span>或者<span class="quote">“<span class="quote"><code class="literal">pgsql</code></span>”</span>。 例如，如果你选择<code class="filename">/usr/local</code>作为前缀， 那么文档将安装在<code class="filename">/usr/local/doc/postgresql</code>，但如果前缀是<code class="filename">/opt/postgres</code>， 那么它将被放到<code class="filename">/opt/postgres/doc</code>。客户接口的公共 C 头文件安装到了<code class="varname">includedir</code>，并且是名字空间无关的。内部的头文件和服务器头文件都安装在<code class="varname">includedir</code>下的私有目录中。参考每种接口的文档获取关于如何访问头文件的信息。最后，如果合适，那么也会在<code class="varname">libdir</code>下创建一个私有的子目录用于动态可装载的模块。
+      </p></div><p>
+    </p><p>     </p><div class="variablelist"><dl class="variablelist"><dt><span class="term"><code class="option">--with-extra-version=<em class="replaceable"><code>STRING</code></em></code></span></dt><dd><p>         把<em class="replaceable"><code>STRING</code></em>追加到 PostgreSQL 版本号。例如，你可以使用它来标记从未发布的 Git 快照或者包含定制补丁（带有一个如<code class="command">git describe</code>标识符之类的额外版本号或者一个分发包发行号）创建的二进制文件。
+        </p></dd><dt><span class="term"><code class="option">--with-includes=<em class="replaceable"><code>DIRECTORIES</code></em></code></span></dt><dd><p>         <em class="replaceable"><code>DIRECTORIES</code></em>是一个冒号分隔的目录列表，这些目录将被加入编译器的头文件搜索列表中。 如果你有一些可选的包（例如 GNU <span class="application">Readline</span>）安装在非标准位置， 你就必须使用这个选项，以及可能还有相应的 <code class="option">--with-libraries</code>选项。
+        </p><p>         例子：<code class="literal">--with-includes=/opt/gnu/include:/usr/sup/include</code>.
+        </p></dd><dt><span class="term"><code class="option">--with-libraries=<em class="replaceable"><code>DIRECTORIES</code></em></code></span></dt><dd><p>         <em class="replaceable"><code>DIRECTORIES</code></em>是一个冒号分隔的目录列表，这些目录是用于查找库文件的。 如果你有一些包安装在非标准位置，你可能就需要使用这个选项（以及对应的<code class="option">--with-includes</code>选项）。
+        </p><p>         例子：<code class="literal">--with-libraries=/opt/gnu/lib:/usr/sup/lib</code>.
+        </p></dd><dt><span class="term"><code class="option">--enable-nls[<span class="optional">=<em class="replaceable"><code>LANGUAGES</code></em></span>]</code></span></dt><dd><p>         打开本地语言支持（<acronym class="acronym">NLS</acronym>），也就是以非英文显示程序消息的能力。<em class="replaceable"><code>LANGUAGES</code></em>是一个空格分隔的语言代码列表， 表示你想支持的语言。例如<code class="literal">--enable-nls='de fr'</code> （你提供的列表和实际支持的列表之间的交集将会自动计算出来）。如果你没有声明一个列表，那么就会安装所有可用的翻译。
+        </p><p>         要使用这个选项，你需要一个<span class="application">Gettext</span> API 的实现。见上文。
+        </p></dd><dt><span class="term"><code class="option">--with-pgport=<em class="replaceable"><code>NUMBER</code></em></code></span></dt><dd><p>         把<em class="replaceable"><code>NUMBER</code></em>设置为服务器和客户端的默认端口。默认是 5432。 这个端口可以在以后修改，不过如果你在这里声明，那么服务器和客户端将有相同的编译好了的默认值。这样会非常方便些。 通常选取一个非默认值的理由是你企图在同一台机器上运行多个<span class="productname">PostgreSQL</span>服务器。
+        </p></dd><dt><span class="term"><code class="option">--with-perl</code></span></dt><dd><p>         制作<span class="application">PL/Perl</span>服务器端编程语言。
+        </p></dd><dt><span class="term"><code class="option">--with-python</code></span></dt><dd><p>         制作<span class="application">PL/Python</span>服务器端编程语言。
+        </p></dd><dt><span class="term"><code class="option">--with-tcl</code></span></dt><dd><p>         制作<span class="application">PL/Tcl</span>服务器编程语言。
+        </p></dd><dt><span class="term"><code class="option">--with-tclconfig=<em class="replaceable"><code>DIRECTORY</code></em></code></span></dt><dd><p>         Tcl 安装文件<code class="filename">tclConfig.sh</code>，其中里面包含编译与 Tcl 接口的模块的配置信息。该文件通常可以自动地在一个众所周知的位置找到，但是如果你需要一个不同版本的 Tcl，你也可以指定可以找到它的目录。
+        </p></dd><dt><span class="term"><code class="option">--with-gssapi</code></span></dt><dd><p>         编译 GSSAPI 认证支持。在很多系统上，GSSAPI（通常是 Kerberos 安装的一部分）系统不会被安装在默认搜索位置（例如<code class="filename">/usr/include</code>、<code class="filename">/usr/lib</code>），因此你必须使用选项<code class="option">--with-includes</code>和<code class="option">--with-libraries</code>来配合该选项。<code class="filename">configure</code>将会检查所需的头文件和库以确保你的 GSSAPI 安装足以让配置继续下去。
+        </p></dd><dt><span class="term"><code class="option">--with-krb-srvnam=<em class="replaceable"><code>NAME</code></em></code></span></dt><dd><p>         默认的 Kerberos 服务主的名称（也被 GSSAPI 使用）。默认是<code class="literal">postgres</code>。通常没有理由改变这个值，除非你是一个 Windows 环境，这种情况下该名称必须被设置为大写形式<code class="literal">POSTGRES</code>。
+        </p></dd><dt><span class="term"><code class="option">--with-icu</code></span></dt><dd><p>         支持<span class="productname">ICU</span><a id="idp18935824" class="indexterm"></a>库。
+		 这需要安装<span class="productname">ICU4C</span>软件包。
+		 目前要求的最低<span class="productname">ICU4C</span>版本是4.2。
+        </p><p>         默认的，<span class="productname">pkg-config</span><a id="idp18939008" class="indexterm"></a>
+		 将被用来查找所需的编译选项。支持<span class="productname">ICU4C</span>版本4.6及更高版本。
+		 对于较老版本，或者如果<span class="productname">pkg-config</span>不可用，
+		 可以将变量<code class="envar">ICU_CFLAGS</code>和<code class="envar">ICU_LIBS</code>
+		 指定为<code class="filename">configure</code>，就像下面的示例中那样：		
+</p><pre class="programlisting">./configure ... --with-icu ICU_CFLAGS='-I/some/where/include' ICU_LIBS='-L/some/where/lib -licui18n -licuuc -licudata'</pre><p>
+         (如果<span class="productname">ICU4C</span>在编译器的默认搜索路径中，
+		 那么你仍然需要指定一个非空的字符串，以避免使用<span class="productname">pkg-config</span>，
+		 例如<code class="literal">ICU_CFLAGS=' '</code>。)
+        </p></dd><dt><span class="term"><code class="option">--with-openssl</code>
+       <a id="idp18946864" class="indexterm"></a>
+
+       </span></dt><dd><p>         编译<acronym class="acronym">SSL</acronym>（加密）连接支持。这个选项需要安装<span class="productname">OpenSSL</span>包。<code class="filename">configure</code>将会检查所需的头文件和库以确保你的 <span class="productname">OpenSSL</span>安装足以让配置继续下去。
+        </p></dd><dt><span class="term"><code class="option">--with-pam</code></span></dt><dd><p>         编译<acronym class="acronym">PAM</acronym><a id="idp18952320" class="indexterm"></a>（可插拔认证模块）支持。
+        </p></dd><dt><span class="term"><code class="option">--with-bsd-auth</code></span></dt><dd><p>         编译 BSD 认证支持（BSD 认证框架目前只在 OpenBSD
+         上可用）。
+        </p></dd><dt><span class="term"><code class="option">--with-ldap</code></span></dt><dd><p>         为认证和连接参数查找编译<acronym class="acronym">LDAP</acronym><a id="idp18955648" class="indexterm"></a>支持（详见<a class="xref" href="libpq-ldap.html" title="33.17. 连接参数的 LDAP 查找">第 33.17 节</a>和<a class="xref" href="auth-methods.html#AUTH-LDAP" title="20.3.7. LDAP 认证">第 20.3.7 节</a>）。在 Unix 上，这需要安装<span class="productname">OpenLDAP</span>包。在 Windows 上将使用默认的<span class="productname">WinLDAP</span>库。<code class="filename">configure</code>将会检查所需的头文件和库以确保你的 <span class="productname">OpenLDAP</span>安装足以让配置继续下去。
+        </p></dd><dt><span class="term"><code class="option">--with-systemd</code></span></dt><dd><p>         编译对<span class="application">systemd</span><a id="idp18962704" class="indexterm"></a>
+         服务通知的支持。如果服务器是在<span class="application">systemd</span>
+         机制下被启动，这可以提高集成度，否则不会有影响
+         ; see <a class="xref" href="server-start.html" title="18.3. 启动数据库服务器">第 18.3 节</a> for more
+         information。要使用这个选项，必须安装<span class="application">libsystemd</span>
+         以及相关的头文件。
+        </p></dd><dt><span class="term"><code class="option">--without-readline</code></span></dt><dd><p>         避免使用<span class="application">Readline</span>库（以及<span class="application">libedit</span>）。这个选项禁用了<span class="application">psql</span>中的命令行编辑和历史， 因此我们不建议这么做。
+        </p></dd><dt><span class="term"><code class="option">--with-libedit-preferred</code></span></dt><dd><p>         更倾向于使用BSD许可证的<span class="application">libedit</span>库而不是GPL许可证的<span class="application">Readline</span>。这个选项只有在你同时安装了两个库时才有意义，在那种情况下默认会使用<span class="application">Readline</span>。
+        </p></dd><dt><span class="term"><code class="option">--with-bonjour</code></span></dt><dd><p>         编译 Bonjour 支持。这要求你的操作系统支持 Bonjour。在 macOS 上建议使用。
+        </p></dd><dt><span class="term"><code class="option">--with-uuid=<em class="replaceable"><code>LIBRARY</code></em></code></span></dt><dd><p>         使用指定的 UUID 库编译
+         <a class="xref" href="uuid-ossp.html" title="F.45. uuid-ossp">uuid-ossp</a>模块（提供生成 UUID 的函数）。
+         <a id="idp18976080" class="indexterm"></a>
+         <em class="replaceable"><code>LIBRARY</code></em>必须是下列之一：
+        </p><div class="itemizedlist"><ul class="itemizedlist" style="list-style-type: disc; "><li class="listitem"><p>           <code class="option">bsd</code>，用来使用 FreeBSD、NetBSD 和一些其他 BSD 衍生系统
+           中的 UUID 函数
+          </p></li><li class="listitem"><p>           <code class="option">e2fs</code>，用来使用<code class="literal">e2fsprogs</code>项目创建的 UUID 库，
+           这个库出现在大部分的 Linux 系统和 macOS 中，并且也能找到用于其他平台的
+           版本
+          </p></li><li class="listitem"><p>           <code class="option">ossp</code>，用来使用<a class="ulink" href="http://www.ossp.org/pkg/lib/uuid/" target="_top">OSSP UUID library</a>
+          </p></li></ul></div></dd><dt><span class="term"><code class="option">--with-ossp-uuid</code></span></dt><dd><p>         <code class="literal">--with-uuid=ossp</code>的已废弃的等效选项。
+        </p></dd><dt><span class="term"><code class="option">--with-libxml</code></span></dt><dd><p>         编译 libxml （启用 SQL/XML 支持）。这个特性需要 Libxml 版本 2.6.23 及以上。
+        </p><p>         Libxml 会安装一个程序<code class="command">xml2-config</code>，它可以被用来检测所需的编译器和链接器选项。如果能找到，PostgreSQL 将自动使用它。要制定一个非常用的 libxml 安装位置，你可以设置环境变量<code class="envar">XML2_CONFIG</code>指向<code class="command">xml2-config</code>程序所属的安装，或者使用选项<code class="option">--with-includes</code>和<code class="option">--with-libraries</code>。
+        </p></dd><dt><span class="term"><code class="option">--with-libxslt</code></span></dt><dd><p>         编译
+         <a class="xref" href="xml2.html" title="F.46. xml2">xml2</a>模块时使用 libxslt。<span class="application">xml2</span>依赖这个库来执行XML的XSL转换。
+        </p></dd><dt><span class="term"><code class="option">--disable-float4-byval</code></span></dt><dd><p>         禁用 float4 值的<span class="quote">“<span class="quote">传值</span>”</span>，导致它们只能被<span class="quote">“<span class="quote">传引用</span>”</span>。这个选项会损失性能，但是在需要兼容使用 C 编写并使用<span class="quote">“<span class="quote">version 0</span>”</span>调用规范的老用户定义函数时可能需要这个选项。更好的长久解决方案是将任何这样的函数更新成使用<span class="quote">“<span class="quote">version 1</span>”</span>调用规范。
+        </p></dd><dt><span class="term"><code class="option">--disable-float8-byval</code></span></dt><dd><p>         禁用 float8 值的<span class="quote">“<span class="quote">传值</span>”</span>，导致它们只能被<span class="quote">“<span class="quote">传引用</span>”</span>。这个选项会损失性能，但是在需要兼容使用 C 编写并使用<span class="quote">“<span class="quote">version 0</span>”</span>调用规范的老用户定义函数时可能需要这个选项。更好的长久解决方案是将任何这样的函数更新成使用<span class="quote">“<span class="quote">version 1</span>”</span>调用规范。注意这个选项并非只影响 float8，它还影响 int8 和某些相关类型如时间戳。在32位平台上，<code class="option">--disable-float8-byval</code>是默认选项并且不允许选择<code class="option">--enable-float8-byval</code>。
+        </p></dd><dt><span class="term"><code class="option">--with-segsize=<em class="replaceable"><code>SEGSIZE</code></em></code></span></dt><dd><p>         设置<em class="firstterm">段尺寸</em>，以 G 字节计。大型的表会被分解成多个操作系统文件，每一个的尺寸等于段尺寸。这避免了与操作系统对文件大小限制相关的问题。默认的段尺寸（1G字节）在所有支持的平台上都是安全的。如果你的操作系统有<span class="quote">“<span class="quote">largefile</span>”</span>支持（如今大部分都支持），你可以使用一个更大的段尺寸。这可以有助于在使用非常大的表时消耗的文件描述符数目。但是要当心不能选择一个超过你将使用的平台和文件系统所支持尺寸的值。你可能希望使用的其他工具（如<span class="application">tar</span>）也可以对可用文件尺寸设限。如非绝对必要，我们推荐这个值应为2的幂。注意改变这个值需要一次 initdb。
+        </p></dd><dt><span class="term"><code class="option">--with-blocksize=<em class="replaceable"><code>BLOCKSIZE</code></em></code></span></dt><dd><p>         设置<em class="firstterm">块尺寸</em>，以 K 字节计。这是表内存储和I/O的单位。默认值（8K字节）适合于大多数情况，但是在特殊情况下可能其他值更有用。这个值必须是2的幂并且在 1 和 32 （K字节）之间。注意修改这个值需要一次 initdb。
+        </p></dd><dt><span class="term"><code class="option">--with-wal-segsize=<em class="replaceable"><code>SEGSIZE</code></em></code></span></dt><dd><p>         设置<em class="firstterm">WAL 段尺寸</em>，以 M 字节计。这是 WAL 日志中每一个独立文件的尺寸。调整这个值来控制传送 WAL 日志的粒度非常有用。默认尺寸为 16 M字节。这个值必须是2的幂并且在 1 到 1024 （M字节）之间。注意修改这个值需要一次 initdb。
+        </p></dd><dt><span class="term"><code class="option">--with-wal-blocksize=<em class="replaceable"><code>BLOCKSIZE</code></em></code></span></dt><dd><p>         设置<em class="firstterm">WAL 块尺寸</em>，以 K 字节计。这是 WAL 日志存储和I/O的单位。默认值（8K 字节）适合于大多数情况，但是在特殊情况下其他值更好有用。这个值必须是2的幂并且在 1 到 64（K字节）之间。注意修改这个值需要一次 initdb。
+        </p></dd><dt><span class="term"><code class="option">--disable-spinlocks</code></span></dt><dd><p>         即便<span class="productname">PostgreSQL</span>对于该平台没有 CPU 自旋锁支持，也允许编译成功。自旋锁支持的缺乏会导致较差的性能，因此这个选项只有当编译终端或者通知你该平台缺乏自旋锁支持时才应被使用。如果在你的平台上要求使用该选项来编译<span class="productname">PostgreSQL</span>，请将此问题报告给<span class="productname">PostgreSQL</span>的开发者。
+        </p></dd><dt><span class="term"><code class="option">--disable-strong-random</code></span></dt><dd><p>         即使<span class="productname">PostgreSQL</span>不支持平台上的强大随机数，也允许构建成功。
+		 一些认证协议以及 
+		 <a class="xref" href="pgcrypto.html" title="F.26. pgcrypto">pgcrypto</a>
+		 模块中的一些例程需要随机数的来源。<code class="option">--disable-strong-random</code>
+		 禁用需要密码强的随机数的功能，并用弱伪随机数生成器代替验证盐值生成和查询取消密钥。
+		 它可能会使认证安全性降低。
+        </p></dd><dt><span class="term"><code class="option">--disable-thread-safety</code></span></dt><dd><p>         禁用客户端库的线程安全性。这会阻止<span class="application">libpq</span>和<span class="application">ECPG</span>程序中的并发线程安全地控制它们私有的连接句柄。
+        </p></dd><dt><span class="term"><code class="option">--with-system-tzdata=<em class="replaceable"><code>DIRECTORY</code></em></code>
+       <a id="idp19017232" class="indexterm"></a>
+       </span></dt><dd><p>         <span class="productname">PostgreSQL</span>包含它自己的时区数据库，它被用于日期和时间操作。这个时区数据库实际上是和 IANA 时区数据库相兼容的，后者在很多操作系统如 FreeBSD、Linux和Solaris上都有提供，因此再次安装它可能是冗余的。当这个选项被使用时，将不会使用<em class="replaceable"><code>DIRECTORY</code></em>中系统提供的时区数据库，而是使用包括在 PostgreSQL 源码发布中的时区数据库。<em class="replaceable"><code>DIRECTORY</code></em>必须被指定为一个绝对路径。<code class="filename">/usr/share/zoneinfo</code>在某些操作系统上是一个很有可能的路径。注意安装例程将不会检测不匹配或错误的时区数据。如果你使用这个选项，建议你运行回归测试来验证你指定的时区数据能正常地工作在<span class="productname">PostgreSQL</span>中。
+        </p><a id="idp19022416" class="indexterm"></a><p>         这个选项主要针对那些很了解他们的目标操作系统的二进制包发布者。使用这个选项主要优点是不管何时当众多本地夏令时规则之一改变时， PostgreSQL 包不需要被升级。另一个优点是如果时区数据库文件在安装时不需要被编译， PostgreSQL 可以被更直接地交叉编译。
+        </p></dd><dt><span class="term"><code class="option">--without-zlib</code></span></dt><dd><p>         <a id="idp19024928" class="indexterm"></a>
+         避免使用<span class="application">Zlib</span>库。这样就禁用了<span class="application">pg_dump</span>和 <span class="application">pg_restore</span>中对压缩归档的支持。这个选项只适用于那些没有这个库的少见的系统。
+        </p></dd><dt><span class="term"><code class="option">--enable-debug</code></span></dt><dd><p>         把所有程序和库以带有调试符号的方式编译。这意味着你可以通过一个调试器运行程序来分析问题。 这样做显著增大了最后安装的可执行文件的大小，并且在非 GCC 的编译器上，这么做通常还要关闭编译器优化， 这些都导致速度的下降。但是，如果有这些符号的话，就可以非常有效地帮助定位可能发生问题的位置。目前，我们只是在你使用 GCC 的情况下才建议在生产安装中使用这个选项。但是如果你正在进行开发工作，或者正在使用 beta 版本，那么你就应该总是打开它。
+        </p></dd><dt><span class="term"><code class="option">--enable-coverage</code></span></dt><dd><p>         如果在使用 GCC，所有程序和库都会用代码覆盖率测试工具编译。在运行时，它们会在编译目录中生成代码覆盖率度量的文件。详见<a class="xref" href="regress-coverage.html" title="32.5. 测试覆盖检查">第 32.5 节</a>。这个选项只用于 GCC 以及做开发工作时。
+        </p></dd><dt><span class="term"><code class="option">--enable-profiling</code></span></dt><dd><p>         如果在使用 GCC，所有程序和库都被编译成可以进行性能分析。在后端退出时，将会创建一个子目录，其中包含用于性能分析的<code class="filename">gmon.out</code>文件。这个选项只用于 GCC 和做开发工作时。
+        </p></dd><dt><span class="term"><code class="option">--enable-cassert</code></span></dt><dd><p>         打开在服务器中的<em class="firstterm">assertion</em>检查， 它会检查许多<span class="quote">“<span class="quote">不可能发生</span>”</span>的条件。它对于代码开发的用途而言是无价之宝， 不过这些测试可能会显著地降低服务器的速度。并且，打开这个测试不会提高你的系统的稳定性！ 这些断言检查并不是按照严重性分类的，因此一些相对无害的小故障也可能导致服务器重启 — 只要它触发了一次断言失败。 目前，我们不推荐在生产环境中使用这个选项，但是如果你在做开发或者在使用 beta 版本的时候应该打开它。
+        </p></dd><dt><span class="term"><code class="option">--enable-depend</code></span></dt><dd><p>         打开自动倚赖性跟踪。如果打开这个选项，那么制作文件（makefile）将设置为在任何头文件被修改的时候都将重新编译所有受影响的目标文件。 如果你在做开发的工作，那么这个选项很有用，但是如果你只是想编译一次并且安装，那么这就是浪费时间。 目前，这个选项只对 GCC 有用。
+        </p></dd><dt><span class="term"><code class="option">--enable-dtrace</code></span></dt><dd><p>         <a id="idp19040000" class="indexterm"></a>
+         为<span class="productname">PostgreSQL</span>编译对动态跟踪工具 DTrace 的支持。
+         详见<a class="xref" href="dynamic-trace.html" title="28.5. 动态追踪">第 28.5 节</a>。
+        </p><p>         要指向<code class="command">dtrace</code>程序，必须设置环境变量<code class="envar">DTRACE</code>。这通常是必需的，因为<code class="command">dtrace</code>通常被安装在<code class="filename">/usr/sbin</code>中，该路径可能不在搜索路径中。
+        </p><p>         <code class="command">dtrace</code>程序的附加命令行选项可以在环境变量<code class="envar">DTRACEFLAGS</code>中指定。在 Solaris 上，要在一个64位二进制中包括 DTrace，你必须为 configure 指定<code class="literal">DTRACEFLAGS="-64"</code>。例如，使用 GCC 编译器：
+</p><pre class="screen">./configure CC='gcc -m64' --enable-dtrace DTRACEFLAGS='-64' ...</pre><p>
+         使用 Sun 的编译器：
+</p><pre class="screen">./configure CC='/opt/SUNWspro/bin/cc -xtarget=native64' --enable-dtrace DTRACEFLAGS='-64' ...</pre><p>
+        </p></dd><dt><span class="term"><code class="option">--enable-tap-tests</code></span></dt><dd><p>         启用 Perl TAP 工具进行测试。这要求安装了 Perl 以及 Perl 模块<code class="literal">IPC::Run</code>。
+         详见<a class="xref" href="regress-tap.html" title="32.4. TAP Tests">第 32.4 节</a>。
+        </p></dd></dl></div><p>
+    </p><p>     如果你喜欢用那些和<code class="filename">configure</code>选取的不同的 C 编译器，那么你可以你的环境变量<code class="envar">CC</code>设置为你选择的程序。默认时，只要<code class="filename">gcc</code>可以使用，<code class="filename">configure</code>将选择它， 或者是该平台的默认（通常是<code class="filename">cc</code>）。类似地，你可以用<code class="envar">CFLAGS</code>变量覆盖默认编译器标志。
+    </p><p>     你可以在<code class="filename">configure</code>命令行上指定环境变量， 例如：
+</p><pre class="screen"><strong class="userinput"><code>./configure CC=/opt/bin/gcc CFLAGS='-O2 -pipe'</code></strong></pre><p>
+    </p><p>     下面是可以以这种方式设置的有效变量的列表：
+
+     </p><div class="variablelist"><dl class="variablelist"><dt><span class="term"><code class="envar">BISON</code></span></dt><dd><p>         Bison程序
+        </p></dd><dt><span class="term"><code class="envar">CC</code></span></dt><dd><p>         C编译器
+        </p></dd><dt><span class="term"><code class="envar">CFLAGS</code></span></dt><dd><p>         传递给 C 编译器的选项
+        </p></dd><dt><span class="term"><code class="envar">CPP</code></span></dt><dd><p>         C 预处理器
+        </p></dd><dt><span class="term"><code class="envar">CPPFLAGS</code></span></dt><dd><p>         传递给 C 预处理器的选项
+        </p></dd><dt><span class="term"><code class="envar">DTRACE</code></span></dt><dd><p>         <code class="command">dtrace</code>程序的位置
+        </p></dd><dt><span class="term"><code class="envar">DTRACEFLAGS</code></span></dt><dd><p>         传递给<code class="command">dtrace</code>程序的选项
+        </p></dd><dt><span class="term"><code class="envar">FLEX</code></span></dt><dd><p>         Flex程序
+        </p></dd><dt><span class="term"><code class="envar">LDFLAGS</code></span></dt><dd><p>         链接可执行程序或共享库时使用的选项
+        </p></dd><dt><span class="term"><code class="envar">LDFLAGS_EX</code></span></dt><dd><p>         只用于链接可执行程序的附加选项
+        </p></dd><dt><span class="term"><code class="envar">LDFLAGS_SL</code></span></dt><dd><p>         只用于链接共享库的附加选项
+        </p></dd><dt><span class="term"><code class="envar">MSGFMT</code></span></dt><dd><p>         用于本地语言支持的<code class="command">msgfmt</code>程序
+        </p></dd><dt><span class="term"><code class="envar">PERL</code></span></dt><dd><p>         Perl 解释器的全路径名称。这将被用来决定编译 PL/Perl 时的依赖性。
+        </p></dd><dt><span class="term"><code class="envar">PYTHON</code></span></dt><dd><p>         Python 解释器的全路径名称。这将被用来决定编译 PL/Python 时的依赖性。另外这里指定的是 Python 2 还是 Python 3 （或者是隐式选择）决定了 PL/Python 语言的哪一种变种将成为可用的。详见
+         <a class="xref" href="plpython-python23.html" title="45.1. Python 2 vs. Python 3">第 45.1 节</a>。
+        </p></dd><dt><span class="term"><code class="envar">TCLSH</code></span></dt><dd><p>         Tcl 解释器的全路径名称。这将被用来决定编译 PL/Tcl 时的依赖性，并且它将被替换到 Tcl 脚本中。
+        </p></dd><dt><span class="term"><code class="envar">XML2_CONFIG</code></span></dt><dd><p>         用于定位 libxml 安装的<code class="command">xml2-config</code>程序。
+        </p></dd></dl></div><p>
+    </p><p>     有时候，将编译器标志事后添加到由<code class="filename">configure</code>选择的集合中非常有用。
+	 一个重要的例子是，<span class="application">gcc</span>的<code class="option">-Werror</code>
+	 选项不能包含在传递给<code class="filename">configure</code>的<code class="envar">CFLAGS</code>中，
+	 因为它会中断许多<code class="filename">configure</code>的内置测试。要添加这样的标志，
+	 在运行<code class="filename">make</code>时将它们包含在<code class="envar">COPT</code>环境变量中。
+	 将<code class="envar">COPT</code>的内容添加到由<code class="filename">configure</code>设置的
+	<code class="envar">CFLAGS</code>和<code class="envar">LDFLAGS</code>中。例如，你可以这样做
+</p><pre class="screen"><strong class="userinput"><code>make COPT='-Werror'</code></strong></pre><p>
+     或者
+</p><pre class="screen"><strong class="userinput"><code>export COPT='-Werror'</code></strong>
+<strong class="userinput"><code>make</code></strong></pre><p>
+    </p><div class="note"><h3 class="title">注意</h3><p>      在开发服务器内部代码时，我们推荐使用配置选项<code class="option">--enable-cassert</code>（它会打开很多运行时错误检查）和<code class="option">--enable-debug</code>（它会提高调试工具的有用性）。
+     </p><p>      如果在使用 GCC，最好使用至少<code class="option">-O1</code>的优化级别来编译，因为不使用优化（<code class="option">-O0</code>）会禁用某些重要的编译器警告（例如使用未经初始化的变量）。但是，非零的优化级别会使调试更复杂，因为在编译好的代码中步进通常将不能和源代码行一一对应。如果你在尝试调试优化过的代码时觉得困惑，将感兴趣的特定文件使用<code class="option">-O0</code>编译。一种简单的方式是传递一个选项给<span class="application">make</span>：<code class="command">make PROFILE=-O0 file.o</code>。
+     </p><p>      <code class="envar">COPT</code>和<code class="envar">PROFILE</code>环境变量同样由<span class="productname">PostgreSQL</span>
+	   makefile实际处理。要使用哪个是一个性能问题，但是开发者的共同习惯是将
+	   <code class="envar">PROFILE</code>用于一次性的标识调整，而始终保持设置<code class="envar">COPT</code>。
+     </p></div></li><li class="step" id="BUILD"><p class="title"><strong>编译</strong></p><p>    要开始编译，键入：
+</p><pre class="screen"><strong class="userinput"><code>make</code></strong></pre><p>
+    （一定要记得用<acronym class="acronym">GNU</acronym> <span class="application">make</span>）。依你的硬件而异，编译过程可能需要 5 分钟到半小时。显示的最后一行应该是：
+</p><pre class="screen">All of PostgreSQL successfully made. Ready to install.</pre><p>
+   </p><p>   如果你希望编译所有能编译的东西，包括文档（HTML和手册页）以及附加模块（<code class="filename">contrib</code>），这样键入：
+</p><pre class="screen"><strong class="userinput"><code>make world</code></strong></pre><p>
+   显示的最后一行应该是：
+</p><pre class="screen">PostgreSQL, contrib, and documentation successfully made. Ready to install.</pre><p>
+   </p></li><li class="step"><p class="title"><strong>回归测试</strong></p><a id="idp19106976" class="indexterm"></a><p>    如果你想在安装文件前测试新编译的服务器， 那么你可以在这个时候运行回归测试。 回归测试是一个用于验证<span class="productname">PostgreSQL</span>在你的系统上是否按照开发人员设想的那样运行的测试套件。键入：
+</p><pre class="screen"><strong class="userinput"><code>make check</code></strong></pre><p>
+    （这条命令不能以 root 运行；请在非特权用户下运行该命令）。
+    (This won't work as root; do it as an unprivileged user.)
+    
+    <a class="xref" href="regress.html" title="第 32 章 回归测试">第 32 章</a>包含关于如何解释测试结果的详细信息。你可以在以后的任何时间通过执行这条命令来运行这个测试。
+   </p></li><li class="step" id="INSTALL"><p class="title"><strong>安装文件</strong></p><div class="note"><h3 class="title">注意</h3><p>     如果你正在升级一套现有的系统，请阅读
+     <a class="xref" href="upgrading.html" title="18.6. 升级一个PostgreSQL集簇">第 18.6 节</a>
+     其中有关于升级一个集簇的指导。
+    </p></div><p>    要安装<span class="productname">PostgreSQL</span>，输入：
+</p><pre class="screen"><strong class="userinput"><code>make install</code></strong></pre><p>
+    这条命令将把文件安装到在<a class="xref" href="install-procedure.html#CONFIGURE" title="配置">步骤 1</a>中指定的目录。确保你有足够的权限向该区域写入。通常你需要用 root 权限做这一步。或者你也可以事先创建目标目录并且分派合适的权限。
+   </p><p>    要安装文档（HTML和手册页），输入：
+</p><pre class="screen"><strong class="userinput"><code>make install-docs</code></strong></pre><p>
+   </p><p>    如果你按照上面的方法编译了所有东西，输入：
+</p><pre class="screen"><strong class="userinput"><code>make install-world</code></strong></pre><p>
+    这也会安装文档。
+   </p><p>    你可以使用<code class="literal">make install-strip</code>代替<code class="literal">make install</code>， 在安装可执行文件和库文件时把它们剥离。 这样将节约一些空间。如果你编译时带着调试支持，那么抽取将有效地删除调试支持， 因此我们应该只是在不再需要调试的时候做这些事情。 <code class="literal">install-strip</code>力图做一些合理的工作来节约空间， 但是它并不了解如何从可执行文件中抽取每个不需要的字节， 因此，如果你希望节约所有可能节约的磁盘空间，那么你可能需要手工做些处理。
+   </p><p>    标准的安装只提供客户端应用开发和服务器端程序开发所需的所有头文件，例如用 C 写的定制函数或者数据类型（在<span class="productname">PostgreSQL</span> 8.0 之前，后者需要独立地执行一次<code class="literal">make  install-all-headers</code>命令，不过现在这个步骤已经融合到标准的安装步骤中）。
+   </p><p><strong>只安装客户端：. </strong>     如果你只想装客户应用和接口，那么你可以用下面的命令：
+</p><pre class="screen"><strong class="userinput"><code>make -C src/bin install</code></strong>
+<strong class="userinput"><code>make -C src/include install</code></strong>
+<strong class="userinput"><code>make -C src/interfaces install</code></strong>
+<strong class="userinput"><code>make -C doc install</code></strong></pre><p>
+    <code class="filename">src/bin</code>中有一些服务器专用的二进制文件，但是它们很小。
+    </p></li></ol></div><p><strong>卸载：. </strong>    要撤销安装可以使用命令<code class="command">make uninstall</code>。不过这样不会删除任何创建出来的目录。
+   </p><p><strong>清理：. </strong>    在安装完成以后，你可以通过在源码树里面用命令<code class="command">make clean</code>删除编译文件。 这样会保留<code class="command">configure</code>程序生成的文件，这样以后你就可以用<code class="command">make</code>命令重新编译所有东西。 要把源码树恢复为发布时的状态，可用<code class="command">make distclean</code>命令。 如果你想从同一棵源码树上为多个不同平台制作，你就一定要运行这条命令并且为每个编译重新配置（另外一种方法是在每种平台上使用一套独立的编译树，这样源代码树就可以保留不被更改）。
+   </p><p>   如果你执行了一次制作，然后发现你的<code class="command">configure</code>选项是错误的， 或者你修改了任何<code class="command">configure</code>所探测的东西（例如，升级了软件）， 那么在重新配置和编译之前运行一下<code class="command">make distclean</code>是个好习惯。如果不这样做， 你修改的配置选项可能无法传播到所有需要变化的地方。
+  </p></div><div class="navfooter"><hr /><table width="100%" summary="Navigation footer"><tr><td width="40%" align="left"><a accesskey="p" href="install-getsource.html">上一页</a> </td><td width="20%" align="center"><a accesskey="u" href="installation.html">上一级</a></td><td width="40%" align="right"> <a accesskey="n" href="install-post.html">下一页</a></td></tr><tr><td width="40%" align="left" valign="top">16.3. 获取源码 </td><td width="20%" align="center"><a accesskey="h" href="index.html">起始页</a></td><td width="40%" align="right" valign="top"> 16.5. 安装后设置</td></tr></table></div></body></html>

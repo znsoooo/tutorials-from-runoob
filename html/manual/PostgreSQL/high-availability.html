@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><title>第 26 章 高可用、负载均衡和复制</title><link rel="stylesheet" type="text/css" href="stylesheet.css" /><link rev="made" href="pgsql-docs@postgresql.org" /><meta name="generator" content="DocBook XSL Stylesheets V1.79.1" /><link rel="prev" href="continuous-archiving.html" title="25.3. 连续归档和时间点恢复（PITR）" /><link rel="next" href="different-replication-solutions.html" title="26.1. 不同方案的比较" /></head><body><div xmlns="http://www.w3.org/TR/xhtml1/transitional" class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="5" align="center">第 26 章 高可用、负载均衡和复制</th></tr><tr><td width="10%" align="left"><a accesskey="p" href="continuous-archiving.html" title="25.3. 连续归档和时间点恢复（PITR）">上一页</a> </td><td width="10%" align="left"><a accesskey="u" href="admin.html" title="部分 III. 服务器管理">上一级</a></td><th width="60%" align="center">部分 III. 服务器管理</th><td width="10%" align="right"><a accesskey="h" href="index.html" title="PostgreSQL 10.1 手册">起始页</a></td><td width="10%" align="right"> <a accesskey="n" href="different-replication-solutions.html" title="26.1. 不同方案的比较">下一页</a></td></tr></table><hr></hr></div><div class="chapter" id="HIGH-AVAILABILITY"><div class="titlepage"><div><div><h2 class="title">第 26 章 高可用、负载均衡和复制</h2></div></div></div><div class="toc"><p><strong>目录</strong></p><dl class="toc"><dt><span class="sect1"><a href="different-replication-solutions.html">26.1. 不同方案的比较</a></span></dt><dt><span class="sect1"><a href="warm-standby.html">26.2. 日志传送后备服务器</a></span></dt><dd><dl><dt><span class="sect2"><a href="warm-standby.html#STANDBY-PLANNING">26.2.1. 规划</a></span></dt><dt><span class="sect2"><a href="warm-standby.html#STANDBY-SERVER-OPERATION">26.2.2. 后备服务器操作</a></span></dt><dt><span class="sect2"><a href="warm-standby.html#PREPARING-MASTER-FOR-STANDBY">26.2.3. 为后备服务器准备主控机</a></span></dt><dt><span class="sect2"><a href="warm-standby.html#STANDBY-SERVER-SETUP">26.2.4. 建立一个后备服务器</a></span></dt><dt><span class="sect2"><a href="warm-standby.html#STREAMING-REPLICATION">26.2.5. 流复制</a></span></dt><dt><span class="sect2"><a href="warm-standby.html#STREAMING-REPLICATION-SLOTS">26.2.6. 复制槽</a></span></dt><dt><span class="sect2"><a href="warm-standby.html#CASCADING-REPLICATION">26.2.7. 级联复制</a></span></dt><dt><span class="sect2"><a href="warm-standby.html#SYNCHRONOUS-REPLICATION">26.2.8. 同步复制</a></span></dt><dt><span class="sect2"><a href="warm-standby.html#CONTINUOUS-ARCHIVING-IN-STANDBY">26.2.9. 后备服务器中的持续归档</a></span></dt></dl></dd><dt><span class="sect1"><a href="warm-standby-failover.html">26.3. 故障转移</a></span></dt><dt><span class="sect1"><a href="log-shipping-alternative.html">26.4. 日志传送的替代方法</a></span></dt><dd><dl><dt><span class="sect2"><a href="log-shipping-alternative.html#WARM-STANDBY-CONFIG">26.4.1. 实现</a></span></dt><dt><span class="sect2"><a href="log-shipping-alternative.html#WARM-STANDBY-RECORD">26.4.2. 基于记录的日志传送</a></span></dt></dl></dd><dt><span class="sect1"><a href="hot-standby.html">26.5. 热备</a></span></dt><dd><dl><dt><span class="sect2"><a href="hot-standby.html#HOT-STANDBY-USERS">26.5.1. 用户概览</a></span></dt><dt><span class="sect2"><a href="hot-standby.html#HOT-STANDBY-CONFLICT">26.5.2. 处理查询冲突</a></span></dt><dt><span class="sect2"><a href="hot-standby.html#HOT-STANDBY-ADMIN">26.5.3. 管理员概览</a></span></dt><dt><span class="sect2"><a href="hot-standby.html#HOT-STANDBY-PARAMETERS">26.5.4. 热备参数参考</a></span></dt><dt><span class="sect2"><a href="hot-standby.html#HOT-STANDBY-CAVEATS">26.5.5. 警告</a></span></dt></dl></dd></dl></div><a id="idp24648016" class="indexterm"></a><a id="idp24648672" class="indexterm"></a><a id="idp24649360" class="indexterm"></a><a id="idp24650048" class="indexterm"></a><a id="idp24650736" class="indexterm"></a><a id="idp24651392" class="indexterm"></a><p>  数据库服务器可以一起工作，
+  这样如果主要的服务器失效则允许一个第二服务器快速接手它的任务（高可用性），
+  或者可以允许多个计算机提供相同的数据（负载均衡）。理想情况下，
+  数据库服务器能够无缝地一起工作。
+  提供静态网页服务的网页服务器可以非常容易地通过把网页请求均衡到多个机器来组合。
+  事实上，只读的数据库服务器也可以相对容易地组合起来。不幸的是，
+  大部分数据库服务器收到的请求是读/写混合的，并且读/写服务器更难于组合。
+  这是因为尽管只读数据只需要在每台服务器上放置一次，
+  但对于任意服务器的一次写动作却必须被传播给所有的服务器，
+  这样才能保证未来对于那些服务器的读请求能返回一致的结果。
+ </p><p>  这种同步问题是服务器一起工作的最根本的困难。
+  因为没有单一解决方案能够消除该同步问题对所有用例的影响。有多种解决方案，
+  每一种方案都以一种不同的方式提出了这个问题，
+  并且对于一种特定的负载最小化了该问题所产生的影响。
+ </p><p>  某些方案通过只允许一台服务器修改数据来处理同步。
+  能修改数据的服务器被称为读/写、<em class="firstterm">主控</em>或<em class="firstterm">主要</em>服务器。
+  跟踪主控机中改变的服务器被称为<em class="firstterm">后备</em>或<em class="firstterm">第二</em>服务器。
+  如果一台后备服务器只有被提升为一台主控服务器后才能被连接，
+  它被称为一台<em class="firstterm">温后备</em>服务器，
+  而一台能够接受连接并且提供只读查询的后备服务器被称为一台
+  <em class="firstterm">热后备</em>服务器。
+ </p><p>  某些方案是同步的，
+  即一个数据修改事务只有到所有服务器都提交了该事务之后才被认为是提交成功。
+  这保证了一次故障转移不会丢失任何数据并且所有负载均衡的服务器将返回一致的结果
+  （不管哪台服务器被查询）。相反，
+  异步的方案允许在一次提交和它被传播到其他服务器之间有一些延迟，
+  这产生了切换到一个备份服务器时丢失某些事务的可能性，
+  并且负载均衡的服务器可能会返回略微陈旧的结果。当同步通信可能很慢时，
+  可以使用异步通信。
+ </p><p>  方案也可以按照它们的粒度进行分类。某些方案只能处理一整个数据库服务器，
+  而其他的允许在每个表或每个数据库的级别上进行控制。
+ </p><p>  在任何选择中，都必须考虑性能。通常在功能和性能之间都存在着权衡。例如，
+  在一个低速网络上的一种完全同步的方案可能使性能减少超过一半，
+  而一种异步的方案产生的性能影响可能是最小的。
+ </p><p>  本节的剩余部分列出了多种故障转移、复制和负载均衡方案。
+ </p></div><div class="navfooter"><hr /><table width="100%" summary="Navigation footer"><tr><td width="40%" align="left"><a accesskey="p" href="continuous-archiving.html">上一页</a> </td><td width="20%" align="center"><a accesskey="u" href="admin.html">上一级</a></td><td width="40%" align="right"> <a accesskey="n" href="different-replication-solutions.html">下一页</a></td></tr><tr><td width="40%" align="left" valign="top">25.3. 连续归档和时间点恢复（PITR） </td><td width="20%" align="center"><a accesskey="h" href="index.html">起始页</a></td><td width="40%" align="right" valign="top"> 26.1. 不同方案的比较</td></tr></table></div></body></html>

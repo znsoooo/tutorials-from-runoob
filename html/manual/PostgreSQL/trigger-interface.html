@@ -1,0 +1,82 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><title>38.3. 用 C 编写触发器函数</title><link rel="stylesheet" type="text/css" href="stylesheet.css" /><link rev="made" href="pgsql-docs@postgresql.org" /><meta name="generator" content="DocBook XSL Stylesheets V1.79.1" /><link rel="prev" href="trigger-datachanges.html" title="38.2. 数据改变的可见性" /><link rel="next" href="trigger-example.html" title="38.4. 一个完整的触发器实例" /></head><body><div xmlns="http://www.w3.org/TR/xhtml1/transitional" class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="5" align="center">38.3. 用 C 编写触发器函数</th></tr><tr><td width="10%" align="left"><a accesskey="p" href="trigger-datachanges.html" title="38.2. 数据改变的可见性">上一页</a> </td><td width="10%" align="left"><a accesskey="u" href="triggers.html" title="第 38 章 触发器">上一级</a></td><th width="60%" align="center">第 38 章 触发器</th><td width="10%" align="right"><a accesskey="h" href="index.html" title="PostgreSQL 10.1 手册">起始页</a></td><td width="10%" align="right"> <a accesskey="n" href="trigger-example.html" title="38.4. 一个完整的触发器实例">下一页</a></td></tr></table><hr></hr></div><div class="sect1" id="TRIGGER-INTERFACE"><div class="titlepage"><div><div><h2 class="title" style="clear: both">38.3. 用 C 编写触发器函数</h2></div></div></div><a id="idp34780032" class="indexterm"></a><a id="idp34781456" class="indexterm"></a><p>    这一节描述了一个触发器函数的接口的低层细节。只有用 C 编写触发器函数时才需要这些信息。如果你使用一种更高层的语言，那么这些细节就不需要你来处理。在大部分情况下，你应该优先考虑使用一种过程语言。每一种过程语言的文档阐述了如何使用那种语言编写一个触发器。
+   </p><p>    触发器函数必须使用<span class="quote">“<span class="quote">版本 1</span>”</span>函数管理器接口。
+   </p><p>    当一个函数被触发器管理器调用时，不会给它传递任何常规的参数，但是会有一个<span class="quote">“<span class="quote">context</span>”</span>指针传递给它，该指针指向一个<code class="structname">TriggerData</code>结构。C 函数可以通过执行一个宏来检查它们是否是从触发器管理器被调用：
+</p><pre class="programlisting">CALLED_AS_TRIGGER(fcinfo)</pre><p>
+    它会展开成为：
+</p><pre class="programlisting">((fcinfo)-&gt;context != NULL &amp;&amp; IsA((fcinfo)-&gt;context, TriggerData))</pre><p>
+    如果这返回真，那么将<code class="literal">fcinfo-&gt;context</code>造型成类型<code class="literal">TriggerData *</code>并且利用所指向的<code class="structname">TriggerData</code>结构就是安全的。该函数<span class="emphasis"><em>不能</em></span>修改该<code class="structname">TriggerData</code>结构或者它指向的任何数据。
+   </p><p>    <code class="structname">struct TriggerData</code>被定义在<code class="filename">commands/trigger.h</code>中：
+
+</p><pre class="programlisting">typedef struct TriggerData
+{
+    NodeTag          type;
+    TriggerEvent     tg_event;
+    Relation         tg_relation;
+    HeapTuple        tg_trigtuple;
+    HeapTuple        tg_newtuple;
+    Trigger         *tg_trigger;
+    Buffer           tg_trigtuplebuf;
+    Buffer           tg_newtuplebuf;
+    Tuplestorestate *tg_oldtable;
+    Tuplestorestate *tg_newtable;
+} TriggerData;</pre><p>
+
+    其中的成员被定义如下：
+
+    </p><div class="variablelist"><dl class="variablelist"><dt><span class="term"><code class="structfield">type</code></span></dt><dd><p>        总是<code class="literal">T_TriggerData</code>.
+       </p></dd><dt><span class="term"><code class="structfield">tg_event</code></span></dt><dd><p>        描述该函数是为什么事件被调用的。你可以使用下列宏来检查<code class="literal">tg_event</code>：
+
+        </p><div class="variablelist"><dl class="variablelist"><dt><span class="term"><code class="literal">TRIGGER_FIRED_BEFORE(tg_event)</code></span></dt><dd><p>            如果该触发器在操作前被引发则返回真。
+           </p></dd><dt><span class="term"><code class="literal">TRIGGER_FIRED_AFTER(tg_event)</code></span></dt><dd><p>            如果该触发器在操作后被引发则返回真。
+           </p></dd><dt><span class="term"><code class="literal">TRIGGER_FIRED_INSTEAD(tg_event)</code></span></dt><dd><p>            如果该触发器被引发替代操作则返回真。
+           </p></dd><dt><span class="term"><code class="literal">TRIGGER_FIRED_FOR_ROW(tg_event)</code></span></dt><dd><p>            如果该触发器为一个行级事件而引发则返回真。
+           </p></dd><dt><span class="term"><code class="literal">TRIGGER_FIRED_FOR_STATEMENT(tg_event)</code></span></dt><dd><p>            如果该触发器为一个语句级事件而引发则返回真。
+           </p></dd><dt><span class="term"><code class="literal">TRIGGER_FIRED_BY_INSERT(tg_event)</code></span></dt><dd><p>            如果该触发器由一个<code class="command">INSERT</code>命令引发则返回真。
+           </p></dd><dt><span class="term"><code class="literal">TRIGGER_FIRED_BY_UPDATE(tg_event)</code></span></dt><dd><p>            如果该触发器由一个<code class="command">UPDATE</code>命令引发则返回真。
+           </p></dd><dt><span class="term"><code class="literal">TRIGGER_FIRED_BY_DELETE(tg_event)</code></span></dt><dd><p>            如果该触发器由一个<code class="command">DELETE</code>命令引发则返回真。
+           </p></dd><dt><span class="term"><code class="literal">TRIGGER_FIRED_BY_TRUNCATE(tg_event)</code></span></dt><dd><p>            如果该触发器由一个<code class="command">TRUNCATE</code>命令引发则返回真。
+           </p></dd></dl></div><p>
+       </p></dd><dt><span class="term"><code class="structfield">tg_relation</code></span></dt><dd><p>        一个结构指针，该结构描述该触发器为其引发的关系。关于这个结构的细节请参考<code class="filename">utils/rel.h</code>。最有趣的东西是<code class="literal">tg_relation-&gt;rd_att</code>（该关系元组的描述符）和<code class="literal">tg_relation-&gt;rd_rel-&gt;relname</code>（关系名称，该类型不是<code class="type">char*</code>而是<code class="type">NameData</code>。如果你需要该名称的一个拷贝，可使用<code class="literal">SPI_getrelname(tg_relation)</code>来得到一个<code class="type">char*</code>）。
+       </p></dd><dt><span class="term"><code class="structfield">tg_trigtuple</code></span></dt><dd><p>        一个该触发器为其引发的行的指针。这是被插入、更新或删除的行。如果这个触发器是为一个<code class="command">INSERT</code>或<code class="command">DELETE</code>而引发，在你不想把该行替换成另一行（在<code class="command">INSERT</code>的情况中）或不想跳过该操作时你应该从该函数中返回它。
+          对于外部表上的触发器，此中的系统列值未被指定。
+       </p></dd><dt><span class="term"><code class="structfield">tg_newtuple</code></span></dt><dd><p>        如果该触发器为一个<code class="command">UPDATE</code>而引发，则是一个指向该行新版本的指针。如果是为一个<code class="command">INSERT</code>或<code class="command">DELETE</code>而引发，则是<code class="symbol">NULL</code>。如果事件是一个<code class="command">UPDATE</code>并且你并不想用一个不同的行替换这个行或者不想跳过该操作时，你必须从函数中返回它。对于外部表上的触发器，此中的系统列值未被指定。
+       </p></dd><dt><span class="term"><code class="structfield">tg_trigger</code></span></dt><dd><p>        一个指向类型为<code class="structname">Trigger</code>的结构的指针，定义在<code class="filename">utils/reltrigger.h</code>中：
+
+</p><pre class="programlisting">typedef struct Trigger
+{
+    Oid         tgoid;
+    char       *tgname;
+    Oid         tgfoid;
+    int16       tgtype;
+    char        tgenabled;
+    bool        tgisinternal;
+    Oid         tgconstrrelid;
+    Oid         tgconstrindid;
+    Oid         tgconstraint;
+    bool        tgdeferrable;
+    bool        tginitdeferred;
+    int16       tgnargs;
+    int16       tgnattr;
+    int16      *tgattr;
+    char      **tgargs;
+    char       *tgqual;
+    char       *tgoldtable;
+    char       *tgnewtable;
+} Trigger;</pre><p>
+
+       其中<code class="structfield">tgname</code>是该触发器的名称，<code class="structfield">tgnargs</code>是<code class="structfield">tgargs</code>中参数的数量，而<code class="structfield">tgargs</code>是一个指向<code class="command">CREATE TRIGGER</code>语句中指定的参数的指针数组。其他成员只用于内部用途。
+       </p></dd><dt><span class="term"><code class="structfield">tg_trigtuplebuf</code></span></dt><dd><p>        包含<code class="structfield">tg_trigtuple</code>的缓冲区。如果没有那个元组或者它没有被存储在一个磁盘缓冲区中，则为<code class="symbol">InvalidBuffer</code>。
+       </p></dd><dt><span class="term"><code class="structfield">tg_newtuplebuf</code></span></dt><dd><p>        包含<code class="structfield">tg_newtuple</code>的缓冲区。如果没有那个元组或者它没有被存储在一个磁盘缓冲区中，则为<code class="symbol">InvalidBuffer</code>。
+       </p></dd><dt><span class="term"><code class="structfield">tg_oldtable</code></span></dt><dd><p>        指向<code class="structname">Tuplestorestate</code>类型的结构的指针，
+		该指针包含由<code class="structfield">tg_relation</code>指定的格式的零个或多个行，
+		如果不存在<code class="literal">OLD TABLE</code>转换关系，则指向<code class="symbol">NULL</code>指针。
+       </p></dd><dt><span class="term"><code class="structfield">tg_newtable</code></span></dt><dd><p>        指向<code class="structname">Tuplestorestate</code>类型的结构的指针，
+		该指针包含由<code class="structfield">tg_relation</code>指定的格式的零个或多个行，
+		如果不存在<code class="literal">NEW TABLE</code>转换关系，则指向<code class="symbol">NULL</code>指针。
+       </p></dd></dl></div><p>
+   </p><p>    要想允许通过SPI发布的查询引用转换表，请参阅
+    <a class="xref" href="spi-spi-register-trigger-data.html" title="SPI_register_trigger_data"><span class="refentrytitle">SPI_register_trigger_data</span></a>。
+   </p><p>    一个触发器函数必须返回一个<code class="structname">HeapTuple</code>指针或一个<code class="symbol">NULL</code>指针（<span class="emphasis"><em>不是</em></span>一个 SQL 空值，也就是不会设置<em class="parameter"><code>isNull</code></em>为真）。如果你不希望修改正在被操作的行，要小心地根据情况返回<code class="structfield">tg_trigtuple</code>或<code class="structfield">tg_newtuple</code>。
+   </p></div><div class="navfooter"><hr /><table width="100%" summary="Navigation footer"><tr><td width="40%" align="left"><a accesskey="p" href="trigger-datachanges.html">上一页</a> </td><td width="20%" align="center"><a accesskey="u" href="triggers.html">上一级</a></td><td width="40%" align="right"> <a accesskey="n" href="trigger-example.html">下一页</a></td></tr><tr><td width="40%" align="left" valign="top">38.2. 数据改变的可见性 </td><td width="20%" align="center"><a accesskey="h" href="index.html">起始页</a></td><td width="40%" align="right" valign="top"> 38.4. 一个完整的触发器实例</td></tr></table></div></body></html>

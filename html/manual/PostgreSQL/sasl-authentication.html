@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><title>52.3. SASL 认证</title><link rel="stylesheet" type="text/css" href="stylesheet.css" /><link rev="made" href="pgsql-docs@postgresql.org" /><meta name="generator" content="DocBook XSL Stylesheets V1.79.1" /><link rel="prev" href="protocol-flow.html" title="52.2. 消息流" /><link rel="next" href="protocol-replication.html" title="52.4. 流复制协议" /></head><body><div xmlns="http://www.w3.org/TR/xhtml1/transitional" class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="5" align="center">52.3. SASL 认证</th></tr><tr><td width="10%" align="left"><a accesskey="p" href="protocol-flow.html" title="52.2. 消息流">上一页</a> </td><td width="10%" align="left"><a accesskey="u" href="protocol.html" title="第 52 章 前端/后端协议">上一级</a></td><th width="60%" align="center">第 52 章 前端/后端协议</th><td width="10%" align="right"><a accesskey="h" href="index.html" title="PostgreSQL 10.1 手册">起始页</a></td><td width="10%" align="right"> <a accesskey="n" href="protocol-replication.html" title="52.4. 流复制协议">下一页</a></td></tr></table><hr></hr></div><div class="sect1" id="SASL-AUTHENTICATION"><div class="titlepage"><div><div><h2 class="title" style="clear: both">52.3. SASL 认证</h2></div></div></div><div class="toc"><dl class="toc"><dt><span class="sect2"><a href="sasl-authentication.html#SASL-SCRAM-SHA256">52.3.1. SCRAM-SHA-256 认证</a></span></dt></dl></div><p><em class="firstterm">SASL</em>是面向连接的协议中的认证的一个框架。目前，<span class="productname">PostgreSQL</span>
+仅实现了一个SASL认证机制SCRAM-SHA-256，但未来可能会添加更多。
+下面的步骤说明了SASL认证通常如何执行，而下一小节给出了关于SCRAM-SHA-256的更多细节。</p><div class="procedure" id="idp57601824"><p class="title"><strong>SASL 认证消息流</strong></p><ol class="procedure" type="1"><li class="step" id="SASL-AUTH-BEGIN"><p>  要开始SASL认证交换，服务器将发送一个AuthenticationSASL消息。
+  它包括一个服务器可以接受的SASL认证机制列表，按照服务器的首选顺序。</p></li><li class="step" id="SASL-AUTH-INITIAL-RESPONSE"><p>  客户端从列表中选择一个受支持的机制，并向服务器发送SASLInitialResponse消息。
+  该消息包含所选机制的名称，以及可选的初始客户端响应（如果所选机制使用该机制）。</p></li><li class="step" id="SASL-AUTH-CONTINUE"><p>  接下来将会有一个或多个服务器质询和客户端响应消息。
+  在AuthenticationSASLContinue消息中发送每个服务器质询，
+  然后在SASLResponse消息中发送来自客户端的响应。消息的细节是机制特定的。</p></li><li class="step" id="SASL-AUTH-END"><p>  最后，当认证交换成功完成时，服务器发送AuthenticationSASLFinal消息，
+  紧接着是AuthenticationOk消息。AuthenticationSASLFinal包含附加的服务器到客户端数据，
+  其内容特定于所选的认证机制。如果认证机制不使用在完成时发送的附加数据，
+  则不会发送AuthenticationSASLFinal消息。</p></li></ol></div><p>出错时，服务器可以在任何阶段中止身份验证，并发送一个错误信息。</p><div class="sect2" id="SASL-SCRAM-SHA256"><div class="titlepage"><div><div><h3 class="title">52.3.1. SCRAM-SHA-256 认证</h3></div></div></div><p>    <em class="firstterm">SCRAM-SHA-256</em>（从现在开始只称为<em class="firstterm">SCRAM</em>）
+	是目前唯一实现的SASL机制。它在RFC 7677和RFC 5802中有详细描述。
+  </p><p>在PostgreSQL中使用SCRAM-SHA-256时，服务器将忽略客户端在<code class="structname">client-first-message</code>
+中发送的用户名。而是使用在启动消息中发送的用户名。
+<span class="productname">PostgreSQL</span>支持多字符编码，而SCRAM指定用户名使用UTF-8，
+因此可能无法用UTF-8表示PostgreSQL用户名。
+  </p><p>SCRAM规范规定密码也使用UTF-8，并使用<em class="firstterm">SASLprep</em>算法进行处理。
+然而，<span class="productname">PostgreSQL</span>并不要求UTF-8用于密码。当设置了用户密码时，
+无论实际使用何种编码，它都会像使用UTF-8一样使用SASLprep进行处理。但是，
+如果它不是合法的UTF-8字节序列，或者它包含SASLprep算法禁止的UTF-8字节序列，
+则将使用未经SASLprep处理的原始密码，而不是引发错误。
+这允许在UTF-8中对密码进行规范化，但仍允许使用非UTF-8密码，
+并且不要求系统知道密码所使用的编码。
+  </p><p><em class="firstterm">Channel binding</em>尚未实现。
+  </p><div class="procedure" id="idp57616128"><p class="title"><strong>示例</strong></p><ol class="procedure" type="1"><li class="step" id="SCRAM-BEGIN"><p>  服务器发送AuthenticationSASL消息。它包含服务器可以接受的SASL认证机制列表。</p></li><li class="step" id="SCRAM-CLIENT-FIRST"><p>  客户端通过发送SASLInitialResponse消息进行响应，该消息指示选择的机制<code class="literal">SCRAM-SHA-256</code>。
+  在初始客户端响应字段中，该消息包含SCRAM <code class="structname">client-first-message</code>。</p></li><li class="step" id="SCRAM-SERVER-FIRST"><p>  服务器发送AuthenticationSASLContinue消息，内容为SCRAM
+  <code class="structname">server-first message</code>。</p></li><li class="step" id="SCRAM-CLIENT-FINAL"><p>  客户端发送SASLResponse消息，内容为SCRAM
+  <code class="structname">client-final-message</code>。</p></li><li class="step" id="SCRAM-SERVER-FINAL"><p>  服务器发送AuthenticationSASLFinal消息，内容为SCRAM
+  <code class="structname">server-final-message</code>，紧接着是一个AuthenticationOk消息。</p></li></ol></div></div></div><div class="navfooter"><hr /><table width="100%" summary="Navigation footer"><tr><td width="40%" align="left"><a accesskey="p" href="protocol-flow.html">上一页</a> </td><td width="20%" align="center"><a accesskey="u" href="protocol.html">上一级</a></td><td width="40%" align="right"> <a accesskey="n" href="protocol-replication.html">下一页</a></td></tr><tr><td width="40%" align="left" valign="top">52.2. 消息流 </td><td width="20%" align="center"><a accesskey="h" href="index.html">起始页</a></td><td width="40%" align="right" valign="top"> 52.4. 流复制协议</td></tr></table></div></body></html>

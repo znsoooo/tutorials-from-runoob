@@ -1,0 +1,171 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><title>35.8. 错误处理</title><link rel="stylesheet" type="text/css" href="stylesheet.css" /><link rev="made" href="pgsql-docs@postgresql.org" /><meta name="generator" content="DocBook XSL Stylesheets V1.79.1" /><link rel="prev" href="ecpg-descriptors.html" title="35.7. 使用描述符区域" /><link rel="next" href="ecpg-preproc.html" title="35.9. 预处理器指令" /></head><body><div xmlns="http://www.w3.org/TR/xhtml1/transitional" class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="5" align="center">35.8. 错误处理</th></tr><tr><td width="10%" align="left"><a accesskey="p" href="ecpg-descriptors.html" title="35.7. 使用描述符区域">上一页</a> </td><td width="10%" align="left"><a accesskey="u" href="ecpg.html" title="第 35 章 ECPG - C 中的嵌入式 SQL">上一级</a></td><th width="60%" align="center">第 35 章 <span xmlns="http://www.w3.org/1999/xhtml" class="application">ECPG</span> - C 中的嵌入式 <acronym xmlns="http://www.w3.org/1999/xhtml" class="acronym">SQL</acronym></th><td width="10%" align="right"><a accesskey="h" href="index.html" title="PostgreSQL 10.1 手册">起始页</a></td><td width="10%" align="right"> <a accesskey="n" href="ecpg-preproc.html" title="35.9. 预处理器指令">下一页</a></td></tr></table><hr></hr></div><div class="sect1" id="ECPG-ERRORS"><div class="titlepage"><div><div><h2 class="title" style="clear: both">35.8. 错误处理</h2></div></div></div><div class="toc"><dl class="toc"><dt><span class="sect2"><a href="ecpg-errors.html#ECPG-WHENEVER">35.8.1. 设置回调</a></span></dt><dt><span class="sect2"><a href="ecpg-errors.html#ECPG-SQLCA">35.8.2. sqlca</a></span></dt><dt><span class="sect2"><a href="ecpg-errors.html#ECPG-SQLSTATE-SQLCODE">35.8.3. <code class="literal">SQLSTATE</code> 与 <code class="literal">SQLCODE</code></a></span></dt></dl></div><p>   这一节描述在一个嵌入式 SQL 程序中如何处理异常情况和警告。有两种非互斥的工具可以用于这个目的。
+
+   </p><div class="itemizedlist"><ul class="itemizedlist" style="list-style-type: disc; "><li class="listitem">      可以使用<code class="literal">WHENEVER</code>命令配置回调来处理警告和错误情况。
+     </li><li class="listitem">      可以从<code class="varname">sqlca</code>变量中获得错误或警告的详细信息。
+     </li></ul></div><p>
+  </p><div class="sect2" id="ECPG-WHENEVER"><div class="titlepage"><div><div><h3 class="title">35.8.1. 设置回调</h3></div></div></div><p>    一种捕捉错误和警告的简单方法是设置一个特殊的动作，只要一个特定情况发生就执行该动作。通常是这样：
+</p><pre class="programlisting">EXEC SQL WHENEVER <em class="replaceable"><code>condition</code></em> <em class="replaceable"><code>action</code></em>;</pre><p>
+   </p><p>    <em class="replaceable"><code>condition</code></em>可以是下列之一：
+
+    </p><div class="variablelist"><dl class="variablelist"><dt><span class="term"><code class="literal">SQLERROR</code></span></dt><dd><p>        只要在 SQL 语句执行期间发生一个错误就调用指定的动作。
+       </p></dd><dt><span class="term"><code class="literal">SQLWARNING</code></span></dt><dd><p>        只要在 SQL 语句执行期间发生一个警告就调用指定的动作。
+       </p></dd><dt><span class="term"><code class="literal">NOT FOUND</code></span></dt><dd><p>        只要一个 SQL 语句检索或者影响零行就调用指定的动作（这种情况不是一个错误，但是你可能需要特别地处理它）。
+       </p></dd></dl></div><p>
+   </p><p>    <em class="replaceable"><code>action</code></em>可以是下列之一：
+
+    </p><div class="variablelist"><dl class="variablelist"><dt><span class="term"><code class="literal">CONTINUE</code></span></dt><dd><p>        这实际上表示该情况被忽略。这是默认值。
+       </p></dd><dt><span class="term"><code class="literal">GOTO <em class="replaceable"><code>label</code></em></code><br /></span><span class="term"><code class="literal">GO TO <em class="replaceable"><code>label</code></em></code></span></dt><dd><p>        调到指定的标签（使用一个 C <code class="literal">goto</code>语句）。
+       </p></dd><dt><span class="term"><code class="literal">SQLPRINT</code></span></dt><dd><p>        把一个消息打印到标准错误。对于简单程序或原型开发中这很有用。消息的细节无法配置。
+       </p></dd><dt><span class="term"><code class="literal">STOP</code></span></dt><dd><p>        调用<code class="literal">exit(1)</code>终止程序。
+       </p></dd><dt><span class="term"><code class="literal">DO BREAK</code></span></dt><dd><p>        执行 C 语句<code class="literal">break</code>。只应被用在循环或<code class="literal">switch</code>语句中。
+       </p></dd><dt><span class="term"><code class="literal">CALL <em class="replaceable"><code>name</code></em> (<em class="replaceable"><code>args</code></em>)</code><br /></span><span class="term"><code class="literal">DO <em class="replaceable"><code>name</code></em> (<em class="replaceable"><code>args</code></em>)</code></span></dt><dd><p>        用指定参数调用指定的 C 函数。
+       </p></dd></dl></div><p>
+
+    SQL 标准只提供动作<code class="literal">CONTINUE</code>和<code class="literal">GOTO</code>（以及<code class="literal">GO TO</code>）。
+   </p><p>    这里有一个可能会用在简单程序中的例子。当一个警告发生时它打印一个简单消息，而发生一个错误时它会中止程序：
+</p><pre class="programlisting">EXEC SQL WHENEVER SQLWARNING SQLPRINT;
+EXEC SQL WHENEVER SQLERROR STOP;</pre><p>
+   </p><p>    语句<code class="literal">EXEC SQL WHENEVER</code>是 SQL 预处理器的一个指令，而不是一个 C 语句。不管 C 程序的控制流程如何，该语句设置的错误或警告动作适用于所有位于处理程序设置点之后的嵌入式 SQL 语句，除非在第一个<code class="literal">EXEC SQL WHENEVER</code>和导致情况的 SQL 语句之间为同一个情况设置了不同的动作。因此下面的两个 C 程序都不会得到预期的效果：
+</p><pre class="programlisting">/*
+ * 错误
+ */
+int main(int argc, char *argv[])
+{
+    ...
+    if (verbose) {
+        EXEC SQL WHENEVER SQLWARNING SQLPRINT;
+    }
+    ...
+    EXEC SQL SELECT ...;
+    ...
+}</pre><p>
+
+</p><pre class="programlisting">/*
+ * 错误
+ */
+int main(int argc, char *argv[])
+{
+    ...
+    set_error_handler();
+    ...
+    EXEC SQL SELECT ...;
+    ...
+}
+
+static void set_error_handler(void)
+{
+    EXEC SQL WHENEVER SQLERROR STOP;
+}</pre><p>
+   </p></div><div class="sect2" id="ECPG-SQLCA"><div class="titlepage"><div><div><h3 class="title">35.8.2. sqlca</h3></div></div></div><p>    为了更强大的错误处理，嵌入式 SQL 接口提供了一个名为<code class="varname">sqlca</code>（SQL 通讯区域）的全局变量，它具有下面的结构：
+</p><pre class="programlisting">struct
+{
+    char sqlcaid[8];
+    long sqlabc;
+    long sqlcode;
+    struct
+    {
+        int sqlerrml;
+        char sqlerrmc[SQLERRMC_LEN];
+    } sqlerrm;
+    char sqlerrp[8];
+    long sqlerrd[6];
+    char sqlwarn[8];
+    char sqlstate[5];
+} sqlca;</pre><p>
+    （在一个多线程程序中，每一个线程会自动得到它自己的<code class="varname">sqlca</code>副本。这和对于标准 C 全局变量<code class="varname">errno</code>的处理相似。）
+   </p><p>    <code class="varname">sqlca</code>覆盖了警告和错误。如果执行一个语句时发生了多个警告或错误，那么<code class="varname">sqlca</code>将只包含关于最后一个的信息。
+   </p><p>    如果在上一个<acronym class="acronym">SQL</acronym>语句中没有产生错误，<code class="literal">sqlca.sqlcode</code>将为 0 并且<code class="literal">sqlca.sqlstate</code>将为<code class="literal">"00000"</code>。如果发生一个警告或错误，则<code class="literal">sqlca.sqlcode</code>将为负并且<code class="literal">sqlca.sqlstate</code>将不为<code class="literal">"00000"</code>。一个正的<code class="literal">sqlca.sqlcode</code>表示一种无害的情况，例如上一个查询返回零行。<code class="literal">sqlcode</code>和<code class="literal">sqlstate</code>是两种不同的错误代码模式，详见下文。
+   </p><p>    如果上一个 SQL 语句成功，那么<code class="literal">sqlca.sqlerrd[1]</code>包含被处理行的 OID （如果可用），并且<code class="literal">sqlca.sqlerrd[2]</code>包含被处理或被返回的行数（如果适用于该命令）。
+   </p><p>    在发生一个错误或警告的情况下，<code class="literal">sqlca.sqlerrm.sqlerrmc</code>将包含一个描述该错误的字符串。域<code class="literal">sqlca.sqlerrm.sqlerrml</code>包含存储在<code class="literal">sqlca.sqlerrm.sqlerrmc</code>中错误消息的长度（<code class="function">strlen()</code>的结果，对于一个 C 程序员来说并不感兴趣）。注意一些消息可能太长不能适应定长的<code class="literal">sqlerrmc</code>数组，它们将被截断。
+   </p><p>    在发生一个警告的情况下，<code class="literal">sqlca.sqlwarn[2]</code>被设置为<code class="literal">W</code>（在所有其他情况中，它被设置为不同于<code class="literal">W</code>的东西）。如果<code class="literal">sqlca.sqlwarn[1]</code>被设置为<code class="literal">W</code>，那么一个值被存储在一个主变量中时会被截断。如果任意其他元素被设置为指示一个警告，<code class="literal">sqlca.sqlwarn[0]</code>会被设置为<code class="literal">W</code>。
+   </p><p>    域<code class="structfield">sqlcaid</code>、
+    <code class="structfield">sqlcabc</code>、
+    <code class="structfield">sqlerrp</code>以及
+    <code class="structfield">sqlerrd</code>的剩余元素还有
+    <code class="structfield">sqlwarn</code>当前不包含有用的信息。
+   </p><p>    SQL 标准中没有定义<code class="varname">sqlca</code>结构，但是在一些其他的 SQL 数据系统中都有实现。在核心上这些定义都想死，但是如果你想要编写可移植的应用，那么你应该仔细研究不同的实现。
+   </p><p>    这里有一个整合使用<code class="literal">WHENEVER</code>和<code class="varname">sqlca</code>的例子，当一个错误发生时打印出<code class="varname">sqlca</code>的内容。在安装一个更<span class="quote">“<span class="quote">用户友好</span>”</span>的错误处理器之前，这可能对调试或开发原型应用有用。
+
+</p><pre class="programlisting">EXEC SQL WHENEVER SQLERROR CALL print_sqlca();
+
+void
+print_sqlca()
+{
+    fprintf(stderr, "==== sqlca ====\n");
+    fprintf(stderr, "sqlcode: %ld\n", sqlca.sqlcode);
+    fprintf(stderr, "sqlerrm.sqlerrml: %d\n", sqlca.sqlerrm.sqlerrml);
+    fprintf(stderr, "sqlerrm.sqlerrmc: %s\n", sqlca.sqlerrm.sqlerrmc);
+    fprintf(stderr, "sqlerrd: %ld %ld %ld %ld %ld %ld\n", sqlca.sqlerrd[0],sqlca.sqlerrd[1],sqlca.sqlerrd[2],
+                                                          sqlca.sqlerrd[3],sqlca.sqlerrd[4],sqlca.sqlerrd[5]);
+    fprintf(stderr, "sqlwarn: %d %d %d %d %d %d %d %d\n", sqlca.sqlwarn[0], sqlca.sqlwarn[1], sqlca.sqlwarn[2],
+                                                          sqlca.sqlwarn[3], sqlca.sqlwarn[4], sqlca.sqlwarn[5],
+                                                          sqlca.sqlwarn[6], sqlca.sqlwarn[7]);
+    fprintf(stderr, "sqlstate: %5s\n", sqlca.sqlstate);
+    fprintf(stderr, "===============\n");
+}</pre><p>
+
+    结果看起来像（这里的错误是一个拼写错误的表名）：
+
+</p><pre class="screen">==== sqlca ====
+sqlcode: -400
+sqlerrm.sqlerrml: 49
+sqlerrm.sqlerrmc: relation "pg_databasep" does not exist on line 38
+sqlerrd: 0 0 0 0 0 0
+sqlwarn: 0 0 0 0 0 0 0 0
+sqlstate: 42P01
+===============</pre><p>
+   </p></div><div class="sect2" id="ECPG-SQLSTATE-SQLCODE"><div class="titlepage"><div><div><h3 class="title">35.8.3. <code class="literal">SQLSTATE</code> 与 <code class="literal">SQLCODE</code></h3></div></div></div><p>    域<code class="literal">sqlca.sqlstate</code>以及<code class="literal">sqlca.sqlcode</code>是提供错误代码的两种不同模式。两种都源自于 SQL 标准，但是在标准的 SQL-92 版本中<code class="literal">SQLCODE</code>已经被标记为弃用并且在后面的版本中被删除。因此，强烈建议新应用使用<code class="literal">SQLSTATE</code>。
+   </p><p>    <code class="literal">SQLSTATE</code>是一个五字符数组。这五个字符包含数字或大写字母，它表示多种错误或警告情况的代码。<code class="literal">SQLSTATE</code>具有一种层次模式：前两个字符表示情况的总体分类，后三个字符表示总体情况的子类。代码<code class="literal">00000</code>表示一种成功的状态。SQL 标准中的大部分都有对应的<code class="literal">SQLSTATE</code>代码。<span class="productname">PostgreSQL</span>服务器本地支持<code class="literal">SQLSTATE</code>错误代码，因此通过在所有应用中自始至终使用这种错误代码模式可以实现高度的一致性。进一步的信息请见<a class="xref" href="errcodes-appendix.html" title="附录 A. PostgreSQL错误代码">附录 A</a>。
+   </p><p>    被弃用的错误代码模式<code class="literal">SQLCODE</code>是一个简单的整数。值为 0 表示成功，一个正值表示带附加信息的成功，一个负值表示一个错误。SQL 标准只定义了正值 +100，它表示上一个命令返回或者影响了零行，并且没有特定的负值。因此，这种模式只能实现很可怜的可移植性并且不具有层次性的代码分配。历史上，<span class="productname">PostgreSQL</span>的嵌入式 SQL 处理器已经分配了一些特定的<code class="literal">SQLCODE</code>值供它使用，它们的数字值和符号名称被列在下文。记住这些对其他 SQL 实现不是可移植的。为了简化移植应用到<code class="literal">SQLSTATE</code>模式，对应的<code class="literal">SQLSTATE</code>也被列出。不过，在两种模式之间没有一对一或者一对多的映射（事实上是多对多），因此在每一种情况下你都应该参考<a class="xref" href="errcodes-appendix.html" title="附录 A. PostgreSQL错误代码">附录 A</a>中列出的全局<code class="literal">SQLSTATE</code>。
+   </p><p>    这些是已分配的<code class="literal">SQLCODE</code>值：
+
+    </p><div class="variablelist"><dl class="variablelist"><dt><span class="term">0 (<code class="symbol">ECPG_NO_ERROR</code>)</span></dt><dd><p>        表示没有错误（SQLSTATE 00000）。
+      </p></dd><dt><span class="term">100 (<code class="symbol">ECPG_NOT_FOUND</code>)</span></dt><dd><p>       这是一种无害情况，它表示上一个命令检索或者处理了零行，或者你到达了游标的末尾（SQLSTATE 02000）。
+      </p><p>       在一个循环中处理一个游标时，你可以使用这个代码作为一种方法来检测何时中止该循环，像这样：
+</p><pre class="programlisting">while (1)
+{
+    EXEC SQL FETCH ... ;
+    if (sqlca.sqlcode == ECPG_NOT_FOUND)
+        break;
+}</pre><p>
+       但是<code class="literal">WHENEVER NOT FOUND DO BREAK</code>实际上会在内部这样做，因此显式地把它写出来通常没有什么好处。
+      </p></dd><dt><span class="term">-12 (<code class="symbol">ECPG_OUT_OF_MEMORY</code>)</span></dt><dd><p>        表示你的虚拟内存已被耗尽。数字值被定义为<code class="literal">-ENOMEM</code>（SQLSTATE YE001）。
+      </p></dd><dt><span class="term">-200 (<code class="symbol">ECPG_UNSUPPORTED</code>)</span></dt><dd><p>       表示预处理器已经产生了一些该库不知道的东西。也许你正在运行一个不兼容版本的预处理和库（SQLSTATE YE002）。
+      </p></dd><dt><span class="term">-201 (<code class="symbol">ECPG_TOO_MANY_ARGUMENTS</code>)</span></dt><dd><p>       这表示命令指定了超过该命令预期数量的主变量（SQLSTATE 07001 或 07002）。
+      </p></dd><dt><span class="term">-202 (<code class="symbol">ECPG_TOO_FEW_ARGUMENTS</code>)</span></dt><dd><p>       这表示命令指定的主变量数量低于该命令的预期（SQLSTATE 07001 或 07002）
+      </p></dd><dt><span class="term">-203 (<code class="symbol">ECPG_TOO_MANY_MATCHES</code>)</span></dt><dd><p>       这意味着一个查询已经返回了多个行，但是该语句只准备存储一个结果行（例如，因为指定的变量不是数组）（SQLSTATE 21000）。
+      </p></dd><dt><span class="term">-204 (<code class="symbol">ECPG_INT_FORMAT</code>)</span></dt><dd><p>       主变量是类型<code class="type">int</code>而数据库中的数据是一种不同的类型并且含有一个不能被解释为<code class="type">int</code>的值。该库使用<code class="function">strtol()</code>进行这种转换（SQLSTATE 42804）。
+      </p></dd><dt><span class="term">-205 (<code class="symbol">ECPG_UINT_FORMAT</code>)</span></dt><dd><p>       主变量是类型<code class="type">unsigned int</code>而数据库中的数据是一种不同的类型并且含有一个不能被解释为<code class="type">unsigned int</code>的值。该库使用<code class="function">strtoul()</code>进行这种转换（SQLSTATE 42804）。
+      </p></dd><dt><span class="term">-206 (<code class="symbol">ECPG_FLOAT_FORMAT</code>)</span></dt><dd><p>       主变量是类型<code class="type">float</code>而数据库中的数据是另一种类型并且含有一个不能被解释为<code class="type">float</code>的值。该库使用<code class="function">strtod()</code>进行这种转换（SQLSTATE 42804）。
+      </p></dd><dt><span class="term">-207 (<code class="symbol">ECPG_NUMERIC_FORMAT</code>)</span></dt><dd><p>       主变量是类型<code class="type">numeric</code>而数据库中的数据是另一种类型并且含有一个不能被解释为<code class="type">numeric</code>的值（SQLSTATE 42804）。
+      </p></dd><dt><span class="term">-208 (<code class="symbol">ECPG_INTERVAL_FORMAT</code>)</span></dt><dd><p>       主变量是类型<code class="type">interval</code>而数据库中的数据是另一种类型并且含有一个不能被解释为<code class="type">interval</code>的值（SQLSTATE 42804）。
+      </p></dd><dt><span class="term">-209 (<code class="symbol">ECPG_DATE_FORMAT</code>)</span></dt><dd><p>       主变量是类型<code class="type">date</code>而数据库中的数据是另一种类型并且含有一个不能被解释为<code class="type">date</code>的值（SQLSTATE 42804）。
+      </p></dd><dt><span class="term">-210 (<code class="symbol">ECPG_TIMESTAMP_FORMAT</code>)</span></dt><dd><p>       主变量是类型<code class="type">timestamp</code>而数据库中的数据是另一种类型并且含有一个不能被解释为<code class="type">timestamp</code>的值（SQLSTATE 42804）。
+      </p></dd><dt><span class="term">-211 (<code class="symbol">ECPG_CONVERT_BOOL</code>)</span></dt><dd><p>       这表示主变量是类型<code class="type">bool</code>而数据库中的数据既不是<code class="literal">'t'</code>也不是<code class="literal">'f'</code>（SQLSTATE 42804）。
+      </p></dd><dt><span class="term">-212 (<code class="symbol">ECPG_EMPTY</code>)</span></dt><dd><p>       发送给<span class="productname">PostgreSQL</span>服务器的语句是空的（通常在一个嵌入式 SQL 程序中不会发生，因此它可能指向一个内部错误）（SQLSTATE YE002）。
+      </p></dd><dt><span class="term">-213 (<code class="symbol">ECPG_MISSING_INDICATOR</code>)</span></dt><dd><p>       返回了一个空值并且没有提供空值指示符（SQLSTATE 22002）。
+      </p></dd><dt><span class="term">-214 (<code class="symbol">ECPG_NO_ARRAY</code>)</span></dt><dd><p>       在要求一个数组的地方使用了一个普通变量（SQLSTATE 42804）。
+      </p></dd><dt><span class="term">-215 (<code class="symbol">ECPG_DATA_NOT_ARRAY</code>)</span></dt><dd><p>       在一个要求数组值的地方数据库返回了一个普通变量（SQLSTATE 42804）。
+      </p></dd><dt><span class="term">-220 (<code class="symbol">ECPG_NO_CONN</code>)</span></dt><dd><p>       程序尝试访问一个不存在的连接（SQLSTATE 08003）。
+      </p></dd><dt><span class="term">-221 (<code class="symbol">ECPG_NOT_CONN</code>)</span></dt><dd><p>       程序尝试访问一个存在的连接但是它没有打开（这是一个内部错误）（SQLSTATE YE002）。
+      </p></dd><dt><span class="term">-230 (<code class="symbol">ECPG_INVALID_STMT</code>)</span></dt><dd><p>       你尝试使用的语句还没有被准备好（SQLSTATE 26000）。
+      </p></dd><dt><span class="term">-239 (<code class="symbol">ECPG_INFORMIX_DUPLICATE_KEY</code>)</span></dt><dd><p>       重复键错误，违背唯一约束（Informix 兼容模式）（SQLSTATE 23505）。
+      </p></dd><dt><span class="term">-240 (<code class="symbol">ECPG_UNKNOWN_DESCRIPTOR</code>)</span></dt><dd><p>       没有找到指定的描述符。你尝试使用的语句还没有被准备好（SQLSTATE 33000）。
+      </p></dd><dt><span class="term">-241 (<code class="symbol">ECPG_INVALID_DESCRIPTOR_INDEX</code>)</span></dt><dd><p>       指定的描述符超出范围（SQLSTATE 07009）。
+      </p></dd><dt><span class="term">-242 (<code class="symbol">ECPG_UNKNOWN_DESCRIPTOR_ITEM</code>)</span></dt><dd><p>       请求了一个非法的描述符（这是一个内部错误）（SQLSTATE YE002）。
+      </p></dd><dt><span class="term">-243 (<code class="symbol">ECPG_VAR_NOT_NUMERIC</code>)</span></dt><dd><p>       在执行一个动态语句期间，数据库返回了一个numeric值而主变量不是numeric的（SQLSTATE 07006）。
+      </p></dd><dt><span class="term">-244 (<code class="symbol">ECPG_VAR_NOT_CHAR</code>)</span></dt><dd><p>       在执行一个动态语句期间，数据库返回了一个非numeric值而主变量是numeric的（SQLSTATE 07006）。
+      </p></dd><dt><span class="term">-284 (<code class="symbol">ECPG_INFORMIX_SUBSELECT_NOT_ONE</code>)</span></dt><dd><p>       子查询的结果不是单一行（Informix 兼容模式）（SQLSTATE 21000）。
+      </p></dd><dt><span class="term">-400 (<code class="symbol">ECPG_PGSQL</code>)</span></dt><dd><p>       <span class="productname">PostgreSQL</span>服务器导致了某个错误。该消息包含来自<span class="productname">PostgreSQL</span>服务器的错误消息。
+      </p></dd><dt><span class="term">-401 (<code class="symbol">ECPG_TRANS</code>)</span></dt><dd><p>       <span class="productname">PostgreSQL</span>服务器通知我们不能启动、提交或回滚事务（SQLSTATE 08007）。
+      </p></dd><dt><span class="term">-402 (<code class="symbol">ECPG_CONNECT</code>)</span></dt><dd><p>       到数据库的连接尝试没有成功（SQLSTATE 08001）。
+      </p></dd><dt><span class="term">-403 (<code class="symbol">ECPG_DUPLICATE_KEY</code>)</span></dt><dd><p>       重复键错误，违背唯一约束（SQLSTATE 23505）。
+      </p></dd><dt><span class="term">-404 (<code class="symbol">ECPG_SUBSELECT_NOT_ONE</code>)</span></dt><dd><p>       子查询的结果不是单一行（SQLSTATE 21000）。
+      </p></dd><dt><span class="term">-602 (<code class="symbol">ECPG_WARNING_UNKNOWN_PORTAL</code>)</span></dt><dd><p>       指定了一个非法的游标名（SQLSTATE 34000）。
+      </p></dd><dt><span class="term">-603 (<code class="symbol">ECPG_WARNING_IN_TRANSACTION</code>)</span></dt><dd><p>       事务正在进行（SQLSTATE 25001）。
+      </p></dd><dt><span class="term">-604 (<code class="symbol">ECPG_WARNING_NO_TRANSACTION</code>)</span></dt><dd><p>       没有活动（正在进行）的事务（SQLSTATE 25P01）。
+      </p></dd><dt><span class="term">-605 (<code class="symbol">ECPG_WARNING_PORTAL_EXISTS</code>)</span></dt><dd><p>       指定了一个现有的游标名（SQLSTATE 42P03）。
+      </p></dd></dl></div><p>
+  </p></div></div><div class="navfooter"><hr /><table width="100%" summary="Navigation footer"><tr><td width="40%" align="left"><a accesskey="p" href="ecpg-descriptors.html">上一页</a> </td><td width="20%" align="center"><a accesskey="u" href="ecpg.html">上一级</a></td><td width="40%" align="right"> <a accesskey="n" href="ecpg-preproc.html">下一页</a></td></tr><tr><td width="40%" align="left" valign="top">35.7. 使用描述符区域 </td><td width="20%" align="center"><a accesskey="h" href="index.html">起始页</a></td><td width="40%" align="right" valign="top"> 35.9. 预处理器指令</td></tr></table></div></body></html>

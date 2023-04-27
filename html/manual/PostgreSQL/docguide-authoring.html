@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><title>J.4. 文档写作</title><link rel="stylesheet" type="text/css" href="stylesheet.css" /><link rev="made" href="pgsql-docs@postgresql.org" /><meta name="generator" content="DocBook XSL Stylesheets V1.79.1" /><link rel="prev" href="docguide-build.html" title="J.3. 编译文档" /><link rel="next" href="docguide-style.html" title="J.5. 样式指导" /></head><body><div xmlns="http://www.w3.org/TR/xhtml1/transitional" class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="5" align="center">J.4. 文档写作</th></tr><tr><td width="10%" align="left"><a accesskey="p" href="docguide-build.html" title="J.3. 编译文档">上一页</a> </td><td width="10%" align="left"><a accesskey="u" href="docguide.html" title="附录 J. 文档">上一级</a></td><th width="60%" align="center">附录 J. 文档</th><td width="10%" align="right"><a accesskey="h" href="index.html" title="PostgreSQL 10.1 手册">起始页</a></td><td width="10%" align="right"> <a accesskey="n" href="docguide-style.html" title="J.5. 样式指导">下一页</a></td></tr></table><hr></hr></div><div class="sect1" id="DOCGUIDE-AUTHORING"><div class="titlepage"><div><div><h2 class="title" style="clear: both">J.4. 文档写作</h2></div></div></div><div class="toc"><dl class="toc"><dt><span class="sect2"><a href="docguide-authoring.html#idp88703456">J.4.1. Emacs/PSGML</a></span></dt><dt><span class="sect2"><a href="docguide-authoring.html#idp88720624">J.4.2. 其他 Emacs 模式</a></span></dt></dl></div><p>    <acronym class="acronym">SGML</acronym>和<span class="productname">DocBook</span>没有受到开源写作工具的过度影响。最常用的工具集是带有适当编辑模式的<span class="productname">Emacs</span>/<span class="productname">XEmacs</span>编辑器。在某些系统上这些工具通常以完全安装的方式提供。
+   </p><div class="sect2" id="idp88703456"><div class="titlepage"><div><div><h3 class="title">J.4.1. Emacs/PSGML</h3></div></div></div><p>     <span class="productname">PSGML</span>是编辑<acronym class="acronym">SGML</acronym>文档最常用也是最强大的模式。配置正确时，它将允许你使用<span class="application">Emacs</span>来插入标签并且检查标记的一致性。你也可以把它用于<acronym class="acronym">HTML</acronym>。可以从<a class="ulink" href="http://www.lysator.liu.se/projects/about_psgml.html" target="_top">PSGML 网站</a>找到下载、安装指导和详细文档。
+    </p><p>     There is one important thing to note with
+     关于<span class="productname">PSGML</span>有一件重要的事情需要注意：它的作者假定你的主<acronym class="acronym">SGML</acronym> <acronym class="acronym">DTD</acronym>目录是<code class="filename">/usr/local/lib/sgml</code>。如果你采用本章的例子中的做法使用<code class="filename">/usr/local/share/sgml</code>，你必须对此进行补偿，要么设置<code class="envar">SGML_CATALOG_FILES</code>环境变量，要么自定义你的<span class="productname">PSGML</span>安装（其手册会告诉你怎么做）。
+    </p><p>     把下面的东西放在你的<code class="filename">~/.emacs</code>环境文件中（把路径名调整为适合于你的系统）：
+
+</p><pre class="programlisting">; ********** for SGML mode (psgml)
+
+(setq sgml-omittag t)
+(setq sgml-shorttag t)
+(setq sgml-minimize-attributes nil)
+(setq sgml-always-quote-attributes t)
+(setq sgml-indent-step 1)
+(setq sgml-indent-data t)
+(setq sgml-parent-document nil)
+(setq sgml-exposed-tags nil)
+(setq sgml-catalog-files '("/usr/local/share/sgml/catalog"))
+
+(autoload 'sgml-mode "psgml" "Major mode to edit SGML files." t )</pre><p>
+
+     并且在同一个文件中在现有<code class="varname">auto-mode-alist</code>定义中为<acronym class="acronym">SGML</acronym>增加一个项：
+</p><pre class="programlisting">(setq
+  auto-mode-alist
+  '(("\\.sgml$" . sgml-mode)
+   ))</pre><p>
+    </p><p>     你可能发现当使用<span class="productname">PSGML</span>时，一种在书籍各部分独立文件上工作的舒服的方法是在编辑它们时插入一个适当的<code class="literal">DOCTYPE</code>声明。如果你在这个源代码上工作，例如是附录章，那么你可以指定文档为一个 DocBook 文档的一个<span class="quote">“<span class="quote">appendix</span>”</span>实例，通过将其第一行变成：
+
+</p><pre class="programlisting">&lt;!DOCTYPE appendix PUBLIC "-//OASIS//DTD DocBook V4.2//EN"&gt;</pre><p>
+
+     这意味着任何和所有读取<acronym class="acronym">SGML</acronym>的东西将会回答正确，并且我可以用<code class="command">nsgmls -s docguide.sgml</code>验证该文档（但是在编译整个文档集之前你需要去掉那一行）。
+    </p></div><div class="sect2" id="idp88720624"><div class="titlepage"><div><div><h3 class="title">J.4.2. 其他 Emacs 模式</h3></div></div></div><p>     <span class="productname">GNU Emacs</span>带有一种不同的<acronym class="acronym">SGML</acronym>模式，但是它不如<span class="productname">PSGML</span>那么强大，但是它更直观并且更轻量级。同样，它提供很有用的语法高亮（字体锁）。<code class="filename">src/tools/editors/emacs.samples</code>包含用于这种模式的设置实例。
+    </p><p>     Norm Walsh 为 DocBook 专门提供了一种<a class="ulink" href="http://nwalsh.com/emacs/docbookide/index.html" target="_top">主模式</a>，它也有字体锁和一些减少录入的特性。
+    </p></div></div><div class="navfooter"><hr /><table width="100%" summary="Navigation footer"><tr><td width="40%" align="left"><a accesskey="p" href="docguide-build.html">上一页</a> </td><td width="20%" align="center"><a accesskey="u" href="docguide.html">上一级</a></td><td width="40%" align="right"> <a accesskey="n" href="docguide-style.html">下一页</a></td></tr><tr><td width="40%" align="left" valign="top">J.3. 编译文档 </td><td width="20%" align="center"><a accesskey="h" href="index.html">起始页</a></td><td width="40%" align="right" valign="top"> J.5. 样式指导</td></tr></table></div></body></html>

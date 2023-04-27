@@ -1,0 +1,303 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><title>INSERT</title><link rel="stylesheet" type="text/css" href="stylesheet.css" /><link rev="made" href="pgsql-docs@postgresql.org" /><meta name="generator" content="DocBook XSL Stylesheets V1.79.1" /><link rel="prev" href="sql-importforeignschema.html" title="IMPORT FOREIGN SCHEMA" /><link rel="next" href="sql-listen.html" title="LISTEN" /></head><body><div xmlns="http://www.w3.org/TR/xhtml1/transitional" class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="5" align="center">INSERT</th></tr><tr><td width="10%" align="left"><a accesskey="p" href="sql-importforeignschema.html" title="IMPORT FOREIGN SCHEMA">上一页</a> </td><td width="10%" align="left"><a accesskey="u" href="sql-commands.html" title="SQL 命令">上一级</a></td><th width="60%" align="center">SQL 命令</th><td width="10%" align="right"><a accesskey="h" href="index.html" title="PostgreSQL 10.1 手册">起始页</a></td><td width="10%" align="right"> <a accesskey="n" href="sql-listen.html" title="LISTEN">下一页</a></td></tr></table><hr></hr></div><div class="refentry" id="SQL-INSERT"><div class="titlepage"></div><a id="idp47549376" class="indexterm"></a><div class="refnamediv"><h2><span class="refentrytitle">INSERT</span></h2><p>INSERT — 在一个表中创建新行</p></div><div class="refsynopsisdiv"><h2>大纲</h2><pre class="synopsis">[ WITH [ RECURSIVE ] <em class="replaceable"><code>with_query</code></em> [, ...] ]
+INSERT INTO <em class="replaceable"><code>table_name</code></em> [ AS <em class="replaceable"><code>alias</code></em> ] [ ( <em class="replaceable"><code>column_name</code></em> [, ...] ) ]
+    [ OVERRIDING { SYSTEM | USER} VALUE ]
+    { DEFAULT VALUES | VALUES ( { <em class="replaceable"><code>expression</code></em> | DEFAULT } [, ...] ) [, ...] | <em class="replaceable"><code>query</code></em> }
+    [ ON CONFLICT [ <em class="replaceable"><code>conflict_target</code></em> ] <em class="replaceable"><code>conflict_action</code></em> ]
+    [ RETURNING * | <em class="replaceable"><code>output_expression</code></em> [ [ AS ] <em class="replaceable"><code>output_name</code></em> ] [, ...] ]
+
+<span class="phrase">其中 <em class="replaceable"><code>conflict_target</code></em> 可以是以下之一：</span>
+
+    ( { <em class="replaceable"><code>index_column_name</code></em> | ( <em class="replaceable"><code>index_expression</code></em> ) } [ COLLATE <em class="replaceable"><code>collation</code></em> ] [ <em class="replaceable"><code>opclass</code></em> ] [, ...] ) [ WHERE <em class="replaceable"><code>index_predicate</code></em> ]
+    ON CONSTRAINT <em class="replaceable"><code>constraint_name</code></em>
+
+<span class="phrase">并且 <em class="replaceable"><code>conflict_action</code></em> 是以下之一：</span>
+
+    DO NOTHING
+    DO UPDATE SET { <em class="replaceable"><code>column_name</code></em> = { <em class="replaceable"><code>expression</code></em> | DEFAULT } |
+                    ( <em class="replaceable"><code>column_name</code></em> [, ...] ) = [ ROW ] ( { <em class="replaceable"><code>expression</code></em> | DEFAULT } [, ...] ) |
+                    ( <em class="replaceable"><code>column_name</code></em> [, ...] ) = ( <em class="replaceable"><code>sub-SELECT</code></em> )
+                  } [, ...]
+              [ WHERE <em class="replaceable"><code>condition</code></em> ]</pre></div><div class="refsect1" id="idp47571856"><h2>描述</h2><p>   <code class="command">INSERT</code>将新行插入到一个表中。我们可以
+   插入一个或者更多由值表达式指定的行，或者插入来自一个查询的零行
+   或者更多行。
+  </p><p>   目标列的名称可以以任意顺序列出。如果没有给出列名列表，则有两种确定
+   目标列的可能性。第一种是以被声明的顺序列出该表的所有列。另一种可能
+   性是，如果<code class="literal">VALUES</code> 子句或者<em class="replaceable"><code>query</code></em>只提
+   供<em class="replaceable"><code>N</code></em>个列，则以被声明的顺序列出该表的前
+   <em class="replaceable"><code>N</code></em>列。<code class="literal">VALUES</code> 子句或者
+   <em class="replaceable"><code>query</code></em>提供的值会被从左至右关联到这些显式或者隐式
+   给出的目标列。
+  </p><p>   每一个没有出现在显式或者隐式列列表中的列都将被默认填充，如果为该列
+   声明过默认值则用默认值填充，否则用空值填充。
+  </p><p>   如果任意列的表达式不是正确的数据类型，将会尝试自动类型转换。
+  </p><p>   <code class="literal">ON CONFLICT</code>可以用来指定发生唯一约束或者排除约束
+   违背错误时的替换动作（见下文的<a class="xref" href="sql-insert.html#SQL-ON-CONFLICT" title="ON CONFLICT 子句"><code class="literal">ON CONFLICT</code> 子句</a>）。
+  </p><p>   可选的<code class="literal">RETURNING</code>子句让<code class="command">INSERT</code>根据
+   实际被插入（如果使用了<code class="literal">ON CONFLICT DO UPDATE</code>子句，
+   可能是被更新）的每一行来计算和返回值。这主要用来获取由默认值提供
+   的值，例如一个序列号。不过，允许在其中包括使用该表列的任何表达式。
+   <code class="literal">RETURNING</code>列表的语法与<code class="command">SELECT</code>的输出
+   列表的相同。只有被成功地插入或者更新的行才将被返回。例如，如果一
+   行被锁定但由于不满足<code class="literal">ON CONFLICT DO UPDATE
+   ... WHERE</code> clause <em class="replaceable"><code>condition</code></em>没有被更新，该行将
+   不被返回。
+  </p><p>   为了向表中插入，你必须具有其上的<code class="literal">INSERT</code>特权。
+   如果存在<code class="literal">ON CONFLICT DO UPDATE</code>子句，还要求该表上
+   的<code class="literal">UPDATE</code>特权。
+  </p><p>   如果指定了字段列表，则只需要所列出字段上的<code class="literal">INSERT</code>
+   权限。类似的，如果指定了<code class="literal">ON CONFLICT DO UPDATE</code>，
+   则只需要所列出的要更新的字段上的<code class="literal">UPDATE</code>权限。
+   不过<code class="literal">ON CONFLICT DO UPDATE</code>还需要其值被
+   <code class="literal">ON CONFLICT DO UPDATE</code>表达式或<em class="replaceable"><code>condition</code></em>
+   使用的字段上的<code class="literal">SELECT</code>权限。
+  </p><p>   如果一个列列表被指定，你只需要其中的列上的<code class="literal">INSERT</code>
+   特权。类似地，在指定了<code class="literal">ON CONFLICT DO UPDATE</code>时，你只
+   需要被列出要更新的列上的<code class="literal">UPDATE</code>特权。不过，
+   <code class="literal">ON CONFLICT DO UPDATE</code>还要求其值被
+   <code class="literal">ON CONFLICT DO UPDATE</code>表达式或者
+   <em class="replaceable"><code>condition</code></em>使用的列上的<code class="literal">SELECT</code>特权。
+  </p></div><div class="refsect1" id="idp47599808"><h2>参数</h2><div class="refsect2" id="SQL-INSERTING-PARAMS"><h3>插入</h3><p>    这个小节介绍了在只插入新行时可以使用的参数。
+    <span class="emphasis"><em>专门用于</em></span><code class="literal">ON CONFLICT</code>子句的
+    参数会单独介绍。
+   </p><div class="variablelist"><dl class="variablelist"><dt><span class="term"><em class="replaceable"><code>with_query</code></em></span></dt><dd><p>       <code class="literal">WITH</code>子句允许指定一个或者更多子查询，在
+       <code class="command">INSERT</code>查询中可以用名称引用这些子查询。详见
+       <a class="xref" href="queries-with.html" title="7.8. WITH查询（公共表表达式）">第 7.8 节</a>以及<a class="xref" href="sql-select.html" title="SELECT"><span class="refentrytitle">SELECT</span></a>。
+      </p><p>       <em class="replaceable"><code>query</code></em>
+       （<code class="command">SELECT</code>语句）也可以包含一个
+       <code class="literal">WITH</code>子句。在这种情况下
+       <em class="replaceable"><code>query</code></em>中可以引用
+       两组<em class="replaceable"><code>with_query</code></em>，但是第二个优先级更
+       高（因为它被嵌套更近）。
+      </p></dd><dt><span class="term"><em class="replaceable"><code>table_name</code></em></span></dt><dd><p>       一个已有表的名称（可以被模式限定）。
+      </p></dd><dt><span class="term"><em class="replaceable"><code>alias</code></em></span></dt><dd><p>        <em class="replaceable"><code>table_name</code></em>
+        的替补名称。当提供了一个别名时，它会完全隐藏掉表的实际名称。
+        当<code class="literal">ON CONFLICT DO UPDATE</code>的目标是一个名为
+		<code class="varname">excluded</code>的表时这特别有用，
+		因为否则它将被视为表示要插入的行的特殊表的名称。
+       </p></dd><dt><span class="term"><em class="replaceable"><code>column_name</code></em></span></dt><dd><p>        名为<em class="replaceable"><code>table_name</code></em>的表中的一个列
+        的名称。如有必要，列名可以用一个子域名或者数组下标限定（指向
+        一个组合列的某些列中插入会让其他域为空）。当用
+        <code class="literal">ON CONFLICT DO UPDATE</code>引用一列时，不要在一个
+        目标列的说明中国包括表名。例如，
+        <code class="literal">INSERT INTO table_name ... ON CONFLICT DO UPDATE
+        SET table_name.col = 1</code>是非法的（这遵循<code class="command">UPDATE</code>
+        的一般行为）。
+       </p></dd><dt><span class="term"><code class="literal">OVERRIDING SYSTEM VALUE</code></span></dt><dd><p>        如果没有此子句，为定义为<code class="literal">GENERATED ALWAYS</code>
+		的标识列指定显式值（除<code class="literal">DEFAULT</code>以外）是错误的。
+		该子句覆盖了该限制。
+       </p></dd><dt><span class="term"><code class="literal">OVERRIDING USER VALUE</code></span></dt><dd><p>        如果指定了此该子句，则为定义为<code class="literal">GENERATED BY DEFAULT</code>
+		的标识列提供的任何值都将被忽略，并应用默认的序列生成值。
+       </p><p>        例如，在表格之间复制值时，该子句很有用。写入
+		<code class="literal">INSERT INTO tbl2 OVERRIDING USER VALUE SELECT * FROM tbl1</code>
+		将从<code class="literal">tbl1</code>中复制<code class="literal">tbl2</code>
+		中不是标识列的所有列，而<code class="literal">tbl2</code>中标识列的值将由与
+		<code class="literal">tbl2</code>相关联的序列生成。
+       </p></dd><dt><span class="term"><code class="literal">DEFAULT VALUES</code></span></dt><dd><p>        所有列都将被其默认值填充。（改形式中不允许<code class="literal">OVERRIDING</code>子句。）
+       </p></dd><dt><span class="term"><em class="replaceable"><code>expression</code></em></span></dt><dd><p>        要赋予给相应列的表达式或者值。
+       </p></dd><dt><span class="term"><code class="literal">DEFAULT</code></span></dt><dd><p>        相应的列将被其默认值填充。
+       </p></dd><dt><span class="term"><em class="replaceable"><code>query</code></em></span></dt><dd><p>        提供要被插入行的查询（<code class="command">SELECT</code>语句）。
+        其语法描述请参考<a class="xref" href="sql-select.html" title="SELECT"><span class="refentrytitle">SELECT</span></a>语句。
+       </p></dd><dt><span class="term"><em class="replaceable"><code>output_expression</code></em></span></dt><dd><p>        在每一行被插入或更新后由<code class="command">INSERT</code>命令计算并且返回的
+        表达式。该表达式可以使用<em class="replaceable"><code>table_name</code></em>
+        指定的表中的任何列。写成<code class="literal">*</code>可返回被插入或更新行的所有列。
+       </p></dd><dt><span class="term"><em class="replaceable"><code>output_name</code></em></span></dt><dd><p>        要用于被返回列的名称。
+       </p></dd></dl></div></div><div class="refsect2" id="SQL-ON-CONFLICT"><h3><code class="literal">ON CONFLICT</code> 子句</h3><a id="idp47643648" class="indexterm"></a><a id="idp47644720" class="indexterm"></a><p>    可选的<code class="literal">ON CONFLICT</code>子句为出现唯一性违背或排除
+    约束违背错误时提供另一种可供选择的动作。对于每一个要插入的行，
+    不管是插入进行下去还是由<em class="parameter"><code>conflict_target</code></em>
+    指定的一个<span class="emphasis"><em>仲裁者</em></span>约束或者索引被违背，都会
+    采取可供选择的<em class="parameter"><code>conflict_action</code></em>。
+    <code class="literal">ON CONFLICT DO NOTHING</code>简单地把避免插入行。
+    <code class="literal">ON CONFLICT DO UPDATE</code>则会
+    更新与要插入的行冲突的已有行。
+   </p><p>    <em class="parameter"><code>conflict_target</code></em>可以执行
+    <span class="emphasis"><em>唯一索引推断</em></span>。在执行推断时，它由一个或者多个
+    <em class="replaceable"><code>index_column_name</code></em>
+    列或者
+    <em class="replaceable"><code>index_expression</code></em>
+    表达式以及一个可选的<em class="replaceable"><code>    index_predicate</code></em>构成。所有刚好包含
+    <em class="parameter"><code>conflict_target</code></em>指定的列/表达式的<em class="replaceable"><code>table_name</code></em>唯一索引（不管顺序）都
+    会被推断为（选择为）仲裁者索引。如果指定了
+    <em class="replaceable"><code>index_predicate</code></em>，它
+    必须满足仲裁者索引（也是推断过程的一个进一步的要求）。注意这意味着如果
+    有一个满足其他条件的非部分唯一索引（没有谓词的唯一索引）可用，它将被
+    推断为仲裁者（并且会被<code class="literal">ON CONFLICT</code>使用）。如果推断
+    尝试不成功，则会发生一个错误。
+   </p><p>    <code class="literal">ON CONFLICT DO UPDATE</code>保证一个原子的
+    <code class="command">INSERT</code>或者
+    <code class="command">UPDATE</code>结果。在没有无关错误的前提下，这两种
+    结果之一可以得到保证，即使在很高的并发度也能保证。这也可以被称作
+    <em class="firstterm">UPSERT</em> — <span class="quote">“<span class="quote">UPDATE 或
+    INSERT</span>”</span>。
+   </p><div class="variablelist"><dl class="variablelist"><dt><span class="term"><em class="replaceable"><code>conflict_target</code></em></span></dt><dd><p>        通过选择<em class="firstterm">仲裁者索引</em>来指定哪些行与
+        <code class="literal">ON CONFLICT</code>在其上采取可替代动作的行相冲突。
+        要么执行<span class="emphasis"><em>唯一索引推断</em></span>，要么显式命名一个
+        约束。对于<code class="literal">ON CONFLICT DO NOTHING</code>来说，
+        它对于指定一个<em class="parameter"><code>conflict_target</code></em>是可选的。
+        在被省略时，与所有有效约束（以及唯一索引）的冲突都会被处理。对于
+        <code class="literal">ON CONFLICT DO UPDATE</code>，<span class="emphasis"><em>必须</em></span>
+        提供一个<em class="parameter"><code>conflict_target</code></em>。
+       </p></dd><dt><span class="term"><em class="replaceable"><code>conflict_action</code></em></span></dt><dd><p>        <em class="parameter"><code>conflict_action</code></em>指定一个可替换的
+        <code class="literal">ON CONFLICT</code>动作。它可以是
+        <code class="literal">DO NOTHING</code>，也可以是一个指定在冲突情况下
+        要被执行的<code class="literal">UPDATE</code>动作细节的<code class="literal">DO
+        UPDATE</code>子句。<code class="literal">ON CONFLICT DO
+        UPDATE</code>中的<code class="literal">SET</code>和
+        <code class="literal">WHERE</code>子句能够使用该表的名称（或者别名）
+        访问现有的行，并且可以用特殊的<code class="varname">被排除</code>
+        表访问要插入的行。这个动作要求<code class="varname">被排除</code>
+        列所在目标表的任何列上的<code class="literal">SELECT</code>特权。
+       </p><p>        注意所有行级<code class="literal">BEFORE INSERT</code>触发器的效果都会
+        反映在<code class="varname">被排除</code>值中，因为那些效果可能会
+        让该行避免被插入。
+       </p></dd><dt><span class="term"><em class="replaceable"><code>index_column_name</code></em></span></dt><dd><p>        一个<em class="replaceable"><code>table_name</code></em>列
+        的名称。它被用来推断仲裁者索引。它遵循<code class="command">CREATE
+        INDEX</code>格式。这要求
+        <em class="replaceable"><code>index_column_name</code></em>
+        上的<code class="literal">SELECT</code>特权。
+       </p></dd><dt><span class="term"><em class="replaceable"><code>index_expression</code></em></span></dt><dd><p>        和<em class="replaceable"><code>index_column_name</code></em>类似，但是
+        被用来推断出现在索引定义中的<em class="replaceable"><code>table_name</code></em>列（非简单列）上的
+        表达式。遵循<code class="command">CREATE INDEX</code>格式。这要求
+        任何出现在<em class="replaceable"><code>index_expression</code></em>中的列上的
+        <code class="literal">SELECT</code>特权。
+       </p></dd><dt><span class="term"><em class="replaceable"><code>collation</code></em></span></dt><dd><p>        指定时，强制相应的<em class="replaceable"><code>index_column_name</code></em>或
+        <em class="replaceable"><code>index_expression</code></em>
+        使用一种特定的排序规则以便在推断期间能被匹配上。通常
+        会被省略，因为排序规则通常不会影响约束违背的发生。遵循
+        <code class="command">CREATE INDEX</code>格式。
+       </p></dd><dt><span class="term"><em class="replaceable"><code>opclass</code></em></span></dt><dd><p>        指定时，强制相应的<em class="replaceable"><code>index_column_name</code></em>或
+        <em class="replaceable"><code>index_expression</code></em>
+        使用特定的操作符类以便在推断期间能被匹配上。通常会被省略，
+        因为<span class="emphasis"><em>相等</em></span>语义在一种类型的操作符类
+        之间都是等价的，或者因为足以信任已定义的唯一索引具有适当的
+        相等定义。遵循<code class="command">CREATE INDEX</code>格式。
+       </p></dd><dt><span class="term"><em class="replaceable"><code>index_predicate</code></em></span></dt><dd><p>        用于允许推断部分唯一索引。任何满足该谓词（不一定需要真的是
+        部分索引）的索引都能被推断。遵循<code class="command">CREATE
+        INDEX</code>格式。这要求任何出现在<em class="replaceable"><code>index_predicate</code></em>中的列上
+        的<code class="literal">SELECT</code>特权。
+       </p></dd><dt><span class="term"><em class="replaceable"><code>constraint_name</code></em></span></dt><dd><p>        用名称显式地指定一个仲裁者<span class="emphasis"><em>约束</em></span>，
+        而不是推断一个约束或者索引。
+       </p></dd><dt><span class="term"><em class="replaceable"><code>condition</code></em></span></dt><dd><p>        一个能返回<code class="type">boolean</code>值的表达式。只有让这个表达式返回
+        <code class="literal">true</code>的行才将被更新，不过在采用
+        <code class="literal">ON CONFLICT DO UPDATE</code>动作时所有的行都会被锁定。
+        注意<em class="replaceable"><code>condition</code></em>会被最后计算，即一个冲突
+        被标识为要更新的候选对象之后。
+       </p></dd></dl></div><p>    注意不支持把排除约束作为<code class="literal">ON CONFLICT DO UPDATE</code>的
+    仲裁者。在所有的情况中，只支持<code class="literal">NOT DEFERRABLE</code>约束和
+    唯一索引作为仲裁者。
+   </p><p>    带有<code class="literal">ON CONFLICT DO UPDATE</code>子句的
+    <code class="command">INSERT</code>是一种<span class="quote">“<span class="quote">确定性的</span>”</span>
+    语句。这表明不允许该命令影响任何单个现有行超过一次，如果发生则会
+    发生一个基数违背错误。要插入的行不应该在仲裁者索引或约束所限制的
+    属性上相重复。
+   </p><div class="tip"><h3 class="title">提示</h3><p>     使用唯一索引推断通常比使用<code class="literal">ON CONFLICT ON
+     CONSTRAINT</code> <em class="replaceable"><code>     constraint_name</code></em>直接提名一个约束更好。当底层索引
+     被以重叠方式替换成另一个或多或少等效的索引时，推断将能继续正确地
+     工作，例如在删除要被替换的索引之前使用
+     <code class="literal">CREATE UNIQUE INDEX ...  CONCURRENTLY</code>。
+    </p></div></div></div><div class="refsect1" id="idp47711888"><h2>输出</h2><p>   成功完成时，<code class="command">INSERT</code>命令会返回以下形式的命令标签：
+</p><pre class="screen">INSERT <em class="replaceable"><code>oid</code></em> <em class="replaceable"><code>count</code></em></pre><p>
+   <em class="replaceable"><code>count</code></em>是被插入或更新的行数。
+   如果<em class="replaceable"><code>count</code></em>正好为 1 并且
+   目标表具有 OID，那么
+   <em class="replaceable"><code>oid</code></em>就是分配给被插入行的
+   <acronym class="acronym">OID</acronym>。这个单一行必须已经被插入而不是被更新。
+   否则<em class="replaceable"><code>oid</code></em>为零。
+  </p><p>   如果<code class="command">INSERT</code>命令包含<code class="literal">RETURNING</code>子句，
+   其结果会类似于包含<code class="literal">RETURNING</code>列表中定义的列和值的
+   <code class="command">SELECT</code>语句，这些结果是由该命令在被插入或更新行上
+   计算得到。
+  </p></div><div class="refsect1" id="idp47721648"><h2>注意</h2><p>   如果指定的表是分区表，则将每行都路由到相应的分区并插入到该分区中。
+   如果指定的表是分区，如果其中一个输入行违反了分区约束，则会发生错误。
+  </p></div><div class="refsect1" id="idp47722752"><h2>示例</h2><p>   向<code class="literal">films</code>中插入一行：
+
+</p><pre class="programlisting">INSERT INTO films VALUES
+    ('UA502', 'Bananas', 105, '1971-07-13', 'Comedy', '82 minutes');</pre><p>
+  </p><p>   在这个例子中，<code class="literal">len</code>列被省略并且因此会具有默认值：
+
+</p><pre class="programlisting">INSERT INTO films (code, title, did, date_prod, kind)
+    VALUES ('T_601', 'Yojimbo', 106, '1961-06-16', 'Drama');</pre><p>
+  </p><p>   这个例子为日期列使用<code class="literal">DEFAULT</code>子句而不是指定一个值：
+
+</p><pre class="programlisting">INSERT INTO films VALUES
+    ('UA502', 'Bananas', 105, DEFAULT, 'Comedy', '82 minutes');
+INSERT INTO films (code, title, did, date_prod, kind)
+    VALUES ('T_601', 'Yojimbo', 106, DEFAULT, 'Drama');</pre><p>
+  </p><p>   插入一个完全由默认值构成的行：
+
+</p><pre class="programlisting">INSERT INTO films DEFAULT VALUES;</pre><p>
+  </p><p>   用多行<code class="command">VALUES</code>语法插入多个行：
+
+</p><pre class="programlisting">INSERT INTO films (code, title, did, date_prod, kind) VALUES
+    ('B6717', 'Tampopo', 110, '1985-02-10', 'Comedy'),
+    ('HG120', 'The Dinner Game', 140, DEFAULT, 'Comedy');</pre><p>
+  </p><p>   这个例子从表<code class="literal">tmp_films</code>中获得一些行插入到表
+   <code class="literal">films</code>中，两个表具有相同的列布局：
+
+</p><pre class="programlisting">INSERT INTO films SELECT * FROM tmp_films WHERE date_prod &lt; '2004-05-07';</pre><p>
+  </p><p>   这个例子插入数组列：
+
+</p><pre class="programlisting">-- 为 noughts-and-crosses 游戏创建一个空的 3x3 棋盘
+INSERT INTO tictactoe (game, board[1:3][1:3])
+    VALUES (1, '{{" "," "," "},{" "," "," "},{" "," "," "}}');
+-- 实际上可以不用上面例子中的下标
+INSERT INTO tictactoe (game, board)
+    VALUES (2, '{{X," "," "},{" ",O," "},{" ",X," "}}');</pre><p>
+  </p><p>   向表<code class="literal">distributors</code>中插入一行，返回由
+   <code class="literal">DEFAULT</code>子句生成的序号：
+
+</p><pre class="programlisting">INSERT INTO distributors (did, dname) VALUES (DEFAULT, 'XYZ Widgets')
+   RETURNING did;</pre><p>
+  </p><p>   增加为 Acme Corporation 管理账户的销售人员的销量，并且把整个被
+   更新的行以及当前时间记录到一个日志表中：
+</p><pre class="programlisting">WITH upd AS (
+  UPDATE employees SET sales_count = sales_count + 1 WHERE id =
+    (SELECT sales_person FROM accounts WHERE name = 'Acme Corporation')
+    RETURNING *
+)
+INSERT INTO employees_log SELECT *, current_timestamp FROM upd;</pre><p>
+  </p><p>   酌情插入或者更新新的 distributor。假设已经定义了一个唯一索引来约束
+   出现在<code class="literal">did</code>列中的值。注意，特殊的
+   <code class="varname">excluded</code>表被用来引用原来要插入的值：
+</p><pre class="programlisting">INSERT INTO distributors (did, dname)
+    VALUES (5, 'Gizmo Transglobal'), (6, 'Associated Computing, Inc')
+    ON CONFLICT (did) DO UPDATE SET dname = EXCLUDED.dname;</pre><p>
+  </p><p>   插入一个 distributor，或者在一个被排除的行（具有一个匹配约束的列或者
+   会让行级前（或者后）插入触发器引发的列的行）存在时不处理要插入的行。
+   例子假设已经定义了一个唯一触发器来约束出现在<code class="literal">did</code>列
+   中的值：
+</p><pre class="programlisting">INSERT INTO distributors (did, dname) VALUES (7, 'Redline GmbH')
+    ON CONFLICT (did) DO NOTHING;</pre><p>
+  </p><p>   酌情插入或者更新新的 distributor。例子假设已经定义了一个唯一触发器来
+   约束出现在<code class="literal">did</code>列中的值。<code class="literal">WHERE</code>子句被用
+   来限制实际被更新的行（不过，任何没有被更新的已有行仍将被锁定）：
+</p><pre class="programlisting">-- 根据一个特定的 ZIP 编码更新 distributors
+INSERT INTO distributors AS d (did, dname) VALUES (8, 'Anvil Distribution')
+    ON CONFLICT (did) DO UPDATE
+    SET dname = EXCLUDED.dname || ' (formerly ' || d.dname || ')'
+    WHERE d.zipcode &lt;&gt; '21201';
+
+-- 直接在语句中命名一个约束（使用相关的索引来判断是否做
+-- DO NOTHING 动作）
+INSERT INTO distributors (did, dname) VALUES (9, 'Antwerp Design')
+    ON CONFLICT ON CONSTRAINT distributors_pkey DO NOTHING;</pre><p>
+  </p><p>   如果可能就插入新的 distributor，否则<code class="literal">DO NOTHING</code>。
+   例子假设已经定义了一个唯一索引，它约束让<code class="literal">is_active</code>
+   布尔列为<code class="literal">true</code>的行子集上<code class="literal">did</code>列中的值：
+</p><pre class="programlisting">-- 这个语句可能推断出一个在 "did" 上带有谓词 "WHERE is_active"
+-- 的部分唯一索引，但是它可能也只是使用了 "did" 上的一个常规唯一约束
+INSERT INTO distributors (did, dname) VALUES (10, 'Conrad International')
+    ON CONFLICT (did) WHERE is_active DO NOTHING;</pre></div><div class="refsect1" id="idp47752256"><h2>兼容性</h2><p>   <code class="command">INSERT</code>符合 SQL 标准，不过
+   <code class="literal">RETURNING</code>子句是一种
+   <span class="productname">PostgreSQL</span>扩展， 在
+   <code class="command">INSERT</code>中使用<code class="literal">WITH</code>也是，
+   用<code class="literal">ON CONFLICT</code>指定一个替代动作也是扩展。
+   还有，标准不允许省略列名列表但不通过
+   <code class="literal">VALUES</code>子句或者<em class="replaceable"><code>query</code></em>填充
+   所有列的情况。
+  </p><p>   SQL标准指定只有在生成的标识列始终存在时才能指定<code class="literal">OVERRIDING SYSTEM VALUE</code>。
+   PostgreSQL在任何情况下都允许该子句，如果它不适用，则忽略它。
+  </p><p>   <em class="replaceable"><code>query</code></em>子句可能的限制在
+   <a class="xref" href="sql-select.html" title="SELECT"><span class="refentrytitle">SELECT</span></a>有介绍。
+  </p></div></div><div class="navfooter"><hr /><table width="100%" summary="Navigation footer"><tr><td width="40%" align="left"><a accesskey="p" href="sql-importforeignschema.html">上一页</a> </td><td width="20%" align="center"><a accesskey="u" href="sql-commands.html">上一级</a></td><td width="40%" align="right"> <a accesskey="n" href="sql-listen.html">下一页</a></td></tr><tr><td width="40%" align="left" valign="top">IMPORT FOREIGN SCHEMA </td><td width="20%" align="center"><a accesskey="h" href="index.html">起始页</a></td><td width="40%" align="right" valign="top"> LISTEN</td></tr></table></div></body></html>

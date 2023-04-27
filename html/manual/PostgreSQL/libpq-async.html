@@ -1,0 +1,137 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><title>33.4. 异步命令处理</title><link rel="stylesheet" type="text/css" href="stylesheet.css" /><link rev="made" href="pgsql-docs@postgresql.org" /><meta name="generator" content="DocBook XSL Stylesheets V1.79.1" /><link rel="prev" href="libpq-exec.html" title="33.3. 命令执行函数" /><link rel="next" href="libpq-single-row-mode.html" title="33.5. 一行一行地检索查询结果" /></head><body><div xmlns="http://www.w3.org/TR/xhtml1/transitional" class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="5" align="center">33.4. 异步命令处理</th></tr><tr><td width="10%" align="left"><a accesskey="p" href="libpq-exec.html" title="33.3. 命令执行函数">上一页</a> </td><td width="10%" align="left"><a accesskey="u" href="libpq.html" title="第 33 章 libpq - C 库">上一级</a></td><th width="60%" align="center">第 33 章 <span xmlns="http://www.w3.org/1999/xhtml" class="application">libpq</span> - C 库</th><td width="10%" align="right"><a accesskey="h" href="index.html" title="PostgreSQL 10.1 手册">起始页</a></td><td width="10%" align="right"> <a accesskey="n" href="libpq-single-row-mode.html" title="33.5. 一行一行地检索查询结果">下一页</a></td></tr></table><hr></hr></div><div class="sect1" id="LIBPQ-ASYNC"><div class="titlepage"><div><div><h2 class="title" style="clear: both">33.4. 异步命令处理</h2></div></div></div><a id="idp27881408" class="indexterm"></a><p>   <code class="function">PQexec</code>函数对于在普通的同步应用中提交命令是足以胜任的。不过，它的一些缺点可能对某些用户很重要： 
+
+   </p><div class="itemizedlist"><ul class="itemizedlist" style="list-style-type: disc; "><li class="listitem"><p>      <code class="function">PQexec</code>会等待命令完成。该应用可能有其他的工作要做（例如维护用户界面），这时它将不希望阻塞等待回应。
+     </p></li><li class="listitem"><p>      因为客户端应用的执行在它等待结果时会被挂起，对于应用来说很难决定要不要尝试取消正在进行的命令（这可以在一个信号处理器中完成，但别无他法）。
+     </p></li><li class="listitem"><p>      <code class="function">PQexec</code>只能返回一个<code class="structname">PGresult</code>结构。如果提交的命令串包含多个<acronym class="acronym">SQL</acronym>命令， 除了最后一个<code class="structname">PGresult</code>之外都会被<code class="function">PQexec</code>丢弃。
+     </p></li><li class="listitem"><p>      <code class="function">PQexec</code>总是收集命令的整个结果，把它缓存在一个单一的<code class="structname">PGresult</code>中。虽然这简化了应用的错误处理逻辑，它对于包含很多行的结果并不现实。
+     </p></li></ul></div><p>
+  </p><p>   不想受到这些限制的应用可以改用构建<code class="function">PQexec</code>的底层函数：<code class="function">PQsendQuery</code>以及<code class="function">PQgetResult</code>。还有
+   <code class="function">PQsendQueryParams</code>、
+   <code class="function">PQsendPrepare</code>、
+   <code class="function">PQsendQueryPrepared</code>、
+   <code class="function">PQsendDescribePrepared</code>以及
+   <code class="function">PQsendDescribePortal</code>，
+   它们可以与<code class="function">PQgetResult</code>一起使用来分别复制<code class="function">PQexecParams</code>、
+   <code class="function">PQprepare</code>、
+   <code class="function">PQexecPrepared</code>、
+   <code class="function">PQdescribePrepared</code>和
+   <code class="function">PQdescribePortal</code>的功能。
+
+   </p><div class="variablelist"><dl class="variablelist"><dt id="LIBPQ-PQSENDQUERY"><span class="term">      <code class="function">PQsendQuery</code>
+      <a id="idp27903008" class="indexterm"></a>
+     </span></dt><dd><p>       向服务器提交一个命令而不等待结果。如果该命令被成功发送则返回 1，否则返回 0（此时，可以用<code class="function">PQerrorMessage</code>获取关于失败的信息）。
+</p><pre class="synopsis">int PQsendQuery(PGconn *conn, const char *command);</pre><p>
+
+       在成功调用<code class="function">PQsendQuery</code>后，调用<code class="function">PQgetResult</code>一次或者多次来获取结果。在<code class="function">PQgetResult</code>返回一个空指针之前，都不能再次调用<code class="function">PQsendQuery</code>，返回的空指针指示该命令已经完成。
+      </p></dd><dt id="LIBPQ-PQSENDQUERYPARAMS"><span class="term">      <code class="function">PQsendQueryParams</code>
+      <a id="idp27910544" class="indexterm"></a>
+     </span></dt><dd><p>       向服务器提交一个命令和单独的参数，而不等待结果。
+</p><pre class="synopsis">int PQsendQueryParams(PGconn *conn,
+                      const char *command,
+                      int nParams,
+                      const Oid *paramTypes,
+                      const char * const *paramValues,
+                      const int *paramLengths,
+                      const int *paramFormats,
+                      int resultFormat);</pre><p>
+
+       这个函数等效于<code class="function">PQsendQuery</code>，不过查询参数可以独立于查询字符串分开指定。该函数的参数处理和<code class="function">PQexecParams</code>一样。和<code class="function">PQexecParams</code>类似，它不能在 2.0 协议的连接上工作，并且它只允许在查询字符串中有一条命令。
+      </p></dd><dt id="LIBPQ-PQSENDPREPARE"><span class="term">      <code class="function">PQsendPrepare</code>
+      <a id="idp27916864" class="indexterm"></a>
+     </span></dt><dd><p>       发送一个请求用给定参数创建一个预备语句，而不等待完成。
+</p><pre class="synopsis">int PQsendPrepare(PGconn *conn,
+                  const char *stmtName,
+                  const char *query,
+                  int nParams,
+                  const Oid *paramTypes);</pre><p>
+
+       这个函数是<code class="function">PQprepare</code>的异步版本：如果它能发送这个请求，则返回 1；如果不能，则返回 0。在成功调用之后，调用<code class="function">PQgetResult</code>判断服务器是否成功创建了预备语句。这个函数的参数的处理和<code class="function">PQprepare</code>一样。和<code class="function">PQprepare</code>类似，它不能在 2.0 协议的连接上工作。
+      </p></dd><dt id="LIBPQ-PQSENDQUERYPREPARED"><span class="term">      <code class="function">PQsendQueryPrepared</code>
+      <a id="idp27923904" class="indexterm"></a>
+     </span></dt><dd><p>       发送一个请求用给定参数执行一个预备语句，而不等待结果。
+</p><pre class="synopsis">int PQsendQueryPrepared(PGconn *conn,
+                        const char *stmtName,
+                        int nParams,
+                        const char * const *paramValues,
+                        const int *paramLengths,
+                        const int *paramFormats,
+                        int resultFormat);</pre><p>
+
+       这个函数与<code class="function">PQsendQueryParams</code>类似，但是要执行的命令是通过一个之前已经命名的预备语句指定， 而不是一个给出的查询字符串。该函数的参数处理和<code class="function">PQexecPrepared</code>一样。和<code class="function">PQexecPrepared</code>类似，它不能在 2.0 协议的连接上工作。
+      </p></dd><dt id="LIBPQ-PQSENDDESCRIBEPREPARED"><span class="term">      <code class="function">PQsendDescribePrepared</code>
+      <a id="idp27930224" class="indexterm"></a>
+     </span></dt><dd><p>       发送一个请求获得指定的预备语句的信息，但不等待完成。
+</p><pre class="synopsis">int PQsendDescribePrepared(PGconn *conn, const char *stmtName);</pre><p>
+
+       这个函数是<code class="function">PQdescribePrepared</code>的一个异步版本：如果它能够发送请求，则返回 1；否则，返回 0。在一次成功的调用后，调用<code class="function">PQgetResult</code>来得到结果。该函数的参数处理和<code class="function">PQdescribePrepared</code>一样。和<code class="function">PQdescribePrepared</code>类似，它不能在 2.0 协议的连接上工作。
+      </p></dd><dt id="LIBPQ-PQSENDDESCRIBEPORTAL"><span class="term">      <code class="function">PQsendDescribePortal</code>
+      <a id="idp27936960" class="indexterm"></a>
+     </span></dt><dd><p>       提交一个请求来获得关于指定入口的信息，但不等待完成。
+</p><pre class="synopsis">int PQsendDescribePortal(PGconn *conn, const char *portalName);</pre><p>
+
+       这个函数是<code class="function">PQdescribePortal</code>的一个异步版本：如果它能够发送请求，则返回 1；否则，返回 0。在一次成功的调用后，调用<code class="function">PQgetResult</code>来得到结果。该函数的参数处理和<code class="function">PQdescribePortal</code>一样。和<code class="function">PQdescribePortal</code>类似，它不能在 2.0 协议的连接上工作。
+      </p></dd><dt id="LIBPQ-PQGETRESULT"><span class="term">      <code class="function">PQgetResult</code>
+      <a id="idp27943664" class="indexterm"></a>
+     </span></dt><dd><p>       等待来自于一个之前的
+       <code class="function">PQsendQuery</code>、
+       <code class="function">PQsendQueryParams</code>、
+       <code class="function">PQsendPrepare</code>、
+       <code class="function">PQsendQueryPrepared</code>、
+       <code class="function">PQsendDescribePrepared</code>或
+       <code class="function">PQsendDescribePortal</code>调用的结果，并且返回它。当该命令完成并且没有更多结果时，将返回一个空指针。
+</p><pre class="synopsis">PGresult *PQgetResult(PGconn *conn);</pre><p>
+      </p><p>       <code class="function">PQgetResult</code>必须被反复调用直到它返回一个空指针，空指针表示该命令完成（如果在没有命令活动时被调用，<code class="function">PQgetResult</code>将立即返回一个空指针）。每一个来自<code class="function">PQgetResult</code>的非空结果应该使用之前描述的同一个<code class="structname">PGresult</code>访问器处理。不要忘记在处理完之后释放每一个结果对象。注意，只有一个命令是活动的并且<code class="function">PQconsumeInput</code>还没有读取必要的响应数据时， <code class="function">PQgetResult</code>将会阻塞。
+      </p><div class="note"><h3 class="title">注意</h3><p>        即使当<code class="function">PQresultStatus</code>指出一个致命错误时，<code class="function">PQgetResult</code>也应当被调用直到它返回一个空指针，以允许<span class="application">libpq</span>完全处理该错误信息。
+       </p></div></dd></dl></div><p>
+  </p><p>   使用<code class="function">PQsendQuery</code>和<code class="function">PQgetResult</code>解决了<code class="function">PQexec</code>的一个问题：如果一个命令字符串包含多个<acronym class="acronym">SQL</acronym>命令，这些命令的结果可以被个别地获得（顺便说一句：这样就允许一种简单的重叠处理形式， 客户端可以处理一个命令的结果，而同时服务器可以继续处理同一命令字符串中后面的查询）。
+  </p><p>   可以被<code class="function">PQsendQuery</code>和<code class="function">PQgetResult</code>获得的另一种常常想要的特性是一次从大型结果中检索一行。这会在<a class="xref" href="libpq-single-row-mode.html" title="33.5. 一行一行地检索查询结果">第 33.5 节</a>中讨论。
+  </p><p>   如果只调用<code class="function">PQgetResult</code>（不调用<code class="function">PQsendQuery</code>等）将仍会导致客户端阻塞直到服务器完成下一个<acronym class="acronym">SQL</acronym>命令。用两个函数的正确使用可以避免这种情况：
+
+   </p><div class="variablelist"><dl class="variablelist"><dt id="LIBPQ-PQCONSUMEINPUT"><span class="term">      <code class="function">PQconsumeInput</code>
+      <a id="idp27967104" class="indexterm"></a>
+     </span></dt><dd><p>       如果有来自服务器的输入可用，则使用之。
+</p><pre class="synopsis">int PQconsumeInput(PGconn *conn);</pre><p>
+      </p><p>       <code class="function">PQconsumeInput</code>通常返回 1 表明<span class="quote">“<span class="quote">没有错误</span>”</span>，而返回 0 表明有某种麻烦发生（此时可以用<code class="function">PQerrorMessage</code>）。注意该结果并不表明是否真正收集了任何输入数据。在调用<code class="function">PQconsumeInput</code>之后，应用可以检查<code class="function">PQisBusy</code>和/或<code class="function">PQnotifies</code>来看看它们的状态是否改变。
+      </p><p>       即使应用还不准备处理一个结果或通知，<code class="function">PQconsumeInput</code>也可以被调用。这个函数将读取可用的数 据并且把它保存在一个缓冲区中，从而导致一个<code class="function">select()</code>的读准备好指示消失。因此应用可以使用<code class="function">PQconsumeInput</code>立即清除<code class="function">select()</code>条件，并且在空闲时再检查结果。
+      </p></dd><dt id="LIBPQ-PQISBUSY"><span class="term">      <code class="function">PQisBusy</code>
+      <a id="idp27978496" class="indexterm"></a>
+     </span></dt><dd><p>       如果一个命令繁忙则返回 1，也就是说<code class="function">PQgetResult</code>会阻塞等待输入。返回 0 表示可以调用<code class="function">PQgetResult</code>而不用担心阻塞。
+</p><pre class="synopsis">int PQisBusy(PGconn *conn);</pre><p>
+      </p><p>       <code class="function">PQisBusy</code>本身将不会尝试从服务器读取数据，因此必须先调用<code class="function">PQconsumeInput</code>，否则繁忙状态将永远不会结束。
+      </p></dd></dl></div><p>
+  </p><p>   一个使用这些函数的典型应用将有一个主循环，在主循环中会使用<code class="function">select()</code>或<code class="function">poll()</code>等待所有它必须响应的情况。其中之一将是来自服务器的输入可用，对<code class="function">select()</code>来说意味着<code class="function">PQsocket</code>标识的文件描述符上有可读的数据。当主循环检测到输入准备好时，它将调用<code class="function">PQconsumeInput</code>读取输入。然后它可以调用<code class="function">PQisBusy</code>，如果<code class="function">PQisBusy</code>返回假（0）则接着调用<code class="function">PQgetResult</code>。它还可以调用<code class="function">PQnotifies</code>检测<code class="command">NOTIFY</code>消息（见<a class="xref" href="libpq-notify.html" title="33.8. 异步提示">第 33.8 节</a>）。
+  </p><p>   一个使用<code class="function">PQsendQuery</code>/<code class="function">PQgetResult</code>的客户端也可以尝试取消一个正在被服务器处理的命令，见<a class="xref" href="libpq-cancel.html" title="33.6. 取消进行中的查询">第 33.6 节</a>。但是，不管<code class="function">PQcancel</code>的返回值是什么，应用都必须继续使用<code class="function">PQgetResult</code>进行正常的结果读取序列。一次成功的取消只会导致命令比不取消时更快终止。
+  </p><p>   通过使用上述函数，我们可以避免在等待来自数据库服务器的输入时被阻塞。不过，在应用发送输出给服务器时还是可能出现阻塞。这种情况比较少见，但是如果发送非常长的 SQL 命令或者数据值时确实可能发生（不过，最有可能是在应用通过<code class="command">COPY IN</code>发送数据时）。为了避免这种可能性并且实现完全地非阻塞数据库操作，可以使用下列附加函数。
+
+   </p><div class="variablelist"><dl class="variablelist"><dt id="LIBPQ-PQSETNONBLOCKING"><span class="term">      <code class="function">PQsetnonblocking</code>
+      <a id="idp28000032" class="indexterm"></a>
+     </span></dt><dd><p>       把连接的状态设置为非阻塞。
+</p><pre class="synopsis">int PQsetnonblocking(PGconn *conn, int arg);</pre><p>
+      </p><p>       如果<em class="parameter"><code>arg</code></em>为 1，把连接状态设置为非阻塞；如果<em class="parameter"><code>arg</code></em>为 0，把连接状态设置为阻塞。如果 OK 返回 0，如果错误返回 -1。
+      </p><p>       在非阻塞状态，调用
+       <code class="function">PQsendQuery</code>、<code class="function">PQputline</code>、
+       <code class="function">PQputnbytes</code>、<code class="function">PQputCopyData</code>和
+       <code class="function">PQendcopy</code>将不会阻塞，但是如果它们需要被再次调用则会返回一个错误。
+      </p><p>       注意<code class="function">PQexec</code>不会遵循任何非阻塞模式；如果调用<code class="function">PQexec</code>，那么它的行为总是阻塞的。
+      </p></dd><dt id="LIBPQ-PQISNONBLOCKING"><span class="term">      <code class="function">PQisnonblocking</code>
+      <a id="idp28011136" class="indexterm"></a>
+     </span></dt><dd><p>       返回数据库连接的阻塞状态。
+</p><pre class="synopsis">int PQisnonblocking(const PGconn *conn);</pre><p>
+      </p><p>       如果连接被设置为非阻塞状态，返回 1，如果是阻塞状态返回 0。
+      </p></dd><dt id="LIBPQ-PQFLUSH"><span class="term">      <code class="function">PQflush</code>
+       <a id="idp28015184" class="indexterm"></a>
+      </span></dt><dd><p>       尝试把任何正在排队的输出数据刷到服务器。如果成功（或者发送队列为空）返回 0， 如果因某种原因失败则返回 -1，或者如果还无法把发送队列中的所有数据都发送出去，则返回 1（这种情况只在连接为非阻塞时候才会发生）。
+</p><pre class="synopsis">int PQflush(PGconn *conn);</pre><p>
+      </p></dd></dl></div><p>
+  </p><p>   在一个非阻塞连接上发送任何命令或者数据之后，要调用<code class="function">PQflush</code>。
+   如果它返回 1，就要等待套接字变成读准备好或写准备好。如果它变为写准备好，应再次调用
+   <code class="function">PQflush</code>。如果它变为读准备好，则应先调用
+   <code class="function">PQconsumeInput</code>，然后再调用<code class="function">PQflush</code>。
+   一直重复直到<code class="function">PQflush</code>返回 0（有必要检查读准备好并且用
+   <code class="function">PQconsumeInput</code>耗尽输入，因为服务器可能阻塞给我们发送数据
+   的尝试，例如 NOTICE 消息，并且在我们读它的数据之前它都不会读我们的数据）。一旦
+   <code class="function">PQflush</code>返回 0，应等待套接字变成读准备好并且接着按照上文所述
+   读取响应。
+  </p></div><div class="navfooter"><hr /><table width="100%" summary="Navigation footer"><tr><td width="40%" align="left"><a accesskey="p" href="libpq-exec.html">上一页</a> </td><td width="20%" align="center"><a accesskey="u" href="libpq.html">上一级</a></td><td width="40%" align="right"> <a accesskey="n" href="libpq-single-row-mode.html">下一页</a></td></tr><tr><td width="40%" align="left" valign="top">33.3. 命令执行函数 </td><td width="20%" align="center"><a accesskey="h" href="index.html">起始页</a></td><td width="40%" align="right" valign="top"> 33.5. 一行一行地检索查询结果</td></tr></table></div></body></html>

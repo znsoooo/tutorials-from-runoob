@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><title>43.7. PL/Tcl 中的事件触发器过程</title><link rel="stylesheet" type="text/css" href="stylesheet.css" /><link rev="made" href="pgsql-docs@postgresql.org" /><meta name="generator" content="DocBook XSL Stylesheets V1.79.1" /><link rel="prev" href="pltcl-trigger.html" title="43.6. PL/Tcl 中的触发器过程" /><link rel="next" href="pltcl-error-handling.html" title="43.8. PL/Tcl 中的错误处理" /></head><body><div xmlns="http://www.w3.org/TR/xhtml1/transitional" class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="5" align="center">43.7. PL/Tcl 中的事件触发器过程</th></tr><tr><td width="10%" align="left"><a accesskey="p" href="pltcl-trigger.html" title="43.6. PL/Tcl 中的触发器过程">上一页</a> </td><td width="10%" align="left"><a accesskey="u" href="pltcl.html" title="第 43 章 PL/Tcl - Tcl 过程语言">上一级</a></td><th width="60%" align="center">第 43 章 PL/Tcl - Tcl 过程语言</th><td width="10%" align="right"><a accesskey="h" href="index.html" title="PostgreSQL 10.1 手册">起始页</a></td><td width="10%" align="right"> <a accesskey="n" href="pltcl-error-handling.html" title="43.8. PL/Tcl 中的错误处理">下一页</a></td></tr></table><hr></hr></div><div class="sect1" id="PLTCL-EVENT-TRIGGER"><div class="titlepage"><div><div><h2 class="title" style="clear: both">43.7. PL/Tcl 中的事件触发器过程</h2></div></div></div><a id="idp37607840" class="indexterm"></a><p>     事件触发器过程也可以用 PL/Tcl 编写。<span class="productname">PostgreSQL</span>要求能作为事件触发器被调用的过程必须被声明为一个没有参数并且返回类型为<code class="literal">event_trigger</code>的函数。
+    </p><p>     来自于触发器管理器的信息通过下列变量被传递给过程体：
+
+     </p><div class="variablelist"><dl class="variablelist"><dt><span class="term"><code class="varname">$TG_event</code></span></dt><dd><p>         触发器为其引发的事件名。
+        </p></dd><dt><span class="term"><code class="varname">$TG_tag</code></span></dt><dd><p>         触发器为其引发的命令标签。
+        </p></dd></dl></div><p>
+    </p><p>     触发器过程的返回值被忽略。
+    </p><p>     这里是一个事件触发器过程的小例子，它在所支持的命令每次执行时简单地产生一个<code class="literal">NOTICE</code>消息：
+
+</p><pre class="programlisting">CREATE OR REPLACE FUNCTION tclsnitch() RETURNS event_trigger AS $$
+  elog NOTICE "tclsnitch: $TG_event $TG_tag"
+$$ LANGUAGE pltcl;
+
+CREATE EVENT TRIGGER tcl_a_snitch ON ddl_command_start EXECUTE PROCEDURE tclsnitch();</pre><p>
+    </p></div><div class="navfooter"><hr /><table width="100%" summary="Navigation footer"><tr><td width="40%" align="left"><a accesskey="p" href="pltcl-trigger.html">上一页</a> </td><td width="20%" align="center"><a accesskey="u" href="pltcl.html">上一级</a></td><td width="40%" align="right"> <a accesskey="n" href="pltcl-error-handling.html">下一页</a></td></tr><tr><td width="40%" align="left" valign="top">43.6. PL/Tcl 中的触发器过程 </td><td width="20%" align="center"><a accesskey="h" href="index.html">起始页</a></td><td width="40%" align="right" valign="top"> 43.8. PL/Tcl 中的错误处理</td></tr></table></div></body></html>

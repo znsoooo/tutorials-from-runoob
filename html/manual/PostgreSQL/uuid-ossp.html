@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><title>F.45. uuid-ossp</title><link rel="stylesheet" type="text/css" href="stylesheet.css" /><link rev="made" href="pgsql-docs@postgresql.org" /><meta name="generator" content="DocBook XSL Stylesheets V1.79.1" /><link rel="prev" href="unaccent.html" title="F.44. unaccent" /><link rel="next" href="xml2.html" title="F.46. xml2" /></head><body><div xmlns="http://www.w3.org/TR/xhtml1/transitional" class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="5" align="center">F.45. uuid-ossp</th></tr><tr><td width="10%" align="left"><a accesskey="p" href="unaccent.html" title="F.44. unaccent">上一页</a> </td><td width="10%" align="left"><a accesskey="u" href="contrib.html" title="附录 F. 额外提供的模块">上一级</a></td><th width="60%" align="center">附录 F. 额外提供的模块</th><td width="10%" align="right"><a accesskey="h" href="index.html" title="PostgreSQL 10.1 手册">起始页</a></td><td width="10%" align="right"> <a accesskey="n" href="xml2.html" title="F.46. xml2">下一页</a></td></tr></table><hr></hr></div><div class="sect1" id="UUID-OSSP"><div class="titlepage"><div><div><h2 class="title" style="clear: both">F.45. uuid-ossp</h2></div></div></div><div class="toc"><dl class="toc"><dt><span class="sect2"><a href="uuid-ossp.html#idp88174768">F.45.1. <code class="literal">uuid-ossp</code> 函数</a></span></dt><dt><span class="sect2"><a href="uuid-ossp.html#idp88204352">F.45.2. 编译<code class="filename">uuid-ossp</code></a></span></dt><dt><span class="sect2"><a href="uuid-ossp.html#idp88216832">F.45.3. 作者</a></span></dt></dl></div><a id="idp88172528" class="indexterm"></a><p>  <code class="filename">uuid-ossp</code>模块提供函数使用几种标准算法之一产生通用唯一标识符（UUID）。还提供产生某些特殊 UUID 常量的函数。
+ </p><div class="sect2" id="idp88174768"><div class="titlepage"><div><div><h3 class="title">F.45.1. <code class="literal">uuid-ossp</code> 函数</h3></div></div></div><p>   <a class="xref" href="uuid-ossp.html#UUID-OSSP-FUNCTIONS" title="表 F.33. 用于 UUID 产生的函数">表 F.33</a>展示了可用来产生 UUID 的函数。相关标准 ITU-T Rec. X.667、ISO/IEC 9834-8:2005 以及 RFC 4122 指定了四种用于产生 UUID 的算法，分别用版本号 1、3、4、5 标识（没有版本 2 的算法）。这些算法中的每一个都适合于不同的应用集合。
+  </p><div class="table" id="UUID-OSSP-FUNCTIONS"><p class="title"><strong>表 F.33. 用于 UUID 产生的函数</strong></p><div class="table-contents"><table class="table" summary="用于 UUID 产生的函数" border="1"><colgroup><col /><col /></colgroup><thead><tr><th>函数</th><th>描述</th></tr></thead><tbody><tr><td><code class="function">uuid_generate_v1()</code><a id="idp88179952" class="indexterm"></a></td><td>       <p>        这个函数产生一个版本 1 的 UUID。这涉及到计算机的 MAC 地址和一个时间戳。注意这种 UUID 会泄露产生该标识符的计算机标识以及产生的时间，因此它不适合某些对安全性很敏感的应用。
+       </p>
+      </td></tr><tr><td><code class="function">uuid_generate_v1mc()</code><a id="idp88182640" class="indexterm"></a></td><td>       <p>        这个函数产生一个版本 1 的 UUID，但是使用一个随机广播 MAC 地址而不是该计算机真实的 MAC 地址。
+       </p>
+      </td></tr><tr><td><code class="function">uuid_generate_v3(namespace uuid, name text)</code><a id="idp88185120" class="indexterm"></a></td><td>       <p>        这个函数使用指定的输入名称在给定的名字空间中产生一个版本 3 的 UUID。该名字空间应该是由<code class="function">uuid_ns_*()</code>函数（如<a class="xref" href="uuid-ossp.html#UUID-OSSP-CONSTANTS" title="表 F.34. 返回 UUID 常量的函数">表 F.34</a>所示）产生的特殊常量之一（理论上它可以是任意 UUID）。名称是选择的名字空间中的一个标识符。
+       </p>
+
+       <p>        例如：
+
+</p><pre class="programlisting">SELECT uuid_generate_v3(uuid_ns_url(), 'http://www.postgresql.org');</pre><p>
+
+        名称参数将使用 MD5 进行哈希，因此从产生的 UUID 中得不到明文。采用这种方法的 UUID 生成没有随机性并且不涉及依赖于环境的元素，因此是可以重现的。
+       </p>
+      </td></tr><tr><td><code class="literal">uuid_generate_v4()</code></td><td>       <p>        这个函数产生一个版本 4 的 UUID，它完全从随机数产生。
+       </p>
+      </td></tr><tr><td><code class="literal">uuid_generate_v5(namespace uuid, name text)</code></td><td>       <p>        这个函数产生一个版本 5 的 UUID，它和版本 3 的 UUID 相似，但是采用的是 SHA-1 作为哈希方法。版本 5 比版本 3 更好，因为 SHA-1 被认为比 MD5 更安全。
+       </p>
+      </td></tr></tbody></table></div></div><br class="table-break" /><div class="table" id="UUID-OSSP-CONSTANTS"><p class="title"><strong>表 F.34. 返回 UUID 常量的函数</strong></p><div class="table-contents"><table class="table" summary="返回 UUID 常量的函数" border="1"><colgroup><col /><col /></colgroup><tbody><tr><td><code class="literal">uuid_nil()</code></td><td>       <p>        一个<span class="quote">“<span class="quote">nil</span>”</span> UUID 常量，它不作为一个真正的 UUID 发生。
+       </p>
+      </td></tr><tr><td><code class="literal">uuid_ns_dns()</code></td><td>       <p>        为 UUID 指定 DNS 名字空间的常量。
+       </p>
+      </td></tr><tr><td><code class="literal">uuid_ns_url()</code></td><td>       <p>        为 UUID 指定 URL 名字空间的常量。
+       </p>
+      </td></tr><tr><td><code class="literal">uuid_ns_oid()</code></td><td>       <p>        为 UUID 指定 ISO 对象标识符（OID） 名字空间的常量（这属于 ASN.1 OID，它与<span class="productname">PostgreSQL</span>使用的 OID 无关）。
+       </p>
+      </td></tr><tr><td><code class="literal">uuid_ns_x500()</code></td><td>       <p>        为 UUID 指定 X.500 可识别名（DN）名字空间的常量。Constant designating the X.500 distinguished name (DN) namespace for
+        UUIDs.
+       </p>
+      </td></tr></tbody></table></div></div><br class="table-break" /></div><div class="sect2" id="idp88204352"><div class="titlepage"><div><div><h3 class="title">F.45.2. 编译<code class="filename">uuid-ossp</code></h3></div></div></div><p>   在历史上这个模块依赖于 OSSP UUID 库，这也是这个模块名称的由来。虽然
+   现在还能在<a class="ulink" href="http://www.ossp.org/pkg/lib/uuid/" target="_top">http://www.ossp.org/pkg/lib/uuid/</a>上
+   找到 OSSP UUID 库，但是它已经不再被维护并且越来越难以被一直到新的平台。
+   <code class="filename">uuid-ossp</code>现在在一些平台上可以脱离 OSSP 库被编译。在
+   FreeBSD、NetBSD 和一些其他源自 BSD 的平台上，在核心的<code class="filename">libc</code>
+   库中已经包括了合适的 UUID 创建函数。在 Linux、macOS和一些其他平台上，
+   <code class="filename">libuuid</code>库中提供了合适的函数，它最初是来自于
+   <code class="literal">e2fsprogs</code>项目（不过在现代 Linux 上它被认为是
+   <code class="literal">util-linux-ng</code>的一部分）。在调用<code class="filename">configure</code>时，
+   指定<code class="option">--with-uuid=bsd</code>可使用 BSD 的函数，指定
+   <code class="option">--with-uuid=e2fs</code>会使用<code class="literal">e2fsprogs</code>的
+   <code class="filename">libuuid</code>，指定<code class="option">--with-uuid=ossp</code>则会
+   使用 OSSP UUID 库。在一台特定的机器上可能会存在多种上述的库，因此
+   <code class="filename">configure</code>不会自动选择其中一个。
+  </p><div class="note"><h3 class="title">注意</h3><p>    如果你只需要随机生成（版本4）的 UUID，可以考虑使用<a class="xref" href="pgcrypto.html" title="F.26. pgcrypto">pgcrypto</a>
+    模块中的<code class="function">gen_random_uuid()</code>函数。
+   </p></div></div><div class="sect2" id="idp88216832"><div class="titlepage"><div><div><h3 class="title">F.45.3. 作者</h3></div></div></div><p>   Peter Eisentraut <code class="email">&lt;<a class="email" href="mailto:peter_e@gmx.net">peter_e@gmx.net</a>&gt;</code>
+  </p></div></div><div class="navfooter"><hr /><table width="100%" summary="Navigation footer"><tr><td width="40%" align="left"><a accesskey="p" href="unaccent.html">上一页</a> </td><td width="20%" align="center"><a accesskey="u" href="contrib.html">上一级</a></td><td width="40%" align="right"> <a accesskey="n" href="xml2.html">下一页</a></td></tr><tr><td width="40%" align="left" valign="top">F.44. unaccent </td><td width="20%" align="center"><a accesskey="h" href="index.html">起始页</a></td><td width="40%" align="right" valign="top"> F.46. xml2</td></tr></table></div></body></html>

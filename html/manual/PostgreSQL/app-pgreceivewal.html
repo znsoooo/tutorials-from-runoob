@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><title>pg_receivewal</title><link rel="stylesheet" type="text/css" href="stylesheet.css" /><link rev="made" href="pgsql-docs@postgresql.org" /><meta name="generator" content="DocBook XSL Stylesheets V1.79.1" /><link rel="prev" href="app-pg-isready.html" title="pg_isready" /><link rel="next" href="app-pgrecvlogical.html" title="pg_recvlogical" /></head><body><div xmlns="http://www.w3.org/TR/xhtml1/transitional" class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="5" align="center">pg_receivewal</th></tr><tr><td width="10%" align="left"><a accesskey="p" href="app-pg-isready.html" title="pg_isready">上一页</a> </td><td width="10%" align="left"><a accesskey="u" href="reference-client.html" title="PostgreSQL 客户端应用">上一级</a></td><th width="60%" align="center">PostgreSQL 客户端应用</th><td width="10%" align="right"><a accesskey="h" href="index.html" title="PostgreSQL 10.1 手册">起始页</a></td><td width="10%" align="right"> <a accesskey="n" href="app-pgrecvlogical.html" title="pg_recvlogical">下一页</a></td></tr></table><hr></hr></div><div class="refentry" id="APP-PGRECEIVEWAL"><div class="titlepage"></div><a id="idp51490608" class="indexterm"></a><div class="refnamediv"><h2><span class="refentrytitle">pg_receivewal</span></h2><p>pg_receivewal — 以流的方式从一个<span class="productname">PostgreSQL</span>服务器得到预写日志</p></div><div class="refsynopsisdiv"><h2>大纲</h2><div class="cmdsynopsis"><p id="idp51494256"><code class="command">pg_receivewal</code> [<em class="replaceable"><code>option</code></em>...]</p></div></div><div class="refsect1" id="idp51496112"><h2>   描述
+  </h2><p>   <span class="application">pg_receivewal</span>被用来从一个运行着的<span class="productname">PostgreSQL</span>集簇以流的方式得到预写日志。预写日志会被使用流复制协议以流的方式传送，并且被写入到文件的一个本地目录。这个目录可以被用作归档位置来做一次使用时间点恢复的恢复（见<a class="xref" href="continuous-archiving.html" title="25.3. 连续归档和时间点恢复（PITR）">第 25.3 节</a>）。
+  </p><p>   当预写日志在服务器上被产生时，<span class="application">pg_receivewal</span>实时以流的方式传输预写日志，并且不像<a class="xref" href="runtime-config-wal.html#GUC-ARCHIVE-COMMAND">archive_command</a>那样等待段完成。由于这个原因，在使用<span class="application">pg_receivewal</span>时不必设置<a class="xref" href="runtime-config-wal.html#GUC-ARCHIVE-TIMEOUT">archive_timeout</a>。
+  </p><p>   与 PostgreSQL 后备服务器上的 WAL 接收进程不同，
+   <span class="application">pg_receivewal</span>默认只在一个 WAL 文件被关闭时
+   才刷入 WAL 数据。要实时刷入 WAL 数据，必须指定选项
+   <code class="option">--synchronous</code>。
+  </p><p>   预写日志在一个常规<span class="productname">PostgreSQL</span>连接上被以流式传送，并且使用复制协议。连接必须由一个超级用户或一个具有<code class="literal">REPLICATION</code>权限（见<a class="xref" href="role-attributes.html" title="21.2. 角色属性">第 21.2 节</a>）的用户建立，并且<code class="filename">pg_hba.conf</code>必须允许复制连接。服务器也必须被配置一个足够高的<a class="xref" href="runtime-config-replication.html#GUC-MAX-WAL-SENDERS">max_wal_senders</a>来至少留出一个可用会话给流。
+  </p><p>   如果该连接丢失，或者它一开始就由于一个非致命错误而没有被建立，<span class="application">pg_receivewal</span>将无限期地重试连接并且尽可能重新建立流。为了避免这种行为，使用<code class="literal">-n</code>参数。
+  </p></div><div class="refsect1" id="idp51510048"><h2>选项</h2><div class="variablelist"><dl class="variablelist"><dt><span class="term"><code class="option">-D <em class="replaceable"><code>directory</code></em></code><br /></span><span class="term"><code class="option">--directory=<em class="replaceable"><code>directory</code></em></code></span></dt><dd><p>        要把输出写到哪个目录。
+       </p><p>        这个参数是必需的。
+       </p></dd><dt><span class="term"><code class="option">--if-not-exists</code></span></dt><dd><p>        当指定<code class="option">--create-slot</code>并且具有指定名称
+        的槽已经存在时不要抛出错误。
+       </p></dd><dt><span class="term"><code class="option">-n</code><br /></span><span class="term"><code class="option">--no-loop</code></span></dt><dd><p>        不要在连接错误上循环。相反，碰到一个错误时立刻退出。
+       </p></dd><dt><span class="term"><code class="option">-s <em class="replaceable"><code>interval</code></em></code><br /></span><span class="term"><code class="option">--status-interval=<em class="replaceable"><code>interval</code></em></code></span></dt><dd><p>        指定发送回服务器的状态包之间的秒数。这允许我们更容易地监控服务器的进度。
+        一个零值完全禁用这种周期性的状态更新，不过当服务器需要时还是会有一个更新
+        会被发送来避免超时导致的断开连接。默认值是 10 秒。
+       </p></dd><dt><span class="term"><code class="option">-S <em class="replaceable"><code>slotname</code></em></code><br /></span><span class="term"><code class="option">--slot=<em class="replaceable"><code>slotname</code></em></code></span></dt><dd><p>         要求<span class="application">pg_receivewal</span>使用一个已有的复制槽（见
+         <a class="xref" href="warm-standby.html#STREAMING-REPLICATION-SLOTS" title="26.2.6. 复制槽">第 26.2.6 节</a>）。在使用这个选项时，
+         <span class="application">pg_receivewal</span>将会报告给服务器一个刷写位置，指示每一个
+         段是何时被同步到磁盘的，这样服务器可以在不需要该段时移除它。
+        </p><p>         当<span class="application">pg_receivewal</span>的复制客户端在服务器
+         上被配置为一个同步后备时，那么使用一个复制槽将会向服务器报告刷写
+         位置，但只在一个 WAL 文件被关闭时报告。因此，该配置将导致主服务
+         器上的事务等待很长的时间并且无法令人满意地工作。要让这种配置工作
+         正确，还必须制定选项<code class="literal">--synchronous</code>（见下文）。
+        </p></dd><dt><span class="term"><code class="option">--synchronous</code></span></dt><dd><p>        在 WAL 数据被收到后立即刷入到磁盘。还要在刷写后立即向服务器回送
+        一个状态包（不考虑<code class="literal">--status-interval</code>）。
+       </p><p>        如果<span class="application">pg_receivewal</span>的复制客户端在服务器
+        上被配置为一个同步后备，应该指定这个选项来确保向服务器发送及时的反馈。
+       </p></dd><dt><span class="term"><code class="option">-v</code><br /></span><span class="term"><code class="option">--verbose</code></span></dt><dd><p>        启用冗长模式。
+       </p></dd><dt><span class="term"><code class="option">-Z <em class="replaceable"><code>level</code></em></code><br /></span><span class="term"><code class="option">--compress=<em class="replaceable"><code>level</code></em></code></span></dt><dd><p>        启用预写日志的gzip压缩，并指定压缩级别（0到9，0是不压缩，9是最佳压缩）。
+		后缀<code class="filename">.gz</code>将自动添加到所有文件名。
+       </p></dd></dl></div><p>    下列命令行选项控制数据库连接参数。
+
+    </p><div class="variablelist"><dl class="variablelist"><dt><span class="term"><code class="option">-d <em class="replaceable"><code>connstr</code></em></code><br /></span><span class="term"><code class="option">--dbname=<em class="replaceable"><code>connstr</code></em></code></span></dt><dd><p>        指定用于连接到服务器的参数为一个连接字符串。详见<a class="xref" href="libpq-connect.html#LIBPQ-CONNSTRING" title="33.1.1. 连接字符串">第 33.1.1 节</a>。
+       </p><p>        为了和其他客户端应用一致，该选项被称为<code class="literal">--dbname</code>。但是因为<span class="application">pg_receivewal</span>并不连接到集簇中的任何特定数据库，连接字符串中的数据库名将被忽略。
+       </p></dd><dt><span class="term"><code class="option">-h <em class="replaceable"><code>host</code></em></code><br /></span><span class="term"><code class="option">--host=<em class="replaceable"><code>host</code></em></code></span></dt><dd><p>        指定运行服务器的机器的主机名。如果该值以一个斜线开始，它被用作 Unix 域套接字的目录。默认值取自<code class="envar">PGHOST</code>环境变量（如果设置），否则会尝试一个 Unix 域套接字连接。
+       </p></dd><dt><span class="term"><code class="option">-p <em class="replaceable"><code>port</code></em></code><br /></span><span class="term"><code class="option">--port=<em class="replaceable"><code>port</code></em></code></span></dt><dd><p>        指定服务器正在监听连接的 TCP 端口或本地 Unix 域套接字文件扩展。默认用<code class="envar">PGPORT</code>环境变量中的值（如果设置），或者一个编译在程序中的默认值。
+       </p></dd><dt><span class="term"><code class="option">-U <em class="replaceable"><code>username</code></em></code><br /></span><span class="term"><code class="option">--username=<em class="replaceable"><code>username</code></em></code></span></dt><dd><p>        要作为哪个用户连接。
+       </p></dd><dt><span class="term"><code class="option">-w</code><br /></span><span class="term"><code class="option">--no-password</code></span></dt><dd><p>        从不发出一个口令提示。如果服务器要求口令认证并且没有其他方式提供口令（例如一个<code class="filename">.pgpass</code>文件），那儿连接尝试将失败。这个选项对于批处理任务和脚本有用，因为在其中没有一个用户来输入口令。
+       </p></dd><dt><span class="term"><code class="option">-W</code><br /></span><span class="term"><code class="option">--password</code></span></dt><dd><p>        强制<span class="application">pg_receivewal</span>在连接到一个数据库之前提示要求一个口令。
+       </p><p>        这个选项不是必不可少的，因为如果服务器要求口令认证，<span class="application">pg_receivewal</span>将自动提示要求一个口令。但是，<span class="application">pg_receivewal</span>将浪费一次连接尝试来发现服务器想要一个口令。在某些情况下值得用<code class="option">-W</code>来避免额外的连接尝试。
+       </p></dd></dl></div><p>
+   </p><p>    为了控制物理复制槽，<span class="application">pg_receivewal</span>
+    可以执行下列两种动作之一：
+
+    </p><div class="variablelist"><dl class="variablelist"><dt><span class="term"><code class="option">--create-slot</code></span></dt><dd><p>        用<code class="option">--slot</code>中指定的名称创建一个新的物理复制槽，
+        然后退出。
+       </p></dd><dt><span class="term"><code class="option">--drop-slot</code></span></dt><dd><p>        删除<code class="option">--slot</code>中指定的复制槽，然后退出。
+       </p></dd></dl></div><p>
+   </p><p>    其他选项也可用：
+
+    </p><div class="variablelist"><dl class="variablelist"><dt><span class="term"><code class="option">-V</code><br /></span><span class="term"><code class="option">--version</code></span></dt><dd><p>       打印<span class="application">pg_receivewal</span>版本并退出。
+       </p></dd><dt><span class="term"><code class="option">-?</code><br /></span><span class="term"><code class="option">--help</code></span></dt><dd><p>       显示有关<span class="application">pg_receivewal</span>命令行参数的帮助并退出。
+       </p></dd></dl></div><p>
+   </p></div><div class="refsect1" id="idp51565312"><h2>环境</h2><p>   和大部分其他<span class="productname">PostgreSQL</span>工具相似，这个工具也使用<span class="application">libpq</span>（见<a class="xref" href="libpq-envars.html" title="33.14. 环境变量">第 33.14 节</a>）支持的环境变量。
+  </p></div><div class="refsect1" id="idp51568224"><h2>注解</h2><p>   在使用<span class="application">pg_receivewal</span>替代
+   <a class="xref" href="runtime-config-wal.html#GUC-ARCHIVE-COMMAND">archive_command</a>作为主要的 WAL 备份方法时，
+   强烈建议使用复制槽。否则，服务器可能会在预写日志文件被备份好之前重用
+   或者移除它们，因为没有任何信息（不管是来自
+   <a class="xref" href="runtime-config-wal.html#GUC-ARCHIVE-COMMAND">archive_command</a>或是复制槽）能够指示 WAL 流已
+   经被归档到什么程度。不过要注意，如果接收者没有持续地取走 WAL 数据，
+   一个复制槽将会填满服务器的磁盘空间。
+  </p></div><div class="refsect1" id="idp51571392"><h2>例子</h2><p>   要从位于<code class="literal">mydbserver</code>的服务器流式传送预写日志并且将它存储在本地目录<code class="filename">/usr/local/pgsql/archive</code>：
+</p><pre class="screen"><code class="prompt">$</code> <strong class="userinput"><code>pg_receivewal -h mydbserver -D /usr/local/pgsql/archive</code></strong></pre></div><div class="refsect1" id="idp51575232"><h2>参见</h2><span class="simplelist"><a class="xref" href="app-pgbasebackup.html" title="pg_basebackup"><span class="refentrytitle">pg_basebackup</span></a></span></div></div><div class="navfooter"><hr /><table width="100%" summary="Navigation footer"><tr><td width="40%" align="left"><a accesskey="p" href="app-pg-isready.html">上一页</a> </td><td width="20%" align="center"><a accesskey="u" href="reference-client.html">上一级</a></td><td width="40%" align="right"> <a accesskey="n" href="app-pgrecvlogical.html">下一页</a></td></tr><tr><td width="40%" align="left" valign="top"><span class="application">pg_isready</span> </td><td width="20%" align="center"><a accesskey="h" href="index.html">起始页</a></td><td width="40%" align="right" valign="top"> <span class="application">pg_recvlogical</span></td></tr></table></div></body></html>

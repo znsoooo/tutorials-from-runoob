@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><title>E.334. 版本 6.2.1</title><link rel="stylesheet" type="text/css" href="stylesheet.css" /><link rev="made" href="pgsql-docs@postgresql.org" /><meta name="generator" content="DocBook XSL Stylesheets V1.79.1" /><link rel="prev" href="release-6-3.html" title="E.333. 版本 6.3" /><link rel="next" href="release-6-2.html" title="E.335. 版本 6.2" /></head><body><div xmlns="http://www.w3.org/TR/xhtml1/transitional" class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="5" align="center">E.334. 版本 6.2.1</th></tr><tr><td width="10%" align="left"><a accesskey="p" href="release-6-3.html" title="E.333. 版本 6.3">上一页</a> </td><td width="10%" align="left"><a accesskey="u" href="release.html" title="附录 E. 版本说明">上一级</a></td><th width="60%" align="center">附录 E. 版本说明</th><td width="10%" align="right"><a accesskey="h" href="index.html" title="PostgreSQL 10.1 手册">起始页</a></td><td width="10%" align="right"> <a accesskey="n" href="release-6-2.html" title="E.335. 版本 6.2">下一页</a></td></tr></table><hr></hr></div><div class="sect1" id="RELEASE-6-2-1"><div class="titlepage"><div><div><h2 class="title" style="clear: both">E.334. 版本 6.2.1</h2></div></div></div><div class="toc"><dl class="toc"><dt><span class="sect2"><a href="release-6-2-1.html#idp84596368">E.334.1. 从 v6.2 迁移到 v6.2.1</a></span></dt><dt><span class="sect2"><a href="release-6-2-1.html#idp84599808">E.334.2. 修改列表</a></span></dt></dl></div><p><strong>发布日期：. </strong>1997-10-17</p><p>6.2.1 是 6.2 的除错版本和增强可用性版本。</p><p>摘要：
+
+</p><div class="itemizedlist"><ul class="itemizedlist" style="list-style-type: disc; "><li class="listitem"><p>允许字符串跨行，类似 <acronym class="acronym">SQL92</acronym>。</p></li><li class="listitem"><p>包括了一个触发器的样例函数，用于在更新表时插入用户名。</p></li></ul></div><p>这是对6.2的一个小的除错版本。对于从 6.2 以前的系统上升级，
+需要进行一次完整的转储/恢复工作。请参考 6.2 版本信息获取相关指导。</p><div class="sect2" id="idp84596368"><div class="titlepage"><div><div><h3 class="title">E.334.1. 从 v6.2 迁移到 v6.2.1</h3></div></div></div><p>这是一次小的除错升级。从v6.2上升级不需要进行转储/恢复，但对任何v6.2以前的版本是需要的。</p><p>当你从 v6.2 上升级时，如果你选择了转储/恢复的做法。你将会发现 avg(money) 
+现在可以正确运算了。所有其他的除错在升级了可执行程序后都将生效。</p><p>另一个避免转储/恢复的做法是在 <code class="command">psql</code> 
+中使用下面的 SQL 命令来升级现有的系统表：
+</p><pre class="programlisting">update pg_aggregate set aggfinalfn = 'cash_div_flt8'
+ where aggname = 'avg' and aggbasetype = 790;</pre><p>我们需要对包括 template1 在内的所有现有数据库进行上面操作。</p></div><div class="sect2" id="idp84599808"><div class="titlepage"><div><div><h3 class="title">E.334.2. 修改列表</h3></div></div></div><pre class="programlisting">允许 TIME 和 TYPE 字段名 (Thomas)
+允许 true/false 的更大范围作为布尔值 (Thomas)
+支持 "now" 和 "current" 的输出 (Thomas)
+适当的处理带有 NULL 的 INSERT 的 DEFAULT (Vadim)
+修复缓冲区管理中的关系参考计数的问题 (Vadim)
+允许字符串跨行，如 ANSI (Thomas)
+修复带有 ORDER BY 的向后的游标 (Vadim)
+修复 avg(cash) 计算 (Thomas)
+修复在 ORDER/GROUP BY 中指定一个字段两次 (Vadim)
+记录新的 libpq 函数返回受影响的行，PQcmdTuples (Bruce)
+INSERT/UPDATE 插入用户名的触发器函数 (Brook Milligan)</pre></div></div><div class="navfooter"><hr /><table width="100%" summary="Navigation footer"><tr><td width="40%" align="left"><a accesskey="p" href="release-6-3.html">上一页</a> </td><td width="20%" align="center"><a accesskey="u" href="release.html">上一级</a></td><td width="40%" align="right"> <a accesskey="n" href="release-6-2.html">下一页</a></td></tr><tr><td width="40%" align="left" valign="top">E.333. 版本 6.3 </td><td width="20%" align="center"><a accesskey="h" href="index.html">起始页</a></td><td width="40%" align="right" valign="top"> E.335. 版本 6.2</td></tr></table></div></body></html>

@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><title>第 61 章 通用WAL 记录</title><link rel="stylesheet" type="text/css" href="stylesheet.css" /><link rev="made" href="pgsql-docs@postgresql.org" /><meta name="generator" content="DocBook XSL Stylesheets V1.79.1" /><link rel="prev" href="index-cost-estimation.html" title="60.6. 索引开销估计函数" /><link rel="next" href="gist.html" title="第 62 章 GiST 索引" /></head><body><div xmlns="http://www.w3.org/TR/xhtml1/transitional" class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="5" align="center">第 61 章 通用WAL 记录</th></tr><tr><td width="10%" align="left"><a accesskey="p" href="index-cost-estimation.html" title="60.6. 索引开销估计函数">上一页</a> </td><td width="10%" align="left"><a accesskey="u" href="internals.html" title="部分 VII. 内部">上一级</a></td><th width="60%" align="center">部分 VII. 内部</th><td width="10%" align="right"><a accesskey="h" href="index.html" title="PostgreSQL 10.1 手册">起始页</a></td><td width="10%" align="right"> <a accesskey="n" href="gist.html" title="第 62 章 GiST 索引">下一页</a></td></tr></table><hr></hr></div><div class="chapter" id="GENERIC-WAL"><div class="titlepage"><div><div><h2 class="title">第 61 章 通用WAL 记录</h2></div></div></div><p>   虽然所有内建的被 WAL 记录的模块都有它们自己的 WAL 记录类型，系统中也还是有一种通用 WAL 记录类型，它以一种通用的方式描述了对页面的改变。这对于提供自定义访问方法的扩展有用，因为这类扩展无法注册自己的 WAL 重做例程。
+  </p><p>   构建通用 WAL 记录的 API 定义在<code class="filename">access/generic_xlog.h</code>中，实现在<code class="filename">access/transam/generic_xlog.c</code>中。
+  </p><p>   要使用通用 WAL 记录工具执行一次被 WAL 记录的数据更新，要遵循这些步骤：
+
+   </p><div class="orderedlist"><ol class="orderedlist" type="1"><li class="listitem"><p>      <code class="function">state = GenericXLogStart(relation)</code> — 为给定的关系构建一个通用 WAL 记录。
+     </p></li><li class="listitem"><p>      <code class="function">page = GenericXLogRegisterBuffer(state, buffer, flags)</code>
+      — 注册一个要在当前的通用 WAL 记录中修改的缓冲区。这个函数会返回一个指针指向该缓冲区页面的一份临时拷贝，修改将会在该拷贝上进行（不要直接修改该缓冲区的内容）。第三个参数是适用于该操作的标志的位掩码。当前这类标志只有<code class="literal">GENERIC_XLOG_FULL_IMAGE</code>，它表示在 WAL 记录中应该包括一个完整页面镜像而不是增量更新。如果是新页面或者页面已经被完全重写，通常会设置这个标志。如果被 WAL 记录的动作需要修改多个页面，可以反复调用<code class="function">GenericXLogRegisterBuffer</code>。
+     </p></li><li class="listitem"><p>      对包含在上一步中的页面镜像应用修改。
+     </p></li><li class="listitem"><p>      <code class="function">GenericXLogFinish(state)</code> — 将更改应用到缓冲区并且发出通用 WAL 记录。
+     </p></li></ol></div><p>
+  </p><p>   在上述步骤之间都可以调用<code class="function">GenericXLogAbort(state)</code>取消 WAL 记录构造。这会丢弃所有对于页面镜像拷贝的更改。
+  </p><p>   在使用通用 WAL 记录功能时请注意以下几点：
+
+   </p><div class="itemizedlist"><ul class="itemizedlist" style="list-style-type: disc; "><li class="listitem"><p>      不允许直接修改缓冲区！所有的修改必须在<code class="function">GenericXLogRegisterBuffer()</code>取得的拷贝上完成。换句话说，制造通用 WAL 记录的代码不能为自己调用<code class="function">BufferGetPage()</code>。不过，在合适的时间对缓冲区进行 pin/unpin 以及加锁/解锁仍然是调用者的责任。从<code class="function">GenericXLogRegisterBuffer()</code>之前直到<code class="function">GenericXLogFinish()</code>之后，每个目标上必须保持排他锁。
+     </p></li><li class="listitem"><p>      可以自由地混合注册缓冲区（步骤 2）和页面镜像修改（步骤 3），即两个步骤可以以任何顺序重复。记住注册缓冲区的顺序应该和重放时对它们加锁的顺序相同。
+     </p></li><li class="listitem"><p>      一个通用 WAL 记录能注册的缓冲区最大数量是<code class="literal">MAX_GENERIC_XLOG_PAGES</code>。如果超出这个限制将会抛出一个错误。
+     </p></li><li class="listitem"><p>      通用 WAL 假定要被修改的页面具有标准布局，特别是在<code class="structfield">pd_lower</code>和<code class="structfield">pd_upper</code>之间没有有用的数据。
+     </p></li><li class="listitem"><p>      由于正在修改缓冲区页面的拷贝，<code class="function">GenericXLogStart()</code>不会开始临界区。因此可以在<code class="function">GenericXLogStart()</code>之间<code class="function">GenericXLogFinish()</code>安全地进行内存分配、抛出错误等。唯一真正的临界区存在于<code class="function">GenericXLogFinish()</code>内。还有，不需要担心在错误退出期间对<code class="function">GenericXLogAbort()</code>的调用。
+     </p></li><li class="listitem"><p>      <code class="function">GenericXLogFinish()</code>会负责标记缓冲区为脏并且设置它们的 LSN。你不需要显式地做这些工作。
+     </p></li><li class="listitem"><p>      对于不做日志的关系，所有的事情都一样，不过不会发出实际的 WAL 记录。因此，对于不做日志的关系你通常不需要做任何显式的检查。
+     </p></li><li class="listitem"><p>      通用 WAL 重做函数将按照注册缓冲区的顺序对它们获得排他锁。在重做所有更改后，这些锁将按照同样的顺序被释放。
+     </p></li><li class="listitem"><p>      如果对一个已注册的缓冲区没有指定<code class="literal">GENERIC_XLOG_FULL_IMAGE</code>，通用 WAL 记录包含了新旧页面镜像之间的不同。这个不同是以逐字节比较的方式形成的。对于在页面内移动数据的情况来说这种方式不是很紧凑，未来可能会有改进。
+     </p></li></ul></div><p>
+  </p></div><div class="navfooter"><hr /><table width="100%" summary="Navigation footer"><tr><td width="40%" align="left"><a accesskey="p" href="index-cost-estimation.html">上一页</a> </td><td width="20%" align="center"><a accesskey="u" href="internals.html">上一级</a></td><td width="40%" align="right"> <a accesskey="n" href="gist.html">下一页</a></td></tr><tr><td width="40%" align="left" valign="top">60.6. 索引开销估计函数 </td><td width="20%" align="center"><a accesskey="h" href="index.html">起始页</a></td><td width="40%" align="right" valign="top"> 第 62 章 GiST 索引</td></tr></table></div></body></html>

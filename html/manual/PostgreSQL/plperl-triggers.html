@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><title>44.6. PL/Perl 触发器</title><link rel="stylesheet" type="text/css" href="stylesheet.css" /><link rev="made" href="pgsql-docs@postgresql.org" /><meta name="generator" content="DocBook XSL Stylesheets V1.79.1" /><link rel="prev" href="plperl-trusted.html" title="44.5. 可信的和不可信的 PL/Perl" /><link rel="next" href="plperl-event-triggers.html" title="44.7. PL/Perl 事件触发器" /></head><body><div xmlns="http://www.w3.org/TR/xhtml1/transitional" class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="5" align="center">44.6. PL/Perl 触发器</th></tr><tr><td width="10%" align="left"><a accesskey="p" href="plperl-trusted.html" title="44.5. 可信的和不可信的 PL/Perl">上一页</a> </td><td width="10%" align="left"><a accesskey="u" href="plperl.html" title="第 44 章 PL/Perl - Perl 过程语言">上一级</a></td><th width="60%" align="center">第 44 章 PL/Perl - Perl 过程语言</th><td width="10%" align="right"><a accesskey="h" href="index.html" title="PostgreSQL 10.1 手册">起始页</a></td><td width="10%" align="right"> <a accesskey="n" href="plperl-event-triggers.html" title="44.7. PL/Perl 事件触发器">下一页</a></td></tr></table><hr></hr></div><div class="sect1" id="PLPERL-TRIGGERS"><div class="titlepage"><div><div><h2 class="title" style="clear: both">44.6. PL/Perl 触发器</h2></div></div></div><p>   PL/Perl 可以被用来编写触发器函数。在触发器函数中，哈希引用
+   <code class="varname">$_TD</code>包含有关当前触发器事件的信息。
+   <code class="varname">$_TD</code>是一个全局变量，对触发器的每一次调用它都会
+   得到一个独立的本地值。<code class="varname">$_TD</code>哈希引用的域有：
+
+   </p><div class="variablelist"><dl class="variablelist"><dt><span class="term"><code class="literal">$_TD-&gt;{new}{foo}</code></span></dt><dd><p>       列<code class="literal">foo</code>的<code class="literal">NEW</code>值
+      </p></dd><dt><span class="term"><code class="literal">$_TD-&gt;{old}{foo}</code></span></dt><dd><p>       列<code class="literal">foo</code>的<code class="literal">OLD</code>值
+      </p></dd><dt><span class="term"><code class="literal">$_TD-&gt;{name}</code></span></dt><dd><p>       要被调用的触发器的名称
+      </p></dd><dt><span class="term"><code class="literal">$_TD-&gt;{event}</code></span></dt><dd><p>       触发器事件：<code class="literal">INSERT</code>、<code class="literal">UPDATE</code>、
+       <code class="literal">DELETE</code>、<code class="literal">TRUNCATE</code>或者<code class="literal">UNKNOWN</code>
+      </p></dd><dt><span class="term"><code class="literal">$_TD-&gt;{when}</code></span></dt><dd><p>       什么时候调用触发器：<code class="literal">BEFORE</code>、
+       <code class="literal">AFTER</code>、<code class="literal">INSTEAD OF</code>或者
+       <code class="literal">UNKNOWN</code>
+      </p></dd><dt><span class="term"><code class="literal">$_TD-&gt;{level}</code></span></dt><dd><p>       触发器级别：<code class="literal">ROW</code>、<code class="literal">STATEMENT</code>或者<code class="literal">UNKNOWN</code>
+      </p></dd><dt><span class="term"><code class="literal">$_TD-&gt;{relid}</code></span></dt><dd><p>       触发器定义在其上的表的 OID
+      </p></dd><dt><span class="term"><code class="literal">$_TD-&gt;{table_name}</code></span></dt><dd><p>       触发器定义在其上的表的名称
+      </p></dd><dt><span class="term"><code class="literal">$_TD-&gt;{relname}</code></span></dt><dd><p>       触发器定义在其上的表的名称。这已经被废弃，并且可能会在
+       未来的发布中被移除。请使用
+       $_TD-&gt;{table_name}。
+      </p></dd><dt><span class="term"><code class="literal">$_TD-&gt;{table_schema}</code></span></dt><dd><p>       触发器定义在其上的表所在的模式的名称
+      </p></dd><dt><span class="term"><code class="literal">$_TD-&gt;{argc}</code></span></dt><dd><p>       触发器函数的参数数目
+      </p></dd><dt><span class="term"><code class="literal">@{$_TD-&gt;{args}}</code></span></dt><dd><p>       触发器函数的参数。如果<code class="literal">$_TD-&gt;{argc}</code>为 0 则不存在
+      </p></dd></dl></div><p>
+  </p><p>   行级触发器可以返回下列之一：
+
+   </p><div class="variablelist"><dl class="variablelist"><dt><span class="term"><code class="literal">return;</code></span></dt><dd><p>       执行操作
+      </p></dd><dt><span class="term"><code class="literal">"SKIP"</code></span></dt><dd><p>       不执行操作
+      </p></dd><dt><span class="term"><code class="literal">"MODIFY"</code></span></dt><dd><p>       指示触发器函数修改了<code class="literal">NEW</code>行
+      </p></dd></dl></div><p>
+  </p><p>   这里是一个触发器函数的例子，展示上文所说的一些东西：
+</p><pre class="programlisting">CREATE TABLE test (
+    i int,
+    v varchar
+);
+
+CREATE OR REPLACE FUNCTION valid_id() RETURNS trigger AS $$
+    if (($_TD-&gt;{new}{i} &gt;= 100) || ($_TD-&gt;{new}{i} &lt;= 0)) {
+        return "SKIP";    # skip INSERT/UPDATE command
+    } elsif ($_TD-&gt;{new}{v} ne "immortal") {
+        $_TD-&gt;{new}{v} .= "(modified by trigger)";
+        return "MODIFY";  # 修改行并且执行 INSERT/UPDATE 命令
+    } else {
+        return;           # 执行 INSERT/UPDATE 命令
+    }
+$$ LANGUAGE plperl;
+
+CREATE TRIGGER test_valid_id_trig
+    BEFORE INSERT OR UPDATE ON test
+    FOR EACH ROW EXECUTE PROCEDURE valid_id();</pre><p>
+  </p></div><div class="navfooter"><hr /><table width="100%" summary="Navigation footer"><tr><td width="40%" align="left"><a accesskey="p" href="plperl-trusted.html">上一页</a> </td><td width="20%" align="center"><a accesskey="u" href="plperl.html">上一级</a></td><td width="40%" align="right"> <a accesskey="n" href="plperl-event-triggers.html">下一页</a></td></tr><tr><td width="40%" align="left" valign="top">44.5. 可信的和不可信的 PL/Perl </td><td width="20%" align="center"><a accesskey="h" href="index.html">起始页</a></td><td width="40%" align="right" valign="top"> 44.7. PL/Perl 事件触发器</td></tr></table></div></body></html>

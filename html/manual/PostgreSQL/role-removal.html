@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><title>21.4. 删除角色</title><link rel="stylesheet" type="text/css" href="stylesheet.css" /><link rev="made" href="pgsql-docs@postgresql.org" /><meta name="generator" content="DocBook XSL Stylesheets V1.79.1" /><link rel="prev" href="role-membership.html" title="21.3. 角色成员关系" /><link rel="next" href="default-roles.html" title="21.5. 默认角色" /></head><body><div xmlns="http://www.w3.org/TR/xhtml1/transitional" class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="5" align="center">21.4. 删除角色</th></tr><tr><td width="10%" align="left"><a accesskey="p" href="role-membership.html" title="21.3. 角色成员关系">上一页</a> </td><td width="10%" align="left"><a accesskey="u" href="user-manag.html" title="第 21 章 数据库角色">上一级</a></td><th width="60%" align="center">第 21 章 数据库角色</th><td width="10%" align="right"><a accesskey="h" href="index.html" title="PostgreSQL 10.1 手册">起始页</a></td><td width="10%" align="right"> <a accesskey="n" href="default-roles.html" title="21.5. 默认角色">下一页</a></td></tr></table><hr></hr></div><div class="sect1" id="ROLE-REMOVAL"><div class="titlepage"><div><div><h2 class="title" style="clear: both">21.4. 删除角色</h2></div></div></div><p>   由于角色可以拥有数据库对象并且能持有访问其他对象的特权，删除一个角色
+   常常并非一次<a class="xref" href="sql-droprole.html" title="DROP ROLE"><span class="refentrytitle">DROP ROLE</span></a>就能解决。任何被该用户所拥有
+   的对象必须首先被删除或者转移给其他拥有者，并且任何已被授予给该角色的
+   权限必须被收回。
+  </p><p>   对象的拥有关系可以使用<code class="command">ALTER</code>命令一次转移出去，例如：
+</p><pre class="programlisting">ALTER TABLE bobs_table OWNER TO alice;</pre><p>
+   此外，<a class="xref" href="sql-reassign-owned.html" title="REASSIGN OWNED"><span class="refentrytitle">REASSIGN OWNED</span></a>命令可以被用来把要被删除的
+   角色所拥有的所有对象的拥有关系转移给另一个角色。由于
+   <code class="command">REASSIGN OWNED</code>不能访问其他数据库中的对象，有必要
+   在每一个包含该角色所拥有对象的数据库中运行该命令（注意第一个这样的
+   <code class="command">REASSIGN OWNED</code>将更改任何在数据库间共享的该角色拥
+   有的对象的拥有关系，即数据库或者表空间）。
+  </p><p>   一旦任何有价值的对象已经被转移给新的拥有者，任何由被删除角色拥有的剩余对象
+   就可以用<a class="xref" href="sql-drop-owned.html" title="DROP OWNED"><span class="refentrytitle">DROP OWNED</span></a>命令删除。再次，由于这个命令不能
+   访问其他数据库中的对象， 有必要在每一个包含该角色所拥有对象的数据库中运行
+   该命令。还有，<code class="command">DROP OWNED</code>将不会删除整个数据库或者表空间，
+   因此如果该角色拥有任何还没有被转移给新拥有者的数据库或者表空间，有必要手工
+   删除它们。
+  </p><p>   <code class="command">DROP OWNED</code>也会注意移除为不属于目标角色的对象授予给目标
+   角色的任何特权。因为<code class="command">REASSIGN OWNED</code>不会触碰这类对象，通
+   常有必要运行<code class="command">REASSIGN OWNED</code>和
+   <code class="command">DROP OWNED</code>（按照这个顺序！）以完全地移除要被删除对象的
+   从属物。
+  </p><p>   总之，移除曾经拥有过对象的角色的方法是：
+  </p><pre class="programlisting">REASSIGN OWNED BY doomed_role TO successor_role;
+DROP OWNED BY doomed_role;
+-- 在集簇中的每一个数据库中重复上述命令
+DROP ROLE doomed_role;</pre><p>   如果不是所有的拥有对象都被转移给了同一个后继拥有者，最好手工处理异常
+   然后执行上述步骤直到结束。
+  </p><p>   如果在依赖对象还存在时尝试了<code class="command">DROP ROLE</code>，它将发出
+   消息标识哪些对象需要被重新授予或者删除。
+  </p></div><div class="navfooter"><hr /><table width="100%" summary="Navigation footer"><tr><td width="40%" align="left"><a accesskey="p" href="role-membership.html">上一页</a> </td><td width="20%" align="center"><a accesskey="u" href="user-manag.html">上一级</a></td><td width="40%" align="right"> <a accesskey="n" href="default-roles.html">下一页</a></td></tr><tr><td width="40%" align="left" valign="top">21.3. 角色成员关系 </td><td width="20%" align="center"><a accesskey="h" href="index.html">起始页</a></td><td width="40%" align="right" valign="top"> 21.5. 默认角色</td></tr></table></div></body></html>

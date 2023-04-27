@@ -1,0 +1,376 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><title>33.3. 命令执行函数</title><link rel="stylesheet" type="text/css" href="stylesheet.css" /><link rev="made" href="pgsql-docs@postgresql.org" /><meta name="generator" content="DocBook XSL Stylesheets V1.79.1" /><link rel="prev" href="libpq-status.html" title="33.2. 连接状态函数" /><link rel="next" href="libpq-async.html" title="33.4. 异步命令处理" /></head><body><div xmlns="http://www.w3.org/TR/xhtml1/transitional" class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="5" align="center">33.3. 命令执行函数</th></tr><tr><td width="10%" align="left"><a accesskey="p" href="libpq-status.html" title="33.2. 连接状态函数">上一页</a> </td><td width="10%" align="left"><a accesskey="u" href="libpq.html" title="第 33 章 libpq - C 库">上一级</a></td><th width="60%" align="center">第 33 章 <span xmlns="http://www.w3.org/1999/xhtml" class="application">libpq</span> - C 库</th><td width="10%" align="right"><a accesskey="h" href="index.html" title="PostgreSQL 10.1 手册">起始页</a></td><td width="10%" align="right"> <a accesskey="n" href="libpq-async.html" title="33.4. 异步命令处理">下一页</a></td></tr></table><hr></hr></div><div class="sect1" id="LIBPQ-EXEC"><div class="titlepage"><div><div><h2 class="title" style="clear: both">33.3. 命令执行函数</h2></div></div></div><div class="toc"><dl class="toc"><dt><span class="sect2"><a href="libpq-exec.html#LIBPQ-EXEC-MAIN">33.3.1. 主要函数</a></span></dt><dt><span class="sect2"><a href="libpq-exec.html#LIBPQ-EXEC-SELECT-INFO">33.3.2. 检索查询结果信息</a></span></dt><dt><span class="sect2"><a href="libpq-exec.html#LIBPQ-EXEC-NONSELECT">33.3.3. 检索其他结果信息</a></span></dt><dt><span class="sect2"><a href="libpq-exec.html#LIBPQ-EXEC-ESCAPE-STRING">33.3.4. 用于包含在 SQL 命令中的转移字符串</a></span></dt></dl></div><p>   一旦到一个数据库服务器的连接被成功建立，这里描述的函数可以被用来执行 SQL 查询和命令。
+  </p><div class="sect2" id="LIBPQ-EXEC-MAIN"><div class="titlepage"><div><div><h3 class="title">33.3.1. 主要函数</h3></div></div></div><p>    </p><div class="variablelist"><dl class="variablelist"><dt id="LIBPQ-PQEXEC"><span class="term">       <code class="function">PQexec</code>
+       <a id="idp27398608" class="indexterm"></a>
+      </span></dt><dd><p>        提交一个命令给服务器并且等待结果。
+
+</p><pre class="synopsis">PGresult *PQexec(PGconn *conn, const char *command);</pre><p>
+       </p><p>        返回一个<code class="structname">PGresult</code>指针或者可能是一个空指针。除了内存不足的情况或者由于严重错误无法将命令发送给服务器之外，一般都会返回一个非空指针。<code class="function">PQresultStatus</code>函数应当被调用来检查返回值是否代表错误（包括空指针的值，它会返回<code class="symbol">PGRES_FATAL_ERROR</code>）。用<code class="function">PQerrorMessage</code>可得到关于那些错误的详细信息。
+       </p></dd></dl></div><p>
+
+    命令字符串可以包括多个 SQL 命令（用分号分隔）。在一次<code class="function">PQexec</code>调用中被发送的多个查询会在一个事务中处理，除非其中有显式的<code class="command">BEGIN</code>/<code class="command">COMMIT</code>命令将该查询字符串划分成多个事务。但是注意，返回的<code class="structname">PGresult</code>结构只描述该字符串中被执行的最后一个命令的结果。如果一个命令失败，该字符串的处理会在它那里停止并且返回的<code class="structname">PGresult</code>会描述错误情况。
+   </p><p>    </p><div class="variablelist"><dl class="variablelist"><dt id="LIBPQ-PQEXECPARAMS"><span class="term">       <code class="function">PQexecParams</code>
+       <a id="idp27409088" class="indexterm"></a>
+      </span></dt><dd><p>        提交一个命令给服务器并且等待结果，它可以在 SQL 命令文本之外独立地传递参数。
+
+</p><pre class="synopsis">PGresult *PQexecParams(PGconn *conn,
+                       const char *command,
+                       int nParams,
+                       const Oid *paramTypes,
+                       const char * const *paramValues,
+                       const int *paramLengths,
+                       const int *paramFormats,
+                       int resultFormat);</pre><p>
+       </p><p>        <code class="function">PQexecParams</code>与<code class="function">PQexec</code>相似，但是提供了额外的功能：参数值可以与命令字符串分开指定，并且可以以文本或二进制格式请求查询结果。<code class="function">PQexecParams</code>只在 3.0 协议及其后的连接中被支持，当使用 2.0 协议时它会失败。
+       </p><p>        该函数的参数是：
+
+        </p><div class="variablelist"><dl class="variablelist"><dt><span class="term"><em class="parameter"><code>conn</code></em></span></dt><dd><p>            要在其中发送命令的连接对象。
+           </p></dd><dt><span class="term"><em class="parameter"><code>command</code></em></span></dt><dd><p>            要执行的 SQL 命令字符串。如果使用了参数，它们在该命令字符串中被引用为<code class="literal">$1</code>、<code class="literal">$2</code>等。
+           </p></dd><dt><span class="term"><em class="parameter"><code>nParams</code></em></span></dt><dd><p>            提供的参数数量。它是数组<em class="parameter"><code>paramTypes[]</code></em>、<em class="parameter"><code>paramValues[]</code></em>、<em class="parameter"><code>paramLengths[]</code></em>和<em class="parameter"><code>paramFormats[]</code></em>的长度（当<em class="parameter"><code>nParams</code></em>为零时，数组指针可以是<code class="symbol">NULL</code>）。
+           </p></dd><dt><span class="term"><em class="parameter"><code>paramTypes[]</code></em></span></dt><dd><p>            通过 OID 指定要赋予给参数符号的数据类型。如果<em class="parameter"><code>paramTypes</code></em>为<code class="symbol">NULL</code>或者该数组中任何特定元素为零，服务器会用对待未知类型文字串的方式为参数符号推测一种数据类型。
+           </p></dd><dt><span class="term"><em class="parameter"><code>paramValues[]</code></em></span></dt><dd><p>            指定参数的实际值。这个数组中的一个空指针表示对应的参数为空，否则该指针指向一个以零终止的文本字符串（用于文本格式）或者以服务器所期待格式的二进制数据（用于二进制格式）。
+           </p></dd><dt><span class="term"><em class="parameter"><code>paramLengths[]</code></em></span></dt><dd><p>            指定二进制格式参数的实际数据长度。它对空参数和文本格式参数被忽略。当没有二进制参数时，该数组指针可以为空。
+           </p></dd><dt><span class="term"><em class="parameter"><code>paramFormats[]</code></em></span></dt><dd><p>            指定参数是否为文本（在参数相应的数组项中放一个零）或二进制（在参数相应的数组项中放一个一）。如果该数组指针为空，那么所有参数都会被假定为文本串。
+           </p><p>            以二进制格式传递的值要求后端所期待的内部表示形式的知识。例如，整数必须以网络字节序被传递。传递<code class="type">numeric</code>值要求关于服务器存储格式的知识，正如<code class="filename">src/backend/utils/adt/numeric.c::numeric_send()</code>以及<code class="filename">src/backend/utils/adt/numeric.c::numeric_recv()</code>中所实现的。
+           </p></dd><dt><span class="term"><em class="parameter"><code>resultFormat</code></em></span></dt><dd><p>            指定零来得到文本格式的结果，或者指定一来得到二进制格式的结果（目前没有规定要求以不同格式得到不同的结果列，尽管在底层协议中这是可以实现的）。
+           </p></dd></dl></div><p>
+       </p></dd></dl></div><p>
+   </p><p>    <code class="function">PQexecParams</code>相对于<code class="function">PQexec</code>的主要优点是参数值可以从命令串中分离，因此避免了冗长的书写、容易发生错误的引用以及转义。
+   </p><p>    和<code class="function">PQexec</code>不同，<code class="function">PQexecParams</code>至多允许在给定串中出现一个 SQL 命令（其中可以有分号，但是不能有超过一个非空命令）。这是底层协议的一个限制，但是有助于抵抗 SQL 注入攻击。
+   </p><div class="tip"><h3 class="title">提示</h3><p>     通过 OID 指定参数类型很罗嗦，特别是如果你不愿意将特定的 OID 值硬编码到你的程序中时。不过，即使服务器本身也无法确定参数的类型，你可以避免这样做，或者选择一种与你想要的不同的类型。在 SQL 命令文本中，附加一个显式造型给参数符号来表示你将发送什么样的数据类型。例如：
+</p><pre class="programlisting">SELECT * FROM mytable WHERE x = $1::bigint;</pre><p>
+     这强制参数<code class="literal">$1</code>被当作<code class="type">bigint</code>，而默认情况下它将被赋予与<code class="literal">x</code>相同的类型。当以二进制格式发送参数值时，我们强烈推荐以这种方式或通过指定一个数字类型的 OID 来强制参数类型决定。因为二进制格式比文本格式具有更少的冗余，并且因此服务器将不会有更多机会为你检测一个类型匹配错误。
+    </p></div><p>    </p><div class="variablelist"><dl class="variablelist"><dt id="LIBPQ-PQPREPARE"><span class="term"><code class="function">PQprepare</code>
+       <a id="idp27446240" class="indexterm"></a>
+      </span></dt><dd><p>        提交一个请求用给定参数创建一个预备语句并且等待完成。
+</p><pre class="synopsis">PGresult *PQprepare(PGconn *conn,
+                    const char *stmtName,
+                    const char *query,
+                    int nParams,
+                    const Oid *paramTypes);</pre><p>
+       </p><p>        <code class="function">PQprepare</code>创建一个后面会由<code class="function">PQexecPrepared</code>执行的预备语句。这种特性允许将被反复执行的命令只被解析和规划一次，而不是在每次被执行时都解析和规划。<code class="function">PQprepare</code>只在协议 3.0 及之后的连接中被支持，当使用协议 2.0 时它将失败。
+       </p><p>        该函数从<em class="parameter"><code>query</code></em>串创建一个名为<em class="parameter"><code>stmtName</code></em>的预备语句，该串必须包含一个单一 SQL 命令。<em class="parameter"><code>stmtName</code></em>可以是<code class="literal">""</code>来创建一个未命名语句，在这种情况下任何已存在未命名语句将被自动替换。如果语句名称已经在当前会话中被定义，则是一种错误。如果使用了任何参数，它们在查询中以<code class="literal">$1</code>、<code class="literal">$2</code>等引用。<em class="parameter"><code>nParams</code></em>是参数的个数，其类型在数组<em class="parameter"><code>paramTypes[]</code></em>中被预先指定（当<em class="parameter"><code>nParams</code></em>为零时，该数组指针可以是<code class="symbol">NULL</code>）。<em class="parameter"><code>paramTypes[]</code></em>通过 OID 指定要赋予给参数符号的数据类型。如果<em class="parameter"><code>paramTypes</code></em>是<code class="symbol">NULL</code>或者该数组中任何特定元素为零，服务器会用对待未知类型文字串的方式为参数符号推测一种数据类型。还有，查询能够使用编号高于<em class="parameter"><code>nParams</code></em>的参数符号，它们的数据类型也会被自动推测（找出推测出的数据类型的方法见<code class="function">PQdescribePrepared</code>）。
+       </p><p>        正如<code class="function">PQexec</code>一样，结果通常是一个<code class="structname">PGresult</code>对象，其内容代表服务器端成功或失败。一个空结果表示内存不足或者根本无法发送命令。关于错误的更多信息请见<code class="function">PQerrorMessage</code>。
+       </p></dd></dl></div><p>
+
+    用于<code class="function">PQexecPrepared</code>的预备语句也能通过执行 SQL <a class="xref" href="sql-prepare.html" title="PREPARE"><span class="refentrytitle">PREPARE</span></a>语句来创建。还有，尽管没有<span class="application">libpq</span>函数来删除一个预备语句，SQL <a class="xref" href="sql-deallocate.html" title="DEALLOCATE"><span class="refentrytitle">DEALLOCATE</span></a>语句可被用于此目的。
+   </p><p>    </p><div class="variablelist"><dl class="variablelist"><dt id="LIBPQ-PQEXECPREPARED"><span class="term">       <code class="function">PQexecPrepared</code>
+       <a id="idp27469664" class="indexterm"></a>
+      </span></dt><dd><p>        发送一个请求来用给定参数执行一个预备语句，并且等待结果。
+</p><pre class="synopsis">PGresult *PQexecPrepared(PGconn *conn,
+                         const char *stmtName,
+                         int nParams,
+                         const char * const *paramValues,
+                         const int *paramLengths,
+                         const int *paramFormats,
+                         int resultFormat);</pre><p>
+       </p><p>        <code class="function">PQexecPrepared</code>像<code class="function">PQexecParams</code>，但是要被执行的命令是用之前准备的语句的名字指定，而不是指定一个查询串。这个特性允许将被重复使用的命令只被解析和规划一次，而不是在每次被执行时都被解析和规划。这个语句必须之前在当前会话中已经被准备好。<code class="function">PQexecPrepared</code>仅被协议 3.0 及之后的连接支持，当使用协议 2.0 时它会失败。
+       </p><p>        参数和<code class="function">PQexecParams</code>相同，除了给定的是一个预备语句的名称而不是一个查询语句，以及不存在<em class="parameter"><code>paramTypes[]</code></em>参数（因为预备语句的参数类型已经在它被创建时决定好了）。
+       </p></dd><dt id="LIBPQ-PQDESCRIBEPREPARED"><span class="term">       <code class="function">PQdescribePrepared</code>
+       <a id="idp27478272" class="indexterm"></a>
+      </span></dt><dd><p>        提交一个请求来获得有关指定预备语句的信息，并且等待完成。
+</p><pre class="synopsis">PGresult *PQdescribePrepared(PGconn *conn, const char *stmtName);</pre><p>
+       </p><p>        <code class="function">PQdescribePrepared</code>允许一个应用获得有关一个之前预备好的语句的信息。<code class="function">PQdescribePrepared</code>仅被协议 3.0 及之后的连接支持，当使用协议 2.0 时它会失败。
+       </p><p>        <em class="parameter"><code>stmtName</code></em>可以用<code class="literal">""</code>或者<code class="symbol">NULL</code>来引用未命名语句，否则它必须是一个现有预备语句的名字。如果成功，一个<code class="structname">PGresult</code>以及状态<code class="literal">PGRES_COMMAND_OK</code>会被返回。函数<code class="function">PQnparams</code>和<code class="function">PQparamtype</code>可以被应用到这个<code class="structname">PGresult</code>来得到关于该预备语句参数的额外信息，而函数<code class="function">PQnfields</code>、<code class="function">PQfname</code>、<code class="function">PQftype</code>等提供该语句结果列（如果有）的信息。
+       </p></dd><dt id="LIBPQ-PQDESCRIBEPORTAL"><span class="term">       <code class="function">PQdescribePortal</code>
+       <a id="idp27491168" class="indexterm"></a>
+      </span></dt><dd><p>        提交一个请求来得到有关指定入口的信息，并且等待完成。
+</p><pre class="synopsis">PGresult *PQdescribePortal(PGconn *conn, const char *portalName);</pre><p>
+       </p><p>        <code class="function">PQdescribePortal</code>允许一个应用获得有关一个之前被创建的入口的信息（<span class="application">libpq</span>不提供对入口任何直接的访问，但是你可以使用这个函数来观察一个通过<code class="command">DECLARE CURSOR</code> SQL 命令创建的游标的属性）。<code class="function">PQdescribePortal</code>仅被协议 3.0 及之后的连接支持，当使用协议 2.0 时它会失败。
+       </p><p>        <em class="parameter"><code>portalName</code></em>可以用<code class="literal">""</code>或者<code class="symbol">NULL</code>来引用未命名入口，否则它必须是一个现有入口的名字。如果成功，一个<code class="structname">PGresult</code>和状态<code class="literal">PGRES_COMMAND_OK</code>会被返回。函数<code class="function">PQnfields</code>、<code class="function">PQfname</code>、<code class="function">PQftype</code>等可以被应用到<code class="structname">PGresult</code>来获得有关该入口结果列（如果有）的信息。
+       </p></dd></dl></div><p>
+   </p><p>    <code class="structname">PGresult</code><a id="idp27503408" class="indexterm"></a>结构封装了由服务器返回的结果。<span class="application">libpq</span>应用程序员应该小心地维护<code class="structname">PGresult</code>的抽象。使用下面的存储器函数来得到<code class="structname">PGresult</code>的内容。避免直接引用<code class="structname">PGresult</code>结构的域，因为它们可能在未来更改。
+
+    </p><div class="variablelist"><dl class="variablelist"><dt id="LIBPQ-PQRESULTSTATUS"><span class="term">       <code class="function">PQresultStatus</code>
+       <a id="idp27508080" class="indexterm"></a>
+      </span></dt><dd><p>        返回该命令的结果状态。
+</p><pre class="synopsis">ExecStatusType PQresultStatus(const PGresult *res);</pre><p>
+       </p><p>        <code class="function">PQresultStatus</code>能返回下列值之一：
+
+        </p><div class="variablelist"><dl class="variablelist"><dt id="LIBPQ-PGRES-EMPTY-QUERY"><span class="term"><code class="literal">PGRES_EMPTY_QUERY</code></span></dt><dd><p>            发送给服务器的字符串为空。
+           </p></dd><dt id="LIBPQ-PGRES-COMMAND-OK"><span class="term"><code class="literal">PGRES_COMMAND_OK</code></span></dt><dd><p>            一个不返回数据的命令成功完成。
+           </p></dd><dt id="LIBPQ-PGRES-TUPLES-OK"><span class="term"><code class="literal">PGRES_TUPLES_OK</code></span></dt><dd><p>            一个返回数据的命令（例如<code class="command">SELECT</code>或者<code class="command">SHOW</code>）成功完成。
+           </p></dd><dt id="LIBPQ-PGRES-COPY-OUT"><span class="term"><code class="literal">PGRES_COPY_OUT</code></span></dt><dd><p>            从服务器复制出数据的传输开始。
+           </p></dd><dt id="LIBPQ-PGRES-COPY-IN"><span class="term"><code class="literal">PGRES_COPY_IN</code></span></dt><dd><p>            复制数据到服务器的传输开始。
+           </p></dd><dt id="LIBPQ-PGRES-BAD-RESPONSE"><span class="term"><code class="literal">PGRES_BAD_RESPONSE</code></span></dt><dd><p>            无法理解服务器的响应。
+           </p></dd><dt id="LIBPQ-PGRES-NONFATAL-ERROR"><span class="term"><code class="literal">PGRES_NONFATAL_ERROR</code></span></dt><dd><p>            发生了一次非致命错误（一个提示或警告）。
+           </p></dd><dt id="LIBPQ-PGRES-FATAL-ERROR"><span class="term"><code class="literal">PGRES_FATAL_ERROR</code></span></dt><dd><p>            发生了一次致命错误。
+           </p></dd><dt id="LIBPQ-PGRES-COPY-BOTH"><span class="term"><code class="literal">PGRES_COPY_BOTH</code></span></dt><dd><p>            向服务器复制数据/从服务器复制数据的传输开始。这个特性当前只被用于流复制，因此这个状态应该不会在普通应用中出现。
+           </p></dd><dt id="LIBPQ-PGRES-SINGLE-TUPLE"><span class="term"><code class="literal">PGRES_SINGLE_TUPLE</code></span></dt><dd><p>            <code class="structname">PGresult</code>包含来自于当前命令的一个单一结果元组。这个状态只在查询选择了单一行模式时发生（见<a class="xref" href="libpq-single-row-mode.html" title="33.5. 一行一行地检索查询结果">第 33.5 节</a>）。
+           </p></dd></dl></div><p>
+
+        如果结果状态是<code class="literal">PGRES_TUPLES_OK</code>或者<code class="literal">PGRES_SINGLE_TUPLE</code>，那么下面所描述的函数能被用来检索该查询所返回的行。注意，一个恰好检索零行的<code class="command">SELECT</code>命令仍然会显示<code class="literal">PGRES_TUPLES_OK</code>。<code class="literal">PGRES_COMMAND_OK</code>用于从不返回行的命令（不带<code class="literal">RETURNING</code>子句的<code class="command">INSERT</code>或者<code class="command">UPDATE</code>等）。一个<code class="literal">PGRES_EMPTY_QUERY</code>可能表示客户端软件中的一个缺陷。
+       </p><p>        一个状态为<code class="symbol">PGRES_NONFATAL_ERROR</code>的结果将不会被<code class="function">PQexec</code>或者其他查询执行函数直接返回，这类结果将被传递给提示处理器（见 <a class="xref" href="libpq-notice-processing.html" title="33.12. 通知处理">第 33.12 节</a>）。
+       </p></dd><dt id="LIBPQ-PQRESSTATUS"><span class="term">       <code class="function">PQresStatus</code>
+       <a id="idp27542944" class="indexterm"></a>
+      </span></dt><dd><p>        将<code class="function">PQresultStatus</code>返回的枚举转换成描述状态编码的字符串常量。调用者不应该释放结果。
+
+</p><pre class="synopsis">char *PQresStatus(ExecStatusType status);</pre><p>
+       </p></dd><dt id="LIBPQ-PQRESULTERRORMESSAGE"><span class="term">       <code class="function">PQresultErrorMessage</code>
+       <a id="idp27547280" class="indexterm"></a>
+      </span></dt><dd><p>        返回与该命令相关的错误消息，如果有错误则会返回一个空字符串。
+</p><pre class="synopsis">char *PQresultErrorMessage(const PGresult *res);</pre><p>
+        如果有一个错误，被返回的字符串将包含一个收尾的新行。调用者不应该直接释放结果。它将在相关的<code class="structname">PGresult</code>句柄被传递给<code class="function">PQclear</code>之后被释放。
+       </p><p>        紧跟着一个<code class="function">PQexec</code>或<code class="function">PQgetResult</code>调用，<code class="function">PQerrorMessage</code>（在连接上）将返回与<code class="function">PQresultErrorMessage</code>相同的字符串（在结果上）。不过，一个<code class="structname">PGresult</code>将保持它的错误消息直到被销毁，而连接的错误消息将在后续操作被执行时被更改。当你想要知道与一个特定<code class="structname">PGresult</code>相关的状态，使用<code class="function">PQresultErrorMessage</code>。而当你想要知道连接上最后一个操作的状态，使用<code class="function">PQerrorMessage</code>。
+       </p></dd><dt id="LIBPQ-PQRESULTVERBOSEERRORMESSAGE"><span class="term">       <code class="function">PQresultVerboseErrorMessage</code>
+       <a id="idp27558112" class="indexterm"></a>
+      </span></dt><dd><p>        返回与<code class="structname">PGresult</code>对象相关的错误消息的重新格式化的版本。
+</p><pre class="synopsis">char *PQresultVerboseErrorMessage(const PGresult *res,
+                                  PGVerbosity verbosity,
+                                  PGContextVisibility show_context);</pre><p>
+        在有些情况下，客户端可能希望得到之前报告过的错误的更加详尽的版本。
+        如果在产生给定<code class="structname">PGresult</code>的连接上 verbosity 设置有效，
+        <code class="function">PQresultVerboseErrorMessage</code>会通过计算已经被
+        <code class="function">PQresultErrorMessage</code>产生过的消息来满足这种需求。
+        如果<code class="structname">PGresult</code>不是一个错误结果，则会报告
+        <span class="quote">“<span class="quote">PGresult is not an error result</span>”</span>。
+        返回的字符串包括一个新行作为结尾。
+       </p><p>        和大部分从<code class="structname">PGresult</code>中提取数据的其他函数不同，
+        这个函数的结果是一个全新分配的字符串。调用者在不需要这个字符串以后，
+        必须使用<code class="function">PQfreemem()</code>释放它。
+       </p><p>        如果内存不足，可能会返回 NULL。
+       </p></dd><dt id="LIBPQ-PQRESULTERRORFIELD"><span class="term"><code class="function">PQresultErrorField</code><a id="idp27567424" class="indexterm"></a></span></dt><dd><p>        返回一个错误报告的一个域。
+</p><pre class="synopsis">char *PQresultErrorField(const PGresult *res, int fieldcode);</pre><p>
+        <em class="parameter"><code>fieldcode</code></em>是一个错误域标识符，见下列符号。如果<code class="structname">PGresult</code>不是一个错误或者警告结果或者不包括指定域，会返回<code class="symbol">NULL</code>。域通常不包括一个收尾的新行。调用者不应该直接释放结果。它将在相关的<code class="structname">PGresult</code>句柄被传递给<code class="function">PQclear</code>之后被释放。
+       </p><p>        下列域代码可用：
+        </p><div class="variablelist"><dl class="variablelist"><dt id="LIBPQ-PG-DIAG-SEVERITY"><span class="term"><code class="symbol">PG_DIAG_SEVERITY</code></span></dt><dd><p>            严重。域的内容是<code class="literal">ERROR</code>、<code class="literal">FATAL</code>或<code class="literal">PANIC</code>（在一个错误消息中）。或者是<code class="literal">WARNING</code>、<code class="literal">NOTICE</code>、<code class="literal">DEBUG</code>、<code class="literal">INFO</code>或<code class="literal">LOG</code>（在一个提示消息中）。或者是其中之一的一个本地化翻译。总是存在。
+           </p></dd><dt id="LIBPQ-PG-DIAG-SEVERITY-NONLOCALIZED"><span class="term"><code class="symbol">PG_DIAG_SEVERITY_NONLOCALIZED</code></span></dt><dd><p>            严重。域的内容是<code class="literal">ERROR</code>、<code class="literal">FATAL</code>或<code class="literal">PANIC</code>
+            （在一个错误消息中）。或者是<code class="literal">WARNING</code>、<code class="literal">NOTICE</code>、
+            <code class="literal">DEBUG</code>、<code class="literal">INFO</code>或<code class="literal">LOG</code>（在一个提示消息中）。
+            这和<code class="symbol">PG_DIAG_SEVERITY</code>域相同，不过内容不会被本地化。
+            只存在于<span class="productname">PostgreSQL</span> 9.6 及以后版本产生的报告中。
+           </p></dd><dt id="LIBPQ-PG-DIAG-SQLSTATE"><span class="term"><code class="symbol">PG_DIAG_SQLSTATE</code>
+          <a id="idp27589888" class="indexterm"></a></span></dt><dd><p>            用于错误的 SQLSTATE 代码。SQLSTATE 代码标识了已经发生的错误的类型，它可以被前端应用用来执行特定操作（例如错误处理）来响应一个特定数据库错误。一个可能的 SQLSTATE 代码列表可见<a class="xref" href="errcodes-appendix.html" title="附录 A. PostgreSQL错误代码">附录 A</a>。这个域无法被本地化，并且总是存在。
+           </p></dd><dt id="LIBPQ-PG-DIAG-MESSAGE-PRIMARY"><span class="term"><code class="symbol">PG_DIAG_MESSAGE_PRIMARY</code></span></dt><dd><p>            主要的人类可读的错误消息（通常是一行）。总是存在。
+           </p></dd><dt id="LIBPQ-PG-DIAG-MESSAGE-DETAIL"><span class="term"><code class="symbol">PG_DIAG_MESSAGE_DETAIL</code></span></dt><dd><p>            细节：一个可选的次级错误消息，它携带了关于问题的更多细节。可能有多行。
+           </p></dd><dt id="LIBPQ-PG-DIAG-MESSAGE-HINT"><span class="term"><code class="symbol">PG_DIAG_MESSAGE_HINT</code></span></dt><dd><p>            提示：一个关于如何处理该问题的可选建议。它与细节的区别在于它提供了建议（可能不合适）而不是铁的事实。可能有多行。
+           </p></dd><dt id="LIBPQ-PG-DIAG-STATEMENT-POSITION"><span class="term"><code class="symbol">PG_DIAG_STATEMENT_POSITION</code></span></dt><dd><p>            包含一个十进制整数的字符串，它表示一个错误游标位置，
+            该位置是原始语句字符串的索引。第一个字符的索引是 1，
+            位置以字符计算而不是以及字节计算。
+           </p></dd><dt id="LIBPQ-PG-DIAG-INTERNAL-POSITION"><span class="term"><code class="symbol">PG_DIAG_INTERNAL_POSITION</code></span></dt><dd><p>            这被定义为与<code class="symbol">PG_DIAG_STATEMENT_POSITION</code>域相同，但是它被用在游标位置引用一个内部产生的命令而不是客户端提交的命令时。当这个域出现时，<code class="symbol">PG_DIAG_INTERNAL_QUERY</code>域将总是出现。
+           </p></dd><dt id="LIBPQ-PG-DIAG-INTERNAL-QUERY"><span class="term"><code class="symbol">PG_DIAG_INTERNAL_QUERY</code></span></dt><dd><p>            一个失败的内部产生的命令的文本。例如，这可能是由一个 PL/pgSQL 函数发出的 SQL 查询。
+           </p></dd><dt id="LIBPQ-PG-DIAG-CONTEXT"><span class="term"><code class="symbol">PG_DIAG_CONTEXT</code></span></dt><dd><p>            指示错误发生的环境。当前这包括活动过程语言函数的调用栈追踪以及内部生成的查询。追踪是每行一项，最近的排在最前面。
+           </p></dd><dt id="LIBPQ-PG-DIAG-SCHEMA-NAME"><span class="term"><code class="symbol">PG_DIAG_SCHEMA_NAME</code></span></dt><dd><p>            如果错误与某个特定的数据库对象相关，这里是包含该对象的模式名（如果有）。
+           </p></dd><dt id="LIBPQ-PG-DIAG-TABLE-NAME"><span class="term"><code class="symbol">PG_DIAG_TABLE_NAME</code></span></dt><dd><p>            如果错误与某个特定表相关，这里是该表的名字（该表的模式参考模式名域）。
+           </p></dd><dt id="LIBPQ-PG-DIAG-COLUMN-NAME"><span class="term"><code class="symbol">PG_DIAG_COLUMN_NAME</code></span></dt><dd><p>            如果错误与一个特定表列相关，这里是该表列的名字（参考模式和表名域来标识该表）。
+           </p></dd><dt id="LIBPQ-PG-DIAG-DATATYPE-NAME"><span class="term"><code class="symbol">PG_DIAG_DATATYPE_NAME</code></span></dt><dd><p>            如果错误与一个特定数据类型相关，这里是该数据类型的名字（该数据类型的模式名参考模式名域）。
+           </p></dd><dt id="LIBPQ-PG-DIAG-CONSTRAINT-NAME"><span class="term"><code class="symbol">PG_DIAG_CONSTRAINT_NAME</code></span></dt><dd><p>            如果错误与一个特定约束相关，这里是该约束的名字。相关的表或域参考上面列出的域（为了这个目的，索引也被视作约束，即使它们不是用约束语法创建的）。
+           </p></dd><dt id="LIBPQ-PG-DIAG-SOURCE-FILE"><span class="term"><code class="symbol">PG_DIAG_SOURCE_FILE</code></span></dt><dd><p>            报告错误的源代码所在的文件名。
+           </p></dd><dt id="LIBPQ-PG-DIAG-SOURCE-LINE"><span class="term"><code class="symbol">PG_DIAG_SOURCE_LINE</code></span></dt><dd><p>            报告错误的源代码行号。
+           </p></dd><dt id="LIBPQ-PG-DIAG-SOURCE-FUNCTION"><span class="term"><code class="symbol">PG_DIAG_SOURCE_FUNCTION</code></span></dt><dd><p>            报告错误的源代码函数的名字。
+           </p></dd></dl></div><p>
+       </p><div class="note"><h3 class="title">注意</h3><p>         用于模式名、表明、列名、数据类型名和约束名的域只提供给有限的错误类型，见<a class="xref" href="errcodes-appendix.html" title="附录 A. PostgreSQL错误代码">附录 A</a>。不要假定任何这些域的存在保证另一个域的存在。核心错误源会遵守上面提到的内在联系，但是用户定义的函数可能以其他方式使用这些域。同样地，不要假定这些域代表当前数据库中同类的对象。
+        </p></div><p>        客户端负责格式化显示信息来迎合它的需要，特别是根据需要打断长的行。出现在错误消息域中的新行字符应该被当作分段而不是换行。
+       </p><p>        <span class="application">libpq</span>内部产生的错误将有严重和主要消息，但是通常没有其他域。3.0 协议之前的服务器返回的错误将包括严重和主要消息，并且有时候还有细节消息，但是没有其他域。
+       </p><p>        注意错误域只对<code class="structname">PGresult</code>对象中有效，对<code class="structname">PGconn</code>对象无效。没有<code class="function">PQerrorField</code>函数。
+       </p></dd><dt id="LIBPQ-PQCLEAR"><span class="term"><code class="function">PQclear</code><a id="idp27625552" class="indexterm"></a></span></dt><dd><p>        Frees  the  storage  associated with a
+        释放与一个<code class="structname">PGresult</code>相关的存储。每一个命令结果不再需要时应该用<code class="function">PQclear</code>释放。
+
+</p><pre class="synopsis">void PQclear(PGresult *res);</pre><p>
+       </p><p>        你可以按照需要保留<code class="structname">PGresult</code>对象，当你发出一个新命令时它也不会消失，甚至关闭连接时也不会消失。要去掉它，你必须调用<code class="function">PQclear</code>。没有这样做将会导致在应用中的内存泄露。
+       </p></dd></dl></div><p>
+   </p></div><div class="sect2" id="LIBPQ-EXEC-SELECT-INFO"><div class="titlepage"><div><div><h3 class="title">33.3.2. 检索查询结果信息</h3></div></div></div><p>    这些函数被用来从一个代表成功查询结果（也就是状态为<code class="literal">PGRES_TUPLES_OK</code>或者<code class="literal">PGRES_SINGLE_TUPLE</code>）的<code class="structname">PGresult</code>对象中抽取信息。它们也可以被用来从一个成功的 Describe 操作中抽取信息：一个 Describe 的结果具有和该查询被实际执行所提供的完全相同的列信息，但是它没有行。对于其他状态值的对象，这些函数会认为结果具有零行和零列。
+   </p><div class="variablelist"><dl class="variablelist"><dt id="LIBPQ-PQNTUPLES"><span class="term">      <code class="function">PQntuples</code>
+      <a id="idp27635936" class="indexterm"></a>
+     </span></dt><dd><p>       返回查询结果中的行（元组）数。
+	   (请注意，<code class="structname">PGresult</code>对象限制为不超过<code class="literal">INT_MAX</code>行，
+	   所以<code class="type">int</code>结果是足够的。)
+
+</p><pre class="synopsis">int PQntuples(const PGresult *res);</pre><p>
+
+      </p></dd><dt id="LIBPQ-PQNFIELDS"><span class="term">      <code class="function">PQnfields</code>
+      <a id="idp27641104" class="indexterm"></a>
+     </span></dt><dd><p>       返回查询结果中每一行的列（域）数。
+
+</p><pre class="synopsis">int PQnfields(const PGresult *res);</pre><p>
+      </p></dd><dt id="LIBPQ-PQFNAME"><span class="term">      <code class="function">PQfname</code>
+      <a id="idp27644704" class="indexterm"></a>
+     </span></dt><dd><p>       返回与给定列号相关联的列名。列号从 0 开始。调用者不应该直接释放该结果。它将在相关的<code class="structname">PGresult</code>句柄被传递给<code class="function">PQclear</code>之后被释放。
+</p><pre class="synopsis">char *PQfname(const PGresult *res,
+              int column_number);</pre><p>
+      </p><p>       如果列号超出范围，将返回<code class="symbol">NULL</code>。
+      </p></dd><dt id="LIBPQ-PQFNUMBER"><span class="term">      <code class="function">PQfnumber</code>
+      <a id="idp27650320" class="indexterm"></a>
+     </span></dt><dd><p>       返回与给定列名相关联的列号。
+</p><pre class="synopsis">int PQfnumber(const PGresult *res,
+              const char *column_name);</pre><p>
+      </p><p>       如果给定的名字不匹配任何列，将返回 -1。
+      </p><p>       给定的名称被视作一个 SQL 命令中的一个标识符，也就是说，除非被双引号引用，它是小写形式的。例如，给定一个 SQL 命令：
+</p><pre class="programlisting">SELECT 1 AS FOO, 2 AS "BAR";</pre><p>
+       我们将得到结果：
+</p><pre class="programlisting">PQfname(res, 0)              <em class="lineannotation"><span class="lineannotation">foo</span></em>
+PQfname(res, 1)              <em class="lineannotation"><span class="lineannotation">BAR</span></em>
+PQfnumber(res, "FOO")        <em class="lineannotation"><span class="lineannotation">0</span></em>
+PQfnumber(res, "foo")        <em class="lineannotation"><span class="lineannotation">0</span></em>
+PQfnumber(res, "BAR")        <em class="lineannotation"><span class="lineannotation">-1</span></em>
+PQfnumber(res, "\"BAR\"")    <em class="lineannotation"><span class="lineannotation">1</span></em></pre><p>
+      </p></dd><dt id="LIBPQ-PQFTABLE"><span class="term">      <code class="function">PQftable</code>
+      <a id="idp27658768" class="indexterm"></a>
+     </span></dt><dd><p>       返回取出给定列的表的 OID。列号从 0 开始。
+</p><pre class="synopsis">Oid PQftable(const PGresult *res,
+             int column_number);</pre><p>
+      </p><p>       如果列号超出范围或者指定的列不是对一个表列的简单引用或者在使用 3.0 协议时，返回<code class="literal">InvalidOid</code>。你可以查询系统表<code class="literal">pg_class</code>来确定究竟是哪个表被引用。
+      </p><p>       当你包括<span class="application">libpq</span>头文件，类型<code class="type">Oid</code>以及常数<code class="literal">InvalidOid</code>将被定义。它们将都是某种整数类型。
+      </p></dd><dt id="LIBPQ-PQFTABLECOL"><span class="term">      <code class="function">PQftablecol</code>
+      <a id="idp27666496" class="indexterm"></a>
+     </span></dt><dd><p>       返回构成指定查询结果列的列（在其表中）的列号。查询结果列号从 0 开始，但是表列具有非零编号。
+</p><pre class="synopsis">int PQftablecol(const PGresult *res,
+                int column_number);</pre><p>
+      </p><p>       如果列号超出范围或者指定的列不是对一个表列的简单引用或者在使用 3.0 协议时，返回零。
+      </p></dd><dt id="LIBPQ-PQFFORMAT"><span class="term">      <code class="function">PQfformat</code>
+      <a id="idp27670736" class="indexterm"></a>
+     </span></dt><dd><p>       返回指示给定列格式的格式编码。列号从 0 开始。
+</p><pre class="synopsis">int PQfformat(const PGresult *res,
+              int column_number);</pre><p>
+      </p><p>       格式代码零指示文本数据表示，而格式代码一表示二进制表示（其他代码被保留用于未来的定义）。
+      </p></dd><dt id="LIBPQ-PQFTYPE"><span class="term">      <code class="function">PQftype</code>
+      <a id="idp27674944" class="indexterm"></a>
+     </span></dt><dd><p>       返回与给定列号相关联的数据类型。被返回的整数是该类型的内部 OID 号。列号从 0 开始。
+</p><pre class="synopsis">Oid PQftype(const PGresult *res,
+            int column_number);</pre><p>
+      </p><p>       你可以查询系统表<code class="literal">pg_type</code>来得到多个数据类型的名字和属性。内建数据类型的<acronym class="acronym">OID</acronym>被定义在源代码树中的文件<code class="filename">src/include/catalog/pg_type.h</code>中。
+      </p></dd><dt id="LIBPQ-PQFMOD"><span class="term">      <code class="function">PQfmod</code>
+      <a id="idp27680912" class="indexterm"></a>
+     </span></dt><dd><p>       返回与给定列号相关联的列的修饰符类型。列号从 0 开始。
+</p><pre class="synopsis">int PQfmod(const PGresult *res,
+           int column_number);</pre><p>
+      </p><p>       修饰符值的解释是与类型相关的，它们通常指示精度或尺寸限制。值 -1 被用来指示<span class="quote">“<span class="quote">没有信息可用</span>”</span>。大部分的数据类型不适用修饰符，在那种情况中值总是 -1。
+      </p></dd><dt id="LIBPQ-PQFSIZE"><span class="term">      <code class="function">PQfsize</code>
+      <a id="idp27685568" class="indexterm"></a>
+     </span></dt><dd><p>       返回与给定列号相关的列的尺寸（以字节计）。列号从 0 开始。
+</p><pre class="synopsis">int PQfsize(const PGresult *res,
+            int column_number);</pre><p>
+      </p><p>       <code class="function">PQfsize</code>返回在一个数据库行中为这个列分配的空间，换句话说是服务器对该数据类型的内部表示的尺寸（因此，它对客户端并不是真地非常有用）。一个负值指示该数据类型是变长的。
+      </p></dd><dt id="LIBPQ-PQBINARYTUPLES"><span class="term">      <code class="function">PQbinaryTuples</code>
+      <a id="idp27690352" class="indexterm"></a>
+     </span></dt><dd><p>       如果<code class="structname">PGresult</code>包含二进制数据，返回 1。如果包含的是文本数据，返回 0。
+</p><pre class="synopsis">int PQbinaryTuples(const PGresult *res);</pre><p>
+      </p><p>       这个函数已经被废弃（除了与<code class="command">COPY</code>一起使用），因为一个单一<code class="structname">PGresult</code>可以在某些列中包含文本数据而且在另一些列中包含二进制数据。<code class="function">PQfformat</code>要更好。只有结果的所有列是二进制（格式 1）时<code class="function">PQbinaryTuples</code>才返回 1。
+      </p></dd><dt id="LIBPQ-PQGETVALUE"><span class="term">      <code class="function">PQgetvalue</code>
+       <a id="idp27697488" class="indexterm"></a>
+     </span></dt><dd><p>       返回一个<code class="structname">PGresult</code>的一行的单一域值。行和列号从 0 开始。调用者不应该直接释放该结果。它将在相关的<code class="structname">PGresult</code>句柄被传递给<code class="function">PQclear</code>之后被释放。
+</p><pre class="synopsis">char *PQgetvalue(const PGresult *res,
+                 int row_number,
+                 int column_number);</pre><p>
+      </p><p>       对于文本格式的数据，<code class="function">PQgetvalue</code>返回的值是该域值的一种空值结束的字符串表示。对于二进制格式的数据，该值是由该数据类型的<code class="function">typsend</code>和<code class="function">typreceive</code>函数决定的二进制表示（在这种情况下该值实际上也跟随着一个零字节，但是这通常没有用处，因为该值很可能包含嵌入的空）。
+      </p><p>       如果该域值为空，则返回一个空串。关于区分空值和空字符串值请见<code class="function">PQgetisnull</code>。
+      </p><p>       <code class="function">PQgetvalue</code>返回的指针指向作为<code class="structname">PGresult</code>结构一部分的存储。我们不应该修改它指向的数据，并且如果要在超过<code class="structname">PGresult</code>结构本身的生命期之外使用它，我们必须显式地把该数据拷贝到其他存储中。
+      </p></dd><dt id="LIBPQ-PQGETISNULL"><span class="term">      <code class="function">PQgetisnull</code>
+      <a id="idp27708704" class="indexterm"></a>
+      <a id="idp27709520" class="indexterm"></a>
+     </span></dt><dd><p>       测试一个域是否为空值。行号和列号从 0 开始。
+</p><pre class="synopsis">int PQgetisnull(const PGresult *res,
+                int row_number,
+                int column_number);</pre><p>
+      </p><p>       如果该域是空，这个函数返回 1。如果它包含一个非空值，则返回 0（注意<code class="function">PQgetvalue</code>将为一个空域返回一个空串，不是一个空指针）。
+      </p></dd><dt id="LIBPQ-PQGETLENGTH"><span class="term">     <code class="function">PQgetlength</code>
+     <a id="idp27714928" class="indexterm"></a></span></dt><dd><p>       返回一个域值的真实长度，以字节计。行号和列号从 0 开始。
+</p><pre class="synopsis">int PQgetlength(const PGresult *res,
+                int row_number,
+                int column_number);</pre><p>
+      </p><p>       这是特定数据值的真实数据长度，也就是<code class="function">PQgetvalue</code>指向的对象的尺寸。对于文本数据格式，这和<code class="function">strlen()</code>相同。对于二进制格式这是基本信息。注意我们<span class="emphasis"><em>不</em></span>应该依赖于<code class="function">PQfsize</code>来得到真实的数据长度。
+      </p></dd><dt id="LIBPQ-PQNPARAMS"><span class="term">      <code class="function">PQnparams</code>
+      <a id="idp27721664" class="indexterm"></a>
+     </span></dt><dd><p>       返回一个预备语句的参数数量。
+</p><pre class="synopsis">int PQnparams(const PGresult *res);</pre><p>
+      </p><p>       只有在查看<code class="function">PQdescribePrepared</code>的结果时，这个函数才有用。对于其他类型的查询，它将返回零。
+      </p></dd><dt id="LIBPQ-PQPARAMTYPE"><span class="term">      <code class="function">PQparamtype</code>
+      <a id="idp27726240" class="indexterm"></a>
+     </span></dt><dd><p>       返回所指示的语句参数的数据类型。参数号从 0 开始。
+</p><pre class="synopsis">Oid PQparamtype(const PGresult *res, int param_number);</pre><p>
+      </p><p>       只有在查看<code class="function">PQdescribePrepared</code>的结果时，这个函数才有用。对于其他类型的查询，它将返回零。
+      </p></dd><dt id="LIBPQ-PQPRINT"><span class="term">      <code class="function">PQprint</code>
+      <a id="idp27730960" class="indexterm"></a>
+     </span></dt><dd><p>       将所有的行打印到指定的输出流，以及有选择地将列名打印到指定的输出流。
+</p><pre class="synopsis">void PQprint(FILE *fout,      /* 输出流 */
+             const PGresult *res,
+             const PQprintOpt *po);
+typedef struct
+{
+    pqbool  header;      /* 打印输出域标题和行计数 */
+    pqbool  align;       /* 填充对齐域 */
+    pqbool  standard;    /* 旧的格式 */
+    pqbool  html3;       /* 输出 HTML 表格 */
+    pqbool  expanded;    /* 扩展表格 */
+    pqbool  pager;       /* 如果必要为输出使用页 */
+    char    *fieldSep;   /* 域分隔符 */
+    char    *tableOpt;   /* 用于 HTML 表格元素的属性 */
+    char    *caption;    /* HTML 表格标题 */
+    char    **fieldName; /* 替换域名称的空终止数组 */
+} PQprintOpt;</pre><p>
+      </p><p>       这个函数以前被<span class="application">psql</span>用来打印查询结果，但是现在不是这样了。注意它假定所有的数据都是文本格式。
+      </p></dd></dl></div></div><div class="sect2" id="LIBPQ-EXEC-NONSELECT"><div class="titlepage"><div><div><h3 class="title">33.3.3. 检索其他结果信息</h3></div></div></div><p>    这些函数被用来从<code class="structname">PGresult</code>对象中抽取其他信息。
+   </p><div class="variablelist"><dl class="variablelist"><dt id="LIBPQ-PQCMDSTATUS"><span class="term">      <code class="function">PQcmdStatus</code>
+      <a id="idp27738864" class="indexterm"></a>
+     </span></dt><dd><p>       返回来自于产生<code class="structname">PGresult</code>的 SQL 命令的命令状态标签。
+</p><pre class="synopsis">char *PQcmdStatus(PGresult *res);</pre><p>
+      </p><p>       通常这就是该命令的名称，但是它可能包括额外数据，例如已被处理的行数。调用者不应该直接释放该结果。它将在相关的<code class="structname">PGresult</code>句柄被传递给<code class="function">PQclear</code>之后被释放。
+      </p></dd><dt id="LIBPQ-PQCMDTUPLES"><span class="term">      <code class="function">PQcmdTuples</code>
+      <a id="idp27744656" class="indexterm"></a>
+     </span></dt><dd><p>       返回受该 SQL 命令影响的行数。
+</p><pre class="synopsis">char *PQcmdTuples(PGresult *res);</pre><p>
+      </p><p>       这个函数返回一个字符串，其中包含着产生<code class="structname">PGresult</code>的<acronym class="acronym">SQL</acronym>语句影响的行数。这个只能被用于下列情况：执行一个<code class="command">SELECT</code>、<code class="command">CREATE TABLE AS</code>、<code class="command">INSERT</code>、<code class="command">UPDATE</code>、<code class="command">DELETE</code>、<code class="command">MOVE</code>、<code class="command">FETCH</code>或<code class="command">COPY</code>语句，或者一个包含<code class="command">INSERT</code>、<code class="command">UPDATE</code>或<code class="command">DELETE</code>语句的预备查询的<code class="command">EXECUTE</code>。如果产生<code class="structname">PGresult</code>的命令是其他什么东西，<code class="function">PQcmdTuples</code>会返回一个空串。调用者不应该直接释放该结果。它将在相关的<code class="structname">PGresult</code>句柄被传递给<code class="function">PQclear</code>之后被释放。
+      </p></dd><dt id="LIBPQ-PQOIDVALUE"><span class="term">      <code class="function">PQoidValue</code>
+      <a id="idp27760544" class="indexterm"></a>
+     </span></dt><dd><p>       如果该<acronym class="acronym">SQL</acronym>命令是一个正好将一行插入到具有 OID 的表的<code class="command">INSERT</code>，或者是一个包含合适<code class="command">INSERT</code>语句的预备查询的<code class="command">EXECUTE</code>，这个函数返回被插入行的 OID<a id="idp27764480" class="indexterm"></a>。否则，这个函数返回<code class="literal">InvalidOid</code>。如果被<code class="command">INSERT</code>语句影响的表不包含 OID，这个函数也将返回<code class="literal">InvalidOid</code>。
+</p><pre class="synopsis">Oid PQoidValue(const PGresult *res);</pre><p>
+      </p></dd><dt id="LIBPQ-PQOIDSTATUS"><span class="term">      <code class="function">PQoidStatus</code>
+      <a id="idp27770064" class="indexterm"></a>
+     </span></dt><dd><p>       由于支持<code class="function">PQoidValue</code>以及不是线程安全的，这个函数已经被废弃。它返回包含被插入行的 OID 的一个字符串，而<code class="function">PQoidValue</code>返回 OID 值。
+</p><pre class="synopsis">char *PQoidStatus(const PGresult *res);</pre><p>
+      </p></dd></dl></div></div><div class="sect2" id="LIBPQ-EXEC-ESCAPE-STRING"><div class="titlepage"><div><div><h3 class="title">33.3.4. 用于包含在 SQL 命令中的转移字符串</h3></div></div></div><a id="idp27774448" class="indexterm"></a><div class="variablelist"><dl class="variablelist"><dt id="LIBPQ-PQESCAPELITERAL"><span class="term">      <code class="function">PQescapeLiteral</code>
+      <a id="idp27777600" class="indexterm"></a>
+     </span></dt><dd><pre class="synopsis">char *PQescapeLiteral(PGconn *conn, const char *str, size_t length);</pre><p>
+     </p><p>      为了让一个串能用在 SQL 命令中，<code class="function">PQescapeLiteral</code>可对它进行转义。当在 SQL 命令中插入一个数据值作为文字常量时，这个函数很有用。一些字符（例如引号和反斜线）必须被转义以防止它们被 SQL 解析器解释成特殊的意思。<code class="function">PQescapeLiteral</code>执行这种操作。
+     </p><p>      <code class="function">PQescapeLiteral</code>返回一个<em class="parameter"><code>str</code></em>参数的已被转义版本，该版本被放在用<code class="function">malloc()</code>分配的内存中。当该结果不再被需要时，这个内存应该用<code class="function">PQfreemem()</code>释放。一个终止的零字节不是必须的，并且不应该被计入<em class="parameter"><code>length</code></em>（如果在<em class="parameter"><code>length</code></em>字节被处理之前找到一个终止字节，<code class="function">PQescapeLiteral</code>会停止在零，该行为更像<code class="function">strncpy</code>）。返回串中的所有特殊字符都被替换掉，这样它们能被<span class="productname">PostgreSQL</span>字符串解析器正确地处理。还会加上一个终止零字节。包括在结果串中的<span class="productname">PostgreSQL</span>字符串必须用单引号包围。
+     </p><p>      发生错误时，<code class="function">PQescapeLiteral</code>返回<code class="symbol">NULL</code>并且一个合适的消息会被存储在<em class="parameter"><code>conn</code></em>对象中。
+     </p><div class="tip"><h3 class="title">提示</h3><p>       在处理从一个非可信源接收到的串时，做正确的转义特别重要。否则就会有安全性风险：你容易受到<span class="quote">“<span class="quote">SQL 注入</span>”</span>攻击，其中可能会有预期之外的 SQL 语句会被喂给你的数据库。
+      </p></div><p>      注意，当一个数据值被作为<code class="function">PQexecParams</code>或其兄弟例程中的一个独立参数传递时，没有必要做转义而且做转义也不正确。
+     </p></dd><dt id="LIBPQ-PQESCAPEIDENTIFIER"><span class="term">      <code class="function">PQescapeIdentifier</code>
+      <a id="idp27795424" class="indexterm"></a>
+     </span></dt><dd><pre class="synopsis">char *PQescapeIdentifier(PGconn *conn, const char *str, size_t length);</pre><p>
+     </p><p>      <code class="function">PQescapeIdentifier</code>转义一个要用作 SQL 标识符的字符串，例如表名、列名或函数名。当一个用户提供的标识符可能包含被 SQL 解析器解释为标识符一部分的特殊字符时，或者当该标识符可能包含大小写形式应该被保留的大写字符时，这个函数很有用。
+     </p><p>      <code class="function">PQescapeIdentifier</code>返回一个<em class="parameter"><code>str</code></em>参数的已被转义为 SQL 标识符的版本，该版本被放在用<code class="function">malloc()</code>分配的内存中。当该结果不再被需要时，这个内存应该用<code class="function">PQfreemem()</code>释放。一个终止的零字节不是必须的，并且不应该被计入<em class="parameter"><code>length</code></em>（如果在<em class="parameter"><code>length</code></em>字节被处理之前找到一个终止字节，<code class="function">PQescapeIdentifier</code>会停止在零，该行为更像<code class="function">strncpy</code>）。返回串中的所有特殊字符都被替换掉，这样它们能被作为一个 SQL 标识符正确地处理。还会加上一个终止零字节。返回串也将被双引号包围。
+     </p><p>      发生错误时，<code class="function">PQescapeIdentifier</code>返回<code class="symbol">NULL</code>并且一个合适的消息会被存储在<em class="parameter"><code>conn</code></em>对象中。
+     </p><div class="tip"><h3 class="title">提示</h3><p>       与字符串一样，要阻止 SQL 注入攻击，当从一个不可信的来源接收到 SQL 标识符时，它们必须被转义。
+      </p></div></dd><dt id="LIBPQ-PQESCAPESTRINGCONN"><span class="term">      <code class="function">PQescapeStringConn</code>
+      <a id="idp27809648" class="indexterm"></a>
+     </span></dt><dd><pre class="synopsis">size_t PQescapeStringConn(PGconn *conn,
+                          char *to, const char *from, size_t length,
+                          int *error);</pre><p>
+     </p><p>      <code class="function">PQescapeStringConn</code>转义字符串，它很像<code class="function">PQescapeLiteral</code>。与<code class="function">PQescapeLiteral</code>不一样的是，调用者负责提供一个合适尺寸的缓冲区。此外，<code class="function">PQescapeStringConn</code>不产生必须包围<span class="productname">PostgreSQL</span>字符串的单引号。它们应该在结果要插入的 SQL 命令中提供。参数<em class="parameter"><code>from</code></em>指向要被转义的串的第一个字符，并且<em class="parameter"><code>length</code></em>参数给出了这个串中的字节数。一个终止的零字节不是必须的，并且不应该被计入<em class="parameter"><code>length</code></em>（如果在<em class="parameter"><code>length</code></em>字节被处理之前找到一个终止字节，<code class="function">PQescapeStringConn</code>会停止在零，该行为更像<code class="function">strncpy</code>）。 <em class="parameter"><code>to</code></em>应当指向一个缓冲区，它能够保持至少比<em class="parameter"><code>length</code></em>值的两倍还要多至少一个字节，否则该行为是未被定义的。如果<em class="parameter"><code>to</code></em>和<em class="parameter"><code>from</code></em>串重叠，行为也是未被定义的。
+     </p><p>      如果<em class="parameter"><code>error</code></em>参数不是<code class="symbol">NULL</code>，那么成功时<code class="literal">*error</code>被设置为零，错误时设置为非零。当前唯一可能的错误情况涉及源串中非法的多字节编码。错误时仍然会产生输出串，但是可以预期服务器将认为它是畸形的并且拒绝它。在发生错误时，一个合适的消息被存储在<em class="parameter"><code>conn</code></em>对象中，不管<em class="parameter"><code>error</code></em>是不是<code class="symbol">NULL</code>。
+     </p><p>      <code class="function">PQescapeStringConn</code>返回写到<em class="parameter"><code>to</code></em>的字节数，不包括终止的零字节。
+     </p></dd><dt id="LIBPQ-PQESCAPESTRING"><span class="term">      <code class="function">PQescapeString</code>
+      <a id="idp27830400" class="indexterm"></a>
+     </span></dt><dd><p>       <code class="function">PQescapeString</code>是一个更老的被废弃的<code class="function">PQescapeStringConn</code>版本。
+</p><pre class="synopsis">size_t PQescapeString (char *to, const char *from, size_t length);</pre><p>
+     </p><p>      <code class="function">PQescapeStringConn</code>和<code class="function">PQescapeString</code>之间的唯一区别是不需要<code class="structname">PGconn</code>或<em class="parameter"><code>error</code></em>参数。正因为如此，它不能基于连接属性（例如字符编码）调整它的行为并且因此<span class="emphasis"><em>它可能给出错误的结果</em></span>。还有，它没有方法报告错误情况。
+     </p><p>      <code class="function">PQescapeString</code>可以在一次只使用一个<span class="productname">PostgreSQL</span>连接的客户端程序中安全地使用（在这种情况下它可以<span class="quote">“<span class="quote">在现象后面</span>”</span>找出它需要知道的东西）。在其他环境中它是一个安全性灾难并且应该用<code class="function">PQescapeStringConn</code>来避免。
+     </p></dd><dt id="LIBPQ-PQESCAPEBYTEACONN"><span class="term">      <code class="function">PQescapeByteaConn</code>
+      <a id="idp27841776" class="indexterm"></a>
+     </span></dt><dd><p>       把要用于一个 SQL 命令的二进制数据用类型<code class="type">bytea</code>转义。和<code class="function">PQescapeStringConn</code>一样，只有在将数据直接插入到一个 SQL 命令串时才使用它。
+</p><pre class="synopsis">unsigned char *PQescapeByteaConn(PGconn *conn,
+                                 const unsigned char *from,
+                                 size_t from_length,
+                                 size_t *to_length);</pre><p>
+      </p><p>       当某些字节值被用作一个<acronym class="acronym">SQL</acronym>语句中的<code class="type">bytea</code>文字的一部分时，它们必须被转义。<code class="function">PQescapeByteaConn</code>转义使用十六进制编码或反斜线转义的字节。详见<a class="xref" href="datatype-binary.html" title="8.4. 二进制数据类型">第 8.4 节</a>。
+      </p><p>       <em class="parameter"><code>from</code></em>参数指向要被转义的串的第一个字节，并且<em class="parameter"><code>from_length</code></em>参数给出这个二进制串中的字节数（一个终止的零字节是不需要的也是不被计算的）。<em class="parameter"><code>to_length</code></em>参数指向一个将保持生成的已转义串长度的变量。这个结果串长度包括结果的终止零字节。
+      </p><p>       <code class="function">PQescapeByteaConn</code>返回一个<em class="parameter"><code>from</code></em>参数的已被转义为二进制串的版本，该版本被放在用<code class="function">malloc()</code>分配的内存中。当该结果不再被需要时，这个内存应该用<code class="function">PQfreemem()</code>释放。返回串中的所有特殊字符都被替换掉，这样它们能被<span class="productname">PostgreSQL</span>的字符串解析器以及<code class="type">bytea</code>输入函数正确地处理。还会加上一个终止零字节。不是结果串一部分的<span class="productname">PostgreSQL</span>字符串必须被单引号包围。
+      </p><p>       在发生错误时，将返回一个空指针，并且一个合适的错误消息被存储在<em class="parameter"><code>conn</code></em>对象中。当前，唯一可能的错误是没有足够的内存用于结果串。
+      </p></dd><dt id="LIBPQ-PQESCAPEBYTEA"><span class="term">      <code class="function">PQescapeBytea</code>
+      <a id="idp27858752" class="indexterm"></a>
+     </span></dt><dd><p>       <code class="function">PQescapeBytea</code>是一个更老的被废弃的<code class="function">PQescapeByteaConn</code>版本。
+</p><pre class="synopsis">unsigned char *PQescapeBytea(const unsigned char *from,
+                             size_t from_length,
+                             size_t *to_length);</pre><p>
+      </p><p>       与<code class="function">PQescapeByteaConn</code>的唯一区别是<code class="function">PQescapeBytea</code>不用一个<code class="structname">PGconn</code>参数。正因为这样，<code class="function">PQescapeBytea</code>只能在一次只使用一个<span class="productname">PostgreSQL</span>连接的客户端程序中安全地使用（在这种情况下它可以<span class="quote">“<span class="quote">在现象后面</span>”</span>找出它需要知道的东西）。如果在有多个数据库连接的程序中使用，它<span class="emphasis"><em>可能给出错误的结果</em></span>（在那种情况下使用<code class="function">PQescapeByteaConn</code>）。
+      </p></dd><dt id="LIBPQ-PQUNESCAPEBYTEA"><span class="term">      <code class="function">PQunescapeBytea</code>
+      <a id="idp27869168" class="indexterm"></a>
+     </span></dt><dd><p>       将二进制数据的一个字符串表示转换成二进制数据 — 它是<code class="function">PQescapeBytea</code>的逆向函数。当检索文本格式的<code class="type">bytea</code>数据时，需要这个函数，但检索二进制个事时则不需要它。
+
+</p><pre class="synopsis">unsigned char *PQunescapeBytea(const unsigned char *from, size_t *to_length);</pre><p>
+      </p><p>       <em class="parameter"><code>from</code></em>参数指向一个字符串，例如<code class="function">PQgetvalue</code>被应用到一个<code class="type">bytea</code>列上所返回的。<code class="function">PQunescapeBytea</code>把这个串表示转换成它的二进制表示。它返回一个指向用<code class="function">malloc()</code>分配的缓冲区的指针，在错误时返回<code class="symbol">NULL</code>，并且把缓冲区的尺寸放在<em class="parameter"><code>to_length</code></em>中。当结果不再需要时，它必须使用<code class="function">PQfreemem</code>释放。
+      </p><p>       这种转换并不完全是<code class="function">PQescapeBytea</code>的逆函数，因为当从<code class="function">PQgetvalue</code>接收到字符串时，我们并不能期待它被<span class="quote">“<span class="quote">转义</span>”</span>。特别地这意味着不需要考虑字符串引用，并且因此也不需要一个参数。
+      </p></dd></dl></div></div></div><div class="navfooter"><hr /><table width="100%" summary="Navigation footer"><tr><td width="40%" align="left"><a accesskey="p" href="libpq-status.html">上一页</a> </td><td width="20%" align="center"><a accesskey="u" href="libpq.html">上一级</a></td><td width="40%" align="right"> <a accesskey="n" href="libpq-async.html">下一页</a></td></tr><tr><td width="40%" align="left" valign="top">33.2. 连接状态函数 </td><td width="20%" align="center"><a accesskey="h" href="index.html">起始页</a></td><td width="40%" align="right" valign="top"> 33.4. 异步命令处理</td></tr></table></div></body></html>

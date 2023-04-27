@@ -1,0 +1,88 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><title>CREATE OPERATOR</title><link rel="stylesheet" type="text/css" href="stylesheet.css" /><link rev="made" href="pgsql-docs@postgresql.org" /><meta name="generator" content="DocBook XSL Stylesheets V1.79.1" /><link rel="prev" href="sql-creatematerializedview.html" title="CREATE MATERIALIZED VIEW" /><link rel="next" href="sql-createopclass.html" title="CREATE OPERATOR CLASS" /></head><body><div xmlns="http://www.w3.org/TR/xhtml1/transitional" class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="5" align="center">CREATE OPERATOR</th></tr><tr><td width="10%" align="left"><a accesskey="p" href="sql-creatematerializedview.html" title="CREATE MATERIALIZED VIEW">上一页</a> </td><td width="10%" align="left"><a accesskey="u" href="sql-commands.html" title="SQL 命令">上一级</a></td><th width="60%" align="center">SQL 命令</th><td width="10%" align="right"><a accesskey="h" href="index.html" title="PostgreSQL 10.1 手册">起始页</a></td><td width="10%" align="right"> <a accesskey="n" href="sql-createopclass.html" title="CREATE OPERATOR CLASS">下一页</a></td></tr></table><hr></hr></div><div class="refentry" id="SQL-CREATEOPERATOR"><div class="titlepage"></div><a id="idp43682432" class="indexterm"></a><div class="refnamediv"><h2><span class="refentrytitle">CREATE OPERATOR</span></h2><p>CREATE OPERATOR — 定义一个新的操作符</p></div><div class="refsynopsisdiv"><h2>大纲</h2><pre class="synopsis">CREATE OPERATOR <em class="replaceable"><code>name</code></em> (
+    PROCEDURE = <em class="replaceable"><code>function_name</code></em>
+    [, LEFTARG = <em class="replaceable"><code>left_type</code></em> ] [, RIGHTARG = <em class="replaceable"><code>right_type</code></em> ]
+    [, COMMUTATOR = <em class="replaceable"><code>com_op</code></em> ] [, NEGATOR = <em class="replaceable"><code>neg_op</code></em> ]
+    [, RESTRICT = <em class="replaceable"><code>res_proc</code></em> ] [, JOIN = <em class="replaceable"><code>join_proc</code></em> ]
+    [, HASHES ] [, MERGES ]
+)</pre></div><div class="refsect1" id="idp43691312"><h2>描述</h2><p>   <code class="command">CREATE OPERATOR</code>定义一个新的操作符
+   <em class="replaceable"><code>name</code></em>。定义操作符
+   的用户会成为该操作符的拥有者。如果给出一个模式名，该操作符将被创建
+   在指定的模式中。否则它会被创建在当前模式中。
+  </p><p>   操作符名称是最多<code class="symbol">NAMEDATALEN</code>-1（默认为 63）
+   个字符的序列，这些字符可以是：
+</p><div class="literallayout"><p>+ - * / &lt; &gt; = ~ ! @ # % ^ &amp; | ` ?</p></div><p>
+
+   对名称的选择有一些限制：
+   </p><div class="itemizedlist"><ul class="itemizedlist" style="list-style-type: disc; "><li class="listitem"><p><code class="literal">--</code> and <code class="literal">/*</code>不能出现在
+     操作符名称中，因为它们会被当做一段注释的开始。
+     </p></li><li class="listitem"><p>     多字符操作符名称不能以<code class="literal">+</code>或者<code class="literal">-</code>
+     结束，除非该名称也包含至少一个下列字符：
+</p><div class="literallayout"><p>~ ! @ # % ^ &amp; | ` ?</p></div><p>
+     例如，<code class="literal">@-</code>是一个被允许的操作符名称，而
+     <code class="literal">*-</code>不是。这种限制允许
+     <span class="productname">PostgreSQL</span>解析 SQL 兼容的命令
+     而无需记号之间的空格。
+     </p></li><li class="listitem"><p>     将<code class="literal">=&gt;</code>用作一个操作符名称已经不被推荐。在未来的发行中
+     可能会被禁用。
+     </p></li></ul></div><p>
+  </p><p>   在输入时<code class="literal">!=</code>会被映射为<code class="literal">&lt;&gt;</code>，
+   因此这两个名字总是等效的。
+  </p><p>   必须至少定义<code class="literal">LEFTARG</code>和<code class="literal">RIGHTARG</code>中的一个。
+   对于二元操作符，两者都必须被定义。对于右一元操作符，只应该定义
+   <code class="literal">LEFTARG</code>，而对于左一元操作符只应该定义
+   <code class="literal">RIGHTARG</code>。
+  </p><p>   <em class="replaceable"><code>function_name</code></em>过程
+   必须在之前已经用<code class="command">CREATE FUNCTION</code>定义好，
+   并且必须被定义为接受正确数量的指定类型的参数。
+  </p><p>   其他子句指定可选的操作符优化子句。它们的含义在
+   <a class="xref" href="xoper-optimization.html" title="37.13. 操作符优化信息">第 37.13 节</a>中有详细描述。
+  </p><p>   要创建一个操作符，必须具有参数类型和返回类型上的<code class="literal">USAGE</code>
+   特权，以及底层函数上的<code class="literal">EXECUTE</code>特权。如果指定了一个
+   交换子或者求反器操作符，必须拥有这些操作符。
+  </p></div><div class="refsect1" id="idp43714112"><h2>参数</h2><div class="variablelist"><dl class="variablelist"><dt><span class="term"><em class="replaceable"><code>name</code></em></span></dt><dd><p>        要定义的操作符的名称。允许使用的字符请见上文。名称可以被模式
+        限定，例如<code class="literal">CREATE OPERATOR myschema.+ (...)</code>。如果
+        没有被模式限定，该操作符将被创建在当前模式中。如果两个同一模式
+        中的操作符在不同的数据类型上操作，它们可以具有相同的名称。这
+        被称为<em class="firstterm">重载</em>。
+       </p></dd><dt><span class="term"><em class="replaceable"><code>function_name</code></em></span></dt><dd><p>        用来实现这个操作符的函数。
+       </p></dd><dt><span class="term"><em class="replaceable"><code>left_type</code></em></span></dt><dd><p>        这个操作符的左操作数（如果有）的数据类型。忽略这个选项
+        可以表示一个左一元操作符。
+       </p></dd><dt><span class="term"><em class="replaceable"><code>right_type</code></em></span></dt><dd><p>        这个操作符的右操作数（如果有）的数据类型。忽略这个选项
+        可以表示一个右一元操作符。
+       </p></dd><dt><span class="term"><em class="replaceable"><code>com_op</code></em></span></dt><dd><p>        这个操作符的交换子。
+       </p></dd><dt><span class="term"><em class="replaceable"><code>neg_op</code></em></span></dt><dd><p>        这个操作符的求反器。
+       </p></dd><dt><span class="term"><em class="replaceable"><code>res_proc</code></em></span></dt><dd><p>        用于这个操作符的限制选择度估计函数。
+       </p></dd><dt><span class="term"><em class="replaceable"><code>join_proc</code></em></span></dt><dd><p>        用于这个操作符的连接选择度估算函数。
+       </p></dd><dt><span class="term"><code class="literal">HASHES</code></span></dt><dd><p>       表示这个操作符可以支持哈希连接。
+       </p></dd><dt><span class="term"><code class="literal">MERGES</code></span></dt><dd><p>       表示这个操作符可以支持归并连接。
+       </p></dd></dl></div><p>   要在<em class="replaceable"><code>com_op</code></em>
+   或者其他可选参数中给出一个模式限定的操作符名称，
+   请使用<code class="literal">OPERATOR()</code>语法，例如：
+</p><pre class="programlisting">COMMUTATOR = OPERATOR(myschema.===) ,</pre></div><div class="refsect1" id="idp43732336"><h2>注解</h2><p>   进一步的信息可参考<a class="xref" href="xoper.html" title="37.12. 用户定义的操作符">第 37.12 节</a>。
+  </p><p>   无法在<code class="command">CREATE OPERATOR</code>中指定一个操作符的
+   词法优先级，因为解析器的优先级行为是硬写在代码中的。详见
+   <a class="xref" href="sql-syntax-lexical.html#SQL-PRECEDENCE" title="4.1.6. 操作符优先级">第 4.1.6 节</a>。
+  </p><p>   The obsolete options 
+   废弃的选项<code class="literal">SORT1</code>、<code class="literal">SORT2</code>、
+   <code class="literal">LTCMP</code>以及<code class="literal">GTCMP</code>以前被用来指定与支持
+   归并连接的操作符相关的排序操作符的名称。现在不再需要它们了，因为
+   相关操作符的信息可以在 B-树的操作符族中找到。如果给出了这些选项
+   之一，它会被忽略（除非是为了隐式设置<code class="literal">MERGES</code>为真）。
+  </p><p>   使用<a class="xref" href="sql-dropoperator.html" title="DROP OPERATOR"><span class="refentrytitle">DROP OPERATOR</span></a>从数据库中删除用户定义的操作符。
+   使用<a class="xref" href="sql-alteroperator.html" title="ALTER OPERATOR"><span class="refentrytitle">ALTER OPERATOR</span></a>修改数据库中的操作符。
+  </p></div><div class="refsect1" id="idp43741504"><h2>示例</h2><p>   下面的命令为数据类型<code class="type">box</code>定义了一种新的操作符--面积相等：
+</p><pre class="programlisting">CREATE OPERATOR === (
+    LEFTARG = box,
+    RIGHTARG = box,
+    PROCEDURE = area_equal_procedure,
+    COMMUTATOR = ===,
+    NEGATOR = !==,
+    RESTRICT = area_restriction_procedure,
+    JOIN = area_join_procedure,
+    HASHES, MERGES
+);</pre></div><div class="refsect1" id="idp43743456"><h2>兼容性</h2><p>   <code class="command">CREATE OPERATOR</code>是一种
+   <span class="productname">PostgreSQL</span>扩展。在 SQL 
+   标准中没有用户定义操作符的规定。
+  </p></div><div class="refsect1" id="idp43745632"><h2>另见</h2><span class="simplelist"><a class="xref" href="sql-alteroperator.html" title="ALTER OPERATOR"><span class="refentrytitle">ALTER OPERATOR</span></a>, <a class="xref" href="sql-createopclass.html" title="CREATE OPERATOR CLASS"><span class="refentrytitle">CREATE OPERATOR CLASS</span></a>, <a class="xref" href="sql-dropoperator.html" title="DROP OPERATOR"><span class="refentrytitle">DROP OPERATOR</span></a></span></div></div><div class="navfooter"><hr /><table width="100%" summary="Navigation footer"><tr><td width="40%" align="left"><a accesskey="p" href="sql-creatematerializedview.html">上一页</a> </td><td width="20%" align="center"><a accesskey="u" href="sql-commands.html">上一级</a></td><td width="40%" align="right"> <a accesskey="n" href="sql-createopclass.html">下一页</a></td></tr><tr><td width="40%" align="left" valign="top">CREATE MATERIALIZED VIEW </td><td width="20%" align="center"><a accesskey="h" href="index.html">起始页</a></td><td width="40%" align="right" valign="top"> CREATE OPERATOR CLASS</td></tr></table></div></body></html>

@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><title>5.5. 修改表</title><link rel="stylesheet" type="text/css" href="stylesheet.css" /><link rev="made" href="pgsql-docs@postgresql.org" /><meta name="generator" content="DocBook XSL Stylesheets V1.79.1" /><link rel="prev" href="ddl-system-columns.html" title="5.4. 系统列" /><link rel="next" href="ddl-priv.html" title="5.6. 权限" /></head><body><div xmlns="http://www.w3.org/TR/xhtml1/transitional" class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="5" align="center">5.5. 修改表</th></tr><tr><td width="10%" align="left"><a accesskey="p" href="ddl-system-columns.html" title="5.4. 系统列">上一页</a> </td><td width="10%" align="left"><a accesskey="u" href="ddl.html" title="第 5 章 数据定义">上一级</a></td><th width="60%" align="center">第 5 章 数据定义</th><td width="10%" align="right"><a accesskey="h" href="index.html" title="PostgreSQL 10.1 手册">起始页</a></td><td width="10%" align="right"> <a accesskey="n" href="ddl-priv.html" title="5.6. 权限">下一页</a></td></tr></table><hr></hr></div><div class="sect1" id="DDL-ALTER"><div class="titlepage"><div><div><h2 class="title" style="clear: both">5.5. 修改表</h2></div></div></div><div class="toc"><dl class="toc"><dt><span class="sect2"><a href="ddl-alter.html#DDL-ALTER-ADDING-A-COLUMN">5.5.1. 增加列</a></span></dt><dt><span class="sect2"><a href="ddl-alter.html#DDL-ALTER-REMOVING-A-COLUMN">5.5.2. 移除列</a></span></dt><dt><span class="sect2"><a href="ddl-alter.html#DDL-ALTER-ADDING-A-CONSTRAINT">5.5.3. 增加约束</a></span></dt><dt><span class="sect2"><a href="ddl-alter.html#DDL-ALTER-REMOVING-A-CONSTRAINT">5.5.4. 移除约束</a></span></dt><dt><span class="sect2"><a href="ddl-alter.html#idp6403632">5.5.5. 更改列的默认值</a></span></dt><dt><span class="sect2"><a href="ddl-alter.html#idp6408464">5.5.6. 修改列的数据类型</a></span></dt><dt><span class="sect2"><a href="ddl-alter.html#idp6413424">5.5.7. 重命名列</a></span></dt><dt><span class="sect2"><a href="ddl-alter.html#idp6415888">5.5.8. 重命名表</a></span></dt></dl></div><a id="idp6366592" class="indexterm"></a><p>   当我们已经创建了一个表并意识到犯了一个错误或者应用需求发生改变时，我们可以移除表并重新创建它。但如果表中已经被填充数据或者被其他数据库对象引用（例如有一个外键约束），这种做法就显得很不方便。因此，<span class="productname">PostgreSQL</span>提供了一族命令来对已有的表进行修改。注意这和修改表中所包含的数据是不同的，这里要做的是对表的定义或者说结构进行修改。
+  </p><p>   利用这些命令，我们可以：
+   </p><div class="itemizedlist"><ul class="itemizedlist compact" style="list-style-type: disc; "><li class="listitem"><p>增加列</p></li><li class="listitem"><p>移除列</p></li><li class="listitem"><p>增加约束</p></li><li class="listitem"><p>移除约束</p></li><li class="listitem"><p>修改默认值</p></li><li class="listitem"><p>修改列数据类型</p></li><li class="listitem"><p>重命名列</p></li><li class="listitem"><p>重命名表</p></li></ul></div><p>
+
+   所有这些动作都由<a class="xref" href="sql-altertable.html" title="ALTER TABLE"><span class="refentrytitle">ALTER TABLE</span></a>命令执行，其参考页面中包含更详细的信息。
+  </p><div class="sect2" id="DDL-ALTER-ADDING-A-COLUMN"><div class="titlepage"><div><div><h3 class="title">5.5.1. 增加列</h3></div></div></div><a id="idp6375680" class="indexterm"></a><p>    要增加一个列，可以使用这样的命令：
+</p><pre class="programlisting">ALTER TABLE products ADD COLUMN description text;</pre><p>
+    新列将被默认值所填充（如果没有指定<code class="literal">DEFAULT</code>子句，则会填充空值）。
+   </p><p>    也可以同时为列定义约束，语法：
+</p><pre class="programlisting">ALTER TABLE products ADD COLUMN description text CHECK (description &lt;&gt; '');</pre><p>
+    事实上<code class="command">CREATE TABLE</code>中关于一列的描述都可以应用在这里。记住不管怎样，默认值必须满足给定的约束，否则<code class="literal">ADD</code>将会失败。也可以先将新列正确地填充好，然后再增加约束（见后文）。
+   </p><div class="tip"><h3 class="title">提示</h3><p>    增加一个带默认值的列需要更新表中的每一行（来存储新列值）。然而，如果不指定默认值，<span class="productname">PostgreSQL</span>可以避免物理更新。因此如果我们准备向列中填充的值大多是非默认值，最好是增加列的时候不指定默认值，增加列后用<code class="command">UPDATE</code>填充正确的数据并且增加所需要的默认值约束。   </p></div></div><div class="sect2" id="DDL-ALTER-REMOVING-A-COLUMN"><div class="titlepage"><div><div><h3 class="title">5.5.2. 移除列</h3></div></div></div><a id="idp6384592" class="indexterm"></a><p>    为了移除一个列，使用如下的命令：
+</p><pre class="programlisting">ALTER TABLE products DROP COLUMN description;</pre><p>
+    列中的数据将会消失。涉及到该列的表约束也会被移除。然而，如果该列被另一个表的外键所引用，<span class="productname">PostgreSQL</span>不会安静地移除该约束。我们可以通过增加<code class="literal">CASCADE</code>来授权移除任何依赖于被删除列的所有东西：
+</p><pre class="programlisting">ALTER TABLE products DROP COLUMN description CASCADE;</pre><p>
+    关于这个操作背后的一般性机制请见<a class="xref" href="ddl-depend.html" title="5.13. 依赖跟踪">第 5.13 节</a>。
+   </p></div><div class="sect2" id="DDL-ALTER-ADDING-A-CONSTRAINT"><div class="titlepage"><div><div><h3 class="title">5.5.3. 增加约束</h3></div></div></div><a id="idp6390944" class="indexterm"></a><p>    为了增加一个约束，可以使用表约束的语法，例如：
+</p><pre class="programlisting">ALTER TABLE products ADD CHECK (name &lt;&gt; '');
+ALTER TABLE products ADD CONSTRAINT some_name UNIQUE (product_no);
+ALTER TABLE products ADD FOREIGN KEY (product_group_id) REFERENCES product_groups;</pre><p>
+    要增加一个不能写成表约束的非空约束，可使用语法：
+</p><pre class="programlisting">ALTER TABLE products ALTER COLUMN product_no SET NOT NULL;</pre><p>
+   </p><p>    该约束会立即被检查，所以表中的数据必须在约束被增加之前就已经符合约束。
+   </p></div><div class="sect2" id="DDL-ALTER-REMOVING-A-CONSTRAINT"><div class="titlepage"><div><div><h3 class="title">5.5.4. 移除约束</h3></div></div></div><a id="idp6395760" class="indexterm"></a><p>    为了移除一个约束首先需要知道它的名称。如果在创建时已经给它指定了名称，那么事情就变得很容易。否则约束的名称是由系统生成的，我们必须先找出这个名称。<span class="application">psql</span>的命令<code class="literal">\d
+    <em class="replaceable"><code>表名</code></em></code>将会对此有所帮助，其他接口也会提供方法来查看表的细节。因此命令是：
+</p><pre class="programlisting">ALTER TABLE products DROP CONSTRAINT some_name;</pre><p>
+    （如果处理的是自动生成的约束名称，如<code class="literal">$2</code>，别忘了用双引号使它变成一个合法的标识符。）
+   </p><p>    和移除一个列相似，如果需要移除一个被某些别的东西依赖的约束，也需要加上<code class="literal">CASCADE</code>。一个例子是一个外键约束依赖于被引用列上的一个唯一或者主键约束。
+   </p><p>    这对除了非空约束之外的所有约束类型都一样有效。为了移除一个非空约束可以用：
+</p><pre class="programlisting">ALTER TABLE products ALTER COLUMN product_no DROP NOT NULL;</pre><p>
+    （回忆一下，非空约束是没有名称的，所以不能用第一种方式。）
+   </p></div><div class="sect2" id="idp6403632"><div class="titlepage"><div><div><h3 class="title">5.5.5. 更改列的默认值</h3></div></div></div><a id="idp6404016" class="indexterm"></a><p>    要为一个列设置一个新默认值，使用命令：
+</p><pre class="programlisting">ALTER TABLE products ALTER COLUMN price SET DEFAULT 7.77;</pre><p>
+    注意这不会影响任何表中已经存在的行，它只是为未来的<code class="command">INSERT</code>命令改变了默认值。
+   </p><p>    要移除任何默认值，使用：
+</p><pre class="programlisting">ALTER TABLE products ALTER COLUMN price DROP DEFAULT;</pre><p>
+    这等同于将默认值设置为空值。相应的，试图删除一个未被定义的默认值并不会引发错误，因为默认值已经被隐式地设置为空值。
+   </p></div><div class="sect2" id="idp6408464"><div class="titlepage"><div><div><h3 class="title">5.5.6. 修改列的数据类型</h3></div></div></div><a id="idp6408896" class="indexterm"></a><p>    为了将一个列转换为一种不同的数据类型，使用如下命令：
+</p><pre class="programlisting">ALTER TABLE products ALTER COLUMN price TYPE numeric(10,2);</pre><p>
+    只有当列中的每一个项都能通过一个隐式造型转换为新的类型时该操作才能成功。如果需要一种更复杂的转换，应该加上一个<code class="literal">USING</code>子句来指定应该如何把旧值转换为新值。
+   </p><p>    <span class="productname">PostgreSQL</span>将尝试把列的默认值转换为新类型，其他涉及到该列的任何约束也是一样。但是这些转换可能失败或者产生奇特的结果。因此最好在修改类型之前先删除该列上所有的约束，然后在修改完类型后重新加上相应修改过的约束。
+   </p></div><div class="sect2" id="idp6413424"><div class="titlepage"><div><div><h3 class="title">5.5.7. 重命名列</h3></div></div></div><a id="idp6413840" class="indexterm"></a><p>    要重命名一个列：
+</p><pre class="programlisting">ALTER TABLE products RENAME COLUMN product_no TO product_number;</pre><p>
+   </p></div><div class="sect2" id="idp6415888"><div class="titlepage"><div><div><h3 class="title">5.5.8. 重命名表</h3></div></div></div><a id="idp6416304" class="indexterm"></a><p>    要重命名一个表：
+</p><pre class="programlisting">ALTER TABLE products RENAME TO items;</pre><p>
+   </p></div></div><div class="navfooter"><hr /><table width="100%" summary="Navigation footer"><tr><td width="40%" align="left"><a accesskey="p" href="ddl-system-columns.html">上一页</a> </td><td width="20%" align="center"><a accesskey="u" href="ddl.html">上一级</a></td><td width="40%" align="right"> <a accesskey="n" href="ddl-priv.html">下一页</a></td></tr><tr><td width="40%" align="left" valign="top">5.4. 系统列 </td><td width="20%" align="center"><a accesskey="h" href="index.html">起始页</a></td><td width="40%" align="right" valign="top"> 5.6. 权限</td></tr></table></div></body></html>

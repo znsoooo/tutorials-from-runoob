@@ -1,0 +1,237 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><title>44.3. 内建函数</title><link rel="stylesheet" type="text/css" href="stylesheet.css" /><link rev="made" href="pgsql-docs@postgresql.org" /><meta name="generator" content="DocBook XSL Stylesheets V1.79.1" /><link rel="prev" href="plperl-data.html" title="44.2. PL/Perl 中的数据值" /><link rel="next" href="plperl-global.html" title="44.4. PL/Perl 中的全局值" /></head><body><div xmlns="http://www.w3.org/TR/xhtml1/transitional" class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="5" align="center">44.3. 内建函数</th></tr><tr><td width="10%" align="left"><a accesskey="p" href="plperl-data.html" title="44.2. PL/Perl 中的数据值">上一页</a> </td><td width="10%" align="left"><a accesskey="u" href="plperl.html" title="第 44 章 PL/Perl - Perl 过程语言">上一级</a></td><th width="60%" align="center">第 44 章 PL/Perl - Perl 过程语言</th><td width="10%" align="right"><a accesskey="h" href="index.html" title="PostgreSQL 10.1 手册">起始页</a></td><td width="10%" align="right"> <a accesskey="n" href="plperl-global.html" title="44.4. PL/Perl 中的全局值">下一页</a></td></tr></table><hr></hr></div><div class="sect1" id="PLPERL-BUILTINS"><div class="titlepage"><div><div><h2 class="title" style="clear: both">44.3. 内建函数</h2></div></div></div><div class="toc"><dl class="toc"><dt><span class="sect2"><a href="plperl-builtins.html#PLPERL-DATABASE">44.3.1. 从 PL/Perl 访问数据库</a></span></dt><dt><span class="sect2"><a href="plperl-builtins.html#PLPERL-UTILITY-FUNCTIONS">44.3.2. PL/Perl 中的工具函数</a></span></dt></dl></div><div class="sect2" id="PLPERL-DATABASE"><div class="titlepage"><div><div><h3 class="title">44.3.1. 从 PL/Perl 访问数据库</h3></div></div></div><p>   可以通过下列函数从 Perl 函数中访问数据库本身：
+  </p><div class="variablelist"><dl class="variablelist"><dt><span class="term">      <code class="literal"><code class="function">spi_exec_query</code>(<em class="replaceable"><code>query</code></em> [, <em class="replaceable"><code>max-rows</code></em>])</code>
+      <a id="idp37741168" class="indexterm"></a>
+     </span></dt><dd><p>       <code class="literal">spi_exec_query</code>执行一个 SQL 命令并且以哈希引用数组
+       的引用的形式返回整个行集。<span class="emphasis"><em>只有在知道结果集相对较小时才
+       应该使用这个命令。</em></span>这里是一个带有可选最大行数的查询（
+       <code class="command">SELECT</code>命令）的例子：
+
+</p><pre class="programlisting">$rv = spi_exec_query('SELECT * FROM my_table', 5);</pre><p>
+        这会从表<code class="literal">my_table</code>.返回最多 5 行。如果
+        <code class="literal">my_table</code>有一个列<code class="literal">my_column</code>，
+        可以从结果的<code class="literal">$i</code>行得到值：
+</p><pre class="programlisting">$foo = $rv-&gt;{rows}[$i]-&gt;{my_column};</pre><p>
+       可以这样访问从一个<code class="command">SELECT</code>查询返回
+       的总行数：
+</p><pre class="programlisting">$nrows = $rv-&gt;{processed}</pre><p>
+      </p><p>       这里是使用不同命令类型的一个例子：
+</p><pre class="programlisting">$query = "INSERT INTO my_table VALUES (1, 'test')";
+$rv = spi_exec_query($query);</pre><p>
+       你可以这样访问命令状态（例如<code class="literal">SPI_OK_INSERT</code>）：
+</p><pre class="programlisting">$res = $rv-&gt;{status};</pre><p>
+       要得到受影响的行数：
+</p><pre class="programlisting">$nrows = $rv-&gt;{processed};</pre><p>
+      </p><p>       这里是一个完整的例子：
+</p><pre class="programlisting">CREATE TABLE test (
+    i int,
+    v varchar
+);
+
+INSERT INTO test (i, v) VALUES (1, 'first line');
+INSERT INTO test (i, v) VALUES (2, 'second line');
+INSERT INTO test (i, v) VALUES (3, 'third line');
+INSERT INTO test (i, v) VALUES (4, 'immortal');
+
+CREATE OR REPLACE FUNCTION test_munge() RETURNS SETOF test AS $$
+    my $rv = spi_exec_query('select i, v from test;');
+    my $status = $rv-&gt;{status};
+    my $nrows = $rv-&gt;{processed};
+    foreach my $rn (0 .. $nrows - 1) {
+        my $row = $rv-&gt;{rows}[$rn];
+        $row-&gt;{i} += 200 if defined($row-&gt;{i});
+        $row-&gt;{v} =~ tr/A-Za-z/a-zA-Z/ if (defined($row-&gt;{v}));
+        return_next($row);
+    }
+    return undef;
+$$ LANGUAGE plperl;
+
+SELECT * FROM test_munge();</pre><p>
+    </p></dd><dt><span class="term">      <code class="literal"><code class="function">spi_query(<em class="replaceable"><code>command</code></em>)</code></code>
+      <a id="idp37757936" class="indexterm"></a>
+     <br /></span><span class="term">      <code class="literal"><code class="function">spi_fetchrow(<em class="replaceable"><code>cursor</code></em>)</code></code>
+      <a id="idp37760800" class="indexterm"></a>
+     <br /></span><span class="term">      <code class="literal"><code class="function">spi_cursor_close(<em class="replaceable"><code>cursor</code></em>)</code></code>
+      <a id="idp37763664" class="indexterm"></a>
+     </span></dt><dd><p>    <code class="literal">spi_query</code>和<code class="literal">spi_fetchrow</code>
+    结对用于可能比较大的行集合，或者用于希望在行到达时返回的情况。
+    <code class="literal">spi_fetchrow</code><span class="emphasis"><em>只</em></span>和
+    <code class="literal">spi_query</code>一起工作。下面的例子展示了如何使用
+    它们：
+
+</p><pre class="programlisting">CREATE TYPE foo_type AS (the_num INTEGER, the_text TEXT);
+
+CREATE OR REPLACE FUNCTION lotsa_md5 (INTEGER) RETURNS SETOF foo_type AS $$
+    use Digest::MD5 qw(md5_hex);
+    my $file = '/usr/share/dict/words';
+    my $t = localtime;
+    elog(NOTICE, "opening file $file at $t" );
+    open my $fh, '&lt;', $file # ooh, it's a file access!
+        or elog(ERROR, "cannot open $file for reading: $!");
+    my @words = &lt;$fh&gt;;
+    close $fh;
+    $t = localtime;
+    elog(NOTICE, "closed file $file at $t");
+    chomp(@words);
+    my $row;
+    my $sth = spi_query("SELECT * FROM generate_series(1,$_[0]) AS b(a)");
+    while (defined ($row = spi_fetchrow($sth))) {
+        return_next({
+            the_num =&gt; $row-&gt;{a},
+            the_text =&gt; md5_hex($words[rand @words])
+        });
+    }
+    return;
+$$ LANGUAGE plperlu;
+
+SELECT * from lotsa_md5(500);</pre><p>
+    </p><p>     通常，<code class="function">spi_fetchrow</code>应该重复执行直到它返回
+     <code class="literal">undef</code>（表示没有更多行要读取）。当
+     <code class="function">spi_fetchrow</code>返回<code class="literal">undef</code>时，
+     <code class="literal">spi_query</code>返回的游标会自动被释放。如果不
+     想读取所有的行，可以调用<code class="function">spi_cursor_close</code>来
+     释放游标。如果没有这样做会导致内存泄露。
+    </p></dd><dt><span class="term">      <code class="literal"><code class="function">spi_prepare(<em class="replaceable"><code>command</code></em>, <em class="replaceable"><code>argument types</code></em>)</code></code>
+      <a id="idp37778096" class="indexterm"></a>
+     <br /></span><span class="term">      <code class="literal"><code class="function">spi_query_prepared(<em class="replaceable"><code>plan</code></em>, <em class="replaceable"><code>arguments</code></em>)</code></code>
+      <a id="idp37781376" class="indexterm"></a>
+     <br /></span><span class="term">      <code class="literal"><code class="function">spi_exec_prepared(<em class="replaceable"><code>plan</code></em> [, <em class="replaceable"><code>attributes</code></em>], <em class="replaceable"><code>arguments</code></em>)</code></code>
+      <a id="idp37785104" class="indexterm"></a>
+     <br /></span><span class="term">      <code class="literal"><code class="function">spi_freeplan(<em class="replaceable"><code>plan</code></em>)</code></code>
+      <a id="idp37787968" class="indexterm"></a>
+     </span></dt><dd><p>    <code class="literal">spi_prepare</code>、<code class="literal">spi_query_prepared</code>、
+    <code class="literal">spi_exec_prepared</code>和<code class="literal">spi_freeplan</code>
+    为预备查询实现了相同的功能。<code class="literal">spi_prepare</code>接受一个查询
+    字符串，其中包括编好号的参数占位符（$1、$2 等）以及参数类型的字符串
+    列表：
+</p><pre class="programlisting">$plan = spi_prepare('SELECT * FROM test WHERE id &gt; $1 AND name = $2',
+                                                     'INTEGER', 'TEXT');</pre><p>
+    一旦通过调用<code class="literal">spi_prepare</code>准备好一个查询计划，就可以在
+    <code class="literal">spi_exec_prepared</code>（返回的结果和
+    <code class="literal">spi_exec_query</code>相同）或者<code class="literal">spi_query_prepared</code>
+    （返回的结果和<code class="literal">spi_query</code>一样，后面会被传给
+    <code class="literal">spi_fetchrow</code>）中用该计划来取代字符串查询。
+    <code class="literal">spi_exec_prepared</code>可选的第二个参数是属性的哈希引用，
+    当前唯一支持的属性是<code class="literal">limit</code>，它限定了一个查询返回的最大
+    行数。
+    </p><p>    预备查询的有点是可以把一个准备好的计划用于多次查询执行。不再需要该计划后，
+    可以用<code class="literal">spi_freeplan</code>释放它：
+</p><pre class="programlisting">CREATE OR REPLACE FUNCTION init() RETURNS VOID AS $$
+        $_SHARED{my_plan} = spi_prepare('SELECT (now() + $1)::date AS now',
+                                        'INTERVAL');
+$$ LANGUAGE plperl;
+
+CREATE OR REPLACE FUNCTION add_time( INTERVAL ) RETURNS TEXT AS $$
+        return spi_exec_prepared(
+                $_SHARED{my_plan},
+                $_[0]
+        )-&gt;{rows}-&gt;[0]-&gt;{now};
+$$ LANGUAGE plperl;
+
+CREATE OR REPLACE FUNCTION done() RETURNS VOID AS $$
+        spi_freeplan( $_SHARED{my_plan});
+        undef $_SHARED{my_plan};
+$$ LANGUAGE plperl;
+
+SELECT init();
+SELECT add_time('1 day'), add_time('2 days'), add_time('3 days');
+SELECT done();
+
+  add_time  |  add_time  |  add_time
+------------+------------+------------
+ 2005-12-10 | 2005-12-11 | 2005-12-12</pre><p>
+    注意<code class="literal">spi_prepare</code>中的参数下标通过 $1、$2、$3 等定义，
+    这样避免了用双引号来声明查询串（容易导致难以捕捉的缺陷）。
+    </p><p>    另一个展示<code class="literal">spi_exec_prepared</code>中可选参数用法的例子：
+</p><pre class="programlisting">CREATE TABLE hosts AS SELECT id, ('192.168.1.'||id)::inet AS address
+                      FROM generate_series(1,3) AS id;
+
+CREATE OR REPLACE FUNCTION init_hosts_query() RETURNS VOID AS $$
+        $_SHARED{plan} = spi_prepare('SELECT * FROM hosts
+                                      WHERE address &lt;&lt; $1', 'inet');
+$$ LANGUAGE plperl;
+
+CREATE OR REPLACE FUNCTION query_hosts(inet) RETURNS SETOF hosts AS $$
+        return spi_exec_prepared(
+                $_SHARED{plan},
+                {limit =&gt; 2},
+                $_[0]
+        )-&gt;{rows};
+$$ LANGUAGE plperl;
+
+CREATE OR REPLACE FUNCTION release_hosts_query() RETURNS VOID AS $$
+        spi_freeplan($_SHARED{plan});
+        undef $_SHARED{plan};
+$$ LANGUAGE plperl;
+
+SELECT init_hosts_query();
+SELECT query_hosts('192.168.1.0/30');
+SELECT release_hosts_query();
+
+    query_hosts    
+-----------------
+ (1,192.168.1.1)
+ (2,192.168.1.2)
+(2 rows)</pre><p>
+    </p></dd></dl></div></div><div class="sect2" id="PLPERL-UTILITY-FUNCTIONS"><div class="titlepage"><div><div><h3 class="title">44.3.2. PL/Perl 中的工具函数</h3></div></div></div><div class="variablelist"><dl class="variablelist"><dt><span class="term">      <code class="literal"><code class="function">elog(<em class="replaceable"><code>level</code></em>, <em class="replaceable"><code>msg</code></em>)</code></code>
+      <a id="idp37812464" class="indexterm"></a>
+     </span></dt><dd><p>       发出一个日志或者错误消息。可用的级别有
+       <code class="literal">DEBUG</code>、<code class="literal">LOG</code>、<code class="literal">INFO</code>、
+       <code class="literal">NOTICE</code>、<code class="literal">WARNING</code>以及<code class="literal">ERROR</code>。
+       <code class="literal">ERROR</code>产生一种错误情况，如果它没有被周围的 Perl 代码
+       捕获，错误会传播到调用查询中，导致当前事务或者子事务被中止。这实际
+       上和 Perl 的<code class="literal">die</code> 命令相同。其他级别只产生不同优先级的消息。
+       特定优先级的消息是被报告给客户端、写到服务器日志或者两者都做由
+        配置变量<a class="xref" href="runtime-config-logging.html#GUC-LOG-MIN-MESSAGES">log_min_messages</a>和
+        <a class="xref" href="runtime-config-logging.html#GUC-CLIENT-MIN-MESSAGES">client_min_messages</a>控制。详见
+        <a class="xref" href="runtime-config.html" title="第 19 章 服务器配置">第 19 章</a>。
+      </p></dd><dt><span class="term">      <code class="literal"><code class="function">quote_literal(<em class="replaceable"><code>string</code></em>)</code></code>
+      <a id="idp37824208" class="indexterm"></a>
+     </span></dt><dd><p>        返回给定字符串的被适当引用后的形式，这种形式能被用作 SQL 语句字符串中的字符串。
+        嵌入的引号和反斜线会被正确地双写。注意对 undef 输入<code class="function">quote_literal</code>
+        会返回 undef。如果参数可能是 undef，<code class="function">quote_nullable</code>通常更合适。
+      </p></dd><dt><span class="term">      <code class="literal"><code class="function">quote_nullable(<em class="replaceable"><code>string</code></em>)</code></code>
+      <a id="idp37829568" class="indexterm"></a>
+     </span></dt><dd><p>        返回给定字符串的被适当引用后的形式，这种形式能被用作 SQL 语句字符串中的字符串。
+        或者在参数为 undef 时，返回未引用的串 "NULL"。
+        嵌入的引号和反斜线会被正确地双写。
+      </p></dd><dt><span class="term">      <code class="literal"><code class="function">quote_ident(<em class="replaceable"><code>string</code></em>)</code></code>
+      <a id="idp37833488" class="indexterm"></a>
+     </span></dt><dd><p>        返回给定字符串的被适当引用后的形式，这种形式能被用作 SQL 语句字符串
+        中的标识符。只有在必要时才增加引号（即，如果串包含非标识符字符或者是
+        大小写折叠的）。嵌入的引号会被正确地双写。
+      </p></dd><dt><span class="term">      <code class="literal"><code class="function">decode_bytea(<em class="replaceable"><code>string</code></em>)</code></code>
+      <a id="idp37837472" class="indexterm"></a>
+     </span></dt><dd><p>        返回由给定串的内容（应该用<code class="type">bytea</code>编码）表示的未转义二进制数据。
+        </p></dd><dt><span class="term">      <code class="literal"><code class="function">encode_bytea(<em class="replaceable"><code>string</code></em>)</code></code>
+      <a id="idp37841440" class="indexterm"></a>
+     </span></dt><dd><p>        返回给定串的二进制数据内容的<code class="type">bytea</code>编码形式。
+        </p></dd><dt><span class="term">      <code class="literal"><code class="function">encode_array_literal(<em class="replaceable"><code>array</code></em>)</code></code>
+      <a id="idp37845392" class="indexterm"></a>
+     <br /></span><span class="term">      <code class="literal"><code class="function">encode_array_literal(<em class="replaceable"><code>array</code></em>, <em class="replaceable"><code>delimiter</code></em>)</code></code>
+     </span></dt><dd><p>        把被引用的数组的内容返回成数组文字格式（见<a class="xref" href="arrays.html#ARRAYS-INPUT" title="8.15.2. 数组值输入">第 8.15.2 节</a>）
+        的一个串。如果它不是一个数组的引用，则不加修改地返回参数值。如果没有指定
+        定界符或者定界符为 undef，则默认把"<code class="literal">, </code>"用作数组文字的元素
+        之间的定界符。
+        </p></dd><dt><span class="term">      <code class="literal"><code class="function">encode_typed_literal(<em class="replaceable"><code>value</code></em>, <em class="replaceable"><code>typename</code></em>)</code></code>
+      <a id="idp37853152" class="indexterm"></a>
+     </span></dt><dd><p>         把一个 Perl 变量转换为由第二个参数传入的数据类型的值，并且返回该值
+         的字符串表达。它能正确地处理嵌套数组和组合类型的值。
+       </p></dd><dt><span class="term">      <code class="literal"><code class="function">encode_array_constructor(<em class="replaceable"><code>array</code></em>)</code></code>
+      <a id="idp37856960" class="indexterm"></a>
+     </span></dt><dd><p>        把被引用数组的内容返回为数组构造器格式（
+        <a class="xref" href="sql-expressions.html#SQL-SYNTAX-ARRAY-CONSTRUCTORS" title="4.2.12. 数组构造器">第 4.2.12 节</a>）的一个串。其中的个体值用
+        <code class="function">quote_nullable</code>引用。如果参数不是一个数组引用，则
+        返回用<code class="function">quote_nullable</code>引用的该参数值。
+        </p></dd><dt><span class="term">      <code class="literal"><code class="function">looks_like_number(<em class="replaceable"><code>string</code></em>)</code></code>
+      <a id="idp37862768" class="indexterm"></a>
+     </span></dt><dd><p>        如果给定串的内容对于 Perl 看起来像是数字则返回真，否则返回假。如果
+        参数是 undef 则返回 undef。前导和结尾的空格会被忽略。
+        <code class="literal">Inf</code>和<code class="literal">Infinity</code>被视作数字。
+        </p></dd><dt><span class="term">      <code class="literal"><code class="function">is_array_ref(<em class="replaceable"><code>argument</code></em>)</code></code>
+      <a id="idp37868016" class="indexterm"></a>
+     </span></dt><dd><p>        如果给定参数可以被当作一个数组引用对待则返回真值，即该参数的定义为
+        <code class="literal">ARRAY</code>或者<code class="literal">PostgreSQL::InServer::ARRAY</code>时返回
+        真。否则返回假。
+      </p></dd></dl></div></div></div><div class="navfooter"><hr /><table width="100%" summary="Navigation footer"><tr><td width="40%" align="left"><a accesskey="p" href="plperl-data.html">上一页</a> </td><td width="20%" align="center"><a accesskey="u" href="plperl.html">上一级</a></td><td width="40%" align="right"> <a accesskey="n" href="plperl-global.html">下一页</a></td></tr><tr><td width="40%" align="left" valign="top">44.2. PL/Perl 中的数据值 </td><td width="20%" align="center"><a accesskey="h" href="index.html">起始页</a></td><td width="40%" align="right" valign="top"> 44.4. PL/Perl 中的全局值</td></tr></table></div></body></html>

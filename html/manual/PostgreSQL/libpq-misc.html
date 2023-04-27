@@ -1,0 +1,90 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><title>33.11. 杂项函数</title><link rel="stylesheet" type="text/css" href="stylesheet.css" /><link rev="made" href="pgsql-docs@postgresql.org" /><meta name="generator" content="DocBook XSL Stylesheets V1.79.1" /><link rel="prev" href="libpq-control.html" title="33.10. 控制函数" /><link rel="next" href="libpq-notice-processing.html" title="33.12. 通知处理" /></head><body><div xmlns="http://www.w3.org/TR/xhtml1/transitional" class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="5" align="center">33.11. 杂项函数</th></tr><tr><td width="10%" align="left"><a accesskey="p" href="libpq-control.html" title="33.10. 控制函数">上一页</a> </td><td width="10%" align="left"><a accesskey="u" href="libpq.html" title="第 33 章 libpq - C 库">上一级</a></td><th width="60%" align="center">第 33 章 <span xmlns="http://www.w3.org/1999/xhtml" class="application">libpq</span> - C 库</th><td width="10%" align="right"><a accesskey="h" href="index.html" title="PostgreSQL 10.1 手册">起始页</a></td><td width="10%" align="right"> <a accesskey="n" href="libpq-notice-processing.html" title="33.12. 通知处理">下一页</a></td></tr></table><hr></hr></div><div class="sect1" id="LIBPQ-MISC"><div class="titlepage"><div><div><h2 class="title" style="clear: both">33.11. 杂项函数</h2></div></div></div><p>   一如往常，总有一些函数不适合放在任何其他地方。
+  </p><div class="variablelist"><dl class="variablelist"><dt id="LIBPQ-PQFREEMEM"><span class="term">     <code class="function">PQfreemem</code>
+     <a id="idp28351584" class="indexterm"></a>
+    </span></dt><dd><p>      释放<span class="application">libpq</span>分配的内存。
+</p><pre class="synopsis">void PQfreemem(void *ptr);</pre><p>
+     </p><p>      释放<span class="application">libpq</span>分配的内存，尤其是<code class="function">PQescapeByteaConn</code>、<code class="function">PQescapeBytea</code>、<code class="function">PQunescapeBytea</code>和<code class="function">PQnotifies</code>分配的内存。特别重要的是，在微软 Windows 上使用这个函数，而不是<code class="function">free()</code>。这是因为只有 DLL 和应用的当多线程/单线程、发布/调试以及静态/动态标志相同时，才能在一个 DLL 中分配内存并且在应用中释放它。在非微软 Windows 平台上，这个函数与标准库函数<code class="function">free()</code>相同。
+     </p></dd><dt id="LIBPQ-PQCONNINFOFREE"><span class="term">     <code class="function">PQconninfoFree</code>
+     <a id="idp28361408" class="indexterm"></a>
+    </span></dt><dd><p>      释放<code class="function">PQconndefaults</code>或<code class="function">PQconninfoParse</code>分配的数据结构。
+</p><pre class="synopsis">void PQconninfoFree(PQconninfoOption *connOptions);</pre><p>
+     </p><p>      一个简单的<code class="function">PQfreemem</code>不会做这些，因为数组包含对子字符串的引用。
+     </p></dd><dt id="LIBPQ-PQENCRYPTPASSWORDCONN"><span class="term">     <code class="function">PQencryptPasswordConn</code>
+     <a id="idp28367552" class="indexterm"></a>
+    </span></dt><dd><p>      准备一个<span class="productname">PostgreSQL</span>口令的加密形式。
+</p><pre class="synopsis">char *PQencryptPasswordConn(PGconn *conn, const char *passwd, const char *user, const char *algorithm);</pre><p>
+      这个函数旨在用于那些希望发送类似于<code class="literal">ALTER USER joe PASSWORD 'pwd'</code>命令的客户端应用。不在这样一个命令中发送原始的明文密码是一个好习惯，因为它可能被暴露在命令日志、活动显示等等中。相反，在发送之前使用这个函数可以将口令转换为加密的形式。
+     </p><p>	  
+	  <em class="parameter"><code>algorithm</code></em>指定用于加密口令的加密算法。目前支持的算法是
+	  <code class="literal">md5</code>和<code class="literal">scram-sha-256</code>，（<code class="literal">on</code>和<code class="literal">off</code>
+	  也被接受为<code class="literal">md5</code>的别名，以与旧版服务器版本兼容）。
+	  请注意，在<span class="productname">PostgreSQL</span>版本10中引入了对<code class="literal">scram-sha-256</code>
+	  的支持，并且在旧版服务器版本中无法正常工作。如果<em class="parameter"><code>algorithm</code></em>
+	  是<code class="symbol">NULL</code>，则此函数将向服务器查询<a class="xref" href="runtime-config-connection.html#GUC-PASSWORD-ENCRYPTION">password_encryption</a>
+	  设置的当前值。如果当前事务中止，或者连接忙于执行另一个查询，则可能会阻塞，
+	  并会失败。如果您希望服务器使用默认算法，但希望避免阻塞，
+	  请在调用<code class="function">PQencryptPasswordConn</code>之前亲自查询
+	  <code class="varname">password_encryption</code>，并将该值作为<em class="parameter"><code>algorithm</code></em>传递。
+     </p><p>      返回值是<code class="function">malloc</code>分配的一个字符串。
+	  调用者可以假定该字符串中不包含任何需要转义的特殊字符。当使用结束之后，
+	  用<code class="function">PQfreemem</code>释放结果。错误时，返回<code class="symbol">NULL</code>，
+	  并且一个合适的消息被存储在连接对象中。	  
+     </p></dd><dt id="LIBPQ-PQENCRYPTPASSWORD"><span class="term">     <code class="function">PQencryptPassword</code>
+     <a id="idp28385664" class="indexterm"></a>
+    </span></dt><dd><p>      准备一个<span class="productname">PostgreSQL</span>口令的md5加密形式。
+</p><pre class="synopsis">char *PQencryptPassword(const char *passwd, const char *user);</pre><p>
+      <code class="function">PQencryptPassword</code>是<code class="function">PQencryptPasswodConn</code>
+	  的一个较旧的，废弃的版本。区别在于<code class="function">PQencryptPassword</code>
+	  不需要连接对象，并且始终使用<code class="literal">md5</code>作为加密算法。
+     </p></dd><dt id="LIBPQ-PQMAKEEMPTYPGRESULT"><span class="term">     <code class="function">PQmakeEmptyPGresult</code>
+     <a id="idp28392992" class="indexterm"></a>
+    </span></dt><dd><p>      用给定的状态，构造一个空<code class="structname">PGresult</code>对象。
+</p><pre class="synopsis">PGresult *PQmakeEmptyPGresult(PGconn *conn, ExecStatusType status);</pre><p>
+     </p><p>      这是<span class="application">libpq</span>内部用于分配并初始化一个空<code class="structname">PGresult</code>对象的函数。如果不能分配内存，那么这个函数返回<code class="symbol">NULL</code>。它也是可以对外使用的，因为一些应用认为它可以用于产生结果对象（特别是带有错误状态的对象）本身。如果<em class="parameter"><code>conn</code></em>非空，并且<em class="parameter"><code>status</code></em>表示一个错误，那么指定连接的当前错误消息会被复制到<code class="structname">PGresult</code>中。如果<em class="parameter"><code>conn</code></em>非空，那么连接中的任何已注册事件过程也会被复制到<code class="structname">PGresult</code>中（它们不会获得<code class="literal">PGEVT_RESULTCREATE</code>调用，但会看到<code class="function">PQfireResultCreateEvents</code>）。注意在该对象上最终应该调用<code class="function">PQclear</code>，正如对<span class="application">libpq</span>本身返回的<code class="structname">PGresult</code>对象所作的那样。
+     </p></dd><dt id="LIBPQ-PQFIRERESULTCREATEEVENTS"><span class="term">     <code class="function">PQfireResultCreateEvents</code>
+     <a id="idp28405728" class="indexterm"></a>
+    </span></dt><dd><p>      为每一个在<code class="structname">PGresult</code>对象中注册的事件过程触发一个<code class="literal">PGEVT_RESULTCREATE</code>事件（见<a class="xref" href="libpq-events.html" title="33.13. 事件系统">第 33.13 节</a>）。成功时返回非 0，如果任何事件过程失败则返回 0。
+
+</p><pre class="synopsis">int PQfireResultCreateEvents(PGconn *conn, PGresult *res);</pre><p>
+     </p><p>      <code class="literal">conn</code>参数被传送给事件过程，但不会被直接使用。如果事件过程不使用它，则会返回<code class="symbol">NULL</code>。
+     </p><p>      已经接收到这个对象的<code class="literal">PGEVT_RESULTCREATE</code>或<code class="literal">PGEVT_RESULTCOPY</code>事件的事件过程不会被再次触发。
+     </p><p>      这个函数与<code class="function">PQmakeEmptyPGresult</code>分开的主要原因是在调用事件过程之前创建一个<code class="structname">PGresult</code>并且填充它常常是合适的。
+     </p></dd><dt id="LIBPQ-PQCOPYRESULT"><span class="term">     <code class="function">PQcopyResult</code>
+     <a id="idp28416208" class="indexterm"></a>
+    </span></dt><dd><p>      为一个<code class="structname">PGresult</code>对象创建一个拷贝。这个拷贝不会以任何方式链接到源结果，并且当该拷贝不再需要时，必须调用<code class="function">PQclear</code>进行清理。如果函数失败，返回<code class="symbol">NULL</code>。
+
+</p><pre class="synopsis">PGresult *PQcopyResult(const PGresult *src, int flags);</pre><p>
+     </p><p>      这个函数的意图并非是制作一个准确的拷贝。返回的结果总是会被放入<code class="literal">PGRES_TUPLES_OK</code>状态，并且不会拷贝来源中的任何错误消息（不过它确实会拷贝命令状态字符串）。<em class="parameter"><code>flags</code></em>参数决定还要拷贝些什么。它通常是几个标志的按位 OR。<code class="literal">PG_COPYRES_ATTRS</code>指定复制源结果的属性（列定义）。<code class="literal">PG_COPYRES_TUPLES</code>指定复制源结果的元组（这也意味着复制属性）。<code class="literal">PG_COPYRES_NOTICEHOOKS</code>指定复制源结果的提醒钩子。<code class="literal">PG_COPYRES_EVENTS</code>指定复制源结果的事件（但是不会复制与源结果相关的实例数据）。
+     </p></dd><dt id="LIBPQ-PQSETRESULTATTRS"><span class="term">     <code class="function">PQsetResultAttrs</code>
+     <a id="idp28426544" class="indexterm"></a>
+    </span></dt><dd><p>      设置<code class="structname">PGresult</code>对象的属性。
+</p><pre class="synopsis">int PQsetResultAttrs(PGresult *res, int numAttributes, PGresAttDesc *attDescs);</pre><p>
+     </p><p>      提供的<em class="parameter"><code>attDescs</code></em>被复制到结果中。如果<em class="parameter"><code>attDescs</code></em>指针为<code class="symbol">NULL</code>或<em class="parameter"><code>numAttributes</code></em>小于1，那么请求将被忽略并且函数成功。如果<em class="parameter"><code>res</code></em>已经包含属性，那么函数会失败。如果函数失败，返回值是 0。如果函数成功，返回值是非 0。
+     </p></dd><dt id="LIBPQ-PQSETVALUE"><span class="term">     <code class="function">PQsetvalue</code>
+     <a id="idp28434368" class="indexterm"></a>
+    </span></dt><dd><p>      设置一个<code class="structname">PGresult</code>对象的一个元组域值。
+</p><pre class="synopsis">int PQsetvalue(PGresult *res, int tup_num, int field_num, char *value, int len);</pre><p>
+     </p><p>      这个函数将自动按需增加结果的内置元组数组。但是，<em class="parameter"><code>tup_num</code></em>参数必须小于等于<code class="function">PQntuples</code>，意味着这个函数对元组数组一次只能增加一个元组。但已存在的任意元组中的任意域可以以任意顺序进行调整。如果<em class="parameter"><code>field_num</code></em>的一个值已经存在，它会被覆盖。如果<em class="parameter"><code>len</code></em>是 -1，或<em class="parameter"><code>value</code></em>是<code class="symbol">NULL</code>， 该域值会被设置为一个 SQL 空值。<em class="parameter"><code>value</code></em>会被复制到结果的私有存储中，因此函数返回后就不再需要了。如果函数失败，返回值是 0。如果函数成功，返回值会是非 0。
+     </p></dd><dt id="LIBPQ-PQRESULTALLOC"><span class="term">     <code class="function">PQresultAlloc</code>
+     <a id="idp28443984" class="indexterm"></a>
+    </span></dt><dd><p>      为一个<code class="structname">PGresult</code>对象分配附属存储。
+</p><pre class="synopsis">void *PQresultAlloc(PGresult *res, size_t nBytes);</pre><p>
+     </p><p>      当<em class="parameter"><code>res</code></em>被清除时，这个函数分配的内存也会被释放掉。如果函数失败，返回值是<code class="symbol">NULL</code>。结果被保证为按照数据的任意类型充分地对齐，正如<code class="function">malloc</code>所作的。
+     </p></dd><dt id="LIBPQ-PQLIBVERSION"><span class="term">     <code class="function">PQlibVersion</code>
+     <a id="idp28450192" class="indexterm"></a>
+    </span></dt><dd><p>      返回所使用的<span class="productname">libpq</span>版本。
+</p><pre class="synopsis">int PQlibVersion(void);</pre><p>
+     </p><p>      在运行时，这个函数的结果可以被用来决定在当前已载入的 libpq 版本中特定的功能是否可用。
+	  例如，这个函数可以被用来决定哪些选项可以被用于<code class="function">PQconnectdb</code>。
+     </p><p>      结果是通过将库的主要版本号乘以10000并添加次要版本号形成的。
+	  例如，版本10.1将返回100001，版本11.0将返回110000。如果连接不正确，则返回零。
+     </p><p>       在主版本10之前，<span class="productname">PostgreSQL</span>使用三部分版本号，
+	   前两部分代表主要版本。对于这些版本，<code class="function">PQserverVersion</code>
+	   对每个部分使用两个数字；例如版本9.1.5将返回90105，版本9.2.0将返回90200。
+      </p><p>       因此，为确定功能兼容性，应用程序应将<code class="function">PQserverVersion</code>
+	   的结果除以100而不是10000，以确定逻辑主要版本号。在所有发行版系列中，
+	   只有最后两位数字在次版本（错误修复版本）之间有所不同。
+      </p><div class="note"><h3 class="title">注意</h3><p>       这个函数出现于<span class="productname">PostgreSQL</span>版本 9.1，因此它不能被用来在早期的版本中检测所需的功能，因为调用它将会创建一个对版本 9.1 或更高版本的链接依赖。
+      </p></div></dd></dl></div></div><div class="navfooter"><hr /><table width="100%" summary="Navigation footer"><tr><td width="40%" align="left"><a accesskey="p" href="libpq-control.html">上一页</a> </td><td width="20%" align="center"><a accesskey="u" href="libpq.html">上一级</a></td><td width="40%" align="right"> <a accesskey="n" href="libpq-notice-processing.html">下一页</a></td></tr><tr><td width="40%" align="left" valign="top">33.10. 控制函数 </td><td width="20%" align="center"><a accesskey="h" href="index.html">起始页</a></td><td width="40%" align="right" valign="top"> 33.12. 通知处理</td></tr></table></div></body></html>

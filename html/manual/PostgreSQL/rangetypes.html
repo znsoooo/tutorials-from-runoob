@@ -1,0 +1,164 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><title>8.17. 范围类型</title><link rel="stylesheet" type="text/css" href="stylesheet.css" /><link rev="made" href="pgsql-docs@postgresql.org" /><meta name="generator" content="DocBook XSL Stylesheets V1.79.1" /><link rel="prev" href="rowtypes.html" title="8.16. 复合类型" /><link rel="next" href="datatype-oid.html" title="8.18. 对象标识符类型" /></head><body><div xmlns="http://www.w3.org/TR/xhtml1/transitional" class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="5" align="center">8.17. 范围类型</th></tr><tr><td width="10%" align="left"><a accesskey="p" href="rowtypes.html" title="8.16. 复合类型">上一页</a> </td><td width="10%" align="left"><a accesskey="u" href="datatype.html" title="第 8 章 数据类型">上一级</a></td><th width="60%" align="center">第 8 章 数据类型</th><td width="10%" align="right"><a accesskey="h" href="index.html" title="PostgreSQL 10.1 手册">起始页</a></td><td width="10%" align="right"> <a accesskey="n" href="datatype-oid.html" title="8.18. 对象标识符类型">下一页</a></td></tr></table><hr></hr></div><div class="sect1" id="RANGETYPES"><div class="titlepage"><div><div><h2 class="title" style="clear: both">8.17. 范围类型</h2></div></div></div><div class="toc"><dl class="toc"><dt><span class="sect2"><a href="rangetypes.html#RANGETYPES-BUILTIN">8.17.1. 内建范围类型</a></span></dt><dt><span class="sect2"><a href="rangetypes.html#RANGETYPES-EXAMPLES">8.17.2. 例子</a></span></dt><dt><span class="sect2"><a href="rangetypes.html#RANGETYPES-INCLUSIVITY">8.17.3. 包含和排除边界</a></span></dt><dt><span class="sect2"><a href="rangetypes.html#RANGETYPES-INFINITE">8.17.4. 无限（无界）范围</a></span></dt><dt><span class="sect2"><a href="rangetypes.html#RANGETYPES-IO">8.17.5. 范围输入/输出</a></span></dt><dt><span class="sect2"><a href="rangetypes.html#RANGETYPES-CONSTRUCT">8.17.6. 构造范围</a></span></dt><dt><span class="sect2"><a href="rangetypes.html#RANGETYPES-DISCRETE">8.17.7. 离散范围类型</a></span></dt><dt><span class="sect2"><a href="rangetypes.html#RANGETYPES-DEFINING">8.17.8. 定义新的范围类型</a></span></dt><dt><span class="sect2"><a href="rangetypes.html#RANGETYPES-INDEXING">8.17.9. 索引</a></span></dt><dt><span class="sect2"><a href="rangetypes.html#RANGETYPES-CONSTRAINT">8.17.10. 范围上的约束</a></span></dt></dl></div><a id="idp9199824" class="indexterm"></a><p>  范围类型是表达某种元素类型（称为范围的<em class="firstterm">subtype</em>）的一个值的范围的数据类型。例如，<code class="type">timestamp</code>的范围可以被用来表达一个会议室被保留的时间范围。在这种情况下，数据类型是<code class="type">tsrange</code>（<span class="quote">“<span class="quote">timestamp range</span>”</span>的简写）而<code class="type">timestamp</code>是 subtype。subtype 必须具有一种总体的顺序，这样对于元素值是在一个范围值之内、之前或之后就是界线清楚的。
+ </p><p>  范围类型非常有用，因为它们可以表达一种单一范围值中的多个元素值，并且可以很清晰地表达诸如范围重叠等概念。用于时间安排的时间和日期范围是最清晰的例子；但是价格范围、一种仪器的量程等等也都有用。
+ </p><div class="sect2" id="RANGETYPES-BUILTIN"><div class="titlepage"><div><div><h3 class="title">8.17.1. 内建范围类型</h3></div></div></div><p>  PostgreSQL 带有下列内建范围类型：
+  </p><div class="itemizedlist"><ul class="itemizedlist" style="list-style-type: disc; "><li class="listitem"><p>       <code class="type">int4range</code> — <code class="type">integer</code>的范围
+      </p></li><li class="listitem"><p>       <code class="type">int8range</code> — <code class="type">bigint</code>的范围
+      </p></li><li class="listitem"><p>       <code class="type">numrange</code> — <code class="type">numeric</code>的范围
+      </p></li><li class="listitem"><p>       <code class="type">tsrange</code> — <code class="type">不带时区的 timestamp</code>的范围
+      </p></li><li class="listitem"><p>       <code class="type">tstzrange</code> — <code class="type">带时区的 timestamp</code>的范围
+      </p></li><li class="listitem"><p>       <code class="type">daterange</code> — <code class="type">date</code>的范围
+      </p></li></ul></div><p>
+  此外，你可以定义自己的范围类型，详见<a class="xref" href="sql-createtype.html" title="CREATE TYPE"><span class="refentrytitle">CREATE TYPE</span></a>。
+ </p></div><div class="sect2" id="RANGETYPES-EXAMPLES"><div class="titlepage"><div><div><h3 class="title">8.17.2. 例子</h3></div></div></div><pre class="programlisting">CREATE TABLE reservation (room int, during tsrange);
+INSERT INTO reservation VALUES
+    (1108, '[2010-01-01 14:30, 2010-01-01 15:30)');
+
+-- 包含
+SELECT int4range(10, 20) @&gt; 3;
+
+-- 重叠
+SELECT numrange(11.1, 22.2) &amp;&amp; numrange(20.0, 30.0);
+
+-- 抽取上界
+SELECT upper(int8range(15, 25));
+
+-- 计算交集
+SELECT int4range(10, 20) * int4range(15, 25);
+
+-- 范围为空吗？
+SELECT isempty(numrange(1, 5));</pre><p>
+
+   范围类型上的操作符和函数的完整列表可见<a class="xref" href="functions-range.html#RANGE-OPERATORS-TABLE" title="表 9.50. 范围操作符">表 9.50</a>以及<a class="xref" href="functions-range.html#RANGE-FUNCTIONS-TABLE" title="表 9.51. 范围函数">表 9.51</a>。
+  </p></div><div class="sect2" id="RANGETYPES-INCLUSIVITY"><div class="titlepage"><div><div><h3 class="title">8.17.3. 包含和排除边界</h3></div></div></div><p>   每一个非空范围都有两个界限，下界和上界。这些值之间的所有点都被包括在范围内。一个包含界限意味着边界点本身也被包括在范围内，而一个排除边界意味着边界点不被包括在范围内。
+  </p><p>   在一个范围的文本形式中，一个包含下界被表达为<span class="quote">“<span class="quote"><code class="literal">[</code></span>”</span>而一个排除下界被表达为<span class="quote">“<span class="quote"><code class="literal">(</code></span>”</span>。同样，一个包含上界被表达为<span class="quote">“<span class="quote"><code class="literal">]</code></span>”</span>而一个排除上界被表达为<span class="quote">“<span class="quote"><code class="literal">)</code></span>”</span>（详见<a class="xref" href="rangetypes.html#RANGETYPES-IO" title="8.17.5. 范围输入/输出">第 8.17.5 节</a>）。
+  </p><p>   函数<code class="literal">lower_inc</code>和<code class="literal">upper_inc</code>分别测试一个范围值的上下界。
+  </p></div><div class="sect2" id="RANGETYPES-INFINITE"><div class="titlepage"><div><div><h3 class="title">8.17.4. 无限（无界）范围</h3></div></div></div><p>   一个范围的下界可以被忽略，意味着所有小于上界的点都被包括在范围中。同样，如果范围的上界被忽略，那么所有比上界大的的都被包括在范围中。如果上下界都被忽略，该元素类型的所有值都被认为在该范围中。
+  </p><p>   这等效于把下界当作<span class="quote">“<span class="quote">负无穷</span>”</span>，或者把上界当作<span class="quote">“<span class="quote">正无穷</span>”</span>。但是注意这些无穷值绝不是范围的元素类型的值，并且绝不是范围的一部分（因此没有所谓的包含无限界限 — 如果你尝试写一个，它将被自动转换成一个排除界限）。
+  </p><p>   还有，有一些元素类型具有一种<span class="quote">“<span class="quote">无限</span>”</span>概念，但是那只是范围类型机制所关心的之外的另一种值。例如，在时间戳范围中，<code class="literal">[today,]</code>意味着与<code class="literal">[today,)</code>相同的东西。但是<code class="literal">[today,infinity]</code>意味着与<code class="literal">[today,infinity)</code>不同的某种东西 — 后者排除了特殊的<code class="type">timestamp</code>值<code class="literal">infinity</code>。
+  </p><p>   函数<code class="literal">lower_inf</code>和<code class="literal">upper_inf</code>分别测试一个范围的无限上下界。
+  </p></div><div class="sect2" id="RANGETYPES-IO"><div class="titlepage"><div><div><h3 class="title">8.17.5. 范围输入/输出</h3></div></div></div><p>   一个范围值的输入必须遵循下列模式之一：
+</p><pre class="synopsis">(<em class="replaceable"><code>lower-bound</code></em>,<em class="replaceable"><code>upper-bound</code></em>)
+(<em class="replaceable"><code>lower-bound</code></em>,<em class="replaceable"><code>upper-bound</code></em>]
+[<em class="replaceable"><code>lower-bound</code></em>,<em class="replaceable"><code>upper-bound</code></em>)
+[<em class="replaceable"><code>lower-bound</code></em>,<em class="replaceable"><code>upper-bound</code></em>]
+empty</pre><p>
+   圆括号或方括号指示上下界是否为排除的或者包含的。注意最后一个模式是<code class="literal">empty</code>，它表示一个空范围（一个不包含点的范围）。
+  </p><p>   <em class="replaceable"><code>lower-bound</code></em>可以是作为 subtype 的合法输入的一个字符串，或者是空表示没有下界。同样，<em class="replaceable"><code>upper-bound</code></em>可以是作为 subtype 的合法输入的一个字符串，或者是空表示没有上界。
+  </p><p>   每个界限值可以使用<code class="literal">"</code>（双引号）字符引用。如果界限值包含圆括号、方括号、逗号、双引号或反斜线时，这样做是必须的，因为否则那些字符会被认作范围语法的一部分。要把一个双引号或反斜线放在一个被引用的界限值中，就在它前面放一个反斜线（还有，在一个双引号引用的界限值中的一对双引号表示一个双引号字符，这与 SQL 字符串中的单引号规则类似）。此外，你可以避免引用并且使用反斜线转义来保护所有数据字符，否则它们会被当做返回语法的一部分。还有，要写一个是空字符串的界限值，则可以写成<code class="literal">""</code>，因为什么都不写表示一个无限界限。
+  </p><p>   范围值前后允许有空格，但是圆括号或方括号之间的任何空格会被当做上下界值的一部分（取决于元素类型，它可能是也可能不是有意义的）。
+  </p><div class="note"><h3 class="title">注意</h3><p>    这些规则与组合类型文字中书写域值的规则非常相似。更多注解请见<a class="xref" href="rowtypes.html#ROWTYPES-IO-SYNTAX" title="8.16.6. 复合类型输入和输出语法">第 8.16.6 节</a>。
+   </p></div><p>  例子：
+</p><pre class="programlisting">-- 包括 3，不包括 7，并且包括 3 和 7 之间的所有点
+SELECT '[3,7)'::int4range;
+
+-- 既不包括 3 也不包括 7，但是包括之间的所有点
+SELECT '(3,7)'::int4range;
+
+-- 只包括单独一个点 4
+SELECT '[4,4]'::int4range;
+
+-- 不包括点（并且将被标准化为 '空'）
+SELECT '[4,4)'::int4range;</pre><p>
+  </p></div><div class="sect2" id="RANGETYPES-CONSTRUCT"><div class="titlepage"><div><div><h3 class="title">8.17.6. 构造范围</h3></div></div></div><p>   每一种范围类型都有一个与其同名的构造器函数。使用构造器函数常常比写一个范围文字常数更方便，因为它避免了对界限值的额外引用。构造器函数接受两个或三个参数。两个参数的形式以标准的形式构造一个范围（下界是包含的，上界是排除的），而三个参数的形式按照第三个参数指定的界限形式构造一个范围。第三个参数必须是下列字符串之一：
+   <span class="quote">“<span class="quote"><code class="literal">()</code></span>”</span>、
+   <span class="quote">“<span class="quote"><code class="literal">(]</code></span>”</span>、
+   <span class="quote">“<span class="quote"><code class="literal">[)</code></span>”</span>或者
+   <span class="quote">“<span class="quote"><code class="literal">[]</code></span>”</span>。
+   例如：
+
+</p><pre class="programlisting">-- 完整形式是：下界、上界以及指示界限包含性/排除性的文本参数。
+SELECT numrange(1.0, 14.0, '(]');
+
+-- 如果第三个参数被忽略，则假定为 '[)'。
+SELECT numrange(1.0, 14.0);
+
+-- 尽管这里指定了 '(]'，显示时该值将被转换成标准形式，因为 int8range 是一种离散范围类型（见下文）。
+SELECT int8range(1, 14, '(]');
+
+-- 为一个界限使用 NULL 导致范围在那一边是无界的。
+SELECT numrange(NULL, 2.2);</pre><p>
+  </p></div><div class="sect2" id="RANGETYPES-DISCRETE"><div class="titlepage"><div><div><h3 class="title">8.17.7. 离散范围类型</h3></div></div></div><p>   一种范围的元素类型具有一个良定义的<span class="quote">“<span class="quote">步长</span>”</span>，例如<code class="type">integer</code>或<code class="type">date</code>。在这些类型中，如果两个元素之间没有合法值，它们可以被说成是相邻。这与连续范围相反，连续范围中总是（或者几乎总是）可以在两个给定值之间标识其他元素值。例如，<code class="type">numeric</code>类型之上的一个范围就是连续的，<code class="type">timestamp</code>上的范围也是（尽管<code class="type">timestamp</code>具有有限的精度，并且在理论上可以被当做离散的，最好认为它是连续的，因为通常并不关心它的步长）。
+  </p><p>   另一种考虑离散范围类型的方法是对每一个元素值都有一种清晰的<span class="quote">“<span class="quote">下一个</span>”</span>或<span class="quote">“<span class="quote">上一个</span>”</span>值。了解了这种思想之后，通过选择原来给定的下一个或上一个元素值来取代它，就可以在一个范围界限的包含和排除表达之间转换。例如，在一个整数范围类型中，<code class="literal">[4,8]</code>和<code class="literal">(3,9)</code>表示相同的值集合，但是对于 numeric 上的范围就不是这样。
+  </p><p>   一个离散范围类型应该具有一个<em class="firstterm">正规化</em>函数，它知道元素类型期望的步长。正规化函数负责把范围类型的相等值转换成具有相同的表达，特别是与包含或者排除界限一致。如果没有指定一个正规化函数，那么具有不同格式的范围将总是会被当作不等，即使它们实际上是表达相同的一组值。
+  </p><p>   内建的范围类型<code class="type">int4range</code>、<code class="type">int8range</code>和<code class="type">daterange</code>都使用一种正规的形式，该形式包括下界并且排除上界，也就是<code class="literal">[)</code>。不过，用户定义的范围类型可以使用其他习惯。
+  </p></div><div class="sect2" id="RANGETYPES-DEFINING"><div class="titlepage"><div><div><h3 class="title">8.17.8. 定义新的范围类型</h3></div></div></div><p>   用户可以定义他们自己的范围类型。这样做最常见的原因是为了使用内建范围类型中没有提供的 subtype 上的范围。例如，要创建一个 subtype <code class="type">float8</code>的范围类型：
+
+</p><pre class="programlisting">CREATE TYPE floatrange AS RANGE (
+    subtype = float8,
+    subtype_diff = float8mi
+);
+
+SELECT '[1.234, 5.678]'::floatrange;</pre><p>
+
+   因为<code class="type">float8</code>没有有意义的<span class="quote">“<span class="quote">步长</span>”</span>，我们在这个例子中没有定义一个正规化函数。
+  </p><p>   定义自己的范围类型也允许你指定使用一个不同的子类型 B-树操作符类或者集合，
+   以便更改排序顺序来决定哪些值会落入到给定的范围中。
+  </p><p>   如果 subtype 被认为是具有离散值而不是连续值，<code class="command">CREATE TYPE</code>命令应当指定一个<code class="literal">canonical</code>函数。正规化函数接收一个输入的范围值，并且必须返回一个可能具有不同界限和格式的等价的范围值。对于两个表示相同值集合的范围（例如<code class="literal">[1, 7]</code>和<code class="literal">[1, 8)</code>），正规的输出必须一样。选择哪一种表达作为正规的没有关系，只要两个具有不同格式的等价值总是能被映射到具有相同格式的相同值就行。除了调整包含/排除界限格式外，假使期望的补偿比 subtype 能够存储的要大，一个正规化函数可能会舍入边界值。例如，一个<code class="type">timestamp</code>之上的范围类型可能被定义为具有一个一小时的步长，这样正规化函数可能需要对不是一小时的倍数的界限进行舍入，或者可能直接抛出一个错误。
+  </p><p>   另外，任何打算要和 GiST 或 SP-GiST 索引一起使用的范围类型应当定一个 subtype 差异或<code class="literal">subtype_diff</code>函数（没有<code class="literal">subtype_diff</code>时索引仍然能工作，但是可能效率不如提供了差异函数时高）。subtype 差异函数采用两个 subtype 输入值，并且返回表示为一个<code class="type">float8</code>值的差（即<em class="replaceable"><code>X</code></em>减<em class="replaceable"><code>Y</code></em>）。在我们上面的例子中，可以使用常规<code class="type">float8</code>减法操作符之下的函数。但是对于任何其他 subtype，可能需要某种类型转换。还可能需要一些关于如何把差异表达为数字的创新型想法。为了最大的可扩展性，<code class="literal">subtype_diff</code>函数应该同意选中的操作符类和排序规则所蕴含的排序顺序，也就是说，只要它的第一个参数根据排序顺序大于第二个参数，它的结果就应该是正值。
+  </p><p>   <code class="literal">subtype_diff</code>函数的一个不那么过度简化的例子：
+  </p><pre class="programlisting">CREATE FUNCTION time_subtype_diff(x time, y time) RETURNS float8 AS
+'SELECT EXTRACT(EPOCH FROM (x - y))' LANGUAGE sql STRICT IMMUTABLE;
+
+CREATE TYPE timerange AS RANGE (
+    subtype = time,
+    subtype_diff = time_subtype_diff
+);
+
+SELECT '[11:10, 23:00]'::timerange;</pre><p>   更多关于创建范围类型的信息请参考<a class="xref" href="sql-createtype.html" title="CREATE TYPE"><span class="refentrytitle">CREATE TYPE</span></a>。
+  </p></div><div class="sect2" id="RANGETYPES-INDEXING"><div class="titlepage"><div><div><h3 class="title">8.17.9. 索引</h3></div></div></div><a id="idp9286544" class="indexterm"></a><p>   可以为范围类型的表列创建 GiST 和 SP-GiST 索引。例如，要创建一个 GiST 索引：
+</p><pre class="programlisting">CREATE INDEX reservation_idx ON reservation USING GIST (during);</pre><p>
+   一个 GiST 或 SP-GiST 索引可以加速涉及以下范围操作符的查询：
+   <code class="literal">=</code>、
+   <code class="literal">&amp;&amp;</code>、
+   <code class="literal">&lt;@</code>、
+   <code class="literal">@&gt;</code>、
+   <code class="literal">&lt;&lt;</code>、
+   <code class="literal">&gt;&gt;</code>、
+   <code class="literal">-|-</code>、
+   <code class="literal">&amp;&lt;</code>以及
+   <code class="literal">&amp;&gt;</code>
+   （详见<a class="xref" href="functions-range.html#RANGE-OPERATORS-TABLE" title="表 9.50. 范围操作符">表 9.50</a>）。
+  </p><p>   此外，B-树和哈希索引可以在范围类型的表列上创建。对于这些索引类型，基本上唯一有用的范围操作就是等值。使用相应的<code class="literal">&lt;</code> 和 <code class="literal">&gt;</code>操作符，对于范围值定义有一种 B-树排序顺序，但是该顺序相当任意并且在真实世界中通常不怎么有用。范围类型的 B-树和哈希支持主要是为了允许在查询内部进行排序和哈希，而不是创建真正的索引。
+  </p></div><div class="sect2" id="RANGETYPES-CONSTRAINT"><div class="titlepage"><div><div><h3 class="title">8.17.10. 范围上的约束</h3></div></div></div><a id="idp9299168" class="indexterm"></a><p>   虽然<code class="literal">UNIQUE</code>是标量值的一种自然约束，它通常不适合于范围类型。反而，一种排除约束常常更加适合（见<a class="link" href="sql-createtable.html#SQL-CREATETABLE-EXCLUDE">CREATE TABLE ... CONSTRAINT ... EXCLUDE</a>）。排除约束允许在一个范围类型上说明诸如<span class="quote">“<span class="quote">non-overlapping</span>”</span>的约束。例如：
+
+</p><pre class="programlisting">CREATE TABLE reservation (
+    during tsrange,
+    EXCLUDE USING GIST (during WITH &amp;&amp;)
+);</pre><p>
+
+   该约束将阻止任何重叠值同时存在于表中：
+
+</p><pre class="programlisting">INSERT INTO reservation VALUES
+    ('[2010-01-01 11:30, 2010-01-01 15:00)');
+INSERT 0 1
+
+INSERT INTO reservation VALUES
+    ('[2010-01-01 14:45, 2010-01-01 15:45)');
+ERROR:  conflicting key value violates exclusion constraint "reservation_during_excl"
+DETAIL:  Key (during)=(["2010-01-01 14:45:00","2010-01-01 15:45:00")) conflicts
+with existing key (during)=(["2010-01-01 11:30:00","2010-01-01 15:00:00")).</pre><p>
+  </p><p>   你可以使用<a class="link" href="btree-gist.html" title="F.7. btree_gist"><code class="literal">btree_gist</code></a>扩展来在纯标量数据类型上定义排除约束，然后把它和范围排除结合可以得到最大的灵活性。例如，安装<code class="literal">btree_gist</code>之后，只有会议室号码相等时，下列约束将拒绝重叠的范围：
+
+</p><pre class="programlisting">CREATE EXTENSION btree_gist;
+CREATE TABLE room_reservation (
+    room text,
+    during tsrange,
+    EXCLUDE USING GIST (room WITH =, during WITH &amp;&amp;)
+);
+
+INSERT INTO room_reservation VALUES
+    ('123A', '[2010-01-01 14:00, 2010-01-01 15:00)');
+INSERT 0 1
+
+INSERT INTO room_reservation VALUES
+    ('123A', '[2010-01-01 14:30, 2010-01-01 15:30)');
+ERROR:  conflicting key value violates exclusion constraint "room_reservation_room_during_excl"
+DETAIL:  Key (room, during)=(123A, ["2010-01-01 14:30:00","2010-01-01 15:30:00")) conflicts
+with existing key (room, during)=(123A, ["2010-01-01 14:00:00","2010-01-01 15:00:00")).
+
+INSERT INTO room_reservation VALUES
+    ('123B', '[2010-01-01 14:30, 2010-01-01 15:30)');
+INSERT 0 1</pre><p>
+  </p></div></div><div class="navfooter"><hr /><table width="100%" summary="Navigation footer"><tr><td width="40%" align="left"><a accesskey="p" href="rowtypes.html">上一页</a> </td><td width="20%" align="center"><a accesskey="u" href="datatype.html">上一级</a></td><td width="40%" align="right"> <a accesskey="n" href="datatype-oid.html">下一页</a></td></tr><tr><td width="40%" align="left" valign="top">8.16. 复合类型 </td><td width="20%" align="center"><a accesskey="h" href="index.html">起始页</a></td><td width="40%" align="right" valign="top"> 8.18. 对象标识符类型</td></tr></table></div></body></html>

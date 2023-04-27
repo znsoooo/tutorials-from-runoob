@@ -1,0 +1,92 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><title>dblink</title><link rel="stylesheet" type="text/css" href="stylesheet.css" /><link rev="made" href="pgsql-docs@postgresql.org" /><meta name="generator" content="DocBook XSL Stylesheets V1.79.1" /><link rel="prev" href="contrib-dblink-disconnect.html" title="dblink_disconnect" /><link rel="next" href="contrib-dblink-exec.html" title="dblink_exec" /></head><body><div xmlns="http://www.w3.org/TR/xhtml1/transitional" class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="5" align="center">dblink</th></tr><tr><td width="10%" align="left"><a accesskey="p" href="contrib-dblink-disconnect.html" title="dblink_disconnect">上一页</a> </td><td width="10%" align="left"><a accesskey="u" href="dblink.html" title="F.11. dblink">上一级</a></td><th width="60%" align="center">F.11. dblink</th><td width="10%" align="right"><a accesskey="h" href="index.html" title="PostgreSQL 10.1 手册">起始页</a></td><td width="10%" align="right"> <a accesskey="n" href="contrib-dblink-exec.html" title="dblink_exec">下一页</a></td></tr></table><hr></hr></div><div class="refentry" id="CONTRIB-DBLINK-FUNCTION"><div class="titlepage"></div><a id="idp85311808" class="indexterm"></a><div class="refnamediv"><h2><span class="refentrytitle">dblink</span></h2><p>dblink — 在一个远程数据库中执行一个查询</p></div><div class="refsynopsisdiv"><h2>大纲</h2><pre class="synopsis">dblink(text connname, text sql [, bool fail_on_error]) 返回记录集
+dblink(text connstr, text sql [, bool fail_on_error]) 返回记录集
+dblink(text sql [, bool fail_on_error]) 返回记录集</pre></div><div class="refsect1" id="idp85314944"><h2>描述</h2><p>    <code class="function">dblink</code>在一个远程数据库中执行一个查询（通常是一个<code class="command">SELECT</code>，但是也可以是任意返回行的 SQL 语句）。
+   </p><p>    当给定两个<code class="type">text</code>参数时，第一个被首先作为一个持久连接的名称进行查找；如果找到，该命令会在该连接上被执行。如果没有找到，第一个参数被视作一个用于<code class="function">dblink_connect</code>的连接信息字符串，并且被指出的连接只是在这个命令的持续期间被建立。
+   </p></div><div class="refsect1" id="idp85318880"><h2>参数</h2><div class="variablelist"><dl class="variablelist"><dt><span class="term"><em class="parameter"><code>connname</code></em></span></dt><dd><p>       要使用的连接名。忽略这个参数将使用未命名连接。
+      </p></dd><dt><span class="term"><em class="parameter"><code>connstr</code></em></span></dt><dd><p>       如之前为<code class="function">dblink_connect</code>所描述的一个连接信息字符串。
+      </p></dd><dt><span class="term"><em class="parameter"><code>sql</code></em></span></dt><dd><p>       你希望在远程数据库中执行的 SQL 查询，例如<code class="literal">select * from foo</code>。
+      </p></dd><dt><span class="term"><em class="parameter"><code>fail_on_error</code></em></span></dt><dd><p>       如果为真（忽略时的默认值），那么在连接的远端抛出的一个错误也会导致本地抛出一个错误。如果为假，远程错误只在本地被报告为一个 NOTICE，并且该函数不反回行。
+      </p></dd></dl></div></div><div class="refsect1" id="idp85326528"><h2>返回值</h2><p>    该函数返回查询产生的行。因为<code class="function">dblink</code>能与任何查询一起使用，它被声明为返回<code class="type">record</code>，而不是指定任意特定的列集合。这意味着你必须指定在调用的查询中所期待的列集合 — 否则<span class="productname">PostgreSQL</span>将不知道会得到什么。这里是一个例子：
+
+</p><pre class="programlisting">SELECT *
+    FROM dblink('dbname=mydb', 'select proname, prosrc from pg_proc')
+      AS t1(proname name, prosrc text)
+    WHERE proname LIKE 'bytea%';</pre><p>
+
+    <code class="literal">FROM</code>子句的<span class="quote">“<span class="quote">alias</span>”</span>部分必须指定函数将返回的列名及类型（在一个别名中指定列名实际上是标准 SQL 语法，但是指定列类型是一种<span class="productname">PostgreSQL</span>扩展）。这允许系统在尝试执行该函数之前就理解<code class="literal">*</code>将展开成什么，以及<code class="literal">WHERE</code>子句中的<code class="structname">proname</code>指的什么。在运行时，如果来自远程数据库的实际查询结果和<code class="literal">FROM</code>子句中显示的列数不同，将会抛出一个错误。不过，列名不需要匹配，并且<code class="function">dblink</code>并不坚持精确地匹配类型。只要被返回的数据字符串是<code class="literal">FROM</code>子句中声明的列类型的合法输入，它就将会成功。
+   </p></div><div class="refsect1" id="idp85336640"><h2>注解</h2><p>    一种将预定义查询用于<code class="function">dblink</code>的方便方法是创建一个视图。这允许列类型信息被埋藏在该视图中，而不是在每一个查询中都拼写出来。例如：
+
+</p><pre class="programlisting">CREATE VIEW myremote_pg_proc AS
+  SELECT *
+    FROM dblink('dbname=postgres', 'select proname, prosrc from pg_proc')
+    AS t1(proname name, prosrc text);
+
+SELECT * FROM myremote_pg_proc WHERE proname LIKE 'bytea%';</pre></div><div class="refsect1" id="idp85338992"><h2>例子</h2><pre class="screen">SELECT * FROM dblink('dbname=postgres', 'select proname, prosrc from pg_proc')
+  AS t1(proname name, prosrc text) WHERE proname LIKE 'bytea%';
+  proname   |   prosrc
+------------+------------
+ byteacat   | byteacat
+ byteaeq    | byteaeq
+ bytealt    | bytealt
+ byteale    | byteale
+ byteagt    | byteagt
+ byteage    | byteage
+ byteane    | byteane
+ byteacmp   | byteacmp
+ bytealike  | bytealike
+ byteanlike | byteanlike
+ byteain    | byteain
+ byteaout   | byteaout
+(12 rows)
+
+SELECT dblink_connect('dbname=postgres');
+ dblink_connect
+----------------
+ OK
+(1 row)
+
+SELECT * FROM dblink('select proname, prosrc from pg_proc')
+  AS t1(proname name, prosrc text) WHERE proname LIKE 'bytea%';
+  proname   |   prosrc
+------------+------------
+ byteacat   | byteacat
+ byteaeq    | byteaeq
+ bytealt    | bytealt
+ byteale    | byteale
+ byteagt    | byteagt
+ byteage    | byteage
+ byteane    | byteane
+ byteacmp   | byteacmp
+ bytealike  | bytealike
+ byteanlike | byteanlike
+ byteain    | byteain
+ byteaout   | byteaout
+(12 rows)
+
+SELECT dblink_connect('myconn', 'dbname=regression');
+ dblink_connect
+----------------
+ OK
+(1 row)
+
+SELECT * FROM dblink('myconn', 'select proname, prosrc from pg_proc')
+  AS t1(proname name, prosrc text) WHERE proname LIKE 'bytea%';
+  proname   |   prosrc
+------------+------------
+ bytearecv  | bytearecv
+ byteasend  | byteasend
+ byteale    | byteale
+ byteagt    | byteagt
+ byteage    | byteage
+ byteane    | byteane
+ byteacmp   | byteacmp
+ bytealike  | bytealike
+ byteanlike | byteanlike
+ byteacat   | byteacat
+ byteaeq    | byteaeq
+ bytealt    | bytealt
+ byteain    | byteain
+ byteaout   | byteaout
+(14 rows)</pre></div></div><div class="navfooter"><hr /><table width="100%" summary="Navigation footer"><tr><td width="40%" align="left"><a accesskey="p" href="contrib-dblink-disconnect.html">上一页</a> </td><td width="20%" align="center"><a accesskey="u" href="dblink.html">上一级</a></td><td width="40%" align="right"> <a accesskey="n" href="contrib-dblink-exec.html">下一页</a></td></tr><tr><td width="40%" align="left" valign="top">dblink_disconnect </td><td width="20%" align="center"><a accesskey="h" href="index.html">起始页</a></td><td width="40%" align="right" valign="top"> dblink_exec</td></tr></table></div></body></html>

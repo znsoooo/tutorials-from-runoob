@@ -1,0 +1,138 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><title>9.24. 集合返回函数</title><link rel="stylesheet" type="text/css" href="stylesheet.css" /><link rev="made" href="pgsql-docs@postgresql.org" /><meta name="generator" content="DocBook XSL Stylesheets V1.79.1" /><link rel="prev" href="functions-comparisons.html" title="9.23. 行和数组比较" /><link rel="next" href="functions-info.html" title="9.25. 系统信息函数" /></head><body><div xmlns="http://www.w3.org/TR/xhtml1/transitional" class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="5" align="center">9.24. 集合返回函数</th></tr><tr><td width="10%" align="left"><a accesskey="p" href="functions-comparisons.html" title="9.23. 行和数组比较">上一页</a> </td><td width="10%" align="left"><a accesskey="u" href="functions.html" title="第 9 章 函数和操作符">上一级</a></td><th width="60%" align="center">第 9 章 函数和操作符</th><td width="10%" align="right"><a accesskey="h" href="index.html" title="PostgreSQL 10.1 手册">起始页</a></td><td width="10%" align="right"> <a accesskey="n" href="functions-info.html" title="9.25. 系统信息函数">下一页</a></td></tr></table><hr></hr></div><div class="sect1" id="FUNCTIONS-SRF"><div class="titlepage"><div><div><h2 class="title" style="clear: both">9.24. 集合返回函数</h2></div></div></div><a id="idp14585296" class="indexterm"></a><a id="idp14586784" class="indexterm"></a><p>   本节描述那些可能返回多于一行的函数。目前这个类中被使用最广泛的是级数生成函数， 如<a class="xref" href="functions-srf.html#FUNCTIONS-SRF-SERIES" title="表 9.58. 级数生成函数">表 9.58</a>和<a class="xref" href="functions-srf.html#FUNCTIONS-SRF-SUBSCRIPTS" title="表 9.59. 下标生成函数">表 9.59</a>所述。其他更特殊的集合返回函数在本手册的其他地方描述。
+   组合多集合返回函数的方法可见<a class="xref" href="queries-table-expressions.html#QUERIES-TABLEFUNCTIONS" title="7.2.1.4. 表函数">第 7.2.1.4 节</a>。
+  </p><div class="table" id="FUNCTIONS-SRF-SERIES"><p class="title"><strong>表 9.58. 级数生成函数</strong></p><div class="table-contents"><table class="table" summary="级数生成函数" border="1"><colgroup><col /><col /><col /><col /></colgroup><thead><tr><th>函数</th><th>参数类型</th><th>返回类型</th><th>描述</th></tr></thead><tbody><tr><td><code class="literal"><code class="function">generate_series(<em class="parameter"><code>start</code></em>, <em class="parameter"><code>stop</code></em>)</code></code></td><td><code class="type">int</code>，<code class="type">bigint</code>或者<code class="type">numeric</code></td><td><code class="type">setof int</code>，<code class="type">setof bigint</code>或者<code class="type">setof numeric</code> (与参数类型相同)</td><td>       产生一系列值，从<em class="parameter"><code>start</code></em>到<em class="parameter"><code>stop</code></em>，步长为 1
+      </td></tr><tr><td><code class="literal"><code class="function">generate_series(<em class="parameter"><code>start</code></em>, <em class="parameter"><code>stop</code></em>, <em class="parameter"><code>step</code></em>)</code></code></td><td><code class="type">int</code>，<code class="type">bigint</code>或者<code class="type">numeric</code></td><td><code class="type">setof int</code>，<code class="type">setof bigint</code>或者<code class="type">setof numeric</code> (与参数类型相同)</td><td>       产生一系列值，从<em class="parameter"><code>start</code></em>到<em class="parameter"><code>stop</code></em>，步长为<em class="parameter"><code>step</code></em>
+      </td></tr><tr><td><code class="literal"><code class="function">generate_series(<em class="parameter"><code>start</code></em>, <em class="parameter"><code>stop</code></em>, <em class="parameter"><code>step</code></em> <code class="type">interval</code>)</code></code></td><td><code class="type">timestamp</code>或<code class="type">timestamp with time zone</code></td><td><code class="type">setof timestamp</code>或<code class="type">setof timestamp with time zone</code>（和参数类型相同）</td><td>       产生一系列值，从<em class="parameter"><code>start</code></em>到<em class="parameter"><code>stop</code></em>，步长为<em class="parameter"><code>step</code></em>
+      </td></tr></tbody></table></div></div><br class="table-break" /><p>   当<em class="parameter"><code>step</code></em>为正时，如果<em class="parameter"><code>start</code></em>大于<em class="parameter"><code>stop</code></em>则返回零行。相反，当<em class="parameter"><code>step</code></em>为负时，如果<em class="parameter"><code>start</code></em>小于<em class="parameter"><code>stop</code></em>则返回零行。对于<code class="literal">NULL</code>输入也会返回零行。<em class="parameter"><code>step</code></em>为零是一个错误。下面是一些例子：
+</p><pre class="programlisting">SELECT * FROM generate_series(2,4);
+ generate_series
+-----------------
+               2
+               3
+               4
+(3 rows)
+
+SELECT * FROM generate_series(5,1,-2);
+ generate_series
+-----------------
+               5
+               3
+               1
+(3 rows)
+
+SELECT * FROM generate_series(4,3);
+ generate_series
+-----------------
+(0 rows)
+
+SELECT generate_series(1.1, 4, 1.3);
+ generate_series 
+-----------------
+             1.1
+             2.4
+             3.7
+(3 rows)
+
+-- 这个例子依赖于日期+整数操作符
+SELECT current_date + s.a AS dates FROM generate_series(0,14,7) AS s(a);
+   dates
+------------
+ 2004-02-05
+ 2004-02-12
+ 2004-02-19
+(3 rows)
+
+SELECT * FROM generate_series('2008-03-01 00:00'::timestamp,
+                              '2008-03-04 12:00', '10 hours');
+   generate_series   
+---------------------
+ 2008-03-01 00:00:00
+ 2008-03-01 10:00:00
+ 2008-03-01 20:00:00
+ 2008-03-02 06:00:00
+ 2008-03-02 16:00:00
+ 2008-03-03 02:00:00
+ 2008-03-03 12:00:00
+ 2008-03-03 22:00:00
+ 2008-03-04 08:00:00
+(9 rows)</pre><p>
+  </p><div class="table" id="FUNCTIONS-SRF-SUBSCRIPTS"><p class="title"><strong>表 9.59. 下标生成函数</strong></p><div class="table-contents"><table class="table" summary="下标生成函数" border="1"><colgroup><col /><col /><col /></colgroup><thead><tr><th>函数</th><th>返回类型</th><th>描述</th></tr></thead><tbody><tr><td><code class="literal"><code class="function">generate_subscripts(<em class="parameter"><code>array anyarray</code></em>, <em class="parameter"><code>dim int</code></em>)</code></code></td><td><code class="type">setof int</code></td><td>       生成一个级数组成给定数组的下标。
+      </td></tr><tr><td><code class="literal"><code class="function">generate_subscripts(<em class="parameter"><code>array anyarray</code></em>, <em class="parameter"><code>dim int</code></em>, <em class="parameter"><code>reverse boolean</code></em>)</code></code></td><td><code class="type">setof int</code></td><td>       生成一个级数组成给定数组的下标。当<em class="parameter"><code>reverse</code></em>为真，级数以逆序返回。
+      </td></tr></tbody></table></div></div><br class="table-break" /><a id="idp14636016" class="indexterm"></a><p>   <code class="function">generate_subscripts</code>是一个快捷函数，它为给定数组的指定维度生成一组合法的下标。对于不具有请求维度的数组返回零行，对于 NULL 数组也返回零行（但是会对 NULL 数组元素返回合法的下标）。下面是一些例子：
+</p><pre class="programlisting">-- 基本使用
+SELECT generate_subscripts('{NULL,1,NULL,2}'::int[], 1) AS s;
+ s 
+---
+ 1
+ 2
+ 3
+ 4
+(4 rows)
+
+-- 表示一个数组，下标和被下标的值需要一个子查询
+SELECT * FROM arrays;
+         a          
+--------------------
+ {-1,-2}
+ {100,200,300}
+(2 rows)
+
+SELECT a AS array, s AS subscript, a[s] AS value
+FROM (SELECT generate_subscripts(a, 1) AS s, a FROM arrays) foo;
+     array     | subscript | value
+---------------+-----------+-------
+ {-1,-2}       |         1 |    -1
+ {-1,-2}       |         2 |    -2
+ {100,200,300} |         1 |   100
+ {100,200,300} |         2 |   200
+ {100,200,300} |         3 |   300
+(5 rows)
+
+-- 平面化一个 2D 数组
+CREATE OR REPLACE FUNCTION unnest2(anyarray)
+RETURNS SETOF anyelement AS $$
+select $1[i][j]
+   from generate_subscripts($1,1) g1(i),
+        generate_subscripts($1,2) g2(j);
+$$ LANGUAGE sql IMMUTABLE;
+CREATE FUNCTION
+SELECT * FROM unnest2(ARRAY[[1,2],[3,4]]);
+ unnest2 
+---------
+       1
+       2
+       3
+       4
+(4 rows)</pre><p>
+  </p><a id="idp14640400" class="indexterm"></a><p>   当<code class="literal">FROM</code>子句中的一个函数后面跟着
+   <code class="literal">WITH ORDINALITY</code>时，一个<code class="type">bigint</code>
+   字段被添加到为该函数的输出的每一行从1开始、以1为增量的输出中。
+   这在设置返回函数，比如<code class="function">unnest()</code>的情况下很有用。
+
+</p><pre class="programlisting">-- 带有WITH ORDINALITY的设置返回函数
+SELECT * FROM pg_ls_dir('.') WITH ORDINALITY AS t(ls,n);
+       ls        | n
+-----------------+----
+ pg_serial       |  1
+ pg_twophase     |  2
+ postmaster.opts |  3
+ pg_notify       |  4
+ postgresql.conf |  5
+ pg_tblspc       |  6
+ logfile         |  7
+ base            |  8
+ postmaster.pid  |  9
+ pg_ident.conf   | 10
+ global          | 11
+ pg_xact         | 12
+ pg_snapshots    | 13
+ pg_multixact    | 14
+ PG_VERSION      | 15
+ pg_wal          | 16
+ pg_hba.conf     | 17
+ pg_stat_tmp     | 18
+ pg_subtrans     | 19
+(19 rows)</pre><p>
+  </p></div><div class="navfooter"><hr /><table width="100%" summary="Navigation footer"><tr><td width="40%" align="left"><a accesskey="p" href="functions-comparisons.html">上一页</a> </td><td width="20%" align="center"><a accesskey="u" href="functions.html">上一级</a></td><td width="40%" align="right"> <a accesskey="n" href="functions-info.html">下一页</a></td></tr><tr><td width="40%" align="left" valign="top">9.23. 行和数组比较 </td><td width="20%" align="center"><a accesskey="h" href="index.html">起始页</a></td><td width="40%" align="right" valign="top"> 9.25. 系统信息函数</td></tr></table></div></body></html>

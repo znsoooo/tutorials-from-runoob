@@ -1,0 +1,92 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><title>ALTER EXTENSION</title><link rel="stylesheet" type="text/css" href="stylesheet.css" /><link rev="made" href="pgsql-docs@postgresql.org" /><meta name="generator" content="DocBook XSL Stylesheets V1.79.1" /><link rel="prev" href="sql-altereventtrigger.html" title="ALTER EVENT TRIGGER" /><link rel="next" href="sql-alterforeigndatawrapper.html" title="ALTER FOREIGN DATA WRAPPER" /></head><body><div xmlns="http://www.w3.org/TR/xhtml1/transitional" class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="5" align="center">ALTER EXTENSION</th></tr><tr><td width="10%" align="left"><a accesskey="p" href="sql-altereventtrigger.html" title="ALTER EVENT TRIGGER">上一页</a> </td><td width="10%" align="left"><a accesskey="u" href="sql-commands.html" title="SQL 命令">上一级</a></td><th width="60%" align="center">SQL 命令</th><td width="10%" align="right"><a accesskey="h" href="index.html" title="PostgreSQL 10.1 手册">起始页</a></td><td width="10%" align="right"> <a accesskey="n" href="sql-alterforeigndatawrapper.html" title="ALTER FOREIGN DATA WRAPPER">下一页</a></td></tr></table><hr></hr></div><div class="refentry" id="SQL-ALTEREXTENSION"><div class="titlepage"></div><a id="idp39922224" class="indexterm"></a><div class="refnamediv"><h2><span class="refentrytitle">ALTER EXTENSION</span></h2><p>ALTER EXTENSION —    更改一个扩展的定义
+  </p></div><div class="refsynopsisdiv"><h2>大纲</h2><pre class="synopsis">ALTER EXTENSION <em class="replaceable"><code>name</code></em> UPDATE [ TO <em class="replaceable"><code>new_version</code></em> ]
+ALTER EXTENSION <em class="replaceable"><code>name</code></em> SET SCHEMA <em class="replaceable"><code>new_schema</code></em>
+ALTER EXTENSION <em class="replaceable"><code>name</code></em> ADD <em class="replaceable"><code>member_object</code></em>
+ALTER EXTENSION <em class="replaceable"><code>name</code></em> DROP <em class="replaceable"><code>member_object</code></em>
+
+<span class="phrase">其中 <em class="replaceable"><code>member_object</code></em> 是：</span>
+
+  ACCESS METHOD <em class="replaceable"><code>object_name</code></em> |
+  AGGREGATE <em class="replaceable"><code>aggregate_name</code></em> ( <em class="replaceable"><code>aggregate_signature</code></em> ) |
+  CAST (<em class="replaceable"><code>source_type</code></em> AS <em class="replaceable"><code>target_type</code></em>) |
+  COLLATION <em class="replaceable"><code>object_name</code></em> |
+  CONVERSION <em class="replaceable"><code>object_name</code></em> |
+  DOMAIN <em class="replaceable"><code>object_name</code></em> |
+  EVENT TRIGGER <em class="replaceable"><code>object_name</code></em> |
+  FOREIGN DATA WRAPPER <em class="replaceable"><code>object_name</code></em> |
+  FOREIGN TABLE <em class="replaceable"><code>object_name</code></em> |
+  FUNCTION <em class="replaceable"><code>function_name</code></em> [ ( [ [ <em class="replaceable"><code>argmode</code></em> ] [ <em class="replaceable"><code>argname</code></em> ] <em class="replaceable"><code>argtype</code></em> [, ...] ] ) ] |
+  MATERIALIZED VIEW <em class="replaceable"><code>object_name</code></em> |
+  OPERATOR <em class="replaceable"><code>operator_name</code></em> (<em class="replaceable"><code>left_type</code></em>, <em class="replaceable"><code>right_type</code></em>) |
+  OPERATOR CLASS <em class="replaceable"><code>object_name</code></em> USING <em class="replaceable"><code>index_method</code></em> |
+  OPERATOR FAMILY <em class="replaceable"><code>object_name</code></em> USING <em class="replaceable"><code>index_method</code></em> |
+  [ PROCEDURAL ] LANGUAGE <em class="replaceable"><code>object_name</code></em> |
+  SCHEMA <em class="replaceable"><code>object_name</code></em> |
+  SEQUENCE <em class="replaceable"><code>object_name</code></em> |
+  SERVER <em class="replaceable"><code>object_name</code></em> |
+  TABLE <em class="replaceable"><code>object_name</code></em> |
+  TEXT SEARCH CONFIGURATION <em class="replaceable"><code>object_name</code></em> |
+  TEXT SEARCH DICTIONARY <em class="replaceable"><code>object_name</code></em> |
+  TEXT SEARCH PARSER <em class="replaceable"><code>object_name</code></em> |
+  TEXT SEARCH TEMPLATE <em class="replaceable"><code>object_name</code></em> |
+  TRANSFORM FOR <em class="replaceable"><code>type_name</code></em> LANGUAGE <em class="replaceable"><code>lang_name</code></em> |
+  TYPE <em class="replaceable"><code>object_name</code></em> |
+  VIEW <em class="replaceable"><code>object_name</code></em>
+
+<span class="phrase">并且 <em class="replaceable"><code>aggregate_signature</code></em> 是：</span>
+
+* |
+[ <em class="replaceable"><code>argmode</code></em> ] [ <em class="replaceable"><code>argname</code></em> ] <em class="replaceable"><code>argtype</code></em> [ , ... ] |
+[ [ <em class="replaceable"><code>argmode</code></em> ] [ <em class="replaceable"><code>argname</code></em> ] <em class="replaceable"><code>argtype</code></em> [ , ... ] ] ORDER BY [ <em class="replaceable"><code>argmode</code></em> ] [ <em class="replaceable"><code>argname</code></em> ] <em class="replaceable"><code>argtype</code></em> [ , ... ]</pre></div><div class="refsect1" id="idp39961936"><h2>描述</h2><p>   <code class="command">ALTER EXTENSION</code>更改一个已安装扩展的定义。
+   有几种子形式：
+
+   </p><div class="variablelist"><dl class="variablelist"><dt><span class="term"><code class="literal">UPDATE</code></span></dt><dd><p>      这种形式把该扩展更新到一个新版本。该扩展必须提供一个适当的更新
+      脚本（或者一系列脚本）来把当前已安装的版本修改成所要求的版本。
+     </p></dd><dt><span class="term"><code class="literal">SET SCHEMA</code></span></dt><dd><p>      这种形式把该扩展的对象移动到另一个模式中。要使这个命令成功，该扩展
+      必须是<em class="firstterm">可重定位的</em>。
+     </p></dd><dt><span class="term"><code class="literal">ADD <em class="replaceable"><code>member_object</code></em></code></span></dt><dd><p>      这种形式把一个现有的对象加入到该扩展中。这主要对扩展更新脚本有用。
+      该对象后续将被当作该扩展的一个成员。尤其是该对象只有通过删除扩展
+      才能删除。
+     </p></dd><dt><span class="term"><code class="literal">DROP <em class="replaceable"><code>member_object</code></em></code></span></dt><dd><p>      这种形式从该扩展移除一个成员对象。这主要对扩展更新脚本有用。只有
+      撤销该对象与其扩展之间的关联后才能删除该对象。
+     </p></dd></dl></div><p>
+
+   关于这些操作详见<a class="xref" href="extend-extensions.html" title="37.15. 打包相关对象到一个扩展中">第 37.15 节</a>。
+  </p><p>   要使用<code class="command">ALTER EXTENSION</code>，你必须拥有该扩展。
+   <code class="literal">ADD</code>/<code class="literal">DROP</code>形式还要求被增加/删除对象的所有权。
+  </p></div><div class="refsect1" id="idp39974768"><h2>参数</h2><p>   </p><div class="variablelist"><dl class="variablelist"><dt><span class="term"><em class="replaceable"><code>name</code></em></span></dt><dd><p>       一个已安装扩展的名称。
+      </p></dd><dt><span class="term"><em class="replaceable"><code>new_version</code></em></span></dt><dd><p>       想要得到的该扩展的新版本。这可以写成一个标识符或者一个字符串。如果没有指定，
+       <code class="command">ALTER EXTENSION UPDATE</code>会尝试更新到该扩展的控制文件中的
+       默认版本。
+      </p></dd><dt><span class="term"><em class="replaceable"><code>new_schema</code></em></span></dt><dd><p>       该扩展的新模式。
+      </p></dd><dt><span class="term"><em class="replaceable"><code>object_name</code></em><br /></span><span class="term"><em class="replaceable"><code>aggregate_name</code></em><br /></span><span class="term"><em class="replaceable"><code>function_name</code></em><br /></span><span class="term"><em class="replaceable"><code>operator_name</code></em></span></dt><dd><p>       要从该扩展增加或者移除的对象的名称。表、聚集、域、外部表、函数、
+       操作符、操作符类、操作符族、序列、文本搜索对象、类型和视图的名称
+       可以被模式限定。
+      </p></dd><dt><span class="term"><em class="replaceable"><code>source_type</code></em></span></dt><dd><p>       该转换的源数据类型的名称。
+      </p></dd><dt><span class="term"><em class="replaceable"><code>target_type</code></em></span></dt><dd><p>       该转换的目标数据类型的名称。
+      </p></dd><dt><span class="term"><em class="replaceable"><code>argmode</code></em></span></dt><dd><p>       一个函数或聚集参数的模式：<code class="literal">IN</code>、<code class="literal">OUT</code>、
+       <code class="literal">INOUT</code>或者<code class="literal">VARIADIC</code>。如果被忽略，默认值是
+       <code class="literal">IN</code>。注意，<code class="command">ALTER EXTENSION</code>
+       并不真正关心<code class="literal">OUT</code>参数，因为决定该函数的身份时只需要输入
+       参数。因此列出<code class="literal">IN</code>、<code class="literal">INOUT</code>和
+       <code class="literal">VARIADIC</code>参数足矣。
+      </p></dd><dt><span class="term"><em class="replaceable"><code>argname</code></em></span></dt><dd><p>       一个函数或者聚集参数的名称。注意，
+       <code class="command">ALTER EXTENSION</code>并不真正关心参数名称，因为
+       决定该函数的身份时只需要参数的数据类型。
+      </p></dd><dt><span class="term"><em class="replaceable"><code>argtype</code></em></span></dt><dd><p>       一个函数或聚集参数的数据类型。
+      </p></dd><dt><span class="term"><em class="replaceable"><code>left_type</code></em><br /></span><span class="term"><em class="replaceable"><code>right_type</code></em></span></dt><dd><p>       该操作符参数的数据类型（可以用模式限定）。对一个前缀或后缀操作符的缺失的
+       参数可以写<code class="literal">NONE</code>。
+      </p></dd><dt><span class="term"><code class="literal">PROCEDURAL</code></span></dt><dd><p>       这是一个噪声词。
+      </p></dd><dt><span class="term"><em class="replaceable"><code>type_name</code></em></span></dt><dd><p>       该转换的数据类型的名称。
+      </p></dd><dt><span class="term"><em class="replaceable"><code>lang_name</code></em></span></dt><dd><p>       该转换的语言的名称。
+      </p></dd></dl></div><p>
+  </p></div><div class="refsect1" id="idp40004688"><h2>示例</h2><p>   把<code class="literal">hstore</code>扩展更新到版本 2.0：
+</p><pre class="programlisting">ALTER EXTENSION hstore UPDATE TO '2.0';</pre><p>
+  </p><p>   把<code class="literal">hstore</code>扩展的模式更改到<code class="literal">utils</code>：
+</p><pre class="programlisting">ALTER EXTENSION hstore SET SCHEMA utils;</pre><p>
+  </p><p>   要向<code class="literal">hstore</code>扩展增加一个现有函数：
+</p><pre class="programlisting">ALTER EXTENSION hstore ADD FUNCTION populate_record(anyelement, hstore);</pre></div><div class="refsect1" id="idp40010944"><h2>兼容性</h2><p>   <code class="command">ALTER EXTENSION</code>是一个<span class="productname">PostgreSQL</span>
+   扩展。
+  </p></div><div class="refsect1" id="SQL-ALTEREXTENSION-SEE-ALSO"><h2>另见</h2><span class="simplelist"><a class="xref" href="sql-createextension.html" title="CREATE EXTENSION"><span class="refentrytitle">CREATE EXTENSION</span></a>, <a class="xref" href="sql-dropextension.html" title="DROP EXTENSION"><span class="refentrytitle">DROP EXTENSION</span></a></span></div></div><div class="navfooter"><hr /><table width="100%" summary="Navigation footer"><tr><td width="40%" align="left"><a accesskey="p" href="sql-altereventtrigger.html">上一页</a> </td><td width="20%" align="center"><a accesskey="u" href="sql-commands.html">上一级</a></td><td width="40%" align="right"> <a accesskey="n" href="sql-alterforeigndatawrapper.html">下一页</a></td></tr><tr><td width="40%" align="left" valign="top">ALTER EVENT TRIGGER </td><td width="20%" align="center"><a accesskey="h" href="index.html">起始页</a></td><td width="40%" align="right" valign="top"> ALTER FOREIGN DATA WRAPPER</td></tr></table></div></body></html>

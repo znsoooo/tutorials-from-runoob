@@ -1,0 +1,948 @@
+<!Doctype html>
+<html>
+<head>
+	<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+	<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+	<title>4.4 Verilog FIFO 设计 | 菜鸟教程</title>
+
+  <meta name='robots' content='max-image-preview:large' />
+<link rel='stylesheet' id='classic-theme-styles-css' href='http://www.runoob.com/wp-includes/css/classic-themes.min.css?ver=6.2' type='text/css' media='all' />
+<link rel="canonical" href="http://www.runoob.com/w3cnote/verilog2-fifo.html" />
+<meta name="keywords" content="4.4 Verilog FIFO 设计">
+<meta name="description" content="FIFO（First In First Out）是异步数据传输时经常使用的存储器。该存储器的特点是数据先进先出（后进后出）。其实，多位宽数据的异步传输问题，无论是从快时钟到慢时钟域，还是从慢时钟到快时钟域，都可以使用 FIFO 处理。  FIFO 原理 工作流程 复位之后，在写时钟和状态信号的控制下，数据写入 FIFO 中。RAM 的写地址从 0 开始，每写一次数据写地址指针加一，指向下一个存储单元。当 FIFO 写满后，数据将不能再写..">
+		
+	<link rel="shortcut icon" href="https://static.runoob.com/images/favicon.ico">
+	<link rel="stylesheet" href="/wp-content/themes/runoob/style.css?v=1.170" type="text/css" media="all" />	
+	<link rel="stylesheet" href="https://cdn.staticfile.org/font-awesome/4.7.0/css/font-awesome.min.css" media="all" />	
+  <!--[if gte IE 9]><!-->
+  <script src="https://cdn.staticfile.org/jquery/2.0.3/jquery.min.js"></script>
+  <!--<![endif]-->
+  <!--[if lt IE 9]>
+     <script src="https://cdn.staticfile.org/jquery/1.9.1/jquery.min.js"></script>
+     <script src="https://cdn.staticfile.org/html5shiv/r29/html5.min.js"></script>
+  <![endif]-->
+  <link rel="apple-touch-icon" href="https://static.runoob.com/images/icon/mobile-icon.png"/>
+  <meta name="apple-mobile-web-app-title" content="菜鸟教程">
+</head>
+<body>
+
+<!--  头部 -->
+<div class="container logo-search">
+
+  <div class="col search row-search-mobile">
+    <form action="index.php">
+      <input class="placeholder" placeholder="搜索……" name="s" autocomplete="off">
+      
+    </form>
+  </div>
+
+  <div class="row">
+    <div class="col logo">
+      <h1><a href="/">菜鸟教程 -- 学的不仅是技术，更是梦想！</a></h1>
+    </div>
+        <div class="col right-list"> 
+    <button class="btn btn-responsive-nav btn-inverse" data-toggle="collapse" data-target=".nav-main-collapse" id="pull" style=""> <i class="fa fa-navicon"></i> </button>
+    </div>
+        
+    <div class="col search search-desktop last">
+      <div class="search-input" >
+      <form action="//www.runoob.com/" target="_blank">
+        <input class="placeholder" id="s" name="s" placeholder="搜索……"  autocomplete="off" style="height: 44px;">
+      </form>
+      
+      </div>
+    </div>
+  </div>
+</div>
+
+
+
+<!-- 导航栏 -->
+<div class="container navigation">
+    <div class="row">
+        <div class="col nav">
+            
+
+                        <ul class="pc-nav" id="note-nav">
+                <li><a href="//www.runoob.com/">首页</a></li>
+                <li><a href="/w3cnote">笔记首页</a></li>
+                <li><a href="/w3cnote/android-tutorial-intro.html" title="Android 基础入门教程">Android</a></li>
+                <li><a href="/w3cnote/es6-tutorial.html" title="ES6 教程">ES6 教程</a></li>
+                <li><a href="/w3cnote/ten-sorting-algorithm.html" title="排序算法">排序算法</a></li>
+                <li><a href="/w3cnote/hadoop-tutorial.html" title="Hadoop 教程">Hadoop</a></li>
+                <li><a href="/w3cnote/zookeeper-tutorial.html" title="Zookeeper 教程">Zookeeper</a></li>
+                <li><a href="/w3cnote/verilog-tutorial.html" title="Verilog 教程">Verilog</a></li>
+                <li><a href="/w3cnote_genre/code" title="编程技术">编程技术</a></li> 
+                <li><a href="/w3cnote_genre/coderlife" title="程序员人生">程序员人生</a></li>
+                
+                <!--<li><a href="javascript:;" class="runoob-pop">登录</a></li>
+                
+                
+                        <li>
+                <a style="font-weight:bold;" href="https://www.runoob.com/linux/linux-tutorial.html#yunserver" target="_blank" onclick="_hmt.push(['_trackEvent', 'aliyun', 'click', 'aliyun'])" title="kkb">云服务器</a>
+                </li>
+                <li><a href="http://gk.link/a/104mQ" target="_blank" style="font-weight: bold;"onclick="_hmt.push(['_trackEvent', '极客时间', 'click', 'jike'])" title="我的圈子">极客时间</a></li>
+            
+                
+                <li><a target="_blank" href="/shoppinglist" rel="nofollow">知识店铺</a></li> 
+        -->
+            </ul>
+                        
+              
+            <ul class="mobile-nav">
+                <li><a href="/w3cnote">首页</a></li>
+                <li><a href="/w3cnote_genre/android" target="_blank" title="Android 基础入门教程">Android</a></li>
+                <li><a href="/w3cnote/es6-tutorial.html" target="_blank" title="ES6 教程">ES6</a></li>
+                <li><a href="/w3cnote_genre/joke" target="_blank" title="程序员笑话">逗乐</a></li>
+                
+                <a href="javascript:void(0)" class="search-reveal">Search</a> 
+            </ul>
+            
+        </div>
+    </div>
+</div>
+
+
+<!--  内容  -->
+<div class="container main">
+	<div class="row">
+
+		<!--  Android 基础入门教程 start  -->
+	<div class="col left-column" style="display:none;">
+		<div class="tab">Verilog 高级教程</div>
+		<div class="sidebar-box gallery-list">
+			<div class="design" id="leftcolumn">  
+			</div> 
+		</div> 
+	</div>
+	<!--  Android 基础入门教程 end  -->
+		<div class="col middle-column big-middle-column">
+	 			<div class="article">
+			<div class="article-heading">
+				<h2>4.4 Verilog FIFO 设计</h2>				<h3><em>分类</em> <a href="/w3cnote_genre/verilog2" title="Verilog 教程高级篇" >Verilog 教程高级篇</a> </h3>
+			</div>
+			<div class="article-body note-body">
+				<div class="article-intro">
+					<p>FIFO（First In First Out）是异步数据传输时经常使用的存储器。该存储器的特点是数据先进先出（后进后出）。其实，多位宽数据的异步传输问题，无论是从快时钟到慢时钟域，还是从慢时钟到快时钟域，都可以使用 FIFO 处理。</p><hr>
+<h2>
+FIFO 原理</h2>
+<h3>工作流程</h3><p>
+复位之后，在写时钟和状态信号的控制下，数据写入 FIFO 中。RAM 的写地址从 0 开始，每写一次数据写地址指针加一，指向下一个存储单元。当 FIFO 写满后，数据将不能再写入，否则数据会因覆盖而丢失。</p><p>
+FIFO 数据为非空、或满状态时，在读时钟和状态信号的控制下，可以将数据从 FIFO 中读出。RAM 的读地址从 0 开始，每读一次数据读地址指针加一，指向下一个存储单元。当 FIFO 读空后，就不能再读数据，否则读出的数据将是错误的。</p><p>
+
+FIFO 的存储结构为双口 RAM，所以允许读写同时进行。典型异步 FIFO 结构图如下所示。端口及内部信号将在代码编写时进行说明。</p>
+<p><img decoding="async" src="https://www.runoob.com/wp-content/uploads/2021/05/v-fifo-1.jpg"></p>
+<h3>读写时刻</h3><p>
+关于写时刻，只要 FIFO 中数据为非满状态，就可以进行写操作；如果 FIFO 为满状态，则禁止再写数据。</p><p>
+关于读时刻，只要 FIFO 中数据为非空状态，就可以进行读操作；如果 FIFO 为空状态，则禁止再读数据。</p><p>
+不管怎样，一段正常读写 FIFO 的时间段，如果读写同时进行，则要求写 FIFO 速率不能大于读速率。</p>
+<h3>读空状态</h3><p>
+开始复位时，FIFO 没有数据，空状态信号是有效的。当 FIFO 中被写入数据后，空状态信号拉低无效。当读数据地址追赶上写地址，即读写地址都相等时，FIFO 为空状态。</p><p>
+因为是异步 FIFO，所以读写地址进行比较时，需要同步打拍逻辑，就需要耗费一定的时间。所以空状态的指示信号不是实时的，会有一定的延时。如果在这段延迟时间内又有新的数据写入 FIFO，就会出现空状态指示信号有效，但是 FIFO 中其实存在数据的现象。</p><p>
+严格来讲该空状态指示是错误的。但是产生空状态的意义在于防止读操作对空状态的 FIFO 进行数据读取。产生空状态信号时，实际 FIFO 中有数据，相当于提前判断了空状态信号，此时不再进行读 FIFO 数据操作也是安全的。所以，该设计从应用上来说是没有问题的。</p>
+<h3>写满状态</h3><p>
+开始复位时，FIFO 没有数据，满信号是无效的。当 FIFO 中被写入数据后，此时读操作不进行或读速率相对较慢，只要写数据地址超过读数据地址一个 FIFO 深度时，便会产生满状态信号。此时写地址和读地址也是相等的，但是意义是不一样的。</p>
+<p><img decoding="async" src="https://www.runoob.com/wp-content/uploads/2021/05/v-fifo-2.png"></p>
+<p>此时经常使用多余的 1bit 分别当做读写地址的拓展位，来区分读写地址相同的时候，FIFO 的状态是空还是满状态。当读写地址与拓展位均相同的时候，表明读写数据的数量是一致的，则此时 FIFO 是空状态。如果读写地址相同，拓展位为相反数，表明写数据的数量已经超过读数据数量的一个 FIFO 深度了，此时 FIFO 是满状态。当然，此条件成立的前提是空状态禁止读操作、满状态禁止写操作。</p><p>
+同理，由于异步延迟逻辑的存在，满状态信号也不是实时的。但是也相当于提前判断了满状态信号，此时不再进行写 FIFO 操作也不会影响应用的正确性。</p><hr>
+<h2>
+FIFO 设计</h2>
+<h3>设计要求</h3><p>
+为设计应用于各种场景的  FIFO，这里对设计提出如下要求：</p><ul><li>
+(1) FIFO 深度、宽度参数化，输出空、满状态信号，并输出一个可配置的满状态信号。当 FIFO 内部数据达到设置的参数数量时，拉高该信号。</li><li>
+(2) 输入数据和输出数据位宽可以不一致，但要保证写数据、写地址位宽与读数据、读地址位宽的一致性。例如写数据位宽 8bit，写地址位宽为 6bit（64 个数据）。如果输出数据位宽要求 32bit，则输出地址位宽应该为 4bit（16 个数据）。</li><li>
+(3) FIFO 是异步的，即读写控制信号来自不同的时钟域。输出空、满状态信号之前，读写地址信号要用格雷码做同步处理，通过减少多位宽信号的翻转来减少打拍法同步时数据的传输错误。
+格雷码与二进制之间的转换如下图所示。</li></ul>
+<p><img decoding="async" src="https://www.runoob.com/wp-content/uploads/2021/05/v-fifo-3.png"></p>
+<h3>双口 RAM 设计</h3>
+<p>RAM 端口参数可配置，读写位宽可以不一致。建议 memory 数组定义时，以长位宽地址、短位宽数据的参数为参考，方便数组变量进行选择访问。</p><p>
+Verilog 描述如下。</p>
+<div class="example"><h2 class="example">实例</h2> <div class="example_code">
+<span style="color: #A52A2A; font-weight: bold;">module</span> &nbsp;ramdp<br />
+&nbsp; &nbsp; <span style="color: #5D478B;">#</span><span style="color: #9F79EE;">&#40;</span> &nbsp;<span style="color: #A52A2A; font-weight: bold;">parameter</span> &nbsp; &nbsp; &nbsp; AWI &nbsp; &nbsp; <span style="color: #5D478B;">=</span> <span style="color: #ff0055;">5</span> <span style="color: #5D478B;">,</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; <span style="color: #A52A2A; font-weight: bold;">parameter</span> &nbsp; &nbsp; &nbsp; AWO &nbsp; &nbsp; <span style="color: #5D478B;">=</span> <span style="color: #ff0055;">7</span> <span style="color: #5D478B;">,</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; <span style="color: #A52A2A; font-weight: bold;">parameter</span> &nbsp; &nbsp; &nbsp; DWI &nbsp; &nbsp; <span style="color: #5D478B;">=</span> <span style="color: #ff0055;">64</span> <span style="color: #5D478B;">,</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; <span style="color: #A52A2A; font-weight: bold;">parameter</span> &nbsp; &nbsp; &nbsp; DWO &nbsp; &nbsp; <span style="color: #5D478B;">=</span> <span style="color: #ff0055;">16</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; <span style="color: #9F79EE;">&#41;</span><br />
+&nbsp; &nbsp; <span style="color: #9F79EE;">&#40;</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; <span style="color: #A52A2A; font-weight: bold;">input</span> &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; CLK_WR <span style="color: #5D478B;">,</span> <span style="color: #00008B; font-style: italic;">//写时钟</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; <span style="color: #A52A2A; font-weight: bold;">input</span> &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; WR_EN <span style="color: #5D478B;">,</span> &nbsp;<span style="color: #00008B; font-style: italic;">//写使能</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; <span style="color: #A52A2A; font-weight: bold;">input</span> <span style="color: #9F79EE;">&#91;</span>AWI<span style="color: #5D478B;">-</span><span style="color: #ff0055;">1</span><span style="color: #5D478B;">:</span><span style="color: #ff0055;">0</span><span style="color: #9F79EE;">&#93;</span> &nbsp; &nbsp; &nbsp; &nbsp; ADDR_WR <span style="color: #5D478B;">,</span><span style="color: #00008B; font-style: italic;">//写地址</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; <span style="color: #A52A2A; font-weight: bold;">input</span> <span style="color: #9F79EE;">&#91;</span>DWI<span style="color: #5D478B;">-</span><span style="color: #ff0055;">1</span><span style="color: #5D478B;">:</span><span style="color: #ff0055;">0</span><span style="color: #9F79EE;">&#93;</span> &nbsp; &nbsp; &nbsp; &nbsp; D <span style="color: #5D478B;">,</span> &nbsp; &nbsp; &nbsp;<span style="color: #00008B; font-style: italic;">//写数据</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; <span style="color: #A52A2A; font-weight: bold;">input</span> &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; CLK_RD <span style="color: #5D478B;">,</span> <span style="color: #00008B; font-style: italic;">//读时钟</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; <span style="color: #A52A2A; font-weight: bold;">input</span> &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; RD_EN <span style="color: #5D478B;">,</span> &nbsp;<span style="color: #00008B; font-style: italic;">//读使能</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; <span style="color: #A52A2A; font-weight: bold;">input</span> <span style="color: #9F79EE;">&#91;</span>AWO<span style="color: #5D478B;">-</span><span style="color: #ff0055;">1</span><span style="color: #5D478B;">:</span><span style="color: #ff0055;">0</span><span style="color: #9F79EE;">&#93;</span> &nbsp; &nbsp; &nbsp; &nbsp; ADDR_RD <span style="color: #5D478B;">,</span><span style="color: #00008B; font-style: italic;">//读地址</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; <span style="color: #A52A2A; font-weight: bold;">output</span> <span style="color: #A52A2A; font-weight: bold;">reg</span> <span style="color: #9F79EE;">&#91;</span>DWO<span style="color: #5D478B;">-</span><span style="color: #ff0055;">1</span><span style="color: #5D478B;">:</span><span style="color: #ff0055;">0</span><span style="color: #9F79EE;">&#93;</span> &nbsp; &nbsp;Q &nbsp; &nbsp; &nbsp; &nbsp;<span style="color: #00008B; font-style: italic;">//读数据</span><br />
+&nbsp; &nbsp; &nbsp;<span style="color: #9F79EE;">&#41;</span><span style="color: #5D478B;">;</span><br />
+&nbsp; &nbsp;<span style="color: #00008B; font-style: italic;">//输出位宽大于输入位宽，求取扩大的倍数及对应的位数</span><br />
+&nbsp; &nbsp;<span style="color: #A52A2A; font-weight: bold;">parameter</span> &nbsp; &nbsp; &nbsp; EXTENT &nbsp; &nbsp; &nbsp; <span style="color: #5D478B;">=</span> DWO<span style="color: #5D478B;">/</span>DWI <span style="color: #5D478B;">;</span><br />
+&nbsp; &nbsp;<span style="color: #A52A2A; font-weight: bold;">parameter</span> &nbsp; &nbsp; &nbsp; EXTENT_BIT &nbsp; <span style="color: #5D478B;">=</span> AWI<span style="color: #5D478B;">-</span>AWO <span style="color: #5D478B;">&gt;</span> <span style="color: #ff0055;">0</span> <span style="color: #5D478B;">?</span> AWI<span style="color: #5D478B;">-</span>AWO <span style="color: #5D478B;">:</span> 'b1 <span style="color: #5D478B;">;</span><br />
+&nbsp; &nbsp;<span style="color: #00008B; font-style: italic;">//输入位宽大于输出位宽，求取缩小的倍数及对应的位数</span><br />
+&nbsp; &nbsp;<span style="color: #A52A2A; font-weight: bold;">parameter</span> &nbsp; &nbsp; &nbsp; SHRINK &nbsp; &nbsp; &nbsp; <span style="color: #5D478B;">=</span> DWI<span style="color: #5D478B;">/</span>DWO <span style="color: #5D478B;">;</span><br />
+&nbsp; &nbsp;<span style="color: #A52A2A; font-weight: bold;">parameter</span> &nbsp; &nbsp; &nbsp; SHRINK_BIT &nbsp; <span style="color: #5D478B;">=</span> AWO<span style="color: #5D478B;">-</span>AWI <span style="color: #5D478B;">&gt;</span> <span style="color: #ff0055;">0</span> <span style="color: #5D478B;">?</span> AWO<span style="color: #5D478B;">-</span>AWI <span style="color: #5D478B;">:</span> 'b1<span style="color: #5D478B;">;</span><br />
+<br />
+&nbsp; &nbsp;<span style="color: #A52A2A; font-weight: bold;">genvar</span> i <span style="color: #5D478B;">;</span><br />
+&nbsp; &nbsp;<span style="color: #A52A2A; font-weight: bold;">generate</span><br />
+&nbsp; &nbsp; &nbsp; <span style="color: #00008B; font-style: italic;">//数据位宽展宽（地址位宽缩小）</span><br />
+&nbsp; &nbsp; &nbsp; <span style="color: #A52A2A; font-weight: bold;">if</span> <span style="color: #9F79EE;">&#40;</span>DWO <span style="color: #5D478B;">&gt;=</span> DWI<span style="color: #9F79EE;">&#41;</span> <span style="color: #A52A2A; font-weight: bold;">begin</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp;<span style="color: #00008B; font-style: italic;">//写逻辑，每时钟写一次</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp;<span style="color: #A52A2A; font-weight: bold;">reg</span> <span style="color: #9F79EE;">&#91;</span>DWI<span style="color: #5D478B;">-</span><span style="color: #ff0055;">1</span><span style="color: #5D478B;">:</span><span style="color: #ff0055;">0</span><span style="color: #9F79EE;">&#93;</span> &nbsp; &nbsp; &nbsp; &nbsp; mem <span style="color: #9F79EE;">&#91;</span><span style="color: #9F79EE;">&#40;</span><span style="color: #ff0055;">1</span><span style="color: #5D478B;">&lt;&lt;</span>AWI<span style="color: #9F79EE;">&#41;</span><span style="color: #5D478B;">-</span><span style="color: #ff0055;">1</span> <span style="color: #5D478B;">:</span> <span style="color: #ff0055;">0</span><span style="color: #9F79EE;">&#93;</span> <span style="color: #5D478B;">;</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp;<span style="color: #A52A2A; font-weight: bold;">always</span> <span style="color: #5D478B;">@</span><span style="color: #9F79EE;">&#40;</span><span style="color: #A52A2A; font-weight: bold;">posedge</span> CLK_WR<span style="color: #9F79EE;">&#41;</span> <span style="color: #A52A2A; font-weight: bold;">begin</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; <span style="color: #A52A2A; font-weight: bold;">if</span> <span style="color: #9F79EE;">&#40;</span>WR_EN<span style="color: #9F79EE;">&#41;</span> <span style="color: #A52A2A; font-weight: bold;">begin</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;mem<span style="color: #9F79EE;">&#91;</span>ADDR_WR<span style="color: #9F79EE;">&#93;</span> &nbsp;<span style="color: #5D478B;">&lt;=</span> D <span style="color: #5D478B;">;</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; <span style="color: #A52A2A; font-weight: bold;">end</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp;<span style="color: #A52A2A; font-weight: bold;">end</span><br />
+<br />
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp;<span style="color: #00008B; font-style: italic;">//读逻辑，每时钟读 4 次</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp;<span style="color: #A52A2A; font-weight: bold;">for</span> <span style="color: #9F79EE;">&#40;</span>i<span style="color: #5D478B;">=</span><span style="color: #ff0055;">0</span><span style="color: #5D478B;">;</span> i<span style="color: #5D478B;">&lt;</span>EXTENT<span style="color: #5D478B;">;</span> i<span style="color: #5D478B;">=</span>i<span style="color: #5D478B;">+</span><span style="color: #ff0055;">1</span><span style="color: #9F79EE;">&#41;</span> <span style="color: #A52A2A; font-weight: bold;">begin</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; <span style="color: #A52A2A; font-weight: bold;">always</span> <span style="color: #5D478B;">@</span><span style="color: #9F79EE;">&#40;</span><span style="color: #A52A2A; font-weight: bold;">posedge</span> CLK_RD<span style="color: #9F79EE;">&#41;</span> <span style="color: #A52A2A; font-weight: bold;">begin</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;<span style="color: #A52A2A; font-weight: bold;">if</span> <span style="color: #9F79EE;">&#40;</span>RD_EN<span style="color: #9F79EE;">&#41;</span> <span style="color: #A52A2A; font-weight: bold;">begin</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; Q<span style="color: #9F79EE;">&#91;</span><span style="color: #9F79EE;">&#40;</span>i<span style="color: #5D478B;">+</span><span style="color: #ff0055;">1</span><span style="color: #9F79EE;">&#41;</span><span style="color: #5D478B;">*</span>DWI<span style="color: #5D478B;">-</span><span style="color: #ff0055;">1</span><span style="color: #5D478B;">:</span> i<span style="color: #5D478B;">*</span>DWI<span style="color: #9F79EE;">&#93;</span> &nbsp;<span style="color: #5D478B;">&lt;=</span> mem<span style="color: #9F79EE;">&#91;</span><span style="color: #9F79EE;">&#40;</span>ADDR_RD<span style="color: #5D478B;">*</span>EXTENT<span style="color: #9F79EE;">&#41;</span> <span style="color: #5D478B;">+</span> i <span style="color: #9F79EE;">&#93;</span> <span style="color: #5D478B;">;</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;<span style="color: #A52A2A; font-weight: bold;">end</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; <span style="color: #A52A2A; font-weight: bold;">end</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp;<span style="color: #A52A2A; font-weight: bold;">end</span><br />
+&nbsp; &nbsp; &nbsp; <span style="color: #A52A2A; font-weight: bold;">end</span><br />
+<br />
+&nbsp; &nbsp; &nbsp; <span style="color: #00008B; font-style: italic;">//=================================================</span><br />
+&nbsp; &nbsp; &nbsp; <span style="color: #00008B; font-style: italic;">//数据位宽缩小（地址位宽展宽）</span><br />
+&nbsp; &nbsp; &nbsp; <span style="color: #A52A2A; font-weight: bold;">else</span> <span style="color: #A52A2A; font-weight: bold;">begin</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp;<span style="color: #00008B; font-style: italic;">//写逻辑，每时钟写 4 次</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp;<span style="color: #A52A2A; font-weight: bold;">reg</span> <span style="color: #9F79EE;">&#91;</span>DWO<span style="color: #5D478B;">-</span><span style="color: #ff0055;">1</span><span style="color: #5D478B;">:</span><span style="color: #ff0055;">0</span><span style="color: #9F79EE;">&#93;</span> &nbsp; &nbsp; &nbsp; &nbsp; mem <span style="color: #9F79EE;">&#91;</span><span style="color: #9F79EE;">&#40;</span><span style="color: #ff0055;">1</span><span style="color: #5D478B;">&lt;&lt;</span>AWO<span style="color: #9F79EE;">&#41;</span><span style="color: #5D478B;">-</span><span style="color: #ff0055;">1</span> <span style="color: #5D478B;">:</span> <span style="color: #ff0055;">0</span><span style="color: #9F79EE;">&#93;</span> <span style="color: #5D478B;">;</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp;<span style="color: #A52A2A; font-weight: bold;">for</span> <span style="color: #9F79EE;">&#40;</span>i<span style="color: #5D478B;">=</span><span style="color: #ff0055;">0</span><span style="color: #5D478B;">;</span> i<span style="color: #5D478B;">&lt;</span>SHRINK<span style="color: #5D478B;">;</span> i<span style="color: #5D478B;">=</span>i<span style="color: #5D478B;">+</span><span style="color: #ff0055;">1</span><span style="color: #9F79EE;">&#41;</span> <span style="color: #A52A2A; font-weight: bold;">begin</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; <span style="color: #A52A2A; font-weight: bold;">always</span> <span style="color: #5D478B;">@</span><span style="color: #9F79EE;">&#40;</span><span style="color: #A52A2A; font-weight: bold;">posedge</span> CLK_WR<span style="color: #9F79EE;">&#41;</span> <span style="color: #A52A2A; font-weight: bold;">begin</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;<span style="color: #A52A2A; font-weight: bold;">if</span> <span style="color: #9F79EE;">&#40;</span>WR_EN<span style="color: #9F79EE;">&#41;</span> <span style="color: #A52A2A; font-weight: bold;">begin</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; mem<span style="color: #9F79EE;">&#91;</span><span style="color: #9F79EE;">&#40;</span>ADDR_WR<span style="color: #5D478B;">*</span>SHRINK<span style="color: #9F79EE;">&#41;</span><span style="color: #5D478B;">+</span>i<span style="color: #9F79EE;">&#93;</span> &nbsp;<span style="color: #5D478B;">&lt;=</span> D<span style="color: #9F79EE;">&#91;</span><span style="color: #9F79EE;">&#40;</span>i<span style="color: #5D478B;">+</span><span style="color: #ff0055;">1</span><span style="color: #9F79EE;">&#41;</span><span style="color: #5D478B;">*</span>DWO <span style="color: #5D478B;">-</span><span style="color: #ff0055;">1</span><span style="color: #5D478B;">:</span> i<span style="color: #5D478B;">*</span>DWO<span style="color: #9F79EE;">&#93;</span> <span style="color: #5D478B;">;</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;<span style="color: #A52A2A; font-weight: bold;">end</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; <span style="color: #A52A2A; font-weight: bold;">end</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp;<span style="color: #A52A2A; font-weight: bold;">end</span><br />
+<br />
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp;<span style="color: #00008B; font-style: italic;">//读逻辑，每时钟读 1 次</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp;<span style="color: #A52A2A; font-weight: bold;">always</span> <span style="color: #5D478B;">@</span><span style="color: #9F79EE;">&#40;</span><span style="color: #A52A2A; font-weight: bold;">posedge</span> CLK_RD<span style="color: #9F79EE;">&#41;</span> <span style="color: #A52A2A; font-weight: bold;">begin</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; <span style="color: #A52A2A; font-weight: bold;">if</span> <span style="color: #9F79EE;">&#40;</span>RD_EN<span style="color: #9F79EE;">&#41;</span> <span style="color: #A52A2A; font-weight: bold;">begin</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; Q <span style="color: #5D478B;">&lt;=</span> mem<span style="color: #9F79EE;">&#91;</span>ADDR_RD<span style="color: #9F79EE;">&#93;</span> <span style="color: #5D478B;">;</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; <span style="color: #A52A2A; font-weight: bold;">end</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp;<span style="color: #A52A2A; font-weight: bold;">end</span><br />
+&nbsp; &nbsp; &nbsp; <span style="color: #A52A2A; font-weight: bold;">end</span><br />
+&nbsp; &nbsp;<span style="color: #A52A2A; font-weight: bold;">endgenerate</span><br />
+<br />
+<span style="color: #A52A2A; font-weight: bold;">endmodule</span><br />
+</div></div>
+<h3>计数器设计</h3><p>
+计数器用于产生读写地址信息，位宽可配置，不需要设置结束值，让其溢出后自动重新计数即可。Verilg 描述如下。</p>
+<div class="example"><h2 class="example">实例</h2> <div class="example_code">
+<span style="color: #A52A2A; font-weight: bold;">module</span> &nbsp;ccnt<br />
+&nbsp; <span style="color: #5D478B;">#</span><span style="color: #9F79EE;">&#40;</span><span style="color: #A52A2A; font-weight: bold;">parameter</span> W <span style="color: #9F79EE;">&#41;</span><br />
+&nbsp; &nbsp;<span style="color: #9F79EE;">&#40;</span><br />
+&nbsp; &nbsp; <span style="color: #A52A2A; font-weight: bold;">input</span> &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;rstn <span style="color: #5D478B;">,</span><br />
+&nbsp; &nbsp; <span style="color: #A52A2A; font-weight: bold;">input</span> &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;clk <span style="color: #5D478B;">,</span><br />
+&nbsp; &nbsp; <span style="color: #A52A2A; font-weight: bold;">input</span> &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;en <span style="color: #5D478B;">,</span><br />
+&nbsp; &nbsp; <span style="color: #A52A2A; font-weight: bold;">output</span> <span style="color: #9F79EE;">&#91;</span>W<span style="color: #5D478B;">-</span><span style="color: #ff0055;">1</span><span style="color: #5D478B;">:</span><span style="color: #ff0055;">0</span><span style="color: #9F79EE;">&#93;</span> &nbsp; &nbsp; count<br />
+&nbsp; &nbsp; <span style="color: #9F79EE;">&#41;</span><span style="color: #5D478B;">;</span><br />
+<br />
+&nbsp; &nbsp;<span style="color: #A52A2A; font-weight: bold;">reg</span> <span style="color: #9F79EE;">&#91;</span>W<span style="color: #5D478B;">-</span><span style="color: #ff0055;">1</span><span style="color: #5D478B;">:</span><span style="color: #ff0055;">0</span><span style="color: #9F79EE;">&#93;</span> &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;count_r <span style="color: #5D478B;">;</span><br />
+&nbsp; &nbsp;<span style="color: #A52A2A; font-weight: bold;">always</span> <span style="color: #5D478B;">@</span><span style="color: #9F79EE;">&#40;</span><span style="color: #A52A2A; font-weight: bold;">posedge</span> clk <span style="color: #A52A2A; font-weight: bold;">or</span> <span style="color: #A52A2A; font-weight: bold;">negedge</span> rstn<span style="color: #9F79EE;">&#41;</span> <span style="color: #A52A2A; font-weight: bold;">begin</span><br />
+&nbsp; &nbsp; &nbsp; <span style="color: #A52A2A; font-weight: bold;">if</span> <span style="color: #9F79EE;">&#40;</span><span style="color: #5D478B;">!</span>rstn<span style="color: #9F79EE;">&#41;</span> <span style="color: #A52A2A; font-weight: bold;">begin</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp;count_r &nbsp; &nbsp; &nbsp; &nbsp;<span style="color: #5D478B;">&lt;=</span> 'b0 <span style="color: #5D478B;">;</span><br />
+&nbsp; &nbsp; &nbsp; <span style="color: #A52A2A; font-weight: bold;">end</span><br />
+&nbsp; &nbsp; &nbsp; <span style="color: #A52A2A; font-weight: bold;">else</span> <span style="color: #A52A2A; font-weight: bold;">if</span> <span style="color: #9F79EE;">&#40;</span>en<span style="color: #9F79EE;">&#41;</span> <span style="color: #A52A2A; font-weight: bold;">begin</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp;count_r &nbsp; &nbsp; &nbsp; &nbsp;<span style="color: #5D478B;">&lt;=</span> count_r <span style="color: #5D478B;">+</span> <span style="color: #ff0055;">1'b1</span> <span style="color: #5D478B;">;</span><br />
+&nbsp; &nbsp; &nbsp; <span style="color: #A52A2A; font-weight: bold;">end</span><br />
+&nbsp; &nbsp;<span style="color: #A52A2A; font-weight: bold;">end</span><br />
+&nbsp; &nbsp;<span style="color: #A52A2A; font-weight: bold;">assign</span> count <span style="color: #5D478B;">=</span> count_r <span style="color: #5D478B;">;</span><br />
+<br />
+<span style="color: #A52A2A; font-weight: bold;">endmodule</span><br />
+</div></div>
+<h3>FIFO 设计</h3><p>
+该模块为 FIFO 的主体部分，产生读写控制逻辑，并产生空、满、可编程满状态信号。</p><p>
+鉴于篇幅原因，这里只给出读数据位宽大于写数据位宽的逻辑代码，写数据位宽大于读数据位宽的代码描述详见附件。</p>
+<div class="example"><h2 class="example">实例</h2> <div class="example_code">
+<span style="color: #A52A2A; font-weight: bold;">module</span> &nbsp;fifo<br />
+&nbsp; &nbsp; <span style="color: #5D478B;">#</span><span style="color: #9F79EE;">&#40;</span> &nbsp;<span style="color: #A52A2A; font-weight: bold;">parameter</span> &nbsp; &nbsp; &nbsp; AWI &nbsp; &nbsp; &nbsp; &nbsp;<span style="color: #5D478B;">=</span> <span style="color: #ff0055;">5</span> <span style="color: #5D478B;">,</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; <span style="color: #A52A2A; font-weight: bold;">parameter</span> &nbsp; &nbsp; &nbsp; AWO &nbsp; &nbsp; &nbsp; &nbsp;<span style="color: #5D478B;">=</span> <span style="color: #ff0055;">3</span> <span style="color: #5D478B;">,</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; <span style="color: #A52A2A; font-weight: bold;">parameter</span> &nbsp; &nbsp; &nbsp; DWI &nbsp; &nbsp; &nbsp; &nbsp;<span style="color: #5D478B;">=</span> <span style="color: #ff0055;">4</span> <span style="color: #5D478B;">,</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; <span style="color: #A52A2A; font-weight: bold;">parameter</span> &nbsp; &nbsp; &nbsp; DWO &nbsp; &nbsp; &nbsp; &nbsp;<span style="color: #5D478B;">=</span> <span style="color: #ff0055;">16</span> <span style="color: #5D478B;">,</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; <span style="color: #A52A2A; font-weight: bold;">parameter</span> &nbsp; &nbsp; &nbsp; PROG_DEPTH <span style="color: #5D478B;">=</span> <span style="color: #ff0055;">16</span><span style="color: #9F79EE;">&#41;</span> <span style="color: #00008B; font-style: italic;">//可设置深度</span><br />
+&nbsp; &nbsp; <span style="color: #9F79EE;">&#40;</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; <span style="color: #A52A2A; font-weight: bold;">input</span> &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; rstn<span style="color: #5D478B;">,</span> &nbsp;<span style="color: #00008B; font-style: italic;">//读写使用一个复位</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; <span style="color: #A52A2A; font-weight: bold;">input</span> &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; wclk<span style="color: #5D478B;">,</span> &nbsp;<span style="color: #00008B; font-style: italic;">//写时钟</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; <span style="color: #A52A2A; font-weight: bold;">input</span> &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; winc<span style="color: #5D478B;">,</span> &nbsp;<span style="color: #00008B; font-style: italic;">//写使能</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; <span style="color: #A52A2A; font-weight: bold;">input</span> <span style="color: #9F79EE;">&#91;</span>DWI<span style="color: #5D478B;">-</span><span style="color: #ff0055;">1</span><span style="color: #5D478B;">:</span> <span style="color: #ff0055;">0</span><span style="color: #9F79EE;">&#93;</span> &nbsp; &nbsp; &nbsp; &nbsp;wdata<span style="color: #5D478B;">,</span> <span style="color: #00008B; font-style: italic;">//写数据</span><br />
+<br />
+&nbsp; &nbsp; &nbsp; &nbsp; <span style="color: #A52A2A; font-weight: bold;">input</span> &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; rclk<span style="color: #5D478B;">,</span> &nbsp;<span style="color: #00008B; font-style: italic;">//读时钟</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; <span style="color: #A52A2A; font-weight: bold;">input</span> &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; rinc<span style="color: #5D478B;">,</span> &nbsp;<span style="color: #00008B; font-style: italic;">//读使能</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; <span style="color: #A52A2A; font-weight: bold;">output</span> <span style="color: #9F79EE;">&#91;</span>DWO<span style="color: #5D478B;">-</span><span style="color: #ff0055;">1</span> <span style="color: #5D478B;">:</span> <span style="color: #ff0055;">0</span><span style="color: #9F79EE;">&#93;</span> &nbsp; &nbsp; &nbsp;rdata<span style="color: #5D478B;">,</span> <span style="color: #00008B; font-style: italic;">//读数据</span><br />
+<br />
+&nbsp; &nbsp; &nbsp; &nbsp; <span style="color: #A52A2A; font-weight: bold;">output</span> &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;wfull<span style="color: #5D478B;">,</span> &nbsp; &nbsp;<span style="color: #00008B; font-style: italic;">//写满标志 </span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; <span style="color: #A52A2A; font-weight: bold;">output</span> &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;rempty<span style="color: #5D478B;">,</span> &nbsp; <span style="color: #00008B; font-style: italic;">//读空标志</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; <span style="color: #A52A2A; font-weight: bold;">output</span> &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;prog_full <span style="color: #00008B; font-style: italic;">//可编程满标志</span><br />
+&nbsp; &nbsp; &nbsp;<span style="color: #9F79EE;">&#41;</span><span style="color: #5D478B;">;</span><br />
+<br />
+&nbsp; &nbsp;<span style="color: #00008B; font-style: italic;">//输出位宽大于输入位宽，求取扩大的倍数及对应的位数</span><br />
+&nbsp; &nbsp;<span style="color: #A52A2A; font-weight: bold;">parameter</span> &nbsp; &nbsp; &nbsp; EXTENT &nbsp; &nbsp; &nbsp; <span style="color: #5D478B;">=</span> DWO<span style="color: #5D478B;">/</span>DWI <span style="color: #5D478B;">;</span><br />
+&nbsp; &nbsp;<span style="color: #A52A2A; font-weight: bold;">parameter</span> &nbsp; &nbsp; &nbsp; EXTENT_BIT &nbsp; <span style="color: #5D478B;">=</span> AWI<span style="color: #5D478B;">-</span>AWO <span style="color: #5D478B;">;</span><br />
+&nbsp; &nbsp;<span style="color: #00008B; font-style: italic;">//输出位宽小于输入位宽，求取缩小的倍数及对应的位数</span><br />
+&nbsp; &nbsp;<span style="color: #A52A2A; font-weight: bold;">parameter</span> &nbsp; &nbsp; &nbsp; SHRINK &nbsp; &nbsp; &nbsp; <span style="color: #5D478B;">=</span> DWI<span style="color: #5D478B;">/</span>DWO <span style="color: #5D478B;">;</span><br />
+&nbsp; &nbsp;<span style="color: #A52A2A; font-weight: bold;">parameter</span> &nbsp; &nbsp; &nbsp; SHRINK_BIT &nbsp; <span style="color: #5D478B;">=</span> AWO<span style="color: #5D478B;">-</span>AWI <span style="color: #5D478B;">;</span><br />
+<br />
+&nbsp; &nbsp;<span style="color: #00008B; font-style: italic;">//==================== push/wr counter ===============</span><br />
+&nbsp; &nbsp;<span style="color: #A52A2A; font-weight: bold;">wire</span> <span style="color: #9F79EE;">&#91;</span>AWI<span style="color: #5D478B;">-</span><span style="color: #ff0055;">1</span><span style="color: #5D478B;">:</span><span style="color: #ff0055;">0</span><span style="color: #9F79EE;">&#93;</span> &nbsp; &nbsp; &nbsp;waddr <span style="color: #5D478B;">;</span><br />
+&nbsp; &nbsp;<span style="color: #A52A2A; font-weight: bold;">wire</span> &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;wover_flag <span style="color: #5D478B;">;</span> <span style="color: #00008B; font-style: italic;">//多使用一位做写地址拓展</span><br />
+&nbsp; &nbsp;ccnt &nbsp; &nbsp; &nbsp; &nbsp; <span style="color: #5D478B;">#</span><span style="color: #9F79EE;">&#40;</span>.W<span style="color: #9F79EE;">&#40;</span>AWI<span style="color: #5D478B;">+</span><span style="color: #ff0055;">1</span><span style="color: #9F79EE;">&#41;</span><span style="color: #9F79EE;">&#41;</span> &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; <br />
+&nbsp; &nbsp;u_push_cnt<span style="color: #9F79EE;">&#40;</span><br />
+&nbsp; &nbsp; &nbsp; .rstn &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; <span style="color: #9F79EE;">&#40;</span>rstn<span style="color: #9F79EE;">&#41;</span><span style="color: #5D478B;">,</span><br />
+&nbsp; &nbsp; &nbsp; .clk &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;<span style="color: #9F79EE;">&#40;</span>wclk<span style="color: #9F79EE;">&#41;</span><span style="color: #5D478B;">,</span><br />
+&nbsp; &nbsp; &nbsp; .en &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; <span style="color: #9F79EE;">&#40;</span>winc <span style="color: #5D478B;">&amp;&amp;</span> <span style="color: #5D478B;">!</span>wfull<span style="color: #9F79EE;">&#41;</span><span style="color: #5D478B;">,</span> <span style="color: #00008B; font-style: italic;">//full 时禁止写</span><br />
+&nbsp; &nbsp; &nbsp; .count &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;<span style="color: #9F79EE;">&#40;</span><span style="color: #9F79EE;">&#123;</span>wover_flag<span style="color: #5D478B;">,</span> waddr<span style="color: #9F79EE;">&#125;</span><span style="color: #9F79EE;">&#41;</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; <span style="color: #9F79EE;">&#41;</span><span style="color: #5D478B;">;</span><br />
+<br />
+&nbsp; &nbsp;<span style="color: #00008B; font-style: italic;">//============== pop/rd counter ===================</span><br />
+&nbsp; &nbsp;<span style="color: #A52A2A; font-weight: bold;">wire</span> <span style="color: #9F79EE;">&#91;</span>AWO<span style="color: #5D478B;">-</span><span style="color: #ff0055;">1</span><span style="color: #5D478B;">:</span><span style="color: #ff0055;">0</span><span style="color: #9F79EE;">&#93;</span> &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;raddr <span style="color: #5D478B;">;</span><br />
+&nbsp; &nbsp;<span style="color: #A52A2A; font-weight: bold;">wire</span> &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;rover_flag <span style="color: #5D478B;">;</span> &nbsp;<span style="color: #00008B; font-style: italic;">//多使用一位做读地址拓展</span><br />
+&nbsp; &nbsp;ccnt &nbsp; &nbsp; &nbsp; &nbsp; <span style="color: #5D478B;">#</span><span style="color: #9F79EE;">&#40;</span>.W<span style="color: #9F79EE;">&#40;</span>AWO<span style="color: #5D478B;">+</span><span style="color: #ff0055;">1</span><span style="color: #9F79EE;">&#41;</span><span style="color: #9F79EE;">&#41;</span> &nbsp; &nbsp;<br />
+&nbsp; &nbsp;u_pop_cnt<span style="color: #9F79EE;">&#40;</span><br />
+&nbsp; &nbsp; &nbsp; .rstn &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; <span style="color: #9F79EE;">&#40;</span>rstn<span style="color: #9F79EE;">&#41;</span><span style="color: #5D478B;">,</span><br />
+&nbsp; &nbsp; &nbsp; .clk &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;<span style="color: #9F79EE;">&#40;</span>rclk<span style="color: #9F79EE;">&#41;</span><span style="color: #5D478B;">,</span><br />
+&nbsp; &nbsp; &nbsp; .en &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; <span style="color: #9F79EE;">&#40;</span>rinc <span style="color: #5D478B;">&amp;</span> <span style="color: #5D478B;">!</span>rempty<span style="color: #9F79EE;">&#41;</span><span style="color: #5D478B;">,</span> <span style="color: #00008B; font-style: italic;">//empyt 时禁止读</span><br />
+&nbsp; &nbsp; &nbsp; .count &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;<span style="color: #9F79EE;">&#40;</span><span style="color: #9F79EE;">&#123;</span>rover_flag<span style="color: #5D478B;">,</span> raddr<span style="color: #9F79EE;">&#125;</span><span style="color: #9F79EE;">&#41;</span><br />
+&nbsp; &nbsp; &nbsp; <span style="color: #9F79EE;">&#41;</span><span style="color: #5D478B;">;</span><br />
+<br />
+&nbsp; &nbsp;<span style="color: #00008B; font-style: italic;">//==============================================</span><br />
+&nbsp; &nbsp;<span style="color: #00008B; font-style: italic;">//窄数据进，宽数据出</span><br />
+<span style="color: #A52A2A; font-weight: bold;">generate</span><br />
+&nbsp; &nbsp;<span style="color: #A52A2A; font-weight: bold;">if</span> <span style="color: #9F79EE;">&#40;</span>DWO <span style="color: #5D478B;">&gt;=</span> DWI<span style="color: #9F79EE;">&#41;</span> <span style="color: #A52A2A; font-weight: bold;">begin</span> <span style="color: #5D478B;">:</span> EXTENT_WIDTH<br />
+<br />
+&nbsp; &nbsp; &nbsp; <span style="color: #00008B; font-style: italic;">//格雷码转换</span><br />
+&nbsp; &nbsp; &nbsp; <span style="color: #A52A2A; font-weight: bold;">wire</span> <span style="color: #9F79EE;">&#91;</span>AWI<span style="color: #5D478B;">:</span><span style="color: #ff0055;">0</span><span style="color: #9F79EE;">&#93;</span> wptr &nbsp; &nbsp;<span style="color: #5D478B;">=</span> <span style="color: #9F79EE;">&#40;</span><span style="color: #9F79EE;">&#123;</span>wover_flag<span style="color: #5D478B;">,</span> waddr<span style="color: #9F79EE;">&#125;</span><span style="color: #5D478B;">&gt;&gt;</span><span style="color: #ff0055;">1</span><span style="color: #9F79EE;">&#41;</span> <span style="color: #5D478B;">^</span> <span style="color: #9F79EE;">&#40;</span><span style="color: #9F79EE;">&#123;</span>wover_flag<span style="color: #5D478B;">,</span> waddr<span style="color: #9F79EE;">&#125;</span><span style="color: #9F79EE;">&#41;</span> <span style="color: #5D478B;">;</span><br />
+&nbsp; &nbsp; &nbsp; <span style="color: #00008B; font-style: italic;">//将写数据指针同步到读时钟域</span><br />
+&nbsp; &nbsp; &nbsp; <span style="color: #A52A2A; font-weight: bold;">reg</span> <span style="color: #9F79EE;">&#91;</span>AWI<span style="color: #5D478B;">:</span><span style="color: #ff0055;">0</span><span style="color: #9F79EE;">&#93;</span> &nbsp;rq2_wptr_r0 <span style="color: #5D478B;">;</span><br />
+&nbsp; &nbsp; &nbsp; <span style="color: #A52A2A; font-weight: bold;">reg</span> <span style="color: #9F79EE;">&#91;</span>AWI<span style="color: #5D478B;">:</span><span style="color: #ff0055;">0</span><span style="color: #9F79EE;">&#93;</span> &nbsp;rq2_wptr_r1 <span style="color: #5D478B;">;</span><br />
+&nbsp; &nbsp; &nbsp; <span style="color: #A52A2A; font-weight: bold;">always</span> <span style="color: #5D478B;">@</span><span style="color: #9F79EE;">&#40;</span><span style="color: #A52A2A; font-weight: bold;">posedge</span> rclk <span style="color: #A52A2A; font-weight: bold;">or</span> <span style="color: #A52A2A; font-weight: bold;">negedge</span> rstn<span style="color: #9F79EE;">&#41;</span> <span style="color: #A52A2A; font-weight: bold;">begin</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp;<span style="color: #A52A2A; font-weight: bold;">if</span> <span style="color: #9F79EE;">&#40;</span><span style="color: #5D478B;">!</span>rstn<span style="color: #9F79EE;">&#41;</span> <span style="color: #A52A2A; font-weight: bold;">begin</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; rq2_wptr_r0 &nbsp; &nbsp; <span style="color: #5D478B;">&lt;=</span> 'b0 <span style="color: #5D478B;">;</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; rq2_wptr_r1 &nbsp; &nbsp; <span style="color: #5D478B;">&lt;=</span> 'b0 <span style="color: #5D478B;">;</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp;<span style="color: #A52A2A; font-weight: bold;">end</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp;<span style="color: #A52A2A; font-weight: bold;">else</span> <span style="color: #A52A2A; font-weight: bold;">begin</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; rq2_wptr_r0 &nbsp; &nbsp; <span style="color: #5D478B;">&lt;=</span> wptr <span style="color: #5D478B;">;</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; rq2_wptr_r1 &nbsp; &nbsp; <span style="color: #5D478B;">&lt;=</span> rq2_wptr_r0 <span style="color: #5D478B;">;</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp;<span style="color: #A52A2A; font-weight: bold;">end</span><br />
+&nbsp; &nbsp; &nbsp; <span style="color: #A52A2A; font-weight: bold;">end</span><br />
+<br />
+&nbsp; &nbsp; &nbsp; <span style="color: #00008B; font-style: italic;">//格雷码转换</span><br />
+&nbsp; &nbsp; &nbsp; <span style="color: #A52A2A; font-weight: bold;">wire</span> <span style="color: #9F79EE;">&#91;</span>AWI<span style="color: #5D478B;">-</span><span style="color: #ff0055;">1</span><span style="color: #5D478B;">:</span><span style="color: #ff0055;">0</span><span style="color: #9F79EE;">&#93;</span> raddr_ex <span style="color: #5D478B;">=</span> raddr <span style="color: #5D478B;">&lt;&lt;</span> EXTENT_BIT <span style="color: #5D478B;">;</span><br />
+&nbsp; &nbsp; &nbsp; <span style="color: #A52A2A; font-weight: bold;">wire</span> <span style="color: #9F79EE;">&#91;</span>AWI<span style="color: #5D478B;">:</span><span style="color: #ff0055;">0</span><span style="color: #9F79EE;">&#93;</span> &nbsp; rptr &nbsp; &nbsp; <span style="color: #5D478B;">=</span> <span style="color: #9F79EE;">&#40;</span><span style="color: #9F79EE;">&#123;</span>rover_flag<span style="color: #5D478B;">,</span> raddr_ex<span style="color: #9F79EE;">&#125;</span><span style="color: #5D478B;">&gt;&gt;</span><span style="color: #ff0055;">1</span><span style="color: #9F79EE;">&#41;</span> <span style="color: #5D478B;">^</span> <span style="color: #9F79EE;">&#40;</span><span style="color: #9F79EE;">&#123;</span>rover_flag<span style="color: #5D478B;">,</span> raddr_ex<span style="color: #9F79EE;">&#125;</span><span style="color: #9F79EE;">&#41;</span> <span style="color: #5D478B;">;</span><br />
+&nbsp; &nbsp; &nbsp; <span style="color: #00008B; font-style: italic;">//将读数据指针同步到写时钟域</span><br />
+&nbsp; &nbsp; &nbsp; <span style="color: #A52A2A; font-weight: bold;">reg</span> <span style="color: #9F79EE;">&#91;</span>AWI<span style="color: #5D478B;">:</span><span style="color: #ff0055;">0</span><span style="color: #9F79EE;">&#93;</span> &nbsp; &nbsp;wq2_rptr_r0 <span style="color: #5D478B;">;</span><br />
+&nbsp; &nbsp; &nbsp; <span style="color: #A52A2A; font-weight: bold;">reg</span> <span style="color: #9F79EE;">&#91;</span>AWI<span style="color: #5D478B;">:</span><span style="color: #ff0055;">0</span><span style="color: #9F79EE;">&#93;</span> &nbsp; &nbsp;wq2_rptr_r1 <span style="color: #5D478B;">;</span><br />
+&nbsp; &nbsp; &nbsp; <span style="color: #A52A2A; font-weight: bold;">always</span> <span style="color: #5D478B;">@</span><span style="color: #9F79EE;">&#40;</span><span style="color: #A52A2A; font-weight: bold;">posedge</span> wclk <span style="color: #A52A2A; font-weight: bold;">or</span> <span style="color: #A52A2A; font-weight: bold;">negedge</span> rstn<span style="color: #9F79EE;">&#41;</span> <span style="color: #A52A2A; font-weight: bold;">begin</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp;<span style="color: #A52A2A; font-weight: bold;">if</span> <span style="color: #9F79EE;">&#40;</span><span style="color: #5D478B;">!</span>rstn<span style="color: #9F79EE;">&#41;</span> <span style="color: #A52A2A; font-weight: bold;">begin</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; wq2_rptr_r0 &nbsp; &nbsp; <span style="color: #5D478B;">&lt;=</span> 'b0 <span style="color: #5D478B;">;</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; wq2_rptr_r1 &nbsp; &nbsp; <span style="color: #5D478B;">&lt;=</span> 'b0 <span style="color: #5D478B;">;</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp;<span style="color: #A52A2A; font-weight: bold;">end</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp;<span style="color: #A52A2A; font-weight: bold;">else</span> <span style="color: #A52A2A; font-weight: bold;">begin</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; wq2_rptr_r0 &nbsp; &nbsp; <span style="color: #5D478B;">&lt;=</span> rptr <span style="color: #5D478B;">;</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; wq2_rptr_r1 &nbsp; &nbsp; <span style="color: #5D478B;">&lt;=</span> wq2_rptr_r0 <span style="color: #5D478B;">;</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp;<span style="color: #A52A2A; font-weight: bold;">end</span><br />
+&nbsp; &nbsp; &nbsp; <span style="color: #A52A2A; font-weight: bold;">end</span><br />
+<br />
+&nbsp; &nbsp; &nbsp; <span style="color: #00008B; font-style: italic;">//格雷码反解码</span><br />
+&nbsp; &nbsp; &nbsp; <span style="color: #00008B; font-style: italic;">//如果只需要空、满状态信号，则不需要反解码</span><br />
+&nbsp; &nbsp; &nbsp; <span style="color: #00008B; font-style: italic;">//因为可编程满状态信号的存在，地址反解码后便于比较</span><br />
+&nbsp; &nbsp; &nbsp; <span style="color: #A52A2A; font-weight: bold;">reg</span> <span style="color: #9F79EE;">&#91;</span>AWI<span style="color: #5D478B;">:</span><span style="color: #ff0055;">0</span><span style="color: #9F79EE;">&#93;</span> &nbsp; &nbsp; &nbsp; wq2_rptr_decode <span style="color: #5D478B;">;</span><br />
+&nbsp; &nbsp; &nbsp; <span style="color: #A52A2A; font-weight: bold;">reg</span> <span style="color: #9F79EE;">&#91;</span>AWI<span style="color: #5D478B;">:</span><span style="color: #ff0055;">0</span><span style="color: #9F79EE;">&#93;</span> &nbsp; &nbsp; &nbsp; rq2_wptr_decode <span style="color: #5D478B;">;</span><br />
+&nbsp; &nbsp; &nbsp; <span style="color: #A52A2A; font-weight: bold;">integer</span> &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; i <span style="color: #5D478B;">;</span><br />
+&nbsp; &nbsp; &nbsp; <span style="color: #A52A2A; font-weight: bold;">always</span> <span style="color: #5D478B;">@</span><span style="color: #9F79EE;">&#40;</span><span style="color: #5D478B;">*</span><span style="color: #9F79EE;">&#41;</span> <span style="color: #A52A2A; font-weight: bold;">begin</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp;wq2_rptr_decode<span style="color: #9F79EE;">&#91;</span>AWI<span style="color: #9F79EE;">&#93;</span> <span style="color: #5D478B;">=</span> wq2_rptr_r1<span style="color: #9F79EE;">&#91;</span>AWI<span style="color: #9F79EE;">&#93;</span><span style="color: #5D478B;">;</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp;<span style="color: #A52A2A; font-weight: bold;">for</span> <span style="color: #9F79EE;">&#40;</span>i<span style="color: #5D478B;">=</span>AWI<span style="color: #5D478B;">-</span><span style="color: #ff0055;">1</span><span style="color: #5D478B;">;</span> i<span style="color: #5D478B;">&gt;=</span><span style="color: #ff0055;">0</span><span style="color: #5D478B;">;</span> i<span style="color: #5D478B;">=</span>i<span style="color: #5D478B;">-</span><span style="color: #ff0055;">1</span><span style="color: #9F79EE;">&#41;</span> <span style="color: #A52A2A; font-weight: bold;">begin</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; wq2_rptr_decode<span style="color: #9F79EE;">&#91;</span>i<span style="color: #9F79EE;">&#93;</span> <span style="color: #5D478B;">=</span> wq2_rptr_decode<span style="color: #9F79EE;">&#91;</span>i<span style="color: #5D478B;">+</span><span style="color: #ff0055;">1</span><span style="color: #9F79EE;">&#93;</span> <span style="color: #5D478B;">^</span> wq2_rptr_r1<span style="color: #9F79EE;">&#91;</span>i<span style="color: #9F79EE;">&#93;</span> <span style="color: #5D478B;">;</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp;<span style="color: #A52A2A; font-weight: bold;">end</span><br />
+&nbsp; &nbsp; &nbsp; <span style="color: #A52A2A; font-weight: bold;">end</span><br />
+&nbsp; &nbsp; &nbsp; <span style="color: #A52A2A; font-weight: bold;">always</span> <span style="color: #5D478B;">@</span><span style="color: #9F79EE;">&#40;</span><span style="color: #5D478B;">*</span><span style="color: #9F79EE;">&#41;</span> <span style="color: #A52A2A; font-weight: bold;">begin</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp;rq2_wptr_decode<span style="color: #9F79EE;">&#91;</span>AWI<span style="color: #9F79EE;">&#93;</span> <span style="color: #5D478B;">=</span> rq2_wptr_r1<span style="color: #9F79EE;">&#91;</span>AWI<span style="color: #9F79EE;">&#93;</span><span style="color: #5D478B;">;</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp;<span style="color: #A52A2A; font-weight: bold;">for</span> <span style="color: #9F79EE;">&#40;</span>i<span style="color: #5D478B;">=</span>AWI<span style="color: #5D478B;">-</span><span style="color: #ff0055;">1</span><span style="color: #5D478B;">;</span> i<span style="color: #5D478B;">&gt;=</span><span style="color: #ff0055;">0</span><span style="color: #5D478B;">;</span> i<span style="color: #5D478B;">=</span>i<span style="color: #5D478B;">-</span><span style="color: #ff0055;">1</span><span style="color: #9F79EE;">&#41;</span> <span style="color: #A52A2A; font-weight: bold;">begin</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; rq2_wptr_decode<span style="color: #9F79EE;">&#91;</span>i<span style="color: #9F79EE;">&#93;</span> <span style="color: #5D478B;">=</span> rq2_wptr_decode<span style="color: #9F79EE;">&#91;</span>i<span style="color: #5D478B;">+</span><span style="color: #ff0055;">1</span><span style="color: #9F79EE;">&#93;</span> <span style="color: #5D478B;">^</span> rq2_wptr_r1<span style="color: #9F79EE;">&#91;</span>i<span style="color: #9F79EE;">&#93;</span> <span style="color: #5D478B;">;</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp;<span style="color: #A52A2A; font-weight: bold;">end</span><br />
+&nbsp; &nbsp; &nbsp; <span style="color: #A52A2A; font-weight: bold;">end</span><br />
+<br />
+&nbsp; &nbsp; &nbsp; <span style="color: #00008B; font-style: italic;">//读写地址、拓展位完全相同是，为空状态</span><br />
+&nbsp; &nbsp; &nbsp; <span style="color: #A52A2A; font-weight: bold;">assign</span> rempty &nbsp; &nbsp;<span style="color: #5D478B;">=</span> <span style="color: #9F79EE;">&#40;</span>rover_flag <span style="color: #5D478B;">==</span> rq2_wptr_decode<span style="color: #9F79EE;">&#91;</span>AWI<span style="color: #9F79EE;">&#93;</span><span style="color: #9F79EE;">&#41;</span> <span style="color: #5D478B;">&amp;&amp;</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;<span style="color: #9F79EE;">&#40;</span>raddr_ex <span style="color: #5D478B;">&gt;=</span> rq2_wptr_decode<span style="color: #9F79EE;">&#91;</span>AWI<span style="color: #5D478B;">-</span><span style="color: #ff0055;">1</span><span style="color: #5D478B;">:</span><span style="color: #ff0055;">0</span><span style="color: #9F79EE;">&#93;</span><span style="color: #9F79EE;">&#41;</span><span style="color: #5D478B;">;</span><br />
+&nbsp; &nbsp; &nbsp; <span style="color: #00008B; font-style: italic;">//读写地址相同、拓展位不同，为满状态</span><br />
+&nbsp; &nbsp; &nbsp; <span style="color: #A52A2A; font-weight: bold;">assign</span> wfull &nbsp; &nbsp; <span style="color: #5D478B;">=</span> <span style="color: #9F79EE;">&#40;</span>wover_flag <span style="color: #5D478B;">!=</span> wq2_rptr_decode<span style="color: #9F79EE;">&#91;</span>AWI<span style="color: #9F79EE;">&#93;</span><span style="color: #9F79EE;">&#41;</span> <span style="color: #5D478B;">&amp;&amp;</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;<span style="color: #9F79EE;">&#40;</span>waddr <span style="color: #5D478B;">&gt;=</span> wq2_rptr_decode<span style="color: #9F79EE;">&#91;</span>AWI<span style="color: #5D478B;">-</span><span style="color: #ff0055;">1</span><span style="color: #5D478B;">:</span><span style="color: #ff0055;">0</span><span style="color: #9F79EE;">&#93;</span><span style="color: #9F79EE;">&#41;</span> <span style="color: #5D478B;">;</span><br />
+&nbsp; &nbsp; &nbsp; <span style="color: #00008B; font-style: italic;">//拓展位一样时，写地址必然不小于读地址</span><br />
+&nbsp; &nbsp; &nbsp; <span style="color: #00008B; font-style: italic;">//拓展位不同时，写地址部分比如小于读地址，实际写地址要增加一个FIFO深度</span><br />
+&nbsp; &nbsp; &nbsp; <span style="color: #A52A2A; font-weight: bold;">assign</span> prog_full &nbsp;<span style="color: #5D478B;">=</span> <span style="color: #9F79EE;">&#40;</span>wover_flag <span style="color: #5D478B;">==</span> wq2_rptr_decode<span style="color: #9F79EE;">&#91;</span>AWI<span style="color: #9F79EE;">&#93;</span><span style="color: #9F79EE;">&#41;</span> <span style="color: #5D478B;">?</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; waddr <span style="color: #5D478B;">-</span> wq2_rptr_decode<span style="color: #9F79EE;">&#91;</span>AWI<span style="color: #5D478B;">-</span><span style="color: #ff0055;">1</span><span style="color: #5D478B;">:</span><span style="color: #ff0055;">0</span><span style="color: #9F79EE;">&#93;</span> <span style="color: #5D478B;">&gt;=</span> PROG_DEPTH<span style="color: #5D478B;">-</span><span style="color: #ff0055;">1</span> <span style="color: #5D478B;">:</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; waddr <span style="color: #5D478B;">+</span> <span style="color: #9F79EE;">&#40;</span><span style="color: #ff0055;">1</span><span style="color: #5D478B;">&lt;&lt;</span>AWI<span style="color: #9F79EE;">&#41;</span> <span style="color: #5D478B;">-</span> wq2_rptr_decode<span style="color: #9F79EE;">&#91;</span>AWI<span style="color: #5D478B;">-</span><span style="color: #ff0055;">1</span><span style="color: #5D478B;">:</span><span style="color: #ff0055;">0</span><span style="color: #9F79EE;">&#93;</span> <span style="color: #5D478B;">&gt;=</span> PROG_DEPTH<span style="color: #5D478B;">-</span><span style="color: #ff0055;">1</span><span style="color: #5D478B;">;</span><br />
+<br />
+&nbsp; &nbsp; &nbsp; <span style="color: #00008B; font-style: italic;">//双口 ram 例化</span><br />
+&nbsp; &nbsp; &nbsp; ramdp<br />
+&nbsp; &nbsp; &nbsp; &nbsp; <span style="color: #5D478B;">#</span><span style="color: #9F79EE;">&#40;</span> .AWI &nbsp; &nbsp; <span style="color: #9F79EE;">&#40;</span>AWI<span style="color: #9F79EE;">&#41;</span><span style="color: #5D478B;">,</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;.AWO &nbsp; &nbsp; <span style="color: #9F79EE;">&#40;</span>AWO<span style="color: #9F79EE;">&#41;</span><span style="color: #5D478B;">,</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;.DWI &nbsp; &nbsp; <span style="color: #9F79EE;">&#40;</span>DWI<span style="color: #9F79EE;">&#41;</span><span style="color: #5D478B;">,</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;.DWO &nbsp; &nbsp; <span style="color: #9F79EE;">&#40;</span>DWO<span style="color: #9F79EE;">&#41;</span><span style="color: #9F79EE;">&#41;</span><br />
+&nbsp; &nbsp; &nbsp; u_ramdp<br />
+&nbsp; &nbsp; &nbsp; &nbsp; <span style="color: #9F79EE;">&#40;</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp;.CLK_WR &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;<span style="color: #9F79EE;">&#40;</span>wclk<span style="color: #9F79EE;">&#41;</span><span style="color: #5D478B;">,</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp;.WR_EN &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; <span style="color: #9F79EE;">&#40;</span>winc <span style="color: #5D478B;">&amp;</span> ！wfull<span style="color: #9F79EE;">&#41;</span><span style="color: #5D478B;">,</span> <span style="color: #00008B; font-style: italic;">//写满时禁止写</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp;.ADDR_WR &nbsp; &nbsp; &nbsp; &nbsp; <span style="color: #9F79EE;">&#40;</span>waddr<span style="color: #9F79EE;">&#41;</span><span style="color: #5D478B;">,</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp;.D &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; <span style="color: #9F79EE;">&#40;</span>wdata<span style="color: #9F79EE;">&#91;</span>DWI<span style="color: #5D478B;">-</span><span style="color: #ff0055;">1</span><span style="color: #5D478B;">:</span><span style="color: #ff0055;">0</span><span style="color: #9F79EE;">&#93;</span><span style="color: #9F79EE;">&#41;</span><span style="color: #5D478B;">,</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp;.CLK_RD &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;<span style="color: #9F79EE;">&#40;</span>rclk<span style="color: #9F79EE;">&#41;</span><span style="color: #5D478B;">,</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp;.RD_EN &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; <span style="color: #9F79EE;">&#40;</span>rinc <span style="color: #5D478B;">&amp;</span> <span style="color: #5D478B;">!</span>rempty<span style="color: #9F79EE;">&#41;</span><span style="color: #5D478B;">,</span> <span style="color: #00008B; font-style: italic;">//读空时禁止读</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp;.ADDR_RD &nbsp; &nbsp; &nbsp; &nbsp; <span style="color: #9F79EE;">&#40;</span>raddr<span style="color: #9F79EE;">&#41;</span><span style="color: #5D478B;">,</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp;.Q &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; <span style="color: #9F79EE;">&#40;</span>rdata<span style="color: #9F79EE;">&#91;</span>DWO<span style="color: #5D478B;">-</span><span style="color: #ff0055;">1</span><span style="color: #5D478B;">:</span><span style="color: #ff0055;">0</span><span style="color: #9F79EE;">&#93;</span><span style="color: #9F79EE;">&#41;</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp;<span style="color: #9F79EE;">&#41;</span><span style="color: #5D478B;">;</span><br />
+<br />
+&nbsp; &nbsp;<span style="color: #A52A2A; font-weight: bold;">end</span><br />
+<br />
+&nbsp; &nbsp;<span style="color: #00008B; font-style: italic;">//==============================================</span><br />
+&nbsp; &nbsp;<span style="color: #00008B; font-style: italic;">//big in and small out</span><br />
+&nbsp; &nbsp;<span style="color: #00008B; font-style: italic;">/*<br />
+&nbsp; &nbsp;else begin: SHRINK_WIDTH<br />
+&nbsp; &nbsp; &nbsp; ……<br />
+&nbsp; &nbsp;end<br />
+&nbsp; &nbsp;*/</span><br />
+&nbsp;<span style="color: #A52A2A; font-weight: bold;">endgenerate</span><br />
+<span style="color: #A52A2A; font-weight: bold;">endmodule</span><br />
+</div></div>
+<h3>FIFO 调用</h3><p>
+下面可以调用设计的 FIFO，完成多位宽数据传输的异步处理。</p><p>
+写数据位宽为 4bit，写深度为 32。</p><p>
+读数据位宽为 16bit，读深度为 8，可配置 full 深度为 16。</p>
+<div class="example"><h2 class="example">实例</h2> <div class="example_code">
+<span style="color: #A52A2A; font-weight: bold;">module</span> &nbsp;fifo_s2b<span style="color: #9F79EE;">&#40;</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; <span style="color: #A52A2A; font-weight: bold;">input</span> &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; rstn<span style="color: #5D478B;">,</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; <span style="color: #A52A2A; font-weight: bold;">input</span> <span style="color: #9F79EE;">&#91;</span><span style="color: #ff0055;">4</span><span style="color: #5D478B;">-</span><span style="color: #ff0055;">1</span><span style="color: #5D478B;">:</span> <span style="color: #ff0055;">0</span><span style="color: #9F79EE;">&#93;</span> &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;din<span style="color: #5D478B;">,</span> &nbsp; &nbsp; <span style="color: #00008B; font-style: italic;">//异步写数据</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; <span style="color: #A52A2A; font-weight: bold;">input</span> &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; din_clk<span style="color: #5D478B;">,</span> <span style="color: #00008B; font-style: italic;">//异步写时钟</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; <span style="color: #A52A2A; font-weight: bold;">input</span> &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; din_en<span style="color: #5D478B;">,</span> &nbsp;<span style="color: #00008B; font-style: italic;">//异步写使能</span><br />
+<br />
+&nbsp; &nbsp; &nbsp; &nbsp; <span style="color: #A52A2A; font-weight: bold;">output</span> <span style="color: #9F79EE;">&#91;</span><span style="color: #ff0055;">16</span><span style="color: #5D478B;">-</span><span style="color: #ff0055;">1</span> <span style="color: #5D478B;">:</span> <span style="color: #ff0055;">0</span><span style="color: #9F79EE;">&#93;</span> &nbsp; &nbsp; &nbsp; dout<span style="color: #5D478B;">,</span> &nbsp; &nbsp; &nbsp;<span style="color: #00008B; font-style: italic;">//同步后数据</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; <span style="color: #A52A2A; font-weight: bold;">input</span> &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; dout_clk<span style="color: #5D478B;">,</span> &nbsp;<span style="color: #00008B; font-style: italic;">//同步使用时钟</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; <span style="color: #A52A2A; font-weight: bold;">input</span> &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; dout_en <span style="color: #9F79EE;">&#41;</span><span style="color: #5D478B;">;</span> <span style="color: #00008B; font-style: italic;">//同步数据使能</span><br />
+<br />
+&nbsp; &nbsp;<span style="color: #A52A2A; font-weight: bold;">wire</span> &nbsp; &nbsp; &nbsp; &nbsp; fifo_empty<span style="color: #5D478B;">,</span> fifo_full<span style="color: #5D478B;">,</span> prog_full <span style="color: #5D478B;">;</span><br />
+&nbsp; &nbsp;<span style="color: #A52A2A; font-weight: bold;">wire</span> &nbsp; &nbsp; &nbsp; &nbsp; rd_en_wir <span style="color: #5D478B;">;</span><br />
+&nbsp; &nbsp;<span style="color: #A52A2A; font-weight: bold;">wire</span> <span style="color: #9F79EE;">&#91;</span><span style="color: #ff0055;">15</span><span style="color: #5D478B;">:</span><span style="color: #ff0055;">0</span><span style="color: #9F79EE;">&#93;</span> &nbsp;dout_wir <span style="color: #5D478B;">;</span><br />
+<br />
+&nbsp; &nbsp;<span style="color: #00008B; font-style: italic;">//读空状态时禁止读，否则一直读</span><br />
+&nbsp; &nbsp;<span style="color: #A52A2A; font-weight: bold;">assign</span> rd_en_wir &nbsp; &nbsp; <span style="color: #5D478B;">=</span> fifo_empty <span style="color: #5D478B;">?</span> <span style="color: #ff0055;">1'b0</span> <span style="color: #5D478B;">:</span> <span style="color: #ff0055;">1'b1</span> <span style="color: #5D478B;">;</span><br />
+<br />
+&nbsp; &nbsp;fifo &nbsp;<span style="color: #5D478B;">#</span><span style="color: #9F79EE;">&#40;</span>.AWI<span style="color: #9F79EE;">&#40;</span><span style="color: #ff0055;">5</span><span style="color: #9F79EE;">&#41;</span><span style="color: #5D478B;">,</span> .AWO<span style="color: #9F79EE;">&#40;</span><span style="color: #ff0055;">3</span><span style="color: #9F79EE;">&#41;</span><span style="color: #5D478B;">,</span> .DWI<span style="color: #9F79EE;">&#40;</span><span style="color: #ff0055;">4</span><span style="color: #9F79EE;">&#41;</span><span style="color: #5D478B;">,</span> .DWO<span style="color: #9F79EE;">&#40;</span><span style="color: #ff0055;">16</span><span style="color: #9F79EE;">&#41;</span><span style="color: #5D478B;">,</span> .PROG_DEPTH<span style="color: #9F79EE;">&#40;</span><span style="color: #ff0055;">16</span><span style="color: #9F79EE;">&#41;</span><span style="color: #9F79EE;">&#41;</span><br />
+&nbsp; &nbsp; &nbsp;u_buf_s2b<span style="color: #9F79EE;">&#40;</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; .rstn &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; <span style="color: #9F79EE;">&#40;</span>rstn<span style="color: #9F79EE;">&#41;</span><span style="color: #5D478B;">,</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; .wclk &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; <span style="color: #9F79EE;">&#40;</span>din_clk<span style="color: #9F79EE;">&#41;</span><span style="color: #5D478B;">,</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; .winc &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; <span style="color: #9F79EE;">&#40;</span>din_en<span style="color: #9F79EE;">&#41;</span><span style="color: #5D478B;">,</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; .wdata &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;<span style="color: #9F79EE;">&#40;</span>din<span style="color: #9F79EE;">&#41;</span><span style="color: #5D478B;">,</span><br />
+<br />
+&nbsp; &nbsp; &nbsp; &nbsp; .rclk &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; <span style="color: #9F79EE;">&#40;</span>dout_clk<span style="color: #9F79EE;">&#41;</span><span style="color: #5D478B;">,</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; .rinc &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; <span style="color: #9F79EE;">&#40;</span>rd_en_wir<span style="color: #9F79EE;">&#41;</span><span style="color: #5D478B;">,</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; .rdata &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;<span style="color: #9F79EE;">&#40;</span>dout_wir<span style="color: #9F79EE;">&#41;</span><span style="color: #5D478B;">,</span><br />
+<br />
+&nbsp; &nbsp; &nbsp; &nbsp; .wfull &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;<span style="color: #9F79EE;">&#40;</span>fifo_full<span style="color: #9F79EE;">&#41;</span><span style="color: #5D478B;">,</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; .rempty &nbsp; &nbsp; &nbsp; &nbsp; <span style="color: #9F79EE;">&#40;</span>fifo_empty<span style="color: #9F79EE;">&#41;</span><span style="color: #5D478B;">,</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; .prog_full &nbsp; &nbsp; &nbsp;<span style="color: #9F79EE;">&#40;</span>prog_full<span style="color: #9F79EE;">&#41;</span><span style="color: #9F79EE;">&#41;</span><span style="color: #5D478B;">;</span><br />
+<br />
+&nbsp; &nbsp;<span style="color: #00008B; font-style: italic;">//缓存同步后的数据和使能</span><br />
+&nbsp; &nbsp;<span style="color: #A52A2A; font-weight: bold;">reg</span> &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;dout_en_r <span style="color: #5D478B;">;</span><br />
+&nbsp; &nbsp;<span style="color: #A52A2A; font-weight: bold;">always</span> <span style="color: #5D478B;">@</span><span style="color: #9F79EE;">&#40;</span><span style="color: #A52A2A; font-weight: bold;">posedge</span> dout_clk <span style="color: #A52A2A; font-weight: bold;">or</span> <span style="color: #A52A2A; font-weight: bold;">negedge</span> rstn<span style="color: #9F79EE;">&#41;</span> <span style="color: #A52A2A; font-weight: bold;">begin</span><br />
+&nbsp; &nbsp; &nbsp; <span style="color: #A52A2A; font-weight: bold;">if</span> <span style="color: #9F79EE;">&#40;</span><span style="color: #5D478B;">!</span>rstn<span style="color: #9F79EE;">&#41;</span> <span style="color: #A52A2A; font-weight: bold;">begin</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp;dout_en_r &nbsp; &nbsp; &nbsp; <span style="color: #5D478B;">&lt;=</span> <span style="color: #ff0055;">1'b0</span> <span style="color: #5D478B;">;</span><br />
+&nbsp; &nbsp; &nbsp; <span style="color: #A52A2A; font-weight: bold;">end</span><br />
+&nbsp; &nbsp; &nbsp; <span style="color: #A52A2A; font-weight: bold;">else</span> <span style="color: #A52A2A; font-weight: bold;">begin</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp;dout_en_r &nbsp; &nbsp; &nbsp; <span style="color: #5D478B;">&lt;=</span> rd_en_wir <span style="color: #5D478B;">;</span><br />
+&nbsp; &nbsp; &nbsp; <span style="color: #A52A2A; font-weight: bold;">end</span><br />
+&nbsp; &nbsp;<span style="color: #A52A2A; font-weight: bold;">end</span><br />
+&nbsp; &nbsp;<span style="color: #A52A2A; font-weight: bold;">assign</span> &nbsp; &nbsp; &nbsp; dout &nbsp; &nbsp;<span style="color: #5D478B;">=</span> dout_wir <span style="color: #5D478B;">;</span><br />
+&nbsp; &nbsp;<span style="color: #A52A2A; font-weight: bold;">assign</span> &nbsp; &nbsp; &nbsp; dout_en <span style="color: #5D478B;">=</span> dout_en_r <span style="color: #5D478B;">;</span><br />
+<br />
+<span style="color: #A52A2A; font-weight: bold;">endmodule</span><br />
+</div></div>
+<h3>testbench</h3>
+<div class="example"><h2 class="example">实例</h2> <div class="example_code">
+<span style="color: #008800;">`timescale</span> <span style="color: #ff0055;">1ns</span><span style="color: #5D478B;">/</span><span style="color: #ff0055;">1ns</span><br />
+<span style="color: #008800;">`define</span> &nbsp; &nbsp; &nbsp; &nbsp; SMALL2BIG<br />
+<span style="color: #A52A2A; font-weight: bold;">module</span> test <span style="color: #5D478B;">;</span><br />
+<br />
+<span style="color: #008800;">`ifdef</span> SMALL2BIG<br />
+&nbsp; &nbsp;<span style="color: #A52A2A; font-weight: bold;">reg</span> &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;rstn <span style="color: #5D478B;">;</span><br />
+&nbsp; &nbsp;<span style="color: #A52A2A; font-weight: bold;">reg</span> &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;clk_slow<span style="color: #5D478B;">,</span> clk_fast <span style="color: #5D478B;">;</span><br />
+&nbsp; &nbsp;<span style="color: #A52A2A; font-weight: bold;">reg</span> <span style="color: #9F79EE;">&#91;</span><span style="color: #ff0055;">3</span><span style="color: #5D478B;">:</span><span style="color: #ff0055;">0</span><span style="color: #9F79EE;">&#93;</span> &nbsp; &nbsp;din <span style="color: #5D478B;">;</span><br />
+&nbsp; &nbsp;<span style="color: #A52A2A; font-weight: bold;">reg</span> &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;din_en <span style="color: #5D478B;">;</span><br />
+&nbsp; &nbsp;<span style="color: #A52A2A; font-weight: bold;">wire</span> <span style="color: #9F79EE;">&#91;</span><span style="color: #ff0055;">15</span><span style="color: #5D478B;">:</span><span style="color: #ff0055;">0</span><span style="color: #9F79EE;">&#93;</span> &nbsp;dout <span style="color: #5D478B;">;</span><br />
+&nbsp; &nbsp;<span style="color: #A52A2A; font-weight: bold;">wire</span> &nbsp; &nbsp; &nbsp; &nbsp; dout_en <span style="color: #5D478B;">;</span><br />
+<br />
+&nbsp; &nbsp;<span style="color: #00008B; font-style: italic;">//reset</span><br />
+&nbsp; &nbsp;<span style="color: #A52A2A; font-weight: bold;">initial</span> <span style="color: #A52A2A; font-weight: bold;">begin</span><br />
+&nbsp; &nbsp; &nbsp; clk_slow &nbsp;<span style="color: #5D478B;">=</span> <span style="color: #ff0055;">0</span> <span style="color: #5D478B;">;</span><br />
+&nbsp; &nbsp; &nbsp; clk_fast &nbsp;<span style="color: #5D478B;">=</span> <span style="color: #ff0055;">0</span> <span style="color: #5D478B;">;</span><br />
+&nbsp; &nbsp; &nbsp; rstn &nbsp; &nbsp; &nbsp;<span style="color: #5D478B;">=</span> <span style="color: #ff0055;">0</span> <span style="color: #5D478B;">;</span><br />
+&nbsp; &nbsp; &nbsp; <span style="color: #5D478B;">#</span><span style="color: #ff0055;">50</span> rstn &nbsp;<span style="color: #5D478B;">=</span> <span style="color: #ff0055;">1</span> <span style="color: #5D478B;">;</span><br />
+&nbsp; &nbsp;<span style="color: #A52A2A; font-weight: bold;">end</span><br />
+<br />
+&nbsp; &nbsp;<span style="color: #00008B; font-style: italic;">//读时钟 clock_slow 较快于写时钟 clk_fast 的 1/4</span><br />
+&nbsp; &nbsp;<span style="color: #00008B; font-style: italic;">//保证读数据稍快于写数据</span><br />
+&nbsp; &nbsp;<span style="color: #A52A2A; font-weight: bold;">parameter</span> CYCLE_WR <span style="color: #5D478B;">=</span> <span style="color: #ff0055;">40</span> <span style="color: #5D478B;">;</span><br />
+&nbsp; &nbsp;<span style="color: #A52A2A; font-weight: bold;">always</span> <span style="color: #5D478B;">#</span><span style="color: #9F79EE;">&#40;</span>CYCLE_WR<span style="color: #5D478B;">/</span><span style="color: #ff0055;">2</span><span style="color: #5D478B;">/</span><span style="color: #ff0055;">4</span><span style="color: #9F79EE;">&#41;</span> clk_fast <span style="color: #5D478B;">=</span> <span style="color: #5D478B;">~</span>clk_fast <span style="color: #5D478B;">;</span><br />
+&nbsp; &nbsp;<span style="color: #A52A2A; font-weight: bold;">always</span> <span style="color: #5D478B;">#</span><span style="color: #9F79EE;">&#40;</span>CYCLE_WR<span style="color: #5D478B;">/</span><span style="color: #ff0055;">2</span><span style="color: #5D478B;">-</span><span style="color: #ff0055;">1</span><span style="color: #9F79EE;">&#41;</span> clk_slow <span style="color: #5D478B;">=</span> <span style="color: #5D478B;">~</span>clk_slow <span style="color: #5D478B;">;</span><br />
+<br />
+&nbsp; &nbsp;<span style="color: #00008B; font-style: italic;">//data generate</span><br />
+&nbsp; &nbsp;<span style="color: #A52A2A; font-weight: bold;">initial</span> <span style="color: #A52A2A; font-weight: bold;">begin</span><br />
+&nbsp; &nbsp; &nbsp; din &nbsp; &nbsp; &nbsp; <span style="color: #5D478B;">=</span> <span style="color: #ff0055;">1</span><span style="color: #ff0055;">6'h4321</span> <span style="color: #5D478B;">;</span><br />
+&nbsp; &nbsp; &nbsp; din_en &nbsp; &nbsp;<span style="color: #5D478B;">=</span> <span style="color: #ff0055;">0</span> <span style="color: #5D478B;">;</span><br />
+&nbsp; &nbsp; &nbsp; <span style="color: #A52A2A; font-weight: bold;">wait</span> <span style="color: #9F79EE;">&#40;</span>rstn<span style="color: #9F79EE;">&#41;</span> <span style="color: #5D478B;">;</span><br />
+&nbsp; &nbsp; &nbsp; <span style="color: #00008B; font-style: italic;">//(1) 测试 full、prog_full、empyt 信号</span><br />
+&nbsp; &nbsp; &nbsp; <span style="color: #A52A2A; font-weight: bold;">force</span> test.u_data_buf2.u_buf_s2b.rinc <span style="color: #5D478B;">=</span> <span style="color: #ff0055;">1'b0</span> <span style="color: #5D478B;">;</span><br />
+&nbsp; &nbsp; &nbsp; <span style="color: #A52A2A; font-weight: bold;">repeat</span><span style="color: #9F79EE;">&#40;</span><span style="color: #ff0055;">32</span><span style="color: #9F79EE;">&#41;</span> <span style="color: #A52A2A; font-weight: bold;">begin</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp;<span style="color: #5D478B;">@</span><span style="color: #9F79EE;">&#40;</span><span style="color: #A52A2A; font-weight: bold;">negedge</span> clk_fast<span style="color: #9F79EE;">&#41;</span> <span style="color: #5D478B;">;</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp;din_en <span style="color: #5D478B;">=</span> <span style="color: #ff0055;">1'b1</span> <span style="color: #5D478B;">;</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp;din &nbsp; &nbsp;<span style="color: #5D478B;">=</span> <span style="color: #9F79EE;">&#123;</span><span style="color: #9932CC;">$random</span><span style="color: #9F79EE;">&#40;</span><span style="color: #9F79EE;">&#41;</span><span style="color: #9F79EE;">&#125;</span> <span style="color: #5D478B;">%</span> <span style="color: #ff0055;">16</span><span style="color: #5D478B;">;</span><br />
+&nbsp; &nbsp; &nbsp; <span style="color: #A52A2A; font-weight: bold;">end</span><br />
+&nbsp; &nbsp; &nbsp; <span style="color: #5D478B;">@</span><span style="color: #9F79EE;">&#40;</span><span style="color: #A52A2A; font-weight: bold;">negedge</span> clk_fast<span style="color: #9F79EE;">&#41;</span> din_en <span style="color: #5D478B;">=</span> <span style="color: #ff0055;">1'b0</span> <span style="color: #5D478B;">;</span><br />
+<br />
+&nbsp; &nbsp; &nbsp; <span style="color: #00008B; font-style: italic;">//(2) 测试数据读写</span><br />
+&nbsp; &nbsp; &nbsp; <span style="color: #5D478B;">#</span><span style="color: #ff0055;">500</span> <span style="color: #5D478B;">;</span><br />
+&nbsp; &nbsp; &nbsp; rstn <span style="color: #5D478B;">=</span> <span style="color: #ff0055;">0</span> <span style="color: #5D478B;">;</span><br />
+&nbsp; &nbsp; &nbsp; <span style="color: #5D478B;">#</span><span style="color: #ff0055;">10</span> rstn <span style="color: #5D478B;">=</span> <span style="color: #ff0055;">1</span> <span style="color: #5D478B;">;</span><br />
+&nbsp; &nbsp; &nbsp; <span style="color: #A52A2A; font-weight: bold;">release</span> test.u_data_buf2.u_buf_s2b.rinc<span style="color: #5D478B;">;</span><br />
+&nbsp; &nbsp; &nbsp; <span style="color: #A52A2A; font-weight: bold;">repeat</span><span style="color: #9F79EE;">&#40;</span><span style="color: #ff0055;">100</span><span style="color: #9F79EE;">&#41;</span> <span style="color: #A52A2A; font-weight: bold;">begin</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp;<span style="color: #5D478B;">@</span><span style="color: #9F79EE;">&#40;</span><span style="color: #A52A2A; font-weight: bold;">negedge</span> clk_fast<span style="color: #9F79EE;">&#41;</span> <span style="color: #5D478B;">;</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp;din_en <span style="color: #5D478B;">=</span> <span style="color: #ff0055;">1'b1</span> <span style="color: #5D478B;">;</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp;din &nbsp; &nbsp;<span style="color: #5D478B;">=</span> <span style="color: #9F79EE;">&#123;</span><span style="color: #9932CC;">$random</span><span style="color: #9F79EE;">&#40;</span><span style="color: #9F79EE;">&#41;</span><span style="color: #9F79EE;">&#125;</span> <span style="color: #5D478B;">%</span> <span style="color: #ff0055;">16</span><span style="color: #5D478B;">;</span><br />
+&nbsp; &nbsp; &nbsp; <span style="color: #A52A2A; font-weight: bold;">end</span><br />
+<br />
+&nbsp; &nbsp; &nbsp; <span style="color: #00008B; font-style: italic;">//(3) 停止读取再一次测试 empyt、full、prog_full 信号</span><br />
+&nbsp; &nbsp; &nbsp; <span style="color: #A52A2A; font-weight: bold;">force</span> test.u_data_buf2.u_buf_s2b.rinc <span style="color: #5D478B;">=</span> <span style="color: #ff0055;">1'b0</span> <span style="color: #5D478B;">;</span><br />
+&nbsp; &nbsp; &nbsp; <span style="color: #A52A2A; font-weight: bold;">repeat</span><span style="color: #9F79EE;">&#40;</span><span style="color: #ff0055;">18</span><span style="color: #9F79EE;">&#41;</span> <span style="color: #A52A2A; font-weight: bold;">begin</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp;<span style="color: #5D478B;">@</span><span style="color: #9F79EE;">&#40;</span><span style="color: #A52A2A; font-weight: bold;">negedge</span> clk_fast<span style="color: #9F79EE;">&#41;</span> <span style="color: #5D478B;">;</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp;din_en <span style="color: #5D478B;">=</span> <span style="color: #ff0055;">1'b1</span> <span style="color: #5D478B;">;</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp;din &nbsp; &nbsp;<span style="color: #5D478B;">=</span> <span style="color: #9F79EE;">&#123;</span><span style="color: #9932CC;">$random</span><span style="color: #9F79EE;">&#40;</span><span style="color: #9F79EE;">&#41;</span><span style="color: #9F79EE;">&#125;</span> <span style="color: #5D478B;">%</span> <span style="color: #ff0055;">16</span><span style="color: #5D478B;">;</span><br />
+&nbsp; &nbsp; &nbsp; <span style="color: #A52A2A; font-weight: bold;">end</span><br />
+&nbsp; &nbsp;<span style="color: #A52A2A; font-weight: bold;">end</span><br />
+<br />
+&nbsp; &nbsp;fifo_s2b u_data_buf2<span style="color: #9F79EE;">&#40;</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; .rstn &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; <span style="color: #9F79EE;">&#40;</span>rstn<span style="color: #9F79EE;">&#41;</span><span style="color: #5D478B;">,</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; .din &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;<span style="color: #9F79EE;">&#40;</span>din<span style="color: #9F79EE;">&#41;</span><span style="color: #5D478B;">,</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; .din_clk &nbsp; &nbsp; &nbsp; &nbsp;<span style="color: #9F79EE;">&#40;</span>clk_fast<span style="color: #9F79EE;">&#41;</span><span style="color: #5D478B;">,</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; .din_en &nbsp; &nbsp; &nbsp; &nbsp; <span style="color: #9F79EE;">&#40;</span>din_en<span style="color: #9F79EE;">&#41;</span><span style="color: #5D478B;">,</span><br />
+<br />
+&nbsp; &nbsp; &nbsp; &nbsp; .dout &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; <span style="color: #9F79EE;">&#40;</span>dout<span style="color: #9F79EE;">&#41;</span><span style="color: #5D478B;">,</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; .dout_clk &nbsp; &nbsp; &nbsp; <span style="color: #9F79EE;">&#40;</span>clk_slow<span style="color: #9F79EE;">&#41;</span><span style="color: #5D478B;">,</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; .dout_en &nbsp; &nbsp; &nbsp; &nbsp;<span style="color: #9F79EE;">&#40;</span>dout_en<span style="color: #9F79EE;">&#41;</span><span style="color: #9F79EE;">&#41;</span><span style="color: #5D478B;">;</span><br />
+<br />
+`<span style="color: #A52A2A; font-weight: bold;">else</span><br />
+<span style="color: #008800;">`endif</span><br />
+<br />
+&nbsp; &nbsp;<span style="color: #00008B; font-style: italic;">//stop sim</span><br />
+&nbsp; &nbsp;<span style="color: #A52A2A; font-weight: bold;">initial</span> <span style="color: #A52A2A; font-weight: bold;">begin</span><br />
+&nbsp; &nbsp; &nbsp; <span style="color: #A52A2A; font-weight: bold;">forever</span> <span style="color: #A52A2A; font-weight: bold;">begin</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp;<span style="color: #5D478B;">#</span><span style="color: #ff0055;">100</span><span style="color: #5D478B;">;</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp;<span style="color: #A52A2A; font-weight: bold;">if</span> <span style="color: #9F79EE;">&#40;</span><span style="color: #9932CC;">$time</span> <span style="color: #5D478B;">&gt;=</span> <span style="color: #ff0055;">5000</span><span style="color: #9F79EE;">&#41;</span> &nbsp;<span style="color: #9932CC;">$finish</span> <span style="color: #5D478B;">;</span><br />
+&nbsp; &nbsp; &nbsp; <span style="color: #A52A2A; font-weight: bold;">end</span><br />
+&nbsp; &nbsp;<span style="color: #A52A2A; font-weight: bold;">end</span><br />
+<br />
+<span style="color: #A52A2A; font-weight: bold;">endmodule</span> <br />
+</div></div>
+<h3>仿真分析</h3><p>
+根据 testbench 中的 3 步测试激励，分析如下：</p><p>
+测试 (1) : FIFO 端口及一些内部信号时序结果如下。</p><p>
+由图可知，FIFO 内部开始写数据，空状态信号拉低之前有一段时间延迟，这是同步读写地址信息导致的。</p><p>
+由于此时没有进行读 FIFO 操作，相对于写数据操作，full 和 prog_full 拉高几乎没有延迟。</p>
+<p><img decoding="async" src="https://www.runoob.com/wp-content/uploads/2021/05/v-fifo-4.png"></p>
+
+<p>测试 (2) : FIFO 同时进行读写时，数字顶层异步处理模块的端口信号如下所示，两图分别显示了数据开始传输、结束传输时的读取过程。</p><p>
+由图可知，数据在开始、末尾均能正确传输，完成了不同时钟域之间多位宽数据的异步处理。</p>
+<p><img decoding="async" src="https://www.runoob.com/wp-content/uploads/2021/05/v-fifo-5.png"></p>
+
+<p><img decoding="async" src="https://www.runoob.com/wp-content/uploads/2021/05/v-fifo-6.png"></p>
+<p>
+测试 (3) ：整个 FIFO 读写行为及读停止的时序仿真图如下所示。</p><p>
+由图可知，读写同时进行时，读空状态信号 rempty 会拉低，表明 FIFO 中有数据写入。一方面读数据速率稍高于写速率，且数据之间传输会有延迟，所以中间过程中 rempty 会有拉高的行为。</p><p>
+读写过程中，full 与 prog_full 信号一直为低，说明 FIFO 中数据并没有到达一定的数量。当停止读操作后，两个 full 信号不久便拉高，表明 FIFO 已满。仔细对比读写地址信息，FIFO 行为没有问题。</p>
+<p><img decoding="async" src="https://www.runoob.com/wp-content/uploads/2021/05/v-fifo-7.png"></p>
+<p>
+完整的 FIFO 设计见附件，包括输入数据位宽小于输出数据位宽时的异步设计和仿真。</p>
+<h3>本章节源码下载</h3><p>
+<a class="download" href="https://www.runoob.com/wp-content/uploads/2021/05/v4.4_fifo.zip">Download</a>   </p>				</div>
+			</div>
+			<div class="previous-next-links">
+			<div class="previous-design-link">← <a href="http://www.runoob.com/w3cnote/verilog2-fast2slow.html" rel="prev"> 4.3 Verilog 跨时钟域传输：快到慢</a> </div>
+			<div class="next-design-link"><a href="http://www.runoob.com/w3cnote/verilog2-reset.html" rel="next"> 5.1 Verilog 复位简介</a> →</div>
+			</div>
+						<div class="article-heading-ad" id="w3cnote-ad728">
+			<script async src="//pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script>
+			<!-- 移动版 自动调整 -->
+			<ins class="adsbygoogle"
+			     style="display:inline-block;min-width:300px;max-width:970px;width:100%;height:90px"
+			     data-ad-client="ca-pub-5751451760833794"
+			     data-ad-slot="1691338467"
+			     data-ad-format="horizontal"></ins>
+			<script>
+			(adsbygoogle = window.adsbygoogle || []).push({});
+			</script>
+			</div>
+			<style>
+@media screen and (max-width: 768px) {
+	#w3cnote-ad728 {
+		display: none;
+	}
+}
+p.note-author {
+    border-bottom: 1px solid #ddd;
+    font-size: 18px;
+    font-weight: bold;
+    color: #78a15a;
+    padding-bottom: 2px;
+    margin-bottom: 4px;
+}
+</style>
+<script>
+var aid = 23731;
+</script>
+	</div>
+		
+	</div>
+	<div class="listcol last right-column">
+
+	<script type="text/javascript">
+jQuery(document).ready(function ($){
+	var total = $(".membership li").length;
+	var left_list = '';
+	href = window.location.href;
+	
+	$(".membership li").each(function(index, value){
+
+		left_list += $(this).html();
+
+		cur_href = $(this).find("a").attr("href");
+		cur_obj = $(this);
+		
+		if(href.match(cur_href) != null) {
+			if(index==0) {
+				$(".previous-design-link").hide();
+			}
+			if(index==(total-1)) {
+				$(".next-design-link").hide();
+			}
+			prev_href = cur_obj.prev("li").find("a").attr("href");
+			prev_title = cur_obj.prev("li").find("a").attr("title");
+
+			next_href = cur_obj.next("li").find("a").attr("href");
+			next_title = cur_obj.next("li").find("a").attr("title");
+			if(prev_title) {
+				$(".previous-design-link a").attr("href", prev_href);
+				$(".previous-design-link a").attr("title", prev_title);
+				$(".previous-design-link a").text(prev_title);
+			} else {
+				$(".previous-design-link").html("");
+			}
+
+			if(next_title) {
+				$(".next-design-link a").attr("href", next_href);
+				$(".next-design-link a").attr("title", next_title);
+				$(".next-design-link a").text(next_title);
+			} else {
+				$(".next-design-link").html("");
+			}
+		}
+	});
+
+	$("#leftcolumn").html(left_list);
+});
+	</script>
+	<div class="sidebar-box cate-list">
+	<div class="sidebar-box recommend-here list-link">
+	<a href="javascript:void(0);">Verilog 高级教程</a>	</div>
+	
+	<ul class="membership">
+		
+	<li><a target="_top" data-id="23639" title="0.1 数字逻辑设计" href="http://www.runoob.com/w3cnote/verilog2-tutorial.html" >0.1 数字逻辑设计</a></li>
+	
+		
+	<li><a target="_top" data-id="23641" title="0.2 Verilog 编码风格" href="http://www.runoob.com/w3cnote/verilog2-codestyle.html" >0.2 Verilog 编码风格</a></li>
+	
+		
+	<li><a target="_top" data-id="23644" title="0.3 Verilog 代码规范" href="http://www.runoob.com/w3cnote/verilog2-codeguide.html" >0.3 Verilog 代码规范</a></li>
+	
+		
+	<li><a target="_top" data-id="23645" title="1.1 Verilog 门的类型" href="http://www.runoob.com/w3cnote/verilog2-gate.html" >1.1 Verilog 门的类型</a></li>
+	
+		
+	<li><a target="_top" data-id="23648" title="1.2 Verilog 开关级建模" href="http://www.runoob.com/w3cnote/verilog2-level-modeling.html" >1.2 Verilog 开关级建模</a></li>
+	
+		
+	<li><a target="_top" data-id="23656" title="1.3 Verilog 门延迟" href="http://www.runoob.com/w3cnote/verilog2-gate-delay.html" >1.3 Verilog 门延迟</a></li>
+	
+		
+	<li><a target="_top" data-id="23673" title="2.1 Verilog UDP 基础知识" href="http://www.runoob.com/w3cnote/verilog2-udp.html" >2.1 Verilog UDP 基础知识</a></li>
+	
+		
+	<li><a target="_top" data-id="23674" title="2.2 Verilog 组合逻辑 UDP" href="http://www.runoob.com/w3cnote/verilog2-udp-logic.html" >2.2 Verilog 组合逻辑 UDP</a></li>
+	
+		
+	<li><a target="_top" data-id="23677" title="2.3 Verilog 时序逻辑 UDP" href="http://www.runoob.com/w3cnote/verilog2-udp-timing.html" >2.3 Verilog 时序逻辑 UDP</a></li>
+	
+		
+	<li><a target="_top" data-id="23685" title="3.1 Verilog 延迟模型" href="http://www.runoob.com/w3cnote/verilog2-delay-type.html" >3.1 Verilog 延迟模型</a></li>
+	
+		
+	<li><a target="_top" data-id="23690" title="3.2 Verilog specify 块语句" href="http://www.runoob.com/w3cnote/verilog2-specify.html" >3.2 Verilog specify 块语句</a></li>
+	
+		
+	<li><a target="_top" data-id="23692" title="3.3 Verilog 建立时间和保持时间" href="http://www.runoob.com/w3cnote/verilog2-setup-hold-time.html" >3.3 Verilog 建立时间和保持时间</a></li>
+	
+		
+	<li><a target="_top" data-id="23701" title="3.4 Verilog 时序检查" href="http://www.runoob.com/w3cnote/verilog2-timing-check.html" >3.4 Verilog 时序检查</a></li>
+	
+		
+	<li><a target="_top" data-id="23708" title="3.5 Verilog 延迟反标注" href="http://www.runoob.com/w3cnote/verilog2-sdf.html" >3.5 Verilog 延迟反标注</a></li>
+	
+		
+	<li><a target="_top" data-id="23714" title="4.1 Verilog 同步与异步" href="http://www.runoob.com/w3cnote/verilog-sync.html" >4.1 Verilog 同步与异步</a></li>
+	
+		
+	<li><a target="_top" data-id="23725" title="4.2 Verilog 跨时钟域传输：慢到快" href="http://www.runoob.com/w3cnote/verilog2-slow2fast.html" >4.2 Verilog 跨时钟域传输：慢到快</a></li>
+	
+		
+	<li><a target="_top" data-id="23729" title="4.3 Verilog 跨时钟域传输：快到慢" href="http://www.runoob.com/w3cnote/verilog2-fast2slow.html" >4.3 Verilog 跨时钟域传输：快到慢</a></li>
+	
+		<li>
+	4.4 Verilog FIFO 设计	</li>
+	
+		
+	<li><a target="_top" data-id="23739" title="5.1 Verilog 复位简介" href="http://www.runoob.com/w3cnote/verilog2-reset.html" >5.1 Verilog 复位简介</a></li>
+	
+		
+	<li><a target="_top" data-id="23743" title="5.2 Verilog 时钟简介" href="http://www.runoob.com/w3cnote/verilog2-clock.html" >5.2 Verilog 时钟简介</a></li>
+	
+		
+	<li><a target="_top" data-id="23757" title="5.3 Verilog 时钟分频" href="http://www.runoob.com/w3cnote/verilog2-clock-division.html" >5.3 Verilog 时钟分频</a></li>
+	
+		
+	<li><a target="_top" data-id="23768" title="5.4 Verilog 时钟切换" href="http://www.runoob.com/w3cnote/verilog2-clock-switch.html" >5.4 Verilog 时钟切换</a></li>
+	
+		
+	<li><a target="_top" data-id="23779" title="6.1 Verilog 低功耗简介" href="http://www.runoob.com/w3cnote/verilog2-low-power.html" >6.1 Verilog 低功耗简介</a></li>
+	
+		
+	<li><a target="_top" data-id="23788" title="6.2 Verilog 系统级低功耗设计" href="http://www.runoob.com/w3cnote/verilog2-lower-power-design.html" >6.2 Verilog 系统级低功耗设计</a></li>
+	
+		
+	<li><a target="_top" data-id="23792" title="6.3 Verilog  RTL 级低功耗设计（上）" href="http://www.runoob.com/w3cnote/verilog2-rtl-low-power-design-1.html" >6.3 Verilog  RTL 级低功耗设计（上）</a></li>
+	
+		
+	<li><a target="_top" data-id="23796" title="6.4 Verilog RTL 级低功耗设计（下）" href="http://www.runoob.com/w3cnote/verilog2-rtl-low-power-design-2.html" >6.4 Verilog RTL 级低功耗设计（下）</a></li>
+	
+		
+	<li><a target="_top" data-id="23806" title="7.1 Verilog 显示任务" href="http://www.runoob.com/w3cnote/verilog2-display.html" >7.1 Verilog 显示任务</a></li>
+	
+		
+	<li><a target="_top" data-id="23813" title="7.2 Verilog 文件操作" href="http://www.runoob.com/w3cnote/verilog2-file.html" >7.2 Verilog 文件操作</a></li>
+	
+		
+	<li><a target="_top" data-id="23825" title="7.3 Verilog 随机数及概率分布" href="http://www.runoob.com/w3cnote/verilog2-random.html" >7.3 Verilog 随机数及概率分布</a></li>
+	
+		
+	<li><a target="_top" data-id="23847" title="7.4 Verilog 实数整数转换" href="http://www.runoob.com/w3cnote/verilog2-real2int.html" >7.4 Verilog 实数整数转换</a></li>
+	
+		
+	<li><a target="_top" data-id="23851" title="7.5 Verilog 其他系统任务" href="http://www.runoob.com/w3cnote/verilog2-other-task.html" >7.5 Verilog 其他系统任务</a></li>
+	
+		
+	<li><a target="_top" data-id="23862" title="8.1 Verilog  PLI 简介" href="http://www.runoob.com/w3cnote/verilog2-pli-intro.html" >8.1 Verilog  PLI 简介</a></li>
+	
+		
+	<li><a target="_top" data-id="23865" title="8.2 Verilog TF 子程序" href="http://www.runoob.com/w3cnote/verilog2-tf.html" >8.2 Verilog TF 子程序</a></li>
+	
+		
+	<li><a target="_top" data-id="23869" title="8.3 Verilog TF 子程序列表" href="http://www.runoob.com/w3cnote/verilog2-tf-sub.html" >8.3 Verilog TF 子程序列表</a></li>
+	
+		
+	<li><a target="_top" data-id="23870" title="8.4 Verilog ACC 子程序" href="http://www.runoob.com/w3cnote/verilog2-acc.html" >8.4 Verilog ACC 子程序</a></li>
+	
+		
+	<li><a target="_top" data-id="23872" title="8.5 Verilog ACC 子程序列表" href="http://www.runoob.com/w3cnote/verilog2-acc-sub.html" >8.5 Verilog ACC 子程序列表</a></li>
+	
+		
+	<li><a target="_top" data-id="23876" title="9.1 Verilog 逻辑综合" href="http://www.runoob.com/w3cnote/verilog2-logic-sumarry.html" >9.1 Verilog 逻辑综合</a></li>
+	
+		
+	<li><a target="_top" data-id="23882" title="9.2 Verilog 可综合性设计" href="http://www.runoob.com/w3cnote/verilog2-integrated-design.html" >9.2 Verilog 可综合性设计</a></li>
+	
+	</ul></div>	</div>
+</div>
+
+
+<!-- 底部 -->
+<div id="footer" class="mar-t50">
+   <div class="runoob-block">
+    <div class="runoob cf">
+     <dl>
+      <dt>
+       在线实例
+      </dt>
+      <dd>
+       &middot;<a target="_blank" href="/html/html-examples.html">HTML 实例</a>
+      </dd>
+      <dd>
+       &middot;<a target="_blank" href="/css/css-examples.html">CSS 实例</a>
+      </dd>
+      <dd>
+       &middot;<a target="_blank" href="/js/js-examples.html">JavaScript 实例</a>
+      </dd>
+      <dd>
+       &middot;<a target="_blank" href="/ajx/ajax-examples.html">Ajax 实例</a>
+      </dd>
+       <dd>
+       &middot;<a target="_blank" href="/jquery/jquery-examples.html">jQuery 实例</a>
+      </dd>
+      <dd>
+       &middot;<a target="_blank" href="/xml/xml-examples.html">XML 实例</a>
+      </dd>
+      <dd>
+       &middot;<a target="_blank" href="/java/java-examples.html">Java 实例</a>
+      </dd>
+     
+     </dl>
+     <dl>
+      <dt>
+      字符集&工具
+      </dt>
+      <dd>
+       &middot; <a target="_blank" href="/charsets/html-charsets.html">HTML 字符集设置</a>
+      </dd>
+      <dd>
+       &middot; <a target="_blank" href="/tags/html-ascii.html">HTML ASCII 字符集</a>
+      </dd>
+     <dd>
+       &middot; <a target="_blank" href="https://c.runoob.com/front-end/6939/">JS 混淆/加密</a>
+      </dd> 
+      <dd>
+       &middot; <a target="_blank" href="https://c.runoob.com/front-end/6232/">PNG/JPEG 图片压缩</a>
+      </dd>
+      <dd>
+       &middot; <a target="_blank" href="/tags/html-colorpicker.html">HTML 拾色器</a>
+      </dd>
+      <dd>
+       &middot; <a target="_blank" href="//c.runoob.com/front-end/53">JSON 格式化工具</a>
+      </dd>
+      <dd>
+       &middot; <a target="_blank" href="//c.runoob.com/front-end/6680/">随机数生成器</a>
+      </dd>
+     </dl>
+     <dl>
+      <dt>
+       最新更新
+      </dt>
+                   <dd>
+       &middot;
+      <a href="http://www.runoob.com/matplotlib/matplotlib-imread.html" title="Matplotlib imread() 方法">Matplotlib imre...</a>
+      </dd>
+              <dd>
+       &middot;
+      <a href="http://www.runoob.com/matplotlib/matplotlib-imsave.html" title="Matplotlib imsave() 方法">Matplotlib imsa...</a>
+      </dd>
+              <dd>
+       &middot;
+      <a href="http://www.runoob.com/matplotlib/matplotlib-imshow.html" title="Matplotlib imshow() 方法">Matplotlib imsh...</a>
+      </dd>
+              <dd>
+       &middot;
+      <a href="http://www.runoob.com/matplotlib/matplotlib-hist.html" title="Matplotlib 直方图">Matplotlib 直方图</a>
+      </dd>
+              <dd>
+       &middot;
+      <a href="http://www.runoob.com/python3/python-func-object.html" title="Python object() 函数">Python object()...</a>
+      </dd>
+              <dd>
+       &middot;
+      <a href="http://www.runoob.com/python3/python-ai-draw.html" title="Python AI 绘画">Python AI 绘画</a>
+      </dd>
+              <dd>
+       &middot;
+      <a href="http://www.runoob.com/w3cnote/cursor-editor.html" title="神辅助 Cursor 编辑器，加入 GPT-4 让编码更轻松！">神辅助 Cursor ...</a>
+      </dd>
+             </dl>
+     <dl>
+      <dt>
+       站点信息
+      </dt>
+      <dd>
+       &middot;
+       <a target="_blank" href="mailto:admin@runoob.com" rel="external nofollow">意见反馈</a>
+       </dd>
+      <dd>
+       &middot;
+      <a target="_blank" href="/disclaimer">免责声明</a>
+       </dd>
+      <dd>
+       &middot;
+       <a target="_blank" href="/aboutus">关于我们</a>
+       </dd>
+      <dd>
+       &middot;
+      <a target="_blank" href="/archives">文章归档</a>
+      </dd>
+    
+     </dl>
+    
+     <div class="search-share">
+      <div class="app-download">
+        <div>
+         <strong>关注微信</strong>
+        </div>
+      </div>
+      <div class="share">
+      <img width="128" height="128" src="/wp-content/themes/runoob/assets/images/qrcode.png" />
+       </div>
+     </div>
+     
+    </div>
+   </div>
+   <div class="w-1000 copyright">
+     Copyright &copy; 2013-2023    <strong><a href="//www.runoob.com/" target="_blank">菜鸟教程</a></strong>&nbsp;
+    <strong><a href="//www.runoob.com/" target="_blank">runoob.com</a></strong> All Rights Reserved. 备案号：<a target="_blank" rel="nofollow" href="https://beian.miit.gov.cn/">闽ICP备15012807号-1</a>
+   </div>
+  </div>
+  <div class="fixed-btn">
+    <a class="go-top" href="javascript:void(0)" title="返回顶部"> <i class="fa fa-angle-up"></i></a>
+    <a class="qrcode"  href="javascript:void(0)" title="关注我们"><i class="fa fa-qrcode"></i></a>
+    <a class="writer" style="display:none" href="javascript:void(0)"   title="标记/收藏"><i class="fa fa-star" aria-hidden="true"></i></a>
+    <!-- qrcode modal -->
+    <div id="bottom-qrcode" class="modal panel-modal hide fade in">
+      <h4>微信关注</h4>
+      <div class="panel-body"><img alt="微信关注" width="128" height="128" src="/wp-content/themes/runoob/assets/images/qrcode.png"></div> 
+    </div>
+  </div>
+
+ <div style="display:none;">
+<script async src="https://www.googletagmanager.com/gtag/js?id=UA-84264393-2"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+
+  gtag('config', 'UA-84264393-2');
+</script>
+<script>
+var _hmt = _hmt || [];
+(function() {
+  var hm = document.createElement("script");
+  hm.src = "https://hm.baidu.com/hm.js?3eec0b7da6548cf07db3bc477ea905ee";
+  var s = document.getElementsByTagName("script")[0]; 
+  s.parentNode.insertBefore(hm, s);
+})();
+</script>
+
+</div>
+<script>
+window.jsui={
+    www: 'https://www.runoob.com',
+    uri: 'https://www.runoob.com/wp-content/themes/runoob'
+};
+</script>
+
+<script src="https://static.runoob.com/assets/libs/hl/run_prettify.js"></script>
+<script src="/wp-content/themes/runoob/assets/js/main.min.js?v=1.156"></script>
+
+</body>
+</html>

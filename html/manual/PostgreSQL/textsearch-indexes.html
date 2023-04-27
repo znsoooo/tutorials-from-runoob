@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><title>12.9. GIN 和 GiST 索引类型</title><link rel="stylesheet" type="text/css" href="stylesheet.css" /><link rev="made" href="pgsql-docs@postgresql.org" /><meta name="generator" content="DocBook XSL Stylesheets V1.79.1" /><link rel="prev" href="textsearch-debugging.html" title="12.8. 测试和调试文本搜索" /><link rel="next" href="textsearch-psql.html" title="12.10. psql支持" /></head><body><div xmlns="http://www.w3.org/TR/xhtml1/transitional" class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="5" align="center">12.9. GIN 和 GiST 索引类型</th></tr><tr><td width="10%" align="left"><a accesskey="p" href="textsearch-debugging.html" title="12.8. 测试和调试文本搜索">上一页</a> </td><td width="10%" align="left"><a accesskey="u" href="textsearch.html" title="第 12 章 全文搜索">上一级</a></td><th width="60%" align="center">第 12 章 全文搜索</th><td width="10%" align="right"><a accesskey="h" href="index.html" title="PostgreSQL 10.1 手册">起始页</a></td><td width="10%" align="right"> <a accesskey="n" href="textsearch-psql.html" title="12.10. psql支持">下一页</a></td></tr></table><hr></hr></div><div class="sect1" id="TEXTSEARCH-INDEXES"><div class="titlepage"><div><div><h2 class="title" style="clear: both">12.9. GIN 和 GiST 索引类型</h2></div></div></div><a id="idp17729488" class="indexterm"></a><p>   有两种索引可以被用来加速全文搜索。注意全文搜索并非一定需要索引，但是在一个定期会被搜索的列上，通常需要有一个索引。
+
+   </p><div class="variablelist"><dl class="variablelist"><dt><span class="term">     <a id="idp17731952" class="indexterm"></a>
+
+      <code class="literal">CREATE INDEX <em class="replaceable"><code>name</code></em> ON <em class="replaceable"><code>table</code></em> USING GIN(<em class="replaceable"><code>column</code></em>);</code>
+     </span></dt><dd><p>       创建一个基于 GIN（通用倒排索引）的索引。<em class="replaceable"><code>column</code></em>必须是<code class="type">tsvector</code>类型。
+      </p></dd><dt><span class="term">     <a id="idp17737504" class="indexterm"></a>
+
+      <code class="literal">CREATE INDEX <em class="replaceable"><code>name</code></em> ON <em class="replaceable"><code>table</code></em> USING GIST(<em class="replaceable"><code>column</code></em>);</code>
+     </span></dt><dd><p>       创建一个基于 GiST（通用搜索树）的索引。<em class="replaceable"><code>column</code></em>可以是<code class="type">tsvector</code>或<code class="type">tsquery</code>类型。
+      </p></dd></dl></div><p>
+  </p><p>   GIN 索引是更好的文本搜索索引类型。作为倒排索引，每个词（词位）在
+   其中都有一个索引项，其中有压缩过的匹配位置的列表。多词搜索可以找到
+   第一个匹配，然后使用该索引移除缺少额外词的行。GIN 索引只存储
+   <code class="type">tsvector</code>值的词（词位），并且不存储它们的权重标签。因此，
+   在使用涉及权重的查询时需要一次在表行上的重新检查。
+  </p><p>   一个 GiST 索引是<em class="firstterm">有损的</em>，这表示索引可能产生假匹配，并且有必要检查真实的表行来消除这种假匹配（<span class="productname">PostgreSQL</span>在需要时会自动做这一步）。GiST 索引之所以是有损的，是因为每一个文档在索引中被表示为一个定长的签名。该签名通过哈希每一个词到一个 n 位串中的一个单一位来产生，通过将所有这些位 OR 在一起产生一个 n 位的文档签名。当两个词哈希到同一个位位置时就会产生假匹配。如果查询中所有词都有匹配（真或假），则必须检索表行查看匹配是否正确。
+  </p><p>   有损性导致的性能下降归因于不必要的表记录（即被证实为假匹配的记录）获取。因为表记录的随机访问是较慢的，这限制了 GiST 索引的可用性。假匹配的可能性取决于几个因素，特别是唯一词的数量，因此推荐使用词典来缩减这个数量。
+  </p><p>   注意<acronym class="acronym">GIN</acronym>索引的构件时间常常可以通过增加<a class="xref" href="runtime-config-resource.html#GUC-MAINTENANCE-WORK-MEM">maintenance_work_mem</a>来改进，而<acronym class="acronym">GiST</acronym>索引的构建时间则与该参数无关。
+  </p><p>   对大集合分区并正确使用 GIN 和 GiST 索引允许实现带在线更新的快速搜索。分区可以在数据库层面上使用表继承来完成，或者是通过将文档分布在服务器上并使用<a class="xref" href="dblink.html" title="F.11. dblink">dblink</a>收集结果。后者是可能的，因为排名函数只使用本地信息。
+  </p></div><div class="navfooter"><hr /><table width="100%" summary="Navigation footer"><tr><td width="40%" align="left"><a accesskey="p" href="textsearch-debugging.html">上一页</a> </td><td width="20%" align="center"><a accesskey="u" href="textsearch.html">上一级</a></td><td width="40%" align="right"> <a accesskey="n" href="textsearch-psql.html">下一页</a></td></tr><tr><td width="40%" align="left" valign="top">12.8. 测试和调试文本搜索 </td><td width="20%" align="center"><a accesskey="h" href="index.html">起始页</a></td><td width="40%" align="right" valign="top"> 12.10. <span class="application">psql</span>支持</td></tr></table></div></body></html>

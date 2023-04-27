@@ -1,0 +1,131 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><title>E.1. 版本 10.1</title><link rel="stylesheet" type="text/css" href="stylesheet.css" /><link rev="made" href="pgsql-docs@postgresql.org" /><meta name="generator" content="DocBook XSL Stylesheets V1.79.1" /><link rel="prev" href="release.html" title="附录 E. 版本说明" /><link rel="next" href="release-10.html" title="E.2. 版本 10" /></head><body><div xmlns="http://www.w3.org/TR/xhtml1/transitional" class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="5" align="center">E.1. 版本 10.1</th></tr><tr><td width="10%" align="left"><a accesskey="p" href="release.html" title="附录 E. 版本说明">上一页</a> </td><td width="10%" align="left"><a accesskey="u" href="release.html" title="附录 E. 版本说明">上一级</a></td><th width="60%" align="center">附录 E. 版本说明</th><td width="10%" align="right"><a accesskey="h" href="index.html" title="PostgreSQL 10.1 手册">起始页</a></td><td width="10%" align="right"> <a accesskey="n" href="release-10.html" title="E.2. 版本 10">下一页</a></td></tr></table><hr></hr></div><div class="sect1" id="RELEASE-10-1"><div class="titlepage"><div><div><h2 class="title" style="clear: both">E.1. 版本 10.1</h2></div></div></div><div class="toc"><dl class="toc"><dt><span class="sect2"><a href="release-10-1.html#idp63417824">E.1.1. 迁移到版本 10.1</a></span></dt><dt><span class="sect2"><a href="release-10-1.html#idp63419072">E.1.2. 修改列表</a></span></dt></dl></div><p><strong>发布日期: </strong>2017-11-09</p><p>   这个版本包含自10.0以来的各种修复。关于主版本10中的新特性信息，请查看
+   <a class="xref" href="release-10.html" title="E.2. 版本 10">第 E.2 节</a>。
+  </p><div class="sect2" id="idp63417824"><div class="titlepage"><div><div><h3 class="title">E.1.1. 迁移到版本 10.1</h3></div></div></div><p>    运行10.X版本的用户不需要转储/恢复。
+   </p><p>    不过，如果你使用了BRIN索引，请查看下列第四条修改日志。
+   </p></div><div class="sect2" id="idp63419072"><div class="titlepage"><div><div><h3 class="title">E.1.2. 修改列表</h3></div></div></div><div class="itemizedlist"><ul class="itemizedlist" style="list-style-type: disc; "><li class="listitem"><p>      确保<code class="literal">INSERT ... ON CONFLICT DO UPDATE</code>
+	  在所有情况下检查表权限和RLS策略 (Dean Rasheed)
+     </p><p>      <code class="literal">INSERT ... ON CONFLICT DO UPDATE</code>
+	  的更新路径需要在仲裁索引的列上有<code class="literal">SELECT</code>权限，
+	  但是在由约束名称指定仲裁的情况下它没有检查。 此外，
+	  对于启用了行级别安全性的表，无法根据表的<code class="literal">SELECT</code>
+	  策略检查更新的行（不管仲裁索引是如何指定的）。
+      (CVE-2017-15099)
+     </p></li><li class="listitem"><p>      修复<code class="function">json{b}_populate_recordset()</code>
+	  中由于行类型不匹配导致的崩溃
+      (Michael Paquier, Tom Lane)
+     </p><p>      这些函数使用<code class="literal">FROM ... AS</code>子句中指定的结果行类型，
+	  不检查是否匹配提供的元组值的实际行类型。如果不匹配，
+	  通常会导致崩溃，甚至可能会暴露服务器内存的内容。
+      (CVE-2017-15098)
+     </p></li><li class="listitem"><p>      修复打开<code class="literal">$PGLOG</code>之前，示例服务器启动脚本变成
+	  <code class="literal">$PGUSER</code> (Noah Misch)
+     </p><p>      以前，postmaster日志文件是以root用户身份运行的。因此，
+	  数据库所有者可以通过将<code class="literal">$PGLOG</code>
+	  作为其他文件的符号链接来挂载针对另一个系统用户的攻击，
+	  然后通过追加日志消息将其损坏。
+     </p><p>      默认情况下，这些脚本没有安装在任何地方。
+	  已经使用过的用户需要手动重新复制它们，或者对其修改后的版本应用相同的更改。
+	  如果现有的<code class="literal">$PGLOG</code>文件是由root用户拥有的，
+	  那么需要在修正脚本重新启动服务器之前将其删除或重命名。
+      (CVE-2017-12172)
+     </p></li><li class="listitem"><p>      修复BRIN索引汇总以正确处理并发表扩展 (Álvaro Herrera)
+     </p><p>      以前，竞争条件允许从索引中省略一些表行。
+	  可能有必要重新索引现有的BRIN索引以恢复过去发生的这个问题。
+     </p></li><li class="listitem"><p>      修复BRIN索引并发更新期间可能发生的故障
+      (Tom Lane)
+     </p><p>      这些竞争条件可能会导致像<span class="quote">“<span class="quote">invalid index
+      offnum</span>”</span>或<span class="quote">“<span class="quote">inconsistent range map</span>”</span>这样的错误。
+     </p></li><li class="listitem"><p>      在复制<code class="command">UPDATE</code>时防止逻辑复制将非复制列设置为空 (Petr Jelinek)
+     </p></li><li class="listitem"><p>      修复逻辑复制以在需要时触发<code class="literal">BEFORE ROW DELETE</code>
+      (Masahiko Sawada)
+     </p><p>      以前，除非表中还有一个<code class="literal">BEFORE ROW UPDATE</code>触发器，
+	  否则就会失败。
+     </p></li><li class="listitem"><p>      修复从使用SPI的函数调用逻辑解码时崩溃，特别是用PL语言编写的任何函数
+      (Tom Lane)
+     </p></li><li class="listitem"><p>      当查询<code class="command">INSERT</code>/<code class="command">UPDATE</code>/<code class="command">DELETE</code>
+	  的目标表时忽略CTE，并阻止符合模式限定的目标表名触发转换表名 (Thomas Munro)
+     </p><p>      对于附加到DML命令的CTE，这恢复了v10之前的行为。
+     </p></li><li class="listitem"><p>      避免在其<code class="literal">FILTER</code>测试失败的行处评估聚合函数的参数表达式
+	  (Tom Lane)
+     </p><p>      这恢复了v10之前(和SQL标准)的行为。
+     </p></li><li class="listitem"><p>      当多个<code class="literal">GROUPING SETS</code>列包含相同的简单变量时，
+	  修复不正确的查询结果 (Tom Lane)
+     </p></li><li class="listitem"><p>      修复在一个<code class="command">SELECT</code>
+	  的目标列表中评估一个设置返回函数时，查询寿命内存泄露 (Tom Lane)
+     </p></li><li class="listitem"><p>      允许使用通用计划的预备语句并行执行
+      (Amit Kapila, Kuntal Ghosh)
+     </p></li><li class="listitem"><p>      修复嵌套查询的不正确的并行化决定
+      (Amit Kapila, Kuntal Ghosh)
+     </p></li><li class="listitem"><p>      当最近使用的角色被删除时，修复并行查询处理不会失败 (Amit Kapila)
+     </p></li><li class="listitem"><p>      修复在BitmapOr节点下具有BitmapAnd计划节点的位图扫描并行执行时的崩溃 (Dilip Kumar)
+     </p></li><li class="listitem"><p>      修复<code class="function">json_build_array()</code>,
+      <code class="function">json_build_object()</code>和它们的<code class="type">jsonb</code>
+      等效函数以正确的处理显式<code class="literal">VARIADIC</code>参数 (Michael Paquier)
+     </p></li><li class="listitem"><p>      修复autovacuum的<span class="quote">“<span class="quote">工作项</span>”</span>逻辑，
+	  以防止可能的崩溃和工作项的无声丢失 (Álvaro Herrera)
+     </p></li><li class="listitem"><p>      修正了列已被添加到视图的末尾情况下的崩溃 (Tom Lane)
+     </p></li><li class="listitem"><p>      当一个视图或规则包含<code class="structname">FieldSelect</code>
+      或<code class="structname">FieldStore</code>表达式节点时，记录适当的依赖关系 (Tom Lane)
+     </p><p>      缺少这些依赖关系可能允许<code class="command">DROP</code>列或数据类型在应该失败时通过，
+	  从而导致稍后使用该视图或规则时错误。此修补程序不会保护现有的视图/规则，
+	  只保护在未来创建的视图/规则。
+     </p></li><li class="listitem"><p>      正确检测范围数据类型的哈希能力 (Tom Lane)
+     </p><p>      规划器错误地认为任何范围类型都可以哈希用于哈希连接或哈希聚合，
+	  但实际上它必须检查范围的子类型是否具有哈希支持。
+	  这不会影响任何内置的范围类型，因为它们都是可哈希的。
+     </p></li><li class="listitem"><p>      在检查函数相关性统计信息时，正确的忽略
+	  <code class="structname">RelabelType</code>表达式节点 (David Rowley)
+     </p><p>      这允许，比如，正确的使用<code class="type">varchar</code>列上的扩展统计。
+     </p></li><li class="listitem"><p>      防止在有序集聚合之间共享转换状态
+      (David Rowley)
+     </p><p>      这会导致内置的有序集聚合的崩溃，也可能导致用户编写的聚合崩溃。
+	  v11和更高版本将包括安全处理此类情况的条款，但在发布的分支中，只需禁用优化。
+     </p></li><li class="listitem"><p>      当<code class="varname">statement_timeout</code>较早发生时，防止
+	  <code class="varname">idle_in_transaction_session_timeout</code>被忽略 (Lukas Fittl)
+     </p></li><li class="listitem"><p>      修复由于XID环绕引起的<code class="command">NOTIFY</code>消息的低概率丢失 (Marko Tiikkaja, Tom Lane)
+     </p><p>      如果一个会话没有执行任何查询，而只是听取了通知，那么超过20亿个事务，
+	  它就会开始错过来自并发提交事务的一些通知。
+     </p></li><li class="listitem"><p>      在减少批文件拷贝期间数据刷新请求的频率，以避免macOS上的性能问题，
+	  尤其是其新的APFS文件系统 (Tom Lane)
+     </p></li><li class="listitem"><p>      当事务隔离级别是<code class="literal">REPEATABLE READ</code>或更高时，
+	  允许使用<code class="command">COPY</code>的<code class="literal">FREEZE</code>选项 (Noah Misch)
+     </p><p>      这种情况是被以前的bug修复无意中破坏的。
+     </p></li><li class="listitem"><p>      修复<code class="function">AggGetAggref()</code>，返回正确的
+	  <code class="structname">Aggref</code>节点来聚合已经合并了转换计算的最终函数
+	  (Tom Lane)
+     </p></li><li class="listitem"><p>      修复了<span class="application">pg_dump</span>和<span class="application">psql</span>
+	  的一些新查询中不充分的模式限定
+      (Vitaly Burovoy, Tom Lane, Noah Misch)
+     </p></li><li class="listitem"><p>      避免在<span class="application">psql</span>的<code class="command">\d</code>
+	  查询中使用<code class="literal">@&gt;</code>操作符 (Tom Lane)
+     </p><p>      这可以防止在安装<span class="application">parray_gin</span>扩展时出现问题，
+	  因为它定义了一个冲突的操作符。
+     </p></li><li class="listitem"><p>      修复<span class="application">pg_basebackup</span>的表空间路径匹配，
+	  在比较之前对两个路径进行规范化 (Michael Paquier)
+     </p><p>      这在Windows上特别有用。
+     </p></li><li class="listitem"><p>      修复<span class="application">libpq</span>不要求用户的主目录存在 (Tom Lane)
+     </p><p>      在v10中，当尝试读取<code class="filename">~/.pgpass</code>时未能找到主目录被看做是硬错误，
+	  但是应该只是导致未找到该文件。v10和之前的版本在读取
+	  <code class="filename">~/.pg_service.conf</code>时也是相同的错误，
+	  尽管这样做并不明显，因为除非指定了服务名称，否则不会找到该文件。
+     </p></li><li class="listitem"><p>      在ecpglib中，正确的处理字符串文本中的反斜杠依赖于是否设置了
+	  <code class="varname">standard_conforming_strings</code>
+      (Tsunakawa Takayuki)
+     </p></li><li class="listitem"><p>      让ecpglib的Informix兼容性模式忽略整型输入字符串中的小数部分
+	  (Gao Zengqi, Michael Meskes)
+     </p></li><li class="listitem"><p>      修复了类似<code class="literal">check</code> Make目标缺少临时安装先决条件
+	  (Noah Misch)
+     </p><p>      一些非默认的测试程序，像<code class="literal">make check</code>一样工作，
+	  不能确保临时安装是最新的。
+     </p></li><li class="listitem"><p>      更新时区数据文件到<span class="application">tzdata</span>版本2017c，
+	  因为 DST 规则在 Fiji, Namibia, Northern Cyprus,
+      Sudan, Tonga 和 Turks &amp; Caicos Islands发生了改变，加上
+	  Alaska, Apia, Burma, Calcutta, Detroit, Ireland,
+      Namibia 和 Pago Pago的历史更正。
+     </p></li><li class="listitem"><p>      在文档中，将HTML锚点恢复为大写字符串
+      (Peter Eisentraut)
+     </p><p>      由于工具链改变，10.0的用户手册页面内部锚点有小写字符串，
+	  因此使一些外部链接打散到了网站文档中。返回到我们之前使用大写字符串的传统。
+     </p></li></ul></div></div></div><div class="navfooter"><hr /><table width="100%" summary="Navigation footer"><tr><td width="40%" align="left"><a accesskey="p" href="release.html">上一页</a> </td><td width="20%" align="center"><a accesskey="u" href="release.html">上一级</a></td><td width="40%" align="right"> <a accesskey="n" href="release-10.html">下一页</a></td></tr><tr><td width="40%" align="left" valign="top">附录 E. 版本说明 </td><td width="20%" align="center"><a accesskey="h" href="index.html">起始页</a></td><td width="40%" align="right" valign="top"> E.2. 版本 10</td></tr></table></div></body></html>

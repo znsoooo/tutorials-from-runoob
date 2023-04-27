@@ -1,0 +1,81 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><title>43.2. PL/Tcl 函数和参数</title><link rel="stylesheet" type="text/css" href="stylesheet.css" /><link rev="made" href="pgsql-docs@postgresql.org" /><meta name="generator" content="DocBook XSL Stylesheets V1.79.1" /><link rel="prev" href="pltcl-overview.html" title="43.1. 概述" /><link rel="next" href="pltcl-data.html" title="43.3. PL/Tcl 中的数据值" /></head><body><div xmlns="http://www.w3.org/TR/xhtml1/transitional" class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="5" align="center">43.2. PL/Tcl 函数和参数</th></tr><tr><td width="10%" align="left"><a accesskey="p" href="pltcl-overview.html" title="43.1. 概述">上一页</a> </td><td width="10%" align="left"><a accesskey="u" href="pltcl.html" title="第 43 章 PL/Tcl - Tcl 过程语言">上一级</a></td><th width="60%" align="center">第 43 章 PL/Tcl - Tcl 过程语言</th><td width="10%" align="right"><a accesskey="h" href="index.html" title="PostgreSQL 10.1 手册">起始页</a></td><td width="10%" align="right"> <a accesskey="n" href="pltcl-data.html" title="43.3. PL/Tcl 中的数据值">下一页</a></td></tr></table><hr></hr></div><div class="sect1" id="PLTCL-FUNCTIONS"><div class="titlepage"><div><div><h2 class="title" style="clear: both">43.2. PL/Tcl 函数和参数</h2></div></div></div><p>     要用<span class="application">PL/Tcl</span>语言创建函数，可使用标准的<a class="xref" href="sql-createfunction.html" title="CREATE FUNCTION"><span class="refentrytitle">CREATE FUNCTION</span></a>语法：
+
+</p><pre class="programlisting">CREATE FUNCTION <em class="replaceable"><code>funcname</code></em> (<em class="replaceable"><code>argument-types</code></em>) RETURNS <em class="replaceable"><code>return-type</code></em> AS $$
+    # PL/Tcl function body
+$$ LANGUAGE pltcl;</pre><p>
+
+     <span class="application">PL/TclU</span>的函数是一样的语法，只是语言被指定为<code class="literal">pltclu</code>。
+    </p><p>     函数的主体就是一个 Tcl 脚本。当函数被调用时，参数值会被作为名为
+	 <code class="literal">1</code> ... <code class="literal"><em class="replaceable"><code>n</code></em></code>的变量传递给 Tcl 脚本。结果会以常见的方式通过一个<code class="literal">return</code>从 Tcl 脚本中返回。
+    </p><p>     例如，一个返回两个整数值中较大值的函数可以定义为：
+
+</p><pre class="programlisting">CREATE FUNCTION tcl_max(integer, integer) RETURNS integer AS $$
+    if {$1 &gt; $2} {return $1}
+    return $2
+$$ LANGUAGE pltcl STRICT;</pre><p>
+
+     注意子句<code class="literal">STRICT</code>，它让我们不用去操心空输入值：如果空值被传入，函数根本就不会被调用，而是自动地返回一个空结果。
+    </p><p>     在非严格函数中，如果一个参数的实际值为空，对应的<code class="literal">$<em class="replaceable"><code>n</code></em></code>变量将被设置为一个空串。为了检测一个特定参数是否为空，可使用函数<code class="literal">argisnull</code>。例如，假设我们想要带有一个空参数和一个非空参数并且返回非空参数的<code class="function">tcl_max</code>：
+
+</p><pre class="programlisting">CREATE FUNCTION tcl_max(integer, integer) RETURNS integer AS $$
+    if {[argisnull 1]} {
+        if {[argisnull 2]} { return_null }
+        return $2
+    }
+    if {[argisnull 2]} { return $1 }
+    if {$1 &gt; $2} {return $1}
+    return $2
+$$ LANGUAGE pltcl;</pre><p>
+    </p><p>     如上所述，要从一个 PL/Tcl 函数返回空值，可执行<code class="literal">return_null</code>。不管函数是严格还是非严格都可以这样做。
+    </p><p>     组合类型参数会被作为 Tcl 数组传递给函数。该数组的元素名就是组合类型的属性值。如果被传入行的一个属性为空值，它不会出现在数组中。这里是一个例子：
+
+</p><pre class="programlisting">CREATE TABLE employee (
+    name text,
+    salary integer,
+    age integer
+);
+
+CREATE FUNCTION overpaid(employee) RETURNS boolean AS $$
+    if {200000.0 &lt; $1(salary)} {
+        return "t"
+    }
+    if {$1(age) &lt; 30 &amp;&amp; 100000.0 &lt; $1(salary)} {
+        return "t"
+    }
+    return "f"
+$$ LANGUAGE pltcl;</pre><p>
+    </p><p>     PL/Tcl函数也可以返回复合类型的结果。要这样做，
+	 Tcl模块必须返回匹配期望结果类型的列名/值对的列表。
+	 该列表省略的任意字段名返回null，如果有意料之外的字段名，则返回一个错误。
+	 这里是一个示例：
+
+</p><pre class="programlisting">CREATE FUNCTION square_cube(in int, out squared int, out cubed int) AS $$
+    return [list squared [expr {$1 * $1}] cubed [expr {$1 * $1 * $1}]]
+$$ LANGUAGE pltcl;</pre><p>
+    </p><div class="tip"><h3 class="title">提示</h3><p>      结果列表可以使用<code class="literal">array get</code> Tcl命令从所需元组的数组表示获得。
+	  例如：
+
+</p><pre class="programlisting">CREATE FUNCTION raise_pay(employee, delta int) RETURNS employee AS $$
+    set 1(salary) [expr {$1(salary) + $2}]
+    return [array get 1]
+$$ LANGUAGE pltcl;</pre><p>
+     </p></div><p>     PL/Tcl函数可以返回集合。要这样做，Tcl代码应该为要返回的每行调用一次
+	 <code class="function">return_next</code>，在返回标量类型时传递适当的值，
+	 或者在返回复合类型时传递列名/值列表。这是一个返回标量类型的示例：
+
+</p><pre class="programlisting">CREATE FUNCTION sequence(int, int) RETURNS SETOF int AS $$
+    for {set i $1} {$i &lt; $2} {incr i} {
+        return_next $i
+    }
+$$ LANGUAGE pltcl;</pre><p>
+
+     这是一个返回复合类型的示例：
+
+</p><pre class="programlisting">CREATE FUNCTION table_of_squares(int, int) RETURNS TABLE (x int, x2 int) AS $$
+    for {set i $1} {$i &lt; $2} {incr i} {
+        return_next [list x $i x2 [expr {$i * $i}]]
+    }
+$$ LANGUAGE pltcl;</pre><p>
+    </p></div><div class="navfooter"><hr /><table width="100%" summary="Navigation footer"><tr><td width="40%" align="left"><a accesskey="p" href="pltcl-overview.html">上一页</a> </td><td width="20%" align="center"><a accesskey="u" href="pltcl.html">上一级</a></td><td width="40%" align="right"> <a accesskey="n" href="pltcl-data.html">下一页</a></td></tr><tr><td width="40%" align="left" valign="top">43.1. 概述 </td><td width="20%" align="center"><a accesskey="h" href="index.html">起始页</a></td><td width="40%" align="right" valign="top"> 43.3. PL/Tcl 中的数据值</td></tr></table></div></body></html>

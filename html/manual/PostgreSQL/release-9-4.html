@@ -1,0 +1,578 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><title>E.36. 版本 9.4</title><link rel="stylesheet" type="text/css" href="stylesheet.css" /><link rev="made" href="pgsql-docs@postgresql.org" /><meta name="generator" content="DocBook XSL Stylesheets V1.79.1" /><link rel="prev" href="release-9-4-1.html" title="E.35. 版本 9.4.1" /><link rel="next" href="release-9-3-20.html" title="E.37. 版本 9.3.20" /></head><body><div xmlns="http://www.w3.org/TR/xhtml1/transitional" class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="5" align="center">E.36. 版本 9.4</th></tr><tr><td width="10%" align="left"><a accesskey="p" href="release-9-4-1.html" title="E.35. 版本 9.4.1">上一页</a> </td><td width="10%" align="left"><a accesskey="u" href="release.html" title="附录 E. 版本说明">上一级</a></td><th width="60%" align="center">附录 E. 版本说明</th><td width="10%" align="right"><a accesskey="h" href="index.html" title="PostgreSQL 10.1 手册">起始页</a></td><td width="10%" align="right"> <a accesskey="n" href="release-9-3-20.html" title="E.37. 版本 9.3.20">下一页</a></td></tr></table><hr></hr></div><div class="sect1" id="RELEASE-9-4"><div class="titlepage"><div><div><h2 class="title" style="clear: both">E.36. 版本 9.4</h2></div></div></div><div class="toc"><dl class="toc"><dt><span class="sect2"><a href="release-9-4.html#idp67760736">E.36.1. 概述</a></span></dt><dt><span class="sect2"><a href="release-9-4.html#idp67772048">E.36.2. 迁移到版本 9.4</a></span></dt><dt><span class="sect2"><a href="release-9-4.html#idp67845520">E.36.3. 修改列表</a></span></dt></dl></div><p><strong>发布日期：. </strong>2014-12-18</p><div class="sect2" id="idp67760736"><div class="titlepage"><div><div><h3 class="title">E.36.1. 概述</h3></div></div></div><p>    <span class="productname">PostgreSQL</span> 9.4中主要增强的功能包括：
+   </p><div class="itemizedlist"><ul class="itemizedlist" style="list-style-type: disc; "><li class="listitem"><p>       添加了<a class="link" href="datatype-json.html" title="8.14. JSON 类型"><code class="type">jsonb</code></a>，
+       一个存储<acronym class="acronym">JSON</acronym>数据更能胜任和更有效的数据类型
+      </p></li><li class="listitem"><p>       为修改了的<code class="filename">postgresql.conf</code>配置文件项添加新的<acronym class="acronym">SQL</acronym>命令
+       <a class="xref" href="sql-altersystem.html" title="ALTER SYSTEM"><span class="refentrytitle">ALTER SYSTEM</span></a>
+      </p></li><li class="listitem"><p>       为一些<a class="xref" href="sql-altertable.html" title="ALTER TABLE"><span class="refentrytitle">ALTER TABLE</span></a>命令降低锁定力度
+      </p></li><li class="listitem"><p>       允许<a class="link" href="rules-materializedviews.html" title="40.3. 物化视图">物化视图</a>
+       在不阻塞并发读取的情况下刷新
+      </p></li><li class="listitem"><p>       添加对<a class="link" href="logicaldecoding.html" title="第 48 章 逻辑解码">逻辑解码</a>WAL数据的支持，
+       以便允许数据库以一个可定制的格式流出数据
+      </p></li><li class="listitem"><p>        允许<a class="link" href="bgworker.html" title="第 47 章 后台工作者进程">后端工作进程</a>动态注册、启动和终止
+      </p></li></ul></div><p>    上面的条目在下面的章节中有更详细的解释。
+   </p></div><div class="sect2" id="idp67772048"><div class="titlepage"><div><div><h3 class="title">E.36.2. 迁移到版本 9.4</h3></div></div></div><p>    那些想要从以前的版本中迁移数据的用户，需要使用<a class="xref" href="app-pg-dumpall.html" title="pg_dumpall"><span class="refentrytitle"><span class="application">pg_dumpall</span></span></a>
+    的转储/恢复，或者使用<a class="xref" href="pgupgrade.html" title="pg_upgrade"><span class="refentrytitle"><span class="application">pg_upgrade</span></span></a>。
+   </p><p>    版本9.4包含一些可能影响与以前版本兼容性的修改。查看下面的不兼容：
+   </p><div class="itemizedlist"><ul class="itemizedlist" style="list-style-type: disc; "><li class="listitem"><p>      加强到多维<a class="link" href="arrays.html" title="8.15. 数组">数组</a>输入的检查 (Bruce Momjian)
+     </p><p>      以前，一个以单元素子数组开头的输入数组字符串稍后可能包含多元素子数组，
+      例如<code class="literal">'{{1}, {2,3}}'::int[]</code>是可以接受的。
+     </p></li><li class="listitem"><p>      当转换类型<code class="type">date</code>、<code class="type">timestamp</code>或<code class="type">timestamptz</code>
+      的值到<a class="link" href="datatype-json.html" title="8.14. JSON 类型"><code class="type">JSON</code></a>时，
+      让该值的格式是一个与ISO 8601兼容的格式 (Andrew Dunstan)
+     </p><p>      以前这样的值是根据当前<a class="xref" href="runtime-config-client.html#GUC-DATESTYLE">DateStyle</a>设置呈现的；
+      但是许多JSON处理器要求时间戳的格式是ISO 8601。如果需要，
+      可以在传递值到JSON转换函数之前，通过明确的转换日期时间值为
+      <code class="type">text</code>获取以前的行为。
+     </p></li><li class="listitem"><p>      如果数组是空的话，<a class="link" href="functions-json.html#FUNCTIONS-JSON-OP-TABLE" title="表 9.43. json和jsonb 操作符"><code class="type">json</code>
+      <code class="literal">#&gt;</code> <code class="type">text[]</code></a>路径提取运算符现在返回它左侧的输入，
+      而不是NULL (Tom Lane)
+     </p><p>      这与代表简单字段/元素提取运算符<code class="literal">-&gt;</code>的零应用的想法是一致的。
+      相似的，带有空数组的<code class="type">json</code> <code class="literal">#&gt;&gt;</code> <code class="type">text[]</code>
+      只是强制它的左侧输入变成text。
+     </p></li><li class="listitem"><p>      <a class="link" href="functions-json.html#FUNCTIONS-JSON-OP-TABLE" title="表 9.43. json和jsonb 操作符"><code class="type">JSON</code>
+      字段/元素/路径提取运算符</a>中的极端情况现在返回NULL而不是提出一个错误 (Tom Lane)
+     </p><p>      例如，将字段提取应用到JSON数组中现在会产生NULL而不是一个错误。
+      这样就更加一致了（因为一些可比较的情况，比如没有这样的字段早就是返回NULL的），
+      并且这样使得创建使用这些运算符的表达式索引更加安全，
+      因为他们现在对于任何有效的JSON输入将不会抛出错误。
+     </p></li><li class="listitem"><p>      使<a class="link" href="functions-formatting.html#FUNCTIONS-FORMATTING-TABLE" title="表 9.23. 格式化函数"><code class="function">to_timestamp()</code></a>
+      和<code class="function">to_date()</code>格式字符串中连续的空格消耗输入字符串中相应数量的字符
+      （空格或非空格），然后有条件的消耗临近的空格，如果不在<code class="literal">FX</code>模式下 (Jeevan Chalke)
+     </p><p>      以前，非<code class="literal">FX</code>格式字符串中连续的空格字符表现的就像一个空格字符，
+      并且消耗掉输入字符串中所有临近的空格。例如，以前一个三个空间的格式字符串将只消耗
+      <code class="literal">' 12'</code>中的第一个空格，但是现在它将消耗所有三个字符。
+     </p></li><li class="listitem"><p>      修复<a class="link" href="functions-textsearch.html#TEXTSEARCH-FUNCTIONS-TABLE" title="表 9.41. 文本搜索函数"><code class="function">ts_rank_cd()</code></a>
+      以忽略剥离了的词位 (Alex Hill)
+     </p><p>      以前，剥离了的词位被看做是它们有一个缺省的位置，产生一个可疑的有效性。
+     </p></li><li class="listitem"><p>      对于声明为接受<a class="link" href="xfunc-sql.html#XFUNC-SQL-VARIADIC-FUNCTIONS" title="37.4.5. 带有可变数量参数的SQL函数"><code class="literal">VARIADIC
+      "any"</code></a>的函数，一个标记为<code class="literal">VARIADIC</code>
+      的实参必须是一个可以测定的数组类型 (Pavel Stehule)
+     </p><p>      这样的参数不能再被写作未加修饰的字符串文本或<code class="literal">NULL</code>；
+      现在将必须转换到一个适当的数组数据类型。请注意，
+      这并不影响没有标记为<code class="literal">VARIADIC</code>的参数。
+     </p></li><li class="listitem"><p>      确保整行变量暴露预期的字段名给注意复合变量中字段名的函数 (Tom Lane)
+     </p><p>      类似<code class="literal">row_to_json(tab.*)</code>的构造现在总是发出在该调用时，
+      匹配表<code class="literal">tab</code>可见的字段别名的字段名字。在以前的版本中，
+      发出的字段名字有时将是表的实际字段名字，不管在查询中给它赋予了什么别名。
+     </p></li><li class="listitem"><p>      <a class="xref" href="sql-discard.html" title="DISCARD"><span class="refentrytitle">DISCARD</span></a>现在也丢弃了序列相关的状态
+      (Fabrízio de Royes Mello, Robert Haas)
+     </p></li><li class="listitem"><p>      重命名<a class="link" href="sql-explain.html" title="EXPLAIN"><code class="command">EXPLAIN
+      ANALYZE</code></a>的<span class="quote">“<span class="quote">total runtime</span>”</span>输出为
+      <span class="quote">“<span class="quote">execution time</span>”</span> (Tom Lane)
+     </p><p>      现在也报告规划时间，以前的名字有些混淆。
+     </p></li><li class="listitem"><p>      <a class="link" href="sql-show.html" title="SHOW"><code class="command">SHOW TIME ZONE</code></a>
+      现在以<acronym class="acronym">POSIX</acronym>时区格式输出简单数字UTC偏移量 (Tom Lane)
+     </p><p>      以前，这样的时区设置作为<a class="link" href="datatype-datetime.html#DATATYPE-INTERVAL-OUTPUT" title="8.5.5. 间隔输出"><code class="type">interval</code></a>
+      值显示。新的输出在作为简单字符串传递时被<code class="command">SET TIME ZONE</code>
+      适当的解读了，而老的输出则需要特殊的处理才能正确的重新解析。
+     </p></li><li class="listitem"><p>      支持更新外部表的外部数据封装器必须考虑<code class="literal">AFTER ROW</code>
+      触发器存在的可能性 (Noah Misch)
+     </p><p>      当存在<code class="literal">AFTER ROW</code>触发器时，表的所有字段必须通过更新动作返回，
+      因为触发器可能检查任何或所有字段。以前，外部表从未有过触发器，
+      所以FDW可能会优化<code class="literal">RETURNING</code>子句（如果有）中没有提到的字段。
+     </p></li><li class="listitem"><p>      阻止<a class="link" href="ddl-constraints.html#DDL-CONSTRAINTS-CHECK-CONSTRAINTS" title="5.3.1. 检查约束"><code class="literal">CHECK</code></a>
+      约束参考系统字段，除了<code class="structfield">tableoid</code> (Amit Kapila)
+     </p><p>      以前是允许这样的检查约束的，但是它们在恢复时经常引起错误。
+     </p></li><li class="listitem"><p>      如果指定了多个目标参数，那么使用最后指定的
+      <a class="link" href="recovery-target-settings.html" title="27.2. 恢复目标设置">恢复目标参数</a> (Heikki Linnakangas)
+     </p><p>      以前，在<code class="literal">recovery_target_<em class="replaceable"><code>xxx</code></em></code>
+      参数上有一个未记录的优先级顺序。
+     </p></li><li class="listitem"><p>      在Windows上，自动保存用户提供的命令字符串中的引用 (Heikki Linnakangas)
+     </p><p>      执行它们自己的引用保留的用户命令可能需要调整。这对于在
+      <a class="xref" href="runtime-config-wal.html#GUC-ARCHIVE-COMMAND">archive_command</a>、<a class="xref" href="archive-recovery-settings.html#RESTORE-COMMAND">restore_command</a>
+      和<a class="link" href="sql-copy.html" title="COPY"><code class="command">COPY TO/FROM PROGRAM</code></a>
+      中使用的命令来说可能是一个问题。
+     </p></li><li class="listitem"><p>      删除目录列<a class="link" href="catalog-pg-class.html" title="51.11. pg_class"><code class="structfield">pg_class.reltoastidxid</code></a>
+      (Michael Paquier)
+     </p></li><li class="listitem"><p>      删除目录列<a class="link" href="catalog-pg-rewrite.html" title="51.44. pg_rewrite"><code class="structfield">pg_rewrite.ev_attr</code></a>
+      (Kevin Grittner)
+     </p><p>      自<span class="application">PostgreSQL</span> 7.3以来不再支持每列的规则。
+     </p></li><li class="listitem"><p>      删除本地对<span class="application">Kerberos</span>认证的支持(<code class="option">--with-krb5</code>等)
+      (Magnus Hagander)
+     </p><p>      支持使用<span class="application">Kerberos</span>认证的方式是<acronym class="acronym">GSSAPI</acronym>。
+      本地代码自<span class="productname">PostgreSQL</span> 8.3起就弃用了。
+     </p></li><li class="listitem"><p>      在<span class="application">PL/Python</span>中，像底层数组类型那样处理数组上的域名 (Rodolfo Campero)
+     </p><p>      以前这样的值被看做是字符串。
+     </p></li><li class="listitem"><p>      让libpq的<a class="link" href="libpq-connect.html#LIBPQ-PQCONNECTDBPARAMS"><code class="function">PQconnectdbParams()</code></a>
+      和<a class="link" href="libpq-connect.html#LIBPQ-PQPINGPARAMS"><code class="function">PQpingParams()</code></a>
+      函数处理零长度的字符串为缺省 (Adrian
+      Vondendriesch)
+     </p><p>      以前，这些函数只在某些情况下将零长度的字符串值看做是选取缺省。
+     </p></li><li class="listitem"><p>      修改<a class="xref" href="intarray.html" title="F.19. intarray">intarray</a>模块返回的空数组为零维数组 (Bruce Momjian)
+     </p><p>      以前，空数组是作为零长度一维数组返回的，它的文本表示看起来和零维数组
+      (<code class="literal">{}</code>)相同，但是它们在数组操作中的表现不同。在这一块，
+      <span class="application">intarray</span>的行为现在匹配内建数组运算符。
+     </p></li><li class="listitem"><p>      <a class="xref" href="pgupgrade.html" title="pg_upgrade"><span class="refentrytitle"><span class="application">pg_upgrade</span></span></a>现在使用<code class="option">-U</code>
+      或<code class="option">--username</code>来声明用户名 (Bruce Momjian)
+     </p><p>      以前，这个选项拼写为<code class="option">-u</code>或<code class="option">--user</code>，
+      但是会与其他工具不一致。
+     </p></li></ul></div></div><div class="sect2" id="idp67845520"><div class="titlepage"><div><div><h3 class="title">E.36.3. 修改列表</h3></div></div></div><p>    下面你将看到一个<span class="productname">PostgreSQL</span> 9.4和以前的主版本之间详细的修改清单。
+   </p><div class="sect3" id="idp67847088"><div class="titlepage"><div><div><h4 class="title">E.36.3.1. 服务器</h4></div></div></div><div class="itemizedlist"><ul class="itemizedlist" style="list-style-type: disc; "><li class="listitem"><p>        允许<a class="link" href="bgworker.html" title="第 47 章 后台工作者进程">后端工作进程</a>动态注册、启动和终止 (Robert Haas)
+       </p><p>        新的<code class="filename">worker_spi</code>模块显示了使用这个特性的一个示例。
+       </p></li><li class="listitem"><p>        允许动态分配共享内存段 (Robert Haas, Amit Kapila)
+       </p><p>        这个特性在<code class="filename">test_shm_mq</code>模块中阐明。
+       </p></li><li class="listitem"><p>        在崩溃恢复或立即关闭时，发送不可抓取的终止信号(<span class="systemitem">SIGKILL</span>)
+        到没有立即关闭的子进程 (MauMau, Álvaro Herrera)
+       </p><p>        这减少了在<a class="xref" href="app-postmaster.html" title="postmaster"><span class="refentrytitle"><span class="application">postmaster</span></span></a>关闭之后留有单独的子进程的可能性，
+        也确保了在某些子进程变成<span class="quote">“<span class="quote">stuck</span>”</span>时崩溃恢复可以继续进行。
+       </p></li><li class="listitem"><p>        改善数据库系统标识符的随机性 (Tom Lane)
+       </p></li><li class="listitem"><p>        让<a class="xref" href="sql-vacuum.html" title="VACUUM"><span class="refentrytitle">VACUUM</span></a>正确的将死亡但是还未移除的行报告给状态收集器 (Hari Babu)
+       </p><p>        以前这些被报告为存活的行。
+       </p></li></ul></div><div class="sect4" id="idp67856624"><div class="titlepage"><div><div><h5 class="title">E.36.3.1.1. 索引</h5></div></div></div><div class="itemizedlist"><ul class="itemizedlist" style="list-style-type: disc; "><li class="listitem"><p>        减少<a class="link" href="gin.html" title="第 64 章 GIN 索引"><acronym class="acronym">GIN</acronym></a>索引尺寸
+        (Alexander Korotkov, Heikki Linnakangas)
+       </p><p>        通过<a class="xref" href="pgupgrade.html" title="pg_upgrade"><span class="refentrytitle"><span class="application">pg_upgrade</span></span></a>升级的索引将会工作的很好，
+        但是仍然是老的、较大的<acronym class="acronym">GIN</acronym>格式。使用
+        <a class="xref" href="sql-reindex.html" title="REINDEX"><span class="refentrytitle">REINDEX</span></a>以新的格式重新创建老的GIN索引。
+       </p></li><li class="listitem"><p>        改善多键<a class="link" href="gin.html" title="第 64 章 GIN 索引"><acronym class="acronym">GIN</acronym></a>查找的速度 (Alexander Korotkov,
+        Heikki Linnakangas)
+       </p></li><li class="listitem"><p>        为<a class="link" href="datatype-net-types.html#DATATYPE-INET" title="8.9.1. inet"><code class="type">inet</code></a>和
+        <a class="link" href="datatype-net-types.html#DATATYPE-CIDR" title="8.9.2. cidr"><code class="type">cidr</code></a>数据类型添加
+        <a class="link" href="gist.html" title="第 62 章 GiST 索引"><acronym class="acronym">GiST</acronym></a>索引支持
+        (Emre Hasegeli)
+       </p><p>        这样的索引改善了<a class="link" href="functions-net.html#CIDR-INET-OPERATORS-TABLE" title="表 9.36. cidr和inet操作符">子网和超网</a>
+        查找和排序比较。
+       </p></li><li class="listitem"><p>        修复B-tree页删除中罕见的竞态条件 (Heikki Linnakangas)
+       </p></li><li class="listitem"><p>        让中断的B-tree页分裂的处理更加健壮 (Heikki Linnakangas)
+       </p></li></ul></div></div><div class="sect4" id="idp67867888"><div class="titlepage"><div><div><h5 class="title">E.36.3.1.2. 一般性能</h5></div></div></div><div class="itemizedlist"><ul class="itemizedlist" style="list-style-type: disc; "><li class="listitem"><p>        允许多重后端并发的插入到<a class="link" href="wal.html" title="第 30 章 可靠性和预写式日志"><acronym class="acronym">WAL</acronym></a>
+        缓冲区中 (Heikki Linnakangas)
+       </p><p>        这提升了并行写入的性能。
+       </p></li><li class="listitem"><p>        有条件的只写入被更新行的修改部分到<a class="link" href="wal.html" title="第 30 章 可靠性和预写式日志"><acronym class="acronym">WAL</acronym></a>中 (Amit Kapila)
+       </p></li><li class="listitem"><p>        改善作为<a class="link" href="sql-expressions.html#SYNTAX-WINDOW-FUNCTIONS" title="4.2.8. 窗口函数调用">窗口函数</a>
+        使用的聚合函数的性能 (David Rowley, Florian Pflug, Tom Lane)
+       </p></li><li class="listitem"><p>        改善使用<a class="link" href="datatype-numeric.html" title="8.1. 数字类型"><code class="type">numeric</code></a>
+        状态值的聚合的速度 (Hadi Moshayedi)
+       </p></li><li class="listitem"><p>        当使用<a class="xref" href="sql-cluster.html" title="CLUSTER"><span class="refentrytitle">CLUSTER</span></a>或<a class="link" href="sql-vacuum.html" title="VACUUM"><code class="command">VACUUM FULL</code></a>
+        重新写入表时，尝试<a class="link" href="routine-vacuuming.html#VACUUM-FOR-WRAPAROUND" title="24.1.5. 防止事务 ID 回卷失败">冻结</a>元组 (Robert Haas,
+        Andres Freund)
+       </p><p>        这可以避免将来冻结元组的需要。
+       </p></li><li class="listitem"><p>        改善<a class="xref" href="sql-copy.html" title="COPY"><span class="refentrytitle">COPY</span></a>处理缺省<a class="link" href="functions-sequence.html#FUNCTIONS-SEQUENCE-TABLE" title="表 9.47. 序列函数"><code class="function">nextval()</code></a>
+        字段的速度 (Simon Riggs)
+       </p></li><li class="listitem"><p>        改善在同一会话中访问许多不同<a class="link" href="sql-createsequence.html" title="CREATE SEQUENCE">序列</a>
+        的速度 (David Rowley)
+       </p></li><li class="listitem"><p>        在排序和B-tree索引建立时，提高内存中持有的元组数量的硬限制 (Noah Misch)
+       </p></li><li class="listitem"><p>        减少<span class="application">PL/pgSQL</span> <a class="xref" href="sql-do.html" title="DO"><span class="refentrytitle">DO</span></a>块的内存分配 (Tom Lane)
+       </p></li><li class="listitem"><p>        让规划器更积极的提取混合<code class="literal">AND</code>/<code class="literal">OR</code>子句中的限制子句 (Tom Lane)
+       </p></li><li class="listitem"><p>        不允许将不稳定的<code class="literal">WHERE</code>子句放入<code class="literal">DISTINCT</code>子查询中 (Tom Lane)
+       </p><p>        放入一个<code class="literal">WHERE</code>子句总的来说会产生一个更有效的规划，
+        但是在评估的成本方面来说，该子句比查询的文本所隐含的要更多；
+        所以，如果该子句包含任何不稳定的函数，就不要这样做。
+       </p></li><li class="listitem"><p>        自动调整目录缓存的大小 (Heikki Linnakangas)
+       </p><p>        这减少了只访问几个表的会话的内存消耗，提高了访问许多表的会话的性能。
+       </p></li></ul></div></div><div class="sect4" id="idp67890688"><div class="titlepage"><div><div><h5 class="title">E.36.3.1.3. 监视</h5></div></div></div><div class="itemizedlist"><ul class="itemizedlist" style="list-style-type: disc; "><li class="listitem"><p>        添加<a class="xref" href="monitoring-stats.html#PG-STAT-ARCHIVER-VIEW" title="表 28.9. pg_stat_archiver视图">pg_stat_archiver</a>系统视图以报告
+        <a class="link" href="wal.html" title="第 30 章 可靠性和预写式日志"><acronym class="acronym">WAL</acronym></a>归档活动 (Gabriele Bartolini)
+       </p></li><li class="listitem"><p>        添加<code class="structfield">n_mod_since_analyze</code>字段到
+        <a class="xref" href="monitoring-stats.html#PG-STAT-ALL-TABLES-VIEW" title="表 28.13. pg_stat_all_tables视图">pg_stat_all_tables</a>和相关的系统视图 (Mark Kirkwood)
+       </p><p>        这些字段显示子表最后<a class="xref" href="sql-analyze.html" title="ANALYZE"><span class="refentrytitle">ANALYZE</span></a>依赖修改了的元组数量的系统估计。
+        这个估计促使决定何时自动分析。
+       </p></li><li class="listitem"><p>        添加<code class="structfield">backend_xid</code>和<code class="structfield">backend_xmin</code>
+        字段到系统视图<a class="xref" href="monitoring-stats.html#PG-STAT-ACTIVITY-VIEW" title="表 28.3. pg_stat_activity 视图">pg_stat_activity</a>，
+        和一个<code class="structfield">backend_xmin</code>字段到
+        <a class="xref" href="monitoring-stats.html#PG-STAT-REPLICATION-VIEW" title="表 28.5. pg_stat_replication 视图">pg_stat_replication</a> (Christian Kruse)
+       </p></li></ul></div></div><div class="sect4" id="idp67899200"><div class="titlepage"><div><div><h5 class="title">E.36.3.1.4. <acronym class="acronym">SSL</acronym></h5></div></div></div><div class="itemizedlist"><ul class="itemizedlist" style="list-style-type: disc; "><li class="listitem"><p>        添加对<acronym class="acronym">SSL</acronym> <acronym class="acronym">ECDH</acronym>秘钥交换的支持 (Marko Kreen)
+       </p><p>        这允许为服务器认证使用Elliptic Curve秘钥。这样的秘钥更快，
+        并且比<acronym class="acronym">RSA</acronym>秘钥更加安全。新的配置参数<a class="xref" href="runtime-config-connection.html#GUC-SSL-ECDH-CURVE">ssl_ecdh_curve</a>
+        控制为<acronym class="acronym">ECDH</acronym>使用哪条曲线。
+       </p></li><li class="listitem"><p>        改善缺省的<a class="xref" href="runtime-config-connection.html#GUC-SSL-CIPHERS">ssl_ciphers</a>设置 (Marko Kreen)
+       </p></li><li class="listitem"><p>        缺省的，现在是服务器而不是客户端控制<acronym class="acronym">SSL</acronym>运算的优先顺序
+        (Marko Kreen)
+       </p><p>        以前，为了支持客户端侧的缺省，<a class="xref" href="runtime-config-connection.html#GUC-SSL-CIPHERS">ssl_ciphers</a>
+        声明的顺序通常是忽略了的，这在大多数<span class="productname">PostgreSQL</span>
+        客户端上是不可配置的。如果需要，可以通过新的配置参数
+        <a class="xref" href="runtime-config-connection.html#GUC-SSL-PREFER-SERVER-CIPHERS">ssl_prefer_server_ciphers</a>恢复老的行为。
+       </p></li><li class="listitem"><p>        让<a class="xref" href="runtime-config-logging.html#GUC-LOG-CONNECTIONS">log_connections</a>显示<acronym class="acronym">SSL</acronym>
+        加密信息 (Andreas Kunert)
+       </p></li><li class="listitem"><p>        改善<acronym class="acronym">SSL</acronym>协商处理 (Álvaro Herrera)
+       </p></li></ul></div></div><div class="sect4" id="idp67852992"><div class="titlepage"><div><div><h5 class="title">E.36.3.1.5. 服务器设置</h5></div></div></div><div class="itemizedlist"><ul class="itemizedlist" style="list-style-type: disc; "><li class="listitem"><p>        为了改变<code class="filename">postgresql.conf</code>配置文件项，添加新的
+        <acronym class="acronym">SQL</acronym>命令<a class="xref" href="sql-altersystem.html" title="ALTER SYSTEM"><span class="refentrytitle">ALTER SYSTEM</span></a> (Amit Kapila)
+       </p><p>        以前这样的设置只能通过手动编辑<code class="filename">postgresql.conf</code>修改。
+       </p></li><li class="listitem"><p>        添加<a class="xref" href="runtime-config-resource.html#GUC-AUTOVACUUM-WORK-MEM">autovacuum_work_mem</a>配置参数，
+        控制自动清理进程使用的内存数量 (Peter Geoghegan)
+       </p></li><li class="listitem"><p>        添加<a class="xref" href="runtime-config-resource.html#GUC-HUGE-PAGES">huge_pages</a>参数，允许在Linux上使用大量的内存页
+        (Christian Kruse, Richard Poole, Abhijit
+        Menon-Sen)
+       </p><p>        这可以提升大内存系统的性能。
+       </p></li><li class="listitem"><p>        添加<a class="xref" href="runtime-config-resource.html#GUC-MAX-WORKER-PROCESSES">max_worker_processes</a>参数，
+        限制后端工作进程的数量 (Robert Haas)
+       </p><p>        这在配置一个备用服务器拥有所需数量的工作进程时是有帮助的（主机也是一样的）。
+       </p></li><li class="listitem"><p>        添加仅超级用户的<a class="xref" href="runtime-config-client.html#GUC-SESSION-PRELOAD-LIBRARIES">session_preload_libraries</a>参数，
+        在会话开始时加载库 (Peter Eisentraut)
+       </p><p>        与<a class="xref" href="runtime-config-client.html#GUC-LOCAL-PRELOAD-LIBRARIES">local_preload_libraries</a>相比，
+        这个参数可以加载任意共享库，不只是在<code class="filename">$libdir/plugins</code>路径中的那些。
+       </p></li><li class="listitem"><p>        添加<a class="xref" href="runtime-config-wal.html#GUC-WAL-LOG-HINTS">wal_log_hints</a>参数，启用提示一点变化的WAL记录 (Sawada Masahiko)
+       </p><p>        提示一点变化通常是不记录的，除非启用了校验和。这对于外部工具
+        比如<span class="application">pg_rewind</span>是有用的。
+       </p></li><li class="listitem"><p>        四次增加<a class="xref" href="runtime-config-resource.html#GUC-WORK-MEM">work_mem</a>和<a class="xref" href="runtime-config-resource.html#GUC-MAINTENANCE-WORK-MEM">maintenance_work_mem</a>
+        的缺省设置 (Bruce Momjian)
+       </p><p>        新的缺省分别是4MB和64MB。
+       </p></li><li class="listitem"><p>        增加<a class="xref" href="runtime-config-query.html#GUC-EFFECTIVE-CACHE-SIZE">effective_cache_size</a>
+        的缺省设置到4GB (Bruce Momjian, Tom Lane)
+       </p></li><li class="listitem"><p>        允许<code class="function">printf</code>风格的空白填补到
+        <a class="xref" href="runtime-config-logging.html#GUC-LOG-LINE-PREFIX">log_line_prefix</a>指定的位置 (David Rowley)
+       </p></li><li class="listitem"><p>        在声明了配置变量值时，允许使用太字节单位(<code class="literal">TB</code>) (Simon Riggs)
+       </p></li><li class="listitem"><p>        显示锁持有者和等待者的<acronym class="acronym">PID</acronym>，并改善
+        <a class="xref" href="runtime-config-logging.html#GUC-LOG-LOCK-WAITS">log_lock_waits</a>日志消息中关系相关的信息 (Christian Kruse)
+       </p></li><li class="listitem"><p>        在加载共享库时，降低服务器日志级别 (Peter Geoghegan)
+       </p><p>        以前的级别是<code class="literal">LOG</code>，这对于每个会话都加载的库来说太详细了。
+       </p></li><li class="listitem"><p>        在Windows上，让<code class="literal">SQL_ASCII</code>编码的数据库和服务器进程
+        （比如<a class="xref" href="app-postmaster.html" title="postmaster"><span class="refentrytitle"><span class="application">postmaster</span></span></a>）在服务器的Windows用户本地的字符编码中发出消息
+        (Alexander Law, Noah Misch)
+       </p><p>        以前，这些消息在Windows <acronym class="acronym">ANSI</acronym>代码页输出。
+       </p></li></ul></div></div></div><div class="sect3" id="idp67937376"><div class="titlepage"><div><div><h4 class="title">E.36.3.2. 复制和恢复</h4></div></div></div><div class="itemizedlist"><ul class="itemizedlist" style="list-style-type: disc; "><li class="listitem"><p>        添加<a class="link" href="warm-standby.html#STREAMING-REPLICATION-SLOTS" title="26.2.6. 复制槽">复制槽</a>，
+        协调流备用上的活动和流出节点 (Andres Freund, Robert Haas)
+       </p><p>        复制槽允许在主服务器上保存资源，像<acronym class="acronym">WAL</acronym>文件，
+        直到备用服务器不再需要它们。
+       </p></li><li class="listitem"><p>        添加恢复参数<a class="xref" href="standby-settings.html#RECOVERY-MIN-APPLY-DELAY">recovery_min_apply_delay</a>推迟复制
+        (Robert Haas, Fabrízio de Royes Mello,
+        Simon Riggs)
+       </p><p>        在备用服务器上延迟重放可以帮助从用户错误中恢复。
+       </p></li><li class="listitem"><p>        添加<a class="xref" href="recovery-target-settings.html#RECOVERY-TARGET">recovery_target</a>选项<code class="option">immediate</code>，
+        一旦达到一致状态，尽快停止<a class="link" href="wal.html" title="第 30 章 可靠性和预写式日志"><acronym class="acronym">WAL</acronym></a>
+        恢复 (MauMau, Heikki Linnakangas)
+       </p></li><li class="listitem"><p>        改善恢复目标处理 (Heikki Linnakangas)
+       </p><p>        <a class="link" href="functions-admin.html#FUNCTIONS-RECOVERY-INFO-TABLE" title="表 9.80. 恢复信息函数"><code class="function">pg_last_xact_replay_timestamp()</code></a>
+        报告的时间戳现在反映了早已提交的记录，而不是要提交的事务。
+        恢复到一个还原点现在重放了该还原点，而不只是在还原点之前停止。
+       </p></li><li class="listitem"><p>        <a class="link" href="functions-admin.html#FUNCTIONS-ADMIN-BACKUP-TABLE" title="表 9.79. 备份控制函数"><code class="function">pg_switch_xlog()</code></a>
+        现在清理老的<acronym class="acronym">WAL</acronym>文件中任何未使用的尾随空白 (Heikki Linnakangas)
+       </p><p>        这提高了<acronym class="acronym">WAL</acronym>文件的压缩率。
+       </p></li><li class="listitem"><p>        报告来自<a class="link" href="archive-recovery-settings.html" title="27.1. 归档恢复设置">外部恢复命令</a>
+        的失败返回码 (Peter Eisentraut)
+       </p></li><li class="listitem"><p>        减少<acronym class="acronym">WAL</acronym>重放期间的自旋锁争用 (Heikki Linnakangas)
+       </p></li><li class="listitem"><p>        更频繁的将事务运行写入到<acronym class="acronym">WAL</acronym>记录中 (Andres Freund)
+       </p><p>        这允许备用服务器启动更迅速，并且更强力的清理资源。
+       </p></li></ul></div><div class="sect4" id="idp67953568"><div class="titlepage"><div><div><h5 class="title">E.36.3.2.1. <a class="link" href="logicaldecoding.html" title="第 48 章 逻辑解码">逻辑解码</a></h5></div></div></div><p>       逻辑解码允许数据库以一个可配置的格式改变流。从<a class="link" href="wal.html" title="第 30 章 可靠性和预写式日志"><acronym class="acronym">WAL</acronym></a>
+       中读取数据，然后转化成需要的目标格式。要实现这个特性，需要做以下改变：
+      </p><div class="itemizedlist"><ul class="itemizedlist" style="list-style-type: disc; "><li class="listitem"><p>         添加对WAL数据的<a class="link" href="logicaldecoding.html" title="第 48 章 逻辑解码">逻辑解码</a>的支持，
+         以允许数据库改变为以一个可自定义的格式流出
+         (Andres Freund)
+        </p></li><li class="listitem"><p>         添加新的<a class="xref" href="runtime-config-wal.html#GUC-WAL-LEVEL">wal_level</a>设置<code class="option">logical</code>，
+         在<acronym class="acronym">WAL</acronym>中启用逻辑更改集编码 (Andres Freund)
+        </p></li><li class="listitem"><p>         添加表级参数<a class="link" href="catalog-pg-class.html" title="51.11. pg_class"><code class="literal">REPLICA IDENTITY</code></a>，
+         控制逻辑复制 (Andres Freund)
+        </p></li><li class="listitem"><p>         添加关系选项<a class="link" href="sql-createtable.html#SQL-CREATETABLE-STORAGE-PARAMETERS" title="存储参数"><code class="option">user_catalog_table</code></a>，
+         辨认包含在逻辑更改集编码中的用户创建的表 (Andres Freund)
+        </p></li><li class="listitem"><p>         添加<a class="xref" href="app-pgrecvlogical.html" title="pg_recvlogical"><span class="refentrytitle"><span class="application">pg_recvlogical</span></span></a>应用以接收逻辑解码数据 (Andres Freund)
+        </p></li><li class="listitem"><p>         添加<a class="xref" href="test-decoding.html" title="F.41. test_decoding">test_decoding</a>模块，在<acronym class="acronym">SQL</acronym>
+         级别说明逻辑解码 (Andres Freund)
+        </p></li></ul></div></div></div><div class="sect3" id="idp67965600"><div class="titlepage"><div><div><h4 class="title">E.36.3.3. 查询</h4></div></div></div><div class="itemizedlist"><ul class="itemizedlist" style="list-style-type: disc; "><li class="listitem"><p>        添加<a class="link" href="queries-table-expressions.html#QUERIES-TABLEFUNCTIONS" title="7.2.1.4. 表函数"><code class="literal">WITH
+        ORDINALITY</code></a>语言，给从<code class="literal">FROM</code>
+        子句中的设置返回函数返回的行编号 (Andrew Gierth, David Fetter)
+       </p><p>        这对于像<code class="function">unnest()</code>这样的函数尤其有用。
+       </p></li><li class="listitem"><p>        添加<a class="link" href="queries-table-expressions.html#QUERIES-TABLEFUNCTIONS" title="7.2.1.4. 表函数"><code class="literal">ROWS
+        FROM()</code></a>语法，允许<code class="literal">FROM</code>子句中的设置返回函数水平串联 (Andrew Gierth)
+       </p></li><li class="listitem"><p>        允许<a class="xref" href="sql-select.html" title="SELECT"><span class="refentrytitle">SELECT</span></a>有一个空的目标列表 (Tom Lane)
+       </p><p>        添加这个是为了从一个表中选取的零字段视图可以正确的转储和恢复。
+       </p></li><li class="listitem"><p>        确保<a class="link" href="sql-select.html" title="SELECT"><code class="literal">SELECT ... FOR UPDATE
+        NOWAIT</code></a>在极端情况下不会等待，包括早已并发更新元组的情况
+        (Craig Ringer and Thomas Munro)
+       </p></li></ul></div></div><div class="sect3" id="idp67975616"><div class="titlepage"><div><div><h4 class="title">E.36.3.4. 实用命令</h4></div></div></div><div class="itemizedlist"><ul class="itemizedlist" style="list-style-type: disc; "><li class="listitem"><p>        添加<a class="link" href="sql-discard.html" title="DISCARD"><code class="command">DISCARD
+        SEQUENCES</code></a>命令，抛弃缓存的序列相关的状态
+        (Fabrízio de Royes Mello, Robert Haas)
+       </p><p>        <code class="command">DISCARD ALL</code>现在也抛弃这样的信息。
+       </p></li><li class="listitem"><p>         添加<code class="literal">FORCE NULL</code>选项到<a class="link" href="sql-copy.html" title="COPY"><code class="command">COPY FROM</code></a>，
+         使匹配指定空字符串的引用字符串在<code class="literal">CSV</code>模式下转换为NULL
+         (Ian Barwick, Michael Paquier)
+        </p><p>         没有这个选项，只有未引用的匹配字符串将被作为空值引入。
+        </p></li><li class="listitem"><p>        当命令在事务块外部使用时，发出警告，虽然它们没什么影响 (Bruce Momjian)
+       </p><p>        新增的警告为<code class="command">SET LOCAL</code>、<code class="command">SET CONSTRAINTS</code>、
+        <code class="command">SET TRANSACTION</code>和<code class="command">ABORT</code>命令在事务块外部使用时发出。
+       </p></li></ul></div><div class="sect4" id="idp67986416"><div class="titlepage"><div><div><h5 class="title">E.36.3.4.1. <a class="xref" href="sql-explain.html" title="EXPLAIN"><span class="refentrytitle">EXPLAIN</span></a></h5></div></div></div><div class="itemizedlist"><ul class="itemizedlist" style="list-style-type: disc; "><li class="listitem"><p>         让<code class="command">EXPLAIN ANALYZE</code>显示规划时间 (Andreas Karlsson)
+        </p></li><li class="listitem"><p>         让<code class="command">EXPLAIN</code>在Agg和组节点显示组字段 (Tom Lane)
+        </p></li><li class="listitem"><p>         让<code class="command">EXPLAIN ANALYZE</code>显示包含在位图堆扫描中的准确和失真块计数 (Etsuro Fujita)
+        </p></li></ul></div></div><div class="sect4" id="idp67990896"><div class="titlepage"><div><div><h5 class="title">E.36.3.4.2. 视图</h5></div></div></div><div class="itemizedlist"><ul class="itemizedlist" style="list-style-type: disc; "><li class="listitem"><p>        允许<a class="link" href="rules-materializedviews.html" title="40.3. 物化视图">物化视图</a>
+        在不阻塞其他会话读取视图的同时刷新 (Kevin Grittner)
+       </p><p>        这是通过<a class="link" href="sql-refreshmaterializedview.html" title="REFRESH MATERIALIZED VIEW"><code class="command">REFRESH MATERIALIZED
+        VIEW CONCURRENTLY</code></a>实现的。
+       </p></li><li class="listitem"><p>        允许视图<a class="link" href="sql-createview.html#SQL-CREATEVIEW-UPDATABLE-VIEWS" title="可更新视图">自动更新</a>，
+        即使它们包含一些非自动更新的字段 (Dean Rasheed)
+       </p><p>        以前不可自动更新输出字段，比如表达式、常量和函数调用，的存在阻止了自动更新。
+        现在支持<code class="command">INSERT</code>、<code class="command">UPDATE</code>和<code class="command">DELETE</code>了，
+        假设它们不尝试分配新的值给任何不可自动更新的字段。
+       </p></li><li class="listitem"><p>        允许控制<code class="command">INSERT</code>和<code class="command">UPDATE</code>
+        是否可以添加行到可自动更新的视图而不会出现在该视图中 (Dean Rasheed)
+       </p><p>        这是用新的<a class="xref" href="sql-createview.html" title="CREATE VIEW"><span class="refentrytitle">CREATE VIEW</span></a>子句<code class="literal">WITH CHECK OPTION</code>
+        控制的。
+       </p></li><li class="listitem"><p>        允许<a class="link" href="rules-privileges.html" title="40.5. 规则和权限">安全屏障视图</a>自动可更新 (Dean Rasheed)
+       </p></li></ul></div></div></div><div class="sect3" id="idp68003792"><div class="titlepage"><div><div><h4 class="title">E.36.3.5. 对象操作</h4></div></div></div><div class="itemizedlist"><ul class="itemizedlist" style="list-style-type: disc; "><li class="listitem"><p>        支持<a class="link" href="sql-createforeigntable.html" title="CREATE FOREIGN TABLE">外部表</a>上的触发器 (Ronan Dunklau)
+       </p></li><li class="listitem"><p>        允许移动对象的组从一个表空间到另一个表空间中，
+        使用<code class="literal">ALL IN TABLESPACE ... SET TABLESPACE</code>的
+        <a class="xref" href="sql-altertable.html" title="ALTER TABLE"><span class="refentrytitle">ALTER TABLE</span></a>, <a class="xref" href="sql-alterindex.html" title="ALTER INDEX"><span class="refentrytitle">ALTER INDEX</span></a>或
+        <a class="xref" href="sql-altermaterializedview.html" title="ALTER MATERIALIZED VIEW"><span class="refentrytitle">ALTER MATERIALIZED VIEW</span></a>格式 (Stephen Frost)
+       </p></li><li class="listitem"><p>        允许通过<a class="xref" href="sql-altertable.html" title="ALTER TABLE"><span class="refentrytitle">ALTER TABLE</span></a> ... <code class="literal">ALTER
+        CONSTRAINT</code>修改外键约束为可延迟的 (Simon Riggs)
+       </p></li><li class="listitem"><p>        为某些<a class="xref" href="sql-altertable.html" title="ALTER TABLE"><span class="refentrytitle">ALTER TABLE</span></a>命令降低锁定力度
+        (Simon Riggs, Noah Misch, Robert Haas)
+       </p><p>        特别的，<code class="literal">VALIDATE CONSTRAINT</code>、<code class="literal">CLUSTER
+        ON</code>、<code class="literal">SET WITHOUT CLUSTER</code>、<code class="literal">ALTER COLUMN
+        SET STATISTICS</code>、<code class="literal">ALTER COLUMN</code> <code class="literal">SET</code>
+        <code class="option">(attribute_option)</code>、<code class="literal">ALTER COLUMN RESET</code>
+        <code class="option">(attribute_option)</code>不再需要<code class="literal">ACCESS
+        EXCLUSIVE</code>锁。
+       </p></li><li class="listitem"><p>        允许表空间选项在<a class="xref" href="sql-createtablespace.html" title="CREATE TABLESPACE"><span class="refentrytitle">CREATE TABLESPACE</span></a>中设置 (Vik Fearing)
+       </p><p>        以前这些选项只能通过<a class="xref" href="sql-altertablespace.html" title="ALTER TABLESPACE"><span class="refentrytitle">ALTER TABLESPACE</span></a>设置。
+       </p></li><li class="listitem"><p>        允许<a class="xref" href="sql-createaggregate.html" title="CREATE AGGREGATE"><span class="refentrytitle">CREATE AGGREGATE</span></a>定义聚合的过渡状态数据的估计大小 (Hadi Moshayedi)
+       </p><p>        正确的使用这个特性允许规划器更好的估计聚合将使用多少内存。
+       </p></li><li class="listitem"><p>        修复<code class="command">DROP IF EXISTS</code>，避免大多数情况下对象不存在的错误
+        (Pavel Stehule, Dean Rasheed)
+       </p></li><li class="listitem"><p>        改善系统关系的标识 (Andres Freund, Robert Haas)
+       </p><p>        以前，关系一旦移动到<code class="literal">pg_catalog</code>模式中，就不能被修改或删除了。
+       </p></li></ul></div></div><div class="sect3" id="idp68025616"><div class="titlepage"><div><div><h4 class="title">E.36.3.6. 数据类型</h4></div></div></div><div class="itemizedlist"><ul class="itemizedlist" style="list-style-type: disc; "><li class="listitem"><p>        完全实现<a class="link" href="datatype-geometric.html#DATATYPE-LINE" title="8.8.2. 线"><code class="type">line</code></a>数据类型 (Peter Eisentraut)
+       </p><p>        线<span class="emphasis"><em>段</em></span>数据类型(<a class="link" href="datatype-geometric.html#DATATYPE-LSEG" title="8.8.3. 线段"><code class="type">lseg</code></a>)
+        总是完全支持的。以前的<code class="type">line</code>数据类型（只通过编译时选项启用）
+        不是二进制的或者与新的实现转储兼容。
+       </p></li><li class="listitem"><p>        添加<a class="link" href="datatype-pg-lsn.html" title="8.19. pg_lsn Type"><code class="type">pg_lsn</code></a>
+        数据类型代表<acronym class="acronym">WAL</acronym>日志序列号
+        (<acronym class="acronym">LSN</acronym>) (Robert Haas, Michael Paquier)
+       </p></li><li class="listitem"><p>        允许单点<a class="link" href="datatype-geometric.html#DATATYPE-POLYGON" title="8.8.6. 多边形"><code class="type">polygon</code></a>
+        被转换为<a class="link" href="datatype-geometric.html#DATATYPE-CIRCLE" title="8.8.7. 圆"><code class="type">circle</code></a>
+        (Bruce Momjian)
+       </p></li><li class="listitem"><p>        支持时区缩写修改UTC的偏移时间 (Tom Lane)
+       </p><p>        以前，<span class="productname">PostgreSQL</span>假设与时区缩写（比如<code class="literal">EST</code>）
+        有关的UTC偏移在任何特殊环境的使用中都不会改变。然而，
+        这个假设在现实环境中失败了，所以引入了时区缩写代表有时变化的UTC偏移的能力。
+        更新时区缩写定义文件，在自1970年（根据IANA时区数据库）
+        以来修改了UTC偏移的缩写时区环境中使用这个特性。在这样的时区中，
+        <span class="productname">PostgreSQL</span>现在将根据给定的日期，关联正确的UTC偏移和缩写。
+       </p></li><li class="listitem"><p>        在合适时，允许非<acronym class="acronym">ISO</acronym> <a class="link" href="datatype-datetime.html" title="8.5. 日期/时间类型"><code class="type">timestamp</code></a>
+        和<code class="type">date</code>字符串有5位数字以上的年 (Bruce Momjian)
+       </p></li><li class="listitem"><p>        添加对<a class="link" href="datatype-datetime.html" title="8.5. 日期/时间类型"><code class="type">interval</code></a>
+        值的上溢/下溢检查 (Bruce Momjian)
+       </p></li></ul></div><div class="sect4" id="idp68042656"><div class="titlepage"><div><div><h5 class="title">E.36.3.6.1. <a class="link" href="datatype-json.html" title="8.14. JSON 类型"><acronym class="acronym">JSON</acronym></a></h5></div></div></div><div class="itemizedlist"><ul class="itemizedlist" style="list-style-type: disc; "><li class="listitem"><p>         添加<a class="link" href="datatype-json.html" title="8.14. JSON 类型"><code class="type">jsonb</code></a>，
+         一个存储<acronym class="acronym">JSON</acronym>数据更加胜任和有效的数据类型
+         (Oleg Bartunov, Teodor Sigaev, Alexander
+         Korotkov, Peter Geoghegan, Andrew Dunstan)
+        </p><p>         这个新的类型允许更快的访问JSON文档中的值，更快、更有用的索引JSON列。
+         <code class="type">jsonb</code>文档中的标量值是以适当的标量SQL类型存储的，
+         并且JSON文档结构是预解析的，而不是和原始<code class="type">json</code>
+         数据类型中的文本一样存储。
+        </p></li><li class="listitem"><p>         添加新的JSON函数，允许构造任意复杂的JSON树 (Andrew Dunstan, Laurence Rowe)
+        </p><p>         新增的函数包括<a class="link" href="functions-json.html#FUNCTIONS-JSON-PROCESSING-TABLE" title="表 9.46. JSON 处理函数"><code class="function">json_array_elements_text()</code></a>、
+         <code class="function">json_build_array()</code>、<code class="function">json_object()</code>、
+         <code class="function">json_object_agg()</code>、<code class="function">json_to_record()</code>、
+         和<code class="function">json_to_recordset()</code>。
+        </p></li><li class="listitem"><p>         添加<a class="link" href="functions-json.html#FUNCTIONS-JSON-PROCESSING-TABLE" title="表 9.46. JSON 处理函数"><code class="function">json_typeof()</code></a>，
+         返回一个<code class="type">json</code>值的数据类型 (Andrew Tipton)
+        </p></li></ul></div></div></div><div class="sect3" id="idp68055488"><div class="titlepage"><div><div><h4 class="title">E.36.3.7. 函数</h4></div></div></div><div class="itemizedlist"><ul class="itemizedlist" style="list-style-type: disc; "><li class="listitem"><p>        添加<a class="link" href="functions-datetime.html#FUNCTIONS-DATETIME-DELAY" title="9.9.5. 延时执行"><code class="function">pg_sleep_for(interval)</code></a>
+        和<code class="function">pg_sleep_until(timestamp)</code>，更灵活的指定延迟 (Vik Fearing, Julien Rouhaud)
+       </p><p>        现有的<code class="function">pg_sleep()</code>函数只支持以秒为单位指定延迟。
+       </p></li><li class="listitem"><p>        为数组添加<a class="link" href="functions-array.html#ARRAY-FUNCTIONS-TABLE" title="表 9.49. 数组函数"><code class="function">cardinality()</code></a>
+        函数 (Marko Tiikkaja)
+       </p><p>        这返回数组中的元素总数量，或者是0（没有元素的数组）。
+       </p></li><li class="listitem"><p>        添加<acronym class="acronym">SQL</acronym>函数，允许以任意的偏移量
+        <a class="link" href="lo-funcs.html" title="34.4. 服务器端函数">大对象读/写</a> (Pavel Stehule)
+       </p></li><li class="listitem"><p>        允许<a class="link" href="functions-array.html#ARRAY-FUNCTIONS-TABLE" title="表 9.49. 数组函数"><code class="function">unnest()</code></a>
+        接受多个参数，相互间未嵌套水平串联 (Andrew Gierth)
+       </p></li><li class="listitem"><p>        添加函数，为单个的值而不是字符串构造<code class="type">time</code>、<code class="type">date</code>、
+        <code class="type">timestamp</code>、<code class="type">timestamptz</code>和<code class="type">interval</code> (Pavel Stehule)
+       </p><p>        函数的名字是以<code class="literal">make_</code>为前缀的，
+        比如<a class="link" href="functions-datetime.html#FUNCTIONS-DATETIME-TABLE" title="表 9.30. 日期/时间函数"><code class="function">make_date()</code></a>。
+       </p></li><li class="listitem"><p>        让<a class="link" href="functions-formatting.html#FUNCTIONS-FORMATTING-TABLE" title="表 9.23. 格式化函数"><code class="function">to_char()</code></a>
+        的<code class="literal">TZ</code>格式说明符为简单的数值时区偏移量返回一个有用的值 (Tom Lane)
+       </p><p>        以前，如果<code class="literal">timezone</code>设置为一个常量，比如<code class="literal">-4</code>，
+        <code class="literal">to_char(CURRENT_TIMESTAMP, 'TZ')</code>返回一个空字符串。
+       </p></li><li class="listitem"><p>        添加时区偏移格式说明符<code class="literal">OF</code>到<a class="link" href="functions-formatting.html#FUNCTIONS-FORMATTING-TABLE" title="表 9.23. 格式化函数"><code class="function">to_char()</code></a>
+        (Bruce Momjian)
+       </p></li><li class="listitem"><p>        改善<a class="link" href="functions-math.html#FUNCTIONS-MATH-RANDOM-TABLE" title="表 9.6. 随机函数"><code class="function">random()</code></a>
+        使用的随机种子 (Honza Horak)
+       </p></li><li class="listitem"><p>        加强对<a class="link" href="functions-string.html#FUNCTIONS-STRING-OTHER" title="表 9.9. 其他字符串函数"><code class="function">chr(int)</code></a>
+        中指出的Unicode代码的有效性检查 (Tom Lane)
+       </p><p>        这个函数现在只接受根据RFC 3629来说有效的UTF8字符值。
+       </p></li></ul></div><div class="sect4" id="idp68081968"><div class="titlepage"><div><div><h5 class="title">E.36.3.7.1. 系统信息函数</h5></div></div></div><div class="itemizedlist"><ul class="itemizedlist" style="list-style-type: disc; "><li class="listitem"><p>        添加函数，在<code class="structname">pg_class</code>、<code class="structname">pg_proc</code>、
+        <code class="structname">pg_type</code>和<code class="structname">pg_operator</code>中查找对象，
+        对于不存在的对象不会生成错误 (Yugo Nagata, Nozomi Anzai,
+        Robert Haas)
+       </p><p>        例如，<a class="link" href="functions-info.html#FUNCTIONS-INFO-CATALOG-TABLE" title="表 9.63. 系统目录信息函数"><code class="function">to_regclass()</code></a>
+        在<code class="structname">pg_class</code>中执行查找类似于<code class="type">regclass</code>输入函数，
+        但是它在遇到不存在的对象时返回NULL而不是失败。
+       </p></li><li class="listitem"><p>        添加函数<a class="link" href="functions-admin.html#FUNCTIONS-ADMIN-DBLOCATION" title="表 9.85. 数据库对象定位函数"><code class="function">pg_filenode_relation()</code></a>，
+        允许从文件节点中更有效的查找关系名 (Andres Freund)
+       </p></li><li class="listitem"><p>        添加<code class="structfield">parameter_default</code>字段到<a class="link" href="infoschema-parameters.html" title="36.32. parameters"><code class="structname">information_schema.parameters</code></a>
+        视图 (Peter Eisentraut)
+       </p></li><li class="listitem"><p>        让<a class="link" href="infoschema-schemata.html" title="36.41. schemata"><code class="structname">information_schema.schemata</code></a>
+        显示所有可访问的模式 (Peter Eisentraut)
+       </p><p>        以前只显示当前用户拥有的模式。
+       </p></li></ul></div></div><div class="sect4" id="idp68093264"><div class="titlepage"><div><div><h5 class="title">E.36.3.7.2. 聚合</h5></div></div></div><div class="itemizedlist"><ul class="itemizedlist" style="list-style-type: disc; "><li class="listitem"><p>        通过<a class="link" href="sql-expressions.html#SYNTAX-AGGREGATES" title="4.2.7. 聚合表达式"><code class="literal">FILTER</code></a>
+        子句添加哪些行被传递到聚合函数的控制 (David Fetter)
+       </p></li><li class="listitem"><p>        支持顺序集(<a class="link" href="sql-expressions.html#SYNTAX-AGGREGATES" title="4.2.7. 聚合表达式"><code class="literal">WITHIN GROUP</code></a>)
+        聚合 (Atri Sharma, Andrew Gierth, Tom Lane)
+       </p></li><li class="listitem"><p>        添加标准顺序集聚合<a class="link" href="functions-aggregate.html#FUNCTIONS-ORDEREDSET-TABLE" title="表 9.54. 有序集聚集函数"><code class="function">percentile_cont()</code></a>、
+        <code class="function">percentile_disc()</code>、<code class="function">mode()</code>、<a class="link" href="functions-aggregate.html#FUNCTIONS-HYPOTHETICAL-TABLE" title="表 9.55. 假想集聚集函数"><code class="function">rank()</code></a>、
+        <code class="function">dense_rank()</code>、<code class="function">percent_rank()</code>和
+        <code class="function">cume_dist()</code>
+        (Atri Sharma, Andrew Gierth)
+       </p></li><li class="listitem"><p>        支持<a class="link" href="xfunc-sql.html#XFUNC-SQL-VARIADIC-FUNCTIONS" title="37.4.5. 带有可变数量参数的SQL函数"><code class="literal">VARIADIC</code></a>
+        聚合函数 (Tom Lane)
+       </p></li><li class="listitem"><p>        允许多态的聚合拥有非多态的状态数据类型 (Tom Lane)
+       </p><p>        这允许SQL中聚合的适当声明像内建聚合<code class="function">array_agg()</code>。
+       </p></li></ul></div></div></div><div class="sect3" id="idp68107504"><div class="titlepage"><div><div><h4 class="title">E.36.3.8. 服务器端的语言</h4></div></div></div><div class="itemizedlist"><ul class="itemizedlist" style="list-style-type: disc; "><li class="listitem"><p>       添加事件触发器支持到<a class="link" href="plperl.html" title="第 44 章 PL/Perl - Perl 过程语言">PL/Perl</a>
+       和<a class="link" href="pltcl.html" title="第 43 章 PL/Tcl - Tcl 过程语言">PL/Tcl</a> (Dimitri Fontaine)
+      </p></li><li class="listitem"><p>       在<a class="link" href="plpython.html" title="第 45 章 PL/Python - Python 过程语言">PL/Python</a>中转换
+       <a class="link" href="datatype-numeric.html" title="8.1. 数字类型"><code class="type">numeric</code></a>
+       值到<code class="type">decimal</code> (Szymon Guz, Ronan Dunklau)
+      </p><p>       以前这样的值被转换成Python <code class="type">float</code>值，有丢失精度的风险。
+      </p></li></ul></div><div class="sect4" id="idp68113696"><div class="titlepage"><div><div><h5 class="title">E.36.3.8.1. <a class="link" href="plpgsql.html" title="第 42 章 PL/pgSQL - SQL过程语言">PL/pgSQL</a>服务器端的语言</h5></div></div></div><div class="itemizedlist"><ul class="itemizedlist" style="list-style-type: disc; "><li class="listitem"><p>        使用<a class="link" href="plpgsql-control-structures.html#PLPGSQL-CALL-STACK" title="42.6.7. 获得执行位置信息"><code class="command">GET
+        DIAGNOSTICS</code></a>添加检索当前PL/pgSQL调用堆栈的能力
+        (Pavel Stehule, Stephen Frost)
+       </p></li><li class="listitem"><p>        添加选项<a class="link" href="plpgsql-statements.html#PLPGSQL-STATEMENTS-SQL-ONEROW" title="42.5.3. 执行一个有单一行结果的查询"><code class="option">print_strict_params</code></a>，
+        显示传递到违反<code class="literal">STRICT</code>约束的查询中的参数 (Marko Tiikkaja)
+       </p></li><li class="listitem"><p>        添加变量<a class="link" href="plpgsql-development-tips.html#PLPGSQL-EXTRA-CHECKS" title="42.11.2. 额外的编译时检查"><code class="varname">plpgsql.extra_warnings</code></a>
+        和<code class="varname">plpgsql.extra_errors</code>，启用额外的PL/pgSQL警告和错误
+        (Marko Tiikkaja, Petr Jelinek)
+       </p><p>        当前只有关于跟踪变量的警告/错误可用。
+       </p></li></ul></div></div></div><div class="sect3" id="idp68121296"><div class="titlepage"><div><div><h4 class="title">E.36.3.9. <a class="link" href="libpq.html" title="第 33 章 libpq - C 库"><span class="application">libpq</span></a></h4></div></div></div><div class="itemizedlist"><ul class="itemizedlist" style="list-style-type: disc; "><li class="listitem"><p>        让libpq's <a class="link" href="libpq-connect.html#LIBPQ-PQCONNDEFAULTS"><code class="function">PQconndefaults()</code></a>
+        函数忽略无效的服务文件 (Steve Singer, Bruce Momjian)
+       </p><p>        以前，如果遇到一个不正确的服务文件，它会返回NULL。
+       </p></li><li class="listitem"><p>        接受超过libpq中<code class="literal">TLSv1</code>的<acronym class="acronym">TLS</acronym>协议版本 (Marko Kreen)
+       </p></li></ul></div></div><div class="sect3" id="idp68126752"><div class="titlepage"><div><div><h4 class="title">E.36.3.10. 客户端应用</h4></div></div></div><div class="itemizedlist"><ul class="itemizedlist" style="list-style-type: disc; "><li class="listitem"><p>        添加<a class="xref" href="app-createuser.html" title="createuser"><span class="refentrytitle"><span class="application">createuser</span></span></a>选项<code class="option">-g</code>
+        指定角色成员关系 (Christopher Browne)
+       </p></li><li class="listitem"><p>        添加<a class="xref" href="app-vacuumdb.html" title="vacuumdb"><span class="refentrytitle"><span class="application">vacuumdb</span></span></a>
+        选项<code class="option">--analyze-in-stages</code>，在增加粒度阶段分析 (Peter Eisentraut)
+       </p><p>        这允许快速建立最小的统计。
+       </p></li><li class="listitem"><p>        让<a class="link" href="app-pgresetwal.html" title="pg_resetwal"><span class="application">pg_resetxlog</span></a>带有选项<code class="option">-n</code>
+        输出当前和潜在修改了的值 (Rajeev Rastogi)
+       </p></li><li class="listitem"><p>        让<a class="xref" href="app-initdb.html" title="initdb"><span class="refentrytitle">initdb</span></a>为不正确的区域设置抛出错误，
+        而不是安静的回滚到缺省的选择 (Tom Lane)
+       </p></li><li class="listitem"><p>        让<a class="xref" href="app-pg-ctl.html" title="pg_ctl"><span class="refentrytitle"><span class="application">pg_ctl</span></span></a>为一个不可访问的数据目录返回退出代码<code class="literal">4</code>
+        (Amit Kapila, Bruce Momjian)
+       </p><p>        这个行为更紧密的匹配Linux Standard Base(<acronym class="acronym">LSB</acronym>)核心规范。
+       </p></li><li class="listitem"><p>        在Windows上，确保非绝对的<code class="option">-D</code>路径声明被解释为相对的
+        <a class="xref" href="app-pg-ctl.html" title="pg_ctl"><span class="refentrytitle"><span class="application">pg_ctl</span></span></a>的当前路径 (Kumar Rajeev Rastogi)
+       </p><p>        以前它将被解释为相对于底层Windows服务启动的目录。
+       </p></li><li class="listitem"><p>        允许<code class="function">sizeof()</code>在<a class="link" href="ecpg.html" title="第 35 章 ECPG - C 中的嵌入式 SQL">ECPG</a>
+        C数组定义中 (Michael Meskes)
+       </p></li><li class="listitem"><p>        让<a class="link" href="ecpg.html" title="第 35 章 ECPG - C 中的嵌入式 SQL">ECPG</a>正确的处理C风格的注释嵌套，
+        以C或者<acronym class="acronym">SQL</acronym>文本的形式 (Michael Meskes)
+       </p></li></ul></div><div class="sect4" id="idp68142864"><div class="titlepage"><div><div><h5 class="title">E.36.3.10.1. <a class="xref" href="app-psql.html" title="psql"><span class="refentrytitle"><span class="application">psql</span></span></a></h5></div></div></div><div class="itemizedlist"><ul class="itemizedlist" style="list-style-type: disc; "><li class="listitem"><p>        当禁用了页脚时，抑制在<span class="application">psql</span> <a class="link" href="app-psql.html#APP-PSQL-META-COMMANDS" title="元命令"><code class="option">expanded</code></a>
+        模式中输出<span class="quote">“<span class="quote">No rows</span>”</span> (Bruce Momjian)
+       </p></li><li class="listitem"><p>        当它处在连接启动时，允许Control-C退出<span class="application">psql</span> (Peter Eisentraut)
+       </p></li></ul></div><div class="sect5" id="idp68147632"><div class="titlepage"><div><div><h6 class="title">E.36.3.10.1.1. <a class="link" href="app-psql.html#APP-PSQL-META-COMMANDS" title="元命令">反斜杠命令</a></h6></div></div></div><div class="itemizedlist"><ul class="itemizedlist" style="list-style-type: disc; "><li class="listitem"><p>         让<span class="application">psql</span>的<code class="command">\db+</code>显示表空间选项 (Magnus Hagander)
+        </p></li><li class="listitem"><p>         让<code class="command">\do+</code>显示实现运算符的函数 (Marko Tiikkaja)
+        </p></li><li class="listitem"><p>         如果表中存在<code class="literal">oid</code>字段，则让<code class="command">\d+</code>
+         只输出一个<code class="literal">OID</code>行 (Bruce Momjian)
+        </p><p>         以前，不管<code class="literal">oid</code>字段是否存在，总是报告它的。
+        </p></li><li class="listitem"><p>         让<code class="command">\d</code>显示禁用的系统触发器 (Bruce Momjian)
+        </p><p>         以前，如果你禁用了所有的触发器，那么只显示用户触发器为禁用的。
+        </p></li><li class="listitem"><p>         修复<code class="command">\copy</code>，不再需要<code class="literal">stdin</code>和分号之间有空格 (Etsuro Fujita)
+        </p></li><li class="listitem"><p>         在<code class="command">\copy</code>的末尾输出行计数，就像<code class="command">COPY</code>那样 (Kumar Rajeev Rastogi)
+        </p></li><li class="listitem"><p>         修复<code class="command">\conninfo</code>，为使用<code class="literal">hostaddr</code>
+         的连接显示服务器的<acronym class="acronym">IP</acronym>地址 (Fujii Masao)
+        </p><p>         以前<code class="command">\conninfo</code>在这样的情况下不会显示服务器的<acronym class="acronym">IP</acronym>地址。
+        </p></li><li class="listitem"><p>         在<code class="command">\conninfo</code>中显示<acronym class="acronym">SSL</acronym>协议版本 (Marko Kreen)
+        </p></li><li class="listitem"><p>         为<code class="command">\pset</code>添加tab补齐 (Pavel Stehule)
+        </p></li><li class="listitem"><p>         允许<code class="command">\pset</code>不带有任何参数的显示所有设置 (Gilles Darold)
+        </p></li><li class="listitem"><p>         让<code class="command">\s</code>显示以前它没有转换为绝对路径时写入的历史文件的名字 (Tom Lane)
+        </p><p>         该代码以前尝试转换一个相对文件名到一个绝对路径显示，但是经常弄错了。
+        </p></li></ul></div></div></div><div class="sect4" id="idp68170416"><div class="titlepage"><div><div><h5 class="title">E.36.3.10.2. <a class="xref" href="app-pgdump.html" title="pg_dump"><span class="refentrytitle">pg_dump</span></a></h5></div></div></div><div class="itemizedlist"><ul class="itemizedlist" style="list-style-type: disc; "><li class="listitem"><p>        允许<a class="xref" href="app-pgrestore.html" title="pg_restore"><span class="refentrytitle">pg_restore</span></a>选项
+        <code class="option">-I</code>、<code class="option">-P</code>、<code class="option">-T</code>和<code class="option">-n</code>
+        指定多次 (Heikki Linnakangas)
+       </p><p>        这允许在一次操作中恢复多个对象。
+       </p></li><li class="listitem"><p>        在恢复期间删除老的对象时，可以添加<code class="literal">IF EXISTS</code>子句到
+        <code class="command">DROP</code>命令发出 (Pavel Stehule)
+       </p><p>        这个修改在删除老的对象时阻止了不必要的错误。<a class="xref" href="app-pgdump.html" title="pg_dump"><span class="refentrytitle">pg_dump</span></a>、
+        <a class="xref" href="app-pg-dumpall.html" title="pg_dumpall"><span class="refentrytitle"><span class="application">pg_dumpall</span></span></a>和<a class="xref" href="app-pgrestore.html" title="pg_restore"><span class="refentrytitle">pg_restore</span></a>的新的
+        <code class="option">--if-exists</code>选项只在也指定了<code class="option">--clean</code>时可用。
+       </p></li></ul></div></div><div class="sect4" id="idp68179872"><div class="titlepage"><div><div><h5 class="title">E.36.3.10.3. <a class="xref" href="app-pgbasebackup.html" title="pg_basebackup"><span class="refentrytitle">pg_basebackup</span></a></h5></div></div></div><div class="itemizedlist"><ul class="itemizedlist" style="list-style-type: disc; "><li class="listitem"><p>        添加<span class="application">pg_basebackup</span>选项<code class="option">--xlogdir</code>，
+        指定<code class="filename">pg_xlog</code>目录位置 (Haribabu Kommi)
+       </p></li><li class="listitem"><p>        允许<span class="application">pg_basebackup</span>在备份中重新安置表空间 (Steeve Lennmark)
+       </p><p>        这对于在同一个机器上使用<span class="application">pg_basebackup</span>作为主机尤其有用。
+       </p></li><li class="listitem"><p>        允许网络流基础备份是节流的 (Antonin Houska)
+       </p><p>        这可以使用<span class="application">pg_basebackup</span> <code class="option">--max-rate</code>
+        参数控制。
+       </p></li></ul></div></div></div><div class="sect3" id="idp68187456"><div class="titlepage"><div><div><h4 class="title">E.36.3.11. 源代码</h4></div></div></div><div class="itemizedlist"><ul class="itemizedlist" style="list-style-type: disc; "><li class="listitem"><p>        改善冻结元组的方式，保存辩证的信息 (Robert Haas, Andres Freund)
+       </p><p>        这个修改尽快删除了冻结元组的主要反对意见。需要修改检查元组标识位的代码。
+       </p></li><li class="listitem"><p>        不再需要标有
+        <a class="link" href="xfunc-c.html" title="37.9. C 语言函数"><code class="function">PG_FUNCTION_INFO_V1</code></a>
+        宏的函数的函数原型 (Peter Eisentraut)
+       </p><p>        这个修改消除了写引用原型的需要。请注意，<code class="function">PG_FUNCTION_INFO_V1</code>
+        宏必须出现在对应函数定义的前面，以避免编译器警告。
+       </p></li><li class="listitem"><p>        删除<code class="varname">SnapshotNow</code>和<code class="function">HeapTupleSatisfiesNow()</code> (Robert Haas)
+       </p><p>        所有现有的使用都已经转换到了更合适的快照类型。
+        目录扫描现在使用<acronym class="acronym">MVCC</acronym>快照。
+       </p></li><li class="listitem"><p>        添加一个<acronym class="acronym">API</acronym>，允许内存分配超过1G (Noah Misch)
+       </p></li><li class="listitem"><p>        添加<code class="function">psprintf()</code>，简化字符串组合时的内存分配 (Peter Eisentraut, Tom Lane)
+       </p></li><li class="listitem"><p>        支持<code class="function">printf()</code>尺寸修饰符<code class="literal">z</code>， 
+        输出<code class="type">size_t</code>值 (Andres Freund)
+       </p></li><li class="listitem"><p>        改变<code class="function">appendStringInfoVA()</code>的<acronym class="acronym">API</acronym>，
+        以更好的使用<code class="function">vsnprintf()</code> (David Rowley, Tom Lane)
+       </p></li><li class="listitem"><p>        允许创建外部toast数据的新类型 (Andres Freund)
+       </p></li><li class="listitem"><p>        添加单读者、单作者、轻量级共享消息序列 (Robert Haas)
+       </p></li><li class="listitem"><p>        改善x86_64 <acronym class="acronym">CPU</acronym>上的自旋锁速度 (Heikki Linnakangas)
+       </p></li><li class="listitem"><p>        删除不支持的平台<span class="productname">SINIX</span>、<span class="productname">Sun3</span>和
+        <span class="productname">NS32K</span>上的自旋锁支持 (Robert Haas)
+       </p></li><li class="listitem"><p>        删除<acronym class="acronym">IRIX</acronym>接口 (Robert Haas)
+       </p></li><li class="listitem"><p>        减少<code class="option">--disable-spinlocks</code>建立所需的信号量 (Robert Haas)
+       </p></li><li class="listitem"><p>        重写<span class="application">Perl</span>中的<span class="application">duplicate_oids</span>
+        Unix shell脚本 (Andrew Dunstan)
+       </p></li><li class="listitem"><p>        添加Test Anything Protocol (<acronym class="acronym">TAP</acronym>)检测客户端程序 (Peter Eisentraut)
+       </p><p>        当前这些测试只在给出<code class="option">--enable-tap-tests</code>选项到
+        <span class="application">configure</span>时通过<code class="literal">make check-world</code>运行。
+        这在某些将来的版本中可能会成为缺省行为。
+       </p></li><li class="listitem"><p>        添加编译目标<code class="option">check-tests</code>和<code class="option">installcheck-tests</code>，
+        允许运行单个测试的选择 (Andrew Dunstan)
+       </p></li><li class="listitem"><p>        删除<code class="option">maintainer-check</code> makefile规则 (Peter Eisentraut)
+       </p><p>        缺省的建立规则现在包括所有以前可选的测试。
+       </p></li><li class="listitem"><p>        改善对<acronym class="acronym">PGXS</acronym>模块<code class="envar">VPATH</code>建立的支持
+        (Cédric Villemain, Andrew Dunstan, Peter Eisentraut)
+       </p></li><li class="listitem"><p>        升级到Autoconf 2.69 (Peter Eisentraut)
+       </p></li><li class="listitem"><p>        添加一个<span class="application">configure</span>标志，附加自定义文本到
+        <code class="envar">PG_VERSION</code>字符串 (Oskari Saarenmaa)
+       </p><p>        这对于打包者建立自定义的二进制有帮助。
+       </p></li><li class="listitem"><p>        改善DocBook <acronym class="acronym">XML</acronym>有效性 (Peter Eisentraut)
+       </p></li><li class="listitem"><p>        修复<span class="productname">Coverity</span>扫描器报告的各种较小的安全性和完整性问题 (Stephen Frost)
+       </p></li><li class="listitem"><p>        在测试<span class="productname">PostgreSQL</span>的<span class="application">Valgrind</span>时，
+        增加对无效内存使用的检测 (Noah Misch)
+       </p></li><li class="listitem"><p>        改善样品<span class="application">Emacs</span>配置文件
+        <code class="filename">emacs.samples</code> (Peter Eisentraut)
+       </p><p>        还添加了<code class="filename">.dir-locals.el</code>到源码树的顶端。
+       </p></li><li class="listitem"><p>        允许<span class="application">pgindent</span>接受类型定义的命令列表 (Bruce Momjian)
+       </p></li><li class="listitem"><p>        让<span class="application">pgindent</span>对于预处理器条件语句周围的空行更智能 (Bruce Momjian)
+       </p></li><li class="listitem"><p>        避免在<span class="productname">Cygwin</span>和<span class="productname">Mingw</span>
+        建立中大多数使用<code class="command">dlltool</code> (Marco Atzeri, Hiroshi Inoue)
+       </p></li><li class="listitem"><p>        在<acronym class="acronym">MSVC</acronym> (Windows)建立中支持仅客户端的安装 (MauMau)
+       </p></li></ul></div></div><div class="sect3" id="idp68233008"><div class="titlepage"><div><div><h4 class="title">E.36.3.12. 附加模块</h4></div></div></div><div class="itemizedlist"><ul class="itemizedlist" style="list-style-type: disc; "><li class="listitem"><p>        添加<a class="xref" href="pgprewarm.html" title="F.28. pg_prewarm">pg_prewarm</a>扩展，在服务器启动时预加载关系数据到共享缓存 (Robert Haas)
+       </p><p>        这允许更快的达到完整的操作性能。
+       </p></li><li class="listitem"><p>        添加<acronym class="acronym">UUID</acronym>随机数生成器<code class="function">gen_random_uuid()</code>到
+        <a class="xref" href="pgcrypto.html" title="F.26. pgcrypto">pgcrypto</a> (Oskari Saarenmaa)
+       </p><p>        这允许创建版本 4 <acronym class="acronym">UUID</acronym>，而不用安装<a class="xref" href="uuid-ossp.html" title="F.45. uuid-ossp">uuid-ossp</a>。
+       </p></li><li class="listitem"><p>        允许<a class="xref" href="uuid-ossp.html" title="F.45. uuid-ossp">uuid-ossp</a>与<span class="systemitem">BSD</span>或
+        <span class="systemitem">e2fsprogs</span> UUID库一起工作，
+        不只是<span class="systemitem">OSSP</span> UUID库 (Matteo Beccati)
+       </p><p>        这提高了<span class="application">uuid-ossp</span>模块的可移植性，
+        因为它不再必须有日益过时的OSSP库。该模块名稍微有点用词不当，
+        但是我们不会修改它。
+       </p></li><li class="listitem"><p>        添加选项到<a class="xref" href="auto-explain.html" title="F.4. auto_explain">auto_explain</a>，以包含触发器执行时间 (Horiguchi Kyotaro)
+       </p></li><li class="listitem"><p>        修复<a class="xref" href="pgstattuple.html" title="F.31. pgstattuple">pgstattuple</a>，不将未提交事务中的行报告为死行 (Robert Haas)
+       </p></li><li class="listitem"><p>        让<a class="xref" href="pgstattuple.html" title="F.31. pgstattuple">pgstattuple</a>函数使用<code class="type">regclass</code>类型参数 (Satoshi Nagayasu)
+       </p><p>        仍然支持<code class="type">text</code>类型参数，它们可能会在将来的小版本中移除。
+       </p></li><li class="listitem"><p>        提高<a class="xref" href="pgrowlocks.html" title="F.29. pgrowlocks">pgrowlocks</a>输出的一致性，以更一致的遵守快照规则 (Robert Haas)
+       </p></li><li class="listitem"><p>        改善<a class="xref" href="pgtrgm.html" title="F.32. pg_trgm">pg_trgm</a>对于有索引的正则表达式搜索的三元模型的选择 (Alexander Korotkov)
+       </p><p>        这个修改阻止使用包含空格的三元模型，它们通常有更少的选择性。
+       </p></li><li class="listitem"><p>        允许<a class="link" href="pgwaldump.html" title="pg_waldump"><span class="application">pg_xlogdump</span></a>用<code class="option">--follow</code>
+        报告一个生活日志流 (Heikki Linnakangas)
+       </p></li><li class="listitem"><p>        更简洁的存储<a class="xref" href="cube.html" title="F.10. cube">cube</a>数据 (Stas Kelvich)
+       </p><p>        现有的数据必须转储/恢复，以使用新的格式。老的格式仍然能够读取。
+       </p></li><li class="listitem"><p>        减少使用游标时<a class="xref" href="vacuumlo.html" title="vacuumlo"><span class="refentrytitle"><span class="application">vacuumlo</span></span></a>客户端内存的使用 (Andrew Dunstan)
+       </p></li><li class="listitem"><p>        大幅度减少<a class="xref" href="pgupgrade.html" title="pg_upgrade"><span class="refentrytitle"><span class="application">pg_upgrade</span></span></a>中的内存消耗 (Bruce Momjian)
+       </p></li><li class="listitem"><p>        传递<a class="xref" href="pgupgrade.html" title="pg_upgrade"><span class="refentrytitle"><span class="application">pg_upgrade</span></span></a>的用户名(<code class="option">-U</code>)选项到产生的分析脚本 (Bruce Momjian)
+       </p></li></ul></div><div class="sect4" id="idp68259104"><div class="titlepage"><div><div><h5 class="title">E.36.3.12.1. <a class="xref" href="pgbench.html" title="pgbench"><span class="refentrytitle"><span class="application">pgbench</span></span></a></h5></div></div></div><div class="itemizedlist"><ul class="itemizedlist" style="list-style-type: disc; "><li class="listitem"><p>        删除对<span class="application">pgbench</span>脚本的行长度限制 (Sawada Masahiko)
+       </p><p>        以前的行限制是<code class="envar">BUFSIZ</code>。
+       </p></li><li class="listitem"><p>        添加长的选项名称到<span class="application">pgbench</span> (Fabien Coelho)
+       </p></li><li class="listitem"><p>        添加<span class="application">pgbench</span>选项<code class="option">--rate</code>，控制事务速度 (Fabien Coelho)
+       </p></li><li class="listitem"><p>        添加<span class="application">pgbench</span>选项<code class="option">--progress</code>，
+        打印定期的进度报告 (Fabien Coelho)
+       </p></li></ul></div></div><div class="sect4" id="idp68266448"><div class="titlepage"><div><div><h5 class="title">E.36.3.12.2. <a class="xref" href="pgstatstatements.html" title="F.30. pg_stat_statements">pg_stat_statements</a></h5></div></div></div><div class="itemizedlist"><ul class="itemizedlist" style="list-style-type: disc; "><li class="listitem"><p>        让<span class="application">pg_stat_statements</span>使用一个文件，
+        而不是共享内存，用于查询文本存储 (Peter Geoghegan)
+       </p><p>        这删除了以前查询文本长度的限制，允许默认追踪更多的唯一语句。
+       </p></li><li class="listitem"><p>        允许报告<span class="application">pg_stat_statements</span>的内部查询哈希标识符
+        (Daniel Farina, Sameer Thakur, Peter Geoghegan)
+       </p></li><li class="listitem"><p>        添加检索所有<span class="application">pg_stat_statements</span>
+        信息除了查询文本的能力 (Peter Geoghegan)
+       </p><p>        这允许监视工具只为刚创建的条目抓取查询文本，提高状态重复查询时的性能。
+       </p></li><li class="listitem"><p>        让<span class="application">pg_stat_statements</span>忽略<code class="command">DEALLOCATE</code>
+        命令 (Fabien Coelho)
+       </p><p>        它早已忽略了<code class="command">PREPARE</code>，还有规划时间，所以这样看起来更加一致。
+       </p></li><li class="listitem"><p>        在服务器关闭时保存状态文件到<code class="filename">$PGDATA/pg_stat</code>，
+        而不是<code class="filename">$PGDATA/global</code> (Fujii Masao)
+       </p></li></ul></div></div></div></div></div><div class="navfooter"><hr /><table width="100%" summary="Navigation footer"><tr><td width="40%" align="left"><a accesskey="p" href="release-9-4-1.html">上一页</a> </td><td width="20%" align="center"><a accesskey="u" href="release.html">上一级</a></td><td width="40%" align="right"> <a accesskey="n" href="release-9-3-20.html">下一页</a></td></tr><tr><td width="40%" align="left" valign="top">E.35. 版本 9.4.1 </td><td width="20%" align="center"><a accesskey="h" href="index.html">起始页</a></td><td width="40%" align="right" valign="top"> E.37. 版本 9.3.20</td></tr></table></div></body></html>

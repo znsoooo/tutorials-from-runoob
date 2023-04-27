@@ -1,0 +1,89 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><title>DELETE</title><link rel="stylesheet" type="text/css" href="stylesheet.css" /><link rev="made" href="pgsql-docs@postgresql.org" /><meta name="generator" content="DocBook XSL Stylesheets V1.79.1" /><link rel="prev" href="sql-declare.html" title="DECLARE" /><link rel="next" href="sql-discard.html" title="DISCARD" /></head><body><div xmlns="http://www.w3.org/TR/xhtml1/transitional" class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="5" align="center">DELETE</th></tr><tr><td width="10%" align="left"><a accesskey="p" href="sql-declare.html" title="DECLARE">上一页</a> </td><td width="10%" align="left"><a accesskey="u" href="sql-commands.html" title="SQL 命令">上一级</a></td><th width="60%" align="center">SQL 命令</th><td width="10%" align="right"><a accesskey="h" href="index.html" title="PostgreSQL 10.1 手册">起始页</a></td><td width="10%" align="right"> <a accesskey="n" href="sql-discard.html" title="DISCARD">下一页</a></td></tr></table><hr></hr></div><div class="refentry" id="SQL-DELETE"><div class="titlepage"></div><a id="idp46072064" class="indexterm"></a><div class="refnamediv"><h2><span class="refentrytitle">DELETE</span></h2><p>DELETE — 删除一个表的行</p></div><div class="refsynopsisdiv"><h2>大纲</h2><pre class="synopsis">[ WITH [ RECURSIVE ] <em class="replaceable"><code>with_query</code></em> [, ...] ]
+DELETE FROM [ ONLY ] <em class="replaceable"><code>table_name</code></em> [ * ] [ [ AS ] <em class="replaceable"><code>alias</code></em> ]
+    [ USING <em class="replaceable"><code>using_list</code></em> ]
+    [ WHERE <em class="replaceable"><code>condition</code></em> | WHERE CURRENT OF <em class="replaceable"><code>cursor_name</code></em> ]
+    [ RETURNING * | <em class="replaceable"><code>output_expression</code></em> [ [ AS ] <em class="replaceable"><code>output_name</code></em> ] [, ...] ]</pre></div><div class="refsect1" id="idp46081248"><h2>描述</h2><p>   <code class="command">DELETE</code>从指定表中删除满足
+   <code class="literal">WHERE</code>子句的行。如果<code class="literal">WHERE</code>
+   子句没有出现，效果将会是删除表中的所有行。结果是一个合法的空表。
+  </p><div class="tip"><h3 class="title">提示</h3><p>     <a class="xref" href="sql-truncate.html" title="TRUNCATE"><span class="refentrytitle">TRUNCATE</span></a>提供移除表中所有行的快速机制。
+    </p></div><p>   有两种方式可以使用数据库中其他表中包含的信息来删除一个表的行：
+   使用子选择或者在<code class="literal">USING</code>子句中指定额外的表。
+   哪种技术更合适取决于特定的环境。
+  </p><p>   可选的<code class="literal">RETURNING</code>子句导致<code class="command">DELETE</code>
+   基于实际被删除的每一行计算并且返回值。任何使用被删除表列或者
+   <code class="literal">USING</code>中提到的其他表的列的表达式都可以被计算。
+   <code class="literal">RETURNING</code>列表的语法和<code class="command">SELECT</code>的
+   输出列表语法相同。
+  </p><p>   要从表中删除行，你必须具有其上的<code class="literal">DELETE</code>特权，
+   以及<code class="literal">USING</code>子句中任何表以及其值在<em class="replaceable"><code>condition</code></em>中被读取的表上的
+   <code class="literal">SELECT</code>特权。
+  </p></div><div class="refsect1" id="idp46094112"><h2>参数</h2><div class="variablelist"><dl class="variablelist"><dt><span class="term"><em class="replaceable"><code>with_query</code></em></span></dt><dd><p>      <code class="literal">WITH</code>子句允许你指定一个或者多个子查询，在 
+      <code class="command">DELETE</code>查询中可以用子查询的名字来引用它们。
+      详见<a class="xref" href="queries-with.html" title="7.8. WITH查询（公共表表达式）">第 7.8 节</a>和<a class="xref" href="sql-select.html" title="SELECT"><span class="refentrytitle">SELECT</span></a>。
+     </p></dd><dt><span class="term"><em class="replaceable"><code>table_name</code></em></span></dt><dd><p>      要从其中删除行的表名（可以是模式限定的）。如果在表名前指定
+      <code class="literal">ONLY</code>，只会从提到的表中删除匹配的行。如果没有指定
+      <code class="literal">ONLY</code>，还会删除该表的任何继承表中的匹配行。可选地，
+      可以在表名后面指定<code class="literal">*</code>来显式指定要包括继承表。
+     </p></dd><dt><span class="term"><em class="replaceable"><code>alias</code></em></span></dt><dd><p>      目标表的一个别名。提供别名时，它会完全隐藏该表的真实名称。例如，
+      对于<code class="literal">DELETE FROM foo AS f</code>，
+      <code class="command">DELETE</code>语句的剩余部分都会用
+      <code class="literal">f</code>而不是 <code class="literal">foo</code>来引用该表。
+     </p></dd><dt><span class="term"><em class="replaceable"><code>using_list</code></em></span></dt><dd><p>      一个表表达式的列表，它允许在<code class="literal">WHERE</code>条件中出现
+      来自其他表的列。这和<code class="command">SELECT</code>语句
+      的<a class="xref" href="sql-select.html#SQL-FROM" title="FROM 子句"><code class="literal">FROM</code> 子句</a>中指定
+      的表列表相似。例如，可以指定表的别名。除非想要进行自连接，
+      否则不要在<em class="replaceable"><code>using_list</code></em>
+      再写上目标表。
+     </p></dd><dt><span class="term"><em class="replaceable"><code>condition</code></em></span></dt><dd><p>      一个返回<code class="type">boolean</code>类型值的表达式。只有让这个
+      表达式返回<code class="literal">true</code>的行才将被删除。
+     </p></dd><dt><span class="term"><em class="replaceable"><code>cursor_name</code></em></span></dt><dd><p>      要在<code class="literal">WHERE CURRENT OF</code>情况中使用的游标
+      的名称。最近一次从这个游标中取出的行将被删除。该游标
+      必须是<code class="command">DELETE</code>的目标表上的非分组查询。
+      注意不能在使用<code class="literal">WHERE CURRENT OF</code>的同时
+      指定一个布尔条件。有关将游标用于
+      <code class="literal">WHERE CURRENT OF</code>的更多信息请见
+      <a class="xref" href="sql-declare.html" title="DECLARE"><span class="refentrytitle">DECLARE</span></a>。
+     </p></dd><dt><span class="term"><em class="replaceable"><code>output_expression</code></em></span></dt><dd><p>      在每一行被删除后，会被<code class="command">DELETE</code>计算并且返回的表达式。
+      该表达式可以使用<em class="replaceable"><code>table_name</code></em>
+      以及<code class="literal">USING</code>中的表的任何列。写成<code class="literal">*</code>可以返回所有列。
+     </p></dd><dt><span class="term"><em class="replaceable"><code>output_name</code></em></span></dt><dd><p>      被返回列的名称。
+     </p></dd></dl></div></div><div class="refsect1" id="idp46124512"><h2>输出</h2><p>   在成功完成时，一个<code class="command">DELETE</code>命令会返回以下形式
+   的命令标签：
+</p><pre class="screen">DELETE <em class="replaceable"><code>count</code></em></pre><p>
+   <em class="replaceable"><code>count</code></em>是被删除行的数目。
+   注意如果有一个<code class="literal">BEFORE DELETE</code>触发器抑制删除，那么该数目
+   可能小于匹配<em class="replaceable"><code>condition</code></em>
+   的行数。如果<em class="replaceable"><code>count</code></em>为 0，
+   表示查询没有删除行（这并非一种错误）。
+  </p><p>   如果<code class="command">DELETE</code>命令包含<code class="literal">RETURNING</code>子句，
+   则结果会与包含有<code class="literal">RETURNING</code>列表中定义的列和值的
+   <code class="command">SELECT</code>语句结果相似，这些结果是在被该命令删除的
+   行上计算得来。
+  </p></div><div class="refsect1" id="idp46133600"><h2>注解</h2><p>   通过在<code class="literal">USING</code>子句中指定其他的表，
+   <span class="productname">PostgreSQL</span>允许在
+   <code class="literal">WHERE</code>条件中引用其他表的列。例如，要
+   删除有一个给定制片人制作的所有电影，可以这样做：
+</p><pre class="programlisting">DELETE FROM films USING producers
+  WHERE producer_id = producers.id AND producers.name = 'foo';</pre><p>
+   这里实际发生的事情是在<code class="structname">films</code>和
+   <code class="structname">producers</code>之间进行连接，然后删除
+   所有成功连接的<code class="structname">films</code>行。这种语法不
+   属于标准。更标准的方式是：
+</p><pre class="programlisting">DELETE FROM films
+  WHERE producer_id IN (SELECT id FROM producers WHERE name = 'foo');</pre><p>
+   在一些情况下，连接形式比子查询形式更容易书写或者执行更快。
+  </p></div><div class="refsect1" id="idp46139872"><h2>示例</h2><p>   删除所有电影，但音乐剧除外：
+</p><pre class="programlisting">DELETE FROM films WHERE kind &lt;&gt; 'Musical';</pre><p>
+  </p><p>   清空表<code class="literal">films</code>：
+</p><pre class="programlisting">DELETE FROM films;</pre><p>
+  </p><p>   删除已完成的任务，返回被删除行的明细：
+</p><pre class="programlisting">DELETE FROM tasks WHERE status = 'DONE' RETURNING *;</pre><p>
+  </p><p>   删除<code class="structname">tasks</code>中游标<code class="literal">c_tasks</code>
+   当前位于其上的行：
+</p><pre class="programlisting">DELETE FROM tasks WHERE CURRENT OF c_tasks;</pre></div><div class="refsect1" id="idp46146320"><h2>兼容性</h2><p>   这个命令符合<acronym class="acronym">SQL</acronym>标准，不过
+   <code class="literal">USING</code>和<code class="literal">RETURNING</code>子句是
+   <span class="productname">PostgreSQL</span>扩展，在
+   <code class="command">DELETE</code>中使用<code class="literal">WITH</code>也是扩展。
+  </p></div><div class="refsect1" id="idp46151072"><h2>又见</h2><span class="simplelist"><a class="xref" href="sql-truncate.html" title="TRUNCATE"><span class="refentrytitle">TRUNCATE</span></a></span></div></div><div class="navfooter"><hr /><table width="100%" summary="Navigation footer"><tr><td width="40%" align="left"><a accesskey="p" href="sql-declare.html">上一页</a> </td><td width="20%" align="center"><a accesskey="u" href="sql-commands.html">上一级</a></td><td width="40%" align="right"> <a accesskey="n" href="sql-discard.html">下一页</a></td></tr><tr><td width="40%" align="left" valign="top">DECLARE </td><td width="20%" align="center"><a accesskey="h" href="index.html">起始页</a></td><td width="40%" align="right" valign="top"> DISCARD</td></tr></table></div></body></html>

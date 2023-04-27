@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><title>E.73. 版本 9.2.9</title><link rel="stylesheet" type="text/css" href="stylesheet.css" /><link rev="made" href="pgsql-docs@postgresql.org" /><meta name="generator" content="DocBook XSL Stylesheets V1.79.1" /><link rel="prev" href="release-9-2-10.html" title="E.72. 版本 9.2.10" /><link rel="next" href="release-9-2-8.html" title="E.74. 版本 9.2.8" /></head><body><div xmlns="http://www.w3.org/TR/xhtml1/transitional" class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="5" align="center">E.73. 版本 9.2.9</th></tr><tr><td width="10%" align="left"><a accesskey="p" href="release-9-2-10.html" title="E.72. 版本 9.2.10">上一页</a> </td><td width="10%" align="left"><a accesskey="u" href="release.html" title="附录 E. 版本说明">上一级</a></td><th width="60%" align="center">附录 E. 版本说明</th><td width="10%" align="right"><a accesskey="h" href="index.html" title="PostgreSQL 10.1 手册">起始页</a></td><td width="10%" align="right"> <a accesskey="n" href="release-9-2-8.html" title="E.74. 版本 9.2.8">下一页</a></td></tr></table><hr></hr></div><div class="sect1" id="RELEASE-9-2-9"><div class="titlepage"><div><div><h2 class="title" style="clear: both">E.73. 版本 9.2.9</h2></div></div></div><div class="toc"><dl class="toc"><dt><span class="sect2"><a href="release-9-2-9.html#idp71114128">E.73.1. 迁移到版本9.2.9</a></span></dt><dt><span class="sect2"><a href="release-9-2-9.html#idp71116896">E.73.2. 修改列表</a></span></dt></dl></div><p><strong>发布日期: </strong>2014-07-24</p><p>这个版本包含各种自9.2.8以来的修复。关于9.2主版本的新特性信息，
+请查看<a class="xref" href="release-9-2.html" title="E.82. 版本9.2">第 E.82 节</a>。</p><div class="sect2" id="idp71114128"><div class="titlepage"><div><div><h3 class="title">E.73.1. 迁移到版本9.2.9</h3></div></div></div><p>    运行9.2.X版本的用户不需要转储/恢复。
+   </p><p>    不过，这个版本纠正了一些GiST索引中的索引损坏问题。
+    查看下面的第一条修改日志项找出你的安装是否受到了影响，
+    和受到影响后要采取的步骤。
+   </p><p>    另外，如果你是从一个早于9.2.6的版本升级而来，
+    请查看<a class="xref" href="release-9-2-6.html" title="E.76. 版本 9.2.6">第 E.76 节</a>。
+   </p></div><div class="sect2" id="idp71116896"><div class="titlepage"><div><div><h3 class="title">E.73.2. 修改列表</h3></div></div></div><div class="itemizedlist"><ul class="itemizedlist" style="list-style-type: disc; "><li class="listitem"><p>正确的初始化<code class="type">bit</code>字段上<code class="filename">contrib/btree_gist</code>
+索引中的填充字节 (Heikki Linnakangas)</p><p>这个错误会导致不正确的查询结果，因为值应该是比较相等而不是看做相等。
+在<code class="type">bit</code>或<code class="type">bit varying</code>字段上拥有GiST索引的用户应该在安装这个更新之后
+<code class="command">REINDEX</code>这些索引。</p></li><li class="listitem"><p>在删除GIN列表页时保护页面不被撕裂 (Heikki Linnakangas)</p><p>如果在将页更新写入磁盘时发生了系统崩溃，则该修复阻止了可能的索引损坏。</p></li><li class="listitem"><p>在从WAL重放更新时，不要清理GiST索引页的右连接 (Heikki Linnakangas)</p><p>这个错误会导致在热备份上执行的GiST索引扫描瞬态的错误回复。</p></li><li class="listitem"><p>修复插入SP-GiST文本索引期间极端情况下的无限循环 (Tom Lane)</p></li><li class="listitem"><p>修复在运行中关闭<a class="xref" href="runtime-config-replication.html#GUC-HOT-STANDBY-FEEDBACK">hot_standby_feedback</a>时的回复状态 (Simon Riggs)</p></li><li class="listitem"><p>修复嵌套调用<code class="function">ReceiveSharedInvalidMessages</code>期间，
+可能不正确的缓存失效 (Andres Freund)</p></li><li class="listitem"><p>修复规划器对嵌套的嵌套循环规划中生成的嵌套的PlaceHolderVars的错误处理 (Tom Lane)</p><p>这个疏忽会导致<span class="quote">“<span class="quote">variable not found in subplan
+      target lists</span>”</span>错误，或错误的查询结果。</p></li><li class="listitem"><p>修复<code class="literal">UNION ALL</code>子查询从有继承子表的表中读取时，
+<span class="quote">“<span class="quote">could not find pathkey item to sort</span>”</span>的规划器失败 (Tom Lane)</p></li><li class="listitem"><p>如果在子查询的目标列表中有一个设置返回函数，
+则不要假设它的输出是唯一的 (David Rowley)</p><p>这个疏忽会导致像<code class="literal">WHERE x IN (SELECT y, generate_series(1,10) FROM t GROUP
+      BY y)</code>这样的构造错误的最优化。</p></li><li class="listitem"><p>改善规划器，在可能时删除<code class="literal">AND</code>/<code class="literal">OR</code>
+的常量NULL输入 (Tom Lane)</p><p>这个修改修复了一些情况，9.2及更高版本越积极的替换参数，
+比较老版本生成的规划越糟糕。</p></li><li class="listitem"><p>修复<code class="function">to_json()</code>和相关函数中输入类型类别的识别 (Tom Lane)</p><p>已经知道这会导致在<code class="type">JSON</code>结果中不适当的引用<code class="type">money</code>字段，
+并且其他数据类型也可能有错误结果。</p></li><li class="listitem"><p>修复构造类型的复合元素中未能detoast字段 (Tom Lane)</p><p>这纠正了TOAST指针在没有解引用时就被拷贝到其他表的情况。
+如果稍后删除了原始数据，那么在使用现在的悬摆指针时，
+会导致像<span class="quote">“<span class="quote">missing chunk number 0 for toast value ...</span>”</span>这样的错误。</p></li><li class="listitem"><p>修复整行引用作为附加计划节点的输出时，
+<span class="quote">“<span class="quote">record type has not been registered</span>”</span>失败 (Tom Lane)</p></li><li class="listitem"><p>修复倒回一个游标时调用用户定义的函数时可能的崩溃 (Tom Lane)</p></li><li class="listitem"><p>修复计算<code class="literal">FROM</code>中的函数参数时，查询寿命内存泄露 (Tom Lane)</p></li><li class="listitem"><p>修复正则表达式处理中的会话寿命内存泄露 (Tom Lane, Arthur O'Dwyer, Greg Stark)</p></li><li class="listitem"><p>修复<code class="filename">hungarian.stop</code>中的数据编码错误 (Tom Lane)</p></li><li class="listitem"><p>在<a class="xref" href="runtime-config-compatible.html#GUC-DEFAULT-WITH-OIDS">default_with_oids</a>为真时，
+阻止带有OIDS创建外表 (Etsuro Fujita)</p></li><li class="listitem"><p>修复在当前事务中插入，然后被现在回滚的子事务删除的行的活跃度检查
+      (Andres Freund)</p><p>如果稍后在同一个事务中执行了<code class="command">CREATE INDEX</code>或<code class="command">CLUSTER</code>，
+那么会导致问题（至少是严重警告，最坏是无限循环）。</p></li><li class="listitem"><p>在<code class="command">PREPARE TRANSACTION</code>期间清理
+<code class="structname">pg_stat_activity</code>.<code class="structfield">xact_start</code> (Andres Freund)</p><p>在<code class="command">PREPARE</code>之后，原始的会话不再存在于事务当中，
+所以它不应该继续显示事务的开始时间。</p></li><li class="listitem"><p>修复<code class="command">REASSIGN OWNED</code>，不为文本搜索对象失败 (Álvaro Herrera)</p></li><li class="listitem"><p>在主服务器启动期间闭塞信号 (Tom Lane)</p><p>这确保了，比如，主服务器在启动时它自己收到<span class="systemitem">SIGINT</span>之后将正确的清理。</p></li><li class="listitem"><p>修复处理声明主机名而不是IP地址的<code class="filename">pg_hba.conf</code>项时，
+客户端主机名的查找 (Tom Lane)</p><p>确保报告反DNS查找失败，而不只是默默的不匹配这样的项。
+还要确保每个连接只有一个反DNS查找尝试，而不是每个主机名，
+这是查找尝试失败时以前发生的情况。</p></li><li class="listitem"><p>允许根用户使用<code class="literal">postgres -C variable</code>和
+<code class="literal">postgres --describe-config</code> (MauMau)</p><p>作为根用户启动服务器的禁令不需要扩展这些操作，
+并且放开它阻止了某些情况下<span class="application">pg_ctl</span>的失败。</p></li><li class="listitem"><p>在<code class="literal">make check</code>期间启动临时主服务器的安全的Unix域套接字 (Noah Misch)</p><p>任何可以访问套接字文件的本地用户都可以作为服务器的引导超级用户连接，
+然后继续执行任意代码作为操作系统用户运行测试，
+就像我们之前在CVE-2014-0067提到的那样。
+这个修改通过在临时文件、<code class="filename">/tmp</code>的模式为0700的子目录中替换服务器的套接字，
+防卫了风险。在不支持Unix套接字的平台上，尤其是Windows，仍然存在风险，
+因为临时主服务器必须接受本地TCP连接。</p><p>这个修改一个有用的副作用是简化了重写<code class="literal">DEFAULT_PGSOCKET_DIR</code>
+的建立中的<code class="literal">make check</code>测试。流行的非缺省值，
+像<code class="filename">/var/run/postgresql</code>，通常是不能由建立用户所写的，
+请求绕开将不再是必须的了。</p></li><li class="listitem"><p>修复表空间创建WAL重放，使其在Windows上可以工作 (MauMau)</p></li><li class="listitem"><p>修复Windows上套接字创建失败的检测 (Bruce Momjian)</p></li><li class="listitem"><p>在Windows上，允许新的会话从配置文件中吸收PGC_BACKEND参数的值
+（比如<a class="xref" href="runtime-config-logging.html#GUC-LOG-CONNECTIONS">log_connections</a>） (Amit Kapila)</p><p>以前，如果这样的参数在文件启动之后做了修改，则该修改将没有任何作用。</p></li><li class="listitem"><p>在Windows上正确的引用可执行路径名 (Nikhil Deshpande)</p><p>这个疏忽会导致<span class="application">initdb</span>和<span class="application">pg_upgrade</span>
+在Windows上失败，如果该安装路径包含空格和<code class="literal">@</code>符号。</p></li><li class="listitem"><p>修复macOS上的<span class="application">libpython</span>连接 (Tom Lane)</p><p>以前我们使用的方法在Xcode 5.0及以后版本提供的Python库上会失败。</p></li><li class="listitem"><p>当服务器持续以比客户端吸收的速度更快的速度发送数据时，
+避免<span class="application">libpq</span>中的缓冲区膨胀 (Shin-ichi Morita, Tom Lane)</p><p>可以强制<span class="application">libpq</span>扩大它的输入缓冲区，直到用完内存
+（这将会误导的报告为<span class="quote">“<span class="quote">lost synchronization with server</span>”</span>）。
+在普通情况下，很难达到数据持续发送的速度比<code class="function">recv()</code>
+循环可以吸收的速度快，但是在客户端通过调度器的约束人工变慢之后，
+可以观察到这种现象。</p></li><li class="listitem"><p>确保<span class="application">libpq</span>中的LDAP查找尝试像预期的那样超时 (Laurenz Albe)</p></li><li class="listitem"><p>修复<span class="application">ecpg</span>，当<code class="type">char *</code>类型的数组是返回多于一行的FETCH语句的目标时，
+<span class="application">ecpg</span>做正确的事情，还有一些其他数组处理的修复 (Ashutosh Bapat)</p></li><li class="listitem"><p>修复<span class="application">pg_restore</span>对老风格的大对象注释的处理 (Tom Lane)</p><p>如果<span class="application">pg_dump</span> 9.0以前的版本生成的归档文件包含几个大对象的注释，
+则从该归档文件直接到数据库的恢复通常会失败。</p></li><li class="listitem"><p>修复新服务器创建TOAST表但是老版本不创建的<span class="application">pg_upgrade</span>的情况 (Bruce Momjian)</p><p>这个罕见情况会显示为<span class="quote">“<span class="quote">relation OID mismatch</span>”</span>错误。</p></li><li class="listitem"><p>阻止<code class="filename">contrib/auto_explain</code>修改用户的<code class="command">EXPLAIN</code>输出 (Tom Lane)</p><p>如果<code class="filename">auto_explain</code>是活动的，它会导致
+<code class="literal">EXPLAIN (ANALYZE, TIMING OFF)</code>命令打印时间信息。</p></li><li class="listitem"><p>修复<code class="filename">contrib/dblink</code>中的查询寿命内存泄露 (MauMau, Joe Conway)</p></li><li class="listitem"><p>在<code class="filename">contrib/pgcrypto</code>函数中，确保在返回前从堆栈变量中清理了敏感信息
+      (Marko Kreen)</p></li><li class="listitem"><p>阻止在<code class="filename">contrib/pgstattuple</code>的<code class="function">pgstat_heap()</code>
+中使用早已释放的内存 (Noah Misch)</p></li><li class="listitem"><p>在<code class="filename">contrib/uuid-ossp</code>中，在调用间缓存OSSP UUID库的状态 (Tom Lane)</p><p>这提高了UUID生成的效率，并减少了从<code class="filename">/dev/urandom</code>获得的熵的数量，
+在拥有它们的平台上。</p></li><li class="listitem"><p>更新时区数据文件到<span class="application">tzdata</span>版本2014e，
+因为DST规律在Crimea、Egypt和Morocco发生了改变。</p></li></ul></div></div></div><div class="navfooter"><hr /><table width="100%" summary="Navigation footer"><tr><td width="40%" align="left"><a accesskey="p" href="release-9-2-10.html">上一页</a> </td><td width="20%" align="center"><a accesskey="u" href="release.html">上一级</a></td><td width="40%" align="right"> <a accesskey="n" href="release-9-2-8.html">下一页</a></td></tr><tr><td width="40%" align="left" valign="top">E.72. 版本 9.2.10 </td><td width="20%" align="center"><a accesskey="h" href="index.html">起始页</a></td><td width="40%" align="right" valign="top"> E.74. 版本 9.2.8</td></tr></table></div></body></html>

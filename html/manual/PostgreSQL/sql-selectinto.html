@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><title>SELECT INTO</title><link rel="stylesheet" type="text/css" href="stylesheet.css" /><link rev="made" href="pgsql-docs@postgresql.org" /><meta name="generator" content="DocBook XSL Stylesheets V1.79.1" /><link rel="prev" href="sql-select.html" title="SELECT" /><link rel="next" href="sql-set.html" title="SET" /></head><body><div xmlns="http://www.w3.org/TR/xhtml1/transitional" class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="5" align="center">SELECT INTO</th></tr><tr><td width="10%" align="left"><a accesskey="p" href="sql-select.html" title="SELECT">上一页</a> </td><td width="10%" align="left"><a accesskey="u" href="sql-commands.html" title="SQL 命令">上一级</a></td><th width="60%" align="center">SQL 命令</th><td width="10%" align="right"><a accesskey="h" href="index.html" title="PostgreSQL 10.1 手册">起始页</a></td><td width="10%" align="right"> <a accesskey="n" href="sql-set.html" title="SET">下一页</a></td></tr></table><hr></hr></div><div class="refentry" id="SQL-SELECTINTO"><div class="titlepage"></div><a id="idp49209712" class="indexterm"></a><div class="refnamediv"><h2><span class="refentrytitle">SELECT INTO</span></h2><p>SELECT INTO — 从一个查询的结果定义一个新表</p></div><div class="refsynopsisdiv"><h2>大纲</h2><pre class="synopsis">[ WITH [ RECURSIVE ] <em class="replaceable"><code>with_query</code></em> [, ...] ]
+SELECT [ ALL | DISTINCT [ ON ( <em class="replaceable"><code>expression</code></em> [, ...] ) ] ]
+    * | <em class="replaceable"><code>expression</code></em> [ [ AS ] <em class="replaceable"><code>output_name</code></em> ] [, ...]
+    INTO [ TEMPORARY | TEMP | UNLOGGED ] [ TABLE ] <em class="replaceable"><code>new_table</code></em>
+    [ FROM <em class="replaceable"><code>from_item</code></em> [, ...] ]
+    [ WHERE <em class="replaceable"><code>condition</code></em> ]
+    [ GROUP BY <em class="replaceable"><code>expression</code></em> [, ...] ]
+    [ HAVING <em class="replaceable"><code>condition</code></em> [, ...] ]
+    [ WINDOW <em class="replaceable"><code>window_name</code></em> AS ( <em class="replaceable"><code>window_definition</code></em> ) [, ...] ]
+    [ { UNION | INTERSECT | EXCEPT } [ ALL | DISTINCT ] <em class="replaceable"><code>select</code></em> ]
+    [ ORDER BY <em class="replaceable"><code>expression</code></em> [ ASC | DESC | USING <em class="replaceable"><code>operator</code></em> ] [ NULLS { FIRST | LAST } ] [, ...] ]
+    [ LIMIT { <em class="replaceable"><code>count</code></em> | ALL } ]
+    [ OFFSET <em class="replaceable"><code>start</code></em> [ ROW | ROWS ] ]
+    [ FETCH { FIRST | NEXT } [ <em class="replaceable"><code>count</code></em> ] { ROW | ROWS } ONLY ]
+    [ FOR { UPDATE | SHARE } [ OF <em class="replaceable"><code>table_name</code></em> [, ...] ] [ NOWAIT ] [...] ]</pre></div><div class="refsect1" id="idp49226416"><h2>描述</h2><p>   <code class="command">SELECT INTO</code>创建一个新表并且用一个查询
+   计算得到的数据填充它。这些数据不会像普通的
+   <code class="command">SELECT</code>那样被返回给客户端。新表的列具有
+   和<code class="command">SELECT</code>的输出列相关的名称和数据类型。
+  </p></div><div class="refsect1" id="idp49229408"><h2>参数</h2><div class="variablelist"><dl class="variablelist"><dt><span class="term"><code class="literal">TEMPORARY</code> or <code class="literal">TEMP</code></span></dt><dd><p>     如果被指定，该表被创建为一个临时表。详见
+     <a class="xref" href="sql-createtable.html" title="CREATE TABLE"><span class="refentrytitle">CREATE TABLE</span></a>。
+    </p></dd><dt><span class="term"><code class="literal">UNLOGGED</code></span></dt><dd><p>     如果被指定，该表被创建为一个不做日志的表。详见
+     <a class="xref" href="sql-createtable.html" title="CREATE TABLE"><span class="refentrytitle">CREATE TABLE</span></a>。
+    </p></dd><dt><span class="term"><em class="replaceable"><code>new_table</code></em></span></dt><dd><p>      要创建的表的名字（可以是模式限定的）。
+     </p></dd></dl></div><p>   所有其他参数在<a class="xref" href="sql-select.html" title="SELECT"><span class="refentrytitle">SELECT</span></a>中有详细描述。
+  </p></div><div class="refsect1" id="idp49237152"><h2>注解</h2><p>   <a class="xref" href="sql-createtableas.html" title="CREATE TABLE AS"><span class="refentrytitle">CREATE TABLE AS</span></a>在功能上与
+   <code class="command">SELECT INTO</code>相似。<code class="command">CREATE TABLE AS</code>
+   是被推荐的语法，因为这种形式的<code class="command">SELECT
+   INTO</code>在<span class="application">ECPG</span>
+   或<span class="application">PL/pgSQL</span>中不可用，因为它们对
+   <code class="literal">INTO</code>子句的解释不同。此外，
+   <code class="command">CREATE TABLE AS</code>提供的功能是
+   <code class="command">SELECT INTO</code>的超集。
+  </p><p>   要为<code class="command">SELECT INTO</code>创建的表增加 OID，
+   启用<a class="xref" href="runtime-config-compatible.html#GUC-DEFAULT-WITH-OIDS">default_with_oids</a>配置变量。
+   <code class="command">CREATE TABLE AS</code>可以使用
+   <code class="literal">WITH OIDS</code>子句。
+  </p></div><div class="refsect1" id="idp49247472"><h2>示例</h2><p>   创建一个只由来自<code class="literal">films</code>的最近项构成的
+   新表<code class="literal">films_recent</code>：
+
+</p><pre class="programlisting">SELECT * INTO films_recent FROM films WHERE date_prod &gt;= '2002-01-01';</pre></div><div class="refsect1" id="idp49250320"><h2>兼容性</h2><p>   SQL 标准使用<code class="command">SELECT INTO</code>表示把值选择
+   到一个宿主程序的标量变量中，而不是创建一个新表。这实际上就是
+   <span class="application">ECPG</span>（见<a class="xref" href="ecpg.html" title="第 35 章 ECPG - C 中的嵌入式 SQL">第 35 章</a>）和
+   <span class="application">PL/pgSQL</span>（见<a class="xref" href="plpgsql.html" title="第 42 章 PL/pgSQL - SQL过程语言">第 42 章</a>）
+   中的用法。
+   <span class="productname">PostgreSQL</span>使用
+   <code class="command">SELECT INTO</code>的来表示表创建是有历史原因的。
+   最好在新代码中使用<code class="command">CREATE TABLE AS</code>。
+  </p></div><div class="refsect1" id="idp49256880"><h2>另见</h2><span class="simplelist"><a class="xref" href="sql-createtableas.html" title="CREATE TABLE AS"><span class="refentrytitle">CREATE TABLE AS</span></a></span></div></div><div class="navfooter"><hr /><table width="100%" summary="Navigation footer"><tr><td width="40%" align="left"><a accesskey="p" href="sql-select.html">上一页</a> </td><td width="20%" align="center"><a accesskey="u" href="sql-commands.html">上一级</a></td><td width="40%" align="right"> <a accesskey="n" href="sql-set.html">下一页</a></td></tr><tr><td width="40%" align="left" valign="top">SELECT </td><td width="20%" align="center"><a accesskey="h" href="index.html">起始页</a></td><td width="40%" align="right" valign="top"> SET</td></tr></table></div></body></html>

@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><title>F.38. sslinfo</title><link rel="stylesheet" type="text/css" href="stylesheet.css" /><link rev="made" href="pgsql-docs@postgresql.org" /><meta name="generator" content="DocBook XSL Stylesheets V1.79.1" /><link rel="prev" href="contrib-spi.html" title="F.37. spi" /><link rel="next" href="tablefunc.html" title="F.39. tablefunc" /></head><body><div xmlns="http://www.w3.org/TR/xhtml1/transitional" class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="5" align="center">F.38. sslinfo</th></tr><tr><td width="10%" align="left"><a accesskey="p" href="contrib-spi.html" title="F.37. spi">上一页</a> </td><td width="10%" align="left"><a accesskey="u" href="contrib.html" title="附录 F. 额外提供的模块">上一级</a></td><th width="60%" align="center">附录 F. 额外提供的模块</th><td width="10%" align="right"><a accesskey="h" href="index.html" title="PostgreSQL 10.1 手册">起始页</a></td><td width="10%" align="right"> <a accesskey="n" href="tablefunc.html" title="F.39. tablefunc">下一页</a></td></tr></table><hr></hr></div><div class="sect1" id="SSLINFO"><div class="titlepage"><div><div><h2 class="title" style="clear: both">F.38. sslinfo</h2></div></div></div><div class="toc"><dl class="toc"><dt><span class="sect2"><a href="sslinfo.html#idp87884416">F.38.1. 提供的函数</a></span></dt><dt><span class="sect2"><a href="sslinfo.html#idp87918544">F.38.2. 作者</a></span></dt></dl></div><a id="idp87880368" class="indexterm"></a><p>  在连接到<span class="productname">PostgreSQL</span>时，<code class="filename">sslinfo</code>模块提供当前客户端提供的 SSL 证书的有关信息。如果当前连接不使用 SSL，这个模块就没有用处（大部分函数将返回 NULL）。
+ </p><p>  除非安装时用<code class="literal">--with-openssl</code>进行了配置，这个扩展压根就不会被编译。
+ </p><div class="sect2" id="idp87884416"><div class="titlepage"><div><div><h3 class="title">F.38.1. 提供的函数</h3></div></div></div><div class="variablelist"><dl class="variablelist"><dt><span class="term">     <code class="function">ssl_is_used() 返回 boolean</code>
+    <a id="idp87886080" class="indexterm"></a>
+    </span></dt><dd><p>     如果当前到服务器的连接使用 SSL 则返回 TRUE，否则返回 FALSE。
+    </p></dd><dt><span class="term">     <code class="function">ssl_version() 返回 text</code>
+     <a id="idp87888592" class="indexterm"></a>
+    </span></dt><dd><p>     返回 SSL 连接使用的协议名称（如 TLSv1.0、TLSv1.1 或者 TLSv1.2）。
+    </p></dd><dt><span class="term">     <code class="function">ssl_cipher() 返回 text</code>
+     <a id="idp87891104" class="indexterm"></a>
+    </span></dt><dd><p>     返回 SSL 连接所用的加密方法名称（如 DHE-RSA-AES256-SHA）。
+    </p></dd><dt><span class="term">     <code class="function">ssl_client_cert_present() 返回 boolean</code>
+     <a id="idp87893632" class="indexterm"></a>
+    </span></dt><dd><p>     如果当前客户端已经向服务器出示了一个合法的 SSL 客户端证书则返回 TRUE，否则返回 FALSE（服务器可能被配置要求一个客户端配置，也可能没有被配置成这样）。
+    </p></dd><dt><span class="term">     <code class="function">ssl_client_serial() 返回 numeric</code>
+     <a id="idp87896416" class="indexterm"></a>
+    </span></dt><dd><p>     返回当前客户端证书的序列号。证书序列号和证书发行人的组合被确保可以
+     唯一标识一个证书（但是不能唯一标识其拥有者 — 拥有者应该定期地更换其密钥，
+     并且从发行人那里得到新的证书）。
+    </p><p>     因此，如果你运行自己的 CA 并且只允许服务器接收来自于这个 CA 的证书，序列号就是最可靠的（虽然并非很好记忆）标识一个用户的方法。
+    </p></dd><dt><span class="term">     <code class="function">ssl_client_dn() 返回 text</code>
+     <a id="idp87899952" class="indexterm"></a>
+    </span></dt><dd><p>     返回当前客户端证书的完整主题，并且将字符数据转换成当前数据库的编码。我们假定如果你在证书名中使用非 ASCII 字符，你的数据库也有能力展示这些字符。如果你的数据库使用 SQL_ASCII 编码，名称中的非 ASCII 字符将被表示为 UTF-8 序列。
+    </p><p>     结果看起来像<code class="literal">/CN=某人 /C=某个国家 /O=某个组织</code>。
+    </p></dd><dt><span class="term">     <code class="function">ssl_issuer_dn() 返回 text</code>
+    <a id="idp87903984" class="indexterm"></a>
+    </span></dt><dd><p>     返回当前客户端证书的完整的发行人名称，并把字符数据转换成当前数据库的编码。编码转换以与<code class="function">ssl_client_dn</code>相同的方式处理。
+    </p><p>     这个函数的返回值与证书序列号的组合唯一地标识证书。
+    </p><p>     如果在服务器的<code class="filename">root.crt</code>文件中有多于一个的可信 CA 证书，或者如果 CAI 已经发行了某些中间认证授权证书，这个函数就真的很有用。
+    </p></dd><dt><span class="term">     <code class="function">ssl_client_dn_field(fieldname text) 返回 text</code>
+    <a id="idp87908976" class="indexterm"></a>
+    </span></dt><dd><p>     这个函数返回证书主题中指定域的值，如果域不存在则返回 NULL。域的名称是字符串常量，它们被使用 OpenSSL 对象数据库转换成 ASN1 对象标识符。下列值是可接受的：
+    </p><pre class="literallayout">commonName (alias CN)
+surname (alias SN)
+name
+givenName (alias GN)
+countryName (alias C)
+localityName (alias L)
+stateOrProvinceName (alias ST)
+organizationName (alias O)
+organizationUnitName (alias OU)
+title
+description
+initials
+postalCode
+streetAddress
+generationQualifier
+description
+dnQualifier
+x500UniqueIdentifier
+pseudonym
+role
+emailAddress</pre><p>     这些域中除了<code class="structfield">commonName</code>都是可选的。它们之中哪些会被包括或者不会被包括完全取决于你的 CA 策略。不过，这些域的含义由 X.500 和 X.509 标准严格地定义，因此你不能只是为它们分配任意含义。
+    </p></dd><dt><span class="term">     <code class="function">ssl_issuer_field(fieldname text) 返回 text</code>
+    <a id="idp87913952" class="indexterm"></a>
+    </span></dt><dd><p>     和<code class="function">ssl_client_dn_field</code>一样，但是用于证书发行人而不是证书主题。
+    </p></dd><dt><span class="term">     <code class="function">ssl_extension_info() 返回 setof record</code>
+     <a id="idp87917088" class="indexterm"></a>
+    </span></dt><dd><p>     提供有关客户端证书扩展的信息：扩展名、扩展值以及是否为
+     决定性的扩展。
+    </p></dd></dl></div></div><div class="sect2" id="idp87918544"><div class="titlepage"><div><div><h3 class="title">F.38.2. 作者</h3></div></div></div><p>   Victor Wagner <code class="email">&lt;<a class="email" href="mailto:vitus@cryptocom.ru">vitus@cryptocom.ru</a>&gt;</code>, Cryptocom LTD
+  </p><p>   Dmitry Voronin <code class="email">&lt;<a class="email" href="mailto:carriingfate92@yandex.ru">carriingfate92@yandex.ru</a>&gt;</code>
+  </p><p>   Cryptocom OpenSSL 开发组的 E-Mail：
+   <code class="email">&lt;<a class="email" href="mailto:openssl@cryptocom.ru">openssl@cryptocom.ru</a>&gt;</code>
+  </p></div></div><div class="navfooter"><hr /><table width="100%" summary="Navigation footer"><tr><td width="40%" align="left"><a accesskey="p" href="contrib-spi.html">上一页</a> </td><td width="20%" align="center"><a accesskey="u" href="contrib.html">上一级</a></td><td width="40%" align="right"> <a accesskey="n" href="tablefunc.html">下一页</a></td></tr><tr><td width="40%" align="left" valign="top">F.37. spi </td><td width="20%" align="center"><a accesskey="h" href="index.html">起始页</a></td><td width="40%" align="right" valign="top"> F.39. tablefunc</td></tr></table></div></body></html>

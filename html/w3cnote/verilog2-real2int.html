@@ -1,0 +1,616 @@
+<!Doctype html>
+<html>
+<head>
+	<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+	<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+	<title>7.4 Verilog 实数整数转换 | 菜鸟教程</title>
+
+  <meta name='robots' content='max-image-preview:large' />
+<link rel='stylesheet' id='classic-theme-styles-css' href='http://www.runoob.com/wp-includes/css/classic-themes.min.css?ver=6.2' type='text/css' media='all' />
+<link rel="canonical" href="http://www.runoob.com/w3cnote/verilog2-real2int.html" />
+<meta name="keywords" content="7.4 Verilog 实数整数转换">
+<meta name="description" content="关键词 ：定点数, 浮点数, $realtobits, $bitstoreal 本节主要介绍实数与整数间相互转换的函数：$realtobits, $bitstoreal，同时说明下 real 型 (同 C 语言中的 double float）变量是怎么用多位宽的二进制码表示的。  二进制表示小数 二进制表示小数 十进制整数用二进制来表示时，需要进行数据除以 2 然后取余的操作。 小数部分用二进制来表示时恰好相反，需要进行数据乘以 2 然..">
+		
+	<link rel="shortcut icon" href="https://static.runoob.com/images/favicon.ico">
+	<link rel="stylesheet" href="/wp-content/themes/runoob/style.css?v=1.170" type="text/css" media="all" />	
+	<link rel="stylesheet" href="https://cdn.staticfile.org/font-awesome/4.7.0/css/font-awesome.min.css" media="all" />	
+  <!--[if gte IE 9]><!-->
+  <script src="https://cdn.staticfile.org/jquery/2.0.3/jquery.min.js"></script>
+  <!--<![endif]-->
+  <!--[if lt IE 9]>
+     <script src="https://cdn.staticfile.org/jquery/1.9.1/jquery.min.js"></script>
+     <script src="https://cdn.staticfile.org/html5shiv/r29/html5.min.js"></script>
+  <![endif]-->
+  <link rel="apple-touch-icon" href="https://static.runoob.com/images/icon/mobile-icon.png"/>
+  <meta name="apple-mobile-web-app-title" content="菜鸟教程">
+</head>
+<body>
+
+<!--  头部 -->
+<div class="container logo-search">
+
+  <div class="col search row-search-mobile">
+    <form action="index.php">
+      <input class="placeholder" placeholder="搜索……" name="s" autocomplete="off">
+      
+    </form>
+  </div>
+
+  <div class="row">
+    <div class="col logo">
+      <h1><a href="/">菜鸟教程 -- 学的不仅是技术，更是梦想！</a></h1>
+    </div>
+        <div class="col right-list"> 
+    <button class="btn btn-responsive-nav btn-inverse" data-toggle="collapse" data-target=".nav-main-collapse" id="pull" style=""> <i class="fa fa-navicon"></i> </button>
+    </div>
+        
+    <div class="col search search-desktop last">
+      <div class="search-input" >
+      <form action="//www.runoob.com/" target="_blank">
+        <input class="placeholder" id="s" name="s" placeholder="搜索……"  autocomplete="off" style="height: 44px;">
+      </form>
+      
+      </div>
+    </div>
+  </div>
+</div>
+
+
+
+<!-- 导航栏 -->
+<div class="container navigation">
+    <div class="row">
+        <div class="col nav">
+            
+
+                        <ul class="pc-nav" id="note-nav">
+                <li><a href="//www.runoob.com/">首页</a></li>
+                <li><a href="/w3cnote">笔记首页</a></li>
+                <li><a href="/w3cnote/android-tutorial-intro.html" title="Android 基础入门教程">Android</a></li>
+                <li><a href="/w3cnote/es6-tutorial.html" title="ES6 教程">ES6 教程</a></li>
+                <li><a href="/w3cnote/ten-sorting-algorithm.html" title="排序算法">排序算法</a></li>
+                <li><a href="/w3cnote/hadoop-tutorial.html" title="Hadoop 教程">Hadoop</a></li>
+                <li><a href="/w3cnote/zookeeper-tutorial.html" title="Zookeeper 教程">Zookeeper</a></li>
+                <li><a href="/w3cnote/verilog-tutorial.html" title="Verilog 教程">Verilog</a></li>
+                <li><a href="/w3cnote_genre/code" title="编程技术">编程技术</a></li> 
+                <li><a href="/w3cnote_genre/coderlife" title="程序员人生">程序员人生</a></li>
+                
+                <!--<li><a href="javascript:;" class="runoob-pop">登录</a></li>
+                
+                
+                        <li>
+                <a style="font-weight:bold;" href="https://www.runoob.com/linux/linux-tutorial.html#yunserver" target="_blank" onclick="_hmt.push(['_trackEvent', 'aliyun', 'click', 'aliyun'])" title="kkb">云服务器</a>
+                </li>
+                <li><a href="http://gk.link/a/104mQ" target="_blank" style="font-weight: bold;"onclick="_hmt.push(['_trackEvent', '极客时间', 'click', 'jike'])" title="我的圈子">极客时间</a></li>
+            
+                
+                <li><a target="_blank" href="/shoppinglist" rel="nofollow">知识店铺</a></li> 
+        -->
+            </ul>
+                        
+              
+            <ul class="mobile-nav">
+                <li><a href="/w3cnote">首页</a></li>
+                <li><a href="/w3cnote_genre/android" target="_blank" title="Android 基础入门教程">Android</a></li>
+                <li><a href="/w3cnote/es6-tutorial.html" target="_blank" title="ES6 教程">ES6</a></li>
+                <li><a href="/w3cnote_genre/joke" target="_blank" title="程序员笑话">逗乐</a></li>
+                
+                <a href="javascript:void(0)" class="search-reveal">Search</a> 
+            </ul>
+            
+        </div>
+    </div>
+</div>
+
+
+<!--  内容  -->
+<div class="container main">
+	<div class="row">
+
+		<!--  Android 基础入门教程 start  -->
+	<div class="col left-column" style="display:none;">
+		<div class="tab">Verilog 高级教程</div>
+		<div class="sidebar-box gallery-list">
+			<div class="design" id="leftcolumn">  
+			</div> 
+		</div> 
+	</div>
+	<!--  Android 基础入门教程 end  -->
+		<div class="col middle-column big-middle-column">
+	 			<div class="article">
+			<div class="article-heading">
+				<h2>7.4 Verilog 实数整数转换</h2>				<h3><em>分类</em> <a href="/w3cnote_genre/verilog2" title="Verilog 教程高级篇" >Verilog 教程高级篇</a> </h3>
+			</div>
+			<div class="article-body note-body">
+				<div class="article-intro">
+					<h3>关键词 ：定点数, 浮点数, $realtobits, $bitstoreal</h3>
+<p>本节主要介绍实数与整数间相互转换的函数：$realtobits, $bitstoreal，同时说明下 real 型 (同 C 语言中的 double float）变量是怎么用多位宽的二进制码表示的。</p><hr>
+<h2>
+二进制表示小数</h2>
+<h3>二进制表示小数</h3><p>
+十进制整数用二进制来表示时，需要进行数据除以 2 然后取余的操作。</p><p>
+小数部分用二进制来表示时恰好相反，需要进行数据乘以 2 然后判断整数部分是否大于 1 的操作。</p><p>
+得到 2.3125 小数部分 0.3125 的二进制表示的过程如下：</p>
+<table class="reference"><thead><tr><th style="text-align:left;"><span>计算过程</span></th><th style="text-align:left;"><span>判断</span></th><th style="text-align:left;"><span>二进制位</span></th></tr></thead><tbody><tr><td style="text-align:left;"><span>0.3125 x 2        = 0.625</span></td><td style="text-align:left;"><span>&lt; 1</span></td><td style="text-align:left;"><span>0</span></td></tr><tr><td style="text-align:left;"><span>0.625 x 2          = 1.25</span></td><td style="text-align:left;"><span>≥ 1</span></td><td style="text-align:left;"><span>1</span></td></tr><tr><td style="text-align:left;"><span>(1.25 - 1) x 2     = 0.5</span></td><td style="text-align:left;"><span>&lt; 1</span></td><td style="text-align:left;"><span>0</span></td></tr><tr><td style="text-align:left;"><span>0.5 x 2              = 1</span></td><td style="text-align:left;"><span>≥ 1</span></td><td style="text-align:left;"><span>1</span></td></tr><tr><td style="text-align:left;"><span>结果：用 4 位二进制数表示小数</span></td><td style="text-align:left;"><span>stop</span></td><td style="text-align:left;"><span>0101</span></td></tr></tbody></table>
+<p>
+所以 2.3125 的二进制表示为 dec2bin(2.3125) = bin(10.0101)。这里小数点只是用于区分小数部分的位置，即小数部分用 4bit 二进制码来表示。实际中小数点标识是不存在的。</p><p>
+二进制表示小数时，还有一种快捷的方法。假如小数部分用 N bit 来表示，则一个小数 num 的二进制表示数值大小为：</p>
+<pre>dec2bin(num) = bin(num x 2^N )</pre><p>
+例如小数 2.3125 转换过程如下：</p>
+<pre>2.3125 x 2 ^ 4 = 37 = bin(100101)</pre><p>
+小数部分位宽为 4， 则 dec2bin(2.3125) = bin(10.0101）。</p>
+<h3>
+二进制转为小数</h3><p>
+二进制整数转换为十进制时，需要按位进行以 2 为低的指数相乘并累加的运算。</p><p>
+二进制小数转换为十进制时，需要按位进行以 1/2 为低的指数相乘并累加的运算。</p><p>
+例如小数位宽为 4 时，则 bin(11.1001) 小数部分表示的十进制小数为：</p><pre>
+bin2dec(1001) = 1 x 2^(-1) + 0 x 2^(-2) + 0 x 2^(-3) + 1 x 2^(-4) = 0. 5625</pre><p>
+则小数部分位宽为 4 的二进制小数 bin(11.1001) 表示的十进制小数为 3.5626 。</p><p>
+N 位宽小数部分的二进制小数 num 转为十进制时的快速方法为：</p>
+<pre>bin2dec(num) = num / 2^N </pre><p>
+例如 bin(11.1001) 表示的小数计算过程为：</p><pre>
+bin(11.1001) = bin(111001) / (2^4) = 57/16 = 3.5625 。</pre><p>
+其实多位宽的一个变量表示整数还是小数，Verilog 编译器是不区分的，都只是人为的在小数层面上进行运算。</p>
+<hr>
+<h2>浮点数表示方法</h2><p>
+定点数是指小数点位置固定不变的数。整数就是一种定点数，因为小数点总是在最后一位。</p><p>
+浮点数是指小数点的位置不是固定的数。例如 1.2 x 1.3 =1.56，小数点的位置一直在浮动，此谓浮点数。</p><p>
+当然也可以将小数的小数点位置固定，此谓定点小数。但该表示方法会降低小数的精度。例如固定小数点后面只有一位数据表示小数，则 1.2 x 1.3 = 1.5，丢失了部分数据。</p><p>
+
+十进制浮点数一般表示方法：</p><pre>
+dec(num) = (-1) ^ S x M x (10^E );</pre><p>
+S 为符号位，为 1 时表示负数，为 0 时表示正数。</p><p>
+E 为比例因子的指数部分，用整数表示，称为阶码。阶码指明了小数点在码字中的位置，因而决定了浮点数的表示范围。 </p>
+<p>M 为小数部分，称为尾数。尾数位宽决定了浮点数的表示精度。</p><p>
+例如数字 100.0344 可以表示为：</p>
+<pre>1995.0907 = (-1) ^ 0 x 199.50907 x 10^1 （正数，尾数为199.50907,  阶码为1）
+= (-1) ^ 0 x 1.9950907 x 10^3 
+= (-1) ^ 0 x 0.19950907 x 10^ 4</pre>
+<p>
+同理，二进制浮点数一般表示方法：</p><pre>
+dec(num) = (-1) ^ S x M x (2^E ) </pre>
+<p>例如：</p>
+<pre>dec(2.3125) (十进制)  =  bin(10.0101) 
+              = bin(10.0101) x 2^0
+              = bin(1.00101) x 2^1 (正数，尾数为 1.00101，阶码为 1）
+              = bin(0.100101) x 2^2</pre>
+<p>
+由上可知，同一个浮点数不同的表示方法，尾数和阶码均是不同的。为了便于移植，1985年 IEEE (Institute of Electrical and Electronics Engineers, 美国电气与电子工程协会) 提出了 IEEE-754 标准，以此作为浮点数表示格式的统一标准。</p><p>
+IEEE-754 标准从逻辑上采用一个三元组 {S, E, M} 来表示浮点数 Num。</p><p>
+S 代表符号位，0 和 1 分布代表正数和负数。</p><p>
+E 代表指数部分，称为移码。为避免出现正负指数，移码是由阶码加上固定的偏移量得到的。所以阶码可由移码得到：E - 2^(W-1) +1 。W 为移码位宽。指数基底为 2。</p><p>
+M 代表尾数，尾数的最高位总是为1，但是尾数部分不存储该位数据，只存储小数部分。所以，尾数代表的数值大小实际是 1.M 。</p><p>
+规定单精度浮点数用 4 字节存储，双精度浮点数用 8 字节存储，示意图如下。</p>
+<p><img decoding="async" src="https://www.runoob.com/wp-content/uploads/2021/05/v-real2int-1.png"></p>
+<p>
+单精度格式 (32 位)：S 符号位 1 位宽；E 阶码 8 位宽，阶码的偏移量为 127 (7'h7F)；M 尾数 23 位宽，表示小数，小数点放在尾数域的最前面。</p><p>
+双精度格式 (64 位)：S 符号位 1 位宽；E 阶码 11 位宽，阶码的偏移量为 1023 (10'h3FF)；M 尾数 52 位宽，表示小数，小数点放在尾数域的最前面。</p>
+<p>32 位浮点数 N 的真值可表示为：</p>
+<pre>Num = (-1)^S &times; (1.M) &times; 2 ^(E-127)</pre><p>
+64 位浮点数 N 的真值可表示为：</p>
+<pre>Num = (-1)^S &times; (1.M) &times; 2 ^(E-1023)</pre>
+<p>
+例如双精度浮点数对应的二进制码 64'h4002_8000_0000_0000 表示的小数为：</p>
+<pre>Num = (-1)^0 x  (1+ 8'h28/2**8) x 2^((12'h400 &amp; 11'h7FF)-1023) = 2.3125</pre>
+<p>上述尾数计算过程省略了后面一连串的"0"，只取前 8bit 有效位。</p>
+<p>
+例如双精度浮点数 -13.14 的二进制表示过程为：</p>
+<table class="tecspec"><thead><tr><th style="text-align:left;"><span>需要 1bit 表示符号位</span></th><th style="text-align:left;"><span>S = 1</span></th></tr></thead><tbody><tr><td style="text-align:left;"><span>需要 4bit 表示整数</span></td><td style="text-align:left;"><span>13 = bin(1101) = bin(1.101) x 2^3</span></td></tr><tr><td style="text-align:left;"><span>需要 11bit 表示阶数</span></td><td style="text-align:left;"><span>E = 3 + 1023 = 11'h402</span></td></tr><tr><td style="text-align:left;"><span>需要 (52-3)bit 表示小数</span></td><td style="text-align:left;"><span>0.14 * 2^(52-3) = 78812993478983.688 </span><br><span>≈ 78812993478984    = 49'h47ae147ae148</span></td></tr><tr><td style="text-align:left;"><span>需要52bit表示尾数：整合两部分小数</span></td><td style="text-align:left;"><span>M = (bin(101)&lt;&lt;49) + 49'h47ae147ae148</span><br><span>= 52'ha47ae147ae148</span></td></tr><tr><td style="text-align:left;"><span>浮点数二进制码</span></td><td style="text-align:left;"><span>{S, E, M} = 32'hc02a_47ae_147a_e148</span></td></tr></tbody></table>
+<p>
+而 Verilog 中的 real 型变量，正是 IEEE-754 标准的 64bit 位宽的双精度浮点型变量。</p>
+<hr>
+<h2>转换函数</h2>
+<table class="reference"><thead><tr><th style="text-align:left;"><span>调用系统任务</span></th><th style="text-align:left;"><span>任务描述</span></th></tr></thead><tbody><tr><td style="text-align:left;"><span>int_val = $rtoi( real_val ) ;</span></td><td style="text-align:left;"><span>实数 real_val 转换为整数 int_val</span><br><span>例如 3.14 -&gt; 3</span></td></tr><tr><td style="text-align:left;"><span>real_val = $itor( int_val ) ;</span></td><td style="text-align:left;"><span>整数 int_vla 转换为实数 real_val</span><br><span>例如 3 -&gt; 3.0</span></td></tr><tr><td style="text-align:left;"><span>vec_val = $realtobits( real_val ) ;</span></td><td style="text-align:left;"><span>实数转换为多位宽的寄存器向量</span><br><span>寄存器内按照 IEEE-754 标准存储双精度浮点型数据</span></td></tr><tr><td style="text-align:left;"><span>real_val = $bitstoreal( vec_val ) ;</span></td><td style="text-align:left;"><span>多位宽的寄存器向量转换为实数</span></td></tr></tbody></table>
+<p>
+real 型变量的产生或转换过程，都应该遵循 IEEE Std 754-1985 [B1] 标准。</p>
+<p>利用 $realtobits 与 $bitstoreal 对数据进行转换：</p>
+<div class="example"><h2 class="example">实例</h2> <div class="example_code">
+&nbsp; &nbsp;<span style="color: #00008B; font-style: italic;">//real, bits</span><br />
+&nbsp; &nbsp;<span style="color: #A52A2A; font-weight: bold;">reg</span> <span style="color: #9F79EE;">&#91;</span><span style="color: #ff0055;">63</span><span style="color: #5D478B;">:</span><span style="color: #ff0055;">0</span><span style="color: #9F79EE;">&#93;</span> &nbsp; num_bits <span style="color: #5D478B;">;</span><br />
+&nbsp; &nbsp;<span style="color: #A52A2A; font-weight: bold;">initial</span> <span style="color: #A52A2A; font-weight: bold;">begin</span><br />
+&nbsp; &nbsp; &nbsp; num_bits &nbsp;<span style="color: #5D478B;">=</span> <span style="color: #ff0055;">6</span><span style="color: #ff0055;">4'h4002_8000_0000_0000</span> <span style="color: #5D478B;">;</span><br />
+&nbsp; &nbsp; &nbsp; <span style="color: #9932CC;">$display</span><span style="color: #9F79EE;">&#40;</span><span style="color: #FF00FF;">&quot;-14.13 -&gt; hex: %h&quot;</span><span style="color: #5D478B;">,</span> $realtobits<span style="color: #9F79EE;">&#40;</span><span style="color: #5D478B;">-</span><span style="color: #ff0055;">13.14</span><span style="color: #9F79EE;">&#41;</span><span style="color: #9F79EE;">&#41;</span><span style="color: #5D478B;">;</span><br />
+&nbsp; &nbsp; &nbsp; <span style="color: #9932CC;">$display</span><span style="color: #9F79EE;">&#40;</span><span style="color: #FF00FF;">&quot;64'h4002_8000_0000_0000 -&gt; real: %f&quot;</span><span style="color: #5D478B;">,</span> $bitstoreal<span style="color: #9F79EE;">&#40;</span>num_bits<span style="color: #9F79EE;">&#41;</span><span style="color: #9F79EE;">&#41;</span><span style="color: #5D478B;">;</span><br />
+&nbsp; &nbsp;<span style="color: #A52A2A; font-weight: bold;">end</span><br />
+</div></div><p>
+仿真 log 如下，可知转换正确。</p>
+<p><img decoding="async" src="https://www.runoob.com/wp-content/uploads/2021/05/v-real2int-2.png"></p>
+<p>利用 $itor 与 $rtoi 对数据进行格式转换：</p>
+<div class="example"><h2 class="example">实例</h2> <div class="example_code">
+&nbsp; &nbsp;<span style="color: #00008B; font-style: italic;">//$itor, $rtoi</span><br />
+&nbsp; &nbsp;<span style="color: #A52A2A; font-weight: bold;">initial</span> <span style="color: #A52A2A; font-weight: bold;">begin</span><br />
+&nbsp; &nbsp; &nbsp; <span style="color: #9932CC;">$display</span><span style="color: #9F79EE;">&#40;</span><span style="color: #9F79EE;">&#41;</span><span style="color: #5D478B;">;</span><br />
+&nbsp; &nbsp; &nbsp; <span style="color: #9932CC;">$display</span><span style="color: #9F79EE;">&#40;</span><span style="color: #FF00FF;">&quot;Real to integer: %h&quot;</span><span style="color: #5D478B;">,</span> $rtoi<span style="color: #9F79EE;">&#40;</span><span style="color: #ff0055;">13.14</span><span style="color: #9F79EE;">&#41;</span><span style="color: #9F79EE;">&#41;</span><span style="color: #5D478B;">;</span><br />
+&nbsp; &nbsp; &nbsp; <span style="color: #9932CC;">$display</span><span style="color: #9F79EE;">&#40;</span><span style="color: #FF00FF;">&quot;Display integer in float: %f&quot;</span><span style="color: #5D478B;">,</span> <span style="color: #ff0055;">1001</span><span style="color: #9F79EE;">&#41;</span><span style="color: #5D478B;">;</span><br />
+&nbsp; &nbsp; &nbsp; <span style="color: #9932CC;">$display</span><span style="color: #9F79EE;">&#40;</span><span style="color: #FF00FF;">&quot;Integer to real: %f&quot;</span><span style="color: #5D478B;">,</span> $itor<span style="color: #9F79EE;">&#40;</span><span style="color: #ff0055;">1001</span><span style="color: #9F79EE;">&#41;</span><span style="color: #9F79EE;">&#41;</span><span style="color: #5D478B;">;</span><br />
+&nbsp; &nbsp;<span style="color: #A52A2A; font-weight: bold;">end</span><br />
+</div></div>
+<p>由以下仿真 log 可知，$rtoi 做实数（13.14）向整数（4'hd）的转换时，只截了取整数部分。$itor 做整数 (1001) 向实数（1001.000000）的转换时，似乎没有什么变化。</p>
+<p><img decoding="async" src="https://www.runoob.com/wp-content/uploads/2021/05/v-real2int-3.png"></p>
+<p>其实，$rtoi 与 $itor 的功能是改变变量的存储方式。</p><p>
+例如 14 以整数型变量储存时，表示方法为 32'h1110，而如果以实数型变量存储，则表示方法为 64h402c_0000_0000_0000。</p>
+<h3>本章节源码下载</h3><p>
+<a class="download" href="https://www.runoob.com/wp-content/uploads/2021/05/v7.4_real22int.zip">Download</a>   </p>				</div>
+			</div>
+			<div class="previous-next-links">
+			<div class="previous-design-link">← <a href="http://www.runoob.com/w3cnote/verilog2-random.html" rel="prev"> 7.3 Verilog 随机数及概率分布</a> </div>
+			<div class="next-design-link"><a href="http://www.runoob.com/w3cnote/verilog2-other-task.html" rel="next"> 7.5 Verilog 其他系统任务</a> →</div>
+			</div>
+						<div class="article-heading-ad" id="w3cnote-ad728">
+			<script async src="//pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script>
+			<!-- 移动版 自动调整 -->
+			<ins class="adsbygoogle"
+			     style="display:inline-block;min-width:300px;max-width:970px;width:100%;height:90px"
+			     data-ad-client="ca-pub-5751451760833794"
+			     data-ad-slot="1691338467"
+			     data-ad-format="horizontal"></ins>
+			<script>
+			(adsbygoogle = window.adsbygoogle || []).push({});
+			</script>
+			</div>
+			<style>
+@media screen and (max-width: 768px) {
+	#w3cnote-ad728 {
+		display: none;
+	}
+}
+p.note-author {
+    border-bottom: 1px solid #ddd;
+    font-size: 18px;
+    font-weight: bold;
+    color: #78a15a;
+    padding-bottom: 2px;
+    margin-bottom: 4px;
+}
+</style>
+<script>
+var aid = 23847;
+</script>
+	</div>
+		
+	</div>
+	<div class="listcol last right-column">
+
+	<script type="text/javascript">
+jQuery(document).ready(function ($){
+	var total = $(".membership li").length;
+	var left_list = '';
+	href = window.location.href;
+	
+	$(".membership li").each(function(index, value){
+
+		left_list += $(this).html();
+
+		cur_href = $(this).find("a").attr("href");
+		cur_obj = $(this);
+		
+		if(href.match(cur_href) != null) {
+			if(index==0) {
+				$(".previous-design-link").hide();
+			}
+			if(index==(total-1)) {
+				$(".next-design-link").hide();
+			}
+			prev_href = cur_obj.prev("li").find("a").attr("href");
+			prev_title = cur_obj.prev("li").find("a").attr("title");
+
+			next_href = cur_obj.next("li").find("a").attr("href");
+			next_title = cur_obj.next("li").find("a").attr("title");
+			if(prev_title) {
+				$(".previous-design-link a").attr("href", prev_href);
+				$(".previous-design-link a").attr("title", prev_title);
+				$(".previous-design-link a").text(prev_title);
+			} else {
+				$(".previous-design-link").html("");
+			}
+
+			if(next_title) {
+				$(".next-design-link a").attr("href", next_href);
+				$(".next-design-link a").attr("title", next_title);
+				$(".next-design-link a").text(next_title);
+			} else {
+				$(".next-design-link").html("");
+			}
+		}
+	});
+
+	$("#leftcolumn").html(left_list);
+});
+	</script>
+	<div class="sidebar-box cate-list">
+	<div class="sidebar-box recommend-here list-link">
+	<a href="javascript:void(0);">Verilog 高级教程</a>	</div>
+	
+	<ul class="membership">
+		
+	<li><a target="_top" data-id="23639" title="0.1 数字逻辑设计" href="http://www.runoob.com/w3cnote/verilog2-tutorial.html" >0.1 数字逻辑设计</a></li>
+	
+		
+	<li><a target="_top" data-id="23641" title="0.2 Verilog 编码风格" href="http://www.runoob.com/w3cnote/verilog2-codestyle.html" >0.2 Verilog 编码风格</a></li>
+	
+		
+	<li><a target="_top" data-id="23644" title="0.3 Verilog 代码规范" href="http://www.runoob.com/w3cnote/verilog2-codeguide.html" >0.3 Verilog 代码规范</a></li>
+	
+		
+	<li><a target="_top" data-id="23645" title="1.1 Verilog 门的类型" href="http://www.runoob.com/w3cnote/verilog2-gate.html" >1.1 Verilog 门的类型</a></li>
+	
+		
+	<li><a target="_top" data-id="23648" title="1.2 Verilog 开关级建模" href="http://www.runoob.com/w3cnote/verilog2-level-modeling.html" >1.2 Verilog 开关级建模</a></li>
+	
+		
+	<li><a target="_top" data-id="23656" title="1.3 Verilog 门延迟" href="http://www.runoob.com/w3cnote/verilog2-gate-delay.html" >1.3 Verilog 门延迟</a></li>
+	
+		
+	<li><a target="_top" data-id="23673" title="2.1 Verilog UDP 基础知识" href="http://www.runoob.com/w3cnote/verilog2-udp.html" >2.1 Verilog UDP 基础知识</a></li>
+	
+		
+	<li><a target="_top" data-id="23674" title="2.2 Verilog 组合逻辑 UDP" href="http://www.runoob.com/w3cnote/verilog2-udp-logic.html" >2.2 Verilog 组合逻辑 UDP</a></li>
+	
+		
+	<li><a target="_top" data-id="23677" title="2.3 Verilog 时序逻辑 UDP" href="http://www.runoob.com/w3cnote/verilog2-udp-timing.html" >2.3 Verilog 时序逻辑 UDP</a></li>
+	
+		
+	<li><a target="_top" data-id="23685" title="3.1 Verilog 延迟模型" href="http://www.runoob.com/w3cnote/verilog2-delay-type.html" >3.1 Verilog 延迟模型</a></li>
+	
+		
+	<li><a target="_top" data-id="23690" title="3.2 Verilog specify 块语句" href="http://www.runoob.com/w3cnote/verilog2-specify.html" >3.2 Verilog specify 块语句</a></li>
+	
+		
+	<li><a target="_top" data-id="23692" title="3.3 Verilog 建立时间和保持时间" href="http://www.runoob.com/w3cnote/verilog2-setup-hold-time.html" >3.3 Verilog 建立时间和保持时间</a></li>
+	
+		
+	<li><a target="_top" data-id="23701" title="3.4 Verilog 时序检查" href="http://www.runoob.com/w3cnote/verilog2-timing-check.html" >3.4 Verilog 时序检查</a></li>
+	
+		
+	<li><a target="_top" data-id="23708" title="3.5 Verilog 延迟反标注" href="http://www.runoob.com/w3cnote/verilog2-sdf.html" >3.5 Verilog 延迟反标注</a></li>
+	
+		
+	<li><a target="_top" data-id="23714" title="4.1 Verilog 同步与异步" href="http://www.runoob.com/w3cnote/verilog-sync.html" >4.1 Verilog 同步与异步</a></li>
+	
+		
+	<li><a target="_top" data-id="23725" title="4.2 Verilog 跨时钟域传输：慢到快" href="http://www.runoob.com/w3cnote/verilog2-slow2fast.html" >4.2 Verilog 跨时钟域传输：慢到快</a></li>
+	
+		
+	<li><a target="_top" data-id="23729" title="4.3 Verilog 跨时钟域传输：快到慢" href="http://www.runoob.com/w3cnote/verilog2-fast2slow.html" >4.3 Verilog 跨时钟域传输：快到慢</a></li>
+	
+		
+	<li><a target="_top" data-id="23731" title="4.4 Verilog FIFO 设计" href="http://www.runoob.com/w3cnote/verilog2-fifo.html" >4.4 Verilog FIFO 设计</a></li>
+	
+		
+	<li><a target="_top" data-id="23739" title="5.1 Verilog 复位简介" href="http://www.runoob.com/w3cnote/verilog2-reset.html" >5.1 Verilog 复位简介</a></li>
+	
+		
+	<li><a target="_top" data-id="23743" title="5.2 Verilog 时钟简介" href="http://www.runoob.com/w3cnote/verilog2-clock.html" >5.2 Verilog 时钟简介</a></li>
+	
+		
+	<li><a target="_top" data-id="23757" title="5.3 Verilog 时钟分频" href="http://www.runoob.com/w3cnote/verilog2-clock-division.html" >5.3 Verilog 时钟分频</a></li>
+	
+		
+	<li><a target="_top" data-id="23768" title="5.4 Verilog 时钟切换" href="http://www.runoob.com/w3cnote/verilog2-clock-switch.html" >5.4 Verilog 时钟切换</a></li>
+	
+		
+	<li><a target="_top" data-id="23779" title="6.1 Verilog 低功耗简介" href="http://www.runoob.com/w3cnote/verilog2-low-power.html" >6.1 Verilog 低功耗简介</a></li>
+	
+		
+	<li><a target="_top" data-id="23788" title="6.2 Verilog 系统级低功耗设计" href="http://www.runoob.com/w3cnote/verilog2-lower-power-design.html" >6.2 Verilog 系统级低功耗设计</a></li>
+	
+		
+	<li><a target="_top" data-id="23792" title="6.3 Verilog  RTL 级低功耗设计（上）" href="http://www.runoob.com/w3cnote/verilog2-rtl-low-power-design-1.html" >6.3 Verilog  RTL 级低功耗设计（上）</a></li>
+	
+		
+	<li><a target="_top" data-id="23796" title="6.4 Verilog RTL 级低功耗设计（下）" href="http://www.runoob.com/w3cnote/verilog2-rtl-low-power-design-2.html" >6.4 Verilog RTL 级低功耗设计（下）</a></li>
+	
+		
+	<li><a target="_top" data-id="23806" title="7.1 Verilog 显示任务" href="http://www.runoob.com/w3cnote/verilog2-display.html" >7.1 Verilog 显示任务</a></li>
+	
+		
+	<li><a target="_top" data-id="23813" title="7.2 Verilog 文件操作" href="http://www.runoob.com/w3cnote/verilog2-file.html" >7.2 Verilog 文件操作</a></li>
+	
+		
+	<li><a target="_top" data-id="23825" title="7.3 Verilog 随机数及概率分布" href="http://www.runoob.com/w3cnote/verilog2-random.html" >7.3 Verilog 随机数及概率分布</a></li>
+	
+		<li>
+	7.4 Verilog 实数整数转换	</li>
+	
+		
+	<li><a target="_top" data-id="23851" title="7.5 Verilog 其他系统任务" href="http://www.runoob.com/w3cnote/verilog2-other-task.html" >7.5 Verilog 其他系统任务</a></li>
+	
+		
+	<li><a target="_top" data-id="23862" title="8.1 Verilog  PLI 简介" href="http://www.runoob.com/w3cnote/verilog2-pli-intro.html" >8.1 Verilog  PLI 简介</a></li>
+	
+		
+	<li><a target="_top" data-id="23865" title="8.2 Verilog TF 子程序" href="http://www.runoob.com/w3cnote/verilog2-tf.html" >8.2 Verilog TF 子程序</a></li>
+	
+		
+	<li><a target="_top" data-id="23869" title="8.3 Verilog TF 子程序列表" href="http://www.runoob.com/w3cnote/verilog2-tf-sub.html" >8.3 Verilog TF 子程序列表</a></li>
+	
+		
+	<li><a target="_top" data-id="23870" title="8.4 Verilog ACC 子程序" href="http://www.runoob.com/w3cnote/verilog2-acc.html" >8.4 Verilog ACC 子程序</a></li>
+	
+		
+	<li><a target="_top" data-id="23872" title="8.5 Verilog ACC 子程序列表" href="http://www.runoob.com/w3cnote/verilog2-acc-sub.html" >8.5 Verilog ACC 子程序列表</a></li>
+	
+		
+	<li><a target="_top" data-id="23876" title="9.1 Verilog 逻辑综合" href="http://www.runoob.com/w3cnote/verilog2-logic-sumarry.html" >9.1 Verilog 逻辑综合</a></li>
+	
+		
+	<li><a target="_top" data-id="23882" title="9.2 Verilog 可综合性设计" href="http://www.runoob.com/w3cnote/verilog2-integrated-design.html" >9.2 Verilog 可综合性设计</a></li>
+	
+	</ul></div>	</div>
+</div>
+
+
+<!-- 底部 -->
+<div id="footer" class="mar-t50">
+   <div class="runoob-block">
+    <div class="runoob cf">
+     <dl>
+      <dt>
+       在线实例
+      </dt>
+      <dd>
+       &middot;<a target="_blank" href="/html/html-examples.html">HTML 实例</a>
+      </dd>
+      <dd>
+       &middot;<a target="_blank" href="/css/css-examples.html">CSS 实例</a>
+      </dd>
+      <dd>
+       &middot;<a target="_blank" href="/js/js-examples.html">JavaScript 实例</a>
+      </dd>
+      <dd>
+       &middot;<a target="_blank" href="/ajx/ajax-examples.html">Ajax 实例</a>
+      </dd>
+       <dd>
+       &middot;<a target="_blank" href="/jquery/jquery-examples.html">jQuery 实例</a>
+      </dd>
+      <dd>
+       &middot;<a target="_blank" href="/xml/xml-examples.html">XML 实例</a>
+      </dd>
+      <dd>
+       &middot;<a target="_blank" href="/java/java-examples.html">Java 实例</a>
+      </dd>
+     
+     </dl>
+     <dl>
+      <dt>
+      字符集&工具
+      </dt>
+      <dd>
+       &middot; <a target="_blank" href="/charsets/html-charsets.html">HTML 字符集设置</a>
+      </dd>
+      <dd>
+       &middot; <a target="_blank" href="/tags/html-ascii.html">HTML ASCII 字符集</a>
+      </dd>
+     <dd>
+       &middot; <a target="_blank" href="https://c.runoob.com/front-end/6939/">JS 混淆/加密</a>
+      </dd> 
+      <dd>
+       &middot; <a target="_blank" href="https://c.runoob.com/front-end/6232/">PNG/JPEG 图片压缩</a>
+      </dd>
+      <dd>
+       &middot; <a target="_blank" href="/tags/html-colorpicker.html">HTML 拾色器</a>
+      </dd>
+      <dd>
+       &middot; <a target="_blank" href="//c.runoob.com/front-end/53">JSON 格式化工具</a>
+      </dd>
+      <dd>
+       &middot; <a target="_blank" href="//c.runoob.com/front-end/6680/">随机数生成器</a>
+      </dd>
+     </dl>
+     <dl>
+      <dt>
+       最新更新
+      </dt>
+                   <dd>
+       &middot;
+      <a href="http://www.runoob.com/matplotlib/matplotlib-imread.html" title="Matplotlib imread() 方法">Matplotlib imre...</a>
+      </dd>
+              <dd>
+       &middot;
+      <a href="http://www.runoob.com/matplotlib/matplotlib-imsave.html" title="Matplotlib imsave() 方法">Matplotlib imsa...</a>
+      </dd>
+              <dd>
+       &middot;
+      <a href="http://www.runoob.com/matplotlib/matplotlib-imshow.html" title="Matplotlib imshow() 方法">Matplotlib imsh...</a>
+      </dd>
+              <dd>
+       &middot;
+      <a href="http://www.runoob.com/matplotlib/matplotlib-hist.html" title="Matplotlib 直方图">Matplotlib 直方图</a>
+      </dd>
+              <dd>
+       &middot;
+      <a href="http://www.runoob.com/python3/python-func-object.html" title="Python object() 函数">Python object()...</a>
+      </dd>
+              <dd>
+       &middot;
+      <a href="http://www.runoob.com/python3/python-ai-draw.html" title="Python AI 绘画">Python AI 绘画</a>
+      </dd>
+              <dd>
+       &middot;
+      <a href="http://www.runoob.com/w3cnote/cursor-editor.html" title="神辅助 Cursor 编辑器，加入 GPT-4 让编码更轻松！">神辅助 Cursor ...</a>
+      </dd>
+             </dl>
+     <dl>
+      <dt>
+       站点信息
+      </dt>
+      <dd>
+       &middot;
+       <a target="_blank" href="mailto:admin@runoob.com" rel="external nofollow">意见反馈</a>
+       </dd>
+      <dd>
+       &middot;
+      <a target="_blank" href="/disclaimer">免责声明</a>
+       </dd>
+      <dd>
+       &middot;
+       <a target="_blank" href="/aboutus">关于我们</a>
+       </dd>
+      <dd>
+       &middot;
+      <a target="_blank" href="/archives">文章归档</a>
+      </dd>
+    
+     </dl>
+    
+     <div class="search-share">
+      <div class="app-download">
+        <div>
+         <strong>关注微信</strong>
+        </div>
+      </div>
+      <div class="share">
+      <img width="128" height="128" src="/wp-content/themes/runoob/assets/images/qrcode.png" />
+       </div>
+     </div>
+     
+    </div>
+   </div>
+   <div class="w-1000 copyright">
+     Copyright &copy; 2013-2023    <strong><a href="//www.runoob.com/" target="_blank">菜鸟教程</a></strong>&nbsp;
+    <strong><a href="//www.runoob.com/" target="_blank">runoob.com</a></strong> All Rights Reserved. 备案号：<a target="_blank" rel="nofollow" href="https://beian.miit.gov.cn/">闽ICP备15012807号-1</a>
+   </div>
+  </div>
+  <div class="fixed-btn">
+    <a class="go-top" href="javascript:void(0)" title="返回顶部"> <i class="fa fa-angle-up"></i></a>
+    <a class="qrcode"  href="javascript:void(0)" title="关注我们"><i class="fa fa-qrcode"></i></a>
+    <a class="writer" style="display:none" href="javascript:void(0)"   title="标记/收藏"><i class="fa fa-star" aria-hidden="true"></i></a>
+    <!-- qrcode modal -->
+    <div id="bottom-qrcode" class="modal panel-modal hide fade in">
+      <h4>微信关注</h4>
+      <div class="panel-body"><img alt="微信关注" width="128" height="128" src="/wp-content/themes/runoob/assets/images/qrcode.png"></div> 
+    </div>
+  </div>
+
+ <div style="display:none;">
+<script async src="https://www.googletagmanager.com/gtag/js?id=UA-84264393-2"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+
+  gtag('config', 'UA-84264393-2');
+</script>
+<script>
+var _hmt = _hmt || [];
+(function() {
+  var hm = document.createElement("script");
+  hm.src = "https://hm.baidu.com/hm.js?3eec0b7da6548cf07db3bc477ea905ee";
+  var s = document.getElementsByTagName("script")[0]; 
+  s.parentNode.insertBefore(hm, s);
+})();
+</script>
+
+</div>
+<script>
+window.jsui={
+    www: 'https://www.runoob.com',
+    uri: 'https://www.runoob.com/wp-content/themes/runoob'
+};
+</script>
+
+<script src="https://static.runoob.com/assets/libs/hl/run_prettify.js"></script>
+<script src="/wp-content/themes/runoob/assets/js/main.min.js?v=1.156"></script>
+
+</body>
+</html>

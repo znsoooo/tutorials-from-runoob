@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><title>E.33. 版本 9.4.3</title><link rel="stylesheet" type="text/css" href="stylesheet.css" /><link rev="made" href="pgsql-docs@postgresql.org" /><meta name="generator" content="DocBook XSL Stylesheets V1.79.1" /><link rel="prev" href="release-9-4-4.html" title="E.32. 版本 9.4.4" /><link rel="next" href="release-9-4-2.html" title="E.34. 版本 9.4.2" /></head><body><div xmlns="http://www.w3.org/TR/xhtml1/transitional" class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="5" align="center">E.33. 版本 9.4.3</th></tr><tr><td width="10%" align="left"><a accesskey="p" href="release-9-4-4.html" title="E.32. 版本 9.4.4">上一页</a> </td><td width="10%" align="left"><a accesskey="u" href="release.html" title="附录 E. 版本说明">上一级</a></td><th width="60%" align="center">附录 E. 版本说明</th><td width="10%" align="right"><a accesskey="h" href="index.html" title="PostgreSQL 10.1 手册">起始页</a></td><td width="10%" align="right"> <a accesskey="n" href="release-9-4-2.html" title="E.34. 版本 9.4.2">下一页</a></td></tr></table><hr></hr></div><div class="sect1" id="RELEASE-9-4-3"><div class="titlepage"><div><div><h2 class="title" style="clear: both">E.33. 版本 9.4.3</h2></div></div></div><div class="toc"><dl class="toc"><dt><span class="sect2"><a href="release-9-4-3.html#idp67524672">E.33.1. 迁移到版本 9.4.3</a></span></dt><dt><span class="sect2"><a href="release-9-4-3.html#idp67526576">E.33.2. 修改列表</a></span></dt></dl></div><p><strong>发布日期：. </strong>2015-06-04</p><p>  这个版本包含一些9.4.2以来的小的修复。关于9.4主版本的新特性信息，
+  请查看<a class="xref" href="release-9-4.html" title="E.36. 版本 9.4">第 E.36 节</a>。
+  </p><div class="sect2" id="idp67524672"><div class="titlepage"><div><div><h3 class="title">E.33.1. 迁移到版本 9.4.3</h3></div></div></div><p>    运行9.4.X的用户不需要转储/恢复。
+   </p><p>    不过，如果你是从一个早于9.4.2的版本升级而来，请查阅<a class="xref" href="release-9-4-2.html" title="E.34. 版本 9.4.2">第 E.34 节</a>。
+   </p></div><div class="sect2" id="idp67526576"><div class="titlepage"><div><div><h3 class="title">E.33.2. 修改列表</h3></div></div></div><div class="itemizedlist"><ul class="itemizedlist" style="list-style-type: disc; "><li class="listitem"><p>      避免崩溃重启期间<code class="function">fsync</code>数据目录失败 (Abhijit Menon-Sen, Tom Lane)
+     </p><p>      在之前的小版本中，我们添加了一个补丁，修补崩溃之后在数据目录中<code class="function">fsync</code>任何东西。
+      不幸的是，它对任何错误条件的响应都是失败，因此阻止服务器重启，
+      即使问题是完全无害的。一个例子是，数据目录中的一个不可写文件在某些平台上会阻止重启；
+      但是共同的是会导致SSL认证文件不能被服务器写。修改这个行为，
+      忽略所有权限失败，并且记录其他类型的失败但是不阻止继续。
+     </p><p>      也在<code class="literal">initdb --sync-only</code>中应用相同的规则。
+      这个情况不太重要但是也要类似的动作。
+     </p></li><li class="listitem"><p>      修复<code class="function">pg_get_functiondef()</code>，显示函数的
+      <code class="literal">LEAKPROOF</code>属性，如果设置了的话 (Jeevan Chalke)
+     </p></li><li class="listitem"><p>      修复<code class="function">pushJsonbValue()</code>，解压<code class="type">jbvBinary</code>对象 (Andrew Dunstan)
+     </p><p>      这个修改并不影响9.4内核代码中的任何行为，但是它避免了可能的第三方调用的极端情况。
+     </p></li><li class="listitem"><p>      删除<span class="application">configure</span>的检查禁止连接到<span class="systemitem">OpenBSD</span>
+      上的线程<span class="application">libpython</span> (Tom Lane)
+     </p><p>      为了避免失败的这个限制在当前的<span class="systemitem">OpenBSD</span>
+      版本上看起来不再是一个问题。
+     </p></li></ul></div></div></div><div class="navfooter"><hr /><table width="100%" summary="Navigation footer"><tr><td width="40%" align="left"><a accesskey="p" href="release-9-4-4.html">上一页</a> </td><td width="20%" align="center"><a accesskey="u" href="release.html">上一级</a></td><td width="40%" align="right"> <a accesskey="n" href="release-9-4-2.html">下一页</a></td></tr><tr><td width="40%" align="left" valign="top">E.32. 版本 9.4.4 </td><td width="20%" align="center"><a accesskey="h" href="index.html">起始页</a></td><td width="40%" align="right" valign="top"> E.34. 版本 9.4.2</td></tr></table></div></body></html>

@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><title>CREATE TABLESPACE</title><link rel="stylesheet" type="text/css" href="stylesheet.css" /><link rev="made" href="pgsql-docs@postgresql.org" /><meta name="generator" content="DocBook XSL Stylesheets V1.79.1" /><link rel="prev" href="sql-createtableas.html" title="CREATE TABLE AS" /><link rel="next" href="sql-createtsconfig.html" title="CREATE TEXT SEARCH CONFIGURATION" /></head><body><div xmlns="http://www.w3.org/TR/xhtml1/transitional" class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="5" align="center">CREATE TABLESPACE</th></tr><tr><td width="10%" align="left"><a accesskey="p" href="sql-createtableas.html" title="CREATE TABLE AS">上一页</a> </td><td width="10%" align="left"><a accesskey="u" href="sql-commands.html" title="SQL 命令">上一级</a></td><th width="60%" align="center">SQL 命令</th><td width="10%" align="right"><a accesskey="h" href="index.html" title="PostgreSQL 10.1 手册">起始页</a></td><td width="10%" align="right"> <a accesskey="n" href="sql-createtsconfig.html" title="CREATE TEXT SEARCH CONFIGURATION">下一页</a></td></tr></table><hr></hr></div><div class="refentry" id="SQL-CREATETABLESPACE"><div class="titlepage"></div><a id="idp45169360" class="indexterm"></a><div class="refnamediv"><h2><span class="refentrytitle">CREATE TABLESPACE</span></h2><p>CREATE TABLESPACE — 定义一个新的表空间</p></div><div class="refsynopsisdiv"><h2>大纲</h2><pre class="synopsis">CREATE TABLESPACE <em class="replaceable"><code>tablespace_name</code></em>
+    [ OWNER { <em class="replaceable"><code>new_owner</code></em> | CURRENT_USER | SESSION_USER } ]
+    LOCATION '<em class="replaceable"><code>directory</code></em>'
+    [ WITH ( <em class="replaceable"><code>tablespace_option</code></em> = <em class="replaceable"><code>value</code></em> [, ... ] ) ]</pre></div><div class="refsect1" id="idp45176112"><h2>描述</h2><p>   <code class="command">CREATE TABLESPACE</code>注册一个新的集簇范围
+   的表空间。表空间的名称必须与数据库集簇中现有的任何表空间不同。
+  </p><p>   表空间允许超级用户在文件系统上定义另一个位置，可以把包含数据库对象
+   （例如表和索引）的数据文件放在那里。
+  </p><p>   一个具有适当特权的用户可以把
+   <em class="replaceable"><code>tablespace_name</code></em>传递给
+   <code class="command">CREATE DATABASE</code>、<code class="command">CREATE TABLE</code>、
+   <code class="command">CREATE INDEX</code>或者<code class="command">ADD CONSTRAINT</code>
+   来让这些对象的数据文件存储在指定的表空间中。
+  </p><div class="warning"><h3 class="title">警告</h3><p>    表空间不能独立于定义它的集簇使用，见
+    <a class="xref" href="manage-ag-tablespaces.html" title="22.6. 表空间">第 22.6 节</a>。
+   </p></div></div><div class="refsect1" id="idp45183504"><h2>参数</h2><div class="variablelist"><dl class="variablelist"><dt><span class="term"><em class="replaceable"><code>tablespace_name</code></em></span></dt><dd><p>        The name of a tablespace to be created.  The name cannot
+        begin with <code class="literal">pg_</code>, as such names
+        are reserved for system tablespaces.
+       </p></dd><dt><span class="term"><em class="replaceable"><code>user_name</code></em></span></dt><dd><p>        将拥有该表空间的用户名。如果省略，默认为执行该命令的用户。只有
+        超级用户能创建表空间，但是它们能把表空间的拥有权赋予给非超级
+        用户。
+       </p></dd><dt><span class="term"><em class="replaceable"><code>directory</code></em></span></dt><dd><p>        要被用于表空间的目录。该目录应该为空并且必须由
+        <span class="productname">PostgreSQL</span>系统用户拥有。该目录必须用一个绝对
+        路径指定。
+       </p></dd><dt><span class="term"><em class="replaceable"><code>tablespace_option</code></em></span></dt><dd><p>        要设置或者重置的表空间参数。当前，唯一可用的参数是
+        <code class="varname">seq_page_cost</code>、<code class="varname">random_page_cost</code>
+        以及<code class="varname">effective_io_concurrency</code>。
+        为一个特定表空间设定其中一个值将覆盖规划器对该表空间中表页读取的
+        常规代价估计，常规代价估计是由同名的配置参数所建立（见
+        <a class="xref" href="runtime-config-query.html#GUC-SEQ-PAGE-COST">seq_page_cost</a>、
+        <a class="xref" href="runtime-config-query.html#GUC-RANDOM-PAGE-COST">random_page_cost</a>、
+        <a class="xref" href="runtime-config-resource.html#GUC-EFFECTIVE-IO-CONCURRENCY">effective_io_concurrency</a>）。如果一个表空间位于一个
+        比其他 I/O 子系统更慢或者更快的磁盘上，这些参数就能发挥作用。
+       </p></dd></dl></div></div><div class="refsect1" id="idp45195120"><h2>注解</h2><p>   只有在支持符号链接的系统上才支持表空间。
+  </p><p>    <code class="command">CREATE TABLESPACE</code>不能在一个事务块内被执行。
+   </p></div><div class="refsect1" id="idp45196944"><h2>示例</h2><p>   在<code class="literal">/data/dbs</code>创建一个表空间<code class="literal">dbspace</code>：
+</p><pre class="programlisting">CREATE TABLESPACE dbspace LOCATION '/data/dbs';</pre><p>
+  </p><p>   在<code class="literal">/data/indexes</code>创建一个<code class="literal">genevieve</code>
+   用户拥有的表空间<code class="literal">indexspace</code>：
+</p><pre class="programlisting">CREATE TABLESPACE indexspace OWNER genevieve LOCATION '/data/indexes';</pre></div><div class="refsect1" id="idp45202912"><h2>兼容性</h2><p>   <code class="command">CREATE TABLESPACE</code>是一种
+   <span class="productname">PostgreSQL</span>扩展。
+  </p></div><div class="refsect1" id="idp45205024"><h2>另见</h2><span class="simplelist"><a class="xref" href="sql-createdatabase.html" title="CREATE DATABASE"><span class="refentrytitle">CREATE DATABASE</span></a>, <a class="xref" href="sql-createtable.html" title="CREATE TABLE"><span class="refentrytitle">CREATE TABLE</span></a>, <a class="xref" href="sql-createindex.html" title="CREATE INDEX"><span class="refentrytitle">CREATE INDEX</span></a>, <a class="xref" href="sql-droptablespace.html" title="DROP TABLESPACE"><span class="refentrytitle">DROP TABLESPACE</span></a>, <a class="xref" href="sql-altertablespace.html" title="ALTER TABLESPACE"><span class="refentrytitle">ALTER TABLESPACE</span></a></span></div></div><div class="navfooter"><hr /><table width="100%" summary="Navigation footer"><tr><td width="40%" align="left"><a accesskey="p" href="sql-createtableas.html">上一页</a> </td><td width="20%" align="center"><a accesskey="u" href="sql-commands.html">上一级</a></td><td width="40%" align="right"> <a accesskey="n" href="sql-createtsconfig.html">下一页</a></td></tr><tr><td width="40%" align="left" valign="top">CREATE TABLE AS </td><td width="20%" align="center"><a accesskey="h" href="index.html">起始页</a></td><td width="40%" align="right" valign="top"> CREATE TEXT SEARCH CONFIGURATION</td></tr></table></div></body></html>

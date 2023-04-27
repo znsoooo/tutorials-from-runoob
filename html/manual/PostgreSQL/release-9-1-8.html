@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><title>E.99. 版本9.1.8</title><link rel="stylesheet" type="text/css" href="stylesheet.css" /><link rev="made" href="pgsql-docs@postgresql.org" /><meta name="generator" content="DocBook XSL Stylesheets V1.79.1" /><link rel="prev" href="release-9-1-9.html" title="E.98. 版本9.1.9" /><link rel="next" href="release-9-1-7.html" title="E.100. 版本9.1.7" /></head><body><div xmlns="http://www.w3.org/TR/xhtml1/transitional" class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="5" align="center">E.99. 版本9.1.8</th></tr><tr><td width="10%" align="left"><a accesskey="p" href="release-9-1-9.html" title="E.98. 版本9.1.9">上一页</a> </td><td width="10%" align="left"><a accesskey="u" href="release.html" title="附录 E. 版本说明">上一级</a></td><th width="60%" align="center">附录 E. 版本说明</th><td width="10%" align="right"><a accesskey="h" href="index.html" title="PostgreSQL 10.1 手册">起始页</a></td><td width="10%" align="right"> <a accesskey="n" href="release-9-1-7.html" title="E.100. 版本9.1.7">下一页</a></td></tr></table><hr></hr></div><div class="sect1" id="RELEASE-9-1-8"><div class="titlepage"><div><div><h2 class="title" style="clear: both">E.99. 版本9.1.8</h2></div></div></div><div class="toc"><dl class="toc"><dt><span class="sect2"><a href="release-9-1-8.html#idp73236224">E.99.1. 迁移到9.1.8</a></span></dt><dt><span class="sect2"><a href="release-9-1-8.html#idp73238080">E.99.2. 变化</a></span></dt></dl></div><p><strong>发布日期：. </strong>2013-02-07</p><p>  此版本包含了9.1.7各种修复。
+  关于9.1主要版本的新功能的信息，
+  参阅<a class="xref" href="release-9-1.html" title="E.107. 版本9.1">第 E.107 节</a>。</p><div class="sect2" id="idp73236224"><div class="titlepage"><div><div><h3 class="title">E.99.1. 迁移到9.1.8</h3></div></div></div><p>  为了运行9.1.X不需要转储/恢复。</p><p>  然而，如果你是从早于9.1.6的版本上更新，参阅<a class="xref" href="release-9-1-6.html" title="E.101. 版本9.1.6">第 E.101 节</a>。</p></div><div class="sect2" id="idp73238080"><div class="titlepage"><div><div><h3 class="title">E.99.2. 变化</h3></div></div></div><div class="itemizedlist"><ul class="itemizedlist" style="list-style-type: disc; "><li class="listitem"><p>   防止来自SQL的<code class="function">enum_recv</code>的执行(Tom Lane)</p><p>     该函数被错误声明，
+ 允许简单SQL命令导致服务器崩溃。
+ 原则上攻击者可以使用它检查服务器内存的内容。
+ 我们该感谢Sumit Soni 
+ (通过Secunia SVCRP)报告这个问题。(CVE-2013-0255)</p></li><li class="listitem"><p>     当检测WAL回放期间达到一致性数据库状态时，修复多个问题。
+(Fujii Masao, Heikki Linnakangas, Simon Riggs, Andres Freund)</p></li><li class="listitem"><p>    当截断关系文件时，更新最小恢复点(Heikki Linnakangas)</p><p>    一旦丢弃数据，在时间轴早一点的时候停止恢复不再安全。</p></li><li class="listitem"><p>    在改变恢复目标时间轴后修复WAL段再循环(Heikki Linnakangas)</p></li><li class="listitem"><p>    在热备模式中修复失去的取消(Noah Misch, Simon Riggs)</p><p>   取消热备份查询冲突的需要有时会被错过，
+   允许这些查询来查看不一致数据。</p></li><li class="listitem"><p>     防止用户可以连接之前从暂停中恢复暂停功能(Tom Lane)</p></li><li class="listitem"><p>    修复SQL语法以允许来自子SELECT结果的下标或者字段选择(Tom Lane)</p></li><li class="listitem"><p>    解决繁忙工作负载中自动清理截断的性能问题(Jan Wieck)</p><p>   在表格末尾的空白页截断需要排他锁，
+   但自动清理编码失败（并且释放表锁）
+当有冲突的锁请求时，在负载下，
+很可能截断永远都不会发生，导致表的膨胀。
+通过执行局部截断进行修复，释放锁，然后
+试图重新获取锁并且继续。
+该修复在自动清理释放锁之前冲突请求到达之后将大大
+减少平均时间。  </p></li><li class="listitem"><p>   当扫描<code class="structname">pg_tablespace</code>的时候，
+   防止竞争条件(Stephen Frost, Tom Lane)</p><p>   如果有<code class="structname">pg_tablespace</code>项的并发更新，
+   那么<code class="command">CREATE DATABASE</code>和<code class="command">DROP DATABASE</code>
+   可能行为不当。</p></li><li class="listitem"><p>   防止<code class="command">DROP OWNED</code>试图删除整个数据库或者表空间(Álvaro Herrera)</p><p>   为了安全起见，
+   这些对象的所有权必须被重新分配，而不是删除。</p></li><li class="listitem"><p>   修复
+   <a class="link" href="runtime-config-client.html#GUC-VACUUM-FREEZE-TABLE-AGE"><code class="varname">vacuum_freeze_table_age</code></a>
+实现中的错误(Andres Freund)  </p><p>   在安装中不只存在
+   <a class="link" href="runtime-config-client.html#GUC-VACUUM-FREEZE-MIN-AGE"><code class="varname">vacuum_freeze_min_age</code></a>事务，
+   这个错误防止自动清理使用部分表扫描，
+   因此相反可能会发生全表扫描。</p></li><li class="listitem"><p>    当<code class="symbol">RowExpr</code>或者<code class="symbol">XmlExpr</code>被解析两次时，
+避免不当行为(Andres Freund, Tom Lane)</p><p>   这个错误在上下文中是用户可见的，
+   比如<code class="literal">CREATE TABLE LIKE INCLUDING INDEXES</code>。</p></li><li class="listitem"><p>   提高在哈希表大小计算中防御整数溢出(Jeff Davis)</p></li><li class="listitem"><p>   在服务器崩溃之后修复忽略剩余临时表错误(Tom Lane)</p></li><li class="listitem"><p>   拒绝<code class="function">to_date()</code>中超期范围日期(Hitoshi Harada)</p></li><li class="listitem"><p>    修复<code class="function">pg_extension_config_dump()</code>以适当处理扩展更新情况(Tom Lane)</p><p>    这个函数现在将取代目标表的任何已经存在项，
+   使它可以用于扩展更新脚本。
+ </p></li><li class="listitem"><p>   修复函数的PL/Python的处理作为多表上的触发器(Andres Freund)</p></li><li class="listitem"><p>    确保非ASCII提示符字符串被翻译成Windows上正确代码页(Alexander Law, Noah Misch)</p><p>    这个错误影响<span class="application">psql</span>和一些其他客户端程序。</p></li><li class="listitem"><p>   当不连接数据库时，
+   修复<span class="application">psql</span>'s <code class="command">\?</code>命令中可能的崩溃(Meng Qingzhong)</p></li><li class="listitem"><p>    当正在运行<span class="application">pg_basebackup</span>时，
+如果删除关系文件，那么修复可能的错误(Heikki Linnakangas)</p></li><li class="listitem"><p>   当在热备份服务器上运行时，使得<span class="application">pg_dump</span>
+   排除未记录表的数据(Magnus Hagander)</p><p>   因为数据在备用服务器上是不可用的，这可能会失败，
+   因此它似乎认为最方便的是自动假设<code class="option">--no-unlogged-table-data</code>。</p></li><li class="listitem"><p>   修复<span class="application">pg_upgrade</span>以安全处理无效索引(Bruce Momjian)</p></li><li class="listitem"><p>   修复<span class="application">libpq</span>的
+   <code class="function">PQprintTuples</code>中一个字节缓冲溢出(Xi Wang)</p><p>   这个以往的函数
+   不再通过<span class="productname">PostgreSQL</span>自身被用于任何地方，
+   但是它仍然可能通过一些客户端代码被使用。</p></li><li class="listitem"><p>   使得<span class="application">ecpglib</span>正确使用已翻译信息(Chen Huajun)</p></li><li class="listitem"><p>   在MSVC上正确安装<span class="application">ecpg_compat</span>和
+      <span class="application">pgtypes</span>库(Jiang Guiqing)</p></li><li class="listitem"><p>   如果它不是通过系统提供的，
+   那么在<span class="application">libecpg</span>中
+   包含<code class="function">isinf()</code>版本(Jiang Guiqing)</p></li><li class="listitem"><p>   重新配置已提供函数的配置测试，
+   因此它不会被libedit/libreadline假输出蒙骗。</p></li><li class="listitem"><p>   确保随时间变化增加的Windows编译数(Magnus Hagander)</p></li><li class="listitem"><p>   当为Windows交叉编译时，
+   使<span class="application">pgxs</span>编译带有正确<code class="literal">.exe</code>
+   后缀的可执行文件(Zoltan Boszormenyi)</p></li><li class="listitem"><p>   添加新的时区缩写<code class="literal">FET</code> (Tom Lane)</p><p>   这用于一些东欧时区。</p></li></ul></div></div></div><div class="navfooter"><hr /><table width="100%" summary="Navigation footer"><tr><td width="40%" align="left"><a accesskey="p" href="release-9-1-9.html">上一页</a> </td><td width="20%" align="center"><a accesskey="u" href="release.html">上一级</a></td><td width="40%" align="right"> <a accesskey="n" href="release-9-1-7.html">下一页</a></td></tr><tr><td width="40%" align="left" valign="top">E.98. 版本9.1.9 </td><td width="20%" align="center"><a accesskey="h" href="index.html">起始页</a></td><td width="40%" align="right" valign="top"> E.100. 版本9.1.7</td></tr></table></div></body></html>

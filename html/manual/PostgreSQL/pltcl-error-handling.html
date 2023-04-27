@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><title>43.8. PL/Tcl 中的错误处理</title><link rel="stylesheet" type="text/css" href="stylesheet.css" /><link rev="made" href="pgsql-docs@postgresql.org" /><meta name="generator" content="DocBook XSL Stylesheets V1.79.1" /><link rel="prev" href="pltcl-event-trigger.html" title="43.7. PL/Tcl 中的事件触发器过程" /><link rel="next" href="pltcl-subtransactions.html" title="43.9. PL/Tcl中的显式子事务" /></head><body><div xmlns="http://www.w3.org/TR/xhtml1/transitional" class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="5" align="center">43.8. PL/Tcl 中的错误处理</th></tr><tr><td width="10%" align="left"><a accesskey="p" href="pltcl-event-trigger.html" title="43.7. PL/Tcl 中的事件触发器过程">上一页</a> </td><td width="10%" align="left"><a accesskey="u" href="pltcl.html" title="第 43 章 PL/Tcl - Tcl 过程语言">上一级</a></td><th width="60%" align="center">第 43 章 PL/Tcl - Tcl 过程语言</th><td width="10%" align="right"><a accesskey="h" href="index.html" title="PostgreSQL 10.1 手册">起始页</a></td><td width="10%" align="right"> <a accesskey="n" href="pltcl-subtransactions.html" title="43.9. PL/Tcl中的显式子事务">下一页</a></td></tr></table><hr></hr></div><div class="sect1" id="PLTCL-ERROR-HANDLING"><div class="titlepage"><div><div><h2 class="title" style="clear: both">43.8. PL/Tcl 中的错误处理</h2></div></div></div><a id="idp37616928" class="indexterm"></a><p>     PL/Tcl 函数中的 Tcl 代码或者从 PL/Tcl 函数中调用的代码可以抛出一个错误，
+	 错误可以由执行某些非法操作产生或者通过使用 Tcl <code class="function">error</code>
+	 命令或者 PL/Tcl 的<code class="function">elog</code>命令产生。
+	 Tcl 中可以使用 Tcl <code class="function">catch</code>命令捕获这类错误。
+	 如果没有捕获到错误并且允许传播到该 PL/Tcl 函数执行过程的顶层，
+	 它会在函数的调用查询中报告为SQL错误。
+    </p><p>     相反，在 PL/Tcl 的<code class="function">spi_exec</code>、<code class="function">spi_prepare</code>
+	 以及<code class="function">spi_execp</code>命令中发生的SQL错误会被报告为 Tcl 错误，
+	 因此它们也可以被 Tcl 的<code class="function">catch</code>命令捕获。
+	 （这些PL/Tcl命令中的每一个都在子事务中运行其SQL操作，该事务在错误时回滚，
+	 以便任何部分完成的操作都会自动清除。）同样，如果错误传播到顶级而没有被捕获，
+	 它会变回SQL错误。
+    </p><p>     Tcl 提供了一个<code class="varname">errorCode</code>变量，它表示有关于一个错误的附加信息，它的格式易于 Tcl 程序解释。该变量的内容符合 Tcl 列表格式，第一个词标识报告该错误的子系统或者库，之后的内容则留给子系统或者库来填充。对于 PL/Tcl 命令报告的数据库错误，第一个词是<code class="literal">POSTGRES</code>，第二个词是 PostgreSQL 的版本号，剩下的部分是域名称/域值构成的对，它们提供有关该错误的详细信息。域<code class="varname">SQLSTATE</code>、<code class="varname">condition</code>以及<code class="varname">message</code>总是会被提供（前两个表示<a class="xref" href="errcodes-appendix.html" title="附录 A. PostgreSQL错误代码">附录 A</a>中所示的错误代码和情况名称）。可能出现的域包括
+     <code class="varname">detail</code>、<code class="varname">hint</code>、<code class="varname">context</code>、
+     <code class="varname">schema</code>、<code class="varname">table</code>、<code class="varname">column</code>、
+     <code class="varname">datatype</code>、<code class="varname">constraint</code>、
+     <code class="varname">statement</code>、<code class="varname">cursor_position</code>、
+     <code class="varname">filename</code>、<code class="varname">lineno</code>以及
+     <code class="varname">funcname</code>。
+    </p><p>     使用 PL/Tcl 的<code class="varname">errorCode</code>信息的一种便捷方式是把它载入到一个数组中，这样域名称就变成了数组下标。这样做的代码看起来像这样
+</p><pre class="programlisting">if {[catch { spi_exec $sql_command }]} {
+    if {[lindex $::errorCode 0] == "POSTGRES"} {
+        array set errorArray $::errorCode
+        if {$errorArray(condition) == "undefined_table"} {
+            # deal with missing table
+        } else {
+            # deal with some other type of SQL error
+        }
+    }
+}</pre><p>
+     （双冒号显式地指定<code class="varname">errorCode</code>是一个全局变量）。
+    </p></div><div class="navfooter"><hr /><table width="100%" summary="Navigation footer"><tr><td width="40%" align="left"><a accesskey="p" href="pltcl-event-trigger.html">上一页</a> </td><td width="20%" align="center"><a accesskey="u" href="pltcl.html">上一级</a></td><td width="40%" align="right"> <a accesskey="n" href="pltcl-subtransactions.html">下一页</a></td></tr><tr><td width="40%" align="left" valign="top">43.7. PL/Tcl 中的事件触发器过程 </td><td width="20%" align="center"><a accesskey="h" href="index.html">起始页</a></td><td width="40%" align="right" valign="top"> 43.9. PL/Tcl中的显式子事务</td></tr></table></div></body></html>

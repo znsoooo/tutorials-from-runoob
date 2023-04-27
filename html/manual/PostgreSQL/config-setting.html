@@ -1,0 +1,138 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><title>19.1. 设置参数</title><link rel="stylesheet" type="text/css" href="stylesheet.css" /><link rev="made" href="pgsql-docs@postgresql.org" /><meta name="generator" content="DocBook XSL Stylesheets V1.79.1" /><link rel="prev" href="runtime-config.html" title="第 19 章 服务器配置" /><link rel="next" href="runtime-config-file-locations.html" title="19.2. 文件位置" /></head><body><div xmlns="http://www.w3.org/TR/xhtml1/transitional" class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="5" align="center">19.1. 设置参数</th></tr><tr><td width="10%" align="left"><a accesskey="p" href="runtime-config.html" title="第 19 章 服务器配置">上一页</a> </td><td width="10%" align="left"><a accesskey="u" href="runtime-config.html" title="第 19 章 服务器配置">上一级</a></td><th width="60%" align="center">第 19 章 服务器配置</th><td width="10%" align="right"><a accesskey="h" href="index.html" title="PostgreSQL 10.1 手册">起始页</a></td><td width="10%" align="right"> <a accesskey="n" href="runtime-config-file-locations.html" title="19.2. 文件位置">下一页</a></td></tr></table><hr></hr></div><div class="sect1" id="CONFIG-SETTING"><div class="titlepage"><div><div><h2 class="title" style="clear: both">19.1. 设置参数</h2></div></div></div><div class="toc"><dl class="toc"><dt><span class="sect2"><a href="config-setting.html#CONFIG-SETTING-NAMES-VALUES">19.1.1. 参数名称和值</a></span></dt><dt><span class="sect2"><a href="config-setting.html#CONFIG-SETTING-CONFIGURATION-FILE">19.1.2. 通过配置文件影响参数</a></span></dt><dt><span class="sect2"><a href="config-setting.html#CONFIG-SETTING-SQL-COMMAND-INTERACTION">19.1.3. 通过SQL影响参数</a></span></dt><dt><span class="sect2"><a href="config-setting.html#idp20262032">19.1.4. 通过 Shell 影响参数</a></span></dt><dt><span class="sect2"><a href="config-setting.html#CONFIG-INCLUDES">19.1.5. 管理配置文件内容</a></span></dt></dl></div><div class="sect2" id="CONFIG-SETTING-NAMES-VALUES"><div class="titlepage"><div><div><h3 class="title">19.1.1. 参数名称和值</h3></div></div></div><p>     所有参数名都是大小写不敏感的。每个参数都可以接受五种类型之一的值： 布尔、字符串、整数、
+     浮点数或枚举。该类型决定了设置该参数的语法：
+    </p><div class="itemizedlist"><ul class="itemizedlist" style="list-style-type: disc; "><li class="listitem"><p>       <span class="emphasis"><em>布尔:</em></span>
+       值可以被写成
+       <code class="literal">on</code>,
+       <code class="literal">off</code>,
+       <code class="literal">true</code>,
+       <code class="literal">false</code>,
+       <code class="literal">yes</code>,
+       <code class="literal">no</code>,
+       <code class="literal">1</code>,
+       <code class="literal">0</code>
+       （都是大小写不敏感的）或者这些值的任何无歧义前缀。
+      </p></li><li class="listitem"><p>       <span class="emphasis"><em>字符串:</em></span>
+       通常值被包括在单引号内，值内部的任何单引号都需要被双写。不过，如果值是一个简单数字或者
+       标识符，引号通常可以被省略。
+      </p></li><li class="listitem"><p>       <span class="emphasis"><em>数字（整数和浮点）:</em></span>
+       只对浮点参数允许一个小数点。不要使用千位分隔符。不要求引号。
+      </p></li><li class="listitem"><p>       <span class="emphasis"><em>带单位的数字:</em></span>
+       一些数字参数具有隐含单位，因为它们描述内存或时间量。单位可能是千字节、块（通常是 8KB）、 毫秒、秒或分钟。这些设置之一的一个未修饰的数字值将使用该设置的默认单位，默认单位可以通
+       过引用<code class="structname">pg_settings</code>.<code class="structfield">unit</code>来找到。为了方便，也可以
+       显式地指定一个不同的单位，例如时间值可以是<code class="literal">'120 ms'</code>，并且它们将被转换到参数的实际单位。要使用这个特性，注意值必须被写成一个字符
+       串（带有引号）。单位名称是大小写敏感的，并且在数字值和单位之间可以有空白。
+
+       </p><div class="itemizedlist"><ul class="itemizedlist" style="list-style-type: circle; "><li class="listitem"><p>          可用的内存单位是<code class="literal">kB</code>（千字节）、<code class="literal">MB</code>（兆字节）、<code class="literal">GB</code>（吉字节）和 <code class="literal">TB</code> (terabytes)。内存单位的乘数是 1024 而不是 1000。
+         </p></li><li class="listitem"><p>          可用的时间单位是<code class="literal">ms</code>（毫秒）、<code class="literal">s</code>（秒）、<code class="literal">min</code>（分钟）、 <code class="literal">h</code>（小时）和<code class="literal">d</code>（天）。
+         </p></li></ul></div><p>
+      </p></li><li class="listitem"><p>       <span class="emphasis"><em>枚举:</em></span>
+       枚举类型的参数以与字符串参数相同的方式指定，但被限制到一组有限的值。 这样一个参数可用的值可以在<code class="structname">pg_settings</code>.<code class="structfield">enumvals</code>
+       中找到。枚举参数值是大小写无关的。
+      </p></li></ul></div></div><div class="sect2" id="CONFIG-SETTING-CONFIGURATION-FILE"><div class="titlepage"><div><div><h3 class="title">19.1.2. 通过配置文件影响参数</h3></div></div></div><p>     设置这些参数最基本的方法是编辑<code class="filename">postgresql.conf</code><a id="idp20222960" class="indexterm"></a>文件， 它通常被保存在数据目录中（当数据库集簇目录被初始化时，一个默认的拷贝将会被安装在那里）。一个该文件的例子看起来是：
+</p><pre class="programlisting"># This is a comment
+log_connections = yes
+log_destination = 'syslog'
+search_path = '"$user", public'
+shared_buffers = 128MB</pre><p>
+     每一行指定一个参数。名称和值之间的等号是可选的。空白是无意义的（除了在一个引号引用的参数值内）并且空行被忽略。井号（<code class="literal">#</code>）指示该行的剩余部分是一个注释。非简单标识符或者数字的参数值必须用单引号包围。要在参数值里嵌入单引号， 要么写两个单引号（首选）或者在引号前放反斜线。
+    </p><p>     以这种方式设定的参数为集簇提供了默认值。除非这些设置被覆盖，活动会话看到的就是这些设置。
+     下面的小节描述了管理员或用户覆盖这些默认值的方法。
+    </p><p>     <a id="idp20227024" class="indexterm"></a>
+     主服务器进程每次收到<span class="systemitem">SIGHUP</span>信号（最简单的方法是从命令行运行<code class="literal">pg_ctl reload</code>或调用 SQL 函数<code class="function">pg_reload_conf()</code>来发送这个信号）后都会重新读取这个配置
+     文件。主服务器进程还会把这个信号传播给所有正在运行的服务器进程，这样现有的会话也能采用新
+     值（要等待它们完成当前正在执行的客户端命令之后才会发生）。另外，你可以直接向一个单一服务
+     器进程发送该信号。有些参数只能在服务器启动时设置，在配置文件中对这些条目的修改将被忽略，
+     直到下次服务器重启。配置文件中的非法参数设置也会在<span class="systemitem">SIGHUP</span>处理过程中被
+     忽略（但是会记录日志）。
+    </p><p>     除<code class="filename">postgresql.conf</code>之外，<span class="productname">PostgreSQL</span>
+     数据目录还包含一个文件
+     <code class="filename">postgresql.auto.conf</code><a id="idp20234352" class="indexterm"></a>，它具有和<code class="filename">postgresql.conf</code>相同的格式但是不应该被手工编辑。这个
+     文件保存了通过<a class="xref" href="sql-altersystem.html" title="ALTER SYSTEM"><span class="refentrytitle">ALTER SYSTEM</span></a>命令提供的设置。每当<code class="filename">postgresql.conf</code>被读
+     取时这个文件会被自动读取，并且它的设置会以同样的方式生效。
+     <code class="filename">postgresql.auto.conf</code>中的设置会覆盖<code class="filename">postgresql.conf</code>
+     中的设置。
+    </p><p>     如果<span class="systemitem">SIGHUP</span>信号没有产生预期效果，
+     那么系统表<a class="link" href="view-pg-file-settings.html" title="51.69. pg_file_settings"><code class="structname">pg_file_settings</code></a>
+     有助于对配置文件的预测试更改，或者诊断问题。
+    </p></div><div class="sect2" id="CONFIG-SETTING-SQL-COMMAND-INTERACTION"><div class="titlepage"><div><div><h3 class="title">19.1.3. 通过SQL影响参数</h3></div></div></div><p>      <span class="productname">PostgreSQL</span>提供了三个SQL命令来建立配置默认值。
+      已经提到过的<a class="xref" href="sql-altersystem.html" title="ALTER SYSTEM"><span class="refentrytitle">ALTER SYSTEM</span></a>命令提供了一种改变全局默认值的从SQL可
+      访问的方法；它在功效上等效于编辑<code class="filename">postgresql.conf</code>。此外，还有两个命令
+      可以针对每个数据库或者每个角色设置默认值：
+     </p><div class="itemizedlist"><ul class="itemizedlist" style="list-style-type: disc; "><li class="listitem"><p>       <a class="xref" href="sql-alterdatabase.html" title="ALTER DATABASE"><span class="refentrytitle">ALTER DATABASE</span></a>命令允许针对一个数据库覆盖其全局设置。
+      </p></li><li class="listitem"><p>       <a class="xref" href="sql-alterrole.html" title="ALTER ROLE"><span class="refentrytitle">ALTER ROLE</span></a>命令允许用用户指定的值来覆盖全局设置和数据库设置。
+      </p></li></ul></div><p>      只有当开始一个新的数据库会话时，用<code class="command">ALTER DATABASE</code>和
+      <code class="command">ALTER ROLE</code>设置的值才会被应用。它们会覆盖从配置文件或服务器命令行
+      获得的值，并且作为该会话后续的默认值。注意某些设置在服务器启动后不能被更改，并且因此
+      不能被这些命令（或者下文列举的命令）设置。
+    </p><p>      一旦一个客户端连接到数据库，<span class="productname">PostgreSQL</span>会提供两个额外的SQL命令（
+      以及等效的函数）用以影响会话本地的配置设置：
+    </p><div class="itemizedlist"><ul class="itemizedlist" style="list-style-type: disc; "><li class="listitem"><p>      <a class="xref" href="sql-show.html" title="SHOW"><span class="refentrytitle">SHOW</span></a>命令允许察看所有参数的当前值。对应的函数是
+      <code class="function">current_setting(setting_name text)</code>。
+     </p></li><li class="listitem"><p>       <a class="xref" href="sql-set.html" title="SET"><span class="refentrytitle">SET</span></a>命令允许修改对于一个会话可以本地设置的参数的当前值，
+       它对其他会话没有影响。对应的函数是
+       <code class="function">set_config(setting_name, new_value, is_local)</code>。
+      </p></li></ul></div><p>     此外，系统视图<a class="link" href="view-pg-settings.html" title="51.85. pg_settings"><code class="structname">pg_settings</code></a>可以被用来查看和改变
+     会话本地的值：
+    </p><div class="itemizedlist"><ul class="itemizedlist" style="list-style-type: disc; "><li class="listitem"><p>       查询这个视图与使用<code class="command">SHOW ALL</code>相似，但是可以提供更多细节。它也更加灵活，
+       因为可以为它指定过滤条件或者把它与其他关系进行连接。
+      </p></li><li class="listitem"><p>       在这个视图上使用<a class="xref" href="sql-update.html" title="UPDATE"><span class="refentrytitle">UPDATE</span></a>并且指定更新<code class="structname">setting</code>
+       列，其效果等同于发出<code class="command">SET</code>命令。例如，下面的命令
+</p><pre class="programlisting">SET configuration_parameter TO DEFAULT;</pre><p>
+       等效于：
+</p><pre class="programlisting">UPDATE pg_settings SET setting = reset_val WHERE name = 'configuration_parameter';</pre><p>
+      </p></li></ul></div></div><div class="sect2" id="idp20262032"><div class="titlepage"><div><div><h3 class="title">19.1.4. 通过 Shell 影响参数</h3></div></div></div><p>      除了在数据库或者角色层面上设置全局默认值或者进行覆盖，你还可以通过 shell 工具把设置
+      传递给<span class="productname">PostgreSQL</span>。服务器和<span class="application">libpq</span>
+      客户端库都能通过 shell 接受参数值。
+     </p><div class="itemizedlist"><ul class="itemizedlist" style="list-style-type: disc; "><li class="listitem"><p>       在服务器启动期间，可以通过<code class="option">-c</code>命令行参数把参数设置传递给
+       <code class="command">postgres</code>命令。例如：
+</p><pre class="programlisting">postgres -c log_connections=yes -c log_destination='syslog'</pre><p>
+       这种方式提供的设置会覆盖通过<code class="filename">postgresql.conf</code>或者
+       <code class="command">ALTER SYSTEM</code>提供的设置，因此除了重启服务器之外无法从全局上改变它们。
+     </p></li><li class="listitem"><p>      当通过<span class="application">libpq</span>启动一个客户端会话时，可以使用<code class="envar">PGOPTIONS</code>
+      环境变量指定参数设置。这种方式建立的设置构成了会话生存期间的默认值，但是不会影响
+      其他的会话。由于历史原因，<code class="envar">PGOPTIONS</code>的格式和启动
+      <code class="command">postgres</code>命令时用到的相似，特别是<code class="option">-c</code>标志必须被指定。
+      例如：
+</p><pre class="programlisting">env PGOPTIONS="-c geqo=off -c statement_timeout=5min" psql</pre><p>
+     </p><p>      通过 shell 或者其他方式，其他客户端和库可能提供它们自己的机制，以便允许用户在不直接
+      使用SQL命令的前提下修改会话设置。
+     </p></li></ul></div></div><div class="sect2" id="CONFIG-INCLUDES"><div class="titlepage"><div><div><h3 class="title">19.1.5. 管理配置文件内容</h3></div></div></div><p>      <span class="productname">PostgreSQL</span>提供了一些特性用于把复杂的
+      <code class="filename">postgresql.conf</code>文件分解成子文件。在管理多个具有相关但不完全相同
+      配置的服务器时，这些特性特别有用。
+     </p><p>      <a id="idp20276768" class="indexterm"></a>
+         除了单个参数设置，<code class="filename">postgresql.conf</code>文件可以包含<em class="firstterm">包括指令</em>，它指定要读入和处理的另一个文件，就好像该文件被插入到配置文件的这个点。这个特性允许一个配置文件被划分成物理上独立的部分。包括指令看起来像：
+</p><pre class="programlisting">include 'filename'</pre><p>
+         如果文件名不是一个绝对路径，它将作为包含引用配置文件的目录的相对位置。包括可以被嵌套。
+     </p><p>      <a id="idp20280976" class="indexterm"></a>
+         也有一个<code class="literal">include_if_exists</code>指令，它的作用和<code class="literal">include</code>指令一样，不过当被引用的文件不存在或者无法被读取时其行为不同。一个通常的<code class="literal">include</code>将认为这是一个错误情况，而<code class="literal">include_if_exists</code>仅仅记录一个消息并且继续处理引用配置文件。
+     </p><p>      <a id="idp20285856" class="indexterm"></a>
+        <code class="filename">postgresql.conf</code>文件也可以包含<code class="literal">include_dir</code>指令，它指定要被包含的配置文件的一整个目录。它的用法类似：
+</p><pre class="programlisting">include_dir 'directory'</pre><p>
+        非绝对目录名被当做包含引用配置文件的目录的相对路径。在该指定目录中，只有以后缀名
+        <code class="literal">.conf</code>结尾的非目录文件才会被包括。以<code class="literal">.</code>
+        字符开头的文件名也会被忽略，因为在某些平台上它们是隐藏文件。一个包括目录中的多个文件
+        被以文件名顺序处理（根据 C 区域规则排序，即数字在字母之前并且大写字母在小写字母
+        之前）。
+     </p><p>       包括文件或目录可以被用来在逻辑上分隔数据库配置的各个部分，而不是用一个很大的<code class="filename">postgresql.conf</code>文件。考虑一个有两台数据库服务器的公司，每一个都有不同的内存量。很可能配置的元素都会被共享，例如用于日志的参数。但是两者关于内存的参数将会不同。并且还可能会有服务器相关的自定义。一种管理这类情况的方法是将你的站点的自定义配置修改分成三个文件。你可以把下面的内容加入到你的<code class="filename">postgresql.conf</code>文件末尾来包括它们：
+</p><pre class="programlisting">include 'shared.conf'
+include 'memory.conf'
+include 'server.conf'</pre><p>
+       所有的系统将会有相同的<code class="filename">shared.conf</code>。每个有特定内存量的服务器可以共享相同的<code class="filename">memory.conf</code>。你可能对所有 8GB 内存的服务器有一个，而对那些 16GB 内存的服务器有另一个。并且最后<code class="filename">server.conf</code>可以装有真正服务器相关的配置信息。
+     </p><p>       另一中可能性是创建一个配置文件目录并把这个信息放到其中的文件里。例如，一个<code class="filename">conf.d</code>目录可以在<code class="filename">postgresql.conf</code>的末尾被引用：
+</p><pre class="programlisting">include_dir 'conf.d'</pre><p>
+       然后你可以这样命名<code class="filename">conf.d</code>目录中的文件：
+ </p><pre class="programlisting">00shared.conf
+01memory.conf
+02server.conf</pre><p>
+       这种命名习惯建立了这些文件将被载入的清晰顺序。这是很重要的，因为在服务器读取配置
+       文件时，对于一个特定的参数只有最后碰到的一个设置才会被使用。在这个例子中，
+       <code class="filename">conf.d/02server.conf</code>设置的东西将会覆盖在
+       <code class="filename">conf.d/01memory.conf</code>中相同参数的值。
+     </p><p>       你还可以使用这种配置目录方法，在命名文件时更有描述性：
+</p><pre class="programlisting">00shared.conf
+01memory-8GB.conf
+02server-foo.conf</pre><p>
+       这种形式的安排为每个配置文件变体给定了一个唯一的名称。当多个服务器把它们的配置全部存储在一个位置（例如在一个版本控制仓库中）时，这可以帮助消除歧义（在版本控制下存储数据库配置文件是另一个值得考虑的好方法）。
+     </p></div></div><div class="navfooter"><hr /><table width="100%" summary="Navigation footer"><tr><td width="40%" align="left"><a accesskey="p" href="runtime-config.html">上一页</a> </td><td width="20%" align="center"><a accesskey="u" href="runtime-config.html">上一级</a></td><td width="40%" align="right"> <a accesskey="n" href="runtime-config-file-locations.html">下一页</a></td></tr><tr><td width="40%" align="left" valign="top">第 19 章 服务器配置 </td><td width="20%" align="center"><a accesskey="h" href="index.html">起始页</a></td><td width="40%" align="right" valign="top"> 19.2. 文件位置</td></tr></table></div></body></html>

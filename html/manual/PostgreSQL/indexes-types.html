@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><title>11.2. 索引类型</title><link rel="stylesheet" type="text/css" href="stylesheet.css" /><link rev="made" href="pgsql-docs@postgresql.org" /><meta name="generator" content="DocBook XSL Stylesheets V1.79.1" /><link rel="prev" href="indexes-intro.html" title="11.1. 简介" /><link rel="next" href="indexes-multicolumn.html" title="11.3. 多列索引" /></head><body><div xmlns="http://www.w3.org/TR/xhtml1/transitional" class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="5" align="center">11.2. 索引类型</th></tr><tr><td width="10%" align="left"><a accesskey="p" href="indexes-intro.html" title="11.1. 简介">上一页</a> </td><td width="10%" align="left"><a accesskey="u" href="indexes.html" title="第 11 章 索引">上一级</a></td><th width="60%" align="center">第 11 章 索引</th><td width="10%" align="right"><a accesskey="h" href="index.html" title="PostgreSQL 10.1 手册">起始页</a></td><td width="10%" align="right"> <a accesskey="n" href="indexes-multicolumn.html" title="11.3. 多列索引">下一页</a></td></tr></table><hr></hr></div><div class="sect1" id="INDEXES-TYPES"><div class="titlepage"><div><div><h2 class="title" style="clear: both">11.2. 索引类型</h2></div></div></div><p>   <span class="productname">PostgreSQL</span>提供了多种索引类型：
+   B-tree、Hash、GiST、SP-GiST 、GIN 和 BRIN。每一种索引类型使用了
+   一种不同的算法来适应不同类型的查询。默认情况下，
+   <code class="command">CREATE INDEX</code>命令创建适合于大部分情况的B-tree 索引。
+  </p><p>   <a id="idp16552032" class="indexterm"></a>
+   <a id="idp16553136" class="indexterm"></a>
+   B-tree可以在可排序数据上的处理等值和范围查询。特别地，<span class="productname">PostgreSQL</span>的查询规划器会在任何一种涉及到以下操作符的已索引列上考虑使用B-tree索引：
+
+   </p><table border="0" summary="Simple list" class="simplelist"><tr><td><code class="literal">&lt;</code></td></tr><tr><td><code class="literal">&lt;=</code></td></tr><tr><td><code class="literal">=</code></td></tr><tr><td><code class="literal">&gt;=</code></td></tr><tr><td><code class="literal">&gt;</code></td></tr></table><p>
+
+   将这些操作符组合起来，例如<code class="literal">BETWEEN</code>和<code class="literal">IN</code>，也可以用B-tree索引搜索实现。同样，在索引列上的<code class="literal">IS NULL</code>或<code class="literal">IS NOT
+   NULL</code>条件也可以在B-tree索引中使用。
+  </p><p>   优化器也会将B-tree索引用于涉及到模式匹配操作符<code class="literal">LIKE</code>和<code class="literal">~</code> 的查询，前提是<span class="emphasis"><em>如果</em></span>模式是一个常量且被固定在字符串的开头—例如：<code class="literal">col LIKE
+   'foo%'</code>或者<code class="literal">col ~ '^foo'</code>, 但在<code class="literal">col LIKE '%bar'</code>上则不会。但是，如果我们的数据库没有使用C区域设置，我们需要创建一个具有特殊操作符类的索引来支持模式匹配查询，参见下面的<a class="xref" href="indexes-opclass.html" title="11.9. 操作符类和操作符族">第 11.9 节</a>。同样可以将B-tree索引用于<code class="literal">ILIKE</code>和<code class="literal">~*</code>，但仅当模式以非字母字符开始，即不受大小写转换影响的字符。
+  </p><p>   B-tree索引也可以用于检索排序数据。这并不会总是比简单扫描和排序更快，但是总是有用的。
+  </p><p>   <a id="idp16569968" class="indexterm"></a>
+   <a id="idp16571072" class="indexterm"></a>
+   Hash索引只能处理简单等值比较。不论何时当一个索引列涉及到一个使用了<code class="literal">=</code>操作符的比较时，查询规划器将考虑使用一个Hash索引。下面的命令将创建一个Hash索引：
+</p><pre class="synopsis">CREATE INDEX <em class="replaceable"><code>name</code></em> ON <em class="replaceable"><code>table</code></em> USING HASH (<em class="replaceable"><code>column</code></em>);</pre><p>
+  </p><p>   <a id="idp16575488" class="indexterm"></a>
+   <a id="idp16576592" class="indexterm"></a>
+   GiST索引并不是一种单独的索引，而是可以用于实现很多不同索引策略的基础设施。相应地，可以使用一个GiST索引的特定操作符根据索引策略（<em class="firstterm">操作符类</em>）而变化。作为一个例子，<span class="productname">PostgreSQL</span>的标准捐献包中包括了用于多种二维几何数据类型的GiST操作符类，它用来支持使用下列操作符的索引化查询：
+
+   </p><table border="0" summary="Simple list" class="simplelist"><tr><td><code class="literal">&lt;&lt;</code></td></tr><tr><td><code class="literal">&amp;&lt;</code></td></tr><tr><td><code class="literal">&amp;&gt;</code></td></tr><tr><td><code class="literal">&gt;&gt;</code></td></tr><tr><td><code class="literal">&lt;&lt;|</code></td></tr><tr><td><code class="literal">&amp;&lt;|</code></td></tr><tr><td><code class="literal">|&amp;&gt;</code></td></tr><tr><td><code class="literal">|&gt;&gt;</code></td></tr><tr><td><code class="literal">@&gt;</code></td></tr><tr><td><code class="literal">&lt;@</code></td></tr><tr><td><code class="literal">~=</code></td></tr><tr><td><code class="literal">&amp;&amp;</code></td></tr></table><p>
+
+   （这些操作符的含义见<a class="xref" href="functions-geometry.html" title="9.11. 几何函数和操作符">第 9.11 节</a>）<a class="xref" href="gist-builtin-opclasses.html#GIST-BUILTIN-OPCLASSES-TABLE" title="表 62.1. 内建GiST操作符类">表 62.1</a>中给出了标准发布中所包括的 GiST 操作符类。<code class="literal">contrib</code>集合中还包括了很多其他GiST操作符类，可见<a class="xref" href="gist.html" title="第 62 章 GiST 索引">第 62 章</a>。
+  </p><p>   GiST索引也有能力优化<span class="quote">“<span class="quote">最近邻</span>”</span>搜索，例如：
+</p><pre class="programlisting">SELECT * FROM places ORDER BY location &lt;-&gt; point '(101,456)' LIMIT 10;</pre><p>
+   它将找到离给定目标点最近的10个位置。能够支持这种查询的能力同样取决于被使用的特定操作符类。
+   在<a class="xref" href="gist-builtin-opclasses.html#GIST-BUILTIN-OPCLASSES-TABLE" title="表 62.1. 内建GiST操作符类">表 62.1</a>中，<span class="quote">“<span class="quote">Ordering Operators</span>”</span>列中列出了可以在这种方法中使用的操作符。
+  </p><p>   <a id="idp16594752" class="indexterm"></a>
+   <a id="idp16595856" class="indexterm"></a>
+   和GiST相似，SP-GiST索引为支持多种搜索提供了一种基础结构。SP-GiST 允许实现众多不同的非平衡的基于磁盘的数据结构，例如四叉树、k-d树和radix树。作为一个例
+子，<span class="productname">PostgreSQL</span>的标准捐献包中包含了一个用于二维点的SP-GiST操作符类，它用于支持使用下列操作符的索引化查询：
+
+   </p><table border="0" summary="Simple list" class="simplelist"><tr><td><code class="literal">&lt;&lt;</code></td></tr><tr><td><code class="literal">&gt;&gt;</code></td></tr><tr><td><code class="literal">~=</code></td></tr><tr><td><code class="literal">&lt;@</code></td></tr><tr><td><code class="literal">&lt;^</code></td></tr><tr><td><code class="literal">&gt;^</code></td></tr></table><p>
+
+   （其含义见<a class="xref" href="functions-geometry.html" title="9.11. 几何函数和操作符">第 9.11 节</a>）<a class="xref" href="spgist-builtin-opclasses.html#SPGIST-BUILTIN-OPCLASSES-TABLE" title="表 63.1. 内建 SP-GiST 操作符类">表 63.1</a>中给出了标准发布中所包括的 SP-GiST 操作符类。更多信息参见<a class="xref" href="spgist.html" title="第 63 章 SP-GiST索引">第 63 章</a>。
+  </p><p>   <a id="idp16605584" class="indexterm"></a>
+   <a id="idp16606656" class="indexterm"></a>
+   GIN 索引是<span class="quote">“<span class="quote">倒排索引</span>”</span>，它适合于包含多个组成值的数据值，例如数组。倒排索引中为每一个组成值都包含一个单独的项，它可以高效地处理测试指定组成值是否存在的查询。
+  </p><p>   与 GiST 和 SP-GiST相似， GIN可以支持多种不同的用户定义的索引策略和特定操作符，通过它一个GIN索引可以被根据索引策略被使用。作为一个例子，<span class="productname">PostgreSQL</span>的标准贡献包中包含了一个用于数组的GIN操作符类，它用于支持使用下列操作符的索引化查询：
+
+   </p><table border="0" summary="Simple list" class="simplelist"><tr><td><code class="literal">&lt;@</code></td></tr><tr><td><code class="literal">@&gt;</code></td></tr><tr><td><code class="literal">=</code></td></tr><tr><td><code class="literal">&amp;&amp;</code></td></tr></table><p>
+
+   （这些操作符的含义见<a class="xref" href="functions-array.html" title="9.18. 数组函数和操作符">第 9.18 节</a>）<a class="xref" href="gin-builtin-opclasses.html#GIN-BUILTIN-OPCLASSES-TABLE" title="表 64.1. 内建GIN操作符类">表 64.1</a>中给出了标准发布中所包括的 GIN 操作符类。在<code class="literal">contrib</code>集合中还有更多其他GIN操作符类，更多信息参见<a class="xref" href="gin.html" title="第 64 章 GIN 索引">第 64 章</a>。
+  </p><p>   <a id="idp16616560" class="indexterm"></a>
+   <a id="idp16617664" class="indexterm"></a>
+   BRIN 索引（块范围索引的缩写）存储有关存放在一个表的连续物理块范围上的值摘要信息。与 GiST、SP-GiST 和 GIN 相似，BRIN可以支持很多种不同的索引策略，并且可以与一个 BRIN 索引配合使用的特定操作符取决于索引策略。对于具有线性排序顺序的数据类型，被索引的数据对应于每个块范围的列中值的最小值和最大值，使用这些操作符来支持用到索引的查询：
+
+   </p><table border="0" summary="Simple list" class="simplelist"><tr><td><code class="literal">&lt;</code></td></tr><tr><td><code class="literal">&lt;=</code></td></tr><tr><td><code class="literal">=</code></td></tr><tr><td><code class="literal">&gt;=</code></td></tr><tr><td><code class="literal">&gt;</code></td></tr></table><p>
+
+   包括在标准发布中的 BRIN 操作符类的文档在<a class="xref" href="brin-builtin-opclasses.html#BRIN-BUILTIN-OPCLASSES-TABLE" title="表 65.1. 内建 BRIN 操作符类">表 65.1</a>中。更多信息请见<a class="xref" href="brin.html" title="第 65 章 BRIN 索引">第 65 章</a>。
+  </p></div><div class="navfooter"><hr /><table width="100%" summary="Navigation footer"><tr><td width="40%" align="left"><a accesskey="p" href="indexes-intro.html">上一页</a> </td><td width="20%" align="center"><a accesskey="u" href="indexes.html">上一级</a></td><td width="40%" align="right"> <a accesskey="n" href="indexes-multicolumn.html">下一页</a></td></tr><tr><td width="40%" align="left" valign="top">11.1. 简介 </td><td width="20%" align="center"><a accesskey="h" href="index.html">起始页</a></td><td width="40%" align="right" valign="top"> 11.3. 多列索引</td></tr></table></div></body></html>

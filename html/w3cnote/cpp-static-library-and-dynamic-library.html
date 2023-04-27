@@ -1,0 +1,1267 @@
+<!Doctype html>
+<html>
+<head>
+	<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+	<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+	<title>C++静态库与动态库 | 菜鸟教程</title>
+
+  <meta name='robots' content='max-image-preview:large' />
+<link rel='stylesheet' id='classic-theme-styles-css' href='http://www.runoob.com/wp-includes/css/classic-themes.min.css?ver=6.2' type='text/css' media='all' />
+<link rel="canonical" href="http://www.runoob.com/w3cnote/cpp-static-library-and-dynamic-library.html" />
+<meta name="keywords" content="C++静态库与动态库">
+<meta name="description" content="这次分享的宗旨是——让大家学会创建与使用静态库、动态库，知道静态库与动态库的区别，知道使用的时候如何选择。这里不深入介绍静态库、动态库的底层&amp;#26684;式，内存布局等，有兴趣的同学，推荐一本书《程序员的自我修养——链接、装载与库》。  1.什么是库  库是写好的现有的，成熟的，可以复用的代码。现实中每个程序都要依赖很多基础的底层库，不可能每个人的代码都从零开始，因此库的存在意义非同寻常。 本质上来说库是一种可执行代码的二进制..">
+		
+	<link rel="shortcut icon" href="https://static.runoob.com/images/favicon.ico">
+	<link rel="stylesheet" href="/wp-content/themes/runoob/style.css?v=1.170" type="text/css" media="all" />	
+	<link rel="stylesheet" href="https://cdn.staticfile.org/font-awesome/4.7.0/css/font-awesome.min.css" media="all" />	
+  <!--[if gte IE 9]><!-->
+  <script src="https://cdn.staticfile.org/jquery/2.0.3/jquery.min.js"></script>
+  <!--<![endif]-->
+  <!--[if lt IE 9]>
+     <script src="https://cdn.staticfile.org/jquery/1.9.1/jquery.min.js"></script>
+     <script src="https://cdn.staticfile.org/html5shiv/r29/html5.min.js"></script>
+  <![endif]-->
+  <link rel="apple-touch-icon" href="https://static.runoob.com/images/icon/mobile-icon.png"/>
+  <meta name="apple-mobile-web-app-title" content="菜鸟教程">
+</head>
+<body>
+
+<!--  头部 -->
+<div class="container logo-search">
+
+  <div class="col search row-search-mobile">
+    <form action="index.php">
+      <input class="placeholder" placeholder="搜索……" name="s" autocomplete="off">
+      
+    </form>
+  </div>
+
+  <div class="row">
+    <div class="col logo">
+      <h1><a href="/">菜鸟教程 -- 学的不仅是技术，更是梦想！</a></h1>
+    </div>
+        <div class="col right-list"> 
+    <button class="btn btn-responsive-nav btn-inverse" data-toggle="collapse" data-target=".nav-main-collapse" id="pull" style=""> <i class="fa fa-navicon"></i> </button>
+    </div>
+        
+    <div class="col search search-desktop last">
+      <div class="search-input" >
+      <form action="//www.runoob.com/" target="_blank">
+        <input class="placeholder" id="s" name="s" placeholder="搜索……"  autocomplete="off" style="height: 44px;">
+      </form>
+      
+      </div>
+    </div>
+  </div>
+</div>
+
+
+
+<!-- 导航栏 -->
+<div class="container navigation">
+    <div class="row">
+        <div class="col nav">
+            
+
+                        <ul class="pc-nav" id="note-nav">
+                <li><a href="//www.runoob.com/">首页</a></li>
+                <li><a href="/w3cnote">笔记首页</a></li>
+                <li><a href="/w3cnote/android-tutorial-intro.html" title="Android 基础入门教程">Android</a></li>
+                <li><a href="/w3cnote/es6-tutorial.html" title="ES6 教程">ES6 教程</a></li>
+                <li><a href="/w3cnote/ten-sorting-algorithm.html" title="排序算法">排序算法</a></li>
+                <li><a href="/w3cnote/hadoop-tutorial.html" title="Hadoop 教程">Hadoop</a></li>
+                <li><a href="/w3cnote/zookeeper-tutorial.html" title="Zookeeper 教程">Zookeeper</a></li>
+                <li><a href="/w3cnote/verilog-tutorial.html" title="Verilog 教程">Verilog</a></li>
+                <li><a href="/w3cnote_genre/code" title="编程技术">编程技术</a></li> 
+                <li><a href="/w3cnote_genre/coderlife" title="程序员人生">程序员人生</a></li>
+                
+                <!--<li><a href="javascript:;" class="runoob-pop">登录</a></li>
+                
+                
+                        <li>
+                <a style="font-weight:bold;" href="https://www.runoob.com/linux/linux-tutorial.html#yunserver" target="_blank" onclick="_hmt.push(['_trackEvent', 'aliyun', 'click', 'aliyun'])" title="kkb">云服务器</a>
+                </li>
+                <li><a href="http://gk.link/a/104mQ" target="_blank" style="font-weight: bold;"onclick="_hmt.push(['_trackEvent', '极客时间', 'click', 'jike'])" title="我的圈子">极客时间</a></li>
+            
+                
+                <li><a target="_blank" href="/shoppinglist" rel="nofollow">知识店铺</a></li> 
+        -->
+            </ul>
+                        
+              
+            <ul class="mobile-nav">
+                <li><a href="/w3cnote">首页</a></li>
+                <li><a href="/w3cnote_genre/android" target="_blank" title="Android 基础入门教程">Android</a></li>
+                <li><a href="/w3cnote/es6-tutorial.html" target="_blank" title="ES6 教程">ES6</a></li>
+                <li><a href="/w3cnote_genre/joke" target="_blank" title="程序员笑话">逗乐</a></li>
+                
+                <a href="javascript:void(0)" class="search-reveal">Search</a> 
+            </ul>
+            
+        </div>
+    </div>
+</div>
+
+
+<!--  内容  -->
+<div class="container main">
+	<div class="row">
+
+		<div class="col middle-column big-middle-column">
+	 			<div class="article">
+			<div class="article-heading">
+				<h2>C++静态库与动态库</h2>				<h3><em>分类</em> <a href="/w3cnote_genre/code" title="编程技术" >编程技术</a> </h3>
+			</div>
+			<div class="article-body note-body">
+				<div class="article-intro">
+					<p>这次分享的<strong>宗旨</strong>是——让大家学会创建与使用静态库、动态库，知道静态库与动态库的区别，知道使用的时候如何选择。这里不深入介绍静态库、动态库的底层&#26684;式，内存布局等，有兴趣的同学，推荐一本书《程序员的自我修养——链接、装载与库》。</p>
+
+<h2>1.什么是库</h2>
+
+<p>库是写好的现有的，成熟的，可以复用的代码。<strong>现实中每个程序都要依赖很多基础的底层库，不可能每个人的代码都从零开始，因此库的存在意义非同寻常</strong>。</p>
+<p>本质上来说库是一种可执行代码的二进制形式，可以被操作系统载入内存执行。库有两种：静态库（.a、.lib）和动态库（.so、.dll）。</p>
+<p>所谓静态、动态是指链接。回顾一下，将一个程序编译成可执行程序的步骤：</p>
+<p align="center"><a target="_blank" href="http://www.runoob.com/wp-content/uploads/2015/05/16201601-66b55a2f0ec74c5b8a773a0e1904e812.png" style="color:rgb(61,129,238)"><img decoding="async" title="clip_image002[4]" border="0" alt="clip_image002[4]" src="//www.runoob.com/wp-content/uploads/2015/05/16201601-66b55a2f0ec74c5b8a773a0e1904e812.png" width="554" height="263"></a></p>
+<p align="center">图：编译过程</p>
+
+<h2>2.静态库</h2>
+
+<p>之所以成为【静态库】，是因为在链接阶段，会将汇编生成的目标文件.o与引用到的库一起链接打包到可执行文件中。因此对应的链接方式称为静态链接。</p>
+<p>试想一下，静态库与汇编生成的目标文件一起链接为可执行文件，那么静态库必定跟.o文件&#26684;式相&#20284;。其实一个静态库可以简单看成是<strong>一组目标文件（</strong><strong>.o/.obj</strong><strong>文件）的集合</strong>，即很多目标文件经过压缩打包后形成的一个文件。静态库特点总结：</p>
+<p>-&nbsp;&nbsp;静态库对函数库的链接是放在编译时期完成的。</p>
+<p>-&nbsp;&nbsp;程序在运行时与函数库再无瓜葛，移植方便。</p>
+<p>-&nbsp;&nbsp;浪费空间和资源，因为所有相关的目标文件与牵涉到的函数库被链接合成一个可执行文件。</p>
+<p>下面编写一些简单的四则运算C&#43;&#43;类，将其编译成静态库给他人用，头文件如下所示：</p>
+
+<table cellspacing="0" cellpadding="0" border="1">
+<tbody>
+<tr>
+<td valign="top" style="background:black">
+<strong>StaticMath.h头文件</strong>
+</td>
+</tr>
+<tr>
+<td valign="top" style="background:rgb(204,204,204)">
+<pre>
+#pragma once
+class StaticMath
+{
+public:
+    StaticMath(void);
+    ~StaticMath(void);
+ 
+    static double add(double a, double b);//加法
+    static double sub(double a, double b);//减法
+    static double mul(double a, double b);//乘法
+    static double div(double a, double b);//除法
+
+    void print();
+};
+</pre>
+</td>
+</tr>
+</tbody>
+</table>
+
+<p>Linux下使用<strong><em>ar</em></strong>工具、Windows下vs使用<strong><em>lib.exe</em></strong>，将目标文件压缩到一起，并且对其进行编号和索引，以便于查找和检索。一般创建静态库的步骤如图所示：</p>
+<p align="center"><a target="_blank" href="http://www.runoob.com/wp-content/uploads/2015/05/16201602-e0b2900a915d4dce8b4af5153c8b2d72.png" style="color:rgb(61,129,238)"><img decoding="async" loading="lazy" title="clip_image004[4]" border="0" alt="clip_image004[4]" src="//www.runoob.com/wp-content/uploads/2015/05/16201602-e0b2900a915d4dce8b4af5153c8b2d72.png" width="484" height="316"></a></p>
+<p align="center">图：创建静态库过程</p>
+
+<h3>2.1.Linux下创建与使用静态库</h3>
+<h4>2.1.1.Linux静态库命名规则</h4>
+<p>Linux静态库命名规范，必须是&quot;lib[your_library_name].a&quot;：lib为前缀，中间是静态库名，扩展名为.a。</p>
+<h4>2.1.2.创建静态库（.a）</h4>
+<p>通过上面的流程可以知道，Linux创建静态库过程如下：</p>
+<p>-&nbsp;&nbsp;首先，将代码文件编译成目标文件.o（StaticMath.o）</p>
+
+<pre>g++ -c StaticMath.cpp</pre>
+
+<p>注意带参数-c，否则直接编译为可执行文件</p>
+<p>-&nbsp;&nbsp;然后，通过ar工具将目标文件打包成.a静态库文件</p>
+
+<pre>ar -crv libstaticmath.a StaticMath.o</pre>
+
+<p>生成静态库<strong><em>libstaticmath.a</em></strong>。</p>
+<p align="center"><a target="_blank" href="http://www.runoob.com/wp-content/uploads/2015/05/16201604-713c3a4a83aa4c17868a16f13b49027b.jpg" style="color:rgb(61,129,238)"><img decoding="async" loading="lazy" title="clip_image006[4]" border="0" alt="clip_image006[4]" src="//www.runoob.com/wp-content/uploads/2015/05/16201604-713c3a4a83aa4c17868a16f13b49027b.jpg" width="554" height="180"></a></p>
+<p>大一点的项目会编写makefile文件（CMake等等工程管理工具）来生成静态库，输入多个命令太麻烦了。</p>
+<h4>2.1.3.使用静态库</h4>
+<p>编写使用上面创建的静态库的测试代码：</p>
+
+<table cellspacing="0" cellpadding="0" border="1">
+<tbody>
+<tr>
+<td valign="top" style="background:black">
+<strong>测试代码：</strong>
+</td>
+</tr>
+<tr>
+<td valign="top" style="background:rgb(204,204,204)">
+<pre>
+#include "StaticMath.h"
+#include &lt;iostream&gt;
+using namespace std;
+
+int main(int argc, char* argv[])
+{
+    double a = 10;
+    double b = 2;
+
+    cout &lt;&lt; "a + b = " &lt;&lt; StaticMath::add(a, b) &lt;&lt; endl;
+    cout &lt;&lt; "a - b = " &lt;&lt; StaticMath::sub(a, b) &lt;&lt; endl;
+    cout &lt;&lt; "a * b = " &lt;&lt; StaticMath::mul(a, b) &lt;&lt; endl;
+    cout &lt;&lt; "a / b = " &lt;&lt; StaticMath::div(a, b) &lt;&lt; endl;
+
+    StaticMath sm;
+    sm.print();
+
+    system("pause");
+    return 0;
+}
+</pre>
+</td>
+</tr>
+</tbody>
+</table>
+
+<p>Linux下使用静态库，只需要在编译的时候，指定静态库的搜索路径（-L选项）、指定静态库名（不需要lib前缀和.a后缀，-l选项）。</p>
+<p># g&#43;&#43; TestStaticLibrary.cpp -<strong>L../StaticLibrary&nbsp;-lstaticmath</strong></p>
+<p align="center"><a target="_blank" href="http://www.runoob.com/wp-content/uploads/2015/05/16201604-ae57e89353c74265a0f1d26e89ffdbd5.jpg" style="color:rgb(61,129,238)"><img decoding="async" loading="lazy" title="clip_image008[4]" border="0" alt="clip_image008[4]" src="//www.runoob.com/wp-content/uploads/2015/05/16201604-ae57e89353c74265a0f1d26e89ffdbd5.jpg" width="554" height="155"></a></p>
+<p>-&nbsp;&nbsp;-L：表示要连接的库所在目录</p>
+<p>-&nbsp;&nbsp;-l：指定链接时需要的动态库，编译器查找动态连接库时有隐含的命名规则，即在给出的名字前面加上lib，后面加上.a或.so来确定库的名称。</p>
+
+<h3>2.2.Windows下创建与使用静态库</h3>
+<h4>2.2.1.创建静态库（.lib）</h4>
+<p>如果是使用VS命令行生成静态库，也是分两个步骤来生成程序：</p>
+<p>-&nbsp;&nbsp;首先，通过使用带编译器选项&nbsp;<strong>/c</strong>&nbsp;的&nbsp;<strong>Cl.exe</strong>&nbsp;编译代码&nbsp;(<strong>cl
+ /c&nbsp;StaticMath.cpp</strong>)，创建名为"StaticMath.obj"的目标文件。</p>
+<p>-&nbsp;&nbsp;然后，使用库管理器&nbsp;<strong>Lib.exe</strong>&nbsp;链接代码&nbsp;(<strong>lib&nbsp;StaticMath.obj</strong>)，创建静态库StaticMath.lib。</p>
+<p>当然，我们一般不这么用，使用VS工程设置更方便。创建win32控制台程序时，勾选静态库类型；打开工程"属性面板"--"配置属性"--"常规"，配置类型选择静态库。</p>
+<p align="center"><a target="_blank" href="http://www.runoob.com/wp-content/uploads/2015/05/16201605-6a3acac10b40402ea99343ad092f0061.jpg" style="color:rgb(61,129,238)"><img decoding="async" loading="lazy" title="clip_image010[4]" border="0" alt="clip_image010[4]" src="//www.runoob.com/wp-content/uploads/2015/05/16201605-6a3acac10b40402ea99343ad092f0061.jpg" width="554" height="359"></a></p>
+<p align="center">图：vs静态库项目属性设置</p>
+<p>Build项目即可生成静态库。</p>
+<h4>2.2.2.使用静态库</h4>
+<p>测试代码Linux下面的一样。有3种使用方法：</p>
+<h4><em>方法一：</em></h4>
+<p>在VS中使用静态库方法：</p>
+<p>-&nbsp;&nbsp;工程"属性面板"--"通用属性"--&nbsp;"框架和引用"--"添加引用"，将显示"添加引用"对话框。&nbsp;"项目"选项卡列出了当前解决方案中的各个项目以及可以引用的所有库。&nbsp;在"项目"选项卡中，选择&nbsp;StaticLibrary。&nbsp;单击"确定"。</p>
+<p align="center"><a target="_blank" href="http://www.runoob.com/wp-content/uploads/2015/05/16201607-fed082fd8a134770b24c2b4569ad4405.jpg" style="color:rgb(61,129,238)"><img decoding="async" loading="lazy" title="clip_image012[4]" border="0" alt="clip_image012[4]" src="//www.runoob.com/wp-content/uploads/2015/05/16201607-fed082fd8a134770b24c2b4569ad4405.jpg" width="554" height="365"></a></p>
+<p>-&nbsp;&nbsp;添加StaticMath.h&nbsp;头文件目录，必须修改包含目录路径。打开工程"属性面板"--"配置属性"--&nbsp;"C/C&#43;&#43;"--"常规"，在"附加包含目录"属性&#20540;中，键入StaticMath.h&nbsp;头文件所在目录的路径或浏览至该目录。</p>
+<p align="center"><a target="_blank" href="http://www.runoob.com/wp-content/uploads/2015/05/16201609-9be107869b604f53bc08653fe28bfbad.jpg" style="color:rgb(61,129,238)"><img decoding="async" loading="lazy" title="clip_image014[4]" border="0" alt="clip_image014[4]" src="//www.runoob.com/wp-content/uploads/2015/05/16201609-9be107869b604f53bc08653fe28bfbad.jpg" width="554" height="359"></a></p>
+<p>编译运行OK。</p>
+<p align="center"><a target="_blank" href="http://www.runoob.com/wp-content/uploads/2015/05/16201610-8630c9a19cae4143bffacd255367ffbb.png" style="color:rgb(61,129,238)"><img decoding="async" loading="lazy" title="clip_image015[4]" border="0" alt="clip_image015[4]" src="//www.runoob.com/wp-content/uploads/2015/05/16201610-8630c9a19cae4143bffacd255367ffbb.png" width="345" height="158"></a></p>
+<p align="center">图：静态库测试结果（vs）</p>
+<p>如果引用的静态库不是在同一解决方案下的子工程，而是使用第三方提供的静态库lib和头文件，上面的方法设置不了。还有2中方法设置都可行。</p>
+<h4><em>方法二：</em></h4>
+<p>打开工程"属性面板"--"配置属性"--&nbsp;"链接器"--"命令行"，输入静态库的完整路径即可。</p>
+<p align="center"><a target="_blank" href="http://www.runoob.com/wp-content/uploads/2015/05/16201610-2bde8b094f5a4603848c574f1f228144.jpg" style="color:rgb(61,129,238)"><img decoding="async" loading="lazy" title="clip_image017[4]" border="0" alt="clip_image017[4]" src="//www.runoob.com/wp-content/uploads/2015/05/16201610-2bde8b094f5a4603848c574f1f228144.jpg" width="554" height="359"></a></p>
+<h4><em>方法三：</em></h4>
+<p>-&nbsp;&nbsp;"属性面板"--"配置属性"--&nbsp;"链接器"--"常规"，附加依赖库目录中输入，静态库所在目录；</p>
+<p>-&nbsp;&nbsp;"属性面板"--"配置属性"--&nbsp;"链接器"--"输入"，附加依赖库中输入静态库名StaticLibrary.lib。</p>
+<p align="center"><a target="_blank" href="http://www.runoob.com/wp-content/uploads/2015/05/16201612-3af709f047ca4964898f3ce29680093c.jpg" style="color:rgb(61,129,238)"><img decoding="async" loading="lazy" title="clip_image019[4]" border="0" alt="clip_image019[4]" src="//www.runoob.com/wp-content/uploads/2015/05/16201612-3af709f047ca4964898f3ce29680093c.jpg" width="554" height="359"></a></p>
+
+<h2>3.动态库</h2>
+
+<p>通过上面的介绍发现静态库，容易使用和理解，也达到了代码复用的目的，那为什么还需要动态库呢？</p>
+<h3>3.1.为什么还需要动态库？</h3>
+<p>为什么需要动态库，其实也是静态库的特点导致。</p>
+<p>-&nbsp;&nbsp;空间浪费是静态库的一个问题。</p>
+<p align="center"><a target="_blank" href="http://www.runoob.com/wp-content/uploads/2015/05/16201613-1320ec57feb24583a6b1294421c323b8.png" style="color:rgb(61,129,238)"><img decoding="async" loading="lazy" title="clip_image021[4]" border="0" alt="clip_image021[4]" src="//www.runoob.com/wp-content/uploads/2015/05/16201613-1320ec57feb24583a6b1294421c323b8.png" width="483" height="413"></a></p>
+<p>-&nbsp;&nbsp;另一个问题是静态库对程序的更新、部署和发布页会带来麻烦。如果静态库liba.lib更新了，所以使用它的应用程序都需要重新编译、发布给用户（对于玩家来说，可能是一个很小的改动，却导致整个程序重新下载，<strong>全量更新</strong>）。</p>
+<p>动态库在程序编译时并不会被连接到目标代码中，而是在程序运行是才被载入。<strong>不同的应用程序如果调用相同的库，那么在内存里只需要有一份该共享库的实例</strong>，规避了空间浪费问题。动态库在程序运行是才被载入，也解决了静态库对程序的更新、部署和发布页会带来麻烦。用户只需要更新动态库即可，<strong>增量更新</strong>。</p>
+<p align="center"><a target="_blank" href="http://www.runoob.com/wp-content/uploads/2015/05/16201613-110ca9e0fd684281b3ee6d9bd9bebd78.png" style="color:rgb(61,129,238)"><img decoding="async" loading="lazy" title="clip_image023[4]" border="0" alt="clip_image023[4]" src="//www.runoob.com/wp-content/uploads/2015/05/16201613-110ca9e0fd684281b3ee6d9bd9bebd78.png" width="459" height="404"></a></p>
+<p>动态库特点总结：</p>
+<p>-&nbsp;&nbsp;动态库把对一些库函数的链接载入推迟到程序运行的时期。</p>
+<p>-&nbsp;&nbsp;可以实现进程之间的资源共享。（因此动态库也称为共享库）</p>
+<p>-&nbsp;&nbsp;将一些程序升级变得简单。</p>
+<p>-&nbsp;&nbsp;甚至可以真正做到链接载入完全由程序员在程序代码中控制（<strong>显示调用</strong>）。</p>
+<p>Window与Linux执行文件&#26684;式不同，在创建动态库的时候有一些差异。</p>
+<p>-&nbsp;&nbsp;在Windows系统下的执行文件&#26684;式是PE&#26684;式，动态库需要一个<strong>DllMain函数做出初始化的入口，通常在导出函数的声明时需要有_declspec(dllexport)</strong><strong>关键字</strong>。</p>
+<p>-&nbsp;&nbsp;Linux下gcc编译的执行文件默认是ELF&#26684;式，<strong>不需要初始化入口，亦不需要函数做特别的声明，</strong>编写比较方便。</p>
+<p>与创建静态库不同的是，不需要打包工具（ar、lib.exe），直接使用编译器即可创建动态库。</p>
+<h3>3.2.Linux下创建与使用动态库</h3>
+
+<h4>3.2.1.linux动态库的命名规则</h4>
+<p>动态链接库的名字形式为&nbsp;libxxx.so，前缀是lib，后缀名为".so"。</p>
+<p>-&nbsp;&nbsp;针对于实际库文件，每个共享库都有个特殊的名字"soname"。在程序启动后，程序通过这个名字来告诉动态加载器该载入哪个共享库。</p>
+<p>-&nbsp;&nbsp;在文件系统中，soname仅是一个链接到实际动态库的链接。对于动态库而言，每个库实际上都有另一个名字给编译器来用。它是一个指向实际库镜像文件的链接文件（lib&#43;soname&#43;.so）。</p>
+<h4>3.2.2.创建动态库（.so）</h4>
+<p>编写四则运算动态库代码：</p>
+
+<table cellspacing="0" cellpadding="0" border="1">
+<tbody>
+<tr>
+<td valign="top" style="background:black">
+<strong>DynamicMath.h头文件</strong>
+</td>
+</tr>
+<tr>
+<td valign="top" style="background:rgb(204,204,204)">
+<pre>
+#pragma once
+class DynamicMath
+{
+public:
+        DynamicMath(void);
+        ~DynamicMath(void); 
+
+        static double add(double a, double b);//加法
+        static double sub(double a, double b);//减法
+        static double mul(double a, double b);//乘法
+        static double div(double a, double b);//除法
+        void print();
+};
+</pre>
+</td>
+</tr>
+</tbody>
+</table>
+
+
+<p>-&nbsp;&nbsp;首先，生成目标文件，此时要加编译器选项-fpic</p>
+
+<pre>g++ -fPIC -c DynamicMath.cpp</pre>
+
+<p>-fPIC&nbsp;创建与地址无关的编译程序（pic，position independent code），是为了能够在多个应用程序间共享。</p>
+<p>-&nbsp;&nbsp;然后，生成动态库，此时要加链接器选项-shared</p>
+
+<pre>g++ -shared -o libdynmath.so DynamicMath.o</pre>
+
+<p>-shared指定生成动态链接库。</p>
+<p align="center"><a target="_blank" href="http://www.runoob.com/wp-content/uploads/2015/05/16201614-02f4340b15664f8a83282fb9a27ca3e5.jpg" style="color:rgb(61,129,238)"><img decoding="async" loading="lazy" title="clip_image025[4]" border="0" alt="clip_image025[4]" src="//www.runoob.com/wp-content/uploads/2015/05/16201614-02f4340b15664f8a83282fb9a27ca3e5.jpg" width="554" height="176"></a></p>
+<p>其实上面两个步骤可以合并为一个命令：</p>
+
+<pre>g++ -fPIC -shared -o libdynmath.so DynamicMath.cpp</pre>
+
+
+<h4>3.2.3.使用动态库</h4>
+<p>编写使用动态库的测试代码：</p>
+
+<table cellspacing="0" cellpadding="0" border="1">
+<tbody>
+<tr>
+<td valign="top" style="background:black">
+<strong>测试代码：</strong>
+</td>
+</tr>
+<tr>
+<td valign="top" style="background:rgb(204,204,204)">
+<pre>
+#include "../DynamicLibrary/DynamicMath.h"
+
+#include &lt;iostream&gt;
+using namespace std;
+
+int main(int argc, char* argv[])
+{
+    double a = 10;
+    double b = 2;
+
+    cout &lt;&lt; "a + b = " &lt;&lt; DynamicMath::add(a, b) &lt;&lt; endl;
+    cout &lt;&lt; "a - b = " &lt;&lt; DynamicMath::sub(a, b) &lt;&lt; endl;
+    cout &lt;&lt; "a * b = " &lt;&lt; DynamicMath::mul(a, b) &lt;&lt; endl;
+    cout &lt;&lt; "a / b = " &lt;&lt; DynamicMath::div(a, b) &lt;&lt; endl;
+
+    DynamicMath dyn;
+    dyn.print();
+    return 0;
+}
+</pre>
+</td>
+</tr>
+</tbody>
+</table>
+
+<p>引用动态库编译成可执行文件（跟静态库方式一样）：</p>
+
+<pre>g++ TestDynamicLibrary.cpp -L../DynamicLibrary -ldynmath</pre>
+
+<p>然后运行：./a.out，发现竟然报错了！！！</p>
+<p align="center"><a target="_blank" href="http://www.runoob.com/wp-content/uploads/2015/05/16201616-45dcaece0519453c96dfd1972295cd92.jpg" style="color:rgb(61,129,238)"><img decoding="async" loading="lazy" title="clip_image027[4]" border="0" alt="clip_image027[4]" src="//www.runoob.com/wp-content/uploads/2015/05/16201616-45dcaece0519453c96dfd1972295cd92.jpg" width="554" height="141"></a></p>
+<p>可能大家会猜测，是因为动态库跟测试程序不是一个目录，那我们验证下是否如此：</p>
+<p align="center"><a target="_blank" href="http://www.runoob.com/wp-content/uploads/2015/05/16201617-93f234207a9947a6a1caadd8acd9ead7.jpg" style="color:rgb(61,129,238)"><img decoding="async" loading="lazy" title="clip_image029[4]" border="0" alt="clip_image029[4]" src="//www.runoob.com/wp-content/uploads/2015/05/16201617-93f234207a9947a6a1caadd8acd9ead7.jpg" width="554" height="112"></a></p>
+<p>发现还是报错！！！那么，在执行的时候是如何定位共享库文件的呢？</p>
+<p>1)&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;当系统加载可执行代码时候，能够知道其所依赖的库的名字，但是还需要知道绝对路径。此时就需要系统动态载入器(dynamic linker/loader)。</p>
+<p>2)&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;对于elf&#26684;式的可执行程序，是由ld-linux.so*来完成的，它先后搜索elf文件的&nbsp;DT_RPATH段—环境变量LD_LIBRARY_PATH—/etc/ld.so.cache文件列表—/lib/,/usr/lib&nbsp;目录找到库文件后将其载入内存。</p>
+<p>如何让系统能够找到它：</p>
+<p>-&nbsp;&nbsp;如果安装在/lib或者/usr/lib下，那么ld默认能够找到，无需其他操作。</p>
+<p>-&nbsp;&nbsp;如果安装在其他目录，需要将其添加到/etc/ld.so.cache文件中，步骤如下：</p>
+<p>--&nbsp;&nbsp;编辑/etc/ld.so.conf文件，加入库文件所在目录的路径</p>
+<p>--&nbsp;&nbsp;运行ldconfig&nbsp;，该命令会重建/etc/ld.so.cache文件</p>
+<p>我们将创建的动态库复制到/usr/lib下面，然后运行测试程序。</p>
+<p align="center"><a target="_blank" href="http://www.runoob.com/wp-content/uploads/2015/05/16201618-a32a866f00c84a74893fa2181fa27b11.jpg" style="color:rgb(61,129,238)"><img decoding="async" loading="lazy" title="clip_image031[4]" border="0" alt="clip_image031[4]" src="//www.runoob.com/wp-content/uploads/2015/05/16201618-a32a866f00c84a74893fa2181fa27b11.jpg" width="553" height="136"></a></p>
+<h3>3.3.Windows下创建与使用动态库</h3>
+<h4>3.3.1.创建动态库（.dll）</h4>
+<p>与Linux相比，在Windows系统下创建动态库要稍微麻烦一些。首先，需要一个DllMain函数做出初始化的入口（创建win32控制台程序时，勾选DLL类型会自动生成这个文件）：</p>
+
+<table cellspacing="0" cellpadding="0" border="1">
+<tbody>
+<tr>
+<td valign="top" style="background:black">
+<strong>dllmain.cpp入口文件</strong>
+</td>
+</tr>
+<tr>
+<td valign="top" style="background:rgb(204,204,204)">
+<pre>
+// dllmain.cpp : Defines the entry point for the DLL application.
+#include "stdafx.h"
+
+BOOL APIENTRY DllMain( HMODULE hModule,
+                       DWORD  ul_reason_for_call,
+                       LPVOID lpReserved
+                     )
+{
+    switch (ul_reason_for_call)
+    {
+    case DLL_PROCESS_ATTACH:
+    case DLL_THREAD_ATTACH:
+    case DLL_THREAD_DETACH:
+    case DLL_PROCESS_DETACH:
+        break;
+    }
+    return TRUE;
+}
+</pre>
+</td>
+</tr>
+</tbody>
+</table>
+
+<p>通常在导出函数的声明时需要有_declspec(dllexport)关键字：</p>
+
+<table cellspacing="0" cellpadding="0" border="1">
+<tbody>
+<tr>
+<td valign="top" style="background:black">
+<strong>DynamicMath.h头文件</strong>
+</td>
+</tr>
+<tr>
+<td valign="top" style="background:rgb(204,204,204)">
+<pre>
+#pragma once
+class DynamicMath
+{
+public:
+    __declspec(dllexport) DynamicMath(void);
+    __declspec(dllexport) ~DynamicMath(void);
+
+    static __declspec(dllexport) double add(double a, double b);//加法
+    static __declspec(dllexport) double sub(double a, double b);//减法
+    static __declspec(dllexport) double mul(double a, double b);//乘法
+    static __declspec(dllexport) double div(double a, double b);//除法
+
+    __declspec(dllexport) void print();
+};
+</pre>
+</td>
+</tr>
+</tbody>
+</table>
+
+<p>生成动态库需要设置工程属性，打开工程"属性面板"--"配置属性"--"常规"，配置类型选择动态库。</p>
+<p align="center"><a target="_blank" href="http://www.runoob.com/wp-content/uploads/2015/05/16201619-f190d6dd94ee48e0883bb5d5bbe4e66a.jpg" style="color:rgb(61,129,238)"><img decoding="async" loading="lazy" title="clip_image033[4]" border="0" alt="clip_image033[4]" src="//www.runoob.com/wp-content/uploads/2015/05/16201619-f190d6dd94ee48e0883bb5d5bbe4e66a.jpg" width="554" height="359"></a></p>
+<p align="center">图：v动态库项目属性设置</p>
+<p>Build项目即可生成动态库。</p>
+<h4>3.3.2.使用动态库</h4>
+<p>创建win32控制台测试程序：</p>
+
+<table cellspacing="0" cellpadding="0" border="1">
+<tbody>
+<tr>
+<td valign="top" style="background:black">
+<strong>TestDynamicLibrary.cpp测试程序</strong>
+</td>
+</tr>
+<tr>
+<td valign="top" style="background:rgb(204,204,204)">
+<pre>
+#include "stdafx.h"
+#include "DynamicMath.h"
+
+#include &lt;iostream&gt;
+using namespace std;
+
+int _tmain(int argc, _TCHAR* argv[])
+{
+    double a = 10;
+    double b = 2;
+
+    cout &lt;&lt; "a + b = " &lt;&lt; DynamicMath::add(a, b) &lt;&lt; endl;
+    cout &lt;&lt; "a - b = " &lt;&lt; DynamicMath::sub(a, b) &lt;&lt; endl;
+    cout &lt;&lt; "a * b = " &lt;&lt; DynamicMath::mul(a, b) &lt;&lt; endl;
+    cout &lt;&lt; "a / b = " &lt;&lt; DynamicMath::div(a, b) &lt;&lt; endl;
+
+    DynamicMath dyn;
+    dyn.print();
+
+    system("pause");
+    return 0;
+}
+</pre>
+</td>
+</tr>
+</tbody>
+</table>
+
+<h4><em>方法一：</em></h4>
+<p>-&nbsp;&nbsp;工程"属性面板"--"通用属性"--&nbsp;"框架和引用"--"添加引用"，将显示"添加引用"对话框。"项目"选项卡列出了当前解决方案中的各个项目以及可以引用的所有库。&nbsp;在"项目"选项卡中，选择&nbsp;DynamicLibrary。&nbsp;单击"确定"。</p>
+<p align="center"><a target="_blank" href="http://www.runoob.com/wp-content/uploads/2015/05/16201623-914ff83612a4470fa59c2bc729053c6b.jpg" style="color:rgb(61,129,238)"><img decoding="async" loading="lazy" title="clip_image035[4]" border="0" alt="clip_image035[4]" src="//www.runoob.com/wp-content/uploads/2015/05/16201623-914ff83612a4470fa59c2bc729053c6b.jpg" width="554" height="363"></a></p>
+<p>-&nbsp;&nbsp;添加DynamicMath.h&nbsp;头文件目录，必须修改包含目录路径。打开工程"属性面板"--"配置属性"--"C/C&#43;&#43;"--"&nbsp;常规"，在"附加包含目录"属性&#20540;中，键入DynamicMath.h&nbsp;头文件所在目录的路径或浏览至该目录。</p>
+<p align="center"><a target="_blank" href="http://www.runoob.com/wp-content/uploads/2015/05/16201624-9cfecaf931ba4f4d96d6cf7cac3ac40e.jpg" style="color:rgb(61,129,238)"><img decoding="async" loading="lazy" title="clip_image037[4]" border="0" alt="clip_image037[4]" src="//www.runoob.com/wp-content/uploads/2015/05/16201624-9cfecaf931ba4f4d96d6cf7cac3ac40e.jpg" width="554" height="358"></a></p>
+<p>编译运行OK。</p>
+<p align="center"><a target="_blank" href="http://www.runoob.com/wp-content/uploads/2015/05/16201626-29defaed72cf4a91b7c83f6bd0fecf53.png" style="color:rgb(61,129,238)"><img decoding="async" loading="lazy" title="clip_image038[4]" border="0" alt="clip_image038[4]" src="//www.runoob.com/wp-content/uploads/2015/05/16201626-29defaed72cf4a91b7c83f6bd0fecf53.png" width="320" height="137"></a></p>
+<p align="center">图：动态库测试结果（vs）</p>
+<h4><em>方法二：</em></h4>
+<p>-&nbsp;&nbsp;"属性面板"--"配置属性"--&nbsp;"链接器"--"常规"，附加依赖库目录中输入，动态库所在目录；</p>
+<p align="center"><a target="_blank" href="http://www.runoob.com/wp-content/uploads/2015/05/16201626-98727f19e0d14d43942771bac7e24238.jpg" style="color:rgb(61,129,238)"><img decoding="async" loading="lazy" title="clip_image040[4]" border="0" alt="clip_image040[4]" src="//www.runoob.com/wp-content/uploads/2015/05/16201626-98727f19e0d14d43942771bac7e24238.jpg" width="554" height="359"></a></p>
+<p>-&nbsp;&nbsp;"属性面板"--"配置属性"--&nbsp;"链接器"--"输入"，附加依赖库中输入动态库编译出来的DynamicLibrary.lib。</p>
+<p align="center"><a target="_blank" href="http://www.runoob.com/wp-content/uploads/2015/05/16201628-425bd512f3bf4b51b121bdb59604bc5e.jpg" style="color:rgb(61,129,238)"><img decoding="async" loading="lazy" title="clip_image042[4]" border="0" alt="clip_image042[4]" src="//www.runoob.com/wp-content/uploads/2015/05/16201628-425bd512f3bf4b51b121bdb59604bc5e.jpg" width="554" height="359"></a></p>
+<p>这里可能大家有个疑问，动态库怎么还有一个DynamicLibrary.lib文件？即无论是静态链接库还是动态链接库，最后都有lib文件，那么两者区别是什么呢？其实，两个是完全不一样的东西。</p>
+<p align="center"><a target="_blank" href="http://www.runoob.com/wp-content/uploads/2015/05/16201631-f72543fd66ba4593996f864a7fb6f92a.jpg" style="color:rgb(61,129,238)"><img decoding="async" loading="lazy" title="clip_image044[4]" border="0" alt="clip_image044[4]" src="//www.runoob.com/wp-content/uploads/2015/05/16201631-f72543fd66ba4593996f864a7fb6f92a.jpg" width="554" height="255"></a></p>
+<p>StaticLibrary.lib的大小为190KB，DynamicLibrary.lib的大小为3KB，静态库对应的lib文件叫<strong>静态库</strong>，动态库对应的lib文件叫【<strong>导入库】</strong>。实际上静态库本身就包含了实际执行代码、符号表等等，而<strong>对于导入库而言，其实际的执行代码位于动态库中，导入库只包含了地址符号表等，确保程序找到对应函数的一些基本地址信息</strong>。</p>
+
+<h2>4.动态库的显式调用</h2>
+
+<p>上面介绍的动态库使用方法和静态库类&#20284;属于隐式调用，编译的时候指定相应的库和查找路径。其实，动态库还可以显式调用。<strong>【在</strong><strong>C</strong><strong>语言中】</strong>，显示调用一个动态库轻而易举！</p>
+<h3>4.1.在Linux下显式调用动态库</h3>
+<p>#include &lt;dlfcn.h&gt;，提供了下面几个接口：</p>
+<p>-&nbsp;&nbsp;void *&nbsp;<strong>dlopen</strong>( const char * pathname, int mode )：函数以指定模式打开指定的动态连接库文件，并返回一个句柄给调用进程。</p>
+<p>-&nbsp;&nbsp;void*&nbsp;<strong>dlsym</strong>(void* handle,const char* symbol)：dlsym根据动态链接库操作句柄(pHandle)与符号(symbol)，返回符号对应的地址。使用这个函数不但可以获取函数地址，也可以获取变量地址。</p>
+<p>-&nbsp;&nbsp;int&nbsp;<strong>dlclose</strong>&nbsp;(void *handle)：dlclose用于关闭指定句柄的动态链接库，只有当此动态链接库的使用计数为0时,才会真正被系统卸载。</p>
+<p>-&nbsp;&nbsp;const char *dlerror(void)：当动态链接库操作函数执行失败时，dlerror可以返回出错信息，返回&#20540;为NULL时表示操作函数执行成功。</p>
+<h3>4.2.在Windows下显式调用动态库</h3>
+<p>应用程序必须进行函数调用以在运行时显式加载&nbsp;DLL。为显式链接到&nbsp;DLL，应用程序必须：</p>
+<p>-&nbsp;&nbsp;调用&nbsp;<strong>LoadLibrary</strong>（或相&#20284;的函数）以加载&nbsp;DLL&nbsp;和获取模块句柄。</p>
+<p>-&nbsp;&nbsp;调用&nbsp;<strong>GetProcAddress</strong>，以获取指向应用程序要调用的每个导出函数的函数指针。由于应用程序是通过指针调用&nbsp;DLL&nbsp;的函数，编译器不生成外部引用，故无需与导入库链接。</p>
+<p>-&nbsp;&nbsp;使用完&nbsp;DLL&nbsp;后调用&nbsp;<strong>FreeLibrary</strong>。</p>
+<h3>4.3.显式调用C&#43;&#43;动态库注意点</h3>
+<p>对C&#43;&#43;来说，情况稍微复杂。显式加载一个C&#43;&#43;动态库的困难<strong>一部分是因为</strong><strong>C&#43;&#43;的name
+ mangling</strong>；<strong>另一部分是因为没有提供一个合适的</strong><strong>API</strong><strong>来装载类</strong>，在C&#43;&#43;中，您可能要用到库中的一个类，而这需要创建该类的一个实例，这不容易做到。</p>
+<p><strong>name mangling</strong>可以通过extern &quot;C&quot;解决。C&#43;&#43;有个特定的关键字用来声明采用C
+ binding的函数：extern &quot;C&quot;&nbsp;。用extern &quot;C&quot;声明的函数将使用函数名作符号名，就像C函数一样。因此，只有非成员函数才能被声明为extern
+ &quot;C&quot;，并且不能被重载。尽管限制多多，extern &quot;C&quot;函数还是非常有用，因为它们可以象C函数一样被dlopen动态加载。冠以extern
+ &quot;C&quot;限定符后，并不意味着函数中无法使用C&#43;&#43;代码了，相反，它仍然是一个完全的C&#43;&#43;函数，可以使用任何C&#43;&#43;特性和各种类型的参数。</p>
+<p>另外如何从C&#43;&#43;动态库中获取类，附上几篇相关文章，但我并不建议这么做：</p>
+<p>-&nbsp;&nbsp;《LoadLibrary调用DLL中的Class》：<a target="_blank" href="http://www.cppblog.com/codejie/archive/2009/09/24/97141.html" style="color:rgb(61,129,238)"><u>http://www.cppblog.com/codejie/archive/2009/09/24/97141.html</u></a></p>
+<p>-&nbsp;&nbsp;《C&#43;&#43; dlopen mini HOWTO》：<a target="_blank" href="http://blog.csdn.net/denny_233/article/details/7255673" style="color:rgb(61,129,238)"><u>http://blog.csdn.net/denny_233/article/details/7255673</u></a></p>
+<p><strong>"显式"使用C&#43;&#43;动态库中的Class是非常繁琐和危险的事情，因此能用"隐式"就不要用"显式"，能静态就不要用动态。</strong></p>
+
+<h2>5.附件：Linux下库相关命令</h2>
+
+<h3>5.1.g&#43;&#43;(gcc)编译选项</h3>
+<p>-&nbsp;&nbsp;-shared&nbsp;：指定生成动态链接库。</p>
+<p>-&nbsp;&nbsp;-static&nbsp;：指定生成静态链接库。</p>
+<p>-&nbsp;&nbsp;-fPIC&nbsp;：表示编译为位置独立的代码，用于编译共享库。目标文件需要创建成位置无关码，&nbsp;念上就是在可执行程序装载它们的时候，它们可以放在可执行程序的内存里的任何地方。</p>
+<p>-&nbsp;&nbsp;-L.&nbsp;：表示要连接的库所在的目录。</p>
+<p>-&nbsp;&nbsp;-l：指定链接时需要的动态库。编译器查找动态连接库时有隐含的命名规则，即在给出的名字前面加上lib，后面加上.a/.so来确定库的名称。</p>
+<p>-&nbsp;&nbsp;-Wall&nbsp;：生成所有警告信息。</p>
+<p>-&nbsp;&nbsp;-ggdb&nbsp;：此选项将尽可能的生成gdb&nbsp;的可以使用的调试信息。</p>
+<p>-&nbsp;&nbsp;-g&nbsp;：编译器在编译的时候产生调试信息。</p>
+<p>-&nbsp;&nbsp;-c&nbsp;：只激活预处理、编译和汇编,也就是把程序做成目标文件(.o文件)&nbsp;。</p>
+<p>-&nbsp;&nbsp;-Wl,options&nbsp;：把参数(options)传递给链接器ld&nbsp;。如果options&nbsp;中间有逗号,就将options分成多个选项,然后传递给链接程序。</p>
+<h3>5.2.nm命令</h3>
+<p>有时候可能需要查看一个库中到底有哪些函数，<strong>nm</strong><strong>命令</strong>可以打印出库中的涉及到的所有符号。库既可以是静态的也可以是动态的。nm列出的符号有很多，常见的有三种：</p>
+<p>-&nbsp;&nbsp;一种是在库中被调用，但并没有在库中定义(表明需要其他库支持)，用U表示；</p>
+<p>-&nbsp;&nbsp;一种是库中定义的函数，用T表示，这是最常见的；</p>
+<p>-&nbsp;&nbsp;一种是所谓的弱态"符号，它们虽然在库中被定义，但是可能被其他库中的同名符号覆盖，用W表示。</p>
+<p>$nm libhello.h</p>
+<h3>5.3.ldd命令</h3>
+<p><strong>ldd</strong><strong>命令可以查看一个可执行程序依赖的共享库</strong>，例如我们编写的四则运算动态库依赖下面这些库：</p>
+<p align="center"><a target="_blank" href="http://www.runoob.com/wp-content/uploads/2015/05/16201633-aebe0e8017354a9b93644043b9d013c6.jpg" style="color:rgb(61,129,238)"><img decoding="async" loading="lazy" title="clip_image046[4]" border="0" alt="clip_image046[4]" src="//www.runoob.com/wp-content/uploads/2015/05/16201633-aebe0e8017354a9b93644043b9d013c6.jpg" width="554" height="114"></a></p>
+
+<h2>6.总结</h2>
+
+<p>二者的不同点在于<strong>代码被载入的时刻不同</strong>。</p>
+<p>-&nbsp;&nbsp;静态库在程序编译时会被连接到目标代码中，程序运行时将不再需要该静态库，<strong>因此体积较大</strong>。</p>
+<p>-&nbsp;&nbsp;动态库在程序编译时并不会被连接到目标代码中，而是在程序运行是才被载入，因此在程序运行时还需要动态库存在，<strong>因此代码体积较小</strong>。</p>
+<p>动态库的好处是，不同的应用程序如果调用相同的库，那么在内存里只需要有一份该共享库的实例。带来好处的同时，也会有问题！如经典的DLL Hell问题，关于如何规避动态库管理问题，可以自行查找相关资料。</p>
+
+<h2>7.相关教程</h2>
+<p>C++ 教程：<a target="_blank" href="http://www.w3cschool.cc/cplusplus/cpp-tutorial.html">http://www.w3cschool.cc/cplusplus/cpp-tutorial.html</a></p>
+
+<p>作者：吴秦<br>
+出处：http://www.cnblogs.com/skynet/</p>				</div>
+			</div>
+			<div class="previous-next-links">
+			<div class="previous-design-link">← <a href="http://www.runoob.com/w3cnote/charset-encoding.html" rel="prev"> 字符集和字符编码（Charset &#038; Encoding）</a> </div>
+			<div class="next-design-link"><a href="http://www.runoob.com/w3cnote/php-xml2json.html" rel="next"> PHP XML 与 JSON 相互转换</a> →</div>
+			</div>
+			<style>
+.wrapper {
+  /*text-transform: uppercase; */
+  background: #ececec;
+  color: #555;
+  cursor: help;
+  font-family: "Gill Sans", Impact, sans-serif;
+  font-size: 20px;
+  position: relative;
+  text-align: center;
+  width: 200px;
+  -webkit-transform: translateZ(0); /* webkit flicker fix */
+  -webkit-font-smoothing: antialiased; /* webkit text rendering fix */
+}
+
+.wrapper .tooltip {
+  white-space: nowrap;
+  font-size: 14px;
+  text-align: left;
+  background: #96b97d;
+  bottom: 100%;
+  color: #fff;
+  display: block;
+  left: -25px;
+  margin-bottom: 15px;
+  opacity: 0;
+  padding: 14px;
+  pointer-events: none;
+  position: absolute;
+  
+  -webkit-transform: translateY(10px);
+     -moz-transform: translateY(10px);
+      -ms-transform: translateY(10px);
+       -o-transform: translateY(10px);
+          transform: translateY(10px);
+  -webkit-transition: all .25s ease-out;
+     -moz-transition: all .25s ease-out;
+      -ms-transition: all .25s ease-out;
+       -o-transition: all .25s ease-out;
+          transition: all .25s ease-out;
+  -webkit-box-shadow: 2px 2px 6px rgba(0, 0, 0, 0.28);
+     -moz-box-shadow: 2px 2px 6px rgba(0, 0, 0, 0.28);
+      -ms-box-shadow: 2px 2px 6px rgba(0, 0, 0, 0.28);
+       -o-box-shadow: 2px 2px 6px rgba(0, 0, 0, 0.28);
+          box-shadow: 2px 2px 6px rgba(0, 0, 0, 0.28);
+}
+.tooltip a {
+	color:#fff;
+}
+/* This bridges the gap so you can mouse into the tooltip without it disappearing */
+.wrapper .tooltip:before {
+  bottom: -20px;
+  content: " ";
+  display: block;
+  height: 20px;
+  left: 0;
+  position: absolute;
+  width: 100%;
+}  
+
+/* CSS Triangles - see Trevor's post */
+.wrapper .tooltip:after {
+  border-left: solid transparent 10px;
+  border-right: solid transparent 10px;
+  border-top: solid #96b97d 10px;
+  bottom: -10px;
+  content: " ";
+  height: 0;
+  left: 20%;
+  margin-left: -13px;
+  position: absolute;
+  width: 0;
+}
+.wrapper .tooltip1 {
+	margin-left: 50px;
+	padding-top: 0px;
+}
+/*
+.wrapper:hover .tooltip {
+  opacity: 1;
+  pointer-events: auto;
+  -webkit-transform: translateY(0px);
+     -moz-transform: translateY(0px);
+      -ms-transform: translateY(0px);
+       -o-transform: translateY(0px);
+          transform: translateY(0px);
+}
+*/
+/* IE can just show/hide with no transition */
+.lte8 .wrapper .tooltip {
+  display: none;
+}
+
+.lte8 .wrapper:hover .tooltip {
+  display: block;
+}
+
+</style>
+
+<link rel="stylesheet" href="https://static.runoob.com/assets/upvotejs/dist/upvotejs/upvotejs.css">
+<script src="https://static.runoob.com/assets/upvotejs/dist/upvotejs/upvotejs.vanilla.js"></script>
+<script src="https://static.runoob.com/assets/upvotejs/dist/upvotejs/upvotejs.jquery.js"></script>
+<div id="respond" class="no_webshot"> 
+		<div class="comment-signarea" style=" padding: 20px 20px;"> 
+	<h3 class="text-muted" id="share_code" style="color: #799961;"><i class="fa fa-pencil-square-o" aria-hidden="true"></i> 点我分享笔记</h3>
+	<!--
+	<p style="font-size:14px;">笔记需要是本篇文章的内容扩展！</p><br>
+	<p style="font-size:12px;"><a href="//www.runoob.com/tougao" target="_blank">文章投稿，可点击这里</a></p>
+	<p style="font-size:14px;"><a href="/w3cnote/runoob-user-test-intro.html#invite" target="_blank">注册邀请码获取方式</a></p>
+		<h3 class="text-muted"><i class="fa fa-info-circle" aria-hidden="true"></i> 分享笔记前必须<a href="javascript:;" class="runoob-pop">登录</a>！</h3>
+		<p><a href="/w3cnote/runoob-user-test-intro.html#invite" target="_blank">注册邀请码获取方式</a></p>-->
+	</div>
+		
+	<form action="/wp-content/themes/runoob/option/addnote.php" method="post" id="commentform" style="display:none;">
+		<div class="comt">
+			<div class="comt-title">
+				<i style="font-size:36px;" class="fa fa-user-circle" aria-hidden="true"></i>				<p><a id="cancel-comment-reply-link" href="javascript:;">取消</a></p>
+			</div>
+			<div class="comt-box">
+			<div id="mded"></div>
+			
+				<div class="comt-ctrl">
+					<div class="comt-tips"><input type='hidden' name='comment_post_ID' value='11968' id='comment_post_ID' />
+<input type='hidden' name='comment_parent' id='comment_parent' value='0' />
+</div>
+					<button type="submit" name="submit" id="submit" tabindex="5"><i class="fa fa-pencil" aria-hidden="true"></i> 分享笔记</button>
+				</div>
+			</div>
+		
+				
+					<div class="comt-comterinfo"> 
+						<ul id="comment-author-info">
+							<li class="form-inline"><label class="hide" for="author">昵称</label><input class="ipt" type="text" name="author" id="author" value="" tabindex="2" placeholder="昵称"><span class="text-muted">昵称 (必填)</span></li>
+							<li class="form-inline"><label class="hide" for="email">邮箱</label><input class="ipt" type="text" name="email" id="email" value="" tabindex="3" placeholder="邮箱"><span class="text-muted">邮箱 (必填)</span></li>
+							<li class="form-inline"><label class="hide" for="url">引用地址</label><input class="ipt" type="text" name="url" id="url" value="" tabindex="4" placeholder="引用地址"><span class="text-muted">引用地址</span></li>
+						</ul>
+					</div>
+				
+			
+		</div>
+
+	</form>
+	</div>
+<script type="text/javascript">
+$(function() {
+	//初始化编辑器
+	
+	var editor = new Simditor({
+	  textarea: $('#mded'),
+	  placeholder: '写笔记...',
+	  upload:false,
+	 // upload: {url:'/api/comment_upload_file.php',params: null,fileKey: 'upload_file',connectionCount: 1,leaveConfirm: '文件正在上传，您确定离开?'},
+	  defaultImage: 'https://www.runoob.com/images/logo.png',
+	  codeLanguages: '',
+	  autosave: 'editor-content',
+	  toolbar: [  'bold','code','ul','ol','image' ]
+	});
+	editor.on('selectionchanged', function() {
+		$(".code-popover").hide();
+	});
+
+	// 提交数据
+	$("#share_code").click(function() {
+		$(".comment-signarea").hide();
+		$("#commentform").show();
+		
+	});
+	$("#user_add_note").click(function() {
+		$(".comment-signarea").hide();
+		$("#commentform").show();
+		$('html, body').animate({
+       	    scrollTop: $("#respond").offset().top
+    	}, 200);
+	});
+
+	// 提交笔记
+	var commentform=$('#commentform');
+	commentform.prepend('<div id="comment-status" style="display:none;" ></div>');
+	var statusdiv=$('#comment-status');
+	
+	commentform.submit(function(e){
+		e.preventDefault();
+		var noteContent = editor.getValue();
+		// console.log(noteContent);
+		noteContent = noteContent.replace(/<pre><code>/g,"<pre>");
+		noteContent = noteContent.replace(/<\/code><\/pre>/g,"</pre>");
+		
+		// 系列化表单数据
+		var comment_parent = 0;
+		var is_user_logged_in = $("#is_user_logged_in").val();
+		var comment_post_ID =  11968;
+		var _wp_unfiltered_html_comment = $("#_wp_unfiltered_html_comment").val();
+		var comment = noteContent;
+		var author = $("#author").val();
+		var url = $("#url").val();
+		var email = $("#email").val();
+		if(isBlank(author) && is_user_logged_in==0) {
+			statusdiv.html('<p  class="ajax-error">请输入昵称！</p>').show();
+		} else if(isBlank(email)  && is_user_logged_in==0) {
+			statusdiv.html('<p  class="ajax-error">请输入邮箱！</p>').show();
+		} else {
+			// var formdata=commentform.serialize() + "&comment=" + noteContent ;
+			// 添加状态信息
+			statusdiv.html('<p>Processing...</p>').show();
+			// 获取表单提交地址
+			var formurl=commentform.attr('action');
+			
+			// 异步提交
+			$.ajax({
+					type: 'post',
+					url: formurl,
+					dataType:'json',
+					data: {"comment_parent":comment_parent,"comment_post_ID":comment_post_ID, "_wp_unfiltered_html_comment":_wp_unfiltered_html_comment,"comment":comment,"url":url, "email":email,"author":author},
+					error: function(XMLHttpRequest, textStatus, errorThrown){
+					statusdiv.html('<p class="ajax-error" >数据不完整或表单提交太快了！</p>').show();
+				},
+				success: function(data, textStatus){
+					if(data.errorno=="0") {
+						$("#submit").prop('disabled', true);
+						statusdiv.html('<p class="ajax-success" >笔记已提交审核，感谢分享笔记！</p>').show();
+						alert('笔记已提交审核，感谢分享笔记！');
+					}else{
+						statusdiv.html('<p class="ajax-error" >'+data.msg+'</p>').show();
+					}
+					commentform.find('textarea[name=comment]').val('');
+				}
+			});
+			setTimeout(function(){
+		        $("#submit").prop('disabled', false);
+		    }, 10*1000);
+		}
+		return false;
+
+	});
+	$(".comt-author").click(function() {
+		href = $(this).children("a").attr("href");
+		if(href.indexOf("/note/")!=-1) {
+			var win = window.open(href, '_blank');
+  			win.focus();
+		}
+	});
+	$(".comt-meta span").hover(function(){
+		$(this).children(".tooltip").css({ "opacity": 1, "pointer-events": "auto"});
+	},function(){
+		$(this).children(".tooltip").removeAttr("style");
+	});
+	/*
+	$(".wrapper i").hover(function(){
+		$(this).siblings(".tooltip").css({ "opacity": 1, "pointer-events": "auto"});
+	},function(){
+		$(this).siblings(".tooltip").css({ "opacity": 0, "pointer-events": "auto"});
+	});
+	*/
+	//Upvote.create('runoobvote-id', {callback: vote_callback});
+	var ajaxurl = 'https://www.runoob.com/wp-admin/admin-ajax.php';
+	var callback = function(data) {
+		//console.log($('#runoobvote-id').upvote('upvoted'));
+		//console.log($('#runoobvote-id').upvote('downvoted'));
+		//console.log(data);
+		_vote_action = data.action;
+		id_arr = data.id.split('-');
+		um_id= id_arr[2];
+		//console.log(um_id);
+		
+		var re = /^[1-9]+/;
+		if (re.test(um_id)) { 
+			var ajax_data = {
+				_vote_action: _vote_action,
+				action: "pinglun_zan",
+				um_id: um_id,
+				um_action: "ding"
+			};
+			//console.log(ajax_data);
+			$.post(ajaxurl,ajax_data,function(status){
+				//if(status.vote_num>999) {
+				//	_voteHtml = '<span style="display: block; text-align: center;font-size: 20px; color: #6a737c; margin: 8px 0;">'+kFormatter(status.vote_num) +'</span>';
+				//	$("#runoobvote-id-" + um_id + " .count").hide().after(_voteHtml);
+				//}
+				
+			});
+		}
+	};
+	if($('#comments').length && $('.upvotejs').length){
+		$('.upvotejs').upvote({id: 11968, callback: callback});
+	
+		$.post(ajaxurl,{"action":"pinglun_zan","postid":11968},function(data){  
+			$(data).each(function(key,value) {
+				$("#runoobvote-id-" + value.commid + " .upvote").addClass(value.upvotejs_class);
+				$("#runoobvote-id-" + value.commid + " .downvote").addClass(value.downvote_class);
+				$("#runoobvote-id-" + value.commid + " .count").text(value.upvote_count);
+			})
+		},'json');
+		
+	}
+	
+	
+});
+function isBlank(str) {
+    return (!str || /^\s*$/.test(str));
+}
+function kFormatter(num) {
+	// return num;
+    return Math.abs(num) > 999 ? Math.sign(num)*((Math.abs(num)/1000).toFixed(1)) + 'k' : Math.sign(num)*Math.abs(num)
+}
+
+</script>
+
+<link rel="stylesheet" href="/wp-content/themes/runoob/assets/css/qa.css?1.44">
+<link rel="stylesheet" type="text/css" href="https://cdn.staticfile.org/simditor/2.3.6/styles/simditor.min.css" />
+<script type="text/javascript" src="https://static.runoob.com/assets/simditor/2.3.6/scripts/module.js"></script>
+<script type="text/javascript" src="//static.runoob.com/assets/simditor/2.3.6/scripts/hotkeys.js"></script>
+<script type="text/javascript" src="//static.runoob.com/assets/simditor/2.3.6/scripts/uploader.js"></script>
+<script type="text/javascript" src="https://cdn.staticfile.org/simditor/2.3.6/lib/simditor.min.js"></script>
+<script type="text/javascript" src="https://static.runoob.com/assets/simditor/2.3.6/scripts/simditor-autosave.js"></script>
+			<div class="article-heading-ad" id="w3cnote-ad728">
+			<script async src="//pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script>
+			<!-- 移动版 自动调整 -->
+			<ins class="adsbygoogle"
+			     style="display:inline-block;min-width:300px;max-width:970px;width:100%;height:90px"
+			     data-ad-client="ca-pub-5751451760833794"
+			     data-ad-slot="1691338467"
+			     data-ad-format="horizontal"></ins>
+			<script>
+			(adsbygoogle = window.adsbygoogle || []).push({});
+			</script>
+			</div>
+			<style>
+@media screen and (max-width: 768px) {
+	#w3cnote-ad728 {
+		display: none;
+	}
+}
+p.note-author {
+    border-bottom: 1px solid #ddd;
+    font-size: 18px;
+    font-weight: bold;
+    color: #78a15a;
+    padding-bottom: 2px;
+    margin-bottom: 4px;
+}
+</style>
+<script>
+var aid = 11968;
+</script>
+	</div>
+		
+	</div>
+	<div class="listcol last right-column">
+
+
+
+
+<!--
+	<div class="tab tab-light-blue"> 订阅</div>
+	<div class="sidebar-box">
+		<div class="socialicons">
+			<a href="//www.runoob.com/feed" class="rss">RSS 订阅</a>
+		
+			<form action="//list.qq.com/cgi-bin/qf_compose_send" method="post">
+			<input type="hidden" value="qf_booked_feedback" name="t">
+			<input type="hidden" value="4b67b6b6c1f5e792559940cab4aebb8f1126fba880bff1a8" name="id">
+			<input class="placeholder" id="feed_email" name="to" value="输入邮箱 订阅笔记" autocomplete="off">
+			<input type="submit" value="订阅" class="btn btn-primary">
+			</form>
+		
+		</div>
+ 
+	</div>
+-->	
+
+
+
+<!--
+	<div class="sidebar-box cate-list">
+	<div class="sidebar-box recommend-here list-link">
+			<a href="javascript:void(0);" style="font-size: 16px; color:#64854c;font-weight:bold;">笔记列表</a>
+		</div>
+
+ 
+
+</div>
+-->
+
+	 <div class="sidebar-box cate-list">
+		 		
+
+	 	<div class="sidebar-box recommend-here list-link">
+			<a href="javascript:void(0);" style="font-size: 16px; color:#64854c;font-weight:bold;">教程列表</a>
+		</div>
+		
+		<div class="cate-items"> 
+				<a href="http://www.runoob.com/ado">ADO 教程</a>
+	<a href="http://www.runoob.com/ajax">Ajax 教程</a>
+	<a href="http://www.runoob.com/android">Android 教程</a>
+	<a href="http://www.runoob.com/angularjs2">Angular2 教程</a>
+	<a href="http://www.runoob.com/angularjs">AngularJS 教程</a>
+	<a href="http://www.runoob.com/appml">AppML 教程</a>
+	<a href="http://www.runoob.com/asp">ASP 教程</a>
+	<a href="http://www.runoob.com/aspnet">ASP.NET 教程</a>
+	<a href="http://www.runoob.com/bootstrap">Bootstrap 教程</a>
+	<a href="http://www.runoob.com/bootstrap4">Bootstrap4 教程</a>
+	<a href="http://www.runoob.com/bootstrap5">Bootstrap5 教程</a>
+	<a href="http://www.runoob.com/cprogramming">C 教程</a>
+	<a href="http://www.runoob.com/csharp">C# 教程</a>
+	<a href="http://www.runoob.com/cplusplus">C++ 教程</a>
+	<a href="http://www.runoob.com/chartjs">Chart.js 教程</a>
+	<a href="http://www.runoob.com/cssref">CSS 参考手册</a>
+	<a href="http://www.runoob.com/css">CSS 教程</a>
+	<a href="http://www.runoob.com/css3">CSS3 教程</a>
+	<a href="http://www.runoob.com/django">Django 教程</a>
+	<a href="http://www.runoob.com/docker">Docker 教程</a>
+	<a href="http://www.runoob.com/dtd">DTD 教程</a>
+	<a href="http://www.runoob.com/echarts">ECharts 教程</a>
+	<a href="http://www.runoob.com/eclipse">Eclipse 教程</a>
+	<a href="http://www.runoob.com/firebug">Firebug 教程</a>
+	<a href="http://www.runoob.com/font-awesome">Font Awesome 图标</a>
+	<a href="http://www.runoob.com/foundation">Foundation 教程</a>
+	<a href="http://www.runoob.com/git">Git 教程</a>
+	<a href="http://www.runoob.com/go">Go 语言教程</a>
+	<a href="http://www.runoob.com/googleapi">Google 地图 API 教程</a>
+	<a href="http://www.runoob.com/highcharts">Highcharts 教程</a>
+	<a href="http://www.runoob.com/htmldom">HTML DOM 教程</a>
+	<a href="http://www.runoob.com/tags">HTML 参考手册</a>
+	<a href="http://www.runoob.com/charsets">HTML 字符集</a>
+	<a href="http://www.runoob.com/html">HTML 教程</a>
+	<a href="http://www.runoob.com/http">HTTP 教程</a>
+	<a href="http://www.runoob.com/ionic">ionic 教程</a>
+	<a href="http://www.runoob.com/ios">iOS 教程</a>
+	<a href="http://www.runoob.com/java">Java 教程</a>
+	<a href="http://www.runoob.com/jsref">JavaScript 参考手册</a>
+	<a href="http://www.runoob.com/js">Javascript 教程</a>
+	<a href="http://www.runoob.com/jeasyui">jQuery EasyUI 教程</a>
+	<a href="http://www.runoob.com/jquerymobile">jQuery Mobile 教程</a>
+	<a href="http://www.runoob.com/jqueryui">jQuery UI 教程</a>
+	<a href="http://www.runoob.com/jquery">jQuery 教程</a>
+	<a href="http://www.runoob.com/json">JSON 教程</a>
+	<a href="http://www.runoob.com/jsp">JSP 教程</a>
+	<a href="http://www.runoob.com/julia">Julia 教程</a>
+	<a href="http://www.runoob.com/kotlin">Kotlin 教程</a>
+	<a href="http://www.runoob.com/linux">Linux 教程</a>
+	<a href="http://www.runoob.com/lua">Lua 教程</a>
+	<a href="http://www.runoob.com/markdown">Markdown 教程</a>
+	<a href="http://www.runoob.com/matplotlib">Matplotlib 教程</a>
+	<a href="http://www.runoob.com/maven">Maven 教程</a>
+	<a href="http://www.runoob.com/memcached">Memcached 教程</a>
+	<a href="http://www.runoob.com/mongodb">MongoDB 教程</a>
+	<a href="http://www.runoob.com/mysql">MySQL 教程</a>
+	<a href="http://www.runoob.com/nodejs">Node.js 教程</a>
+	<a href="http://www.runoob.com/numpy">NumPy 教程</a>
+	<a href="http://www.runoob.com/pandas">Pandas 教程</a>
+	<a href="http://www.runoob.com/perl">Perl 教程</a>
+	<a href="http://www.runoob.com/php">PHP 教程</a>
+	<a href="http://www.runoob.com/postgresql">PostgreSQL 教程</a>
+	<a href="http://www.runoob.com/python3">Python 3 教程</a>
+	<a href="http://www.runoob.com/python">Python 基础教程</a>
+	<a href="http://www.runoob.com/r">R 教程</a>
+	<a href="http://www.runoob.com/rdf">RDF 教程</a>
+	<a href="http://www.runoob.com/react">React 教程</a>
+	<a href="http://www.runoob.com/redis">Redis 教程</a>
+	<a href="http://www.runoob.com/rss">RSS 教程</a>
+	<a href="http://www.runoob.com/ruby">Ruby 教程</a>
+	<a href="http://www.runoob.com/rust">Rust 教程</a>
+	<a href="http://www.runoob.com/sass">Sass 教程</a>
+	<a href="http://www.runoob.com/scala">Scala 教程</a>
+	<a href="http://www.runoob.com/scipy">SciPy 教程</a>
+	<a href="http://www.runoob.com/servlet">Servlet 教程</a>
+	<a href="http://www.runoob.com/soap">SOAP 教程</a>
+	<a href="http://www.runoob.com/sql">SQL 教程</a>
+	<a href="http://www.runoob.com/sqlite">SQLite 教程</a>
+	<a href="http://www.runoob.com/svg">SVG 教程</a>
+	<a href="http://www.runoob.com/svn">SVN 教程</a>
+	<a href="http://www.runoob.com/swift">Swift 教程</a>
+	<a href="http://www.runoob.com/tcpip">TCP/IP 教程</a>
+	<a href="http://www.runoob.com/typescript">TypeScript 教程</a>
+	<a href="http://www.runoob.com/vbscript">VBScript 教程</a>
+	<a href="http://www.runoob.com/vue2">Vue.js 教程</a>
+	<a href="http://www.runoob.com/vue3">Vue3 教程</a>
+	<a href="http://www.runoob.com/w3c">W3C 教程</a>
+	<a href="http://www.runoob.com/webservices">Web Service 教程</a>
+	<a href="http://www.runoob.com/wsdl">WSDL 教程</a>
+	<a href="http://www.runoob.com/xlink">XLink 教程</a>
+	<a href="http://www.runoob.com/dom">XML DOM 教程</a>
+	<a href="http://www.runoob.com/schema">XML Schema 教程</a>
+	<a href="http://www.runoob.com/xml">XML 教程</a>
+	<a href="http://www.runoob.com/xpath">XPath 教程</a>
+	<a href="http://www.runoob.com/xquery">XQuery 教程</a>
+	<a href="http://www.runoob.com/xslfo">XSLFO 教程</a>
+	<a href="http://www.runoob.com/xsl">XSLT 教程</a>
+	<a href="http://www.runoob.com/data-structures">数据结构</a>
+	<a href="http://www.runoob.com/regexp">正则表达式</a>
+	<a href="http://www.runoob.com/quiz">测验</a>
+	<a href="http://www.runoob.com/browsers">浏览器</a>
+	<a href="http://www.runoob.com/quality">网站品质</a>
+	<a href="http://www.runoob.com/web">网站建设指南</a>
+	<a href="http://www.runoob.com/hosting">网站服务器教程</a>
+	<a href="http://www.runoob.com/design-pattern">设计模式</a>
+			
+		</div> 
+		 	 </div>
+</div>
+	</div>
+</div>
+
+
+<!-- 底部 -->
+<div id="footer" class="mar-t50">
+   <div class="runoob-block">
+    <div class="runoob cf">
+     <dl>
+      <dt>
+       在线实例
+      </dt>
+      <dd>
+       &middot;<a target="_blank" href="/html/html-examples.html">HTML 实例</a>
+      </dd>
+      <dd>
+       &middot;<a target="_blank" href="/css/css-examples.html">CSS 实例</a>
+      </dd>
+      <dd>
+       &middot;<a target="_blank" href="/js/js-examples.html">JavaScript 实例</a>
+      </dd>
+      <dd>
+       &middot;<a target="_blank" href="/ajx/ajax-examples.html">Ajax 实例</a>
+      </dd>
+       <dd>
+       &middot;<a target="_blank" href="/jquery/jquery-examples.html">jQuery 实例</a>
+      </dd>
+      <dd>
+       &middot;<a target="_blank" href="/xml/xml-examples.html">XML 实例</a>
+      </dd>
+      <dd>
+       &middot;<a target="_blank" href="/java/java-examples.html">Java 实例</a>
+      </dd>
+     
+     </dl>
+     <dl>
+      <dt>
+      字符集&工具
+      </dt>
+      <dd>
+       &middot; <a target="_blank" href="/charsets/html-charsets.html">HTML 字符集设置</a>
+      </dd>
+      <dd>
+       &middot; <a target="_blank" href="/tags/html-ascii.html">HTML ASCII 字符集</a>
+      </dd>
+     <dd>
+       &middot; <a target="_blank" href="https://c.runoob.com/front-end/6939/">JS 混淆/加密</a>
+      </dd> 
+      <dd>
+       &middot; <a target="_blank" href="https://c.runoob.com/front-end/6232/">PNG/JPEG 图片压缩</a>
+      </dd>
+      <dd>
+       &middot; <a target="_blank" href="/tags/html-colorpicker.html">HTML 拾色器</a>
+      </dd>
+      <dd>
+       &middot; <a target="_blank" href="//c.runoob.com/front-end/53">JSON 格式化工具</a>
+      </dd>
+      <dd>
+       &middot; <a target="_blank" href="//c.runoob.com/front-end/6680/">随机数生成器</a>
+      </dd>
+     </dl>
+     <dl>
+      <dt>
+       最新更新
+      </dt>
+                   <dd>
+       &middot;
+      <a href="http://www.runoob.com/matplotlib/matplotlib-imread.html" title="Matplotlib imread() 方法">Matplotlib imre...</a>
+      </dd>
+              <dd>
+       &middot;
+      <a href="http://www.runoob.com/matplotlib/matplotlib-imsave.html" title="Matplotlib imsave() 方法">Matplotlib imsa...</a>
+      </dd>
+              <dd>
+       &middot;
+      <a href="http://www.runoob.com/matplotlib/matplotlib-imshow.html" title="Matplotlib imshow() 方法">Matplotlib imsh...</a>
+      </dd>
+              <dd>
+       &middot;
+      <a href="http://www.runoob.com/matplotlib/matplotlib-hist.html" title="Matplotlib 直方图">Matplotlib 直方图</a>
+      </dd>
+              <dd>
+       &middot;
+      <a href="http://www.runoob.com/python3/python-func-object.html" title="Python object() 函数">Python object()...</a>
+      </dd>
+              <dd>
+       &middot;
+      <a href="http://www.runoob.com/python3/python-ai-draw.html" title="Python AI 绘画">Python AI 绘画</a>
+      </dd>
+              <dd>
+       &middot;
+      <a href="http://www.runoob.com/w3cnote/cursor-editor.html" title="神辅助 Cursor 编辑器，加入 GPT-4 让编码更轻松！">神辅助 Cursor ...</a>
+      </dd>
+             </dl>
+     <dl>
+      <dt>
+       站点信息
+      </dt>
+      <dd>
+       &middot;
+       <a target="_blank" href="mailto:admin@runoob.com" rel="external nofollow">意见反馈</a>
+       </dd>
+      <dd>
+       &middot;
+      <a target="_blank" href="/disclaimer">免责声明</a>
+       </dd>
+      <dd>
+       &middot;
+       <a target="_blank" href="/aboutus">关于我们</a>
+       </dd>
+      <dd>
+       &middot;
+      <a target="_blank" href="/archives">文章归档</a>
+      </dd>
+    
+     </dl>
+    
+     <div class="search-share">
+      <div class="app-download">
+        <div>
+         <strong>关注微信</strong>
+        </div>
+      </div>
+      <div class="share">
+      <img width="128" height="128" src="/wp-content/themes/runoob/assets/images/qrcode.png" />
+       </div>
+     </div>
+     
+    </div>
+   </div>
+   <div class="w-1000 copyright">
+     Copyright &copy; 2013-2023    <strong><a href="//www.runoob.com/" target="_blank">菜鸟教程</a></strong>&nbsp;
+    <strong><a href="//www.runoob.com/" target="_blank">runoob.com</a></strong> All Rights Reserved. 备案号：<a target="_blank" rel="nofollow" href="https://beian.miit.gov.cn/">闽ICP备15012807号-1</a>
+   </div>
+  </div>
+  <div class="fixed-btn">
+    <a class="go-top" href="javascript:void(0)" title="返回顶部"> <i class="fa fa-angle-up"></i></a>
+    <a class="qrcode"  href="javascript:void(0)" title="关注我们"><i class="fa fa-qrcode"></i></a>
+    <a class="writer" style="display:none" href="javascript:void(0)"   title="标记/收藏"><i class="fa fa-star" aria-hidden="true"></i></a>
+    <!-- qrcode modal -->
+    <div id="bottom-qrcode" class="modal panel-modal hide fade in">
+      <h4>微信关注</h4>
+      <div class="panel-body"><img alt="微信关注" width="128" height="128" src="/wp-content/themes/runoob/assets/images/qrcode.png"></div> 
+    </div>
+  </div>
+
+ <div style="display:none;">
+<script async src="https://www.googletagmanager.com/gtag/js?id=UA-84264393-2"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+
+  gtag('config', 'UA-84264393-2');
+</script>
+<script>
+var _hmt = _hmt || [];
+(function() {
+  var hm = document.createElement("script");
+  hm.src = "https://hm.baidu.com/hm.js?3eec0b7da6548cf07db3bc477ea905ee";
+  var s = document.getElementsByTagName("script")[0]; 
+  s.parentNode.insertBefore(hm, s);
+})();
+</script>
+
+</div>
+<script>
+window.jsui={
+    www: 'https://www.runoob.com',
+    uri: 'https://www.runoob.com/wp-content/themes/runoob'
+};
+</script>
+
+<script src="https://static.runoob.com/assets/libs/hl/run_prettify.js"></script>
+<script src="/wp-content/themes/runoob/assets/js/main.min.js?v=1.156"></script>
+
+</body>
+</html>

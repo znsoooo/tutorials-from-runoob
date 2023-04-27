@@ -1,0 +1,707 @@
+<!Doctype html>
+<html>
+<head>
+	<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+	<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+	<title>5.2 Verilog 时钟简介 | 菜鸟教程</title>
+
+  <meta name='robots' content='max-image-preview:large' />
+<link rel='stylesheet' id='classic-theme-styles-css' href='http://www.runoob.com/wp-includes/css/classic-themes.min.css?ver=6.2' type='text/css' media='all' />
+<link rel="canonical" href="http://www.runoob.com/w3cnote/verilog2-clock.html" />
+<meta name="keywords" content="5.2 Verilog 时钟简介">
+<meta name="description" content="关键词：时钟源，时钟偏移，时钟抖动，时钟转换时间，时钟延时，时钟树，双边沿时钟 几乎稍微复杂的数字设计都离不开时钟。时钟也是所有时序逻辑建立的基础。前面介绍建立时间和保持时间时也涉及过时钟偏移的概念。下面将总结下时钟的相关知识，以便更好的进行数字设计。  时钟源 根据时钟源在数字设计模块中位置的不同，可以将时钟源分为外部时钟源和内部时钟源。 外部时钟源： RC/LC 振荡电路：利用正反馈或负反馈电路产生周期性变化时钟信号。此类时钟源电路..">
+		
+	<link rel="shortcut icon" href="https://static.runoob.com/images/favicon.ico">
+	<link rel="stylesheet" href="/wp-content/themes/runoob/style.css?v=1.170" type="text/css" media="all" />	
+	<link rel="stylesheet" href="https://cdn.staticfile.org/font-awesome/4.7.0/css/font-awesome.min.css" media="all" />	
+  <!--[if gte IE 9]><!-->
+  <script src="https://cdn.staticfile.org/jquery/2.0.3/jquery.min.js"></script>
+  <!--<![endif]-->
+  <!--[if lt IE 9]>
+     <script src="https://cdn.staticfile.org/jquery/1.9.1/jquery.min.js"></script>
+     <script src="https://cdn.staticfile.org/html5shiv/r29/html5.min.js"></script>
+  <![endif]-->
+  <link rel="apple-touch-icon" href="https://static.runoob.com/images/icon/mobile-icon.png"/>
+  <meta name="apple-mobile-web-app-title" content="菜鸟教程">
+</head>
+<body>
+
+<!--  头部 -->
+<div class="container logo-search">
+
+  <div class="col search row-search-mobile">
+    <form action="index.php">
+      <input class="placeholder" placeholder="搜索……" name="s" autocomplete="off">
+      
+    </form>
+  </div>
+
+  <div class="row">
+    <div class="col logo">
+      <h1><a href="/">菜鸟教程 -- 学的不仅是技术，更是梦想！</a></h1>
+    </div>
+        <div class="col right-list"> 
+    <button class="btn btn-responsive-nav btn-inverse" data-toggle="collapse" data-target=".nav-main-collapse" id="pull" style=""> <i class="fa fa-navicon"></i> </button>
+    </div>
+        
+    <div class="col search search-desktop last">
+      <div class="search-input" >
+      <form action="//www.runoob.com/" target="_blank">
+        <input class="placeholder" id="s" name="s" placeholder="搜索……"  autocomplete="off" style="height: 44px;">
+      </form>
+      
+      </div>
+    </div>
+  </div>
+</div>
+
+
+
+<!-- 导航栏 -->
+<div class="container navigation">
+    <div class="row">
+        <div class="col nav">
+            
+
+                        <ul class="pc-nav" id="note-nav">
+                <li><a href="//www.runoob.com/">首页</a></li>
+                <li><a href="/w3cnote">笔记首页</a></li>
+                <li><a href="/w3cnote/android-tutorial-intro.html" title="Android 基础入门教程">Android</a></li>
+                <li><a href="/w3cnote/es6-tutorial.html" title="ES6 教程">ES6 教程</a></li>
+                <li><a href="/w3cnote/ten-sorting-algorithm.html" title="排序算法">排序算法</a></li>
+                <li><a href="/w3cnote/hadoop-tutorial.html" title="Hadoop 教程">Hadoop</a></li>
+                <li><a href="/w3cnote/zookeeper-tutorial.html" title="Zookeeper 教程">Zookeeper</a></li>
+                <li><a href="/w3cnote/verilog-tutorial.html" title="Verilog 教程">Verilog</a></li>
+                <li><a href="/w3cnote_genre/code" title="编程技术">编程技术</a></li> 
+                <li><a href="/w3cnote_genre/coderlife" title="程序员人生">程序员人生</a></li>
+                
+                <!--<li><a href="javascript:;" class="runoob-pop">登录</a></li>
+                
+                
+                        <li>
+                <a style="font-weight:bold;" href="https://www.runoob.com/linux/linux-tutorial.html#yunserver" target="_blank" onclick="_hmt.push(['_trackEvent', 'aliyun', 'click', 'aliyun'])" title="kkb">云服务器</a>
+                </li>
+                <li><a href="http://gk.link/a/104mQ" target="_blank" style="font-weight: bold;"onclick="_hmt.push(['_trackEvent', '极客时间', 'click', 'jike'])" title="我的圈子">极客时间</a></li>
+            
+                
+                <li><a target="_blank" href="/shoppinglist" rel="nofollow">知识店铺</a></li> 
+        -->
+            </ul>
+                        
+              
+            <ul class="mobile-nav">
+                <li><a href="/w3cnote">首页</a></li>
+                <li><a href="/w3cnote_genre/android" target="_blank" title="Android 基础入门教程">Android</a></li>
+                <li><a href="/w3cnote/es6-tutorial.html" target="_blank" title="ES6 教程">ES6</a></li>
+                <li><a href="/w3cnote_genre/joke" target="_blank" title="程序员笑话">逗乐</a></li>
+                
+                <a href="javascript:void(0)" class="search-reveal">Search</a> 
+            </ul>
+            
+        </div>
+    </div>
+</div>
+
+
+<!--  内容  -->
+<div class="container main">
+	<div class="row">
+
+		<!--  Android 基础入门教程 start  -->
+	<div class="col left-column" style="display:none;">
+		<div class="tab">Verilog 高级教程</div>
+		<div class="sidebar-box gallery-list">
+			<div class="design" id="leftcolumn">  
+			</div> 
+		</div> 
+	</div>
+	<!--  Android 基础入门教程 end  -->
+		<div class="col middle-column big-middle-column">
+	 			<div class="article">
+			<div class="article-heading">
+				<h2>5.2 Verilog 时钟简介</h2>				<h3><em>分类</em> <a href="/w3cnote_genre/verilog2" title="Verilog 教程高级篇" >Verilog 教程高级篇</a> </h3>
+			</div>
+			<div class="article-body note-body">
+				<div class="article-intro">
+					<p>关键词：时钟源，时钟偏移，时钟抖动，时钟转换时间，时钟延时，时钟树，双边沿时钟</p><p>
+几乎稍微复杂的数字设计都离不开时钟。时钟也是所有时序逻辑建立的基础。前面介绍建立时间和保持时间时也涉及过时钟偏移的概念。下面将总结下时钟的相关知识，以便更好的进行数字设计。</p>
+<h3>
+时钟源</h3><p>
+根据时钟源在数字设计模块中位置的不同，可以将时钟源分为外部时钟源和内部时钟源。</p>
+<p><strong>外部时钟源：</strong></p>
+<p>RC/LC 振荡电路：利用正反馈或负反馈电路产生周期性变化时钟信号。此类时钟源电路简单，频率变化范围大，但工作频率较低，稳定度不高。</p>
+<p>无源/有源晶体振荡器：利用石英晶体的压电效应（压力和电信号可以相互转换）产生谐振信号。此类时钟源频率精度高，稳定性好，噪声低，温漂小。有源晶振中，往往还加入了压控或温度补偿，时钟的相位和频率都有较好的特性。但电路实现相对复杂，频带较窄，频率基本不能调节。</p>
+<p><img decoding="async" src="https://www.runoob.com/wp-content/uploads/2021/05/v-clock-1.jpeg"></p>
+<p>调试特定电路时，往往也会使用一些搭建的特定电路（例如施密特触发器）或信号发生器设备产生的时钟源。</p>
+<p><strong>内部时钟源：</strong>
+<p>锁相环（PLL， Phase Locked Loop）:	</p>利用外部输入的参考信号控制环路内部振荡信号的频率和相位，实现输出信号频率对输入信号频率的自动跟踪，通过反馈通路将信号倍频到一个较高的固定频率。</p>
+<p><img decoding="async" src="https://www.runoob.com/wp-content/uploads/2021/05/v-clock-2.jpeg"></p>
+<p>一般晶振由于工艺与成本原因，做不到很高的频率，利用 PLL 电路就可以实现稳定且高频的时钟。PLL 集成到设计模块的内部，可以保证数字电路具有较好的延迟和稳定性。</p>
+
+
+<p><strong>时钟分频：</strong>有些模块工作频率会低于系统时钟频率，此时就需要对系统时钟进行一定的分频得到频率较低的时钟。</p><p>
+通过在 always 语句块中计数并输出时钟信号，是分频器常用的方法。任意分频比的实现逻辑详见下一节《5.3 时钟分频》。</p><p>
+<strong>时钟切换：</strong>系统或某些模块的工作频率有时候会在特定状况下改变，例如低功耗模式下需要降频，提高计算能力时需要升频。此时系统往往会有多个时钟源，以备有需求时进行时钟切换。</p><p>
+时钟切换逻辑如果不进行优化，在切换的过度时间内，大概率会出现尖峰脉冲干扰，对电路产生不利影响。安全的切换逻辑，详见后面章节：《5.4 时钟切换》。</p>
+
+<p>数字系统往往会采用外部晶振输入、内部 PLL 进行倍频的方案。再根据设计需求进行时钟分频或时钟切换。</p>
+
+<h3>时钟特性</h3>
+<p>仿真时，所有同步的时钟都是理想的：时钟的翻转是在瞬间完成的，模块之间的时钟沿都是对齐的，没有延迟，没有抖动。实际电路中，时钟在传输、翻转时都会有延迟。完美的数字设计，也应该考虑这些不完美的时钟特性，否则也会造成设计时序不满足的状况。</p>
+<p>下面对时钟的一些特性进行简单说明。</p>
+<p><strong>时钟偏移（skew）</strong></p><p>
+由于线网的延迟，时钟信号在到达触发器端口时，不能保证不同触发器端口的时钟沿是对齐的，即不同触发器端口的时钟相位存在差异。这种差异称为时钟偏移。示意图如下：</p>
+<p><img decoding="async" src="https://www.runoob.com/wp-content/uploads/2021/05/v-clock-3.png"></p>
+<p>一般时钟偏移与时钟频率没有直接的关系，与走线长度、负载电容、负载数量等因素有关。</p>
+<p><strong>时钟抖动（jitter）</strong></p><p>
+相对于理想时钟沿，实际时钟中存在的不随时间积累的、时而超前、时而滞后的偏移称为时钟抖动。可以用抖动频率和抖动幅度对时钟抖动进行定量描述。数字设计中，时钟抖动都是用时间来描述，示意图如下。</p>
+<p><img decoding="async" src="https://www.runoob.com/wp-content/uploads/2021/05/v-clock-4.jpeg"></p>
+<p>时钟抖动可分为随机抖动和固定抖动。</p><p>
+随机抖动的来源为热噪声、半导体工艺等。</p><p>
+固定抖动的来源为开关电源、电磁干扰或其他不合理的布局布线等。</p><p>
+在综合工具 Design Compiler 中，时钟的偏移和抖动统一用不确定度 uncertainty 来统一表示。</p>
+<p><strong>转换时间（transition）</strong></p><p>
+时钟从上升沿跳变到下降沿，或者从下降沿跳变到上升沿时，并不是"直上直下"不需要时间完成电平跳变，而是"斜坡式"需要一个过渡时间完成电平跳变。这个过渡时间称之为时钟的转换时间，示意图如下。</p>
+<p><img decoding="async" src="https://www.runoob.com/wp-content/uploads/2021/05/v-clock-5.png"></p>
+<p>转换时间大小与单元库工艺、电容负载等有关。</p>
+<p><strong>时钟延时（lantency）</strong></p><p>
+时钟从时钟源（例如晶振、PLL 或分频器输出端）出发到达触发器端口的延迟时间，称为时钟延时。时钟延时包括时钟源延迟（source latency）和时钟网络延迟（network latency），如下图所示。</p>
+<p><img decoding="async" src="https://www.runoob.com/wp-content/uploads/2021/05/v-clock-6.png"></p>
+<p>时钟源延时，是时钟信号从实际时钟原点到设计模块时钟定义点的传输时间。上图所示为 3ns。</p><p>
+时钟网络延时，是从设计模块时钟定义点到模块内触发器时钟端的传输时间，传输路径上可能经过缓冲器（buffer）。上图所示为 1ns。</p><p>
+时钟源延时（source latency）是设计模块内所有触发器共有的延时，所以不会影响时钟偏移（skew）。</p>
+
+<h3>时钟树</h3><p>
+数字设计时各个模块应当使用同步时钟电路，同步电路中被相同时钟信号驱动的触发器共同组成一个时钟域。理想电路中，时钟信号会同时到达同时钟域所有触发器的时钟端。但是实际中因为各种延迟的存在，这种无延迟的时钟特性是很难实现的。而且时钟信号的驱动能力有限，难以独立的为一个包含较多的触发器的时钟域提供有效扇出。为解决时钟延迟与驱动的问题，就需要采用时钟树系统对时钟信号进行管理，来确保良好的时序和驱动能力。</p><p>
+
+时钟树，是个由许多缓冲单元 (buffer cell) 平衡搭建的网状结构。一般由一个时钟源点，经一级一级的缓冲单元搭建而成。增加 clock buffer（图中橙色三角模块） 的实际时钟树结构如下所示。</p>
+<p><img decoding="async" src="https://www.runoob.com/wp-content/uploads/2021/05/v-clock-7.jpeg"></p>
+蓝色的上升沿符号表示时钟的转换时间（transition），红色的实线则表示时钟延时 (latency)，包含 network delay 和 source latency，绿色的虚线表示时钟不确定度（uncertainty），包括时钟偏移（skew）和时钟抖动（jitter）。</p><p>
+时钟树并不是来减少时钟信号到达各个触发器的时间，而是减少到达各个触发器之间的时间差异。一般是后端设计人员通过插入 clock buffer 完成时钟树的设计。前端设计人员，往往需要保证时钟方案与数字逻辑的功能正确性。</p>
+
+<p>其他时钟分类：</p>
+<p><strong>同步、异步时钟</strong></p><p>
+<a href="https://www.runoob.com/w3cnote/verilog-sync.html" rel="noopener" target="_blank">《4.1 同步与异步》</a>中有详细说明，当时钟同源且满足整数倍关系是，一般可以认为时钟是同步的。数字设计中同步时钟的定义比较宽泛。同时钟域下的逻辑不需要进行同步处理。</p>
+<p>
+下面从同步电路的角度来理解同步时钟的概念。</p><p>
+同步电路是由时序和组合逻辑电路构成的电路。同步电路的特点是各触发器的时钟端全部连接在一起，并接在系统时钟端。只有当时钟脉冲到来时，电路的状态才能改变。改变后的状态将一直保持到下一个时钟脉冲的到来。这期间无论外部输入 x 有无变化，状态表中的每个状态都是稳定的。</p>
+<p><strong>门控时钟</strong></p><p>
+门控时钟的基本原理：使能信号有效的时候，打开时钟。使能信号无效的时候，关闭时钟。</p>
+<p><img decoding="async" src="https://www.runoob.com/wp-content/uploads/2021/05/v-clock-8.png"></p>
+<p>由于门控时钟可以将工作时钟在适合的时间关闭，所以门控时钟在低功耗设计中有着广泛应用。门控时钟最简单是实现逻辑是将使能信号直接与时钟信号做"与"操作，但这样是不安全的，容易出现毛刺现象。详细门控时钟介绍请参考《6.4 RTL 级低功耗设计（下）》。</p>
+<p><strong>双边沿时钟</strong></p><p>
+某些模块可以在时钟的上升沿和下降沿都进行数据传输，达到速率增倍的效果。</p><p>
+DDR (Double Data Rate) SDRAM 是典型的采用双边沿传输数据的例子。</p><p>
+典型 DDR 数据传输示意图如下。</p>
+<p><img decoding="async" src="https://www.runoob.com/wp-content/uploads/2021/05/v-clock-9.png"></p>
+<p>下面对时钟双边沿传输数据的行为进行一个简单的仿真。</p><p>
+基本设计思路是，利用时钟双边沿对数据进行读取，然后通过与时钟相反的片选信号对数据进行选择输出，完成数据在时钟双边沿的传输。</p><p>
+Verilog 代码描述如下 。</p>
+<div class="example"><h2 class="example">实例</h2> <div class="example_code">
+<span style="color: #A52A2A; font-weight: bold;">module</span> double_rate<span style="color: #9F79EE;">&#40;</span><br />
+&nbsp; &nbsp; <span style="color: #A52A2A; font-weight: bold;">input</span> &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; rstn <span style="color: #5D478B;">,</span><br />
+&nbsp; &nbsp; <span style="color: #A52A2A; font-weight: bold;">input</span> &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; clk<span style="color: #5D478B;">,</span><br />
+&nbsp; &nbsp; <span style="color: #A52A2A; font-weight: bold;">input</span> &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; csn<span style="color: #5D478B;">,</span><br />
+<br />
+&nbsp; &nbsp; <span style="color: #A52A2A; font-weight: bold;">input</span> <span style="color: #9F79EE;">&#91;</span><span style="color: #ff0055;">7</span><span style="color: #5D478B;">:</span><span style="color: #ff0055;">0</span><span style="color: #9F79EE;">&#93;</span> &nbsp; &nbsp; &nbsp; &nbsp; din<span style="color: #5D478B;">,</span><br />
+&nbsp; &nbsp; <span style="color: #A52A2A; font-weight: bold;">input</span> &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; din_en<span style="color: #5D478B;">,</span><br />
+&nbsp; &nbsp; <span style="color: #A52A2A; font-weight: bold;">output</span> <span style="color: #9F79EE;">&#91;</span><span style="color: #ff0055;">7</span><span style="color: #5D478B;">:</span><span style="color: #ff0055;">0</span><span style="color: #9F79EE;">&#93;</span> &nbsp; &nbsp; &nbsp; &nbsp;dout<span style="color: #5D478B;">,</span><br />
+&nbsp; &nbsp; <span style="color: #A52A2A; font-weight: bold;">output</span> &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;dout_en<span style="color: #9F79EE;">&#41;</span><span style="color: #5D478B;">;</span><br />
+<br />
+&nbsp; &nbsp;<span style="color: #00008B; font-style: italic;">//capture at posedge</span><br />
+&nbsp; &nbsp;<span style="color: #A52A2A; font-weight: bold;">reg</span> <span style="color: #9F79EE;">&#91;</span><span style="color: #ff0055;">7</span><span style="color: #5D478B;">:</span><span style="color: #ff0055;">0</span><span style="color: #9F79EE;">&#93;</span> &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;datap_r <span style="color: #5D478B;">;</span><br />
+&nbsp; &nbsp;<span style="color: #A52A2A; font-weight: bold;">reg</span> &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;datap_en_r <span style="color: #5D478B;">;</span><br />
+&nbsp; &nbsp;<span style="color: #A52A2A; font-weight: bold;">always</span> <span style="color: #5D478B;">@</span><span style="color: #9F79EE;">&#40;</span><span style="color: #A52A2A; font-weight: bold;">posedge</span> clk <span style="color: #A52A2A; font-weight: bold;">or</span> <span style="color: #A52A2A; font-weight: bold;">negedge</span> rstn<span style="color: #9F79EE;">&#41;</span> <span style="color: #A52A2A; font-weight: bold;">begin</span><br />
+&nbsp; &nbsp; &nbsp; <span style="color: #A52A2A; font-weight: bold;">if</span> <span style="color: #9F79EE;">&#40;</span><span style="color: #5D478B;">!</span>rstn<span style="color: #9F79EE;">&#41;</span> <span style="color: #A52A2A; font-weight: bold;">begin</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp;datap_r &nbsp; &nbsp; &nbsp; &nbsp;<span style="color: #5D478B;">&lt;=</span> 'b0 <span style="color: #5D478B;">;</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp;datap_en_r &nbsp; &nbsp; <span style="color: #5D478B;">&lt;=</span> <span style="color: #ff0055;">1'b0</span> <span style="color: #5D478B;">;</span><br />
+&nbsp; &nbsp; &nbsp; <span style="color: #A52A2A; font-weight: bold;">end</span><br />
+&nbsp; &nbsp; &nbsp; <span style="color: #A52A2A; font-weight: bold;">else</span> <span style="color: #A52A2A; font-weight: bold;">if</span> <span style="color: #9F79EE;">&#40;</span>din_en<span style="color: #9F79EE;">&#41;</span> <span style="color: #A52A2A; font-weight: bold;">begin</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp;datap_r &nbsp; &nbsp; &nbsp; &nbsp;<span style="color: #5D478B;">&lt;=</span> din <span style="color: #5D478B;">;</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp;datap_en_r &nbsp; &nbsp; <span style="color: #5D478B;">&lt;=</span> <span style="color: #ff0055;">1'b1</span> <span style="color: #5D478B;">;</span><br />
+&nbsp; &nbsp; &nbsp; <span style="color: #A52A2A; font-weight: bold;">end</span><br />
+&nbsp; &nbsp; &nbsp; <span style="color: #A52A2A; font-weight: bold;">else</span> <span style="color: #A52A2A; font-weight: bold;">begin</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp;datap_en_r &nbsp; &nbsp; <span style="color: #5D478B;">&lt;=</span> <span style="color: #ff0055;">1'b0</span> <span style="color: #5D478B;">;</span><br />
+&nbsp; &nbsp; &nbsp; <span style="color: #A52A2A; font-weight: bold;">end</span><br />
+&nbsp; &nbsp;<span style="color: #A52A2A; font-weight: bold;">end</span><br />
+<br />
+&nbsp; &nbsp;<span style="color: #00008B; font-style: italic;">//capture at negedge</span><br />
+&nbsp; &nbsp;<span style="color: #A52A2A; font-weight: bold;">reg</span> <span style="color: #9F79EE;">&#91;</span><span style="color: #ff0055;">7</span><span style="color: #5D478B;">:</span><span style="color: #ff0055;">0</span><span style="color: #9F79EE;">&#93;</span> &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;datan_r <span style="color: #5D478B;">;</span><br />
+&nbsp; &nbsp;<span style="color: #A52A2A; font-weight: bold;">reg</span> &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;datan_en_r <span style="color: #5D478B;">;</span><br />
+&nbsp; &nbsp;<span style="color: #A52A2A; font-weight: bold;">always</span> <span style="color: #5D478B;">@</span><span style="color: #9F79EE;">&#40;</span><span style="color: #A52A2A; font-weight: bold;">negedge</span> clk <span style="color: #A52A2A; font-weight: bold;">or</span> <span style="color: #A52A2A; font-weight: bold;">negedge</span> rstn<span style="color: #9F79EE;">&#41;</span> <span style="color: #A52A2A; font-weight: bold;">begin</span><br />
+&nbsp; &nbsp; &nbsp; <span style="color: #A52A2A; font-weight: bold;">if</span> <span style="color: #9F79EE;">&#40;</span><span style="color: #5D478B;">!</span>rstn<span style="color: #9F79EE;">&#41;</span> <span style="color: #A52A2A; font-weight: bold;">begin</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp;datan_r &nbsp; &nbsp; &nbsp; &nbsp;<span style="color: #5D478B;">&lt;=</span> 'b0 <span style="color: #5D478B;">;</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp;datan_en_r &nbsp; &nbsp; <span style="color: #5D478B;">&lt;=</span> <span style="color: #ff0055;">1'b0</span> <span style="color: #5D478B;">;</span><br />
+&nbsp; &nbsp; &nbsp; <span style="color: #A52A2A; font-weight: bold;">end</span><br />
+&nbsp; &nbsp; &nbsp; <span style="color: #A52A2A; font-weight: bold;">else</span> <span style="color: #A52A2A; font-weight: bold;">if</span> <span style="color: #9F79EE;">&#40;</span>din_en<span style="color: #9F79EE;">&#41;</span> <span style="color: #A52A2A; font-weight: bold;">begin</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp;datan_r &nbsp; &nbsp; &nbsp; &nbsp;<span style="color: #5D478B;">&lt;=</span> din <span style="color: #5D478B;">;</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp;datan_en_r &nbsp; &nbsp; <span style="color: #5D478B;">&lt;=</span> <span style="color: #ff0055;">1'b1</span> <span style="color: #5D478B;">;</span><br />
+&nbsp; &nbsp; &nbsp; <span style="color: #A52A2A; font-weight: bold;">end</span><br />
+&nbsp; &nbsp; &nbsp; <span style="color: #A52A2A; font-weight: bold;">else</span> <span style="color: #A52A2A; font-weight: bold;">begin</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp;datan_en_r &nbsp; &nbsp; <span style="color: #5D478B;">&lt;=</span> <span style="color: #ff0055;">1'b0</span> <span style="color: #5D478B;">;</span><br />
+&nbsp; &nbsp; &nbsp; <span style="color: #A52A2A; font-weight: bold;">end</span><br />
+&nbsp; &nbsp;<span style="color: #A52A2A; font-weight: bold;">end</span><br />
+<br />
+&nbsp; &nbsp;<span style="color: #A52A2A; font-weight: bold;">assign</span> dout <span style="color: #5D478B;">=</span> <span style="color: #5D478B;">!</span>csn <span style="color: #5D478B;">?</span> datap_r <span style="color: #5D478B;">:</span> datan_r <span style="color: #5D478B;">;</span><br />
+&nbsp; &nbsp;<span style="color: #A52A2A; font-weight: bold;">assign</span> dout_en <span style="color: #5D478B;">=</span> datan_en_r <span style="color: #5D478B;">|</span> datap_en_r <span style="color: #5D478B;">;</span><br />
+<span style="color: #A52A2A; font-weight: bold;">endmodule</span><br />
+</div></div><p>
+testbench 描述如下，其中双边沿数据传输模块的时钟频率为 100MHz，但输入的数据速率为 200MHz。</p>
+<div class="example"><h2 class="example">实例</h2> <div class="example_code">
+<span style="color: #008800;">`timescale</span> <span style="color: #ff0055;">1ns</span><span style="color: #5D478B;">/</span><span style="color: #ff0055;">1ps</span><br />
+<br />
+<span style="color: #A52A2A; font-weight: bold;">module</span> test <span style="color: #5D478B;">;</span><br />
+&nbsp; &nbsp;<span style="color: #A52A2A; font-weight: bold;">reg</span> &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;clk_100mhz<span style="color: #5D478B;">,</span> clk_200mhz <span style="color: #5D478B;">;</span><br />
+&nbsp; &nbsp;<span style="color: #A52A2A; font-weight: bold;">reg</span> &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;rstn <span style="color: #5D478B;">;</span><br />
+&nbsp; &nbsp;<span style="color: #A52A2A; font-weight: bold;">reg</span> &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;csn <span style="color: #5D478B;">;</span><br />
+&nbsp; &nbsp;<span style="color: #A52A2A; font-weight: bold;">reg</span> <span style="color: #9F79EE;">&#91;</span><span style="color: #ff0055;">7</span><span style="color: #5D478B;">:</span><span style="color: #ff0055;">0</span><span style="color: #9F79EE;">&#93;</span> &nbsp; &nbsp;din <span style="color: #5D478B;">;</span><br />
+&nbsp; &nbsp;<span style="color: #A52A2A; font-weight: bold;">reg</span> &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;din_en <span style="color: #5D478B;">;</span><br />
+&nbsp; &nbsp;<span style="color: #A52A2A; font-weight: bold;">wire</span> <span style="color: #9F79EE;">&#91;</span><span style="color: #ff0055;">7</span><span style="color: #5D478B;">:</span><span style="color: #ff0055;">0</span><span style="color: #9F79EE;">&#93;</span> &nbsp; dout <span style="color: #5D478B;">;</span><br />
+&nbsp; &nbsp;<span style="color: #A52A2A; font-weight: bold;">wire</span> &nbsp; &nbsp; &nbsp; &nbsp; dout_en <span style="color: #5D478B;">;</span><br />
+<br />
+&nbsp; &nbsp;<span style="color: #A52A2A; font-weight: bold;">always</span> <span style="color: #5D478B;">#</span><span style="color: #9F79EE;">&#40;</span><span style="color: #ff0055;">2.5</span><span style="color: #9F79EE;">&#41;</span> &nbsp; &nbsp;clk_200mhz &nbsp;<span style="color: #5D478B;">=</span> <span style="color: #5D478B;">~</span>clk_200mhz <span style="color: #5D478B;">;</span><br />
+&nbsp; &nbsp;<span style="color: #A52A2A; font-weight: bold;">always</span> <span style="color: #5D478B;">@</span><span style="color: #9F79EE;">&#40;</span><span style="color: #A52A2A; font-weight: bold;">posedge</span> clk_200mhz<span style="color: #9F79EE;">&#41;</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; clk_100mhz &nbsp;<span style="color: #5D478B;">=</span> <span style="color: #5D478B;">~</span>clk_100mhz <span style="color: #5D478B;">;</span><br />
+<br />
+&nbsp; &nbsp;<span style="color: #A52A2A; font-weight: bold;">initial</span> <span style="color: #A52A2A; font-weight: bold;">begin</span><br />
+&nbsp; &nbsp; &nbsp; clk_100mhz &nbsp;<span style="color: #5D478B;">=</span> <span style="color: #ff0055;">0</span> <span style="color: #5D478B;">;</span><br />
+&nbsp; &nbsp; &nbsp; clk_200mhz &nbsp;<span style="color: #5D478B;">=</span> <span style="color: #ff0055;">0</span> <span style="color: #5D478B;">;</span><br />
+&nbsp; &nbsp; &nbsp; rstn &nbsp; &nbsp; &nbsp; &nbsp;<span style="color: #5D478B;">=</span> <span style="color: #ff0055;">0</span> <span style="color: #5D478B;">;</span><br />
+&nbsp; &nbsp; &nbsp; din &nbsp; &nbsp; &nbsp; &nbsp; <span style="color: #5D478B;">=</span> <span style="color: #ff0055;">0</span> <span style="color: #5D478B;">;</span><br />
+&nbsp; &nbsp; &nbsp; din_en &nbsp; &nbsp; &nbsp;<span style="color: #5D478B;">=</span> <span style="color: #ff0055;">0</span> <span style="color: #5D478B;">;</span><br />
+&nbsp; &nbsp; &nbsp; csn &nbsp; &nbsp; &nbsp; &nbsp; <span style="color: #5D478B;">=</span> <span style="color: #ff0055;">0</span> <span style="color: #5D478B;">;</span><br />
+&nbsp; &nbsp; &nbsp; <span style="color: #00008B; font-style: italic;">//start work</span><br />
+&nbsp; &nbsp; &nbsp; <span style="color: #5D478B;">#</span><span style="color: #ff0055;">11</span> rstn &nbsp; &nbsp;<span style="color: #5D478B;">=</span> <span style="color: #ff0055;">1</span> <span style="color: #5D478B;">;</span><br />
+&nbsp; &nbsp; &nbsp; <span style="color: #5D478B;">@</span><span style="color: #9F79EE;">&#40;</span><span style="color: #A52A2A; font-weight: bold;">negedge</span> clk_100mhz<span style="color: #9F79EE;">&#41;</span> <span style="color: #5D478B;">;</span><br />
+&nbsp; &nbsp; &nbsp; din_en &nbsp; &nbsp; &nbsp;<span style="color: #5D478B;">=</span> <span style="color: #ff0055;">1</span> <span style="color: #5D478B;">;</span><br />
+&nbsp; &nbsp; &nbsp; <span style="color: #5D478B;">#</span><span style="color: #ff0055;">0.2</span> <span style="color: #5D478B;">;</span><br />
+&nbsp; &nbsp; &nbsp; csn &nbsp; &nbsp; &nbsp; &nbsp; <span style="color: #5D478B;">=</span> <span style="color: #ff0055;">1</span> <span style="color: #5D478B;">;</span> <span style="color: #00008B; font-style: italic;">//csn=1 时输出下降沿采集的数据</span><br />
+&nbsp; &nbsp; &nbsp; <span style="color: #00008B; font-style: italic;">//generate csn</span><br />
+&nbsp; &nbsp; &nbsp; <span style="color: #A52A2A; font-weight: bold;">forever</span> <span style="color: #A52A2A; font-weight: bold;">begin</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp;<span style="color: #5D478B;">@</span><span style="color: #9F79EE;">&#40;</span><span style="color: #A52A2A; font-weight: bold;">posedge</span> clk_100mhz<span style="color: #9F79EE;">&#41;</span> <span style="color: #5D478B;">;</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp;<span style="color: #5D478B;">#</span><span style="color: #ff0055;">0.2</span> <span style="color: #5D478B;">;</span> &nbsp; &nbsp; &nbsp; &nbsp; <span style="color: #00008B; font-style: italic;">//增加些许延迟确保数据采集正确</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp;csn <span style="color: #5D478B;">=</span> <span style="color: #ff0055;">0</span> <span style="color: #5D478B;">;</span> &nbsp; &nbsp; &nbsp;<span style="color: #00008B; font-style: italic;">//csn=0 时输出上升沿采集的数据</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp;<span style="color: #5D478B;">@</span><span style="color: #9F79EE;">&#40;</span><span style="color: #A52A2A; font-weight: bold;">negedge</span> clk_100mhz<span style="color: #9F79EE;">&#41;</span> <span style="color: #5D478B;">;</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp;<span style="color: #5D478B;">#</span><span style="color: #ff0055;">0.2</span> <span style="color: #5D478B;">;</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp;csn <span style="color: #5D478B;">=</span> <span style="color: #ff0055;">1</span> <span style="color: #5D478B;">;</span> &nbsp; &nbsp; &nbsp;<span style="color: #00008B; font-style: italic;">//csn=1 时输出下降沿采集的数据</span><br />
+&nbsp; &nbsp; &nbsp; <span style="color: #A52A2A; font-weight: bold;">end</span><br />
+&nbsp; &nbsp;<span style="color: #A52A2A; font-weight: bold;">end</span><br />
+<br />
+&nbsp; &nbsp;<span style="color: #A52A2A; font-weight: bold;">always</span> <span style="color: #5D478B;">@</span><span style="color: #9F79EE;">&#40;</span><span style="color: #A52A2A; font-weight: bold;">negedge</span> clk_200mhz<span style="color: #9F79EE;">&#41;</span> <span style="color: #A52A2A; font-weight: bold;">begin</span><br />
+&nbsp; &nbsp; &nbsp; din <span style="color: #5D478B;">&lt;=</span> <span style="color: #9F79EE;">&#123;</span><span style="color: #9932CC;">$random</span><span style="color: #9F79EE;">&#40;</span><span style="color: #9F79EE;">&#41;</span><span style="color: #9F79EE;">&#125;</span> <span style="color: #5D478B;">%</span> <span style="color: #ff0055;">8'hFF</span> <span style="color: #5D478B;">;</span> &nbsp;<span style="color: #00008B; font-style: italic;">//产生传输的随机数据</span><br />
+&nbsp; &nbsp;<span style="color: #A52A2A; font-weight: bold;">end</span><br />
+<br />
+&nbsp; &nbsp;double_rate u_double_rate<span style="color: #9F79EE;">&#40;</span><br />
+&nbsp; &nbsp; &nbsp;.rstn &nbsp; &nbsp; &nbsp;<span style="color: #9F79EE;">&#40;</span>rstn<span style="color: #9F79EE;">&#41;</span><span style="color: #5D478B;">,</span><br />
+&nbsp; &nbsp; &nbsp;.clk &nbsp; &nbsp; &nbsp; <span style="color: #9F79EE;">&#40;</span>clk_100mhz<span style="color: #9F79EE;">&#41;</span><span style="color: #5D478B;">,</span><br />
+&nbsp; &nbsp; &nbsp;.csn &nbsp; &nbsp; &nbsp; <span style="color: #9F79EE;">&#40;</span>csn<span style="color: #9F79EE;">&#41;</span><span style="color: #5D478B;">,</span><br />
+&nbsp; &nbsp; &nbsp;.din &nbsp; &nbsp; &nbsp; <span style="color: #9F79EE;">&#40;</span>din<span style="color: #9F79EE;">&#41;</span><span style="color: #5D478B;">,</span><br />
+&nbsp; &nbsp; &nbsp;.din_en &nbsp; &nbsp;<span style="color: #9F79EE;">&#40;</span>din_en<span style="color: #9F79EE;">&#41;</span><span style="color: #5D478B;">,</span><br />
+&nbsp; &nbsp; &nbsp;.dout &nbsp; &nbsp; &nbsp;<span style="color: #9F79EE;">&#40;</span>dout<span style="color: #9F79EE;">&#41;</span><span style="color: #5D478B;">,</span><br />
+&nbsp; &nbsp; &nbsp;.dout_en &nbsp; <span style="color: #9F79EE;">&#40;</span>dout_en<span style="color: #9F79EE;">&#41;</span><span style="color: #9F79EE;">&#41;</span><span style="color: #5D478B;">;</span><br />
+<br />
+&nbsp; &nbsp;<span style="color: #A52A2A; font-weight: bold;">initial</span> <span style="color: #A52A2A; font-weight: bold;">begin</span><br />
+&nbsp; &nbsp; &nbsp; <span style="color: #A52A2A; font-weight: bold;">forever</span> <span style="color: #A52A2A; font-weight: bold;">begin</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp;<span style="color: #5D478B;">#</span><span style="color: #ff0055;">100</span><span style="color: #5D478B;">;</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp;<span style="color: #A52A2A; font-weight: bold;">if</span> <span style="color: #9F79EE;">&#40;</span><span style="color: #9932CC;">$time</span> <span style="color: #5D478B;">&gt;=</span> <span style="color: #ff0055;">10000</span><span style="color: #9F79EE;">&#41;</span> &nbsp;<span style="color: #9932CC;">$finish</span> <span style="color: #5D478B;">;</span><br />
+&nbsp; &nbsp; &nbsp; <span style="color: #A52A2A; font-weight: bold;">end</span><br />
+&nbsp; &nbsp;<span style="color: #A52A2A; font-weight: bold;">end</span><br />
+<br />
+<span style="color: #A52A2A; font-weight: bold;">endmodule</span> <span style="color: #00008B; font-style: italic;">// test</span><br />
+</div></div><p>
+前几个数据的仿真结果如下。</p><p>
+由图可知，数据传输正常，且速率为时钟频率的 2 倍。</p>
+<p><img decoding="async" src="https://www.runoob.com/wp-content/uploads/2021/05/v-clock-10.png"></p><p>
+本次只是对时钟双边沿传输数据进行简单的仿真，并不是仿真 DDR 的工作原理。DDR 双倍速率传输数据的工作原理远比此次仿真复杂的多。</p>
+<p>
+但是一般情况下，不建议使用双边沿时钟逻辑，主要有以下几点原因。</p>
+<p>always 块中，不能同时使用上升沿和下降沿作为敏感列表，也不能在 2 个always 块中为同一个变量赋值，例如下列描述就是错误的。虽然 RTL 编译可能不会报错，但也不能综合成实际电路。这就导致了信号间通信的难度。</p><pre>
+   always @(posedge clk or negedge clk) begin</pre>
+<p>数据传输速率是数据时钟频率的两倍，如果使用时钟上升沿和下降沿逻辑进行 RTL 建模，则还需要翻转速率和时钟一致的片选信号；如果不使用片选信号，模块内应该引入数据时钟频率 2 倍的同源时钟信号，才可以正常对数据进行选择。</p>
+<p>当使用的双边沿时钟逻辑之后，需要对上升沿和下降沿都进行合理的约束。时钟约束就会变得复杂，布局布线要求更加严格，调试难度增加。</p>
+<p>使用时钟双边沿进行设计，要求时钟的质量很高，设计时钟树时也需要考虑众多因素。</p>
+<h3>本章节源码下载</h3><p>
+<a class="download" href="https://www.runoob.com/wp-content/uploads/2021/05/v5.2_double_clk.zip">Download</a>   </p>				</div>
+			</div>
+			<div class="previous-next-links">
+			<div class="previous-design-link">← <a href="http://www.runoob.com/w3cnote/verilog2-reset.html" rel="prev"> 5.1 Verilog 复位简介</a> </div>
+			<div class="next-design-link"><a href="http://www.runoob.com/w3cnote/verilog2-clock-division.html" rel="next"> 5.3 Verilog 时钟分频</a> →</div>
+			</div>
+						<div class="article-heading-ad" id="w3cnote-ad728">
+			<script async src="//pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script>
+			<!-- 移动版 自动调整 -->
+			<ins class="adsbygoogle"
+			     style="display:inline-block;min-width:300px;max-width:970px;width:100%;height:90px"
+			     data-ad-client="ca-pub-5751451760833794"
+			     data-ad-slot="1691338467"
+			     data-ad-format="horizontal"></ins>
+			<script>
+			(adsbygoogle = window.adsbygoogle || []).push({});
+			</script>
+			</div>
+			<style>
+@media screen and (max-width: 768px) {
+	#w3cnote-ad728 {
+		display: none;
+	}
+}
+p.note-author {
+    border-bottom: 1px solid #ddd;
+    font-size: 18px;
+    font-weight: bold;
+    color: #78a15a;
+    padding-bottom: 2px;
+    margin-bottom: 4px;
+}
+</style>
+<script>
+var aid = 23743;
+</script>
+	</div>
+		
+	</div>
+	<div class="listcol last right-column">
+
+	<script type="text/javascript">
+jQuery(document).ready(function ($){
+	var total = $(".membership li").length;
+	var left_list = '';
+	href = window.location.href;
+	
+	$(".membership li").each(function(index, value){
+
+		left_list += $(this).html();
+
+		cur_href = $(this).find("a").attr("href");
+		cur_obj = $(this);
+		
+		if(href.match(cur_href) != null) {
+			if(index==0) {
+				$(".previous-design-link").hide();
+			}
+			if(index==(total-1)) {
+				$(".next-design-link").hide();
+			}
+			prev_href = cur_obj.prev("li").find("a").attr("href");
+			prev_title = cur_obj.prev("li").find("a").attr("title");
+
+			next_href = cur_obj.next("li").find("a").attr("href");
+			next_title = cur_obj.next("li").find("a").attr("title");
+			if(prev_title) {
+				$(".previous-design-link a").attr("href", prev_href);
+				$(".previous-design-link a").attr("title", prev_title);
+				$(".previous-design-link a").text(prev_title);
+			} else {
+				$(".previous-design-link").html("");
+			}
+
+			if(next_title) {
+				$(".next-design-link a").attr("href", next_href);
+				$(".next-design-link a").attr("title", next_title);
+				$(".next-design-link a").text(next_title);
+			} else {
+				$(".next-design-link").html("");
+			}
+		}
+	});
+
+	$("#leftcolumn").html(left_list);
+});
+	</script>
+	<div class="sidebar-box cate-list">
+	<div class="sidebar-box recommend-here list-link">
+	<a href="javascript:void(0);">Verilog 高级教程</a>	</div>
+	
+	<ul class="membership">
+		
+	<li><a target="_top" data-id="23639" title="0.1 数字逻辑设计" href="http://www.runoob.com/w3cnote/verilog2-tutorial.html" >0.1 数字逻辑设计</a></li>
+	
+		
+	<li><a target="_top" data-id="23641" title="0.2 Verilog 编码风格" href="http://www.runoob.com/w3cnote/verilog2-codestyle.html" >0.2 Verilog 编码风格</a></li>
+	
+		
+	<li><a target="_top" data-id="23644" title="0.3 Verilog 代码规范" href="http://www.runoob.com/w3cnote/verilog2-codeguide.html" >0.3 Verilog 代码规范</a></li>
+	
+		
+	<li><a target="_top" data-id="23645" title="1.1 Verilog 门的类型" href="http://www.runoob.com/w3cnote/verilog2-gate.html" >1.1 Verilog 门的类型</a></li>
+	
+		
+	<li><a target="_top" data-id="23648" title="1.2 Verilog 开关级建模" href="http://www.runoob.com/w3cnote/verilog2-level-modeling.html" >1.2 Verilog 开关级建模</a></li>
+	
+		
+	<li><a target="_top" data-id="23656" title="1.3 Verilog 门延迟" href="http://www.runoob.com/w3cnote/verilog2-gate-delay.html" >1.3 Verilog 门延迟</a></li>
+	
+		
+	<li><a target="_top" data-id="23673" title="2.1 Verilog UDP 基础知识" href="http://www.runoob.com/w3cnote/verilog2-udp.html" >2.1 Verilog UDP 基础知识</a></li>
+	
+		
+	<li><a target="_top" data-id="23674" title="2.2 Verilog 组合逻辑 UDP" href="http://www.runoob.com/w3cnote/verilog2-udp-logic.html" >2.2 Verilog 组合逻辑 UDP</a></li>
+	
+		
+	<li><a target="_top" data-id="23677" title="2.3 Verilog 时序逻辑 UDP" href="http://www.runoob.com/w3cnote/verilog2-udp-timing.html" >2.3 Verilog 时序逻辑 UDP</a></li>
+	
+		
+	<li><a target="_top" data-id="23685" title="3.1 Verilog 延迟模型" href="http://www.runoob.com/w3cnote/verilog2-delay-type.html" >3.1 Verilog 延迟模型</a></li>
+	
+		
+	<li><a target="_top" data-id="23690" title="3.2 Verilog specify 块语句" href="http://www.runoob.com/w3cnote/verilog2-specify.html" >3.2 Verilog specify 块语句</a></li>
+	
+		
+	<li><a target="_top" data-id="23692" title="3.3 Verilog 建立时间和保持时间" href="http://www.runoob.com/w3cnote/verilog2-setup-hold-time.html" >3.3 Verilog 建立时间和保持时间</a></li>
+	
+		
+	<li><a target="_top" data-id="23701" title="3.4 Verilog 时序检查" href="http://www.runoob.com/w3cnote/verilog2-timing-check.html" >3.4 Verilog 时序检查</a></li>
+	
+		
+	<li><a target="_top" data-id="23708" title="3.5 Verilog 延迟反标注" href="http://www.runoob.com/w3cnote/verilog2-sdf.html" >3.5 Verilog 延迟反标注</a></li>
+	
+		
+	<li><a target="_top" data-id="23714" title="4.1 Verilog 同步与异步" href="http://www.runoob.com/w3cnote/verilog-sync.html" >4.1 Verilog 同步与异步</a></li>
+	
+		
+	<li><a target="_top" data-id="23725" title="4.2 Verilog 跨时钟域传输：慢到快" href="http://www.runoob.com/w3cnote/verilog2-slow2fast.html" >4.2 Verilog 跨时钟域传输：慢到快</a></li>
+	
+		
+	<li><a target="_top" data-id="23729" title="4.3 Verilog 跨时钟域传输：快到慢" href="http://www.runoob.com/w3cnote/verilog2-fast2slow.html" >4.3 Verilog 跨时钟域传输：快到慢</a></li>
+	
+		
+	<li><a target="_top" data-id="23731" title="4.4 Verilog FIFO 设计" href="http://www.runoob.com/w3cnote/verilog2-fifo.html" >4.4 Verilog FIFO 设计</a></li>
+	
+		
+	<li><a target="_top" data-id="23739" title="5.1 Verilog 复位简介" href="http://www.runoob.com/w3cnote/verilog2-reset.html" >5.1 Verilog 复位简介</a></li>
+	
+		<li>
+	5.2 Verilog 时钟简介	</li>
+	
+		
+	<li><a target="_top" data-id="23757" title="5.3 Verilog 时钟分频" href="http://www.runoob.com/w3cnote/verilog2-clock-division.html" >5.3 Verilog 时钟分频</a></li>
+	
+		
+	<li><a target="_top" data-id="23768" title="5.4 Verilog 时钟切换" href="http://www.runoob.com/w3cnote/verilog2-clock-switch.html" >5.4 Verilog 时钟切换</a></li>
+	
+		
+	<li><a target="_top" data-id="23779" title="6.1 Verilog 低功耗简介" href="http://www.runoob.com/w3cnote/verilog2-low-power.html" >6.1 Verilog 低功耗简介</a></li>
+	
+		
+	<li><a target="_top" data-id="23788" title="6.2 Verilog 系统级低功耗设计" href="http://www.runoob.com/w3cnote/verilog2-lower-power-design.html" >6.2 Verilog 系统级低功耗设计</a></li>
+	
+		
+	<li><a target="_top" data-id="23792" title="6.3 Verilog  RTL 级低功耗设计（上）" href="http://www.runoob.com/w3cnote/verilog2-rtl-low-power-design-1.html" >6.3 Verilog  RTL 级低功耗设计（上）</a></li>
+	
+		
+	<li><a target="_top" data-id="23796" title="6.4 Verilog RTL 级低功耗设计（下）" href="http://www.runoob.com/w3cnote/verilog2-rtl-low-power-design-2.html" >6.4 Verilog RTL 级低功耗设计（下）</a></li>
+	
+		
+	<li><a target="_top" data-id="23806" title="7.1 Verilog 显示任务" href="http://www.runoob.com/w3cnote/verilog2-display.html" >7.1 Verilog 显示任务</a></li>
+	
+		
+	<li><a target="_top" data-id="23813" title="7.2 Verilog 文件操作" href="http://www.runoob.com/w3cnote/verilog2-file.html" >7.2 Verilog 文件操作</a></li>
+	
+		
+	<li><a target="_top" data-id="23825" title="7.3 Verilog 随机数及概率分布" href="http://www.runoob.com/w3cnote/verilog2-random.html" >7.3 Verilog 随机数及概率分布</a></li>
+	
+		
+	<li><a target="_top" data-id="23847" title="7.4 Verilog 实数整数转换" href="http://www.runoob.com/w3cnote/verilog2-real2int.html" >7.4 Verilog 实数整数转换</a></li>
+	
+		
+	<li><a target="_top" data-id="23851" title="7.5 Verilog 其他系统任务" href="http://www.runoob.com/w3cnote/verilog2-other-task.html" >7.5 Verilog 其他系统任务</a></li>
+	
+		
+	<li><a target="_top" data-id="23862" title="8.1 Verilog  PLI 简介" href="http://www.runoob.com/w3cnote/verilog2-pli-intro.html" >8.1 Verilog  PLI 简介</a></li>
+	
+		
+	<li><a target="_top" data-id="23865" title="8.2 Verilog TF 子程序" href="http://www.runoob.com/w3cnote/verilog2-tf.html" >8.2 Verilog TF 子程序</a></li>
+	
+		
+	<li><a target="_top" data-id="23869" title="8.3 Verilog TF 子程序列表" href="http://www.runoob.com/w3cnote/verilog2-tf-sub.html" >8.3 Verilog TF 子程序列表</a></li>
+	
+		
+	<li><a target="_top" data-id="23870" title="8.4 Verilog ACC 子程序" href="http://www.runoob.com/w3cnote/verilog2-acc.html" >8.4 Verilog ACC 子程序</a></li>
+	
+		
+	<li><a target="_top" data-id="23872" title="8.5 Verilog ACC 子程序列表" href="http://www.runoob.com/w3cnote/verilog2-acc-sub.html" >8.5 Verilog ACC 子程序列表</a></li>
+	
+		
+	<li><a target="_top" data-id="23876" title="9.1 Verilog 逻辑综合" href="http://www.runoob.com/w3cnote/verilog2-logic-sumarry.html" >9.1 Verilog 逻辑综合</a></li>
+	
+		
+	<li><a target="_top" data-id="23882" title="9.2 Verilog 可综合性设计" href="http://www.runoob.com/w3cnote/verilog2-integrated-design.html" >9.2 Verilog 可综合性设计</a></li>
+	
+	</ul></div>	</div>
+</div>
+
+
+<!-- 底部 -->
+<div id="footer" class="mar-t50">
+   <div class="runoob-block">
+    <div class="runoob cf">
+     <dl>
+      <dt>
+       在线实例
+      </dt>
+      <dd>
+       &middot;<a target="_blank" href="/html/html-examples.html">HTML 实例</a>
+      </dd>
+      <dd>
+       &middot;<a target="_blank" href="/css/css-examples.html">CSS 实例</a>
+      </dd>
+      <dd>
+       &middot;<a target="_blank" href="/js/js-examples.html">JavaScript 实例</a>
+      </dd>
+      <dd>
+       &middot;<a target="_blank" href="/ajx/ajax-examples.html">Ajax 实例</a>
+      </dd>
+       <dd>
+       &middot;<a target="_blank" href="/jquery/jquery-examples.html">jQuery 实例</a>
+      </dd>
+      <dd>
+       &middot;<a target="_blank" href="/xml/xml-examples.html">XML 实例</a>
+      </dd>
+      <dd>
+       &middot;<a target="_blank" href="/java/java-examples.html">Java 实例</a>
+      </dd>
+     
+     </dl>
+     <dl>
+      <dt>
+      字符集&工具
+      </dt>
+      <dd>
+       &middot; <a target="_blank" href="/charsets/html-charsets.html">HTML 字符集设置</a>
+      </dd>
+      <dd>
+       &middot; <a target="_blank" href="/tags/html-ascii.html">HTML ASCII 字符集</a>
+      </dd>
+     <dd>
+       &middot; <a target="_blank" href="https://c.runoob.com/front-end/6939/">JS 混淆/加密</a>
+      </dd> 
+      <dd>
+       &middot; <a target="_blank" href="https://c.runoob.com/front-end/6232/">PNG/JPEG 图片压缩</a>
+      </dd>
+      <dd>
+       &middot; <a target="_blank" href="/tags/html-colorpicker.html">HTML 拾色器</a>
+      </dd>
+      <dd>
+       &middot; <a target="_blank" href="//c.runoob.com/front-end/53">JSON 格式化工具</a>
+      </dd>
+      <dd>
+       &middot; <a target="_blank" href="//c.runoob.com/front-end/6680/">随机数生成器</a>
+      </dd>
+     </dl>
+     <dl>
+      <dt>
+       最新更新
+      </dt>
+                   <dd>
+       &middot;
+      <a href="http://www.runoob.com/matplotlib/matplotlib-imread.html" title="Matplotlib imread() 方法">Matplotlib imre...</a>
+      </dd>
+              <dd>
+       &middot;
+      <a href="http://www.runoob.com/matplotlib/matplotlib-imsave.html" title="Matplotlib imsave() 方法">Matplotlib imsa...</a>
+      </dd>
+              <dd>
+       &middot;
+      <a href="http://www.runoob.com/matplotlib/matplotlib-imshow.html" title="Matplotlib imshow() 方法">Matplotlib imsh...</a>
+      </dd>
+              <dd>
+       &middot;
+      <a href="http://www.runoob.com/matplotlib/matplotlib-hist.html" title="Matplotlib 直方图">Matplotlib 直方图</a>
+      </dd>
+              <dd>
+       &middot;
+      <a href="http://www.runoob.com/python3/python-func-object.html" title="Python object() 函数">Python object()...</a>
+      </dd>
+              <dd>
+       &middot;
+      <a href="http://www.runoob.com/python3/python-ai-draw.html" title="Python AI 绘画">Python AI 绘画</a>
+      </dd>
+              <dd>
+       &middot;
+      <a href="http://www.runoob.com/w3cnote/cursor-editor.html" title="神辅助 Cursor 编辑器，加入 GPT-4 让编码更轻松！">神辅助 Cursor ...</a>
+      </dd>
+             </dl>
+     <dl>
+      <dt>
+       站点信息
+      </dt>
+      <dd>
+       &middot;
+       <a target="_blank" href="mailto:admin@runoob.com" rel="external nofollow">意见反馈</a>
+       </dd>
+      <dd>
+       &middot;
+      <a target="_blank" href="/disclaimer">免责声明</a>
+       </dd>
+      <dd>
+       &middot;
+       <a target="_blank" href="/aboutus">关于我们</a>
+       </dd>
+      <dd>
+       &middot;
+      <a target="_blank" href="/archives">文章归档</a>
+      </dd>
+    
+     </dl>
+    
+     <div class="search-share">
+      <div class="app-download">
+        <div>
+         <strong>关注微信</strong>
+        </div>
+      </div>
+      <div class="share">
+      <img width="128" height="128" src="/wp-content/themes/runoob/assets/images/qrcode.png" />
+       </div>
+     </div>
+     
+    </div>
+   </div>
+   <div class="w-1000 copyright">
+     Copyright &copy; 2013-2023    <strong><a href="//www.runoob.com/" target="_blank">菜鸟教程</a></strong>&nbsp;
+    <strong><a href="//www.runoob.com/" target="_blank">runoob.com</a></strong> All Rights Reserved. 备案号：<a target="_blank" rel="nofollow" href="https://beian.miit.gov.cn/">闽ICP备15012807号-1</a>
+   </div>
+  </div>
+  <div class="fixed-btn">
+    <a class="go-top" href="javascript:void(0)" title="返回顶部"> <i class="fa fa-angle-up"></i></a>
+    <a class="qrcode"  href="javascript:void(0)" title="关注我们"><i class="fa fa-qrcode"></i></a>
+    <a class="writer" style="display:none" href="javascript:void(0)"   title="标记/收藏"><i class="fa fa-star" aria-hidden="true"></i></a>
+    <!-- qrcode modal -->
+    <div id="bottom-qrcode" class="modal panel-modal hide fade in">
+      <h4>微信关注</h4>
+      <div class="panel-body"><img alt="微信关注" width="128" height="128" src="/wp-content/themes/runoob/assets/images/qrcode.png"></div> 
+    </div>
+  </div>
+
+ <div style="display:none;">
+<script async src="https://www.googletagmanager.com/gtag/js?id=UA-84264393-2"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+
+  gtag('config', 'UA-84264393-2');
+</script>
+<script>
+var _hmt = _hmt || [];
+(function() {
+  var hm = document.createElement("script");
+  hm.src = "https://hm.baidu.com/hm.js?3eec0b7da6548cf07db3bc477ea905ee";
+  var s = document.getElementsByTagName("script")[0]; 
+  s.parentNode.insertBefore(hm, s);
+})();
+</script>
+
+</div>
+<script>
+window.jsui={
+    www: 'https://www.runoob.com',
+    uri: 'https://www.runoob.com/wp-content/themes/runoob'
+};
+</script>
+
+<script src="https://static.runoob.com/assets/libs/hl/run_prettify.js"></script>
+<script src="/wp-content/themes/runoob/assets/js/main.min.js?v=1.156"></script>
+
+</body>
+</html>

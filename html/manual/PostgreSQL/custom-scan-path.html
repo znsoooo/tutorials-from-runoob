@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><title>58.1. 创建自定义扫描路径</title><link rel="stylesheet" type="text/css" href="stylesheet.css" /><link rev="made" href="pgsql-docs@postgresql.org" /><meta name="generator" content="DocBook XSL Stylesheets V1.79.1" /><link rel="prev" href="custom-scan.html" title="第 58 章 编写一个自定义扫描提供者" /><link rel="next" href="custom-scan-plan.html" title="58.2. 创建自定义扫描计划" /></head><body><div xmlns="http://www.w3.org/TR/xhtml1/transitional" class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="5" align="center">58.1. 创建自定义扫描路径</th></tr><tr><td width="10%" align="left"><a accesskey="p" href="custom-scan.html" title="第 58 章 编写一个自定义扫描提供者">上一页</a> </td><td width="10%" align="left"><a accesskey="u" href="custom-scan.html" title="第 58 章 编写一个自定义扫描提供者">上一级</a></td><th width="60%" align="center">第 58 章 编写一个自定义扫描提供者</th><td width="10%" align="right"><a accesskey="h" href="index.html" title="PostgreSQL 10.1 手册">起始页</a></td><td width="10%" align="right"> <a accesskey="n" href="custom-scan-plan.html" title="58.2. 创建自定义扫描计划">下一页</a></td></tr></table><hr></hr></div><div class="sect1" id="CUSTOM-SCAN-PATH"><div class="titlepage"><div><div><h2 class="title" style="clear: both">58.1. 创建自定义扫描路径</h2></div></div></div><div class="toc"><dl class="toc"><dt><span class="sect2"><a href="custom-scan-path.html#CUSTOM-SCAN-PATH-CALLBACKS">58.1.1. 自定义扫描路径回调</a></span></dt></dl></div><p>    一个自定义扫描提供者将通过设置下面的钩子函数来为基本关系增加路径，在核心代码已经为该关系产生了完全且正确的访问路径集后，这个钩子函数将被调用。
+</p><pre class="programlisting">typedef void (*set_rel_pathlist_hook_type) (PlannerInfo *root,
+                                            RelOptInfo *rel,
+                                            Index rti,
+                                            RangeTblEntry *rte);
+extern PGDLLIMPORT set_rel_pathlist_hook_type set_rel_pathlist_hook;</pre><p>
+  </p><p>    尽管这个钩子函数可被用来检查、修改或者移除核心系统产生的路径，自定义扫描提供程序通常还是局限于产生<code class="structname">CustomPath</code>对象并且使用<code class="function">add_path</code>把它们加入到<code class="literal">rel</code>中。自定义扫描提供者负责初始化<code class="structname">CustomPath</code>对象，它被声明为这样：
+</p><pre class="programlisting">typedef struct CustomPath
+{
+    Path      path;
+    uint32    flags;
+    List     *custom_paths;
+    List     *custom_private;
+    const CustomPathMethods *methods;
+} CustomPath;</pre><p>
+  </p><p>    <code class="structfield">path</code>必须像任何其他路径一样被初始化，包括行计数估计、启动和总代价以及这条路径提供的排序顺序。<code class="structfield">flags</code>是一个位掩码，如果该自定义路径能够支持反向扫描则它应该包括<code class="literal">CUSTOMPATH_SUPPORT_BACKWARD_SCAN</code>，如果支持标记和恢复则应该包括<code class="literal">CUSTOMPATH_SUPPORT_MARK_RESTORE</code>。这两种能力都是可选的。可选的<code class="structfield">custom_paths</code>域是由这个自定义路径节点使用的<code class="structname">Path</code>节点的列表，这些将被规划器转换成<code class="structname">Plan</code>节点。<code class="structfield">custom_private</code>可被用来存储该自定义路径的私有数据。私有数据应该被存储为能被<code class="literal">nodeToString</code>处理的形式，这样尝试打印该自定义路径的调试例程才能正常地工作。<code class="structfield">methods</code>必须指向一个实现了所需自定义路径方法的对象（通常是静态分配的），当前只有一种方法。<code class="structfield">LibraryName</code>和<code class="structfield">SymbolName</code>域必须也被初始化，这样动态载入器才能解析它们来定位方法表。
+  </p><p>   一个自定义扫描提供者还能提供连接路径。就和基本关系一样，这样一条路径也应该产生和它将要替换的连接所产生的相同的输出。要做到这一点，连接提供程序应该设置下面的钩子函数，并且在该钩子函数里为连接关系创建<code class="structname">CustomPath</code>路径。
+</p><pre class="programlisting">typedef void (*set_join_pathlist_hook_type) (PlannerInfo *root,
+                                             RelOptInfo *joinrel,
+                                             RelOptInfo *outerrel,
+                                             RelOptInfo *innerrel,
+                                             JoinType jointype,
+                                             JoinPathExtraData *extra);
+extern PGDLLIMPORT set_join_pathlist_hook_type set_join_pathlist_hook;</pre><p>
+
+   对于同一个连接关系，这个钩子将被反复调用，因为要对不同的内外关系组合生成路径，所以如何最小化可能的重复工作是钩子函数的责任。
+  </p><div class="sect2" id="CUSTOM-SCAN-PATH-CALLBACKS"><div class="titlepage"><div><div><h3 class="title">58.1.1. 自定义扫描路径回调</h3></div></div></div><pre class="programlisting">Plan *(*PlanCustomPath) (PlannerInfo *root,
+                         RelOptInfo *rel,
+                         CustomPath *best_path,
+                         List *tlist,
+                         List *clauses,
+                         List *custom_plans);</pre><p>
+    将一条自定义路径转换为一个完成的计划。返回值通常将是一个<code class="literal">CustomScan</code>对象，回调函数必须负责分配并且初始化这个对象。详见<a class="xref" href="custom-scan-plan.html" title="58.2. 创建自定义扫描计划">第 58.2 节</a>。
+   </p></div></div><div class="navfooter"><hr /><table width="100%" summary="Navigation footer"><tr><td width="40%" align="left"><a accesskey="p" href="custom-scan.html">上一页</a> </td><td width="20%" align="center"><a accesskey="u" href="custom-scan.html">上一级</a></td><td width="40%" align="right"> <a accesskey="n" href="custom-scan-plan.html">下一页</a></td></tr><tr><td width="40%" align="left" valign="top">第 58 章 编写一个自定义扫描提供者 </td><td width="20%" align="center"><a accesskey="h" href="index.html">起始页</a></td><td width="40%" align="right" valign="top"> 58.2. 创建自定义扫描计划</td></tr></table></div></body></html>

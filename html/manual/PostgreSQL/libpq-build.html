@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><title>33.20. 编译 libpq 程序</title><link rel="stylesheet" type="text/css" href="stylesheet.css" /><link rev="made" href="pgsql-docs@postgresql.org" /><meta name="generator" content="DocBook XSL Stylesheets V1.79.1" /><link rel="prev" href="libpq-threading.html" title="33.19. 在线程化程序中的行为" /><link rel="next" href="libpq-example.html" title="33.21. 例子程序" /></head><body><div xmlns="http://www.w3.org/TR/xhtml1/transitional" class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="5" align="center">33.20. 编译 <span xmlns="http://www.w3.org/1999/xhtml" class="application">libpq</span> 程序</th></tr><tr><td width="10%" align="left"><a accesskey="p" href="libpq-threading.html" title="33.19. 在线程化程序中的行为">上一页</a> </td><td width="10%" align="left"><a accesskey="u" href="libpq.html" title="第 33 章 libpq - C 库">上一级</a></td><th width="60%" align="center">第 33 章 <span xmlns="http://www.w3.org/1999/xhtml" class="application">libpq</span> - C 库</th><td width="10%" align="right"><a accesskey="h" href="index.html" title="PostgreSQL 10.1 手册">起始页</a></td><td width="10%" align="right"> <a accesskey="n" href="libpq-example.html" title="33.21. 例子程序">下一页</a></td></tr></table><hr></hr></div><div class="sect1" id="LIBPQ-BUILD"><div class="titlepage"><div><div><h2 class="title" style="clear: both">33.20. 编译 <span class="application">libpq</span> 程序</h2></div></div></div><a id="idp28907952" class="indexterm"></a><p>   要编译（即编译并且链接）一个使用<span class="application">libpq</span>的程序，你需要做下列所有的事情：
+
+   </p><div class="itemizedlist"><ul class="itemizedlist" style="list-style-type: disc; "><li class="listitem"><p>      包括<code class="filename">libpq-fe.h</code>头文件：
+</p><pre class="programlisting">#include &lt;libpq-fe.h&gt;</pre><p>
+      如果你无法这样做，那么你通常会从你的编译器得到像这样的错误消息：
+</p><pre class="screen">foo.c: In function `main':
+foo.c:34: `PGconn' undeclared (first use in this function)
+foo.c:35: `PGresult' undeclared (first use in this function)
+foo.c:54: `CONNECTION_BAD' undeclared (first use in this function)
+foo.c:68: `PGRES_COMMAND_OK' undeclared (first use in this function)
+foo.c:95: `PGRES_TUPLES_OK' undeclared (first use in this function)</pre><p>
+     </p></li><li class="listitem"><p>      通过为你的编译器提供<code class="literal">-I<em class="replaceable"><code>directory</code></em></code>选项，向你的编译器指出<span class="productname">PostgreSQL</span>头文件安装在哪里（在某些情况下编译器默认将查看该目录，因此你可以忽略这个选项）。例如你的编译命令行可能看起来像：
+</p><pre class="programlisting">cc -c -I/usr/local/pgsql/include testprog.c</pre><p>
+      如果你在使用 makefile，那么把该选项加到<code class="varname">CPPFLAGS</code>变量中：
+</p><pre class="programlisting">CPPFLAGS += -I/usr/local/pgsql/include</pre><p>
+     </p><p>      如果你的程序可能由其他用户编译，那么你不应该像那样硬编码目录位置。你可以运行工具<code class="command">pg_config</code><a id="idp28919248" class="indexterm"></a>在本地系统上找出头文件在哪里：
+</p><pre class="screen"><code class="prompt">$</code> pg_config --includedir
+<code class="computeroutput">/usr/local/include</code></pre><p>
+     </p><p>      如果你安装了<code class="command">pkg-config</code><a id="idp28923360" class="indexterm"></a>，你可以运行：
+</p><pre class="screen"><code class="prompt">$</code> pkg-config --cflags libpq
+<code class="computeroutput">-I/usr/local/include</code></pre><p>
+      注意这将在路径前面包括<code class="option">-I</code>。
+     </p><p>      无法为编译器指定正确的选项将导致一个错误消息，例如：
+</p><pre class="screen">testlibpq.c:8:22: libpq-fe.h: No such file or directory</pre><p>
+     </p></li><li class="listitem"><p>      当链接最终的程序时，指定选项<code class="literal">-lpq</code>，这样<span class="application">libpq</span>库会被编译进去，也可以用选项<code class="literal">-L<em class="replaceable"><code>directory</code></em></code>向编译器指出<span class="application">libpq</span>库所在的位置（再次，编译器将默认搜索某些目录）。为了最大的可移植性，将<code class="option">-L</code>选项放在<code class="option">-lpq</code>选项前面。例如：
+</p><pre class="programlisting">cc -o testprog testprog1.o testprog2.o -L/usr/local/pgsql/lib -lpq</pre><p>
+     </p><p>      你也可以使用<code class="command">pg_config</code>找出库目录：
+</p><pre class="screen"><code class="prompt">$</code> pg_config --libdir
+<code class="computeroutput">/usr/local/pgsql/lib</code></pre><p>
+     </p><p>      或者再次使用<code class="command">pkg-config</code>：
+</p><pre class="screen"><code class="prompt">$</code> pkg-config --libs libpq
+<code class="computeroutput">-L/usr/local/pgsql/lib -lpq</code></pre><p>
+      再次提示这会打印出全部的选项，而不仅仅是路径。
+     </p><p>      指出这一部分问题的错误消息可能看起来像：
+</p><pre class="screen">testlibpq.o: In function `main':
+testlibpq.o(.text+0x60): undefined reference to `PQsetdbLogin'
+testlibpq.o(.text+0x71): undefined reference to `PQstatus'
+testlibpq.o(.text+0xa4): undefined reference to `PQerrorMessage'</pre><p>
+      This means you forgot <code class="option">-lpq</code>.
+</p><pre class="screen">/usr/bin/ld: cannot find -lpq</pre><p>
+      这意味着你忘记了<code class="option">-L</code>选项或者没有指定正确的目录。
+     </p></li></ul></div><p>
+  </p></div><div class="navfooter"><hr /><table width="100%" summary="Navigation footer"><tr><td width="40%" align="left"><a accesskey="p" href="libpq-threading.html">上一页</a> </td><td width="20%" align="center"><a accesskey="u" href="libpq.html">上一级</a></td><td width="40%" align="right"> <a accesskey="n" href="libpq-example.html">下一页</a></td></tr><tr><td width="40%" align="left" valign="top">33.19. 在线程化程序中的行为 </td><td width="20%" align="center"><a accesskey="h" href="index.html">起始页</a></td><td width="40%" align="right" valign="top"> 33.21. 例子程序</td></tr></table></div></body></html>

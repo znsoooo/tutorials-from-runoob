@@ -1,0 +1,161 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><title>23.2. 排序规则支持</title><link rel="stylesheet" type="text/css" href="stylesheet.css" /><link rev="made" href="pgsql-docs@postgresql.org" /><meta name="generator" content="DocBook XSL Stylesheets V1.79.1" /><link rel="prev" href="locale.html" title="23.1. 区域支持" /><link rel="next" href="multibyte.html" title="23.3. 字符集支持" /></head><body><div xmlns="http://www.w3.org/TR/xhtml1/transitional" class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="5" align="center">23.2. 排序规则支持</th></tr><tr><td width="10%" align="left"><a accesskey="p" href="locale.html" title="23.1. 区域支持">上一页</a> </td><td width="10%" align="left"><a accesskey="u" href="charset.html" title="第 23 章 本地化">上一级</a></td><th width="60%" align="center">第 23 章 本地化</th><td width="10%" align="right"><a accesskey="h" href="index.html" title="PostgreSQL 10.1 手册">起始页</a></td><td width="10%" align="right"> <a accesskey="n" href="multibyte.html" title="23.3. 字符集支持">下一页</a></td></tr></table><hr></hr></div><div class="sect1" id="COLLATION"><div class="titlepage"><div><div><h2 class="title" style="clear: both">23.2. 排序规则支持</h2></div></div></div><div class="toc"><dl class="toc"><dt><span class="sect2"><a href="collation.html#idp23441952">23.2.1. 概念</a></span></dt><dt><span class="sect2"><a href="collation.html#COLLATION-MANAGING">23.2.2. 管理排序规则</a></span></dt></dl></div><a id="idp23439408" class="indexterm"></a><p>   排序规则特性允许指定每一列甚至每一个操作的数据的排序顺序和字符分类行为。这放松了数据库的<code class="symbol">LC_COLLATE</code>和<code class="symbol">LC_CTYPE</code>设置自创建以后就不能更改这一限制。
+  </p><div class="sect2" id="idp23441952"><div class="titlepage"><div><div><h3 class="title">23.2.1. 概念</h3></div></div></div><p>    在概念上，一种可排序数据类型的每一种表达式都有一个排序规则（内建的可排序数据类型是<code class="type">text</code>、<code class="type">varchar</code>和<code class="type">char</code>。用户定义的基础类型也可以被标记为可排序的，并且在一种可排序数据类型上的域也是可排序的）。如果该表达式是一个列引用，该表达式的排序规则就是列所定义的排序规则。如果该表达式是一个常量，排序规则就是该常量数据类型的默认排序规则。更复杂表达式的排序规则根据其输入的排序规则得来，如下所述：
+   </p><p>    一个表达式的排序规则可以是<span class="quote">“<span class="quote">默认</span>”</span>排序规则，它表示数据库的区域设置。一个表达式的排序规则也可能是不确定的。在这种情况下，排序操作和其他需要知道排序规则的操作会失败。
+   </p><p>    当数据库系统必须要执行一次排序或者字符分类时，它使用输入表达式的排序规则。这会在使用例如<code class="literal">ORDER BY</code>子句以及函数或操作符调用（如<code class="literal">&lt;</code>）时发生。应用于<code class="literal">ORDER BY</code>子句的排序规则就是排序键的排序规则。应用于函数或操作符调用的排序规则从它们的参数得来，具体如下文所述。除比较操作符之外，在大小写字母之间转换的函数会考虑排序规则，例如<code class="function">lower</code>、<code class="function">upper</code>和<code class="function">initcap</code>。模式匹配操作符和<code class="function">to_char</code>及相关函数也会考虑排序规则。
+   </p><p>    对于一个函数或操作符调用，其排序规则通过检查在执行指定操作时参数的排序规则来获得。如果该函数或操作符调用的结果是一种可排序的数据类型，万一有外围表达式要求函数或操作符表达式的排序规则，在解析时结果的排序规则也会被用作函数或操作符表达式的排序规则。
+   </p><p>    一个表达式的<em class="firstterm">排序规则派生</em>可以是显式或隐式。该区别会影响多个不同的排序规则出现在同一个表达式中时如何组合它们。当使用一个<code class="literal">COLLATE</code>子句时，将发生显式排序规则派生。所有其他排序规则派生都是隐式的。当多个排序规则需要被组合时（例如在一个函数调用中），将使用下面的规则：
+
+    </p><div class="orderedlist"><ol class="orderedlist" type="1"><li class="listitem"><p>       如果任何一个输入表达式具有一个显式排序规则派生，则在输入表达式之间的所有显式派生的排序规则必须相同，否则将产生一个错误。如果任何一个显式派生的排序规则存在，它就是排序规则组合的结果。
+      </p></li><li class="listitem"><p>       否则，所有输入表达式必须具有相同的隐式排序规则派生或默认排序规则。如果任何一个非默认排序规则存在，它就是排序规则组合的结果。否则，结果是默认排序规则。
+      </p></li><li class="listitem"><p>       如果在输入表达式之间存在冲突的非默认隐式排序规则，则组合被认为是具有不确定排序规则。这并非一种错误情况，除非被调用的特定函数要求提供排序规则的知识。如果它确实这样做，运行时将发生一个错误。
+      </p></li></ol></div><p>
+
+    例如，考虑这个表定义：
+</p><pre class="programlisting">CREATE TABLE test1 (
+    a text COLLATE "de_DE",
+    b text COLLATE "es_ES",
+    ...
+);</pre><p>
+
+    然后在
+</p><pre class="programlisting">SELECT a &lt; 'foo' FROM test1;</pre><p>
+    中，<code class="literal">&lt;</code>比较被根据<code class="literal">de_DE</code>规则执行，因为表达式组合了一个隐式派生的排序规则和默认排序规则。但是在
+</p><pre class="programlisting">SELECT a &lt; ('foo' COLLATE "fr_FR") FROM test1;</pre><p>
+    中，比较被使用<code class="literal">fr_FR</code>规则执行，因为显式排序规则派生重载了隐式排序规则。更进一步，给定
+</p><pre class="programlisting">SELECT a &lt; b FROM test1;</pre><p>
+    解析器不能确定要应用哪个排序规则，因为<code class="structfield">a</code>列和<code class="structfield">b</code>列具有冲突的隐式排序规则。由于<code class="literal">&lt;</code>操作符不需要知道到底使用哪一个排序规则，这将会导致一个错误。该错误可以通过在一个输入表达式上附加一个显式排序规则说明符来解决，因此：
+</p><pre class="programlisting">SELECT a &lt; b COLLATE "de_DE" FROM test1;</pre><p>
+    或者等效的
+</p><pre class="programlisting">SELECT a COLLATE "de_DE" &lt; b FROM test1;</pre><p>
+    在另一方面，结构相似的情况
+</p><pre class="programlisting">SELECT a || b FROM test1;</pre><p>
+    不会导致一个错误，因为<code class="literal">||</code>操作符不关心排序规则：不管排序规则怎样它的结果都相同。
+   </p><p>    如果一个函数或操作符发送一个具有可排序数据类型的结果，分配给该函数或操作符的组合输入表达式的排序规则也被考虑应用在函数或操作符的结果。因此，在
+</p><pre class="programlisting">SELECT * FROM test1 ORDER BY a || 'foo';</pre><p>
+    中排序将根据<code class="literal">de_DE</code>规则完成。但这个查询：
+</p><pre class="programlisting">SELECT * FROM test1 ORDER BY a || b;</pre><p>
+    会导致一个错误，因为即使<code class="literal">||</code>操作符不需要知道排序规则，但<code class="literal">ORDER BY</code>子句需要。按照以前，冲突可以通过使用一个显式排序规则说明符来解决：
+</p><pre class="programlisting">SELECT * FROM test1 ORDER BY a || b COLLATE "fr_FR";</pre><p>
+   </p></div><div class="sect2" id="COLLATION-MANAGING"><div class="titlepage"><div><div><h3 class="title">23.2.2. 管理排序规则</h3></div></div></div><p>    排序规则是SQL模式对象，它将SQL名称映射到操作系统中安装的库提供的语言环境。
+	排序规则定义中有一个<em class="firstterm">提供程序</em>，
+	它指定哪个库提供语言环境数据。一个标准的提供者名称是<code class="literal">libc</code>，
+	它使用操作系统C库提供的语言环境。这些是操作系统提供的大多数工具使用的语言环境。
+	另一个提供者是<code class="literal">icu</code>，它使用外部ICU<a id="idp23477792" class="indexterm"></a>库。
+	只有在构建PostgreSQL时配置了对ICU的支持，才能使用ICU区域设置。
+   </p><p>    <code class="literal">libc</code>提供的一个排序规则对象映射到<code class="symbol">LC_COLLATE</code>
+	和<code class="symbol">LC_CTYPE</code>设置的组合，
+	如<code class="literal">setlocale()</code>系统库调用所接受的。
+	（正如其名字所说的，一个排序规则的主要目的是设置<code class="symbol">LC_COLLATE</code>，
+	它控制排序顺序。但是在实际中<code class="symbol">LC_CTYPE</code>设置与<code class="symbol">LC_COLLATE</code>
+	不同是很少有必要的，因此通过一个概念来收集这些信息比为了设置每一个表达式的
+	<code class="symbol">LC_CTYPE</code>而创建另一种架构要更加方便）。此外，
+	一个<code class="literal">libc</code>排序规则是和一个字符集编码（见<a class="xref" href="multibyte.html" title="23.3. 字符集支持">第 23.3 节</a>）
+	绑定在一起的。相同的排序规则名字可能存在于不同的编码中。
+   </p><p>    由<code class="literal">icu</code>提供的排序规则对象映射到由ICU库提供的指定整理器。
+	ICU不支持单独的<span class="quote">“<span class="quote">collate</span>”</span>和<span class="quote">“<span class="quote">ctype</span>”</span>设置，
+	所以它们总是相同的。此外，ICU排序规则与编码无关，
+	因此在数据库中总是只有一个给定名称的ICU排序规则。
+   </p><div class="sect3" id="idp23487088"><div class="titlepage"><div><div><h4 class="title">23.2.2.1. 标准的排序规则</h4></div></div></div><p>    在所有的平台上，名为<code class="literal">default</code>、<code class="literal">C</code>和<code class="literal">POSIX</code>的排序规则都可用。附加的排序规则是否可用取决于操作系统的支持。<code class="literal">default</code>排序规则选择在数据库创建时指定的<code class="symbol">LC_COLLATE</code>和<code class="symbol">LC_CTYPE</code>值。<code class="literal">C</code>和<code class="literal">POSIX</code>排序规则都指定了<span class="quote">“<span class="quote">传统的C</span>”</span>行为，在其中只有ASCII字母<span class="quote">“<span class="quote"><code class="literal">A</code></span>”</span>到<span class="quote">“<span class="quote"><code class="literal">Z</code></span>”</span>被视为字母，并且排序严格地按照字符编码的字节值完成。
+   </p><p>    此外，SQL标准排序规则名称<code class="literal">ucs_basic</code>可用于编码<code class="literal">UTF8</code>。
+	它相当于<code class="literal">C</code>，并按Unicode代码点排序。
+   </p></div><div class="sect3" id="idp23497776"><div class="titlepage"><div><div><h4 class="title">23.2.2.2. 预定义的排序规则</h4></div></div></div><p>    如果操作系统支持在一个程序中使用多个区域（<code class="function">newlocale</code>和相关函数），
+	或者配置了ICU支持，那么在一个数据集簇被初始化时，<code class="command">initdb</code>
+	将以它在操作系统中能找到的所有区域为基础在系统目录<code class="literal">pg_collation</code>
+	中填充排序规则。
+	</p><p>    要检查当前可用的语言环境，请在<span class="application">psql</span>中使用查询
+	<code class="literal">SELECT * FROM pg_collation</code>或命令<code class="command">\dOS +</code>。
+   </p><div class="sect4" id="idp23503584"><div class="titlepage"><div><div><h5 class="title">23.2.2.2.1. libc 排序规则</h5></div></div></div><p>    例如，操作系统可能会提供一个名为<code class="literal">de_DE.utf8</code>的区域。<code class="command">initdb</code>则会创建一个用于编码<code class="literal">UTF8</code>的名为<code class="literal">de_DE.utf8</code>的排序规则，在其中<code class="symbol">LC_COLLATE</code>和<code class="symbol">LC_CTYPE</code>都被设置为<code class="literal">de_DE.utf8</code>。它也会创建一个具有去掉名称的<code class="literal">.utf8</code>标签的排序规则。这样你也可以使用名字<code class="literal">de_DE</code>来使用该排序规则，这写起来更简单并且使得名字更加独立于编码。不过要注意，最初的排序规则名称的集合是平台依赖的。
+   </p><p>    由<code class="literal">libc</code>提供的默认排序规则直接映射到操作系统中安装的语言环境，
+	可以使用命令<code class="literal">locale -a</code>列出。如果所需的<code class="literal">libc</code>
+	排序规则与<code class="symbol">LC_COLLATE</code>和<code class="symbol">LC_CTYPE</code>的值不同，
+	或者在数据库系统初始化之后，
+	操作系统中安装了新的语言环境，可以使用<a class="xref" href="sql-createcollation.html" title="CREATE COLLATION"><span class="refentrytitle">CREATE COLLATION</span></a>
+	命令创建新的排序规则。新的操作系统语言环境也可以使用
+	<a class="link" href="functions-admin.html#FUNCTIONS-ADMIN-COLLATION" title="表 9.86. 排序规则管理函数"><code class="function">pg_import_system_collations()</code></a>
+	函数集中导入。
+   </p><p>    在任何特定的数据库中，只有使用数据库编码的排序规则是令人感兴趣的。其他<code class="literal">pg_collation</code>中的项会被忽略。因此，一个如<code class="literal">de_DE</code>的被剥离的排序规则名在一个给定数据库中可以被认为是唯一的，即使它在全局上并不唯一。我们推荐使用被剥离的排序规则名，因为在你决定要更改到另一个数据库编码时需要做的事情更少。但是要注意<code class="literal">default</code>、<code class="literal">C</code>和<code class="literal">POSIX</code>排序规则在使用时可以不考虑数据库编码。
+   </p><p>    <span class="productname">PostgreSQL</span>在碰到具有相同属性的不同排序规则对象时会认为它们是不兼容的。因此对于例子：
+</p><pre class="programlisting">SELECT a COLLATE "C" &lt; b COLLATE "POSIX" FROM test1;</pre><p>
+    将会得到一个错误，即使<code class="literal">C</code>和<code class="literal">POSIX</code>排序规则具有相同的行为。因此，我们不推荐混合使用被剥离的和非被剥离的排序规则名。
+   </p></div><div class="sect4" id="idp23524288"><div class="titlepage"><div><div><h5 class="title">23.2.2.2.2. ICU 排序规则</h5></div></div></div><p>    对于ICU，枚举所有可能的语言环境名称并不明智。
+	ICU为语言环境使用特定的命名系统，但命名语言环境的方法多于实际上不同的语言环境。
+	<code class="command">initdb</code>使用ICU API提取一组不同的语言环境以填充初始排序规则集合。
+	由ICU提供的排序规则是在SQL环境中创建的，名称采用BCP 47语言标记格式，
+	并附有一个<span class="quote">“<span class="quote">专用</span>”</span>扩展名<code class="literal">-x-icu</code>，
+	以将它们与libc语言环境区分开来。
+   </p><p>    以下是可能创建的一些排序规则的示例：
+
+    </p><div class="variablelist"><dl class="variablelist"><dt><span class="term"><code class="literal">de-x-icu</code></span></dt><dd><p>德语排序规则，默认变体</p></dd><dt><span class="term"><code class="literal">de-AT-x-icu</code></span></dt><dd><p>奥地利的德语排序规则，默认变体</p><p>        (也就是说<code class="literal">de-DE-x-icu</code>
+        或<code class="literal">de-CH-x-icu</code>，但是这种写法，相当于
+        <code class="literal">de-x-icu</code>。)
+       </p></dd><dt><span class="term"><code class="literal">und-x-icu</code> (for <span class="quote">“<span class="quote">undefined</span>”</span>)</span></dt><dd><p>        ICU <span class="quote">“<span class="quote">root</span>”</span> 排序规则。
+		使用它获取合理的语言无关的排序顺序
+       </p></dd></dl></div><p>
+   </p><p>    一些（不常用的）编码不受ICU支持。当数据库编码是其中之一时，
+	忽略<code class="literal">pg_collation</code>中的ICU排序规则项。
+	试图使用其中一个将会抛出一个类似<span class="quote">“<span class="quote">collation "de-x-icu" for
+    encoding "WIN874" does not exist</span>”</span>的错误。
+   </p></div></div><div class="sect3" id="COLLATION-CREATE"><div class="titlepage"><div><div><h4 class="title">23.2.2.3. 创建新的排序规则对象</h4></div></div></div><p>    如果标准和预定义的排序规则不够用，用户可以使用SQL命令
+	<a class="xref" href="sql-createcollation.html" title="CREATE COLLATION"><span class="refentrytitle">CREATE COLLATION</span></a>创建自己的排序规则对象。
+   </p><p>    与所有预定于的对象一样，标准和预定义的排序规则在模式
+	<code class="literal">pg_catalog</code>中。用户定义的排序规则应该在用户模式中创建。
+	这也确保它们由<code class="command">pg_dump</code>保存。
+   </p><div class="sect4" id="idp23541344"><div class="titlepage"><div><div><h5 class="title">23.2.2.3.1. libc 排序规则</h5></div></div></div><p>     可以像这样创建新的libc排序规则：
+</p><pre class="programlisting">CREATE COLLATION german (provider = libc, locale = 'de_DE');</pre><p>
+     该命令中<code class="literal">locale</code>子句可接受的确切值取决于操作系统。
+	 在类Unix系统上，命令<code class="literal">locale -a</code>将显示一个列表。
+    </p><p>     由于预定义的libc排序规则已经包含了数据库实例初始化时在操作系统中定义的所有排序规则，
+	 因此通常不需要手动创建新排序规则。如果需要不同的命名系统（在这种情况下，
+	 另请参阅<a class="xref" href="collation.html#COLLATION-COPY" title="23.2.2.3.3. 复制排序规则">第 23.2.2.3.3 节</a>），
+	 或者操作系统已经升级以提供新的区域设置定义（在这种情况下，
+	 另请参阅<a class="link" href="functions-admin.html#FUNCTIONS-ADMIN-COLLATION" title="表 9.86. 排序规则管理函数"><code class="function">pg_import_system_collations()</code></a>），
+	 可能需要手动创建。
+    </p></div><div class="sect4" id="idp23547440"><div class="titlepage"><div><div><h5 class="title">23.2.2.3.2. ICU 排序规则</h5></div></div></div><p>    ICU允许自定义超出由<code class="command">initdb</code>
+	预加载的基本语言+国家/地区集的排序规则。鼓励用户定义他们自己的排序规则对象，
+	利用这些条件来满足他们排序行为的需求。请参阅
+	<a class="ulink" href="http://userguide.icu-project.org/locale" target="_top">http://userguide.icu-project.org/locale</a>和
+	<a class="ulink" href="http://userguide.icu-project.org/collation/api" target="_top">http://userguide.icu-project.org/collation/api</a>
+	获取有关ICU区域设置命名的信息。可接受的名称和属性集取决于特定的ICU版本。
+   </p><p>    这里有些例子：
+
+    </p><div class="variablelist"><dl class="variablelist"><dt><span class="term"><code class="literal">CREATE COLLATION "de-u-co-phonebk-x-icu" (provider = icu, locale = 'de-u-co-phonebk');</code><br /></span><span class="term"><code class="literal">CREATE COLLATION "de-u-co-phonebk-x-icu" (provider = icu, locale = 'de@collation=phonebook');</code></span></dt><dd><p>德语排序规则和电话簿排序规则类型</p><p>        第一个例子使用<span class="quote">“<span class="quote">语言标签</span>”</span>根据 BCP 47选择了ICU区域设置。
+		第二个示例使用传统的ICU特定区域设置语法。第一种风格是首选，
+		但它不受旧版ICU支持。
+       </p><p>        请注意，您可以在SQL环境中任意指定排序规则对象的名称。
+		在这个例子中，我们遵循预定义排序规则使用的命名风格，
+		而这种风格又遵循BCP 47，但这对于用户定义的排序规则不是必需的。
+       </p></dd><dt><span class="term"><code class="literal">CREATE COLLATION "und-u-co-emoji-x-icu" (provider = icu, locale = 'und-u-co-emoji');</code><br /></span><span class="term"><code class="literal">CREATE COLLATION "und-u-co-emoji-x-icu" (provider = icu, locale = '@collation=emoji');</code></span></dt><dd><p>        根据Unicode技术标准＃51，使用表情符号排序规则类型的根排序规则
+       </p><p>        观察传统ICU区域命名系统中的方式，根区域设置由空字符串选择。
+       </p></dd><dt><span class="term"><code class="literal">CREATE COLLATION digitslast (provider = icu, locale = 'en-u-kr-latn-digit');</code><br /></span><span class="term"><code class="literal">CREATE COLLATION digitslast (provider = icu, locale = 'en@colReorder=latn-digit');</code></span></dt><dd><p>        在拉丁字母后面排列数字。（默认是字母前的数字。）
+       </p></dd><dt><span class="term"><code class="literal">CREATE COLLATION upperfirst (provider = icu, locale = 'en-u-kf-upper');</code><br /></span><span class="term"><code class="literal">CREATE COLLATION upperfirst (provider = icu, locale = 'en@colCaseFirst=upper');</code></span></dt><dd><p>        在小写字母前面排列大写字母。（默认是小写字母在前面。）
+       </p></dd><dt><span class="term"><code class="literal">CREATE COLLATION special (provider = icu, locale = 'en-u-kf-upper-kr-latn-digit');</code><br /></span><span class="term"><code class="literal">CREATE COLLATION special (provider = icu, locale = 'en@colCaseFirst=upper;colReorder=latn-digit');</code></span></dt><dd><p>        结合上述两个选项。
+       </p></dd><dt><span class="term"><code class="literal">CREATE COLLATION numeric (provider = icu, locale = 'en-u-kn-true');</code><br /></span><span class="term"><code class="literal">CREATE COLLATION numeric (provider = icu, locale = 'en@colNumeric=yes');</code></span></dt><dd><p>        数字排序，按数字值排序数字序列，例如：
+		<code class="literal">A-21</code> &lt; <code class="literal">A-123</code>（也称为自然排序）。
+       </p></dd></dl></div><p>
+
+    参阅<a class="ulink" href="http://unicode.org/reports/tr35/tr35-collation.html" target="_top">Unicode
+    技术标准 #35</a>
+    和<a class="ulink" href="https://tools.ietf.org/html/bcp47" target="_top">BCP 47</a>获取详细信息。
+	可能的排序规则类型（<code class="literal">co</code>子标签）列表可以在
+	<a class="ulink" href="http://www.unicode.org/repos/cldr/trunk/common/bcp47/collation.xml" target="_top">CLDR
+    仓库</a>中找到。
+	<a class="ulink" href="https://ssl.icu-project.org/icu-bin/locexp" target="_top">区域设置浏览器</a>
+	可以用于检查一个特定区域设置定义的细节。使用<code class="literal">k*</code>
+	子标签的示例至少要求ICU版本54。
+   </p><p>    请注意，虽然此系统允许创建<span class="quote">“<span class="quote">忽略大小写</span>”</span>或<span class="quote">“<span class="quote">忽略重音符</span>”</span>
+	或类似（使用<code class="literal">ks</code>键）的排序规则，
+	但PostgreSQL目前不允许这样的排序规则以真正的不区分大小写或不区分重音的方式进行操作。
+	根据排序规则比较相等但按照字节不相等的任何字符串将根据其字节值进行排序。
+   </p><div class="note"><h3 class="title">注意</h3><p>     根据设计，ICU几乎可以接受任何字符串作为区域名称，
+	 并使用其文档中描述的后备程序将其与最接近的区域设置相匹配。因此，
+	 如果使用给定ICU安装实际上不支持的功能组合排序规范，则不会有直接反馈。
+	 因此建议创建应用程序级别的测试用例，以检查排序规则定义是否满足需求。
+    </p></div></div><div class="sect4" id="COLLATION-COPY"><div class="titlepage"><div><div><h5 class="title">23.2.2.3.3. 复制排序规则</h5></div></div></div><p>    也可以使用命令<a class="xref" href="sql-createcollation.html" title="CREATE COLLATION"><span class="refentrytitle">CREATE COLLATION</span></a>
+	从现有的排序规则创建新的排序规则，
+	这对于能够在应用程序中使用与操作系统无关的排序规则名称、
+	创建兼容性名称或以更易读的名称使用ICU提供的排序规则很有帮助。例如：
+</p><pre class="programlisting">CREATE COLLATION german FROM "de_DE";
+CREATE COLLATION french FROM "fr-x-icu";</pre><p>
+   </p></div></div></div></div><div class="navfooter"><hr /><table width="100%" summary="Navigation footer"><tr><td width="40%" align="left"><a accesskey="p" href="locale.html">上一页</a> </td><td width="20%" align="center"><a accesskey="u" href="charset.html">上一级</a></td><td width="40%" align="right"> <a accesskey="n" href="multibyte.html">下一页</a></td></tr><tr><td width="40%" align="left" valign="top">23.1. 区域支持 </td><td width="20%" align="center"><a accesskey="h" href="index.html">起始页</a></td><td width="40%" align="right" valign="top"> 23.3. 字符集支持</td></tr></table></div></body></html>

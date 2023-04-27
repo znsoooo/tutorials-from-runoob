@@ -1,0 +1,221 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><title>CREATE INDEX</title><link rel="stylesheet" type="text/css" href="stylesheet.css" /><link rev="made" href="pgsql-docs@postgresql.org" /><meta name="generator" content="DocBook XSL Stylesheets V1.79.1" /><link rel="prev" href="sql-creategroup.html" title="CREATE GROUP" /><link rel="next" href="sql-createlanguage.html" title="CREATE LANGUAGE" /></head><body><div xmlns="http://www.w3.org/TR/xhtml1/transitional" class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="5" align="center">CREATE INDEX</th></tr><tr><td width="10%" align="left"><a accesskey="p" href="sql-creategroup.html" title="CREATE GROUP">上一页</a> </td><td width="10%" align="left"><a accesskey="u" href="sql-commands.html" title="SQL 命令">上一级</a></td><th width="60%" align="center">SQL 命令</th><td width="10%" align="right"><a accesskey="h" href="index.html" title="PostgreSQL 10.1 手册">起始页</a></td><td width="10%" align="right"> <a accesskey="n" href="sql-createlanguage.html" title="CREATE LANGUAGE">下一页</a></td></tr></table><hr></hr></div><div class="refentry" id="SQL-CREATEINDEX"><div class="titlepage"></div><a id="idp43407312" class="indexterm"></a><div class="refnamediv"><h2><span class="refentrytitle">CREATE INDEX</span></h2><p>CREATE INDEX — 定义一个新索引</p></div><div class="refsynopsisdiv"><h2>大纲</h2><pre class="synopsis">CREATE [ UNIQUE ] INDEX [ CONCURRENTLY ] [ [ IF NOT EXISTS ] <em class="replaceable"><code>name</code></em> ] ON <em class="replaceable"><code>table_name</code></em> [ USING <em class="replaceable"><code>method</code></em> ]
+    ( { <em class="replaceable"><code>column_name</code></em> | ( <em class="replaceable"><code>expression</code></em> ) } [ COLLATE <em class="replaceable"><code>collation</code></em> ] [ <em class="replaceable"><code>opclass</code></em> ] [ ASC | DESC ] [ NULLS { FIRST | LAST } ] [, ...] )
+    [ WITH ( <em class="replaceable"><code>storage_parameter</code></em> = <em class="replaceable"><code>value</code></em> [, ... ] ) ]
+    [ TABLESPACE <em class="replaceable"><code>tablespace_name</code></em> ]
+    [ WHERE <em class="replaceable"><code>predicate</code></em> ]</pre></div><div class="refsect1" id="idp43418688"><h2>描述</h2><p>   <code class="command">CREATE INDEX</code>在指定关系的指定列上构建
+   一个索引，该关系可以是一个表或者一个物化视图。索引主要被用来提升
+   数据库性能（不过不当的使用会导致性能变差）。
+  </p><p>   索引的键域被指定为列名或者写在圆括号中的表达式。如果索引方法支持
+   多列索引，可以指定多个域。
+  </p><p>   一个索引域可以是一个从表行的一列或者更多列值进行计算的表达式。
+   这种特性可以被用来获得对基于基本数据某种变换的数据的快速访问。
+   例如，一个在<code class="literal">upper(col)</code>上计算的索引可以允许子句
+   <code class="literal">WHERE upper(col) = 'JIM'</code>使用索引。
+  </p><p>   <span class="productname">PostgreSQL</span>提供了索引方法
+   B-树、哈希、GiST、SP-GiST、GIN 以及 BRIN。用户也可以定义自己的索引
+   方法，但是相对较复杂。
+  </p><p>    当<code class="literal">WHERE</code>子句存在时，会创建一个
+    <em class="firstterm">部分索引</em>。部分索引只包含表中一部分行的项，
+    通常索引这一部分会比表的其他部分更有用。例如，如果有一个表包含了
+    已付和未付订单，其中未付订单占了整个表的一小部分并且是经常被使用
+    的部分，可以通过只在这一部分上创建一个索引来改进性能。另一种可能
+    的应用是使用带有<code class="literal">UNIQUE</code>的
+    <code class="literal">WHERE</code>在表的一个子集上强制唯一性。更多的讨论
+    请见<a class="xref" href="indexes-partial.html" title="11.8. 部分索引">第 11.8 节</a>。
+  </p><p>    <code class="literal">WHERE</code>子句中使用的表达式只能引用底层表的列，但
+    它可以引用所有列而不仅仅是被索引的列。当前，
+    <code class="literal">WHERE</code>中也禁止使用子查询和聚集表达式。同样的
+    限制也适用于表达式索引中的表达式域。
+  </p><p>   所有在索引定义中使用的函数和操作符必须是<span class="quote">“<span class="quote">不可变的</span>”</span>，
+   就是说它们的结果必须仅依赖于它们的参数而不受外在因素（例如另
+   一个表的内容和当前的时间）的影响。这种限制确保了索引的行为是
+   良定的。要在一个索引表达式或者<code class="literal">WHERE</code>子句中
+   使用用户定义的函数，记住在创建函数时把它标记为不可变。
+  </p></div><div class="refsect1" id="idp43432320"><h2>参数</h2><div class="variablelist"><dl class="variablelist"><dt><span class="term"><code class="literal">UNIQUE</code></span></dt><dd><p>        导致系统在索引被创建时（如果数据已经存在）或者加入数据时
+        检查重复值。会导致重复项的数据插入或者更新尝试将会产生一
+        个错误。
+       </p></dd><dt><span class="term"><code class="literal">CONCURRENTLY</code></span></dt><dd><p>        当使用了这个选项时，<span class="productname">PostgreSQL</span>在构建索引时
+        不会取得任何会阻止该表上并发插入、更新或者删除的锁。而标准的索引
+        构建将会把表锁住以阻止对表的写（但不阻塞读），这种锁定会持续到索
+        引创建完毕。在使用这个选项时有多个需要注意的地方 — 请见
+        <a class="xref" href="sql-createindex.html#SQL-CREATEINDEX-CONCURRENTLY" title="并发构建索引">并发构建索引</a>。
+       </p></dd><dt><span class="term"><code class="literal">IF NOT EXISTS</code></span></dt><dd><p>        如果一个同名关系已经存在则不要抛出错误。这种情况下会发出一个提示。
+        注意着并不保证现有的索引与将要创建的索引有任何相似。当
+        <code class="literal">IF NOT EXISTS</code>被指定时，需要指定索引名。
+       </p></dd><dt><span class="term"><em class="replaceable"><code>name</code></em></span></dt><dd><p>        要创建的索引名称。这里不能包括模式名，因为索引总是被创建在其基表所在
+        的模式中。如果索引名称被省略，<span class="productname">PostgreSQL</span>将基于基
+        表名称和被索引列名称选择一个合适的名称。
+       </p></dd><dt><span class="term"><em class="replaceable"><code>table_name</code></em></span></dt><dd><p>        要被索引的表的名称（可以被模式限定）。
+       </p></dd><dt><span class="term"><em class="replaceable"><code>method</code></em></span></dt><dd><p>        要使用的索引方法的名称。可以选择
+        <code class="literal">btree</code>、<code class="literal">hash</code>、
+        <code class="literal">gist</code>、<code class="literal">spgist</code>、
+        <code class="literal">gin</code>以及<code class="literal">brin</code>。
+        默认方法是<code class="literal">btree</code>。
+       </p></dd><dt><span class="term"><em class="replaceable"><code>column_name</code></em></span></dt><dd><p>        一个表列的名称。
+       </p></dd><dt><span class="term"><em class="replaceable"><code>expression</code></em></span></dt><dd><p>        一个基于一个或者更多个表列的表达式。如语法中所示，表达式通常必须
+        被写在圆括号中。不过，如果该表达式是一个函数调用的形式，圆括号可
+        以被省略。
+       </p></dd><dt><span class="term"><em class="replaceable"><code>collation</code></em></span></dt><dd><p>        要用于该索引的排序规则的名称。默认情况下，该索引使用被索引列
+        的排序规则或者被索引表达式的结果排序规则。当查询涉及到使用非
+        默认排序规则的表达式时，使用非默认排序规则的索引就能排上用场。
+       </p></dd><dt><span class="term"><em class="replaceable"><code>opclass</code></em></span></dt><dd><p>        一个操作符类的名称。详见下文。
+       </p></dd><dt><span class="term"><code class="literal">ASC</code></span></dt><dd><p>        指定上升排序（默认）。
+       </p></dd><dt><span class="term"><code class="literal">DESC</code></span></dt><dd><p>        指定下降排序。
+       </p></dd><dt><span class="term"><code class="literal">NULLS FIRST</code></span></dt><dd><p>        指定把空值排序在非空值前面。在指定<code class="literal">DESC</code>时，
+        这是默认行为。
+       </p></dd><dt><span class="term"><code class="literal">NULLS LAST</code></span></dt><dd><p>        指定把空值排序在非空值后面。在没有指定<code class="literal">DESC</code>时，
+        这是默认行为。
+       </p></dd><dt><span class="term"><em class="replaceable"><code>storage_parameter</code></em></span></dt><dd><p>        索引方法相关的存储参数的名称。详见
+        <a class="xref" href="sql-createindex.html#SQL-CREATEINDEX-STORAGE-PARAMETERS" title="索引存储参数">索引存储参数</a>。
+       </p></dd><dt><span class="term"><em class="replaceable"><code>tablespace_name</code></em></span></dt><dd><p>        在其中创建索引的表空间。如果没有指定，将会使用
+        <a class="xref" href="runtime-config-client.html#GUC-DEFAULT-TABLESPACE">default_tablespace</a>。或者对临时表上的索引使用
+        <a class="xref" href="runtime-config-client.html#GUC-TEMP-TABLESPACES">temp_tablespaces</a>。
+       </p></dd><dt><span class="term"><em class="replaceable"><code>predicate</code></em></span></dt><dd><p>        部分索引的约束表达式。
+       </p></dd></dl></div><div class="refsect2" id="SQL-CREATEINDEX-STORAGE-PARAMETERS"><h3>索引存储参数</h3><p>    可选的<code class="literal">WITH</code>子句为索引指定<em class="firstterm">存储参数</em>。每一种
+    索引方法都有自己的存储参数集合。B-树、哈希、GiST 和 SP-GiST 索引方法
+    都接受这个参数：
+   </p><div class="variablelist"><dl class="variablelist"><dt><span class="term"><code class="literal">fillfactor</code></span></dt><dd><p>      索引的填充因子是一个百分数，它决定索引方法将尝试填充索引页面的充满
+      程度。对于 B-树，在初始的索引构建过程中，叶子页面会被填充至该百分数，
+      当在索引右端扩展索引（增加新的最大键值）时也会这样处理。如果页面后
+      来被完全填满，它们就会被分裂，导致索引的效率逐渐退化。B-树使用了默
+      认的填充因子 90，但是也可以选择为 10 到 100 的任何整数值。如果表是
+      静态的，那么填充因子 100 是最好的，因为它可以让索引的物理尺寸最小化。
+      但是对于更新负荷很重的表，较小的填充因子有利于最小化对页面分裂的需
+      求。其他索引方法以不同但是大致类似的方式使用填充因子，不同方法的默
+      认填充因子也不相同。
+     </p></dd></dl></div><p>    GiST 还额外接受这个参数：
+   </p><div class="variablelist"><dl class="variablelist"><dt><span class="term"><code class="literal">buffering</code></span></dt><dd><p>     决定是否用<a class="xref" href="gist-implementation.html#GIST-BUFFERING-BUILD" title="62.4.1. GiST 缓冲构建">第 62.4.1 节</a>中描述的缓冲构建技术
+     来构建索引。<code class="literal">OFF</code>会禁用它，<code class="literal">ON</code>则启用该特性，
+     如果设置为<code class="literal">AUTO</code>则初始会禁用它，但是一旦索引尺寸到达
+     <a class="xref" href="runtime-config-query.html#GUC-EFFECTIVE-CACHE-SIZE">effective_cache_size</a>就会随时打开。默认值是
+     <code class="literal">AUTO</code>。
+    </p></dd></dl></div><p>    GIN 索引接受不同的参数：
+   </p><div class="variablelist"><dl class="variablelist"><dt><span class="term"><code class="literal">fastupdate</code></span></dt><dd><p>     这个设置控制<a class="xref" href="gin-implementation.html#GIN-FAST-UPDATE" title="64.4.1. GIN 快速更新技术">第 64.4.1 节</a>中描述的快速更新
+     技术的使用。它是一个布尔参数：<code class="literal">ON</code>启用快速更新，
+     <code class="literal">OFF</code>禁用之（<code class="literal">ON</code>和<code class="literal">OFF</code>的其他
+     写法在<a class="xref" href="config-setting.html" title="19.1. 设置参数">第 19.1 节</a>中有介绍）。默认是
+     <code class="literal">ON</code>。
+    </p><div class="note"><h3 class="title">注意</h3><p>      通过<code class="command">ALTER INDEX</code>关闭<code class="literal">fastupdate</code>
+      会阻止未来的更新进入到待处理索引项列表中，但它不会自己处理之前的
+      待处理项。可以使用<code class="command">VACUUM</code>或者调用
+      <code class="function">gin_clean_pending_list</code>确保处理完待处理列表的项。
+     </p></div></dd></dl></div><div class="variablelist"><dl class="variablelist"><dt><span class="term"><code class="literal">gin_pending_list_limit</code></span></dt><dd><p>     自定义<a class="xref" href="runtime-config-client.html#GUC-GIN-PENDING-LIST-LIMIT">gin_pending_list_limit</a>参数。这个值
+     要以千字节来指定。
+    </p></dd></dl></div><p>    <acronym class="acronym">BRIN</acronym>索引接受不同的参数：
+   </p><div class="variablelist"><dl class="variablelist"><dt><span class="term"><code class="literal">pages_per_range</code></span></dt><dd><p>     定义用于每一个<acronym class="acronym">BRIN</acronym>索引项的块范围由多少个表块组成（详见
+     <a class="xref" href="brin-intro.html" title="65.1. 简介">第 65.1 节</a>）。默认是<code class="literal">128</code>。
+    </p></dd><dt><span class="term"><code class="literal">autosummarize</code></span></dt><dd><p>     定义每当在下一页检测到插入时，是否为前一页范围调用汇总运行。
+    </p></dd></dl></div></div><div class="refsect2" id="SQL-CREATEINDEX-CONCURRENTLY"><h3>并发构建索引</h3><a id="idp43502320" class="indexterm"></a><p>    创建索引可能会干扰数据库的常规操作。通常
+    <span class="productname">PostgreSQL</span>会锁住要被索引的表，让它不能被写入，
+    并且用该表上的一次扫描来执行整个索引的构建。其他事务仍然可以读取表 ，
+    但是如果它们尝试在该表上进行插入、更新或者删除，它们会被阻塞直到索引
+    构建完成。如果系统是一个生产数据库，这可能会导致严重的后果。索引非常
+    大的表可能会需要很多个小时，而且即使是较小的表，在构建索引过程中阻塞
+    写入者一段时间在生产系统中也是不能接受的。
+   </p><p>    <span class="productname">PostgreSQL</span>支持构建索引时不阻塞写入。这种方法通过
+    指定<code class="command">CREATE INDEX</code>的<code class="literal">CONCURRENTLY</code>选项
+    实现。当使用这个选项时，<span class="productname">PostgreSQL</span>必须执行该表的
+    两次扫描，此外它必须等待所有现有可能会修改或者使用该索引的事务终止。因此这种
+    方法比起标准索引构建过程来说要做更多工作并且需要更多时间。不过，由于它
+    允许在构建索引时继续普通操作，这种方式对于在生产环境中增加新索引很有用。
+    当然，由索引创建带来的额外 CPU 和 I/O 开销可能会拖慢其他操作。
+   </p><p>    在并发索引构建中，索引实际上在一个事务中被录入到系统目录，然后在两个
+    事务中发生两次表扫描。在每一次表扫描之前，索引构建必须等待已经修改了
+    表的现有事务终止。在第二次扫描之后，索引构建必须等待任何持有早于第二
+    次扫描的快照（见<a class="xref" href="mvcc.html" title="第 13 章 并发控制">第 13 章</a>）的事务终止。然后该索引最终
+    能被标记为准备好使用，并且<code class="command">CREATE INDEX</code>命令终止。
+    不过即便那样，该索引也不是立刻可以用于查询：在最坏的情况下，只要早于
+    索引构建开始时存在的事务存在，该索引就无法使用。
+   </p><p>    如果在扫描表示出现问题，例如死锁或者唯一索引中的唯一性被违背，
+    <code class="command">CREATE INDEX</code>将会失败，但留下一个<span class="quote">“<span class="quote">不可用</span>”</span>
+    的索引。这个索引会被查询所忽略，因为它可能不完整。不过它仍将消耗更新
+    开销。<span class="application">psql</span>的<code class="command">\d</code>命令将把这类索引报告为
+    <code class="literal">INVALID</code>：
+
+</p><pre class="programlisting">postgres=# \d tab
+       Table "public.tab"
+ Column |  Type   | Collation | Nullable | Default 
+--------+---------+-----------+----------+---------
+ col    | integer |           |          | 
+Indexes:
+    "idx" btree (col) INVALID</pre><p>
+
+    这种情况下推荐的恢复方法是删除该索引并且尝试再次执行
+    <code class="command">CREATE INDEX CONCURRENTLY</code>（另一种可能性是用
+    <code class="command">REINDEX</code>重建该索引。不过，由于
+    <code class="command">REINDEX</code>不支持并发构建，这种选择不那么有吸引力）。
+   </p><p>    并发构建一个唯一索引时需要注意的另一点是，当第二次表扫描开始时，唯一约束
+    已经被强制在其他事务上。这意味着在该索引变得可用之前，其他查询中可能就会
+    报告该约束被违背，或者甚至在索引构建最终失败的情况中也是这样。还有，如果在
+    第二次扫描时发生失败，<span class="quote">“<span class="quote">无效的</span>”</span>索引也会继续强制它的唯一性约束。
+   </p><p>    表达式索引和部分索引的并发构建也被支持。在这些表达式计算过程中发生的
+    错误可能导致和上述唯一约束违背类似的行为。
+   </p><p>    常规索引构建允许在同一个表上并行构建其他常规索引，但是在一个表上同时
+    只能有一个并发索引构建发生。在两种情况下，同时都不允许在表上有其他类
+    型的模式修改。另一个不同是，一个常规<code class="command">CREATE INDEX</code>
+    命令可以在一个事务块中执行，但是
+    <code class="command">CREATE INDEX CONCURRENTLY</code>不行。
+   </p></div></div><div class="refsect1" id="idp43524272"><h2>注解</h2><p>   关于索引何时能被使用、何时不被使用以及什么情况下它们有用的信息请
+   见<a class="xref" href="indexes.html" title="第 11 章 索引">第 11 章</a>。
+  </p><p>   当前，只有 B-树、GiST、GIN 和 BRIN 索引方法支持多列索引。默认最多可以
+   索引 32 个域（可以在构建
+   <span class="productname">PostgreSQL</span>修改这种限制）。当前
+   只有 B-树支持唯一索引。
+  </p><p>   为索引的每一列可以指定一个<em class="firstterm">操作符类</em>。该操作符
+   类标识要被该索引用于该列的操作符。例如，一个四字节整数上的 B-树索引
+   会使用<code class="literal">int4_ops</code>类。这个操作符类包括了用于四字节整数
+   的比较函数。实际上，通常列数据类型的默认操作符类就足够了。对某些数据
+   类型指定操作符类的主要原因是，可能会有多于一种有意义的顺序。例如，
+   我们可能想用绝对值或者实数部分对复数类型排序。我们可以通过为该数据
+   类型定义两个操作符类来做到，并且在创建索引时选择其中合适的类。更多
+   有关操作符类的信息请见<a class="xref" href="indexes-opclass.html" title="11.9. 操作符类和操作符族">第 11.9 节</a>以及<a class="xref" href="xindex.html" title="37.14. 索引的接口扩展">第 37.14 节</a>。
+  </p><p>   对于支持有序扫描的索引方法（当前只有 B-树），可以指定可选子句<code class="literal">ASC</code>、
+   <code class="literal">DESC</code>、<code class="literal">NULLS FIRST</code>以及<code class="literal">NULLS LAST</code>
+   来修改索引的排序顺序。由于一个有序索引能前向或者反向扫描，通常创建一个
+   单列<code class="literal">DESC</code>索引没什么用处 — 一个常规索引已经提供了排序
+   顺序。这些选项的价值是可以创建多列索引，让它的排序顺序匹配有混合排序要求
+   的查询，例如<code class="literal">SELECT ... ORDER BY x ASC, y
+   DESC</code>。如果你想要在依靠索引避免排序步骤的查询中支持
+   <span class="quote">“<span class="quote">空值排序低</span>”</span>这种行为，<code class="literal">NULLS</code>选项就能派上用场，默认
+   的行为是<span class="quote">“<span class="quote">空值排序高</span>”</span>。
+  </p><p>   对于大多数索引方法，索引的创建速度取决于
+   <a class="xref" href="runtime-config-resource.html#GUC-MAINTENANCE-WORK-MEM">maintenance_work_mem</a>的设置。较大的值将会减少
+   索引创建所需的时间，当然不要把它设置得超过实际可用的内存量（那会迫使
+   机器进行交换）。
+  </p><p>   使用<a class="xref" href="sql-dropindex.html" title="DROP INDEX"><span class="refentrytitle">DROP INDEX</span></a>可以移除一个索引。
+  </p><p>   以前的<span class="productname">PostgreSQL</span>发行也有一种 R-树
+   索引方法。这种方法已经被移除，因为它比起 GiST 方法来说没有什么明显的
+   优势。如果指定了<code class="literal">USING rtree</code>，<code class="command">CREATE INDEX</code>
+   将会把它解释为<code class="literal">USING gist</code>，以便把旧的数据库转换成 GiST。
+  </p></div><div class="refsect1" id="idp43543856"><h2>示例</h2><p>   在表<code class="literal">films</code>中的列<code class="literal">title</code>上创建一个
+   B-树索引：
+</p><pre class="programlisting">CREATE UNIQUE INDEX title_idx ON films (title);</pre><p>
+  </p><p>   在表达式<code class="literal">lower(title)</code>上创建一个索引来允许高效的大小写
+   无关搜索：
+</p><pre class="programlisting">CREATE INDEX ON films ((lower(title)));</pre><p>
+   （在这个例子中我们选择省略索引名称，这样系统会选择一个名字，
+   通常是<code class="literal">films_lower_idx</code>）。
+  </p><p>   创建一个具有非默认排序规则的索引：
+</p><pre class="programlisting">CREATE INDEX title_idx_german ON films (title COLLATE "de_DE");</pre><p>
+  </p><p>   创建一个具有非默认空值排序顺序的索引：
+</p><pre class="programlisting">CREATE INDEX title_idx_nulls_low ON films (title NULLS FIRST);</pre><p>
+  </p><p>   创建一个具有非默认填充因子的索引：
+</p><pre class="programlisting">CREATE UNIQUE INDEX title_idx ON films (title) WITH (fillfactor = 70);</pre><p>
+  </p><p>   创建一个禁用快速更新的<acronym class="acronym">GIN</acronym>索引：
+</p><pre class="programlisting">CREATE INDEX gin_idx ON documents_table USING GIN (locations) WITH (fastupdate = off);</pre><p>
+  </p><p>   在表<code class="literal">films</code>中的列<code class="literal">code</code>上创建一个而索引并且
+   把索引放在表空间<code class="literal">indexspace</code>中：
+</p><pre class="programlisting">CREATE INDEX code_idx ON films (code) TABLESPACE indexspace;</pre><p>
+  </p><p>   在一个点属性上创建一个 GiST 索引，这样我们可以在转换函数的结果
+   上有效地使用 box 操作符：
+</p><pre class="programlisting">CREATE INDEX pointloc
+    ON points USING gist (box(location,location));
+SELECT * FROM points
+    WHERE box(location,location) &amp;&amp; '(0,0),(1,1)'::box;</pre><p>
+  </p><p>   创建一个表而不排斥对表的写操作：
+</p><pre class="programlisting">CREATE INDEX CONCURRENTLY sales_quantity_index ON sales_table (quantity);</pre></div><div class="refsect1" id="idp43560064"><h2>兼容性</h2><p>   <code class="command">CREATE INDEX</code>是一种
+   <span class="productname">PostgreSQL</span>的语言扩展。在 SQL 标准中
+   没有对于索引的规定。
+  </p></div><div class="refsect1" id="idp43562240"><h2>另见</h2><span class="simplelist"><a class="xref" href="sql-alterindex.html" title="ALTER INDEX"><span class="refentrytitle">ALTER INDEX</span></a>, <a class="xref" href="sql-dropindex.html" title="DROP INDEX"><span class="refentrytitle">DROP INDEX</span></a></span></div></div><div class="navfooter"><hr /><table width="100%" summary="Navigation footer"><tr><td width="40%" align="left"><a accesskey="p" href="sql-creategroup.html">上一页</a> </td><td width="20%" align="center"><a accesskey="u" href="sql-commands.html">上一级</a></td><td width="40%" align="right"> <a accesskey="n" href="sql-createlanguage.html">下一页</a></td></tr><tr><td width="40%" align="left" valign="top">CREATE GROUP </td><td width="20%" align="center"><a accesskey="h" href="index.html">起始页</a></td><td width="40%" align="right" valign="top"> CREATE LANGUAGE</td></tr></table></div></body></html>

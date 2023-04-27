@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><title>12.7. 配置例子</title><link rel="stylesheet" type="text/css" href="stylesheet.css" /><link rev="made" href="pgsql-docs@postgresql.org" /><meta name="generator" content="DocBook XSL Stylesheets V1.79.1" /><link rel="prev" href="textsearch-dictionaries.html" title="12.6. 词典" /><link rel="next" href="textsearch-debugging.html" title="12.8. 测试和调试文本搜索" /></head><body><div xmlns="http://www.w3.org/TR/xhtml1/transitional" class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="5" align="center">12.7. 配置例子</th></tr><tr><td width="10%" align="left"><a accesskey="p" href="textsearch-dictionaries.html" title="12.6. 词典">上一页</a> </td><td width="10%" align="left"><a accesskey="u" href="textsearch.html" title="第 12 章 全文搜索">上一级</a></td><th width="60%" align="center">第 12 章 全文搜索</th><td width="10%" align="right"><a accesskey="h" href="index.html" title="PostgreSQL 10.1 手册">起始页</a></td><td width="10%" align="right"> <a accesskey="n" href="textsearch-debugging.html" title="12.8. 测试和调试文本搜索">下一页</a></td></tr></table><hr></hr></div><div class="sect1" id="TEXTSEARCH-CONFIGURATION"><div class="titlepage"><div><div><h2 class="title" style="clear: both">12.7. 配置例子</h2></div></div></div><p>    一个文本搜索配置指定了将一个文档转换成一个<code class="type">tsvector</code>所需的所有选项：用于把文本分解成记号的解析器，以及用于将每一个记号转换成词位的词典。每一次<code class="function">to_tsvector</code>或<code class="function">to_tsquery</code>的调用都需要一个文本搜索配置来执行其处理。配置参数<a class="xref" href="runtime-config-client.html#GUC-DEFAULT-TEXT-SEARCH-CONFIG">default_text_search_config</a>指定了默认配置的名称，如果忽略了显式的配置参数，文本搜索函数将会使用它。它可以在<code class="filename">postgresql.conf</code>中设置，或者使用<code class="command">SET</code>命令为一个单独的会话设置。
+   </p><p>    有一些预定义的文本搜索配置可用，并且你可以容易地创建自定义的配置。为了便于管理文本搜索对象，可以使用一组<acronym class="acronym">SQL</acronym>命令，并且有多个<span class="application">psql</span>命令可以显示有关文本搜索对象（<a class="xref" href="textsearch-psql.html" title="12.10. psql支持">第 12.10 节</a>）的信息。
+   </p><p>    作为一个例子，我们将创建一个配置<code class="literal">pg</code>，从复制内建的<code class="literal">english</code>配置开始：
+
+</p><pre class="programlisting">CREATE TEXT SEARCH CONFIGURATION public.pg ( COPY = pg_catalog.english );</pre><p>
+   </p><p>    我们将使用一个 PostgreSQL 相关的同义词列表，并将它存储在<code class="filename">$SHAREDIR/tsearch_data/pg_dict.syn</code>中。文件内容看起来像：
+
+</p><pre class="programlisting">postgres    pg
+pgsql       pg
+postgresql  pg</pre><p>
+
+    我们定义同义词词典如下：
+
+</p><pre class="programlisting">CREATE TEXT SEARCH DICTIONARY pg_dict (
+    TEMPLATE = synonym,
+    SYNONYMS = pg_dict
+);</pre><p>
+
+    接下来我们注册<span class="productname">Ispell</span>词典<code class="literal">english_ispell</code>，它有其自己的配置文件：
+
+</p><pre class="programlisting">CREATE TEXT SEARCH DICTIONARY english_ispell (
+    TEMPLATE = ispell,
+    DictFile = english,
+    AffFile = english,
+    StopWords = english
+);</pre><p>
+
+    现在我们可以在配置<code class="literal">pg</code>中建立词的映射：
+
+</p><pre class="programlisting">ALTER TEXT SEARCH CONFIGURATION pg
+    ALTER MAPPING FOR asciiword, asciihword, hword_asciipart,
+                      word, hword, hword_part
+    WITH pg_dict, english_ispell, english_stem;</pre><p>
+
+    我们选择不索引或搜索某些内建配置确实处理的记号类型：
+
+</p><pre class="programlisting">ALTER TEXT SEARCH CONFIGURATION pg
+    DROP MAPPING FOR email, url, url_path, sfloat, float;</pre><p>
+   </p><p>    现在我们可以测试我们的配置：
+
+</p><pre class="programlisting">SELECT * FROM ts_debug('public.pg', '
+PostgreSQL, the highly scalable, SQL compliant, open source object-relational
+database management system, is now undergoing beta testing of the next
+version of our software.
+');</pre><p>
+   </p><p>    下一个步骤是设置会话让它使用新配置，它被创建在<code class="literal">public</code>模式中：
+
+</p><pre class="screen">=&gt; \dF
+   List of text search configurations
+ Schema  | Name | Description
+---------+------+-------------
+ public  | pg   |
+
+SET default_text_search_config = 'public.pg';
+SET
+
+SHOW default_text_search_config;
+ default_text_search_config
+----------------------------
+ public.pg</pre><p>
+  </p></div><div class="navfooter"><hr /><table width="100%" summary="Navigation footer"><tr><td width="40%" align="left"><a accesskey="p" href="textsearch-dictionaries.html">上一页</a> </td><td width="20%" align="center"><a accesskey="u" href="textsearch.html">上一级</a></td><td width="40%" align="right"> <a accesskey="n" href="textsearch-debugging.html">下一页</a></td></tr><tr><td width="40%" align="left" valign="top">12.6. 词典 </td><td width="20%" align="center"><a accesskey="h" href="index.html">起始页</a></td><td width="40%" align="right" valign="top"> 12.8. 测试和调试文本搜索</td></tr></table></div></body></html>

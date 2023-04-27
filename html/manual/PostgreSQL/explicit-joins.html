@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><title>14.3. 用显式JOIN子句控制规划器</title><link rel="stylesheet" type="text/css" href="stylesheet.css" /><link rev="made" href="pgsql-docs@postgresql.org" /><meta name="generator" content="DocBook XSL Stylesheets V1.79.1" /><link rel="prev" href="planner-stats.html" title="14.2. 规划器使用的统计信息" /><link rel="next" href="populate.html" title="14.4. 填充一个数据库" /></head><body><div xmlns="http://www.w3.org/TR/xhtml1/transitional" class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="5" align="center">14.3. 用显式<code xmlns="http://www.w3.org/1999/xhtml" class="literal">JOIN</code>子句控制规划器</th></tr><tr><td width="10%" align="left"><a accesskey="p" href="planner-stats.html" title="14.2. 规划器使用的统计信息">上一页</a> </td><td width="10%" align="left"><a accesskey="u" href="performance-tips.html" title="第 14 章 性能提示">上一级</a></td><th width="60%" align="center">第 14 章 性能提示</th><td width="10%" align="right"><a accesskey="h" href="index.html" title="PostgreSQL 10.1 手册">起始页</a></td><td width="10%" align="right"> <a accesskey="n" href="populate.html" title="14.4. 填充一个数据库">下一页</a></td></tr></table><hr></hr></div><div class="sect1" id="EXPLICIT-JOINS"><div class="titlepage"><div><div><h2 class="title" style="clear: both">14.3. 用显式<code class="literal">JOIN</code>子句控制规划器</h2></div></div></div><a id="idp18458896" class="indexterm"></a><p>   我们可以在一定程度上用显式<code class="literal">JOIN</code>语法控制查询规划器。要明白为什么需要它，我们首先需要一些背景知识。
+  </p><p>   在一个简单的连接查询中，例如：
+</p><pre class="programlisting">SELECT * FROM a, b, c WHERE a.id = b.id AND b.ref = c.id;</pre><p>
+   规划器可以自由地按照任何顺序连接给定的表。例如，它可以生成一个使用<code class="literal">WHERE</code>条件<code class="literal">a.id = b.id</code>连接 A 到 B 的查询计划，然后用另外一个<code class="literal">WHERE</code>条件把 C 连接到这个连接表。或者它可以先连接 B 和 C 然后再连接 A 得到同样的结果。 或者也可以连接 A 到 C 然后把结果与 B 连接 — 不过这么做效率不好，因为必须生成完整的 A 和 C 的迪卡尔积，而在<code class="literal">WHERE</code>子句中没有可用条件来优化该连接（<span class="productname">PostgreSQL</span>执行器中的所有连接都发生在两个输入表之间， 所以它必须以这些形式之一建立结果）。 重要的一点是这些不同的连接可能性给出在语义等效的结果，但在执行开销上却可能有巨大的差别。 因此，规划器会对它们进行探索并尝试找出最高效的查询计划。
+  </p><p>   当一个查询只涉及两个或三个表时，那么不需要考虑很多连接顺序。但是可能的连接顺序数随着表数目的增加成指数增长。 当超过十个左右的表以后，实际上根本不可能对所有可能性做一次穷举搜索，甚至对六七个表都需要相当长的时间进行规划。 当有太多的输入表时，<span class="productname">PostgreSQL</span>规划器将从穷举搜索切换为一种<em class="firstterm">遗传</em>概率搜索，它只需要考虑有限数量的可能性（切换的阈值用<a class="xref" href="runtime-config-query.html#GUC-GEQO-THRESHOLD">geqo_threshold</a>运行时参数设置）。遗传搜索用时更少，但是并不一定会找到最好的计划。
+  </p><p>   当查询涉及外连接时，规划器比处理普通（内）连接时拥有更小的自由度。例如，考虑：
+</p><pre class="programlisting">SELECT * FROM a LEFT JOIN (b JOIN c ON (b.ref = c.id)) ON (a.id = b.id);</pre><p>
+   尽管这个查询的约束表面上和前一个非常相似，但它们的语义却不同， 因为如果 A 里有任何一行不能匹配 B 和 C的连接表中的行，它也必须被输出。因此这里规划器对连接顺序没有什么选择：它必须先连接 B 到 C，然后把 A 连接到该结果上。 相应地，这个查询比前面一个花在规划上的时间更少。在其它情况下，规划器就有可能确定多种连接顺序都是安全的。例如，给定：
+</p><pre class="programlisting">SELECT * FROM a LEFT JOIN b ON (a.bid = b.id) LEFT JOIN c ON (a.cid = c.id);</pre><p>
+   将 A 首先连接到 B 或 C 都是有效的。当前，只有<code class="literal">FULL JOIN</code>完全约束连接顺序。大多数涉及<code class="literal">LEFT JOIN</code>或<code class="literal">RIGHT JOIN</code>的实际情况都在某种程度上可以被重新排列。
+  </p><p>   显式连接语法（<code class="literal">INNER JOIN</code>、<code class="literal">CROSS JOIN</code>或无修饰的<code class="literal">JOIN</code>）在语义上和<code class="literal">FROM</code>中列出输入关系是一样的， 因此它不约束连接顺序。
+  </p><p>   即使大多数类型的<code class="literal">JOIN</code>并不完全约束连接顺序，但仍然可以指示<span class="productname">PostgreSQL</span>查询规划器将所有<code class="literal">JOIN</code>子句当作有连接顺序约束来对待。例如，这里的三个查询在逻辑上是等效的：
+</p><pre class="programlisting">SELECT * FROM a, b, c WHERE a.id = b.id AND b.ref = c.id;
+SELECT * FROM a CROSS JOIN b CROSS JOIN c WHERE a.id = b.id AND b.ref = c.id;
+SELECT * FROM a JOIN (b JOIN c ON (b.ref = c.id)) ON (a.id = b.id);</pre><p>
+   但如果我们告诉规划器遵循<code class="literal">JOIN</code>的顺序，那么第二个和第三个还是要比第一个花在规划上的时间少。 这个效果对于只有三个表的连接而言是微不足道的，但对于数目众多的表，可能就是救命稻草了。
+  </p><p>   要强制规划器遵循显式<code class="literal">JOIN</code>的连接顺序， 我们可以把运行时参数<a class="xref" href="runtime-config-query.html#GUC-JOIN-COLLAPSE-LIMIT">join_collapse_limit</a>设置为 1（其它可能值在下文讨论)。
+  </p><p>   你不必为了缩短搜索时间来完全约束连接顺序，因为可以在一个普通<code class="literal">FROM</code>列表里使用<code class="literal">JOIN</code>操作符。例如，考虑：
+</p><pre class="programlisting">SELECT * FROM a CROSS JOIN b, c, d, e WHERE ...;</pre><p>
+   如果设置<code class="varname">join_collapse_limit</code> = 1，那么这就强迫规划器先把 A 连接到 B， 然后再连接到其它的表上，但并不约束它的选择。在这个例子中，可能的连接顺序的数目减少了 5 倍。
+  </p><p>   按照这种方法约束规划器的搜索是一个有用的技巧，不管是对减少规划时间还是对引导规划器生成好的查询计划。 如果规划器按照默认选择了一个糟糕的连接顺序，你可以通过<code class="literal">JOIN</code>语法强迫它选择一个更好的顺序 — 假设你知道一个更好的顺序。我们推荐进行实验。
+  </p><p>   一个非常相近的影响规划时间的问题是把子查询压缩到它们的父查询中。例如，考虑：
+</p><pre class="programlisting">SELECT *
+FROM x, y,
+    (SELECT * FROM a, b, c WHERE something) AS ss
+WHERE somethingelse;</pre><p>
+   这种情况可能在使用包含连接的视图时出现；该视图的<code class="literal">SELECT</code>规则将被插入到引用视图的地方，得到与上文非常相似的查询。 通常，规划器会尝试把子查询压缩到父查询里，得到：
+</p><pre class="programlisting">SELECT * FROM x, y, a, b, c WHERE something AND somethingelse;</pre><p>
+   这样通常会生成一个比独立的子查询更好些的计划（例如，outer 的<code class="literal">WHERE</code>条件可能先把 X 连接到 A 上，这样就消除了 A 中的许多行， 因此避免了形成子查询的全部逻辑输出）。但是同时，我们增加了规划的时间； 在这里，我们用五路连接问题替代了两个独立的三路连接问题。这样的差别是巨大的，因为可能的计划数的是按照指数增长的。 如果有超过<code class="varname">from_collapse_limit</code>个<code class="literal">FROM</code>项将会导致父查询，规划器将尝试通过停止提升子查询来避免卡在巨大的连接搜索问题中。你可以通过调高或调低这个运行时参数在规划时间和计划的质量之间取得平衡。
+  </p><p>   <a class="xref" href="runtime-config-query.html#GUC-FROM-COLLAPSE-LIMIT">from_collapse_limit</a>和<a class="xref" href="runtime-config-query.html#GUC-JOIN-COLLAPSE-LIMIT">join_collapse_limit</a>的命名相似，因为它们做的几乎是同一件事：一个控制规划器何时将把子查询<span class="quote">“<span class="quote">平面化</span>”</span>，另外一个控制何时把显式连接平面化。通常，你要么把<code class="varname">join_collapse_limit</code>设置成和<code class="varname">from_collapse_limit</code>一样（这样显式连接和子查询的行为类似）， 要么把<code class="varname">join_collapse_limit</code>设置为 1（如果你想用显式连接控制连接顺序）。 但是你可以把它们设置成不同的值，这样你就可以细粒度地调节规划时间和运行时间之间的平衡。
+  </p></div><div class="navfooter"><hr /><table width="100%" summary="Navigation footer"><tr><td width="40%" align="left"><a accesskey="p" href="planner-stats.html">上一页</a> </td><td width="20%" align="center"><a accesskey="u" href="performance-tips.html">上一级</a></td><td width="40%" align="right"> <a accesskey="n" href="populate.html">下一页</a></td></tr><tr><td width="40%" align="left" valign="top">14.2. 规划器使用的统计信息 </td><td width="20%" align="center"><a accesskey="h" href="index.html">起始页</a></td><td width="40%" align="right" valign="top"> 14.4. 填充一个数据库</td></tr></table></div></body></html>

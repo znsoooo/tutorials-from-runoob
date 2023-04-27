@@ -1,0 +1,194 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><title>20.1. pg_hba.conf文件</title><link rel="stylesheet" type="text/css" href="stylesheet.css" /><link rev="made" href="pgsql-docs@postgresql.org" /><meta name="generator" content="DocBook XSL Stylesheets V1.79.1" /><link rel="prev" href="client-authentication.html" title="第 20 章 客户端认证" /><link rel="next" href="auth-username-maps.html" title="20.2. 用户名映射" /></head><body><div xmlns="http://www.w3.org/TR/xhtml1/transitional" class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="5" align="center">20.1. <code xmlns="http://www.w3.org/1999/xhtml" class="filename">pg_hba.conf</code>文件</th></tr><tr><td width="10%" align="left"><a accesskey="p" href="client-authentication.html" title="第 20 章 客户端认证">上一页</a> </td><td width="10%" align="left"><a accesskey="u" href="client-authentication.html" title="第 20 章 客户端认证">上一级</a></td><th width="60%" align="center">第 20 章 客户端认证</th><td width="10%" align="right"><a accesskey="h" href="index.html" title="PostgreSQL 10.1 手册">起始页</a></td><td width="10%" align="right"> <a accesskey="n" href="auth-username-maps.html" title="20.2. 用户名映射">下一页</a></td></tr></table><hr></hr></div><div class="sect1" id="AUTH-PG-HBA-CONF"><div class="titlepage"><div><div><h2 class="title" style="clear: both">20.1. <code class="filename">pg_hba.conf</code>文件</h2></div></div></div><a id="idp22563056" class="indexterm"></a><p>   客户端认证是由一个配置文件（通常名为<code class="filename">pg_hba.conf</code>并被存放在数据库集簇目录中）控制（<acronym class="acronym">HBA</acronym>表示基于主机的认证）。在<code class="command">initdb</code>初始化数据目录时，它会安装一个默认的<code class="filename">pg_hba.conf</code>文件。不过我们也可以把认证配置文件放在其它地方； 参阅<a class="xref" href="runtime-config-file-locations.html#GUC-HBA-FILE">hba_file</a>配置参数。
+  </p><p>   <code class="filename">pg_hba.conf</code>文件的常用格式是一组记录，每行一条。空白行将被忽略， <code class="literal">#</code>注释字符后面的任何文本也被忽略。记录不能跨行。一条记录由若干用空格
+   和/或制表符分隔的域组成。如果域值用双引号包围，那么它可以包含空白。在数据库、用户或地址域中
+   引用一个关键字（例如，<code class="literal">all</code>或<code class="literal">replication</code>）将使该词失去其特殊
+   含义，并且只是匹配一个有该名字的数据库、用户或主机。
+  </p><p>   每条记录指定一种连接类型、一个客户端 IP 地址范围（如果和连接类型相关）、一个数据库名、一个用户名以及对匹配这些参数的连接使用的认证方法。第一条匹配连接类型、客户端地址、连接请求的数据库和用户名的记录将被用于执行认证。这个过程没有<span class="quote">“<span class="quote">落空</span>”</span>或者<span class="quote">“<span class="quote">后备</span>”</span>的说法：如果选择了一条记录而且认证失败，那么将不再考虑后面的记录。如果没有匹配的记录，那么访问将被拒绝。
+  </p><p>   记录可以是下面七种格式之一：
+</p><pre class="synopsis">local      <em class="replaceable"><code>database</code></em>  <em class="replaceable"><code>user</code></em>  <em class="replaceable"><code>auth-method</code></em>  [<span class="optional"><em class="replaceable"><code>auth-options</code></em></span>]
+host       <em class="replaceable"><code>database</code></em>  <em class="replaceable"><code>user</code></em>  <em class="replaceable"><code>address</code></em>  <em class="replaceable"><code>auth-method</code></em>  [<span class="optional"><em class="replaceable"><code>auth-options</code></em></span>]
+hostssl    <em class="replaceable"><code>database</code></em>  <em class="replaceable"><code>user</code></em>  <em class="replaceable"><code>address</code></em>  <em class="replaceable"><code>auth-method</code></em>  [<span class="optional"><em class="replaceable"><code>auth-options</code></em></span>]
+hostnossl  <em class="replaceable"><code>database</code></em>  <em class="replaceable"><code>user</code></em>  <em class="replaceable"><code>address</code></em>  <em class="replaceable"><code>auth-method</code></em>  [<span class="optional"><em class="replaceable"><code>auth-options</code></em></span>]
+host       <em class="replaceable"><code>database</code></em>  <em class="replaceable"><code>user</code></em>  <em class="replaceable"><code>IP-address</code></em>  <em class="replaceable"><code>IP-mask</code></em>  <em class="replaceable"><code>auth-method</code></em>  [<span class="optional"><em class="replaceable"><code>auth-options</code></em></span>]
+hostssl    <em class="replaceable"><code>database</code></em>  <em class="replaceable"><code>user</code></em>  <em class="replaceable"><code>IP-address</code></em>  <em class="replaceable"><code>IP-mask</code></em>  <em class="replaceable"><code>auth-method</code></em>  [<span class="optional"><em class="replaceable"><code>auth-options</code></em></span>]
+hostnossl  <em class="replaceable"><code>database</code></em>  <em class="replaceable"><code>user</code></em>  <em class="replaceable"><code>IP-address</code></em>  <em class="replaceable"><code>IP-mask</code></em>  <em class="replaceable"><code>auth-method</code></em>  [<span class="optional"><em class="replaceable"><code>auth-options</code></em></span>]</pre><p>
+   各个域的含义如下：
+
+   </p><div class="variablelist"><dl class="variablelist"><dt><span class="term"><code class="literal">local</code></span></dt><dd><p>       这条记录匹配企图使用 Unix 域套接字的连接。如果没有这种类型的记录，就不允许 Unix 域套接字连接。
+      </p></dd><dt><span class="term"><code class="literal">host</code></span></dt><dd><p>       这条记录匹配企图使用 TCP/IP 建立的连接。<code class="literal">host</code>记录匹配<acronym class="acronym">SSL</acronym>和非<acronym class="acronym">SSL</acronym>的连接尝试。
+      </p><div class="note"><h3 class="title">注意</h3><p>       除非服务器带着合适的<a class="xref" href="runtime-config-connection.html#GUC-LISTEN-ADDRESSES">listen_addresses</a>配置参数值启动，否则将不可能进行远程的 TCP/IP 连接，因为默认的行为是只监听在本地环回地址<code class="literal">localhost</code>上的 TCP/IP 连接。
+      </p></div></dd><dt><span class="term"><code class="literal">hostssl</code></span></dt><dd><p>       这条记录匹配企图使用 TCP/IP 建立的连接，但必须是使用<acronym class="acronym">SSL</acronym>加密的连接。
+      </p><p>       要使用这个选项，编译服务器的时候必须打开<acronym class="acronym">SSL</acronym>支持。
+	   此外，必须通过设置<a class="xref" href="runtime-config-connection.html#GUC-SSL">ssl</a>配置参数
+	   （详见<a class="xref" href="ssl-tcp.html" title="18.9. 用 SSL 进行安全的 TCP/IP 连接">第 18.9 节</a>）打开<acronym class="acronym">SSL</acronym>。
+	   否则，除了记录不能与任何连接匹配的警告外，
+	   <code class="literal">hostssl</code>记录将被忽略。
+      </p></dd><dt><span class="term"><code class="literal">hostnossl</code></span></dt><dd><p>       这条记录的行为与<code class="literal">hostssl</code>相反；它只匹配那些在 TCP/IP上不使用<acronym class="acronym">SSL</acronym>的连接企图。
+      </p></dd><dt><span class="term"><em class="replaceable"><code>database</code></em></span></dt><dd><p>       指定记录所匹配的数据库名称。值<code class="literal">all</code>指定该记录匹配所有数据库。值 <code class="literal">sameuser</code>指定如果被请求的数据库和请求的用户同名，则匹配。值<code class="literal">samerole</code>指定请求的用户必须是一个与数据库同名的角色中的成员（<code class="literal">samegroup</code>是一个已经废弃了，但目前仍然被接受的<code class="literal">samerole</code>同义词）。对于一个用于<code class="literal">samerole</code>目的的角色，超级用户不会被考虑为其中的成员，除非它们是该角色的显式成员（直接或间接），而不是由于超级用户的原因。值<code class="literal">replication</code>指定如果一个物理复制连接被请求则该记录匹配（注意复制连接不指定任何特定的数据库）。在其它情况里，这就是一个特定的<span class="productname">PostgreSQL</span>数据库名字。可以通过用逗号分隔的方法指定多个数据库，也可以通过在文件名前面放<code class="literal">@</code>来指定一个包含数据库名的文件。
+      </p></dd><dt><span class="term"><em class="replaceable"><code>user</code></em></span></dt><dd><p>       指定这条记录匹配哪些数据库用户名。值<code class="literal">all</code>指定它匹配所有用户。否则，它要么是一个特定数据库用户的名字或者是一个有前导<code class="literal">+</code>的组名称（回想一下，在<span class="productname">PostgreSQL</span>里，用户和组没有真正的区别，<code class="literal">+</code>实际表示<span class="quote">“<span class="quote">匹配这个角色的任何直接或间接成员角色</span>”</span>，而没有<code class="literal">+</code>记号的名字只匹配指定的角色）。出于这个目的，如果超级用户显式的是一个角色的成员（直接或间接），那么超级用户将只被认为是该角色的一个成员而不是作为一个超级用户。多个用户名可以通过用逗号分隔的方法提供。一个包含用户名的文件可以通过在文件名前面加上<code class="literal">@</code>来指定。
+      </p></dd><dt><span class="term"><em class="replaceable"><code>address</code></em></span></dt><dd><p>       指定这个记录匹配的客户端机器地址。这个域可以包含一个主机名、一个 IP 地址范围或下文提到的特殊关键字之一。
+      </p><p>       一个 IP 地址范围以该范围的开始地址的标准数字记号指定，然后是一个斜线（<code class="literal">/</code>）
+       和一个<acronym class="acronym">CIDR</acronym>掩码长度。掩码长度表示客户端 IP 地址必须匹配的高序二进制位位数。在给出的 IP 地址中，这个长度的右边的二进制位必须为零。 在 IP 地址、<code class="literal">/</code>和 CIDR 掩码长度之间不能有空白。
+      </p><p>       这种方法指定一个 IPv4 地址范围的典型例子是：
+       <code class="literal">172.20.143.89/32</code>用于一个主机，
+       <code class="literal">172.20.143.0/24</code>用于一个小型网络，
+       <code class="literal">10.6.0.0/16</code>用于一个大型网络。
+       一个单主机的 IPv6 地址范围看起来像这样：<code class="literal">::1/128</code>（IPv6 回环地址），
+       一个小型网络的 IPv6 地址范围则类似于：<code class="literal">fe80::7a31:c1ff:0000:0000/96</code>。
+       <code class="literal">0.0.0.0/0</code>表示所有 IPv4 地址，并且<code class="literal">::0/0</code>表示所有 IPv6 地址。要指定一个单一主机，IPv4 用一个长度为 32 的 CIDR 掩码或者 IPv6 用
+       长度为 128 的 CIDR 掩码。在一个网络地址中，不要省略结尾的零。
+      </p><p>       一个以 IPv4 格式给出的项将只匹配 IPv4 连接并且一个以 IPv6 格式给出的项将只匹配 IPv6 连接，即使对应的地址在 IPv4-in-IPv6 范围内。请注意如果系统的 C 库不支持 IPv6 地址，那么 IPv6 格式中的项将被拒绝。
+      </p><p>       你也可以写<code class="literal">all</code>来匹配任何 IP 地址、写<code class="literal">samehost</code>来匹配任何本服务器自身的 IP 地址或者写<code class="literal">samenet</code>来匹配本服务器直接连接到的任意子网的任意地址。
+      </p><p>       若果指定了一个主机名（任何除 IP 地址单位或特殊关键字之外的都被作为主机名处理），
+       该名称会与客户端的 IP 地址的反向名字解析（例如使用 DNS 时的反向 DNS 查找）结果进行比较。主机名比较是大小写敏感的。如果匹配上，那么将在主机名上执行一次正向名字解析（例如正向 DNS 查找）来检查它解析到的任何地址是否等于客户端的 IP 地址。如果两个方向都匹配，则该项被认为匹配（<code class="filename">pg_hba.conf</code>中使用的主机名应该是客户端 IP 地址的地址到名字解析返回的结果，否则该行将不会匹配。某些主机名数据库允许将一个 IP 地址关联多个主机名，但是当被要求解析一个 IP 地址时，操作系统将只返回一个主机名）。
+      </p><p>       一个以点号（<code class="literal">.</code>）开始的主机名声明匹配实际主机名的后缀。因此<code class="literal">.example.com</code>将匹配<code class="literal">foo.example.com</code>（但不匹配<code class="literal">example.com</code>）。
+      </p><p>       当主机名在<code class="filename">pg_hba.conf</code>中被指定时，你应该保证名字解析很快。建立一个类似<code class="command">nscd</code>的本地名字解析缓存是一种不错的选择。另外，你可能希望启用配置参数<code class="varname">log_hostname</code>来在日志中查看客户端的主机名而不是 IP 地址。
+      </p><p>       这个域只适用于<code class="literal">host</code>、
+       <code class="literal">hostssl</code>和<code class="literal">hostnossl</code>记录。
+      </p><div class="note"><h3 class="title">注意</h3><p>        用户有时候会疑惑为什么这样处理的主机名看起来很复杂，因为需要两次名字解析（包括一次
+        客户端 IP 地址的反向查找）。在客户端的反向 DNS 项没有建立或者得到某些意料之外的主机
+        名的情况下，这种方式会让该特性的使用变得复杂。这样做主要是为了效率：通过这种方式，一次
+        连接尝试要求最多两次解析器查找，一次逆向以及一次正向。如果有一个解析器对于该地址有问
+        题，这仅仅是客户端的问题。一种假想的替代实现是只做前向查找，这种方法不得不在每一次连接
+        尝试期间解析<code class="filename">pg_hba.conf</code>中提到的每一个主机名。如果列出了很多
+        名称，这就会很慢。并且如果主机名之一有解析器问题，它会变成所有人的问题。
+       </p><p>        另外，一次反向查找也是实现后缀匹配特性所需的，因为需要知道实际的客户端主机名来与模式进行匹配。
+       </p><p>        注意这种行为与其他流行的基于主机名的访问控制实现相一致，例如 Apache HTTP Server 和 TCP Wrappers。
+       </p></div></dd><dt><span class="term"><em class="replaceable"><code>IP-address</code></em><br /></span><span class="term"><em class="replaceable"><code>IP-mask</code></em></span></dt><dd><p>       这两个域可以被用作<em class="replaceable"><code>IP-address</code></em><code class="literal">/</code>
+       <em class="replaceable"><code>mask-length</code></em>记号法的替代方案。和指定掩码长度不同，实际的掩码被指
+       定在一个单独的列中。例如，<code class="literal">255.0.0.0</code>表示 IPv4 CIDR 掩码长度 8，而<code class="literal">255.255.255.255</code>表示 CIDR 掩码长度 32。
+      </p><p>       这些域只适用于<code class="literal">host</code>、<code class="literal">hostssl</code>和<code class="literal">hostnossl</code>记录。
+      </p></dd><dt><span class="term"><em class="replaceable"><code>auth-method</code></em></span></dt><dd><p>       指定当一个连接匹配这个记录时，要使用的认证方法。下面对可能的选择做了概述，详见<a class="xref" href="auth-methods.html" title="20.3. 认证方法">第 20.3 节</a>。
+
+       </p><div class="variablelist"><dl class="variablelist"><dt><span class="term"><code class="literal">trust</code></span></dt><dd><p>          无条件地允许连接。这种方法允许任何可以与<span class="productname">PostgreSQL</span>数据库服务器连接的用户以他们期望的任意<span class="productname">PostgreSQL</span>数据库用户身份登入，而不需要口令或者其他任何认证。详见<a class="xref" href="auth-methods.html#AUTH-TRUST" title="20.3.1. 信任认证">第 20.3.1 节</a>。
+         </p></dd><dt><span class="term"><code class="literal">reject</code></span></dt><dd><p>          无条件地拒绝连接。这有助于从一个组中<span class="quote">“<span class="quote">过滤出</span>”</span>特定主机，例如一个<code class="literal">reject</code>行可以阻塞一个特定的主机连接，而后面一行允许一个特定网络中的其余主机进行连接。
+         </p></dd><dt><span class="term"><code class="literal">scram-sha-256</code></span></dt><dd><p>          执行SCRAM-SHA-256验证以验证用户的密码。详细信息请参阅
+		  <a class="xref" href="auth-methods.html#AUTH-PASSWORD" title="20.3.2. 口令认证">第 20.3.2 节</a>。
+         </p></dd><dt><span class="term"><code class="literal">md5</code></span></dt><dd><p>          执行SCRAM-SHA-256或MD5验证以验证用户的密码。详细信息请参阅
+		  <a class="xref" href="auth-methods.html#AUTH-PASSWORD" title="20.3.2. 口令认证">第 20.3.2 节</a>。
+         </p></dd><dt><span class="term"><code class="literal">password</code></span></dt><dd><p>          要求客户端提供一个未加密的口令进行认证。因为口令是以明文形式在网络上发送的，所以我们不应该在不可信的网络上使用这种方式。详见<a class="xref" href="auth-methods.html#AUTH-PASSWORD" title="20.3.2. 口令认证">第 20.3.2 节</a>。
+         </p></dd><dt><span class="term"><code class="literal">gss</code></span></dt><dd><p>          用 GSSAPI 认证用户。只对 TCP/IP 连接可用。详见<a class="xref" href="auth-methods.html#GSSAPI-AUTH" title="20.3.3. GSSAPI 认证">第 20.3.3 节</a>。
+         </p></dd><dt><span class="term"><code class="literal">sspi</code></span></dt><dd><p>          用 SSPI 来认证用户。只在 Windows 上可用。详见<a class="xref" href="auth-methods.html#SSPI-AUTH" title="20.3.4. SSPI 认证">第 20.3.4 节</a>。
+         </p></dd><dt><span class="term"><code class="literal">ident</code></span></dt><dd><p>          通过联系客户端的 ident 服务器获取客户端的操作系统名，并且检查它是否匹配被请求的数据库用户名。Ident 认证只能在 TCIP/IP 连接上使用。当为本地连接指定这种认证方式时，将用 peer 认证来替代。详见<a class="xref" href="auth-methods.html#AUTH-IDENT" title="20.3.5. Ident 认证">第 20.3.5 节</a>。
+         </p></dd><dt><span class="term"><code class="literal">peer</code></span></dt><dd><p>          从操作系统获得客户端的操作系统用户，并且检查它是否匹配被请求的数据库用户名。这只对本地连接可用。详见<a class="xref" href="auth-methods.html#AUTH-PEER" title="20.3.6. Peer 认证">第 20.3.6 节</a>。
+         </p></dd><dt><span class="term"><code class="literal">ldap</code></span></dt><dd><p>          使用<acronym class="acronym">LDAP</acronym>服务器认证。详见<a class="xref" href="auth-methods.html#AUTH-LDAP" title="20.3.7. LDAP 认证">第 20.3.7 节</a>。
+         </p></dd><dt><span class="term"><code class="literal">radius</code></span></dt><dd><p>          用 RADIUS 服务器认证。详见<a class="xref" href="auth-methods.html#AUTH-RADIUS" title="20.3.8. RADIUS 认证">第 20.3.8 节</a>。
+         </p></dd><dt><span class="term"><code class="literal">cert</code></span></dt><dd><p>          使用 SSL 客户端证书认证。详见<a class="xref" href="auth-methods.html#AUTH-CERT" title="20.3.9. 证书认证">第 20.3.9 节</a>。
+         </p></dd><dt><span class="term"><code class="literal">pam</code></span></dt><dd><p>          使用操作系统提供的可插入认证模块服务（PAM）认证。详见<a class="xref" href="auth-methods.html#AUTH-PAM" title="20.3.10. PAM 认证">第 20.3.10 节</a>。
+         </p></dd><dt><span class="term"><code class="literal">bsd</code></span></dt><dd><p>          使用由操作系统提供的 BSD 认证服务进行认证。详见<a class="xref" href="auth-methods.html#AUTH-BSD" title="20.3.11. BSD 认证">第 20.3.11 节</a>。
+         </p></dd></dl></div><p>
+      </p></dd><dt><span class="term"><em class="replaceable"><code>auth-options</code></em></span></dt><dd><p>       在<em class="replaceable"><code>auth-method</code></em>域的后面，可以是形如<em class="replaceable"><code>name</code></em><code class="literal">=</code><em class="replaceable"><code>value</code></em>的域，它们指定认证方法的选项。关于哪些认证方法可以用哪些选项的细节请见下文。
+      </p><p>       除了下文列出的与方法相关的选项之外，还有一个与方法无关的认证选项<code class="literal">clientcert</code>，它可以在任何<code class="literal">hostssl</code>记录中指定。当被设置为<code class="literal">1</code>时，这个选项要求客户端在认证方法的其他要求之外出示一个有效的（可信的）SSL 证书。
+      </p></dd></dl></div><p>
+  </p><p>   用<code class="literal">@</code>结构包括的文件被读作一个名字列表，它们可以用空白或者逗号分隔。注释用<code class="literal">#</code>引入，就像在<code class="filename">pg_hba.conf</code>中那样，并且允许嵌套<code class="literal">@</code>结构。除非跟在<code class="literal">@</code>后面的文件名是一个绝对路径， 文件名都被认为是相对于包含引用文件的目录。
+  </p><p>   因为每一次连接尝试都会顺序地检查<code class="filename">pg_hba.conf</code>记录，所以这些记录的顺序是非常关键的。通常，靠前的记录有比较严的连接匹配参数和比较弱的认证方法，而靠后的记录有比较松的匹配参数和比较强的认证方法。 例如，我们希望对本地 TCP/IP 连接使用<code class="literal">trust</code>认证，而对远程 TCP/IP 连接要求口令。在这种情况下为来自于 127.0.0.1 的连接指定<code class="literal">trust</code>认证的记录将出现在为一个更宽范围的客户端 IP 地址指定口令认证的记录前面。
+  </p><p>   在启动以及主服务器进程收到<span class="systemitem">SIGHUP</span><a id="idp22702640" class="indexterm"></a>信号时，<code class="filename">pg_hba.conf</code>文件会被读取。 如果你在活动的系统上编辑了该文件，你将需要通知 postmaster（使用<code class="literal">pg_ctl reload</code>或<code class="literal">kill -HUP</code>）重新读取该文件。
+  </p><div class="note"><h3 class="title">注意</h3><p>    上述语句在Microsoft Windows上不是这样：
+	<code class="filename">pg_hba.conf</code>文件中的任何更改都会立即应用于后续的新连接。
+   </p></div><p>   系统视图<a class="link" href="view-pg-hba-file-rules.html" title="51.71. pg_hba_file_rules"><code class="structname">pg_hba_file_rules</code></a>
+   有助于预先测试对<code class="filename">pg_hba.conf</code>文件的更改，
+   或用于诊断加载文件没有所需效果的问题。具有非空<code class="structfield">error</code>
+   字段的视图中的行指示文件相应行中的问题。
+  </p><div class="tip"><h3 class="title">提示</h3><p>    要连接到一个特定数据库，一个用户必须不仅要通过<code class="filename">pg_hba.conf</code>检查，还必须要有该数据库上的<code class="literal">CONNECT</code>权限。如果你希望限制哪些用户能够连接到哪些数据库，授予/撤销<code class="literal">CONNECT</code>权限通常比在<code class="filename">pg_hba.conf</code>项中设置规则简单。
+   </p></div><p>   <a class="xref" href="auth-pg-hba-conf.html#EXAMPLE-PG-HBA.CONF" title="例 20.1. 示例 pg_hba.conf 项">例 20.1</a>中展示了<code class="filename">pg_hba.conf</code>项的一些例子。不同认证方法的详情请见下一节。
+  </p><div class="example" id="EXAMPLE-PG-HBA.CONF"><p class="title"><strong>例 20.1. 示例 <code class="filename">pg_hba.conf</code> 项</strong></p><div class="example-contents"><pre class="programlisting"># 允许本地系统上的任何用户
+# 通过 Unix 域套接字以任意
+# 数据库用户名连接到任意数据库
+#（本地连接的默认值）。
+#
+# TYPE  DATABASE        USER            ADDRESS                 METHOD
+local   all             all                                     trust
+
+# 相同的规则，但是使用本地环回 TCP/IP 连接。
+#
+# TYPE  DATABASE        USER            ADDRESS                 METHOD
+host    all             all             127.0.0.1/32            trust
+
+# 和前一行相同，但是使用了一个独立的掩码列
+#
+# TYPE  DATABASE        USER            IP-ADDRESS      IP-MASK             METHOD
+host    all             all             127.0.0.1       255.255.255.255     trust
+
+# IPv6 上相同的规则
+#
+# TYPE  DATABASE        USER            ADDRESS                 METHOD
+host    all             all             ::1/128                 trust
+
+# 使用主机名的相同规则（通常同时覆盖 IPv4 和 IPv6）。
+#
+# TYPE  DATABASE        USER            ADDRESS                 METHOD
+host    all             all             localhost               trust
+
+# 允许来自任意具有 IP 地址
+# 192.168.93.x 的主机上任意
+# 用户以 ident 为该连接所
+# 报告的相同用户名连接到
+# 数据库 "postgres"
+#（通常是操作系统用户名）。
+#
+# TYPE  DATABASE        USER            ADDRESS                 METHOD
+host    postgres        all             192.168.93.0/24         ident
+
+# 如果用户的口令被正确提供，
+# 允许来自主机 192.168.12.10
+# 的任意用户连接到数据库 "postgres"。
+#
+# TYPE  DATABASE        USER            ADDRESS                 METHOD
+host    postgres        all             192.168.12.10/32        scram-sha-256
+
+# 如果用户的口令被正确提供，
+# 允许 example.com 中主机上
+# 的任意用户连接到任意数据库。
+#
+# 要求大多数用户使用SCRAM认证，但对用户'mike'例外，
+# 该用户使用不支持SCRAM认证的旧客户端。
+#
+# TYPE  DATABASE        USER            ADDRESS                 METHOD
+host    all             mike            .example.com            md5
+host    all             all             .example.com            scram-sha-256
+
+# 如果没有前面的 "host" 行，这两
+# 行将拒绝所有来自 192.168.54.1
+# 的连接（因为那些项将首先被匹配），
+# 但是允许来自互联网其他任何地方的
+# GSSAPI 连接。零掩码导致主机
+# IP 地址中的所有位都不会被考虑，
+# 因此它匹配任意主机。
+#
+# TYPE  DATABASE        USER            ADDRESS                 METHOD
+host    all             all             192.168.54.1/32         reject
+host    all             all             0.0.0.0/0               gss
+
+# 允许来自 192.168.x.x 主机的用户
+# 连接到任意数据库，如果它们能够
+# 通过 ident 检查。例如，假设 ident
+# 说用户是 "bryanh" 并且他要求以
+# PostgreSQL 用户 "guest1" 连接，
+# 如果在 pg_ident.conf 有一个映射
+# "omicron" 的选项说 "bryanh" 被
+# 允许以 "guest1" 连接，则该连接将被允许。
+#
+# TYPE  DATABASE        USER            ADDRESS                 METHOD
+host    all             all             192.168.0.0/16          ident map=omicron
+
+# 如果这些是本地连接的唯一三行，
+# 它们将允许本地用户只连接到它们
+# 自己的数据库（与其数据库用户名
+# 同名的数据库），不过管理员和角
+# 色 "support" 的成员除外（它们可
+# 以连接到所有数据库）。文件
+# $PGDATA/admins 包含一个管理员
+# 名字的列表。在所有情况下都要求口令。
+#
+# TYPE  DATABASE        USER            ADDRESS                 METHOD
+local   sameuser        all                                     md5
+local   all             @admins                                 md5
+local   all             +support                                md5
+
+# 上面的最后两行可以被整合为一行：
+local   all             @admins,+support                        md5
+
+# 数据库列也可以用列表和文件名：
+local   db1,db2,@demodbs  all                                   md5</pre></div></div><br class="example-break" /></div><div class="navfooter"><hr /><table width="100%" summary="Navigation footer"><tr><td width="40%" align="left"><a accesskey="p" href="client-authentication.html">上一页</a> </td><td width="20%" align="center"><a accesskey="u" href="client-authentication.html">上一级</a></td><td width="40%" align="right"> <a accesskey="n" href="auth-username-maps.html">下一页</a></td></tr><tr><td width="40%" align="left" valign="top">第 20 章 客户端认证 </td><td width="20%" align="center"><a accesskey="h" href="index.html">起始页</a></td><td width="40%" align="right" valign="top"> 20.2. 用户名映射</td></tr></table></div></body></html>

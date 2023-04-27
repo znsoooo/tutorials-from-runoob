@@ -1,0 +1,563 @@
+<!Doctype html>
+<html>
+<head>
+	<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+	<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+	<title>4.0 HDFS 配置与使用 | 菜鸟教程</title>
+
+  <meta name='robots' content='max-image-preview:large' />
+<link rel='stylesheet' id='classic-theme-styles-css' href='http://www.runoob.com/wp-includes/css/classic-themes.min.css?ver=6.2' type='text/css' media='all' />
+<link rel="canonical" href="http://www.runoob.com/w3cnote/hdfs-setup.html" />
+<meta name="keywords" content="4.0 HDFS 配置与使用">
+<meta name="description" content="之前提到过的 Hadoop 三种模式：单机模式、伪集群模式和集群模式。单机模式：Hadoop 仅作为库存在，可以在单计算机上执行 MapReduce 任务，仅用于开发者搭建学习和试验环境。伪集群模式：此模式 Hadoop 将以守护进程的形式在单机运行，一般用于开发者搭建学习和试验环境。集群模式：此模式是 Hadoop 的生产环境模式，也就是说这才是 Hadoop 真正使用的模式，用于提供生产级服务。 HDFS 配置和启动  HDFS 和..">
+		
+	<link rel="shortcut icon" href="https://static.runoob.com/images/favicon.ico">
+	<link rel="stylesheet" href="/wp-content/themes/runoob/style.css?v=1.170" type="text/css" media="all" />	
+	<link rel="stylesheet" href="https://cdn.staticfile.org/font-awesome/4.7.0/css/font-awesome.min.css" media="all" />	
+  <!--[if gte IE 9]><!-->
+  <script src="https://cdn.staticfile.org/jquery/2.0.3/jquery.min.js"></script>
+  <!--<![endif]-->
+  <!--[if lt IE 9]>
+     <script src="https://cdn.staticfile.org/jquery/1.9.1/jquery.min.js"></script>
+     <script src="https://cdn.staticfile.org/html5shiv/r29/html5.min.js"></script>
+  <![endif]-->
+  <link rel="apple-touch-icon" href="https://static.runoob.com/images/icon/mobile-icon.png"/>
+  <meta name="apple-mobile-web-app-title" content="菜鸟教程">
+</head>
+<body>
+
+<!--  头部 -->
+<div class="container logo-search">
+
+  <div class="col search row-search-mobile">
+    <form action="index.php">
+      <input class="placeholder" placeholder="搜索……" name="s" autocomplete="off">
+      
+    </form>
+  </div>
+
+  <div class="row">
+    <div class="col logo">
+      <h1><a href="/">菜鸟教程 -- 学的不仅是技术，更是梦想！</a></h1>
+    </div>
+        <div class="col right-list"> 
+    <button class="btn btn-responsive-nav btn-inverse" data-toggle="collapse" data-target=".nav-main-collapse" id="pull" style=""> <i class="fa fa-navicon"></i> </button>
+    </div>
+        
+    <div class="col search search-desktop last">
+      <div class="search-input" >
+      <form action="//www.runoob.com/" target="_blank">
+        <input class="placeholder" id="s" name="s" placeholder="搜索……"  autocomplete="off" style="height: 44px;">
+      </form>
+      
+      </div>
+    </div>
+  </div>
+</div>
+
+
+
+<!-- 导航栏 -->
+<div class="container navigation">
+    <div class="row">
+        <div class="col nav">
+            
+
+                        <ul class="pc-nav" id="note-nav">
+                <li><a href="//www.runoob.com/">首页</a></li>
+                <li><a href="/w3cnote">笔记首页</a></li>
+                <li><a href="/w3cnote/android-tutorial-intro.html" title="Android 基础入门教程">Android</a></li>
+                <li><a href="/w3cnote/es6-tutorial.html" title="ES6 教程">ES6 教程</a></li>
+                <li><a href="/w3cnote/ten-sorting-algorithm.html" title="排序算法">排序算法</a></li>
+                <li><a href="/w3cnote/hadoop-tutorial.html" title="Hadoop 教程">Hadoop</a></li>
+                <li><a href="/w3cnote/zookeeper-tutorial.html" title="Zookeeper 教程">Zookeeper</a></li>
+                <li><a href="/w3cnote/verilog-tutorial.html" title="Verilog 教程">Verilog</a></li>
+                <li><a href="/w3cnote_genre/code" title="编程技术">编程技术</a></li> 
+                <li><a href="/w3cnote_genre/coderlife" title="程序员人生">程序员人生</a></li>
+                
+                <!--<li><a href="javascript:;" class="runoob-pop">登录</a></li>
+                
+                
+                        <li>
+                <a style="font-weight:bold;" href="https://www.runoob.com/linux/linux-tutorial.html#yunserver" target="_blank" onclick="_hmt.push(['_trackEvent', 'aliyun', 'click', 'aliyun'])" title="kkb">云服务器</a>
+                </li>
+                <li><a href="http://gk.link/a/104mQ" target="_blank" style="font-weight: bold;"onclick="_hmt.push(['_trackEvent', '极客时间', 'click', 'jike'])" title="我的圈子">极客时间</a></li>
+            
+                
+                <li><a target="_blank" href="/shoppinglist" rel="nofollow">知识店铺</a></li> 
+        -->
+            </ul>
+                        
+              
+            <ul class="mobile-nav">
+                <li><a href="/w3cnote">首页</a></li>
+                <li><a href="/w3cnote_genre/android" target="_blank" title="Android 基础入门教程">Android</a></li>
+                <li><a href="/w3cnote/es6-tutorial.html" target="_blank" title="ES6 教程">ES6</a></li>
+                <li><a href="/w3cnote_genre/joke" target="_blank" title="程序员笑话">逗乐</a></li>
+                
+                <a href="javascript:void(0)" class="search-reveal">Search</a> 
+            </ul>
+            
+        </div>
+    </div>
+</div>
+
+
+<!--  内容  -->
+<div class="container main">
+	<div class="row">
+
+		<div class="col middle-column big-middle-column">
+	 			<div class="article">
+			<div class="article-heading">
+				<h2>4.0 HDFS 配置与使用</h2>				<h3><em>分类</em> <a href="/w3cnote_genre/hadoop" title="Hadoop 教程" >Hadoop 教程</a> </h3>
+			</div>
+			<div class="article-body note-body">
+				<div class="article-intro">
+					<p><span>之前提到过的 Hadoop 三种模式：</span><strong><span>单机模式</span></strong><span>、</span><strong><span>伪集群模式</span></strong><span>和</span><strong><span>集群模式</span></strong><span>。</span></p><p><strong><span>单机模式</span></strong><span>：Hadoop 仅作为库存在，可以在单计算机上执行 MapReduce 任务，仅用于开发者搭建学习和试验环境。</span></p><p><strong><span>伪集群模式</span></strong><span>：此模式 Hadoop 将以守护进程的形式在单机运行，一般用于开发者搭建学习和试验环境。</span></p><p><strong><span>集群模式</span></strong><span>：此模式是 Hadoop 的生产环境模式，也就是说这才是 Hadoop 真正使用的模式，用于提供生产级服务。</span></p>
+<h2>HDFS 配置和启动</h2>
+
+<p><span>HDFS 和数据库相似，是以守护进程的方式启动的。使用 HDFS 需要用 HDFS 客户端通过网络 (套接字) 连接到 HDFS 服务器实现文件系统的使用。</span></p><p><span>在</span><a href="https://www.runoob.com/w3cnote/hadoop-setup.html"><span>Hadoop 运行环境 </span></a><span>一章，我们已经配置好了 Hadoop 的基础环境，容器名为 hadoop_single。如果你上次已经关闭了该容器或者关闭了计算机导致容器关闭，请启动并进入该容器。</span></p><p><span>进入该容器后，我们确认一下 Hadoop 是否存在：</span></p>
+
+<pre>hadoop version</pre>
+<p>如果结果显示出 Hadoop 版本号则表示 Hadoop 存在。</p>
+<p>接下来我们将进入正式步骤。</p>
+
+<h3>新建 hadoop 用户</h3>
+<p>新建用户，名为 hadoop：</p>
+
+<pre>adduser hadoop</pre>
+<p>安装一个小工具用于修改用户密码和权限管理：</p>
+
+<pre>yum install -y passwd sudo</pre>
+<p>设置 hadoop 用户密码：</p>
+
+<pre>passwd hadoop</pre>
+<p>接下来两次输入密码，一定要记住！</p>
+<p>修改 hadoop 安装目录所有人为 hadoop 用户：</p>
+
+<pre>chown -R hadoop /usr/local/hadoop</pre>
+<p>然后用文本编辑器修改 /etc/sudoers 文件，在</p>
+
+<pre>root    ALL=(ALL)       ALL</pre>
+<p>之后添加一行</p>
+
+<pre>hadoop  ALL=(ALL)       ALL</pre>
+<p>然后退出容器。</p><p>
+关闭并提交容器 hadoop_single 到镜像 hadoop_proto：</p>
+
+<pre>docker stop hadoop_single
+docker commit hadoop_single hadoop_proto</pre>
+<p>创建新容器 hdfs_single ：</p>
+
+<pre>docker run -d --name=hdfs_single --privileged hadoop_proto /usr/sbin/init</pre>
+<p>这样新用户就被创建了。</p>
+
+<h3>启动 HDFS</h3>
+<p>现在进入刚建立的容器：</p>
+
+<pre>docker exec -it hdfs_single su hadoop</pre>
+<p>现在应该是 hadoop 用户：</p>
+
+<pre>whoami</pre>
+<p>应该显示 "hadoop"</p>
+<p>生成 SSH 密钥：</p>
+
+<pre>ssh-keygen -t rsa</pre><p>
+这里可以一直按回车直到生成结束。</p><p>
+然后将生成的密钥添加到信任列表：</p>
+
+<pre>ssh-copy-id hadoop@172.17.0.2</pre>
+<p>查看容器 IP 地址：</p>
+
+<pre>ip addr | grep 172</pre>
+<p><img decoding="async" src="https://www.runoob.com/wp-content/uploads/2021/02/hdfs-setup-1.png"></p>
+<p>从而得知容器的 IP 地址是 172.17.0.2，你们的 IP 可能会与此不同。</p>
+
+<p>在启动 HDFS 以前我们对其进行一些简单配置，Hadoop 配置文件全部储存在安装目录下的 etc/hadoop 子目录下，所以我们可以进入此目录：</p>
+
+<pre>cd $HADOOP_HOME/etc/hadoop</pre><p>
+这里我们修改两个文件：core-site.xml 和 hdfs-site.xml</p>
+<p>在 core-site.xml 中，我们在  标签下添加属性：</p>
+<pre>
+&lt;property&gt;
+    &lt;name&gt;fs.defaultFS&lt;/name&gt;
+    &lt;value&gt;hdfs://&lt;你的IP&gt;:9000&lt;/value&gt;
+&lt;/property&gt;</pre>
+<p>在 hdfs-site.xml 中的  标签下添加属性：</p>
+
+<pre>&lt;property&gt;
+    &lt;name&gt;dfs.replication&lt;/name&gt;
+    &lt;value&gt;1&lt;/value&gt;
+&lt;/property&gt;</pre>
+<p>格式化文件结构：</p>
+
+<pre>hdfs namenode -format</pre>
+<p>然后启动 HDFS：</p>
+
+<pre>start-dfs.sh</pre><p>
+启动分三个步骤，分别启动 NameNode、DataNode 和 Secondary NameNode。</p>
+<p>我们可以运行 jps 来查看 Java 进程：</p><p><img decoding="async" src="https://www.runoob.com/wp-content/uploads/2021/02/hdfs-setup-2.png"></p>
+<p>
+到此为止，HDFS 守护进程已经建立，由于 HDFS 本身具备 HTTP 面板，我们可以通过浏览器访问http://你的容器IP:9870/来查看 HDFS 面板以及详细信息：</p><p><img decoding="async" src="https://www.runoob.com/wp-content/uploads/2021/02/hdfs-setup-3.png"></p>
+<p>如果出现这个页面，说明 HDFS 配置并启动成功。</p>
+<p>
+<strong>注意：</strong>如果你使用的不是含有桌面环境的 Linux 系统，没有浏览器，可以跳过这个步骤。如果你使用的是 Windows 系统但是没有使用 Docker Desktop ，那么这个步骤对你来说将难以实现。</p>
+<h2>HDFS 使用</h2>
+<h3>HDFS Shell</h3><p>
+回到 hdfs_single 容器，以下命令将用于操作 HDFS：</p>
+
+<pre># 显示根目录 / 下的文件和子目录，绝对路径
+hadoop fs -ls /
+# 新建文件夹，绝对路径
+hadoop fs -mkdir /hello
+# 上传文件
+hadoop fs -put hello.txt /hello/
+# 下载文件
+hadoop fs -get /hello/hello.txt
+# 输出文件内容
+hadoop fs -cat /hello/hello.txt</pre>
+<p>HDFS 最基础的命令如上所述，除此之外还有许多其他传统文件系统所支持的操作。</p>
+<h3>
+HDFS API</h3>
+<p>HDFS 已经被很多的后端平台所支持，目前官方在发行版中包含了 C/C++ 和 Java 的编程接口。此外，node.js 和 Python 语言的包管理器也支持导入 HDFS 的客户端。</p>
+
+<p>以下是包管理器的依赖项列表：</p>
+
+<p>Maven：</p>
+<pre>
+    &lt;dependency&gt;
+        &lt;groupId&gt;org.apache.hadoop&lt;/groupId&gt;
+        &lt;artifactId&gt;hadoop-client&lt;/artifactId&gt;
+        &lt;version&gt;3.1.4&lt;/version&gt;
+    &lt;/dependency&gt;
+</pre>
+<p>Gradle：</p>
+
+<pre>providedCompile group: 'org.apache.hadoop', name: 'hadoop-hdfs-client', version: '3.1.4'</pre>
+<p>NPM：</p>
+
+<pre>npm i webhdfs </pre>
+<p>pip：</p>
+
+<pre>pip install hdfs</pre><p>
+这里提供一个 Java 连接 HDFS 的例子（别忘了修改 IP 地址）：</p>
+
+<div class="example"><h2 class="example">实例</h2> <div class="example_code">
+<span style="color: #000000; font-weight: bold;">package</span> <span style="color: #006699;">com.runoob</span><span style="color: #339933;">;</span><br />
+<span style="color: #000000; font-weight: bold;">import</span> <span style="color: #006699;">java.io.IOException</span><span style="color: #339933;">;</span><br />
+<span style="color: #000000; font-weight: bold;">import</span> <span style="color: #006699;">org.apache.hadoop.conf.Configuration</span><span style="color: #339933;">;</span><br />
+<span style="color: #000000; font-weight: bold;">import</span> <span style="color: #006699;">org.apache.hadoop.fs.*</span><span style="color: #339933;">;</span><br />
+<span style="color: #000000; font-weight: bold;">public</span> <span style="color: #000000; font-weight: bold;">class</span> Application <span style="color: #009900;">&#123;</span><br />
+&nbsp; &nbsp; <span style="color: #000000; font-weight: bold;">public</span> <span style="color: #000000; font-weight: bold;">static</span> <span style="color: #000066; font-weight: bold;">void</span> main<span style="color: #009900;">&#40;</span><span style="color: #003399;">String</span><span style="color: #009900;">&#91;</span><span style="color: #009900;">&#93;</span> args<span style="color: #009900;">&#41;</span> <span style="color: #009900;">&#123;</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; <span style="color: #000000; font-weight: bold;">try</span> <span style="color: #009900;">&#123;</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; <span style="color: #666666; font-style: italic;">// 配置连接地址</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; Configuration conf <span style="color: #339933;">=</span> <span style="color: #000000; font-weight: bold;">new</span> Configuration<span style="color: #009900;">&#40;</span><span style="color: #009900;">&#41;</span><span style="color: #339933;">;</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; conf.<span style="color: #006633;">set</span><span style="color: #009900;">&#40;</span><span style="color: #0000ff;">&quot;fs.defaultFS&quot;</span>, <span style="color: #0000ff;">&quot;hdfs://172.17.0.2:9000&quot;</span><span style="color: #009900;">&#41;</span><span style="color: #339933;">;</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; FileSystem fs <span style="color: #339933;">=</span> FileSystem.<span style="color: #006633;">get</span><span style="color: #009900;">&#40;</span>conf<span style="color: #009900;">&#41;</span><span style="color: #339933;">;</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; <span style="color: #666666; font-style: italic;">// 打开文件并读取输出</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; Path hello <span style="color: #339933;">=</span> <span style="color: #000000; font-weight: bold;">new</span> Path<span style="color: #009900;">&#40;</span><span style="color: #0000ff;">&quot;/hello/hello.txt&quot;</span><span style="color: #009900;">&#41;</span><span style="color: #339933;">;</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; FSDataInputStream ins <span style="color: #339933;">=</span> fs.<span style="color: #006633;">open</span><span style="color: #009900;">&#40;</span>hello<span style="color: #009900;">&#41;</span><span style="color: #339933;">;</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; <span style="color: #000066; font-weight: bold;">int</span> ch <span style="color: #339933;">=</span> ins.<span style="color: #006633;">read</span><span style="color: #009900;">&#40;</span><span style="color: #009900;">&#41;</span><span style="color: #339933;">;</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; <span style="color: #000000; font-weight: bold;">while</span> <span style="color: #009900;">&#40;</span>ch <span style="color: #339933;">!=</span> <span style="color: #339933;">-</span><span style="color: #cc66cc;">1</span><span style="color: #009900;">&#41;</span> <span style="color: #009900;">&#123;</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; <span style="color: #003399;">System</span>.<span style="color: #006633;">out</span>.<span style="color: #006633;">print</span><span style="color: #009900;">&#40;</span><span style="color: #009900;">&#40;</span><span style="color: #000066; font-weight: bold;">char</span><span style="color: #009900;">&#41;</span>ch<span style="color: #009900;">&#41;</span><span style="color: #339933;">;</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; ch <span style="color: #339933;">=</span> ins.<span style="color: #006633;">read</span><span style="color: #009900;">&#40;</span><span style="color: #009900;">&#41;</span><span style="color: #339933;">;</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; <span style="color: #009900;">&#125;</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; <span style="color: #003399;">System</span>.<span style="color: #006633;">out</span>.<span style="color: #006633;">println</span><span style="color: #009900;">&#40;</span><span style="color: #009900;">&#41;</span><span style="color: #339933;">;</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; <span style="color: #009900;">&#125;</span> <span style="color: #000000; font-weight: bold;">catch</span> <span style="color: #009900;">&#40;</span><span style="color: #003399;">IOException</span> ioe<span style="color: #009900;">&#41;</span> <span style="color: #009900;">&#123;</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; ioe.<span style="color: #006633;">printStackTrace</span><span style="color: #009900;">&#40;</span><span style="color: #009900;">&#41;</span><span style="color: #339933;">;</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; <span style="color: #009900;">&#125;</span><br />
+&nbsp; &nbsp; <span style="color: #009900;">&#125;</span><br />
+<span style="color: #009900;">&#125;</span><br />
+</div></div>
+				</div>
+			</div>
+			<div class="previous-next-links">
+			<div class="previous-design-link">← <a href="http://www.runoob.com/w3cnote/hadoop-intro.html" rel="prev"> 3.0 Hadoop 概念</a> </div>
+			<div class="next-design-link"><a href="http://www.runoob.com/w3cnote/hdfs-cluster.html" rel="next"> 5.0 HDFS 集群</a> →</div>
+			</div>
+						<div class="article-heading-ad" id="w3cnote-ad728">
+			<script async src="//pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script>
+			<!-- 移动版 自动调整 -->
+			<ins class="adsbygoogle"
+			     style="display:inline-block;min-width:300px;max-width:970px;width:100%;height:90px"
+			     data-ad-client="ca-pub-5751451760833794"
+			     data-ad-slot="1691338467"
+			     data-ad-format="horizontal"></ins>
+			<script>
+			(adsbygoogle = window.adsbygoogle || []).push({});
+			</script>
+			</div>
+			<style>
+@media screen and (max-width: 768px) {
+	#w3cnote-ad728 {
+		display: none;
+	}
+}
+p.note-author {
+    border-bottom: 1px solid #ddd;
+    font-size: 18px;
+    font-weight: bold;
+    color: #78a15a;
+    padding-bottom: 2px;
+    margin-bottom: 4px;
+}
+</style>
+<script>
+var aid = 23485;
+</script>
+	</div>
+		
+	</div>
+	<div class="listcol last right-column">
+
+	<script type="text/javascript">
+jQuery(document).ready(function ($){
+	var total = $(".membership li").length;
+	var left_list = '';
+	href = window.location.href;
+	
+	$(".membership li").each(function(index, value){
+
+		left_list += $(this).html();
+
+		cur_href = $(this).find("a").attr("href");
+		cur_obj = $(this);
+		
+		if(href.match(cur_href) != null) {
+			if(index==0) {
+				$(".previous-design-link").hide();
+			}
+			if(index==(total-1)) {
+				$(".next-design-link").hide();
+			}
+			prev_href = cur_obj.prev("li").find("a").attr("href");
+			prev_title = cur_obj.prev("li").find("a").attr("title");
+
+			next_href = cur_obj.next("li").find("a").attr("href");
+			next_title = cur_obj.next("li").find("a").attr("title");
+			if(prev_title) {
+				$(".previous-design-link a").attr("href", prev_href);
+				$(".previous-design-link a").attr("title", prev_title);
+				$(".previous-design-link a").text(prev_title);
+			} else {
+				$(".previous-design-link").html("");
+			}
+
+			if(next_title) {
+				$(".next-design-link a").attr("href", next_href);
+				$(".next-design-link a").attr("title", next_title);
+				$(".next-design-link a").text(next_title);
+			} else {
+				$(".next-design-link").html("");
+			}
+		}
+	});
+
+	$("#leftcolumn").html(left_list);
+});
+	</script>
+	<div class="sidebar-box cate-list">
+	<div class="sidebar-box recommend-here list-link">
+	<a href="javascript:void(0);">Hadoop 教程</a>	</div>
+	
+	<ul class="membership">
+		
+	<li><a target="_top" data-id="23475" title="1.0 Hadoop 教程" href="http://www.runoob.com/w3cnote/hadoop-tutorial.html" >1.0 Hadoop 教程</a></li>
+	
+		
+	<li><a target="_top" data-id="23477" title="2.0 Hadoop 运行环境" href="http://www.runoob.com/w3cnote/hadoop-setup.html" >2.0 Hadoop 运行环境</a></li>
+	
+		
+	<li><a target="_top" data-id="23483" title="3.0 Hadoop 概念" href="http://www.runoob.com/w3cnote/hadoop-intro.html" >3.0 Hadoop 概念</a></li>
+	
+		<li>
+	4.0 HDFS 配置与使用	</li>
+	
+		
+	<li><a target="_top" data-id="23489" title="5.0 HDFS 集群" href="http://www.runoob.com/w3cnote/hdfs-cluster.html" >5.0 HDFS 集群</a></li>
+	
+		
+	<li><a target="_top" data-id="23491" title="6.0 MapReduce 使用" href="http://www.runoob.com/w3cnote/mapreduce-usage.html" >6.0 MapReduce 使用</a></li>
+	
+		
+	<li><a target="_top" data-id="23492" title="7.0 MapReduce 编程" href="http://www.runoob.com/w3cnote/mapreduce-coding.html" >7.0 MapReduce 编程</a></li>
+	
+	</ul></div>	</div>
+</div>
+
+
+<!-- 底部 -->
+<div id="footer" class="mar-t50">
+   <div class="runoob-block">
+    <div class="runoob cf">
+     <dl>
+      <dt>
+       在线实例
+      </dt>
+      <dd>
+       &middot;<a target="_blank" href="/html/html-examples.html">HTML 实例</a>
+      </dd>
+      <dd>
+       &middot;<a target="_blank" href="/css/css-examples.html">CSS 实例</a>
+      </dd>
+      <dd>
+       &middot;<a target="_blank" href="/js/js-examples.html">JavaScript 实例</a>
+      </dd>
+      <dd>
+       &middot;<a target="_blank" href="/ajx/ajax-examples.html">Ajax 实例</a>
+      </dd>
+       <dd>
+       &middot;<a target="_blank" href="/jquery/jquery-examples.html">jQuery 实例</a>
+      </dd>
+      <dd>
+       &middot;<a target="_blank" href="/xml/xml-examples.html">XML 实例</a>
+      </dd>
+      <dd>
+       &middot;<a target="_blank" href="/java/java-examples.html">Java 实例</a>
+      </dd>
+     
+     </dl>
+     <dl>
+      <dt>
+      字符集&工具
+      </dt>
+      <dd>
+       &middot; <a target="_blank" href="/charsets/html-charsets.html">HTML 字符集设置</a>
+      </dd>
+      <dd>
+       &middot; <a target="_blank" href="/tags/html-ascii.html">HTML ASCII 字符集</a>
+      </dd>
+     <dd>
+       &middot; <a target="_blank" href="https://c.runoob.com/front-end/6939/">JS 混淆/加密</a>
+      </dd> 
+      <dd>
+       &middot; <a target="_blank" href="https://c.runoob.com/front-end/6232/">PNG/JPEG 图片压缩</a>
+      </dd>
+      <dd>
+       &middot; <a target="_blank" href="/tags/html-colorpicker.html">HTML 拾色器</a>
+      </dd>
+      <dd>
+       &middot; <a target="_blank" href="//c.runoob.com/front-end/53">JSON 格式化工具</a>
+      </dd>
+      <dd>
+       &middot; <a target="_blank" href="//c.runoob.com/front-end/6680/">随机数生成器</a>
+      </dd>
+     </dl>
+     <dl>
+      <dt>
+       最新更新
+      </dt>
+                   <dd>
+       &middot;
+      <a href="http://www.runoob.com/matplotlib/matplotlib-imread.html" title="Matplotlib imread() 方法">Matplotlib imre...</a>
+      </dd>
+              <dd>
+       &middot;
+      <a href="http://www.runoob.com/matplotlib/matplotlib-imsave.html" title="Matplotlib imsave() 方法">Matplotlib imsa...</a>
+      </dd>
+              <dd>
+       &middot;
+      <a href="http://www.runoob.com/matplotlib/matplotlib-imshow.html" title="Matplotlib imshow() 方法">Matplotlib imsh...</a>
+      </dd>
+              <dd>
+       &middot;
+      <a href="http://www.runoob.com/matplotlib/matplotlib-hist.html" title="Matplotlib 直方图">Matplotlib 直方图</a>
+      </dd>
+              <dd>
+       &middot;
+      <a href="http://www.runoob.com/python3/python-func-object.html" title="Python object() 函数">Python object()...</a>
+      </dd>
+              <dd>
+       &middot;
+      <a href="http://www.runoob.com/python3/python-ai-draw.html" title="Python AI 绘画">Python AI 绘画</a>
+      </dd>
+              <dd>
+       &middot;
+      <a href="http://www.runoob.com/w3cnote/cursor-editor.html" title="神辅助 Cursor 编辑器，加入 GPT-4 让编码更轻松！">神辅助 Cursor ...</a>
+      </dd>
+             </dl>
+     <dl>
+      <dt>
+       站点信息
+      </dt>
+      <dd>
+       &middot;
+       <a target="_blank" href="mailto:admin@runoob.com" rel="external nofollow">意见反馈</a>
+       </dd>
+      <dd>
+       &middot;
+      <a target="_blank" href="/disclaimer">免责声明</a>
+       </dd>
+      <dd>
+       &middot;
+       <a target="_blank" href="/aboutus">关于我们</a>
+       </dd>
+      <dd>
+       &middot;
+      <a target="_blank" href="/archives">文章归档</a>
+      </dd>
+    
+     </dl>
+    
+     <div class="search-share">
+      <div class="app-download">
+        <div>
+         <strong>关注微信</strong>
+        </div>
+      </div>
+      <div class="share">
+      <img width="128" height="128" src="/wp-content/themes/runoob/assets/images/qrcode.png" />
+       </div>
+     </div>
+     
+    </div>
+   </div>
+   <div class="w-1000 copyright">
+     Copyright &copy; 2013-2023    <strong><a href="//www.runoob.com/" target="_blank">菜鸟教程</a></strong>&nbsp;
+    <strong><a href="//www.runoob.com/" target="_blank">runoob.com</a></strong> All Rights Reserved. 备案号：<a target="_blank" rel="nofollow" href="https://beian.miit.gov.cn/">闽ICP备15012807号-1</a>
+   </div>
+  </div>
+  <div class="fixed-btn">
+    <a class="go-top" href="javascript:void(0)" title="返回顶部"> <i class="fa fa-angle-up"></i></a>
+    <a class="qrcode"  href="javascript:void(0)" title="关注我们"><i class="fa fa-qrcode"></i></a>
+    <a class="writer" style="display:none" href="javascript:void(0)"   title="标记/收藏"><i class="fa fa-star" aria-hidden="true"></i></a>
+    <!-- qrcode modal -->
+    <div id="bottom-qrcode" class="modal panel-modal hide fade in">
+      <h4>微信关注</h4>
+      <div class="panel-body"><img alt="微信关注" width="128" height="128" src="/wp-content/themes/runoob/assets/images/qrcode.png"></div> 
+    </div>
+  </div>
+
+ <div style="display:none;">
+<script async src="https://www.googletagmanager.com/gtag/js?id=UA-84264393-2"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+
+  gtag('config', 'UA-84264393-2');
+</script>
+<script>
+var _hmt = _hmt || [];
+(function() {
+  var hm = document.createElement("script");
+  hm.src = "https://hm.baidu.com/hm.js?3eec0b7da6548cf07db3bc477ea905ee";
+  var s = document.getElementsByTagName("script")[0]; 
+  s.parentNode.insertBefore(hm, s);
+})();
+</script>
+
+</div>
+<script>
+window.jsui={
+    www: 'https://www.runoob.com',
+    uri: 'https://www.runoob.com/wp-content/themes/runoob'
+};
+</script>
+
+<script src="https://static.runoob.com/assets/libs/hl/run_prettify.js"></script>
+<script src="/wp-content/themes/runoob/assets/js/main.min.js?v=1.156"></script>
+
+</body>
+</html>

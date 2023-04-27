@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><title>CREATE MATERIALIZED VIEW</title><link rel="stylesheet" type="text/css" href="stylesheet.css" /><link rev="made" href="pgsql-docs@postgresql.org" /><meta name="generator" content="DocBook XSL Stylesheets V1.79.1" /><link rel="prev" href="sql-createlanguage.html" title="CREATE LANGUAGE" /><link rel="next" href="sql-createoperator.html" title="CREATE OPERATOR" /></head><body><div xmlns="http://www.w3.org/TR/xhtml1/transitional" class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="5" align="center">CREATE MATERIALIZED VIEW</th></tr><tr><td width="10%" align="left"><a accesskey="p" href="sql-createlanguage.html" title="CREATE LANGUAGE">上一页</a> </td><td width="10%" align="left"><a accesskey="u" href="sql-commands.html" title="SQL 命令">上一级</a></td><th width="60%" align="center">SQL 命令</th><td width="10%" align="right"><a accesskey="h" href="index.html" title="PostgreSQL 10.1 手册">起始页</a></td><td width="10%" align="right"> <a accesskey="n" href="sql-createoperator.html" title="CREATE OPERATOR">下一页</a></td></tr></table><hr></hr></div><div class="refentry" id="SQL-CREATEMATERIALIZEDVIEW"><div class="titlepage"></div><a id="idp43643328" class="indexterm"></a><div class="refnamediv"><h2><span class="refentrytitle">CREATE MATERIALIZED VIEW</span></h2><p>CREATE MATERIALIZED VIEW — 定义一个新的物化视图</p></div><div class="refsynopsisdiv"><h2>大纲</h2><pre class="synopsis">CREATE MATERIALIZED VIEW [ IF NOT EXISTS ] <em class="replaceable"><code>table_name</code></em>
+    [ (<em class="replaceable"><code>column_name</code></em> [, ...] ) ]
+    [ WITH ( <em class="replaceable"><code>storage_parameter</code></em> [= <em class="replaceable"><code>value</code></em>] [, ... ] ) ]
+    [ TABLESPACE <em class="replaceable"><code>tablespace_name</code></em> ]
+    AS <em class="replaceable"><code>query</code></em>
+    [ WITH [ NO ] DATA ]</pre></div><div class="refsect1" id="idp43650368"><h2>描述</h2><p>   <code class="command">CREATE MATERIALIZED VIEW</code>定义一个查询的物化视图。
+   在该命令被发出时，查询会被执行并且被用来填充该视图（除非使用了
+   <code class="command">WITH NO DATA</code>），并且后来可能会用
+   <code class="command">REFRESH MATERIALIZED VIEW</code>进行刷新。
+  </p><p>   <code class="command">CREATE MATERIALIZED VIEW</code>类似于
+   <code class="command">CREATE TABLE AS</code>，不过它还会记住被用来初始化该视图的查询，
+   这样它可以在后来被命令刷新。一个物化视图有很多和表相同的属性，但是不支持
+   临时物化视图以及自动生成  OID。
+  </p></div><div class="refsect1" id="idp43655296"><h2>参数</h2><div class="variablelist"><dl class="variablelist"><dt><span class="term"><code class="literal">IF NOT EXISTS</code></span></dt><dd><p>      如果已经存在一个同名的物化视图时不要抛出错误。这种情况下会发出一个
+      提示。注意这不保证现有的物化视图与即将创建的物化视图相似。
+     </p></dd><dt><span class="term"><em class="replaceable"><code>table_name</code></em></span></dt><dd><p>      要创建的物化视图的名称（可以被模式限定）。
+     </p></dd><dt><span class="term"><em class="replaceable"><code>column_name</code></em></span></dt><dd><p>      新物化视图中的一个列名。如果没有提供列名，会从查询的输出列名来得到。
+     </p></dd><dt><span class="term"><code class="literal">WITH ( <em class="replaceable"><code>storage_parameter</code></em> [= <em class="replaceable"><code>value</code></em>] [, ... ] )</code></span></dt><dd><p>      这个子句为新的物化视图指定可选的存储参数，详见
+      <a class="xref" href="sql-createtable.html#SQL-CREATETABLE-STORAGE-PARAMETERS" title="存储参数">存储参数</a>。所有<code class="literal">CREATE
+      TABLE</code>支持的参数<code class="literal">CREATE MATERIALIZED
+      VIEW</code>也支持，不过<code class="literal">OIDS</code>除外。
+      详见<a class="xref" href="sql-createtable.html" title="CREATE TABLE"><span class="refentrytitle">CREATE TABLE</span></a>。
+     </p></dd><dt><span class="term"><code class="literal">TABLESPACE <em class="replaceable"><code>tablespace_name</code></em></code></span></dt><dd><p>      <em class="replaceable"><code>tablespace_name</code></em>是
+      要把新物化视图创建在其中的表空间的名称。如果没有指定，
+      将查阅<a class="xref" href="runtime-config-client.html#GUC-DEFAULT-TABLESPACE">default_tablespace</a>。
+     </p></dd><dt><span class="term"><em class="replaceable"><code>query</code></em></span></dt><dd><p>      一个<a class="xref" href="sql-select.html" title="SELECT"><span class="refentrytitle">SELECT</span></a>、<a class="link" href="sql-select.html#SQL-TABLE" title="TABLE 命令">TABLE</a>
+      或者<a class="xref" href="sql-values.html" title="VALUES"><span class="refentrytitle">VALUES</span></a>命令。这个查询将在一个安全受限的操作中运行。
+      特别地，对本身会创建临时表的函数的调用将会失败。
+     </p></dd><dt><span class="term"><code class="literal">WITH [ NO ] DATA</code></span></dt><dd><p>      这个子句指定物化视图是否在创建时被填充。如果不是，该物化视图将被标记为
+      不可扫描并且在<code class="command">REFRESH
+      MATERIALIZED VIEW</code>被使用前不能被查询。
+     </p></dd></dl></div></div><div class="refsect1" id="idp43675504"><h2>兼容性</h2><p>   <code class="command">CREATE MATERIALIZED VIEW</code>是一种
+   <span class="productname">PostgreSQL</span>扩展。
+  </p></div><div class="refsect1" id="idp43677632"><h2>另见</h2><span class="simplelist"><a class="xref" href="sql-altermaterializedview.html" title="ALTER MATERIALIZED VIEW"><span class="refentrytitle">ALTER MATERIALIZED VIEW</span></a>, <a class="xref" href="sql-createtableas.html" title="CREATE TABLE AS"><span class="refentrytitle">CREATE TABLE AS</span></a>, <a class="xref" href="sql-createview.html" title="CREATE VIEW"><span class="refentrytitle">CREATE VIEW</span></a>, <a class="xref" href="sql-dropmaterializedview.html" title="DROP MATERIALIZED VIEW"><span class="refentrytitle">DROP MATERIALIZED VIEW</span></a>, <a class="xref" href="sql-refreshmaterializedview.html" title="REFRESH MATERIALIZED VIEW"><span class="refentrytitle">REFRESH MATERIALIZED VIEW</span></a></span></div></div><div class="navfooter"><hr /><table width="100%" summary="Navigation footer"><tr><td width="40%" align="left"><a accesskey="p" href="sql-createlanguage.html">上一页</a> </td><td width="20%" align="center"><a accesskey="u" href="sql-commands.html">上一级</a></td><td width="40%" align="right"> <a accesskey="n" href="sql-createoperator.html">下一页</a></td></tr><tr><td width="40%" align="left" valign="top">CREATE LANGUAGE </td><td width="20%" align="center"><a accesskey="h" href="index.html">起始页</a></td><td width="40%" align="right" valign="top"> CREATE OPERATOR</td></tr></table></div></body></html>

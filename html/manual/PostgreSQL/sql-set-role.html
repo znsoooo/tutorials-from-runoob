@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><title>SET ROLE</title><link rel="stylesheet" type="text/css" href="stylesheet.css" /><link rev="made" href="pgsql-docs@postgresql.org" /><meta name="generator" content="DocBook XSL Stylesheets V1.79.1" /><link rel="prev" href="sql-set-constraints.html" title="SET CONSTRAINTS" /><link rel="next" href="sql-set-session-authorization.html" title="SET SESSION AUTHORIZATION" /></head><body><div xmlns="http://www.w3.org/TR/xhtml1/transitional" class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="5" align="center">SET ROLE</th></tr><tr><td width="10%" align="left"><a accesskey="p" href="sql-set-constraints.html" title="SET CONSTRAINTS">上一页</a> </td><td width="10%" align="left"><a accesskey="u" href="sql-commands.html" title="SQL 命令">上一级</a></td><th width="60%" align="center">SQL 命令</th><td width="10%" align="right"><a accesskey="h" href="index.html" title="PostgreSQL 10.1 手册">起始页</a></td><td width="10%" align="right"> <a accesskey="n" href="sql-set-session-authorization.html" title="SET SESSION AUTHORIZATION">下一页</a></td></tr></table><hr></hr></div><div class="refentry" id="SQL-SET-ROLE"><div class="titlepage"></div><a id="idp49376592" class="indexterm"></a><div class="refnamediv"><h2><span class="refentrytitle">SET ROLE</span></h2><p>SET ROLE — 设置当前会话的当前用户标识符</p></div><div class="refsynopsisdiv"><h2>大纲</h2><pre class="synopsis">SET [ SESSION | LOCAL ] ROLE <em class="replaceable"><code>role_name</code></em>
+SET [ SESSION | LOCAL ] ROLE NONE
+RESET ROLE</pre></div><div class="refsect1" id="idp49380800"><h2>描述</h2><p>   这个命令把当前 SQL 会话的当前用户标识符设置为
+   <em class="replaceable"><code>role_name</code></em>。
+   角色名可以写成一个标识符或者一个字符串。在
+   <code class="command">SET ROLE</code>之后，对 SQL 命令的权限检查时就
+   好像该角色就是原先登录的角色一样。
+  </p><p>   当前会话用户必须是指定的
+   角色<em class="replaceable"><code>role_name</code></em>
+   的一个成员（如果会话用户是一个超级用户，则可以选择任何角色）。
+  </p><p>   <code class="literal">SESSION</code>和<code class="literal">LOCAL</code>修饰符发挥的作用和
+   常规的<a class="xref" href="sql-set.html" title="SET"><span class="refentrytitle">SET</span></a>命令一样。
+  </p><p>   <code class="literal">NONE</code>和<code class="literal">RESET</code>形式把当前用户标识符
+   重置为当前会话用户标识符。这些形式可以由任何用户执行。
+  </p></div><div class="refsect1" id="idp49388688"><h2>注解</h2><p>   使用这个命令可以增加特权或者限制特权。如果会话用户角色具有
+   <code class="literal">INHERITS</code>属性，则它会自动具有它能
+   <code class="command">SET ROLE</code>到的所有角色的全部特权。在这种情况下
+   <code class="command">SET ROLE</code>实际会删除所有直接分配给会话用户的特
+   权以及分配给会话用户作为其成员的其他角色的特权，只留下所提及
+   角色可用的特权。换句话说，如果会话用户没有
+   <code class="literal">NOINHERITS</code>属性，<code class="command">SET ROLE</code>会删除
+   直接分配给会话用户的特权而得到所提及角色可用的特权。
+  </p><p>   特别地，当一个超级用户选择<code class="command">SET ROLE</code>到一个非
+   超级用户角色时，它们会丢失其超级用户特权。
+  </p><p>   <code class="command">SET ROLE</code>的效果堪比
+   <a class="xref" href="sql-set-session-authorization.html" title="SET SESSION AUTHORIZATION"><span class="refentrytitle">SET SESSION AUTHORIZATION</span></a>，但是涉及的特权检查
+   完全不同。还有，<code class="command">SET SESSION AUTHORIZATION</code>决定
+   后来的<code class="command">SET ROLE</code>命令可以使用哪些角色， 不过用
+   <code class="command">SET ROLE</code>更改角色并不会改变后续
+   <code class="command">SET ROLE</code>能够使用的角色集。
+  </p><p>   <code class="command">SET ROLE</code>不会处理角色的<a class="xref" href="sql-alterrole.html" title="ALTER ROLE"><span class="refentrytitle">ALTER ROLE</span></a>
+   设置指定的会话变量。这只在登录期间发生。
+  </p><p>   <code class="command">SET ROLE</code>不能在一个
+   <code class="literal">SECURITY DEFINER</code>函数中使用。
+  </p></div><div class="refsect1" id="idp49402736"><h2>示例</h2><pre class="programlisting">SELECT SESSION_USER, CURRENT_USER;
+
+ session_user | current_user 
+--------------+--------------
+ peter        | peter
+
+SET ROLE 'paul';
+
+SELECT SESSION_USER, CURRENT_USER;
+
+ session_user | current_user 
+--------------+--------------
+ peter        | paul</pre></div><div class="refsect1" id="idp49403952"><h2>兼容性</h2><p>   <span class="productname">PostgreSQL</span>允许标识符
+   语法（<code class="literal">"<em class="replaceable"><code>rolename</code></em>"</code>），而 SQL 标准要求
+   角色名被写成字符串。SQL 不允许在事务中使用这个命令，而
+   <span class="productname">PostgreSQL</span>并不做此限
+   制，因为并没有原因需要这样做。和<code class="literal">RESET</code>语法
+   一样，<code class="literal">SESSION</code>和
+   <code class="literal">LOCAL</code>修饰符是一种
+   <span class="productname">PostgreSQL</span>扩展。
+  </p></div><div class="refsect1" id="idp49410208"><h2>另见</h2><span class="simplelist"><a class="xref" href="sql-set-session-authorization.html" title="SET SESSION AUTHORIZATION"><span class="refentrytitle">SET SESSION AUTHORIZATION</span></a></span></div></div><div class="navfooter"><hr /><table width="100%" summary="Navigation footer"><tr><td width="40%" align="left"><a accesskey="p" href="sql-set-constraints.html">上一页</a> </td><td width="20%" align="center"><a accesskey="u" href="sql-commands.html">上一级</a></td><td width="40%" align="right"> <a accesskey="n" href="sql-set-session-authorization.html">下一页</a></td></tr><tr><td width="40%" align="left" valign="top">SET CONSTRAINTS </td><td width="20%" align="center"><a accesskey="h" href="index.html">起始页</a></td><td width="40%" align="right" valign="top"> SET SESSION AUTHORIZATION</td></tr></table></div></body></html>

@@ -1,0 +1,131 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><title>FETCH</title><link rel="stylesheet" type="text/css" href="stylesheet.css" /><link rev="made" href="pgsql-docs@postgresql.org" /><meta name="generator" content="DocBook XSL Stylesheets V1.79.1" /><link rel="prev" href="sql-explain.html" title="EXPLAIN" /><link rel="next" href="sql-grant.html" title="GRANT" /></head><body><div xmlns="http://www.w3.org/TR/xhtml1/transitional" class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="5" align="center">FETCH</th></tr><tr><td width="10%" align="left"><a accesskey="p" href="sql-explain.html" title="EXPLAIN">上一页</a> </td><td width="10%" align="left"><a accesskey="u" href="sql-commands.html" title="SQL 命令">上一级</a></td><th width="60%" align="center">SQL 命令</th><td width="10%" align="right"><a accesskey="h" href="index.html" title="PostgreSQL 10.1 手册">起始页</a></td><td width="10%" align="right"> <a accesskey="n" href="sql-grant.html" title="GRANT">下一页</a></td></tr></table><hr></hr></div><div class="refentry" id="SQL-FETCH"><div class="titlepage"></div><a id="idp47229888" class="indexterm"></a><a id="idp47230928" class="indexterm"></a><div class="refnamediv"><h2><span class="refentrytitle">FETCH</span></h2><p>FETCH — 使用游标从查询中检索行</p></div><div class="refsynopsisdiv"><h2>大纲</h2><pre class="synopsis">FETCH [ <em class="replaceable"><code>direction</code></em> [ FROM | IN ] ] <em class="replaceable"><code>cursor_name</code></em>
+
+<span class="phrase">其中 <em class="replaceable"><code>direction</code></em> 可以为空或者以下之一：</span>
+
+    NEXT
+    PRIOR
+    FIRST
+    LAST
+    ABSOLUTE <em class="replaceable"><code>count</code></em>
+    RELATIVE <em class="replaceable"><code>count</code></em>
+    <em class="replaceable"><code>count</code></em>
+    ALL
+    FORWARD
+    FORWARD <em class="replaceable"><code>count</code></em>
+    FORWARD ALL
+    BACKWARD
+    BACKWARD <em class="replaceable"><code>count</code></em>
+    BACKWARD ALL</pre></div><div class="refsect1" id="idp47240944"><h2>描述</h2><p>   <code class="command">FETCH</code>从之前创建的一个游标中检索行。
+  </p><p>   游标具有一个相关联的位置，<code class="command">FETCH</code>会用到该位置。
+   游标位置可能会位于查询结果的第一行之前、结果中任意行之上或者
+   结果的最后一行之后。在被创建时，游标被定位在第一行之前。在取出
+   一些行后，该游标被定位在最近被取出的行上。如果
+   <code class="command">FETCH</code>运行超过了可用行的末尾，则该游标会被定位
+   在最后一行之后（如果向后取，则是第一行之前）。
+   <code class="command">FETCH ALL</code>或者<code class="command">FETCH BACKWARD
+   ALL</code>将总是让游标被定位于最后一行之后或者第一行之前。
+  </p><p>   <code class="literal">NEXT</code>、<code class="literal">PRIOR</code>、<code class="literal">FIRST</code>、
+   <code class="literal">LAST</code>、<code class="literal">ABSOLUTE</code>、<code class="literal">RELATIVE</code>
+   形式会在适当移动游标后取出一行。如果没有这样一行，将返回一个空
+   结果，并且视情况将游标定位在第一行之前或者最后一行之后。
+  </p><p>   使用<code class="literal">FORWARD</code>和<code class="literal">BACKWARD</code>的形式会在
+   向前移动或者向后移动的方向上检索指定数量的行，然后将游标定位在
+   最后返回的行上（如果<em class="replaceable"><code>count</code></em>超过可用的行数，则定位
+   在所有行之后或者之前）。
+  </p><p>   <code class="literal">RELATIVE 0</code>、<code class="literal">FORWARD 0</code>以及
+   <code class="literal">BACKWARD 0</code>都会请求检索当前行但不移动游标，也就是
+   重新取最近被取出的行。 只要游标没有被定位在第一行之前或者最后一行
+   之后，这种操作都会成功，否则不会返回任何行。
+  </p><div class="note"><h3 class="title">注意</h3><p>    这个页面描述在 SQL 命令层面上对游标的使用。如果想要在
+    <span class="application">PL/pgSQL</span>函数中使用游标，规则会有所不同
+     — 请见<a class="xref" href="plpgsql-cursors.html" title="42.7. 游标">第 42.7 节</a>。
+   </p></div></div><div class="refsect1" id="idp47258416"><h2>参数</h2><div class="variablelist"><dl class="variablelist"><dt><span class="term"><em class="replaceable"><code>direction</code></em></span></dt><dd><p><em class="replaceable"><code>direction</code></em>
+     定义获取方向以及要取得的行数。它可以是下列之一：
+
+      </p><div class="variablelist"><dl class="variablelist"><dt><span class="term"><code class="literal">NEXT</code></span></dt><dd><p>          取出下一行。如果省略<em class="replaceable"><code>direction</code></em>，这将是默认值。
+         </p></dd><dt><span class="term"><code class="literal">PRIOR</code></span></dt><dd><p>          取出当前位置之前的一行。
+         </p></dd><dt><span class="term"><code class="literal">FIRST</code></span></dt><dd><p>          取出该查询的第一行（和<code class="literal">ABSOLUTE 1</code>相同）。
+         </p></dd><dt><span class="term"><code class="literal">LAST</code></span></dt><dd><p>          取出该查询的最后一行（和<code class="literal">ABSOLUTE -1</code>相同）。
+         </p></dd><dt><span class="term"><code class="literal">ABSOLUTE <em class="replaceable"><code>count</code></em></code></span></dt><dd><p>          取出该查询的第<em class="replaceable"><code>count</code></em>个行，如果<em class="replaceable"><code>count</code></em>为负则是从尾部开始取出
+          第<code class="literal">abs(<em class="replaceable"><code>count</code></em>)</code>个行。如果
+          <em class="replaceable"><code>count</code></em>超出范围，将定位在第一行
+          之前或者最后一行之后。特别地，<code class="literal">ABSOLUTE 0</code>
+          会定位在第一行之前。
+         </p></dd><dt><span class="term"><code class="literal">RELATIVE <em class="replaceable"><code>count</code></em></code></span></dt><dd><p>          取出第<em class="replaceable"><code>count</code></em>个后继行，如果
+          <em class="replaceable"><code>count</code></em>为负
+          则是取出前面的第<code class="literal">abs(<em class="replaceable"><code>count</code></em>)</code>个行。
+          <code class="literal">RELATIVE 0</code>重新取出当前行（如果有）。
+         </p></dd><dt><span class="term"><em class="replaceable"><code>count</code></em></span></dt><dd><p>          取出接下来的<em class="replaceable"><code>count</code></em>行（和
+          <code class="literal">FORWARD <em class="replaceable"><code>count</code></em></code>相同）。
+         </p></dd><dt><span class="term"><code class="literal">ALL</code></span></dt><dd><p>          取出所有剩余的行（和<code class="literal">FORWARD ALL</code>相同）。
+         </p></dd><dt><span class="term"><code class="literal">FORWARD</code></span></dt><dd><p>          取出下一行（和<code class="literal">NEXT</code>相同）。
+         </p></dd><dt><span class="term"><code class="literal">FORWARD <em class="replaceable"><code>count</code></em></code></span></dt><dd><p>          取出接下来的<em class="replaceable"><code>count</code></em>行。
+          <code class="literal">FORWARD 0</code>重新取出当前行。
+         </p></dd><dt><span class="term"><code class="literal">FORWARD ALL</code></span></dt><dd><p>          取出所有剩下的行。
+         </p></dd><dt><span class="term"><code class="literal">BACKWARD</code></span></dt><dd><p>          取出当前行前面的一行（和<code class="literal">PRIOR</code>相同）。
+         </p></dd><dt><span class="term"><code class="literal">BACKWARD <em class="replaceable"><code>count</code></em></code></span></dt><dd><p>          取出前面的<em class="replaceable"><code>count</code></em>行（反向扫描）。
+          <code class="literal">BACKWARD 0</code>会重新取出当前行。
+         </p></dd><dt><span class="term"><code class="literal">BACKWARD ALL</code></span></dt><dd><p>          取出所有当前位置之前的行（反向扫描）。
+         </p></dd></dl></div></dd><dt><span class="term"><em class="replaceable"><code>count</code></em></span></dt><dd><p><em class="replaceable"><code>count</code></em>
+      是一个可能带有符号的整数常量，它决定要取得的位置或者行数。对于
+      <code class="literal">FORWARD</code>和<code class="literal">BACKWARD</code>情况，指定一个负的
+      <em class="replaceable"><code>count</code></em>等效于改变
+      <code class="literal">FORWARD</code>he <code class="literal">BACKWARD</code>的意义。
+     </p></dd><dt><span class="term"><em class="replaceable"><code>cursor_name</code></em></span></dt><dd><p>      一个已打开游标的名称。
+     </p></dd></dl></div></div><div class="refsect1" id="idp47305680"><h2>输出</h2><p>   如果成功完成，<code class="command">FETCH</code>命令返回一个下面形式的命令标签：
+</p><pre class="screen">FETCH <em class="replaceable"><code>count</code></em></pre><p>
+   <em class="replaceable"><code>count</code></em>是取得的行数（可能
+   为零）。注意在<span class="application">psql</span>中，命令标签将不会实际显示，
+   因为<span class="application">psql</span>会显示被取得的行。
+  </p></div><div class="refsect1" id="idp47310656"><h2>注解</h2><p>   如果想要使用<code class="command">FETCH</code>的任意变体而不使用带有正计数的
+   <code class="command">FETCH NEXT</code>或者<code class="command">FETCH FORWARD</code>，
+   应该用<code class="literal">SCROLL</code>声明游标。对于简单查询，
+   <span class="productname">PostgreSQL</span>将允许从不带
+   <code class="literal">SCROLL</code>的游标中反向取得行，但最好不要依赖这种行为。
+   如果游标被声明为带有<code class="literal">SCROLL</code>，则不允许反向取得。
+  </p><p>   用<code class="literal">ABSOLUTE</code>取行并不比用相对移动快多少：不管则样，
+   底层实现都必须遍历所有的中间行。用负绝对值获取的情况更糟：必须读到
+   查询尾部来找到最后一行，并且接着从那里反向开始遍历。不过，回卷到查询
+   的开始（正如<code class="literal">FETCH ABSOLUTE 0</code>）是很快的。
+  </p><p>   <a class="xref" href="sql-declare.html" title="DECLARE"><span class="refentrytitle">DECLARE</span></a>被用来定义游标。使用
+   <a class="xref" href="sql-move.html" title="MOVE"><span class="refentrytitle">MOVE</span></a>可改变游标位置而不检索数据。
+  </p></div><div class="refsect1" id="idp47320272"><h2>示例</h2><p>   下面的例子用一个游标遍历一个表：
+
+</p><pre class="programlisting">BEGIN WORK;
+
+-- 建立一个游标：
+DECLARE liahona SCROLL CURSOR FOR SELECT * FROM films;
+
+-- 在游标 liahona 中取出前 5 行：
+FETCH FORWARD 5 FROM liahona;
+
+ code  |          title          | did | date_prod  |   kind   |  len
+-------+-------------------------+-----+------------+----------+-------
+ BL101 | The Third Man           | 101 | 1949-12-23 | Drama    | 01:44
+ BL102 | The African Queen       | 101 | 1951-08-11 | Romantic | 01:43
+ JL201 | Une Femme est une Femme | 102 | 1961-03-12 | Romantic | 01:25
+ P_301 | Vertigo                 | 103 | 1958-11-14 | Action   | 02:08
+ P_302 | Becket                  | 103 | 1964-02-03 | Drama    | 02:28
+
+-- 取出前面一行：
+FETCH PRIOR FROM liahona;
+
+ code  |  title  | did | date_prod  |  kind  |  len
+-------+---------+-----+------------+--------+-------
+ P_301 | Vertigo | 103 | 1958-11-14 | Action | 02:08
+
+-- 关闭游标并且结束事务：
+CLOSE liahona;
+COMMIT WORK;</pre></div><div class="refsect1" id="idp47323456"><h2>兼容性</h2><p>   SQL 标准只定义<code class="command">FETCH</code>在嵌入式 SQL 中使用。
+   这里描述的<code class="command">FETCH</code>变体返回数据时就好像数据是
+   一个<code class="command">SELECT</code>结果，而不是被放在主变量中。
+   除这一点之外，<code class="command">FETCH</code>完全向上兼容于 SQL 标准。
+  </p><p>   涉及<code class="literal">FORWARD</code>和<code class="literal">BACKWARD</code>的
+   <code class="command">FETCH</code>形式，以及形式<code class="literal">FETCH <em class="replaceable"><code>count</code></em></code>和<code class="literal">FETCH
+   ALL</code>（其中<code class="literal">FORWARD</code>是隐式的）都是
+   <span class="productname">PostgreSQL</span>扩展。
+  </p><p>   SQL 标准只允许<code class="literal">FROM</code>在游标名之前。使用
+   <code class="literal">IN</code>的选项或者完全省去它们是一种扩展。
+  </p></div><div class="refsect1" id="idp47334880"><h2>另见</h2><span class="simplelist"><a class="xref" href="sql-close.html" title="CLOSE"><span class="refentrytitle">CLOSE</span></a>, <a class="xref" href="sql-declare.html" title="DECLARE"><span class="refentrytitle">DECLARE</span></a>, <a class="xref" href="sql-move.html" title="MOVE"><span class="refentrytitle">MOVE</span></a></span></div></div><div class="navfooter"><hr /><table width="100%" summary="Navigation footer"><tr><td width="40%" align="left"><a accesskey="p" href="sql-explain.html">上一页</a> </td><td width="20%" align="center"><a accesskey="u" href="sql-commands.html">上一级</a></td><td width="40%" align="right"> <a accesskey="n" href="sql-grant.html">下一页</a></td></tr><tr><td width="40%" align="left" valign="top">EXPLAIN </td><td width="20%" align="center"><a accesskey="h" href="index.html">起始页</a></td><td width="40%" align="right" valign="top"> GRANT</td></tr></table></div></body></html>

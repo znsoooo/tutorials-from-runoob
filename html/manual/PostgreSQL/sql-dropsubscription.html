@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><title>DROP SUBSCRIPTION</title><link rel="stylesheet" type="text/css" href="stylesheet.css" /><link rev="made" href="pgsql-docs@postgresql.org" /><meta name="generator" content="DocBook XSL Stylesheets V1.79.1" /><link rel="prev" href="sql-dropstatistics.html" title="DROP STATISTICS" /><link rel="next" href="sql-droptable.html" title="DROP TABLE" /></head><body><div xmlns="http://www.w3.org/TR/xhtml1/transitional" class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="5" align="center">DROP SUBSCRIPTION</th></tr><tr><td width="10%" align="left"><a accesskey="p" href="sql-dropstatistics.html" title="DROP STATISTICS">上一页</a> </td><td width="10%" align="left"><a accesskey="u" href="sql-commands.html" title="SQL 命令">上一级</a></td><th width="60%" align="center">SQL 命令</th><td width="10%" align="right"><a accesskey="h" href="index.html" title="PostgreSQL 10.1 手册">起始页</a></td><td width="10%" align="right"> <a accesskey="n" href="sql-droptable.html" title="DROP TABLE">下一页</a></td></tr></table><hr></hr></div><div class="refentry" id="SQL-DROPSUBSCRIPTION"><div class="titlepage"></div><a id="idp46820512" class="indexterm"></a><div class="refnamediv"><h2><span class="refentrytitle">DROP SUBSCRIPTION</span></h2><p>DROP SUBSCRIPTION — 删除一个订阅</p></div><div class="refsynopsisdiv"><h2>大纲</h2><pre class="synopsis">DROP SUBSCRIPTION [ IF EXISTS ] <em class="replaceable"><code>name</code></em> [ CASCADE | RESTRICT ]</pre></div><div class="refsect1" id="idp46824656"><h2>描述</h2><p>   <code class="command">DROP SUBSCRIPTION</code>删除数据库集群中的一个订阅。
+  </p><p>   只有超级用户才可以删除订阅。
+  </p><p>   如果订阅与复制槽相关联，就不能在事务块内部执行<code class="command">DROP SUBSCRIPTION</code>。
+   (可以使用<code class="command">ALTER SUBSCRIPTION</code>取消关联复制槽。)
+  </p></div><div class="refsect1" id="idp46828320"><h2>参数</h2><div class="variablelist"><dl class="variablelist"><dt><span class="term"><em class="replaceable"><code>name</code></em></span></dt><dd><p>      要删除的订阅的名称。
+     </p></dd><dt><span class="term"><code class="literal">CASCADE</code><br /></span><span class="term"><code class="literal">RESTRICT</code></span></dt><dd><p>      这些关键词没有任何作用，因为订阅没有依赖关系。
+     </p></dd></dl></div></div><div class="refsect1" id="idp46832224"><h2>注意</h2><p>   当删除与远程主机（正常状态）上的复制槽相关联的订阅时，<code class="command">DROP SUBSCRIPTION</code>
+   将连接到远程主机，并尝试删除该复制槽，作为其操作的一部分。这是必要的，
+   以便释放远程主机上为订阅分配的资源。如果失败，因为远程主机不可访问，
+   或者因为远程复制槽不能被删除，或者复制槽不存在或从不存在，
+   则<code class="command">DROP SUBSCRIPTION</code>命令将失败。要在这种情况下继续，
+   请执行<code class="literal">ALTER SUBSCRIPTION ... SET (slot_name = NONE)</code>
+   来解除复制槽与订阅的关联。之后，<code class="command">DROP SUBSCRIPTION</code>
+   将不再尝试对远程主机执行任何操作。请注意，如果远程复制槽仍然存在，
+   则应手动删除该插槽；否则将继续保留WAL，最终可能导致磁盘空间不足。
+   另见<a class="xref" href="logical-replication-subscription.html#LOGICAL-REPLICATION-SUBSCRIPTION-SLOT" title="31.2.1. 复制槽管理">第 31.2.1 节</a>。
+  </p><p>   如果订阅与复制槽相关联，那么不能在事务块内部执行<code class="command">DROP SUBSCRIPTION</code>。
+  </p></div><div class="refsect1" id="idp46839104"><h2>示例</h2><p>   删除一个订阅：
+</p><pre class="programlisting">DROP SUBSCRIPTION mysub;</pre></div><div class="refsect1" id="idp46840368"><h2>兼容性</h2><p>   <code class="command">DROP SUBSCRIPTION</code>是一个<span class="productname">PostgreSQL</span>
+   扩展。
+  </p></div><div class="refsect1" id="idp46842496"><h2>又见</h2><span class="simplelist"><a class="xref" href="sql-createsubscription.html" title="CREATE SUBSCRIPTION"><span class="refentrytitle">CREATE SUBSCRIPTION</span></a>, <a class="xref" href="sql-altersubscription.html" title="ALTER SUBSCRIPTION"><span class="refentrytitle">ALTER SUBSCRIPTION</span></a></span></div></div><div class="navfooter"><hr /><table width="100%" summary="Navigation footer"><tr><td width="40%" align="left"><a accesskey="p" href="sql-dropstatistics.html">上一页</a> </td><td width="20%" align="center"><a accesskey="u" href="sql-commands.html">上一级</a></td><td width="40%" align="right"> <a accesskey="n" href="sql-droptable.html">下一页</a></td></tr><tr><td width="40%" align="left" valign="top">DROP STATISTICS </td><td width="20%" align="center"><a accesskey="h" href="index.html">起始页</a></td><td width="40%" align="right" valign="top"> DROP TABLE</td></tr></table></div></body></html>

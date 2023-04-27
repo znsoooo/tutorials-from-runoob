@@ -1,0 +1,81 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><title>40.7. 规则 vs 触发器</title><link rel="stylesheet" type="text/css" href="stylesheet.css" /><link rev="made" href="pgsql-docs@postgresql.org" /><meta name="generator" content="DocBook XSL Stylesheets V1.79.1" /><link rel="prev" href="rules-status.html" title="40.6. 规则和命令状态" /><link rel="next" href="xplang.html" title="第 41 章 过程语言" /></head><body><div xmlns="http://www.w3.org/TR/xhtml1/transitional" class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="5" align="center">40.7. 规则 vs 触发器</th></tr><tr><td width="10%" align="left"><a accesskey="p" href="rules-status.html" title="40.6. 规则和命令状态">上一页</a> </td><td width="10%" align="left"><a accesskey="u" href="rules.html" title="第 40 章 规则系统">上一级</a></td><th width="60%" align="center">第 40 章 规则系统</th><td width="10%" align="right"><a accesskey="h" href="index.html" title="PostgreSQL 10.1 手册">起始页</a></td><td width="10%" align="right"> <a accesskey="n" href="xplang.html" title="第 41 章 过程语言">下一页</a></td></tr></table><hr></hr></div><div class="sect1" id="RULES-TRIGGERS"><div class="titlepage"><div><div><h2 class="title" style="clear: both">40.7. 规则 vs 触发器</h2></div></div></div><a id="idp35874976" class="indexterm"></a><a id="idp35876672" class="indexterm"></a><p>    许多触发器可以干的事情同样也可以用<span class="productname">PostgreSQL</span>规则系统来实现。目前不能用规则来实现的东西之一是某些约束，特别是外键。 可以放置一个合格的规则在一列上，这个规则在列的值没有出现在另一个表中时把命令重写成<code class="literal">NOTHING</code>。但是这样做数据就会被不声不响地丢弃，因此也不是一个好主意。如果要求检查值的有效性，并且在出现无效值的情况下应该生成一个错误消息，这种需求就必须要用触发器来完成。</p><p>    在本章中，我们关注于使用规则来更新视图。本章中所有的更新规则的例子都可以使用视图上的<code class="literal">INSTEAD OF</code>触发器来实现。编写这类触发器通常比编写规则要容易，特别是在要求使用复杂逻辑来执行更新的情况下。</p><p>    对于两者都可实现的情况，哪个更好取决于对数据库的使用。触发器为每一个受影响的行都执行一次。规则修改查询树或生成一个额外的查询。所以如果在一个语句中影响到很多行， 一个发出额外查询的规则通常可能会比一个触发器快，因为触发器对每一个行都要被调用，并且每次被调用时都需要重新判断要做什么样的操作。不过，触发器方法从概念上要远比规则方法简单，并且很容易让新人上手。</p><p>    下面我们展示一个例子，该例子说明了在同种情况下两种选择的比较。这里有两个表：
+
+</p><pre class="programlisting">CREATE TABLE computer (
+    hostname        text,    -- 被索引
+    manufacturer    text     -- 被索引
+);
+
+CREATE TABLE software (
+    software        text,    -- 被索引
+    hostname        text     -- 被索引
+);</pre><p>
+
+    两个表都有数千行，并且在<code class="structfield">hostname</code>上的索引是唯一的。规则或触发器应该实现一个约束，该约束从<code class="literal">software</code>中删除引用已删除计算机的行。 触发器可以用下面这条命令：
+
+</p><pre class="programlisting">DELETE FROM software WHERE hostname = $1;</pre><p>
+
+    因为触发器会为每一个从<code class="literal">computer</code>中删除的独立行调用一次， 那么它可以准备并且保存这个命令的规划，把<code class="structfield">hostname</code>作为参数传入。规则应该被写为：
+
+</p><pre class="programlisting">CREATE RULE computer_del AS ON DELETE TO computer
+    DO DELETE FROM software WHERE hostname = OLD.hostname;</pre><p>
+   </p><p>    现在看看不同类型的删除。在这种情况：
+
+</p><pre class="programlisting">DELETE FROM computer WHERE hostname = 'mypc.local.net';</pre><p>
+
+    表<code class="literal">computer</code>被使用索引（快速）扫描，并且由触发器发出的命令也将使用一个索引扫描（同样快速）。来自规则的额外查询应该是：
+
+</p><pre class="programlisting">DELETE FROM software WHERE computer.hostname = 'mypc.local.net'
+                       AND software.hostname = computer.hostname;</pre><p>
+
+    由于已经建立了合适的索引，规划器将创建一个规划
+
+</p><pre class="literallayout">Nestloop
+  -&gt;  Index Scan using comp_hostidx on computer
+  -&gt;  Index Scan using soft_hostidx on software</pre><p>
+
+    所以在触发器和规则的实现之间没有太多的速度差别。
+   </p><p>    在接下来的删除中，我们想要去掉所有 2000 个<code class="structfield">hostname</code>以<code class="literal">old</code>开头的计算机。有两个命令可以来做这件事。一个是：
+
+</p><pre class="programlisting">DELETE FROM computer WHERE hostname &gt;= 'old'
+                       AND hostname &lt;  'ole'</pre><p>
+
+    被规则增加的命令将是：
+
+</p><pre class="programlisting">DELETE FROM software WHERE computer.hostname &gt;= 'old' AND computer.hostname &lt; 'ole'
+                       AND software.hostname = computer.hostname;</pre><p>
+
+    计划是：
+
+</p><pre class="literallayout">Hash Join
+  -&gt;  Seq Scan on software
+  -&gt;  Hash
+    -&gt;  Index Scan using comp_hostidx on computer</pre><p>
+
+    另一个可能的命令是：
+
+</p><pre class="programlisting">DELETE FROM computer WHERE hostname ~ '^old';</pre><p>
+
+    它会为规划增加的命令产生下面的执行计划：
+
+</p><pre class="literallayout">Nestloop
+  -&gt;  Index Scan using comp_hostidx on computer
+  -&gt;  Index Scan using soft_hostidx on software</pre><p>
+
+    这表明，当有多个条件表达式被使用<code class="literal">AND</code>组合在一起时，规划器不能认识到表<code class="literal">computer</code>中<code class="structfield">hostname</code>上的条件也可以被用于一个<code class="literal">software</code>上的索引扫描， 而在该命令的正则表达式版本中正是这样做的。触发器将为要被删除的 2000 个旧计算机中的每一个调用，并且会导致在<code class="literal">computer</code>上的一次索引扫描和<code class="literal">software</code>上的 2000 次索引扫描。采用规则的实现将会使用两个使用索引的命令来完成。 并且在顺序扫描情况下规则是否仍将更快是取决于<code class="literal">software</code>表的总体大小的。即使所有的索引块都将很快地进入高速缓存，通过 SPI 管理器执行来自触发器的 2000 个命令也要花不少时间。 </p><p>    我们要看的最后一个命令是：
+
+</p><pre class="programlisting">DELETE FROM computer WHERE manufacturer = 'bim';</pre><p>
+
+    同样，这也会导致很多行被从<code class="literal">computer</code>中删除。所以触发器同样会通过执行器运行很多命令。规则生成的命令将会是：
+
+</p><pre class="programlisting">DELETE FROM software WHERE computer.manufacturer = 'bim'
+                       AND software.hostname = computer.hostname;</pre><p>
+
+    这个命令的计划又将是在两个索引扫描上的嵌套循环，只不过使用了<code class="literal">computer</code>上的另一个索引：
+
+</p><pre class="programlisting">Nestloop
+  -&gt;  Index Scan using comp_manufidx on computer
+  -&gt;  Index Scan using soft_hostidx on software</pre><p>
+
+    在任何这些情况之一，来自规则系统的额外命令都或多或少与命令中影响的行数无关。</p><p>    概括来说，规则只有在其动作导致了大而且糟糕的条件连接时才会明显地慢于触发器，这种情况下规划器将没有什么办法。</p></div><div class="navfooter"><hr /><table width="100%" summary="Navigation footer"><tr><td width="40%" align="left"><a accesskey="p" href="rules-status.html">上一页</a> </td><td width="20%" align="center"><a accesskey="u" href="rules.html">上一级</a></td><td width="40%" align="right"> <a accesskey="n" href="xplang.html">下一页</a></td></tr><tr><td width="40%" align="left" valign="top">40.6. 规则和命令状态 </td><td width="20%" align="center"><a accesskey="h" href="index.html">起始页</a></td><td width="40%" align="right" valign="top"> 第 41 章 过程语言</td></tr></table></div></body></html>

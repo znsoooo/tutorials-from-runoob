@@ -1,0 +1,82 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><title>26.4. 日志传送的替代方法</title><link rel="stylesheet" type="text/css" href="stylesheet.css" /><link rev="made" href="pgsql-docs@postgresql.org" /><meta name="generator" content="DocBook XSL Stylesheets V1.79.1" /><link rel="prev" href="warm-standby-failover.html" title="26.3. 故障转移" /><link rel="next" href="hot-standby.html" title="26.5. 热备" /></head><body><div xmlns="http://www.w3.org/TR/xhtml1/transitional" class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="5" align="center">26.4. 日志传送的替代方法</th></tr><tr><td width="10%" align="left"><a accesskey="p" href="warm-standby-failover.html" title="26.3. 故障转移">上一页</a> </td><td width="10%" align="left"><a accesskey="u" href="high-availability.html" title="第 26 章 高可用、负载均衡和复制">上一级</a></td><th width="60%" align="center">第 26 章 高可用、负载均衡和复制</th><td width="10%" align="right"><a accesskey="h" href="index.html" title="PostgreSQL 10.1 手册">起始页</a></td><td width="10%" align="right"> <a accesskey="n" href="hot-standby.html" title="26.5. 热备">下一页</a></td></tr></table><hr></hr></div><div class="sect1" id="LOG-SHIPPING-ALTERNATIVE"><div class="titlepage"><div><div><h2 class="title" style="clear: both">26.4. 日志传送的替代方法</h2></div></div></div><div class="toc"><dl class="toc"><dt><span class="sect2"><a href="log-shipping-alternative.html#WARM-STANDBY-CONFIG">26.4.1. 实现</a></span></dt><dt><span class="sect2"><a href="log-shipping-alternative.html#WARM-STANDBY-RECORD">26.4.2. 基于记录的日志传送</a></span></dt></dl></div><p>    前一节描述的内建后备模式的一种替代方案是使用一个轮询归档位置的
+    <code class="varname">restore_command</code>。这是版本 8.4 及以下版本中唯一可用的选项。
+    在这种设置中，设置<code class="varname">standby_mode</code>为关闭，
+    因为你要自行实现后备操作所需的轮询。关于这种实现的一个参考请见
+    <a class="xref" href="pgstandby.html" title="pg_standby"><span class="refentrytitle"><span class="application">pg_standby</span></span></a>模块。
+   </p><p>    注意在这种模式中，服务器将一次应用一整个文件的 WAL，
+    因此如果你使用后备服务器来查询（见热备），
+    那么主服务器上的一个动作和后备服务器上该动作变得可见之间会有一个延迟，
+    该延迟对应着填满 WAL 文件的时间。<code class="varname">archive_timeout</code>
+    可以被用来缩短该延迟。还要注意你不能把流复制和这种方法组合起来使用。
+   </p><p>    在主服务器和后备服务器上都会发生的操作是通常的连续归档和恢复任务。
+    两个数据库服务器之间唯一的接触点是两者共享的 WAL 文件归档：
+    主服务器写这个归档，后备服务器读取这个归档。
+    必须要小心地保证来自独立主服务器的 WAL 归档不会混合在一起或者混淆。
+    如果归档只被后备操作需要，它不必很大。
+   </p><p>    使得两台松耦合的服务器一起工作的诀窍是在后备服务器上使用的
+    <code class="varname">restore_command</code>，当要求下一个 WAL 文件时，
+    会等待它在主服务器上变得可用。<code class="varname">restore_command</code>在后备服务器的
+    <code class="filename">recovery.conf</code>文件中指定。正常的恢复处理将从 WAL 归档请求一个文件，
+    如果该文件不可用则会报告失败。对于后备处理来说下一个 WAL 文件不可用很正常，
+    因此后备服务器必须等待它出现。对于以<code class="literal">.backup</code>或<code class="literal">.history</code>
+    结尾的文件没有必要等待，并且必须返回一个非零的返回码。一个等待的
+    <code class="varname">restore_command</code>可以用一种自定义的脚本编写，
+    在其中轮询下一个 WAL 文件的存在之后进行循环。也必须有某种方式来触发故障转移，
+    那将打断<code class="varname">restore_command</code>：打破循环并返回一个文件未找到错误给后备服务器。
+    这会结束恢复并且后备服务器将接下来变成一个正常的服务器。
+   </p><p>    一个合适的<code class="varname">restore_command</code>的伪代码是：
+</p><pre class="programlisting">triggered = false;
+while (!NextWALFileReady() &amp;&amp; !triggered)
+{
+    sleep(100000L);         /* wait for ~0.1 sec */
+    if (CheckForExternalTrigger())
+        triggered = true;
+}
+if (!triggered)
+        CopyWALFileForRecovery();</pre><p>    在<a class="xref" href="pgstandby.html" title="pg_standby"><span class="refentrytitle"><span class="application">pg_standby</span></span></a>模块中提供了一个等待的<code class="varname">restore_command</code>
+    的工作例子。它也可被用作如何正确实现上述逻辑的参考。
+    它也可以根据需要被扩展来支持指定的配置和环境。
+   </p><p>    触发故障转移的方法是规划和设计中的一个重要部分。一种潜在的选项是
+    <code class="varname">restore_command</code>命令。它对每一个 WAL 文件执行一次，
+    但是运行<code class="varname">restore_command</code>的进程会为每一个文件创建和死亡，
+    因此没有守护进程或服务器进程，并且也不能使用信号或信号句柄。因此，
+    <code class="varname">restore_command</code>不适合于触发故障转移。可以使用一种简单的超时功能，
+    特别是和主服务器上已知的<code class="varname">archive_timeout</code>设置一起。但是，
+    由于一个网络问题或者繁忙的主服务器可能足以发起故障转移，这有点容易产生错误。
+    如果可以安排，一种提醒机制（例如显式创建一个触发器文件）是最理想的。
+   </p><div class="sect2" id="WARM-STANDBY-CONFIG"><div class="titlepage"><div><div><h3 class="title">26.4.1. 实现</h3></div></div></div><p>    使用这种替代方案配置一个后备服务器的简短过程如下所示。对于每一步的细节，
+    可以参考之前的小节。
+    </p><div class="orderedlist"><ol class="orderedlist" type="1"><li class="listitem"><p>       尽可能将主系统和后背系统设置成近乎一致，
+       包括在同一发行级别上的两个相同的<span class="productname">PostgreSQL</span>拷贝。
+      </p></li><li class="listitem"><p>       在后备服务器上建立从主系统到一个 WAL 归档目录的连续归档。
+       确保在主服务器上<a class="xref" href="runtime-config-wal.html#GUC-ARCHIVE-MODE">archive_mode</a>、
+       <a class="xref" href="runtime-config-wal.html#GUC-ARCHIVE-COMMAND">archive_command</a>和
+       <a class="xref" href="runtime-config-wal.html#GUC-ARCHIVE-TIMEOUT">archive_timeout</a>被恰当地设置
+       （见<a class="xref" href="continuous-archiving.html#BACKUP-ARCHIVING-WAL" title="25.3.1. 建立WAL归档">第 25.3.1 节</a>）。
+      </p></li><li class="listitem"><p>       建立主服务器的一个基础备份（见<a class="xref" href="continuous-archiving.html#BACKUP-BASE-BACKUP" title="25.3.2.  制作一个基础备份">第 25.3.2 节</a>），
+       并且把该数据载入到后备服务器。
+      </p></li><li class="listitem"><p>       在后备服务器上开始从本地 WAL 归档的恢复，在<code class="filename">recovery.conf</code>
+       中指定一个按之前所述进行等待的<code class="varname">restore_command</code>
+       （见<a class="xref" href="continuous-archiving.html#BACKUP-PITR-RECOVERY" title="25.3.4. 使用一个连续归档备份进行恢复">第 25.3.4 节</a>）。
+      </p></li></ol></div><p>
+   </p><p>    恢复将 WAL 归档当作只读的来处理，因此一旦一个 WAL 文件已经被复制到后备系统，
+    在它正在被后备数据库服务器读取时可以被同时复制到磁带。因此，
+    可以在为了长期灾难恢复目的存储文件的同时运行一个用于高可用性的后备服务器。
+   </p><p>    为了测试的目的，可以在一个相同的系统上运行主服务器和后备服务器。
+    这对于服务器鲁棒性并不会提供任何有意义的改进，对 HA 也一样。
+   </p></div><div class="sect2" id="WARM-STANDBY-RECORD"><div class="titlepage"><div><div><h3 class="title">26.4.2. 基于记录的日志传送</h3></div></div></div><p>    也可以使用这种替代方法来实现基于记录的日志传送，不过这需要定制开发，
+    并且只有在一整个 WAL 文件被传送之后改变才会对热后备查询可见。
+   </p><p>    一个外部程序可以调用<code class="function">pg_walfile_name_offset()</code>函数（见<a class="xref" href="functions-admin.html" title="9.26. 系统管理函数">第 9.26 节</a>）
+    来找出 WAL 的当前末端的文件名和其中准确的字节偏移。
+    它接着可以直接访问 WAL 文件并且将从上一个已知的 WAL 末尾到当前末尾之间的数据拷贝到后备服务器。
+    通过这种方法，数据丢失的窗口是复制程序的轮询周期时间，这可以为非常小，
+    并且不会有强制部分使用的段文件被归档所浪费的带宽。注意后备服务器的
+    <code class="varname">restore_command</code>脚本只能处理整个 WAL 文件，
+    因此增量复制的数据通常不会对后备服务器可用。只有当主服务器死掉时它才有用 — 
+    那时最后一个部分 WAL 文件会在允许它发生之前被送给后备服务器。
+    这个处理的正确实现要求<code class="varname">restore_command</code>脚本和数据复制程序的合作。
+   </p><p>    从<span class="productname">PostgreSQL</span> 版本 9.0 开始，你可以使用流复制
+    （见<a class="xref" href="warm-standby.html#STREAMING-REPLICATION" title="26.2.5. 流复制">第 26.2.5 节</a>）来实现事半功倍的效果。
+   </p></div></div><div class="navfooter"><hr /><table width="100%" summary="Navigation footer"><tr><td width="40%" align="left"><a accesskey="p" href="warm-standby-failover.html">上一页</a> </td><td width="20%" align="center"><a accesskey="u" href="high-availability.html">上一级</a></td><td width="40%" align="right"> <a accesskey="n" href="hot-standby.html">下一页</a></td></tr><tr><td width="40%" align="left" valign="top">26.3. 故障转移 </td><td width="20%" align="center"><a accesskey="h" href="index.html">起始页</a></td><td width="40%" align="right" valign="top"> 26.5. 热备</td></tr></table></div></body></html>

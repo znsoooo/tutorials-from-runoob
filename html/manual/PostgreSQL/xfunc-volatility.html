@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><title>37.6. 函数易变性分类</title><link rel="stylesheet" type="text/css" href="stylesheet.css" /><link rev="made" href="pgsql-docs@postgresql.org" /><meta name="generator" content="DocBook XSL Stylesheets V1.79.1" /><link rel="prev" href="xfunc-overload.html" title="37.5. 函数重载" /><link rel="next" href="xfunc-pl.html" title="37.7. 过程语言函数" /></head><body><div xmlns="http://www.w3.org/TR/xhtml1/transitional" class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="5" align="center">37.6. 函数易变性分类</th></tr><tr><td width="10%" align="left"><a accesskey="p" href="xfunc-overload.html" title="37.5. 函数重载">上一页</a> </td><td width="10%" align="left"><a accesskey="u" href="extend.html" title="第 37 章 扩展 SQL">上一级</a></td><th width="60%" align="center">第 37 章 扩展 <acronym xmlns="http://www.w3.org/1999/xhtml" class="acronym">SQL</acronym></th><td width="10%" align="right"><a accesskey="h" href="index.html" title="PostgreSQL 10.1 手册">起始页</a></td><td width="10%" align="right"> <a accesskey="n" href="xfunc-pl.html" title="37.7. 过程语言函数">下一页</a></td></tr></table><hr></hr></div><div class="sect1" id="XFUNC-VOLATILITY"><div class="titlepage"><div><div><h2 class="title" style="clear: both">37.6. 函数易变性分类</h2></div></div></div><a id="idp33337296" class="indexterm"></a><a id="idp33338416" class="indexterm"></a><a id="idp33339280" class="indexterm"></a><a id="idp33340144" class="indexterm"></a><p>    每一个函数都有一个<em class="firstterm">易变性</em>分类，可能是
+    <code class="literal">VOLATILE</code>、<code class="literal">STABLE</code>或者<code class="literal">IMMUTABLE</code>。
+    如果<a class="xref" href="sql-createfunction.html" title="CREATE FUNCTION"><span class="refentrytitle">CREATE FUNCTION</span></a>命令没有指定一个分类，则默认是
+    <code class="literal">VOLATILE</code>。易变性分类是给优化器的关于该函数行为的一种承诺：
+
+   </p><div class="itemizedlist"><ul class="itemizedlist" style="list-style-type: disc; "><li class="listitem"><p>      一个<code class="literal">VOLATILE</code>函数可以做任何事情，包括修改数据库。在
+      使用相同的参数连续调用时，它能返回不同的结果。优化器不会对这类函
+      数的行为做任何假定。在每一行需要 volatile 函数值时，一个使用 volatile
+      函数的查询都会重新计算该函数。
+     </p></li><li class="listitem"><p>      一个<code class="literal">STABLE</code>函数不能修改数据库并且被确保对一个语句中
+      的所有行用给定的相同参数返回相同的结果。这种分类允许优化器把该函
+      数的多个调用优化成一个调用。特别是，在一个索引扫描条件中使用包含
+      这样一个函数的表达式是安全的（因为一次索引扫描只会计算一次比较值，
+      而不是为每一行都计算一次，在一个索引扫描条件中不能使用
+      <code class="literal">VOLATILE</code>函数）。
+     </p></li><li class="listitem"><p>      一个<code class="literal">IMMUTABLE</code>函数不能修改数据库并且被确保用相同的参数
+      永远返回相同的结果。这种分类允许优化器在一个查询用常量参数调用该函数
+      时提前计算该函数。例如，一个
+      <code class="literal">SELECT ... WHERE x = 2 + 2</code>这样的查询可以被简化为
+      <code class="literal">SELECT ... WHERE x = 4</code>，因为整数加法操作符底层的函数被
+      标记为<code class="literal">IMMUTABLE</code>。
+     </p></li></ul></div><p>
+   </p><p>    为了最好的优化结果，你应该把函数标记为对它们合法的易变性分类中最严格
+    的那种。
+   </p><p>    任何带有副作用的函数<span class="emphasis"><em>必须</em></span>被标记为<code class="literal">VOLATILE</code>，
+    这样对它的调用就不能被优化掉。甚至如果一个函数的值在一个查询中会
+    变化，即使它没有副作用也需要被标记为<code class="literal">VOLATILE</code>。这样的
+    例子有<code class="literal">random()</code>、<code class="literal">currval()</code>、
+    <code class="literal">timeofday()</code>等。
+   </p><p>    另一种重要的例子是<code class="function">current_timestamp</code>家族的函数有资格
+    被标记为<code class="literal">STABLE</code>，因为它们的值在一个事务中不会改变。
+   </p><p>    在考虑先规划然后立即执行的简单交互式查询时，在<code class="literal">STABLE</code>和
+    <code class="literal">IMMUTABLE</code>分类间的区别相对较小：一个函数是在规划时只
+    执行一次还是在查询执行开始期间只执行一次没有太大关系。但是如果计划
+    被保存下来然后在后面被重用，区别就大了。如果在不允许过早把一个函数
+    变成规划期间的一个常数时把它标记为<code class="literal">IMMUTABLE</code>，会导致
+    在后续重用该计划时用到一个陈旧的值。当使用预备语句或者使用会缓存计
+    划的函数语言（<span class="application">PL/pgSQL</span>）时，这就会是一种灾难。
+   </p><p>    对于用 SQL 或者其他任何标准过程语言编写的函数，还有第二种由易变性分类
+    决定的特性，即由调用该函数的 SQL 命令所作的数据修改的可见性。
+    <code class="literal">VOLATILE</code>函数将看到这些更改，<code class="literal">STABLE</code>
+    或者<code class="literal">IMMUTABLE</code>函数则看不到。这种行为使用 MVCC 的快照
+    行为（见<a class="xref" href="mvcc.html" title="第 13 章 并发控制">第 13 章</a>）实现：<code class="literal">STABLE</code>和
+    <code class="literal">IMMUTABLE</code>函数使用一个在调用查询开始时建立的快照，而
+    <code class="literal">VOLATILE</code>函数在它们执行的每一个查询的开始都获得一个新鲜
+    的快照。
+   </p><div class="note"><h3 class="title">注意</h3><p>     用 C 编写的函数按照它们自己需要的方式管理快照，但是通常最好
+     让 C 函数也按照上面的方式来。
+    </p></div><p>    由于这种快照行为，一个只包含<code class="command">SELECT</code>命令的函数可以被
+    安全地标记为<code class="literal">STABLE</code>，即便它选择的表可能正在被并发查询所
+    修改。<span class="productname">PostgreSQL</span>将使用为调用查询所
+    建立的快照来执行<code class="literal">STABLE</code>函数中的所有命令，因此它将在整个
+    查询期间看到一种数据库的固定视图。
+   </p><p>    对<code class="literal">IMMUTABLE</code>函数中的<code class="command">SELECT</code>使用了相同
+    的快照行为。通常在一个<code class="literal">IMMUTABLE</code>函数中从数据库表选择是
+    不明智的，因为如果表内容变化就会破坏不变性。不过，
+    <span class="productname">PostgreSQL</span>不会强制不让你这样做。
+   </p><p>    一种常见的错误是当一个函数的结果依赖于一个配置参数时把它标记为
+    <code class="literal">IMMUTABLE</code>。例如，一个操纵时间戳的函数有可能结果
+    依赖于<a class="xref" href="runtime-config-client.html#GUC-TIMEZONE">TimeZone</a>设置。为了安全起见，这类
+    函数应该被标记为<code class="literal">STABLE</code>。
+   </p><div class="note"><h3 class="title">注意</h3><p>     <span class="productname">PostgreSQL</span>要求<code class="literal">STABLE</code>
+     和<code class="literal">IMMUTABLE</code>函数中不包含非<code class="command">SELECT</code>
+     的 SQL 命令以阻止数据修改（这也不是完全万无一失，因为这类函数还可以
+     调用修改数据库的<code class="literal">VOLATILE</code>函数。如果那样做，你将发现
+     该<code class="literal">STABLE</code>或<code class="literal">IMMUTABLE</code>函数不会发现由被调
+     用函数所作的数据库改变，因为它们对它的快照不可见）。
+    </p></div></div><div class="navfooter"><hr /><table width="100%" summary="Navigation footer"><tr><td width="40%" align="left"><a accesskey="p" href="xfunc-overload.html">上一页</a> </td><td width="20%" align="center"><a accesskey="u" href="extend.html">上一级</a></td><td width="40%" align="right"> <a accesskey="n" href="xfunc-pl.html">下一页</a></td></tr><tr><td width="40%" align="left" valign="top">37.5. 函数重载 </td><td width="20%" align="center"><a accesskey="h" href="index.html">起始页</a></td><td width="40%" align="right" valign="top"> 37.7. 过程语言函数</td></tr></table></div></body></html>

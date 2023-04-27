@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><title>45.8. 显式子事务</title><link rel="stylesheet" type="text/css" href="stylesheet.css" /><link rev="made" href="pgsql-docs@postgresql.org" /><meta name="generator" content="DocBook XSL Stylesheets V1.79.1" /><link rel="prev" href="plpython-database.html" title="45.7. 数据库访问" /><link rel="next" href="plpython-util.html" title="45.9. 实用函数" /></head><body><div xmlns="http://www.w3.org/TR/xhtml1/transitional" class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="5" align="center">45.8. 显式子事务</th></tr><tr><td width="10%" align="left"><a accesskey="p" href="plpython-database.html" title="45.7. 数据库访问">上一页</a> </td><td width="10%" align="left"><a accesskey="u" href="plpython.html" title="第 45 章 PL/Python - Python 过程语言">上一级</a></td><th width="60%" align="center">第 45 章 PL/Python - Python 过程语言</th><td width="10%" align="right"><a accesskey="h" href="index.html" title="PostgreSQL 10.1 手册">起始页</a></td><td width="10%" align="right"> <a accesskey="n" href="plpython-util.html" title="45.9. 实用函数">下一页</a></td></tr></table><hr></hr></div><div class="sect1" id="PLPYTHON-SUBTRANSACTION"><div class="titlepage"><div><div><h2 class="title" style="clear: both">45.8. 显式子事务</h2></div></div></div><div class="toc"><dl class="toc"><dt><span class="sect2"><a href="plpython-subtransaction.html#idp38254544">45.8.1. 子事务上下文管理器</a></span></dt><dt><span class="sect2"><a href="plpython-subtransaction.html#idp38265872">45.8.2. 更旧的 Python 版本</a></span></dt></dl></div><p>   按<a class="xref" href="plpython-database.html#PLPYTHON-TRAPPING" title="45.7.2. 捕捉错误">第 45.7.2 节</a>中所述的从数据库访问导致的错误中恢复可能导致不好的情况：某些操作在其中一个操作失败之前已经成功，并且在从错误中恢复后这些操作的数据形成了一种不一致的状态。PL/Python 通过显式子事务的形式为这种问题提供了一套解决方案。
+  </p><div class="sect2" id="idp38254544"><div class="titlepage"><div><div><h3 class="title">45.8.1. 子事务上下文管理器</h3></div></div></div><p>    考虑一个实现在两个账户间进行转账的函数：
+</p><pre class="programlisting">CREATE FUNCTION transfer_funds() RETURNS void AS $$
+try:
+    plpy.execute("UPDATE accounts SET balance = balance - 100 WHERE account_name = 'joe'")
+    plpy.execute("UPDATE accounts SET balance = balance + 100 WHERE account_name = 'mary'")
+except plpy.SPIError, e:
+    result = "error transferring funds: %s" % e.args
+else:
+    result = "funds transferred correctly"
+plan = plpy.prepare("INSERT INTO operations (result) VALUES ($1)", ["text"])
+plpy.execute(plan, [result])
+$$ LANGUAGE plpythonu;</pre><p>
+    如果第二个<code class="literal">UPDATE</code>语句导致产生一个异常，这个函数将会报告该错误，但是第一个<code class="literal">UPDATE</code>的结果却不会被提交。换句话说，资金将从 Joe 的账户中收回，而不会转移到 Mary 的账户中。
+   </p><p>    为了避免这类问题，可以把<code class="literal">plpy.execute</code>包裹在显式子事务中。<code class="literal">plpy</code>模块提供了一种助手对象来管理用<code class="literal">plpy.subtransaction()</code>函数创建的显式子事务。这个函数创建的对象实现了<a class="ulink" href="http://docs.python.org/library/stdtypes.html#context-manager-types" target="_top">上下文管理器接口</a>。通过使用显式子事务，我们可以把函数写成：
+</p><pre class="programlisting">CREATE FUNCTION transfer_funds2() RETURNS void AS $$
+try:
+    with plpy.subtransaction():
+        plpy.execute("UPDATE accounts SET balance = balance - 100 WHERE account_name = 'joe'")
+        plpy.execute("UPDATE accounts SET balance = balance + 100 WHERE account_name = 'mary'")
+except plpy.SPIError, e:
+    result = "error transferring funds: %s" % e.args
+else:
+    result = "funds transferred correctly"
+plan = plpy.prepare("INSERT INTO operations (result) VALUES ($1)", ["text"])
+plpy.execute(plan, [result])
+$$ LANGUAGE plpythonu;</pre><p>
+    注意仍需使用<code class="literal">try/catch</code>。否则异常会传播到 Python 栈的顶层并且将导致整个函数以一个<span class="productname">PostgreSQL</span>错误中止，这样不会有任何行被插入到<code class="literal">operations</code>表。子事务上下文管理器不会捕捉错误，它只确保在其范围内执行的所有数据库操作将被原子性地提交或者回滚。在任何类型的异常（并非只是数据库访问产生的错误）退出时，会发生子事务块回滚。在显式子事务块内部产生的常规 Python 异常也会导致子事务被回滚。
+   </p></div><div class="sect2" id="idp38265872"><div class="titlepage"><div><div><h3 class="title">45.8.2. 更旧的 Python 版本</h3></div></div></div><p>    Python 2.6 中默认可用的是使用<code class="literal">with</code>关键词的上下文管理器语法。如果 PL/Python 用的是一种较老的 Python 版本，仍然可以使用显式子事务，尽管不是那么透明。你可以使用别名<code class="literal">enter</code>和<code class="literal">exit</code>调用子事务管理器的<code class="literal">__enter__</code>和<code class="literal">__exit__</code>函数。转移资金的例子函数可以写成：
+</p><pre class="programlisting">CREATE FUNCTION transfer_funds_old() RETURNS void AS $$
+try:
+    subxact = plpy.subtransaction()
+    subxact.enter()
+    try:
+        plpy.execute("UPDATE accounts SET balance = balance - 100 WHERE account_name = 'joe'")
+        plpy.execute("UPDATE accounts SET balance = balance + 100 WHERE account_name = 'mary'")
+    except:
+        import sys
+        subxact.exit(*sys.exc_info())
+        raise
+    else:
+        subxact.exit(None, None, None)
+except plpy.SPIError, e:
+    result = "error transferring funds: %s" % e.args
+else:
+    result = "funds transferred correctly"
+
+plan = plpy.prepare("INSERT INTO operations (result) VALUES ($1)", ["text"])
+plpy.execute(plan, [result])
+$$ LANGUAGE plpythonu;</pre><p>
+   </p><div class="note"><h3 class="title">注意</h3><p>     尽管 Python 2.5 中实现了上下文管理器，要在那个版本中使用<code class="literal">with</code>语法，需要使用一个<a class="ulink" href="http://docs.python.org/release/2.5/ref/future.html" target="_top">future 语句</a>。不过，由于实现细节的原因，不能在 PL/Python 函数中使用 future 语句。
+    </p></div></div></div><div class="navfooter"><hr /><table width="100%" summary="Navigation footer"><tr><td width="40%" align="left"><a accesskey="p" href="plpython-database.html">上一页</a> </td><td width="20%" align="center"><a accesskey="u" href="plpython.html">上一级</a></td><td width="40%" align="right"> <a accesskey="n" href="plpython-util.html">下一页</a></td></tr><tr><td width="40%" align="left" valign="top">45.7. 数据库访问 </td><td width="20%" align="center"><a accesskey="h" href="index.html">起始页</a></td><td width="40%" align="right" valign="top"> 45.9. 实用函数</td></tr></table></div></body></html>

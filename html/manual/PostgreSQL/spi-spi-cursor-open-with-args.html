@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><title>SPI_cursor_open_with_args</title><link rel="stylesheet" type="text/css" href="stylesheet.css" /><link rev="made" href="pgsql-docs@postgresql.org" /><meta name="generator" content="DocBook XSL Stylesheets V1.79.1" /><link rel="prev" href="spi-spi-cursor-open.html" title="SPI_cursor_open" /><link rel="next" href="spi-spi-cursor-open-with-paramlist.html" title="SPI_cursor_open_with_paramlist" /></head><body><div xmlns="http://www.w3.org/TR/xhtml1/transitional" class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="5" align="center">SPI_cursor_open_with_args</th></tr><tr><td width="10%" align="left"><a accesskey="p" href="spi-spi-cursor-open.html" title="SPI_cursor_open">上一页</a> </td><td width="10%" align="left"><a accesskey="u" href="spi-interface.html" title="46.1. 接口函数">上一级</a></td><th width="60%" align="center">46.1. 接口函数</th><td width="10%" align="right"><a accesskey="h" href="index.html" title="PostgreSQL 10.1 手册">起始页</a></td><td width="10%" align="right"> <a accesskey="n" href="spi-spi-cursor-open-with-paramlist.html" title="SPI_cursor_open_with_paramlist">下一页</a></td></tr></table><hr></hr></div><div class="refentry" id="SPI-SPI-CURSOR-OPEN-WITH-ARGS"><div class="titlepage"></div><a id="idp38770272" class="indexterm"></a><div class="refnamediv"><h2><span class="refentrytitle">SPI_cursor_open_with_args</span></h2><p>SPI_cursor_open_with_args — 使用一个查询和参数建立一个游标</p></div><div class="refsynopsisdiv"><h2>大纲</h2><pre class="synopsis">Portal SPI_cursor_open_with_args(const char *<em class="parameter"><code>name</code></em>,
+                                 const char *<em class="parameter"><code>command</code></em>,
+                                 int <em class="parameter"><code>nargs</code></em>, Oid *<em class="parameter"><code>argtypes</code></em>,
+                                 Datum *<em class="parameter"><code>values</code></em>, const char *<em class="parameter"><code>nulls</code></em>,
+                                 bool <em class="parameter"><code>read_only</code></em>, int <em class="parameter"><code>cursorOptions</code></em>)</pre></div><div class="refsect1" id="idp38778928"><h2>描述</h2><p>   <code class="function">SPI_cursor_open_with_args</code>建立一个将
+   执行指定查询的游标（在内部是一个 portal）。大部分参数具有和
+   <code class="function">SPI_prepare_cursor</code>
+   和<code class="function">SPI_cursor_open</code>中相应参数相同的含
+   义。
+  </p><p>   对于一次性的查询执行，这个函数应该比
+   <code class="function">SPI_prepare_cursor</code>加上其后的
+   <code class="function">SPI_cursor_open</code>更好。如果相同的命令
+   要被用很多不同的参数执行，哪种方法更快就要取决于重做计划的
+   代价与定制计划带来的好处之间谁更有利。
+  </p><p>   被传入的参数数据将被复制到游标的 portal 中，因此在该游标仍然存在时
+   可以释放掉被传入的参数数据。
+  </p></div><div class="refsect1" id="idp38784480"><h2>参数</h2><div class="variablelist"><dl class="variablelist"><dt><span class="term"><code class="literal">const char * <em class="parameter"><code>name</code></em></code></span></dt><dd><p>      portal 的名字，或者设置成<code class="symbol">NULL</code>
+      让系统选择一个名称
+     </p></dd><dt><span class="term"><code class="literal">const char * <em class="parameter"><code>command</code></em></code></span></dt><dd><p>      命令字符串
+     </p></dd><dt><span class="term"><code class="literal">int <em class="parameter"><code>nargs</code></em></code></span></dt><dd><p>      输入参数的数量（<code class="literal">$1</code>、<code class="literal">$2</code>等等）
+     </p></dd><dt><span class="term"><code class="literal">Oid * <em class="parameter"><code>argtypes</code></em></code></span></dt><dd><p>      一个长度为<em class="parameter"><code>nargs</code></em>的数组，它包含参数的
+      数据类型的<acronym class="acronym">OID</acronym>
+     </p></dd><dt><span class="term"><code class="literal">Datum * <em class="parameter"><code>values</code></em></code></span></dt><dd><p>      一个长度为<em class="parameter"><code>nargs</code></em>的数组，它包含实际的参数值
+     </p></dd><dt><span class="term"><code class="literal">const char * <em class="parameter"><code>nulls</code></em></code></span></dt><dd><p>      一个长度为<em class="parameter"><code>nargs</code></em>的数组，它描述哪些参数为空值
+     </p><p>      如果<em class="parameter"><code>nulls</code></em>为<code class="symbol">NULL</code>，
+      那么<code class="function">SPI_cursor_open_with_args</code>会假设没有参数
+      为空值。否则，如果对应的参数值为非空，
+      <em class="parameter"><code>nulls</code></em>
+      数组的每一个项都应该是<code class="literal">' '</code>；如果对应参数值为空，
+      <em class="parameter"><code>nulls</code></em>数组的项应为<code class="literal">'n'</code>（在后
+      面的情况中，对应的<em class="parameter"><code>values</code></em>项中的值没有
+      关系）。注意<em class="parameter"><code>nulls</code></em>不是一个文本字符串，
+      它只是一个数组：它不需要一个<code class="literal">'\0'</code>终止符。
+     </p></dd><dt><span class="term"><code class="literal">bool <em class="parameter"><code>read_only</code></em></code></span></dt><dd><p><code class="literal">true</code>表示只读执行</p></dd><dt><span class="term"><code class="literal">int <em class="parameter"><code>cursorOptions</code></em></code></span></dt><dd><p>      游标选项的整数型位掩码，为零会产生默认行为
+     </p></dd></dl></div></div><div class="refsect1" id="idp38812336"><h2>返回值</h2><p>   指向包含该游标的 portal 的指针。注意这里没有错误返回约定，
+   任何错误都将通过<code class="function">elog</code>报告。
+  </p></div></div><div class="navfooter"><hr /><table width="100%" summary="Navigation footer"><tr><td width="40%" align="left"><a accesskey="p" href="spi-spi-cursor-open.html">上一页</a> </td><td width="20%" align="center"><a accesskey="u" href="spi-interface.html">上一级</a></td><td width="40%" align="right"> <a accesskey="n" href="spi-spi-cursor-open-with-paramlist.html">下一页</a></td></tr><tr><td width="40%" align="left" valign="top">SPI_cursor_open </td><td width="20%" align="center"><a accesskey="h" href="index.html">起始页</a></td><td width="40%" align="right" valign="top"> SPI_cursor_open_with_paramlist</td></tr></table></div></body></html>

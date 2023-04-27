@@ -1,0 +1,87 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><title>E.71. 版本 9.2.11</title><link rel="stylesheet" type="text/css" href="stylesheet.css" /><link rev="made" href="pgsql-docs@postgresql.org" /><meta name="generator" content="DocBook XSL Stylesheets V1.79.1" /><link rel="prev" href="release-9-2-12.html" title="E.70. 版本 9.2.12" /><link rel="next" href="release-9-2-10.html" title="E.72. 版本 9.2.10" /></head><body><div xmlns="http://www.w3.org/TR/xhtml1/transitional" class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="5" align="center">E.71. 版本 9.2.11</th></tr><tr><td width="10%" align="left"><a accesskey="p" href="release-9-2-12.html" title="E.70. 版本 9.2.12">上一页</a> </td><td width="10%" align="left"><a accesskey="u" href="release.html" title="附录 E. 版本说明">上一级</a></td><th width="60%" align="center">附录 E. 版本说明</th><td width="10%" align="right"><a accesskey="h" href="index.html" title="PostgreSQL 10.1 手册">起始页</a></td><td width="10%" align="right"> <a accesskey="n" href="release-9-2-10.html" title="E.72. 版本 9.2.10">下一页</a></td></tr></table><hr></hr></div><div class="sect1" id="RELEASE-9-2-11"><div class="titlepage"><div><div><h2 class="title" style="clear: both">E.71. 版本 9.2.11</h2></div></div></div><div class="toc"><dl class="toc"><dt><span class="sect2"><a href="release-9-2-11.html#idp70858032">E.71.1. 迁移到版本9.2.11</a></span></dt><dt><span class="sect2"><a href="release-9-2-11.html#idp70861936">E.71.2. 修改列表</a></span></dt></dl></div><p><strong>发布日期: </strong>2015-05-22</p><p>这个版本包含各种自9.2.10以来的修复。关于9.2主版本的新特性信息，
+请查看<a class="xref" href="release-9-2.html" title="E.82. 版本9.2">第 E.82 节</a>。</p><div class="sect2" id="idp70858032"><div class="titlepage"><div><div><h3 class="title">E.71.1. 迁移到版本9.2.11</h3></div></div></div><p>    运行9.2.X版本的用户不需要转储/恢复。
+   </p><p>    如果你使用了<code class="filename">contrib/citext</code>的<code class="function">regexp_matches()</code>函数，
+    请查看下面关于它的修改日志项。
+   </p><p>    另外，如果你是从一个早于9.2.10的版本升级而来，
+    那么请查看<a class="xref" href="release-9-2-10.html" title="E.72. 版本 9.2.10">第 E.72 节</a>。
+   </p></div><div class="sect2" id="idp70861936"><div class="titlepage"><div><div><h3 class="title">E.71.2. 修改列表</h3></div></div></div><div class="itemizedlist"><ul class="itemizedlist" style="list-style-type: disc; "><li class="listitem"><p>避免客户端正好在认证超时之前断开连接时可能的崩溃 (Benkocs Norbert Attila)</p><p>如果超时中断在会话关闭序列的中途触发，SSL相关的状态将被释放两次，
+通常导致崩溃并且因此拒绝其他会话的服务。实验显示，
+未认证的远端攻击会一致的触发该bug，因此将其看做是安全问题。
+      (CVE-2015-3165)</p></li><li class="listitem"><p>改善对系统调用失败的检测 (Noah Misch)</p><p>我们的<code class="function">snprintf()</code>的替代实现未能检查底层系统库调用报告的错误；
+可能丢失的主要情况是内存溢出情况。在最坏的情况下，可能会导致信息暴露，
+因为我们的代码假设缓冲区已经被重写，但是实际上它没有。
+另外，还有几个地方有其他系统库函数安全相关的调用，也没有失败检测。</p><p>如果内存溢出错误正好发生在错误的时间，<code class="function">*printf()</code>
+家族函数的某些调用仍然有可能会信息暴露。我们判断该风险不大，
+但是将继续分析。 (CVE-2015-3166)</p></li><li class="listitem"><p>在<code class="filename">contrib/pgcrypto</code>中，统一报告解密失败为
+<span class="quote">“<span class="quote">Wrong key or corrupt data</span>”</span> (Noah Misch)</p><p>以前，错误秘钥解密的一些情况会报告其他的错误消息。已经显示，
+错误报告中这样的变化会帮助攻击者从其他系统中恢复秘钥。
+虽然还不知道<code class="filename">pgcrypto</code>的具体行为否是可以相似的利用，
+但是看起来最好是通过使用通用的消息避免该风险。 (CVE-2015-3167)</p></li><li class="listitem"><p>修复<code class="filename">contrib/citext</code>的<code class="function">regexp_matches()</code>
+函数的不正确的声明 (Tom Lane)</p><p>这些函数应该返回<code class="type">setof text[]</code>，就像它们封装的那些内核函数；
+但是它们错误的声明为只返回<code class="type">text[]</code>。这个错误有两种结果：
+首先，如果没有匹配，你获得一个标量的空结果，而你应该获得一个空集（零行）。
+其次，有效的忽略<code class="literal">g</code>标志，因此你应该获得一个结果数组，
+即使有多个匹配。</p><p>后者的行为显然是一个错误，可能有应用依赖于前者的行为；
+因此该函数的声明缺省是不能改变的，直到<span class="productname">PostgreSQL</span> 9.5。
+在9.5之前，老的行为存在于<code class="literal">citext</code>扩展的1.0版本中，
+我们在版本1.1中提供了纠正的声明（缺省<span class="emphasis"><em>不</em></span>安装）。
+要在9.5之前的分支中采取该修复，在每个安装了<code class="literal">citext</code>
+的数据库中执行<code class="literal">ALTER EXTENSION citext UPDATE TO '1.1'</code>。
+（如果你要取消操作，可以<span class="quote">“<span class="quote">更新</span>”</span>回到1.0。）
+请注意，任一更新指导都将需要删除和重建使用<code class="filename">citext</code>的
+<code class="function">regexp_matches()</code>函数的任意视图或规则。</p></li><li class="listitem"><p>修复HOT更新之后对延迟排除约束的不正确的检查 (Tom Lane)</p><p>如果一个潜在违反了延迟排除约束的新行是稍后在同一个事务中HOT更新的（也就是，
+非索引的字段修改和该行可以存储回相同的表页上），
+当检查最终发生时，将报告违反了排除约束，即使新行本来就与已经删除了的行冲突。</p></li><li class="listitem"><p>修复星型模式风格查询的规划 (Tom Lane)</p><p>有时，有效的扫描大表需要多个其他表提供的索引参数（通常，
+是键需要索引一个大的实际表的维度表）。
+规划器应该能够找到这样的规划，但是过度限制的查询阻止了它。</p></li><li class="listitem"><p>阻止反连接(NOT EXISTS链接)对其他外连接的不正确的重新排序 (Tom Lane)</p><p>已经观察到规划器中的这个疏忽会导致<span class="quote">“<span class="quote">could
+      not find RelOptInfo for given relids</span>”</span>错误，
+但是有时一个不正确的查询规划会通过一致性检查并且导致错误的查询输出是可能的。</p></li><li class="listitem"><p>修复外连接规划节点中子表达式的错误匹配 (Tom Lane)</p><p>以前，如果文本相同的非严格子表达式同时用于外连接的上面和下面，
+规划器可能会尝试重新使用连接下面计算出来的值，这是不正确的，
+因为执行器在外部行不匹配的情况下将强制该值为NULL。</p></li><li class="listitem"><p>修复GEQO规划器，处理它的连接顺序启发失败 (Tom Lane)</p><p>已经观察到这个疏忽会导致包含<code class="literal">LATERAL</code>查询中的<span class="quote">“<span class="quote">failed to join all
+      relations together</span>”</span>错误，也有可能会在其他情况下发生。</p></li><li class="listitem"><p>修复<code class="literal">max_prepared_transactions</code>太小时，启动时可能的死锁
+      (Heikki Linnakangas)</p></li><li class="listitem"><p>不要归档，除非预先分配的WAL文件在时间线切换之后 (Heikki Linnakangas)</p></li><li class="listitem"><p>避免<span class="quote">“<span class="quote">cannot GetMultiXactIdMembers() during recovery</span>”</span>错误
+      (Álvaro Herrera)</p></li><li class="listitem"><p>崩溃之后递归的<code class="function">fsync()</code>数据目录 (Abhijit Menon-Sen, Robert Haas)</p><p>如果另外一个崩溃稍后就发生了，这能确保一致性。（第二个崩溃必须是一个系统级的崩溃，
+而不只是数据库崩溃，所以这是一个问题。）</p></li><li class="listitem"><p>修复自动清理启动器接收到SIGTERM之后发生了一个错误时，可能的未能关闭 (Álvaro Herrera)</p></li><li class="listitem"><p>处理<code class="function">LockBufferForCleanup()</code>中意外的信号 (Andres Freund)</p><p>这个疏忽会导致关于<span class="quote">“<span class="quote">multiple
+      backends attempting to wait for pincount 1</span>”</span>的假错误。</p></li><li class="listitem"><p>修复对一个检查约束包含整行引用的表做<code class="literal">COPY IN</code>时的崩溃 (Tom Lane)</p><p>已知的故障情况仅在9.4及更高版本中崩溃，但是在9.3和9.2中的编码非常类似，
+所以也对这些分支打了补丁。</p></li><li class="listitem"><p>避免在提交用户关心的只读事务期间等待WAL刷新或同步复制 (Andres Freund)</p><p>以前，在由于HOT页修改而写入WAL的事务中，在提交时会发生延迟，
+导致不良影响，比如如果做了所有同步复制，会话会卡在启动时。
+还观察到在使用同步复制时，会话会卡在追赶中断处理时；
+这个修改也修复了这个问题。</p></li><li class="listitem"><p>修复在临时表上操作哈希索引时的崩溃 (Heikki Linnakangas)</p></li><li class="listitem"><p>修复哈希索引桶分裂期间可能的失败，如果其他处理正在并发的修改该索引 (Tom Lane)</p></li><li class="listitem"><p>在分析索引表达式时检查中断 (Jeff Janes)</p><p><code class="command">ANALYZE</code>执行索引表达式多次；如果在这样的表达式中有一个缓慢的函数，
+在循环终止之前取消<code class="command">ANALYZE</code>是合理的。</p></li><li class="listitem"><p>在<code class="literal">READ COMMITTED</code>检查发生在在<code class="command">SELECT FOR UPDATE</code>、
+<code class="command">UPDATE</code>或<code class="command">DELETE</code>中锁定了行之后时，
+确保正确的报告外表的<code class="structfield">tableoid</code> (Etsuro Fujita)</p></li><li class="listitem"><p>添加目标服务器的名字到对象描述字符串，用于外部服务器用户映射 (Álvaro Herrera)</p></li><li class="listitem"><p>建议在使用Kerberos/GSSAPI/SSPI认证时，将<code class="literal">include_realm</code>
+设置为1 (Stephen Frost)</p><p>不这样做，将不能区分来自不同领域的相同命名的用户。目前，
+这只是一个文档修改，它将在<span class="productname">PostgreSQL</span> 9.5
+的设置中变成缺省。</p></li><li class="listitem"><p>为了匹配IPv4 <code class="filename">pg_hba.conf</code>项到IPv4-in-IPv6地址而删除代码 (Tom Lane)</p><p>这个方法是在2003年添加的，为了响应一些Linux内核当时报告IPv4
+连接拥有IPv4-in-IPv6地址的报告。不过，该逻辑在9.0意外的打破了。
+自那之后没有任何领域的投诉，表明不再需要该方法了。
+现在我们收到了破损代码导致某些系统上的崩溃的报告，
+所以我们删除这些代码。（如果我们选择修复它，
+在IPv4 <code class="filename">pg_hba.conf</code>项的有效意义中可能会有安全敏感的修改，
+这在小版本中做看起来不是一件好事。）</p></li><li class="listitem"><p>报告WAL刷新，不是插入，位于<code class="literal">IDENTIFY_SYSTEM</code>复制命令中 (Heikki Linnakangas)</p><p>这避免了<span class="application">pg_receivexlog</span>中可能的启动失败。</p></li><li class="listitem"><p>当在Windows上关闭了服务时，定期发送状态更新到服务控制管理器，
+阻止太快的杀死服务；并确保<span class="application">pg_ctl</span>等待关闭 (Krystian Bigaj)</p></li><li class="listitem"><p>在使用<span class="application">libpq</span>的非阻塞模式时，降低网络死锁的风险 (Heikki Linnakangas)</p><p>在发送大量的数据时，常常排空输入缓冲区是非常重要的，
+以防服务器发送了大量响应数据导致阻塞输出。（一个典型的情况是服务器在
+<code class="literal">COPY FROM STDIN</code>期间发送了一连串NOTICE消息。）
+这在普通阻塞模式下运行正常，但是在非阻塞模式下不行。
+我们已经修改了<span class="application">libpq</span>，在可以时排空输入，
+但是完全防卫该问题需要应用合作：应用应该等待套接字读准备好和写准备好条件，
+并且在读准备好时确保调用<code class="function">PQconsumeInput()</code>。</p></li><li class="listitem"><p>在<span class="application">libpq</span>中，修复URI连接字符串中空值的错误解析 (Thomas Fanghaenel)</p></li><li class="listitem"><p>修复<span class="application">ecpg</span>中的数组处理 (Michael Meskes)</p></li><li class="listitem"><p>修复<span class="application">psql</span>，理智的处理URIs和conninfo字符串为<code class="command">\connect</code>
+的第一个参数 (David Fetter, Andrew Dunstan, Álvaro Herrera)</p><p>已经接受这个语法很长时间了（但是未记录），但是以前一些参数可能来自老的连接，
+而不是给定的字符串，这是不可取的。</p></li><li class="listitem"><p>抑制某些在退出时未能写入<code class="filename">~/.psql_history</code>的平台上，
+来自<span class="application">psql</span>的不正确的抱怨 (Tom Lane)</p><p>这个错误行为是由于在非常老的<span class="application">libedit</span>版本（2006之前）
+中绕开一个错误引起的。我们通过删除该绕开来修复它，
+这将导致仍然使用这个版本的<span class="application">libedit</span>的用户出现类似的失败。
+建议：升级该库，或使用<span class="application">libreadline</span>。</p></li><li class="listitem"><p>修复<span class="application">pg_dump</span>决定哪个转换是系统提供的转换，
+不需要转储的规则 (Tom Lane)</p></li><li class="listitem"><p>在<span class="application">pg_dump</span>中，修复未能遵守<code class="literal">-Z</code>和<code class="literal">-Fd</code>
+压缩级别选项 (Michael Paquier)</p></li><li class="listitem"><p>在选择转储顺序时，让<span class="application">pg_dump</span>考虑扩展配置表之间的外键关系
+      (Gilles Darold, Michael Paquier, Stephen Frost)</p><p>这个疏忽会导致生产转储未能重载，因为暂时违反外键约束。</p></li><li class="listitem"><p>修复仅有<code class="literal">VALUES(...)</code>但是有字段别名的视图的转储 (Tom Lane)</p></li><li class="listitem"><p>在<span class="application">pg_upgrade</span>中，强制timeline 1在新的集群中 (Bruce Momjian)</p><p>这个修改阻止了由于丢失WAL历史文件的虚假抱怨引起的升级失败。</p></li><li class="listitem"><p>在<span class="application">pg_upgrade</span>中，在处理之前检查错误的非可连接数据库
+      (Bruce Momjian)</p></li><li class="listitem"><p>在<span class="application">pg_upgrade</span>中，在生成的<code class="literal">delete_old_cluster</code>
+脚本中正确的引用目录路径 (Bruce Momjian)</p></li><li class="listitem"><p>在<span class="application">pg_upgrade</span>中，正确的保留数据库级别的冻结信息 (Bruce Momjian)</p><p>这个疏忽会导致<code class="literal">postgres</code>和<code class="literal">template1</code>
+数据库中的表missing-clog-file错误。</p></li><li class="listitem"><p>用受限制的权限在Windows上运行<span class="application">pg_upgrade</span>和<span class="application">pg_resetxlog</span>，
+这样在通过管理员运行时，它们不会失败 (Muhammad Asif Naeem)</p></li><li class="listitem"><p>改善扫描<span class="application">initdb</span>和<span class="application">pg_basebackup</span>
+中的目录时，对<code class="function">readdir()</code>失败的处理 (Marco Nenciarini)</p></li><li class="listitem"><p>修复<span class="application">pg_receivexlog</span>中的失败 (Andres Freund)</p><p>9.2.10中的一个补丁合并错误导致<span class="quote">“<span class="quote">could not create archive
+      status file</span>”</span>错误。</p></li><li class="listitem"><p>修复<code class="filename">contrib/intarray</code>中的缓慢排序算法 (Tom Lane)</p></li><li class="listitem"><p>修复Sparc V8机器上的编译失败 (Rob Rowan)</p></li><li class="listitem"><p>更新时区数据文件到<span class="application">tzdata</span>版本2015d，因为DST规律在Egypt、
+Mongolia和Palestine发生了改变，加上Canada和Chile的历史修改。
+还采取了America/Adak时区改进的时区缩写 (HST/HDT not HAST/HADT).</p></li></ul></div></div></div><div class="navfooter"><hr /><table width="100%" summary="Navigation footer"><tr><td width="40%" align="left"><a accesskey="p" href="release-9-2-12.html">上一页</a> </td><td width="20%" align="center"><a accesskey="u" href="release.html">上一级</a></td><td width="40%" align="right"> <a accesskey="n" href="release-9-2-10.html">下一页</a></td></tr><tr><td width="40%" align="left" valign="top">E.70. 版本 9.2.12 </td><td width="20%" align="center"><a accesskey="h" href="index.html">起始页</a></td><td width="40%" align="right" valign="top"> E.72. 版本 9.2.10</td></tr></table></div></body></html>

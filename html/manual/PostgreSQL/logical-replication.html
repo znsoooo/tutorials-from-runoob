@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><title>第 31 章 逻辑复制</title><link rel="stylesheet" type="text/css" href="stylesheet.css" /><link rev="made" href="pgsql-docs@postgresql.org" /><meta name="generator" content="DocBook XSL Stylesheets V1.79.1" /><link rel="prev" href="wal-internals.html" title="30.5. WAL内部" /><link rel="next" href="logical-replication-publication.html" title="31.1. 发布" /></head><body><div xmlns="http://www.w3.org/TR/xhtml1/transitional" class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="5" align="center">第 31 章 逻辑复制</th></tr><tr><td width="10%" align="left"><a accesskey="p" href="wal-internals.html" title="30.5. WAL内部">上一页</a> </td><td width="10%" align="left"><a accesskey="u" href="admin.html" title="部分 III. 服务器管理">上一级</a></td><th width="60%" align="center">部分 III. 服务器管理</th><td width="10%" align="right"><a accesskey="h" href="index.html" title="PostgreSQL 10.1 手册">起始页</a></td><td width="10%" align="right"> <a accesskey="n" href="logical-replication-publication.html" title="31.1. 发布">下一页</a></td></tr></table><hr></hr></div><div class="chapter" id="LOGICAL-REPLICATION"><div class="titlepage"><div><div><h2 class="title">第 31 章 逻辑复制</h2></div></div></div><div class="toc"><p><strong>目录</strong></p><dl class="toc"><dt><span class="sect1"><a href="logical-replication-publication.html">31.1. 发布</a></span></dt><dt><span class="sect1"><a href="logical-replication-subscription.html">31.2. 订阅</a></span></dt><dd><dl><dt><span class="sect2"><a href="logical-replication-subscription.html#LOGICAL-REPLICATION-SUBSCRIPTION-SLOT">31.2.1. 复制槽管理</a></span></dt></dl></dd><dt><span class="sect1"><a href="logical-replication-conflicts.html">31.3. 冲突</a></span></dt><dt><span class="sect1"><a href="logical-replication-restrictions.html">31.4. 限制</a></span></dt><dt><span class="sect1"><a href="logical-replication-architecture.html">31.5. 架构</a></span></dt><dd><dl><dt><span class="sect2"><a href="logical-replication-architecture.html#LOGICAL-REPLICATION-SNAPSHOT">31.5.1. 初始快照</a></span></dt></dl></dd><dt><span class="sect1"><a href="logical-replication-monitoring.html">31.6. 监控</a></span></dt><dt><span class="sect1"><a href="logical-replication-security.html">31.7. 安全</a></span></dt><dt><span class="sect1"><a href="logical-replication-config.html">31.8. 配置设置</a></span></dt><dt><span class="sect1"><a href="logical-replication-quick-setup.html">31.9. 快速设置</a></span></dt></dl></div><p>  逻辑复制是根据复制标识（通常是主键）复制数据对象及其更改的一种方法。
+  我们使用术语逻辑与物理复制相比，它使用确切的块地址和逐字节复制。
+  PostgreSQL同时支持这两种机制，请参阅<a class="xref" href="high-availability.html" title="第 26 章 高可用、负载均衡和复制">第 26 章</a>。
+  逻辑复制允许对数据复制和安全性进行精细控制。
+ </p><p>  逻辑复制使用<em class="firstterm">发布</em>和<em class="firstterm">订阅</em>模型，
+  其中一个或多个<em class="firstterm">订阅者</em>订阅<em class="firstterm">发布者</em>
+  节点上的一个或多个<em class="firstterm">发布</em>。
+  订阅者从他们订阅的发布中提取数据，
+  并可能随后重新发布数据以允许级联复制或更复杂的配置。
+ </p><p>  一个表的逻辑复制通常开始于发布者数据库上的数据快照并将其复制到订阅者。
+  一旦完成，发布者的变化就会实时发送给订阅者。订阅者按照与发布者相同的顺序应用数据，
+  以保证单个订阅内的发布的事务一致性。这种数据复制方法有时被称为事务复制。
+ </p><p>  典型的逻辑复制用例有：
+
+  </p><div class="itemizedlist"><ul class="itemizedlist" style="list-style-type: disc; "><li class="listitem"><p>     在单个数据库或数据库的子集中发送增量更改到订阅者。
+    </p></li><li class="listitem"><p>     在更改到达订阅者时为单个更改触发触发器。
+    </p></li><li class="listitem"><p>     将多个数据库合并成一个数据库（例如出于分析目的）。
+    </p></li><li class="listitem"><p>     在PostgreSQL的不同主要版本之间复制。
+    </p></li><li class="listitem"><p>     为不同的用户组提供对复制数据的访问。
+    </p></li><li class="listitem"><p>     在多个数据库之间共享数据库的一个子集。
+    </p></li></ul></div><p>
+ </p><p>  订阅者数据库的行为与任何其他PostgreSQ实例的行为相同，
+  可以通过定义其自己的发布来用作其他数据库的发布者。
+  当订阅者被应用程序视为只读时，将不会有单个订阅的冲突。
+  但是，如果应用程序或其他订阅者对同一组表执行其他写操作，则可能会产生冲突。
+ </p></div><div class="navfooter"><hr /><table width="100%" summary="Navigation footer"><tr><td width="40%" align="left"><a accesskey="p" href="wal-internals.html">上一页</a> </td><td width="20%" align="center"><a accesskey="u" href="admin.html">上一级</a></td><td width="40%" align="right"> <a accesskey="n" href="logical-replication-publication.html">下一页</a></td></tr><tr><td width="40%" align="left" valign="top">30.5. WAL内部 </td><td width="20%" align="center"><a accesskey="h" href="index.html">起始页</a></td><td width="40%" align="right" valign="top"> 31.1. 发布</td></tr></table></div></body></html>

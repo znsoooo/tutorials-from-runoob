@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><title>E.100. 版本9.1.7</title><link rel="stylesheet" type="text/css" href="stylesheet.css" /><link rev="made" href="pgsql-docs@postgresql.org" /><meta name="generator" content="DocBook XSL Stylesheets V1.79.1" /><link rel="prev" href="release-9-1-8.html" title="E.99. 版本9.1.8" /><link rel="next" href="release-9-1-6.html" title="E.101. 版本9.1.6" /></head><body><div xmlns="http://www.w3.org/TR/xhtml1/transitional" class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="5" align="center">E.100. 版本9.1.7</th></tr><tr><td width="10%" align="left"><a accesskey="p" href="release-9-1-8.html" title="E.99. 版本9.1.8">上一页</a> </td><td width="10%" align="left"><a accesskey="u" href="release.html" title="附录 E. 版本说明">上一级</a></td><th width="60%" align="center">附录 E. 版本说明</th><td width="10%" align="right"><a accesskey="h" href="index.html" title="PostgreSQL 10.1 手册">起始页</a></td><td width="10%" align="right"> <a accesskey="n" href="release-9-1-6.html" title="E.101. 版本9.1.6">下一页</a></td></tr></table><hr></hr></div><div class="sect1" id="RELEASE-9-1-7"><div class="titlepage"><div><div><h2 class="title" style="clear: both">E.100. 版本9.1.7</h2></div></div></div><div class="toc"><dl class="toc"><dt><span class="sect2"><a href="release-9-1-7.html#idp73284656">E.100.1. 迁移到版本9.1.7</a></span></dt><dt><span class="sect2"><a href="release-9-1-7.html#idp73286512">E.100.2. 变化</a></span></dt></dl></div><p><strong>发布日期：. </strong>2012-12-06</p><p>   此版本包含了9.1.6的各种修复。
+   关于9.1主要版本中新功能的信息，
+   参阅<a class="xref" href="release-9-1.html" title="E.107. 版本9.1">第 E.107 节</a>。</p><div class="sect2" id="idp73284656"><div class="titlepage"><div><div><h3 class="title">E.100.1. 迁移到版本9.1.7</h3></div></div></div><p>  为了运行在9.1.X上不需要转储/恢复。</p><p>  然而，如果你正从9.1.6早期版本更新，那么参阅<a class="xref" href="release-9-1-6.html" title="E.101. 版本9.1.6">第 E.101 节</a>。</p></div><div class="sect2" id="idp73286512"><div class="titlepage"><div><div><h3 class="title">E.100.2. 变化</h3></div></div></div><div class="itemizedlist"><ul class="itemizedlist" style="list-style-type: disc; "><li class="listitem"><p>   修复与<code class="command">CREATE INDEX CONCURRENTLY</code>
+   相关的多个错误(Andres Freund, Tom Lane)</p><p>   当改变索引的<code class="structname">pg_index</code>行状态时，
+   修复<code class="command">CREATE INDEX CONCURRENTLY</code>使用适当更新。
+   这可以防止导致并发会话错过更新目标索引的竞争条件，
+   因此导致崩溃同时创建索引。</p><p>  同时，修复各种其他操作以确保他们忽略来源于
+  失败的
+  <code class="command">CREATE INDEX CONCURRENTLY</code>命令的无效索引。
+  这些中最重要的是<code class="command">VACUUM</code>，
+  因为在采取的纠正措施用于修复或删除无效索引之前，
+  在表上自动清理可以很容易地被运行。
+     </p></li><li class="listitem"><p>  在WAL回放期间修复缓冲区锁定(Tom Lane)</p><p>   当回放影响多页的WAL记录时，WAL回放代码对于锁定缓冲区不够小心。
+   
+   这可能热备份查询瞬时看到不一致的状态，
+   导致错误结果或意外的失败。
+   </p></li><li class="listitem"><p>   修复GIN索引的WAL生成逻辑的错误(Tom Lane)</p><p>   如果发生残缺页故障，那么这会导致索引崩溃。</p></li><li class="listitem"><p>   当推进热备份服务器正常运行时，
+   正确删除启动进程的虚拟XID锁(Simon Riggs)</p><p>   这种监督可以防止
+   某个操作的后续执行比如<code class="command">CREATE INDEX CONCURRENTLY</code>。</p></li><li class="listitem"><p>  在待机模式下
+  避免虚假<span class="quote">“<span class="quote">out-of-sequence timeline ID</span>”</span>错误(Heikki Linnakangas)</p></li><li class="listitem"><p>   在接收到停机信号后，防止发起新的子进程的postmaster(Tom Lane)</p><p>  这个错误可能导致关闭更长比它应该的，
+  或者没有额外用户操作甚至不能完成。</p></li><li class="listitem"><p>   当内存不足时，那么避免内部哈希表的崩溃(Hitoshi Harada)</p></li><li class="listitem"><p>    避免已删除表的文件描述符可以保持打开以往事务结束(Tom Lane)</p><p>   这可以减少长时间已删除表继续占用磁盘空间的问题。</p></li><li class="listitem"><p>   当一个新的子进程不能为它的锁创建一个管道，那么防止
+   数据库端崩溃以及重启(Tom Lane)</p><p>   尽管新的进程失败，
+   没有充分的理由强迫数据库端重启，所以避免它。
+   当内核基本没有文件描述符时，那么这提高了鲁棒性。</p></li><li class="listitem"><p>  修复外连接上非严格等价分句规划(Tom Lane)</p><p>   规划器可以从等同于其它东西的非严格建构的分句中获取不正确约束，
+   比如
+   当<code class="literal">foo</code>来源于外连接失效端时，<code class="literal">WHERE COALESCE(foo, 0) = 0</code>。</p></li><li class="listitem"><p>   在继承树上使用索引优化的<code class="function">MIN</code>/<code class="function">MAX</code>
+   修复<code class="command">SELECT DISTINCT</code>(Tom Lane)</p><p>   该规划器伴随着<span class="quote">“<span class="quote">没有重新找到MinMaxAggInfo记录</span>”</span>给定这些结合因素而失败。</p></li><li class="listitem"><p>    提高从等价类证实排他约束的规划器能力(Tom Lane)</p></li><li class="listitem"><p>    修复在哈希子计划中部分行匹配以正确处理交叉类型情况(Tom Lane)</p><p>    这影响多列<code class="literal">NOT IN</code>子计划，
+比如<code class="literal">WHERE (a, b) NOT IN (SELECT x, y FROM ...)</code>
+当比如<code class="literal">b</code>和<code class="literal">y</code>分别是<code class="type">int4</code>
+     和<code class="type">int8</code>的时候。这个错误导致错误结果
+ 或者取决于依赖于涉及到的特定数据类型的崩溃。</p></li><li class="listitem"><p>    当为<code class="literal">AFTER ROW UPDATE/DELETE</code>触发器重新读取旧的元组时，
+那么获取缓冲锁(Andres Freund)</p><p>   在非常罕见的情况下，
+   这一疏忽可能导致传递不正确数据到触发器<code class="literal">WHEN</code>条件，
+   或者为外键执行触发器预检查逻辑。这可能导致崩溃，
+   或者关于是否触发触发器的错误决定。</p></li><li class="listitem"><p>    修复<code class="command">ALTER COLUMN TYPE</code>以
+正确处理已继承的检查约束(Pavan Deolasee)</p><p>   这在8.4版本之前正常运行，
+   并且现在在8.4以及以后也正常运行。</p></li><li class="listitem"><p>   修复<code class="command">ALTER EXTENSION SET SCHEMA</code>的错误
+   以移动一些子对象到新的模式(Álvaro Herrera, Dimitri Fontaine)</p></li><li class="listitem"><p>    修复<code class="command">REASSIGN OWNED</code>以
+处理表空间授权(Álvaro Herrera)</p></li><li class="listitem"><p>   忽略视图系统列中不正确的<code class="structname">pg_attribute</code>项(Tom Lane)</p><p>    视图没有任何系统列。然而，当转换表到视图时，我们忘了删除这项。
+9.3以及以后的正确修复，但是在以前的分支中我们需要防御已经存在的
+错误转换视图。</p></li><li class="listitem"><p>    修复规则输出以正确备份 
+<code class="literal">INSERT INTO <em class="replaceable"><code>table</code></em>DEFAULT VALUES</code>(Tom Lane)</p></li><li class="listitem"><p>   当在查询中有很多<code class="literal">UNION</code>/<code class="literal">INTERSECT</code>/<code class="literal">EXCEPT</code>子句时，
+   避免栈溢出(Tom Lane)</p></li><li class="listitem"><p>   当将最小可能整数值除以-1时，避免平台相关故障(Xi Wang, Tom Lane)</p></li><li class="listitem"><p>    修复日期解析中字符串可能的访问先前终止部分(Hitoshi Harada)
+ </p></li><li class="listitem"><p>   在检查点期间如果产生XID重叠，修复先前XID纪元错误，并且
+   <code class="varname">wal_level</code>是<code class="literal">hot_standby</code>
+   (Tom Lane, Andres Freund)</p><p>   当这个错误对<span class="productname">PostgreSQL</span>自身没有特别影响，
+   对于依赖于<code class="function">txid_current()</code>和相关函数：TXID值可能出现回退，
+   这是一个不好的应用。</p></li><li class="listitem"><p>   修复页面边界上<code class="structname">pg_stat_replication</code>.<code class="structfield">sync_state</code>
+   的显示(Kyotaro Horiguchi)</p></li><li class="listitem"><p>   如果为了Unix域套接字路径名长度超过了特定平台限制，
+   那么产生一个可理解的错误消息(Tom Lane, Andrew Dunstan)</p><p>    以前，这可能导致一些无用的东西，比如
+<span class="quote">“<span class="quote">域名解析中不可恢复错误</span>”</span></p></li><li class="listitem"><p>    当发送复合列值到客户端时，修复内存泄露(Tom Lane)</p></li><li class="listitem"><p>    使得<span class="application">pg_ctl</span>对读取<code class="filename">postmaster.pid</code>
+文件更具有鲁棒性(Heikki Linnakangas)</p><p>    修复竞争条件和可能的文件描述符泄露。</p></li><li class="listitem"><p>   如果提出错误的编码数据，修复<span class="application">psql</span>中可能的错误，
+   并且<code class="varname">client_encoding</code>设置是客户端编码，比如SJIS (Jiang Guiqing)</p></li><li class="listitem"><p>    在不是归档的预先数据部分的数据中使得
+<span class="application">pg_dump</span>备份<code class="literal">SEQUENCE SET</code>项(Tom Lane)</p><p>   该变化修复被标记为扩展配置表的序列的备份。</p></li><li class="listitem"><p>    修复在<code class="literal">tar</code>输出格式中通过<span class="application">pg_dump</span>
+发出的<code class="filename">restore.sql</code>脚本中的错误(Tom Lane)</p><p>   该脚本可能在它的名字包含大写字符的表中完全失败。
+   另外，使得脚本有能力存储数据到
+   <code class="option">--inserts</code>模式和规则的COPY模式。</p></li><li class="listitem"><p>    修复<span class="application">pg_restore</span>以
+接受POSIX标准<code class="literal">tar</code>文件(Brian Weaver, Tom Lane)</p><p>  <span class="application">pg_dump</span>的<code class="literal">tar</code>输出模式的原编码产生与
+   POSIX标准不完全一致的文件。这是9.3版本的校正。
+   这个补丁更新先前分支，以致于它们接受正确的和不正确格式，
+   当发布9.3时，希望避免兼容性问题。
+   </p></li><li class="listitem"><p>    修复通过<span class="application">pg_basebackup</span>到POSIX一致
+发出的<code class="literal">tar</code>文件(Brian Weaver, Tom Lane)</p></li><li class="listitem"><p>    当给定一个数据目录的相对路径时，修复<span class="application">pg_resetxlog</span> 
+以正确定位<code class="filename">postmaster.pid</code>(Tom Lane)</p><p>     这个错误可能导致<span class="application">pg_resetxlog</span>没有注意到
+     有使用数据目录的活跃postmaster。</p></li><li class="listitem"><p>    修复<span class="application">libpq</span>的<code class="function">lo_import()</code>和
+    <code class="function">lo_export()</code>函数以正确报告文件I/O错误(Tom Lane)</p></li><li class="listitem"><p>    修复嵌套结构指针变量的<span class="application">ecpg</span>处理(Muhammad Usama)</p></li><li class="listitem"><p>   修复<span class="application">ecpg</span>的<code class="function">ecpg_get_data</code>函数
+   以正确处理数组(Michael Meskes)</p></li><li class="listitem"><p>    当正在检查页的时候，使得<code class="filename">contrib/pageinspect</code>的btree
+    页检查函数带有缓冲锁(Tom Lane)</p></li><li class="listitem"><p>   确保<code class="literal">make install</code>为扩展创建<code class="filename">extension</code>
+   安装目录(Cédric Villemain)</p><p>   先前，如果在扩展的Makefile中设置<code class="varname">MODULEDIR</code>，可以忽略这步。</p></li><li class="listitem"><p>   修复<span class="application">pgxs</span>在AIX上支持创建可加载模块(Tom Lane)</p><p>    编译起初源码树外部模块在AIX上不工作。</p></li><li class="listitem"><p>    在Cuba, Israel, Jordan, Libya, Palestine, Western
+      Samoa以及Brazil地区中为DST变化规律更新时区数据文件到
+  <span class="application">tzdata</span>发布2012j。</p></li></ul></div></div></div><div class="navfooter"><hr /><table width="100%" summary="Navigation footer"><tr><td width="40%" align="left"><a accesskey="p" href="release-9-1-8.html">上一页</a> </td><td width="20%" align="center"><a accesskey="u" href="release.html">上一级</a></td><td width="40%" align="right"> <a accesskey="n" href="release-9-1-6.html">下一页</a></td></tr><tr><td width="40%" align="left" valign="top">E.99. 版本9.1.8 </td><td width="20%" align="center"><a accesskey="h" href="index.html">起始页</a></td><td width="40%" align="right" valign="top"> E.101. 版本9.1.6</td></tr></table></div></body></html>

@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><title>6.1. 插入数据</title><link rel="stylesheet" type="text/css" href="stylesheet.css" /><link rev="made" href="pgsql-docs@postgresql.org" /><meta name="generator" content="DocBook XSL Stylesheets V1.79.1" /><link rel="prev" href="dml.html" title="第 6 章 数据操纵" /><link rel="next" href="dml-update.html" title="6.2. 更新数据" /></head><body><div xmlns="http://www.w3.org/TR/xhtml1/transitional" class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="5" align="center">6.1. 插入数据</th></tr><tr><td width="10%" align="left"><a accesskey="p" href="dml.html" title="第 6 章 数据操纵">上一页</a> </td><td width="10%" align="left"><a accesskey="u" href="dml.html" title="第 6 章 数据操纵">上一级</a></td><th width="60%" align="center">第 6 章 数据操纵</th><td width="10%" align="right"><a accesskey="h" href="index.html" title="PostgreSQL 10.1 手册">起始页</a></td><td width="10%" align="right"> <a accesskey="n" href="dml-update.html" title="6.2. 更新数据">下一页</a></td></tr></table><hr></hr></div><div class="sect1" id="DML-INSERT"><div class="titlepage"><div><div><h2 class="title" style="clear: both">6.1. 插入数据</h2></div></div></div><a id="idp6921488" class="indexterm"></a><a id="idp6922624" class="indexterm"></a><p>   当一个表被创建后，它不包含数据。在数据库可以有点用之前要做的第一件事就是向里面插入数据。数据在概念上是以每次一行地方式被插入的。你当然可以每次插入多行，但是却没有办法一次插入少于一行的数据。即使你只知道几个列的值，那么你也必须创建一个完整的行。
+  </p><p>   要创建一个新行，使用<a class="xref" href="sql-insert.html" title="INSERT"><span class="refentrytitle">INSERT</span></a>命令。这条命令要求提供表的名字和其中列的值。例如，考虑<a class="xref" href="ddl.html" title="第 5 章 数据定义">第 5 章</a>中的产品表：
+</p><pre class="programlisting">CREATE TABLE products (
+    product_no integer,
+    name text,
+    price numeric
+);</pre><p>
+   一个插入一行的命令将是：
+</p><pre class="programlisting">INSERT INTO products VALUES (1, 'Cheese', 9.99);</pre><p>
+   数据的值是按照这些列在表中出现的顺序列出的，并且用逗号分隔。通常，数据的值是文字（常量），但也允许使用标量表达式。
+  </p><p>   上面的语法的缺点是你必须知道表中列的顺序。要避免这个问题，你也可以显式地列出列。例如，下面的两条命令都有和上文那条 命令一样的效果：
+</p><pre class="programlisting">INSERT INTO products (product_no, name, price) VALUES (1, 'Cheese', 9.99);
+INSERT INTO products (name, price, product_no) VALUES ('Cheese', 9.99, 1);</pre><p>
+   许多用户认为明确列出列的名字是个好习惯。
+  </p><p>   如果你没有获得所有列的值，那么你可以省略其中的一些。在这种情况下，这些列将被填充为它们的缺省值。例如：
+</p><pre class="programlisting">INSERT INTO products (product_no, name) VALUES (1, 'Cheese');
+INSERT INTO products VALUES (1, 'Cheese');</pre><p>
+   第二种形式是<span class="productname">PostgreSQL</span>的一个扩展。它从使用给出的值从左开始填充列，有多少个给出的列值就填充多少个列，其他列的将使用缺省值。
+  </p><p>   为了保持清晰，你也可以显式地要求缺省值，用于单个的列或者用于整个行：
+</p><pre class="programlisting">INSERT INTO products (product_no, name, price) VALUES (1, 'Cheese', DEFAULT);
+INSERT INTO products DEFAULT VALUES;</pre><p>
+  </p><p>   你可以在一个命令中插入多行：
+</p><pre class="programlisting">INSERT INTO products (product_no, name, price) VALUES
+    (1, 'Cheese', 9.99),
+    (2, 'Bread', 1.99),
+    (3, 'Milk', 2.99);</pre><p>
+  </p><p>   也可以插入查询的结果（可能没有行、一行或多行）：
+</p><pre class="programlisting">INSERT INTO products (product_no, name, price)
+  SELECT product_no, name, price FROM new_products
+    WHERE release_date = 'today';</pre><p>
+   这提供了用于计算要插入的行的SQL查询机制（<a class="xref" href="queries.html" title="第 7 章 查询">第 7 章</a>）的全部功能。
+  </p><div class="tip"><h3 class="title">提示</h3><p>    在一次性插入大量数据时，考虑使用<a class="xref" href="sql-copy.html" title="COPY"><span class="refentrytitle">COPY</span></a>命令。它不如<a class="xref" href="sql-insert.html" title="INSERT"><span class="refentrytitle">INSERT</span></a>命令那么灵活，但是更高效。 参考<a class="xref" href="populate.html" title="14.4. 填充一个数据库">第 14.4 节</a>获取更多有关批量装载性能的信息。
+   </p></div></div><div class="navfooter"><hr /><table width="100%" summary="Navigation footer"><tr><td width="40%" align="left"><a accesskey="p" href="dml.html">上一页</a> </td><td width="20%" align="center"><a accesskey="u" href="dml.html">上一级</a></td><td width="40%" align="right"> <a accesskey="n" href="dml-update.html">下一页</a></td></tr><tr><td width="40%" align="left" valign="top">第 6 章 数据操纵 </td><td width="20%" align="center"><a accesskey="h" href="index.html">起始页</a></td><td width="40%" align="right" valign="top"> 6.2. 更新数据</td></tr></table></div></body></html>

@@ -1,0 +1,1219 @@
+<!Doctype html>
+<html>
+<head>
+	<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+	<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+	<title>1.7 堆排序 | 菜鸟教程</title>
+
+  <meta name='robots' content='max-image-preview:large' />
+<link rel='stylesheet' id='classic-theme-styles-css' href='http://www.runoob.com/wp-includes/css/classic-themes.min.css?ver=6.2' type='text/css' media='all' />
+<link rel="canonical" href="http://www.runoob.com/w3cnote/heap-sort.html" />
+<meta name="keywords" content="1.7 堆排序">
+<meta name="description" content="堆排序（Heapsort）是指利用堆这种数据结构所设计的一种排序算法。堆积是一个近似完全二叉树的结构，并同时满足堆积的性质：即子结点的键值或索引总是小于（或者大于）它的父节点。堆排序可以说是一种利用堆的概念来排序的选择排序。分为两种方法：  大顶堆：每个节点的值都大于或等于其子节点的值，在堆排序算法中用于升序排列； 小顶堆：每个节点的值都小于或等于其子节点的值，在堆排序算法中用于降序排列；  堆排序的平均时间复杂度为 Ο(nlogn)。..">
+		
+	<link rel="shortcut icon" href="https://static.runoob.com/images/favicon.ico">
+	<link rel="stylesheet" href="/wp-content/themes/runoob/style.css?v=1.170" type="text/css" media="all" />	
+	<link rel="stylesheet" href="https://cdn.staticfile.org/font-awesome/4.7.0/css/font-awesome.min.css" media="all" />	
+  <!--[if gte IE 9]><!-->
+  <script src="https://cdn.staticfile.org/jquery/2.0.3/jquery.min.js"></script>
+  <!--<![endif]-->
+  <!--[if lt IE 9]>
+     <script src="https://cdn.staticfile.org/jquery/1.9.1/jquery.min.js"></script>
+     <script src="https://cdn.staticfile.org/html5shiv/r29/html5.min.js"></script>
+  <![endif]-->
+  <link rel="apple-touch-icon" href="https://static.runoob.com/images/icon/mobile-icon.png"/>
+  <meta name="apple-mobile-web-app-title" content="菜鸟教程">
+</head>
+<body>
+
+<!--  头部 -->
+<div class="container logo-search">
+
+  <div class="col search row-search-mobile">
+    <form action="index.php">
+      <input class="placeholder" placeholder="搜索……" name="s" autocomplete="off">
+      
+    </form>
+  </div>
+
+  <div class="row">
+    <div class="col logo">
+      <h1><a href="/">菜鸟教程 -- 学的不仅是技术，更是梦想！</a></h1>
+    </div>
+        <div class="col right-list"> 
+    <button class="btn btn-responsive-nav btn-inverse" data-toggle="collapse" data-target=".nav-main-collapse" id="pull" style=""> <i class="fa fa-navicon"></i> </button>
+    </div>
+        
+    <div class="col search search-desktop last">
+      <div class="search-input" >
+      <form action="//www.runoob.com/" target="_blank">
+        <input class="placeholder" id="s" name="s" placeholder="搜索……"  autocomplete="off" style="height: 44px;">
+      </form>
+      
+      </div>
+    </div>
+  </div>
+</div>
+
+
+
+<!-- 导航栏 -->
+<div class="container navigation">
+    <div class="row">
+        <div class="col nav">
+            
+
+                        <ul class="pc-nav" id="note-nav">
+                <li><a href="//www.runoob.com/">首页</a></li>
+                <li><a href="/w3cnote">笔记首页</a></li>
+                <li><a href="/w3cnote/android-tutorial-intro.html" title="Android 基础入门教程">Android</a></li>
+                <li><a href="/w3cnote/es6-tutorial.html" title="ES6 教程">ES6 教程</a></li>
+                <li><a href="/w3cnote/ten-sorting-algorithm.html" title="排序算法">排序算法</a></li>
+                <li><a href="/w3cnote/hadoop-tutorial.html" title="Hadoop 教程">Hadoop</a></li>
+                <li><a href="/w3cnote/zookeeper-tutorial.html" title="Zookeeper 教程">Zookeeper</a></li>
+                <li><a href="/w3cnote/verilog-tutorial.html" title="Verilog 教程">Verilog</a></li>
+                <li><a href="/w3cnote_genre/code" title="编程技术">编程技术</a></li> 
+                <li><a href="/w3cnote_genre/coderlife" title="程序员人生">程序员人生</a></li>
+                
+                <!--<li><a href="javascript:;" class="runoob-pop">登录</a></li>
+                
+                
+                        <li>
+                <a style="font-weight:bold;" href="https://www.runoob.com/linux/linux-tutorial.html#yunserver" target="_blank" onclick="_hmt.push(['_trackEvent', 'aliyun', 'click', 'aliyun'])" title="kkb">云服务器</a>
+                </li>
+                <li><a href="http://gk.link/a/104mQ" target="_blank" style="font-weight: bold;"onclick="_hmt.push(['_trackEvent', '极客时间', 'click', 'jike'])" title="我的圈子">极客时间</a></li>
+            
+                
+                <li><a target="_blank" href="/shoppinglist" rel="nofollow">知识店铺</a></li> 
+        -->
+            </ul>
+                        
+              
+            <ul class="mobile-nav">
+                <li><a href="/w3cnote">首页</a></li>
+                <li><a href="/w3cnote_genre/android" target="_blank" title="Android 基础入门教程">Android</a></li>
+                <li><a href="/w3cnote/es6-tutorial.html" target="_blank" title="ES6 教程">ES6</a></li>
+                <li><a href="/w3cnote_genre/joke" target="_blank" title="程序员笑话">逗乐</a></li>
+                
+                <a href="javascript:void(0)" class="search-reveal">Search</a> 
+            </ul>
+            
+        </div>
+    </div>
+</div>
+
+
+<!--  内容  -->
+<div class="container main">
+	<div class="row">
+
+		<div class="col middle-column big-middle-column">
+	 			<div class="article">
+			<div class="article-heading">
+				<h2>1.7 堆排序</h2>				<h3><em>分类</em> <a href="/w3cnote_genre/algorithm" title="算法" >算法</a> </h3>
+			</div>
+			<div class="article-body note-body">
+				<div class="article-intro">
+					<p>堆排序（Heapsort）是指利用堆这种数据结构所设计的一种排序算法。堆积是一个近似完全二叉树的结构，并同时满足堆积的性质：即子结点的键值或索引总是小于（或者大于）它的父节点。堆排序可以说是一种利用堆的概念来排序的选择排序。分为两种方法：</p>
+<ol>
+<li>大顶堆：每个节点的值都大于或等于其子节点的值，在堆排序算法中用于升序排列；</li>
+<li>小顶堆：每个节点的值都小于或等于其子节点的值，在堆排序算法中用于降序排列；</li>
+</ol>
+<p>堆排序的平均时间复杂度为 Ο(nlogn)。</p>
+
+<h3>1. 算法步骤</h3>
+
+<ol>
+<li>
+<p>创建一个堆 H[0……n-1]；</p>
+</li>
+<li>
+<p>把堆首（最大值）和堆尾互换；</p>
+</li>
+<li>
+<p>把堆的尺寸缩小 1，并调用 shift_down(0)，目的是把新的数组顶端数据调整到相应位置；</p>
+</li>
+<li>
+<p>重复步骤 2，直到堆的尺寸为 1。</p>
+</li>
+</ol>
+
+<h3>2. 动图演示</h3>
+
+<p><img decoding="async" src="//www.runoob.com/wp-content/uploads/2019/03/heapSort.gif"  /></p>
+
+<p><img decoding="async" src="//www.runoob.com/wp-content/uploads/2019/03/Sorting_heapsort_anim.gif"  /></p>
+<hr>
+<h2>代码实现</h2>
+
+<h3>JavaScript </h3>
+
+<div class="example"><h2 class="example">实例</h2> <div class="example_code">
+<span style="color: #000066; font-weight: bold;">var</span> len<span style="color: #339933;">;</span> &nbsp; &nbsp;<span style="color: #006600; font-style: italic;">// 因为声明的多个函数都需要数据长度，所以把len设置成为全局变量</span><br />
+<br />
+<span style="color: #000066; font-weight: bold;">function</span> buildMaxHeap<span style="color: #009900;">&#40;</span>arr<span style="color: #009900;">&#41;</span> <span style="color: #009900;">&#123;</span> &nbsp; <span style="color: #006600; font-style: italic;">// 建立大顶堆</span><br />
+&nbsp; &nbsp; len <span style="color: #339933;">=</span> arr.<span style="color: #660066;">length</span><span style="color: #339933;">;</span><br />
+&nbsp; &nbsp; <span style="color: #000066; font-weight: bold;">for</span> <span style="color: #009900;">&#40;</span><span style="color: #000066; font-weight: bold;">var</span> i <span style="color: #339933;">=</span> <span style="">Math</span>.<span style="color: #660066;">floor</span><span style="color: #009900;">&#40;</span>len<span style="color: #339933;">/</span><span style="color: #CC0000;">2</span><span style="color: #009900;">&#41;</span><span style="color: #339933;">;</span> i <span style="color: #339933;">&gt;=</span> <span style="color: #CC0000;">0</span><span style="color: #339933;">;</span> i<span style="color: #339933;">--</span><span style="color: #009900;">&#41;</span> <span style="color: #009900;">&#123;</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; heapify<span style="color: #009900;">&#40;</span>arr<span style="color: #339933;">,</span> i<span style="color: #009900;">&#41;</span><span style="color: #339933;">;</span><br />
+&nbsp; &nbsp; <span style="color: #009900;">&#125;</span><br />
+<span style="color: #009900;">&#125;</span><br />
+<br />
+<span style="color: #000066; font-weight: bold;">function</span> heapify<span style="color: #009900;">&#40;</span>arr<span style="color: #339933;">,</span> i<span style="color: #009900;">&#41;</span> <span style="color: #009900;">&#123;</span> &nbsp; &nbsp; <span style="color: #006600; font-style: italic;">// 堆调整</span><br />
+&nbsp; &nbsp; <span style="color: #000066; font-weight: bold;">var</span> left <span style="color: #339933;">=</span> <span style="color: #CC0000;">2</span> <span style="color: #339933;">*</span> i <span style="color: #339933;">+</span> <span style="color: #CC0000;">1</span><span style="color: #339933;">,</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; right <span style="color: #339933;">=</span> <span style="color: #CC0000;">2</span> <span style="color: #339933;">*</span> i <span style="color: #339933;">+</span> <span style="color: #CC0000;">2</span><span style="color: #339933;">,</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; largest <span style="color: #339933;">=</span> i<span style="color: #339933;">;</span><br />
+<br />
+&nbsp; &nbsp; <span style="color: #000066; font-weight: bold;">if</span> <span style="color: #009900;">&#40;</span>left <span style="color: #339933;">&lt;</span> len <span style="color: #339933;">&amp;&amp;</span> arr<span style="color: #009900;">&#91;</span>left<span style="color: #009900;">&#93;</span> <span style="color: #339933;">&gt;</span> arr<span style="color: #009900;">&#91;</span>largest<span style="color: #009900;">&#93;</span><span style="color: #009900;">&#41;</span> <span style="color: #009900;">&#123;</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; largest <span style="color: #339933;">=</span> left<span style="color: #339933;">;</span><br />
+&nbsp; &nbsp; <span style="color: #009900;">&#125;</span><br />
+<br />
+&nbsp; &nbsp; <span style="color: #000066; font-weight: bold;">if</span> <span style="color: #009900;">&#40;</span>right <span style="color: #339933;">&lt;</span> len <span style="color: #339933;">&amp;&amp;</span> arr<span style="color: #009900;">&#91;</span>right<span style="color: #009900;">&#93;</span> <span style="color: #339933;">&gt;</span> arr<span style="color: #009900;">&#91;</span>largest<span style="color: #009900;">&#93;</span><span style="color: #009900;">&#41;</span> <span style="color: #009900;">&#123;</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; largest <span style="color: #339933;">=</span> right<span style="color: #339933;">;</span><br />
+&nbsp; &nbsp; <span style="color: #009900;">&#125;</span><br />
+<br />
+&nbsp; &nbsp; <span style="color: #000066; font-weight: bold;">if</span> <span style="color: #009900;">&#40;</span>largest <span style="color: #339933;">!=</span> i<span style="color: #009900;">&#41;</span> <span style="color: #009900;">&#123;</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; swap<span style="color: #009900;">&#40;</span>arr<span style="color: #339933;">,</span> i<span style="color: #339933;">,</span> largest<span style="color: #009900;">&#41;</span><span style="color: #339933;">;</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; heapify<span style="color: #009900;">&#40;</span>arr<span style="color: #339933;">,</span> largest<span style="color: #009900;">&#41;</span><span style="color: #339933;">;</span><br />
+&nbsp; &nbsp; <span style="color: #009900;">&#125;</span><br />
+<span style="color: #009900;">&#125;</span><br />
+<br />
+<span style="color: #000066; font-weight: bold;">function</span> swap<span style="color: #009900;">&#40;</span>arr<span style="color: #339933;">,</span> i<span style="color: #339933;">,</span> j<span style="color: #009900;">&#41;</span> <span style="color: #009900;">&#123;</span><br />
+&nbsp; &nbsp; <span style="color: #000066; font-weight: bold;">var</span> temp <span style="color: #339933;">=</span> arr<span style="color: #009900;">&#91;</span>i<span style="color: #009900;">&#93;</span><span style="color: #339933;">;</span><br />
+&nbsp; &nbsp; arr<span style="color: #009900;">&#91;</span>i<span style="color: #009900;">&#93;</span> <span style="color: #339933;">=</span> arr<span style="color: #009900;">&#91;</span>j<span style="color: #009900;">&#93;</span><span style="color: #339933;">;</span><br />
+&nbsp; &nbsp; arr<span style="color: #009900;">&#91;</span>j<span style="color: #009900;">&#93;</span> <span style="color: #339933;">=</span> temp<span style="color: #339933;">;</span><br />
+<span style="color: #009900;">&#125;</span><br />
+<br />
+<span style="color: #000066; font-weight: bold;">function</span> heapSort<span style="color: #009900;">&#40;</span>arr<span style="color: #009900;">&#41;</span> <span style="color: #009900;">&#123;</span><br />
+&nbsp; &nbsp; buildMaxHeap<span style="color: #009900;">&#40;</span>arr<span style="color: #009900;">&#41;</span><span style="color: #339933;">;</span><br />
+<br />
+&nbsp; &nbsp; <span style="color: #000066; font-weight: bold;">for</span> <span style="color: #009900;">&#40;</span><span style="color: #000066; font-weight: bold;">var</span> i <span style="color: #339933;">=</span> arr.<span style="color: #660066;">length</span><span style="color: #339933;">-</span><span style="color: #CC0000;">1</span><span style="color: #339933;">;</span> i <span style="color: #339933;">&gt;</span> <span style="color: #CC0000;">0</span><span style="color: #339933;">;</span> i<span style="color: #339933;">--</span><span style="color: #009900;">&#41;</span> <span style="color: #009900;">&#123;</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; swap<span style="color: #009900;">&#40;</span>arr<span style="color: #339933;">,</span> <span style="color: #CC0000;">0</span><span style="color: #339933;">,</span> i<span style="color: #009900;">&#41;</span><span style="color: #339933;">;</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; len<span style="color: #339933;">--;</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; heapify<span style="color: #009900;">&#40;</span>arr<span style="color: #339933;">,</span> <span style="color: #CC0000;">0</span><span style="color: #009900;">&#41;</span><span style="color: #339933;">;</span><br />
+&nbsp; &nbsp; <span style="color: #009900;">&#125;</span><br />
+&nbsp; &nbsp; <span style="color: #000066; font-weight: bold;">return</span> arr<span style="color: #339933;">;</span><br />
+<span style="color: #009900;">&#125;</span><br />
+</div></div>
+
+<h3>Python</h3>
+
+<div class="example"><h2 class="example">实例</h2> <div class="example_code">
+<span style="color: Green;font-weight:bold;">def</span> buildMaxHeap<span style="color: Olive;">&#40;</span>arr<span style="color: Olive;">&#41;</span>:<br />
+&nbsp; &nbsp; <span style="color: Green;font-weight:bold;">import</span> <span style="color: #05a;">math</span><br />
+&nbsp; &nbsp; <span style="color: Green;font-weight:bold;">for</span> i <span style="color: Green;font-weight:bold;">in</span> <span style="color: Teal;">range</span><span style="color: Olive;">&#40;</span><span style="color: #05a;">math</span>.<span style="color: #05a;">floor</span><span style="color: Olive;">&#40;</span><span style="color: Teal;">len</span><span style="color: Olive;">&#40;</span>arr<span style="color: Olive;">&#41;</span>/<span style="color: Maroon;">2</span><span style="color: Olive;">&#41;</span><span style="color: Gray;">,</span>-<span style="color: Maroon;">1</span><span style="color: Gray;">,</span>-<span style="color: Maroon;">1</span><span style="color: Olive;">&#41;</span>:<br />
+&nbsp; &nbsp; &nbsp; &nbsp; heapify<span style="color: Olive;">&#40;</span>arr<span style="color: Gray;">,</span>i<span style="color: Olive;">&#41;</span><br />
+<br />
+<span style="color: Green;font-weight:bold;">def</span> heapify<span style="color: Olive;">&#40;</span>arr<span style="color: Gray;">,</span> i<span style="color: Olive;">&#41;</span>:<br />
+&nbsp; &nbsp; left <span style="color: Gray;">=</span> <span style="color: Maroon;">2</span>*i+<span style="color: Maroon;">1</span><br />
+&nbsp; &nbsp; right <span style="color: Gray;">=</span> <span style="color: Maroon;">2</span>*i+<span style="color: Maroon;">2</span><br />
+&nbsp; &nbsp; largest <span style="color: Gray;">=</span> i<br />
+&nbsp; &nbsp; <span style="color: Green;font-weight:bold;">if</span> left <span style="color: Gray;">&lt;</span> arrLen <span style="color: Green;font-weight:bold;">and</span> arr<span style="color: Olive;">&#91;</span>left<span style="color: Olive;">&#93;</span> <span style="color: Gray;">&gt;</span> arr<span style="color: Olive;">&#91;</span>largest<span style="color: Olive;">&#93;</span>:<br />
+&nbsp; &nbsp; &nbsp; &nbsp; largest <span style="color: Gray;">=</span> left<br />
+&nbsp; &nbsp; <span style="color: Green;font-weight:bold;">if</span> right <span style="color: Gray;">&lt;</span> arrLen <span style="color: Green;font-weight:bold;">and</span> arr<span style="color: Olive;">&#91;</span>right<span style="color: Olive;">&#93;</span> <span style="color: Gray;">&gt;</span> arr<span style="color: Olive;">&#91;</span>largest<span style="color: Olive;">&#93;</span>:<br />
+&nbsp; &nbsp; &nbsp; &nbsp; largest <span style="color: Gray;">=</span> right<br />
+<br />
+&nbsp; &nbsp; <span style="color: Green;font-weight:bold;">if</span> largest <span style="color: Gray;">!=</span> i:<br />
+&nbsp; &nbsp; &nbsp; &nbsp; swap<span style="color: Olive;">&#40;</span>arr<span style="color: Gray;">,</span> i<span style="color: Gray;">,</span> largest<span style="color: Olive;">&#41;</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; heapify<span style="color: Olive;">&#40;</span>arr<span style="color: Gray;">,</span> largest<span style="color: Olive;">&#41;</span><br />
+<br />
+<span style="color: Green;font-weight:bold;">def</span> swap<span style="color: Olive;">&#40;</span>arr<span style="color: Gray;">,</span> i<span style="color: Gray;">,</span> j<span style="color: Olive;">&#41;</span>:<br />
+&nbsp; &nbsp; arr<span style="color: Olive;">&#91;</span>i<span style="color: Olive;">&#93;</span><span style="color: Gray;">,</span> arr<span style="color: Olive;">&#91;</span>j<span style="color: Olive;">&#93;</span> <span style="color: Gray;">=</span> arr<span style="color: Olive;">&#91;</span>j<span style="color: Olive;">&#93;</span><span style="color: Gray;">,</span> arr<span style="color: Olive;">&#91;</span>i<span style="color: Olive;">&#93;</span><br />
+<br />
+<span style="color: Green;font-weight:bold;">def</span> heapSort<span style="color: Olive;">&#40;</span>arr<span style="color: Olive;">&#41;</span>:<br />
+&nbsp; &nbsp; <span style="color: Green;font-weight:bold;">global</span> arrLen<br />
+&nbsp; &nbsp; arrLen <span style="color: Gray;">=</span> <span style="color: Teal;">len</span><span style="color: Olive;">&#40;</span>arr<span style="color: Olive;">&#41;</span><br />
+&nbsp; &nbsp; buildMaxHeap<span style="color: Olive;">&#40;</span>arr<span style="color: Olive;">&#41;</span><br />
+&nbsp; &nbsp; <span style="color: Green;font-weight:bold;">for</span> i <span style="color: Green;font-weight:bold;">in</span> <span style="color: Teal;">range</span><span style="color: Olive;">&#40;</span><span style="color: Teal;">len</span><span style="color: Olive;">&#40;</span>arr<span style="color: Olive;">&#41;</span>-<span style="color: Maroon;">1</span><span style="color: Gray;">,</span><span style="color: Maroon;">0</span><span style="color: Gray;">,</span>-<span style="color: Maroon;">1</span><span style="color: Olive;">&#41;</span>:<br />
+&nbsp; &nbsp; &nbsp; &nbsp; swap<span style="color: Olive;">&#40;</span>arr<span style="color: Gray;">,</span><span style="color: Maroon;">0</span><span style="color: Gray;">,</span>i<span style="color: Olive;">&#41;</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; arrLen -<span style="color: Gray;">=</span><span style="color: Maroon;">1</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; heapify<span style="color: Olive;">&#40;</span>arr<span style="color: Gray;">,</span> <span style="color: Maroon;">0</span><span style="color: Olive;">&#41;</span><br />
+&nbsp; &nbsp; <span style="color: Green;font-weight:bold;">return</span> arr<br />
+</div></div>
+<h3>Go</h3>
+
+<div class="example"><h2 class="example">实例</h2> <div class="example_code">
+<span style="color: #993333;">func</span> heapSort<span style="color: #339933;">(</span>arr <span style="color: #339933;">[]</span><span style="color: #993333;">int</span><span style="color: #339933;">)</span> <span style="color: #339933;">[]</span><span style="color: #993333;">int</span> <span style="color: #339933;">{</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; arrLen <span style="color: #339933;">:=</span> <span style="color: #000066;">len</span><span style="color: #339933;">(</span>arr<span style="color: #339933;">)</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; buildMaxHeap<span style="color: #339933;">(</span>arr<span style="color: #339933;">,</span> arrLen<span style="color: #339933;">)</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; <span style="color: #b1b100; font-weight: bold;">for</span> <span style="">i</span> <span style="color: #339933;">:=</span> arrLen <span style="color: #339933;">-</span> <span style="color: #cc66cc;">1</span><span style="color: #339933;">;</span> <span style="">i</span> &gt;<span style="color: #339933;">=</span> <span style="color: #cc66cc;">0</span><span style="color: #339933;">;</span> <span style="">i</span><span style="color: #339933;">--</span> <span style="color: #339933;">{</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; swap<span style="color: #339933;">(</span>arr<span style="color: #339933;">,</span> <span style="color: #cc66cc;">0</span><span style="color: #339933;">,</span> <span style="">i</span><span style="color: #339933;">)</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; arrLen <span style="color: #339933;">-=</span> <span style="color: #cc66cc;">1</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; heapify<span style="color: #339933;">(</span>arr<span style="color: #339933;">,</span> <span style="color: #cc66cc;">0</span><span style="color: #339933;">,</span> arrLen<span style="color: #339933;">)</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; <span style="color: #339933;">}</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; <span style="color: #b1b100; font-weight: bold;">return</span> arr<br />
+<span style="color: #339933;">}</span><br />
+<br />
+<span style="color: #993333;">func</span> buildMaxHeap<span style="color: #339933;">(</span>arr <span style="color: #339933;">[]</span><span style="color: #993333;">int</span><span style="color: #339933;">,</span> arrLen <span style="color: #993333;">int</span><span style="color: #339933;">)</span> <span style="color: #339933;">{</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; <span style="color: #b1b100; font-weight: bold;">for</span> <span style="">i</span> <span style="color: #339933;">:=</span> arrLen <span style="color: #339933;">/</span> <span style="color: #cc66cc;">2</span><span style="color: #339933;">;</span> <span style="">i</span> &gt;<span style="color: #339933;">=</span> <span style="color: #cc66cc;">0</span><span style="color: #339933;">;</span> <span style="">i</span><span style="color: #339933;">--</span> <span style="color: #339933;">{</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; heapify<span style="color: #339933;">(</span>arr<span style="color: #339933;">,</span> <span style="">i</span><span style="color: #339933;">,</span> arrLen<span style="color: #339933;">)</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; <span style="color: #339933;">}</span><br />
+<span style="color: #339933;">}</span><br />
+<br />
+<span style="color: #993333;">func</span> heapify<span style="color: #339933;">(</span>arr <span style="color: #339933;">[]</span><span style="color: #993333;">int</span><span style="color: #339933;">,</span> <span style="">i</span><span style="color: #339933;">,</span> arrLen <span style="color: #993333;">int</span><span style="color: #339933;">)</span> <span style="color: #339933;">{</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; left <span style="color: #339933;">:=</span> <span style="color: #cc66cc;">2</span><span style="color: #339933;">*</span><span style="">i</span> <span style="color: #339933;">+</span> <span style="color: #cc66cc;">1</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; right <span style="color: #339933;">:=</span> <span style="color: #cc66cc;">2</span><span style="color: #339933;">*</span><span style="">i</span> <span style="color: #339933;">+</span> <span style="color: #cc66cc;">2</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; largest <span style="color: #339933;">:=</span> <span style="">i</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; <span style="color: #b1b100; font-weight: bold;">if</span> left &lt; arrLen &amp;&amp; arr<span style="color: #339933;">[</span>left<span style="color: #339933;">]</span> &gt; arr<span style="color: #339933;">[</span>largest<span style="color: #339933;">]</span> <span style="color: #339933;">{</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; largest <span style="color: #339933;">=</span> left<br />
+&nbsp; &nbsp; &nbsp; &nbsp; <span style="color: #339933;">}</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; <span style="color: #b1b100; font-weight: bold;">if</span> right &lt; arrLen &amp;&amp; arr<span style="color: #339933;">[</span>right<span style="color: #339933;">]</span> &gt; arr<span style="color: #339933;">[</span>largest<span style="color: #339933;">]</span> <span style="color: #339933;">{</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; largest <span style="color: #339933;">=</span> right<br />
+&nbsp; &nbsp; &nbsp; &nbsp; <span style="color: #339933;">}</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; <span style="color: #b1b100; font-weight: bold;">if</span> largest <span style="color: #339933;">!=</span> <span style="">i</span> <span style="color: #339933;">{</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; swap<span style="color: #339933;">(</span>arr<span style="color: #339933;">,</span> <span style="">i</span><span style="color: #339933;">,</span> largest<span style="color: #339933;">)</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; heapify<span style="color: #339933;">(</span>arr<span style="color: #339933;">,</span> largest<span style="color: #339933;">,</span> arrLen<span style="color: #339933;">)</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; <span style="color: #339933;">}</span><br />
+<span style="color: #339933;">}</span><br />
+<br />
+<span style="color: #993333;">func</span> swap<span style="color: #339933;">(</span>arr <span style="color: #339933;">[]</span><span style="color: #993333;">int</span><span style="color: #339933;">,</span> <span style="">i</span><span style="color: #339933;">,</span> j <span style="color: #993333;">int</span><span style="color: #339933;">)</span> <span style="color: #339933;">{</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; arr<span style="color: #339933;">[</span><span style="">i</span><span style="color: #339933;">],</span> arr<span style="color: #339933;">[</span>j<span style="color: #339933;">]</span> <span style="color: #339933;">=</span> arr<span style="color: #339933;">[</span>j<span style="color: #339933;">],</span> arr<span style="color: #339933;">[</span><span style="">i</span><span style="color: #339933;">]</span><br />
+<span style="color: #339933;">}</span><br />
+</div></div>
+
+<h3>Java</h3>
+
+<div class="example"><h2 class="example">实例</h2> <div class="example_code">
+<span style="color: #000000; font-weight: bold;">public</span> <span style="color: #000000; font-weight: bold;">class</span> HeapSort <span style="color: #000000; font-weight: bold;">implements</span> IArraySort <span style="color: #009900;">&#123;</span><br />
+<br />
+&nbsp; &nbsp; @Override<br />
+&nbsp; &nbsp; <span style="color: #000000; font-weight: bold;">public</span> <span style="color: #000066; font-weight: bold;">int</span><span style="color: #009900;">&#91;</span><span style="color: #009900;">&#93;</span> sort<span style="color: #009900;">&#40;</span><span style="color: #000066; font-weight: bold;">int</span><span style="color: #009900;">&#91;</span><span style="color: #009900;">&#93;</span> sourceArray<span style="color: #009900;">&#41;</span> <span style="color: #000000; font-weight: bold;">throws</span> <span style="color: #003399;">Exception</span> <span style="color: #009900;">&#123;</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; <span style="color: #666666; font-style: italic;">// 对 arr 进行拷贝，不改变参数内容</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; <span style="color: #000066; font-weight: bold;">int</span><span style="color: #009900;">&#91;</span><span style="color: #009900;">&#93;</span> arr <span style="color: #339933;">=</span> <span style="color: #003399;">Arrays</span>.<span style="color: #006633;">copyOf</span><span style="color: #009900;">&#40;</span>sourceArray, sourceArray.<span style="color: #006633;">length</span><span style="color: #009900;">&#41;</span><span style="color: #339933;">;</span><br />
+<br />
+&nbsp; &nbsp; &nbsp; &nbsp; <span style="color: #000066; font-weight: bold;">int</span> len <span style="color: #339933;">=</span> arr.<span style="color: #006633;">length</span><span style="color: #339933;">;</span><br />
+<br />
+&nbsp; &nbsp; &nbsp; &nbsp; buildMaxHeap<span style="color: #009900;">&#40;</span>arr, len<span style="color: #009900;">&#41;</span><span style="color: #339933;">;</span><br />
+<br />
+&nbsp; &nbsp; &nbsp; &nbsp; <span style="color: #000000; font-weight: bold;">for</span> <span style="color: #009900;">&#40;</span><span style="color: #000066; font-weight: bold;">int</span> i <span style="color: #339933;">=</span> len <span style="color: #339933;">-</span> <span style="color: #cc66cc;">1</span><span style="color: #339933;">;</span> i <span style="color: #339933;">&gt;</span> <span style="color: #cc66cc;">0</span><span style="color: #339933;">;</span> i<span style="color: #339933;">--</span><span style="color: #009900;">&#41;</span> <span style="color: #009900;">&#123;</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; swap<span style="color: #009900;">&#40;</span>arr, <span style="color: #cc66cc;">0</span>, i<span style="color: #009900;">&#41;</span><span style="color: #339933;">;</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; len<span style="color: #339933;">--;</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; heapify<span style="color: #009900;">&#40;</span>arr, <span style="color: #cc66cc;">0</span>, len<span style="color: #009900;">&#41;</span><span style="color: #339933;">;</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; <span style="color: #009900;">&#125;</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; <span style="color: #000000; font-weight: bold;">return</span> arr<span style="color: #339933;">;</span><br />
+&nbsp; &nbsp; <span style="color: #009900;">&#125;</span><br />
+<br />
+&nbsp; &nbsp; <span style="color: #000000; font-weight: bold;">private</span> <span style="color: #000066; font-weight: bold;">void</span> buildMaxHeap<span style="color: #009900;">&#40;</span><span style="color: #000066; font-weight: bold;">int</span><span style="color: #009900;">&#91;</span><span style="color: #009900;">&#93;</span> arr, <span style="color: #000066; font-weight: bold;">int</span> len<span style="color: #009900;">&#41;</span> <span style="color: #009900;">&#123;</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; <span style="color: #000000; font-weight: bold;">for</span> <span style="color: #009900;">&#40;</span><span style="color: #000066; font-weight: bold;">int</span> i <span style="color: #339933;">=</span> <span style="color: #009900;">&#40;</span><span style="color: #000066; font-weight: bold;">int</span><span style="color: #009900;">&#41;</span> <span style="color: #003399;">Math</span>.<span style="color: #006633;">floor</span><span style="color: #009900;">&#40;</span>len <span style="color: #339933;">/</span> <span style="color: #cc66cc;">2</span><span style="color: #009900;">&#41;</span><span style="color: #339933;">;</span> i <span style="color: #339933;">&gt;=</span> <span style="color: #cc66cc;">0</span><span style="color: #339933;">;</span> i<span style="color: #339933;">--</span><span style="color: #009900;">&#41;</span> <span style="color: #009900;">&#123;</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; heapify<span style="color: #009900;">&#40;</span>arr, i, len<span style="color: #009900;">&#41;</span><span style="color: #339933;">;</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; <span style="color: #009900;">&#125;</span><br />
+&nbsp; &nbsp; <span style="color: #009900;">&#125;</span><br />
+<br />
+&nbsp; &nbsp; <span style="color: #000000; font-weight: bold;">private</span> <span style="color: #000066; font-weight: bold;">void</span> heapify<span style="color: #009900;">&#40;</span><span style="color: #000066; font-weight: bold;">int</span><span style="color: #009900;">&#91;</span><span style="color: #009900;">&#93;</span> arr, <span style="color: #000066; font-weight: bold;">int</span> i, <span style="color: #000066; font-weight: bold;">int</span> len<span style="color: #009900;">&#41;</span> <span style="color: #009900;">&#123;</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; <span style="color: #000066; font-weight: bold;">int</span> left <span style="color: #339933;">=</span> <span style="color: #cc66cc;">2</span> <span style="color: #339933;">*</span> i <span style="color: #339933;">+</span> <span style="color: #cc66cc;">1</span><span style="color: #339933;">;</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; <span style="color: #000066; font-weight: bold;">int</span> right <span style="color: #339933;">=</span> <span style="color: #cc66cc;">2</span> <span style="color: #339933;">*</span> i <span style="color: #339933;">+</span> <span style="color: #cc66cc;">2</span><span style="color: #339933;">;</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; <span style="color: #000066; font-weight: bold;">int</span> largest <span style="color: #339933;">=</span> i<span style="color: #339933;">;</span><br />
+<br />
+&nbsp; &nbsp; &nbsp; &nbsp; <span style="color: #000000; font-weight: bold;">if</span> <span style="color: #009900;">&#40;</span>left <span style="color: #339933;">&lt;</span> len <span style="color: #339933;">&amp;&amp;</span> arr<span style="color: #009900;">&#91;</span>left<span style="color: #009900;">&#93;</span> <span style="color: #339933;">&gt;</span> arr<span style="color: #009900;">&#91;</span>largest<span style="color: #009900;">&#93;</span><span style="color: #009900;">&#41;</span> <span style="color: #009900;">&#123;</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; largest <span style="color: #339933;">=</span> left<span style="color: #339933;">;</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; <span style="color: #009900;">&#125;</span><br />
+<br />
+&nbsp; &nbsp; &nbsp; &nbsp; <span style="color: #000000; font-weight: bold;">if</span> <span style="color: #009900;">&#40;</span>right <span style="color: #339933;">&lt;</span> len <span style="color: #339933;">&amp;&amp;</span> arr<span style="color: #009900;">&#91;</span>right<span style="color: #009900;">&#93;</span> <span style="color: #339933;">&gt;</span> arr<span style="color: #009900;">&#91;</span>largest<span style="color: #009900;">&#93;</span><span style="color: #009900;">&#41;</span> <span style="color: #009900;">&#123;</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; largest <span style="color: #339933;">=</span> right<span style="color: #339933;">;</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; <span style="color: #009900;">&#125;</span><br />
+<br />
+&nbsp; &nbsp; &nbsp; &nbsp; <span style="color: #000000; font-weight: bold;">if</span> <span style="color: #009900;">&#40;</span>largest <span style="color: #339933;">!=</span> i<span style="color: #009900;">&#41;</span> <span style="color: #009900;">&#123;</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; swap<span style="color: #009900;">&#40;</span>arr, i, largest<span style="color: #009900;">&#41;</span><span style="color: #339933;">;</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; heapify<span style="color: #009900;">&#40;</span>arr, largest, len<span style="color: #009900;">&#41;</span><span style="color: #339933;">;</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; <span style="color: #009900;">&#125;</span><br />
+&nbsp; &nbsp; <span style="color: #009900;">&#125;</span><br />
+<br />
+&nbsp; &nbsp; <span style="color: #000000; font-weight: bold;">private</span> <span style="color: #000066; font-weight: bold;">void</span> swap<span style="color: #009900;">&#40;</span><span style="color: #000066; font-weight: bold;">int</span><span style="color: #009900;">&#91;</span><span style="color: #009900;">&#93;</span> arr, <span style="color: #000066; font-weight: bold;">int</span> i, <span style="color: #000066; font-weight: bold;">int</span> j<span style="color: #009900;">&#41;</span> <span style="color: #009900;">&#123;</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; <span style="color: #000066; font-weight: bold;">int</span> temp <span style="color: #339933;">=</span> arr<span style="color: #009900;">&#91;</span>i<span style="color: #009900;">&#93;</span><span style="color: #339933;">;</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; arr<span style="color: #009900;">&#91;</span>i<span style="color: #009900;">&#93;</span> <span style="color: #339933;">=</span> arr<span style="color: #009900;">&#91;</span>j<span style="color: #009900;">&#93;</span><span style="color: #339933;">;</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; arr<span style="color: #009900;">&#91;</span>j<span style="color: #009900;">&#93;</span> <span style="color: #339933;">=</span> temp<span style="color: #339933;">;</span><br />
+&nbsp; &nbsp; <span style="color: #009900;">&#125;</span><br />
+<br />
+<span style="color: #009900;">&#125;</span><br />
+</div></div>
+
+<h3>PHP</h3> 
+
+<div class="example"><h2 class="example">实例</h2> <div class="example_code">
+<span style="color: #000000; ">function</span> buildMaxHeap<span style="color: #164;">&#40;</span><span style="color: #000000;">&amp;</span><span style="color: #05a;">$arr</span><span style="color: #164;">&#41;</span><br />
+<span style="color: #164;">&#123;</span><br />
+&nbsp; &nbsp; <span style="color: #000000; ">global</span> <span style="color: #05a;">$len</span><span style="color: #000000;">;</span><br />
+&nbsp; &nbsp; <span style="color: #708;">for</span> <span style="color: #164;">&#40;</span><span style="color: #05a;">$i</span> <span style="color: #000000;">=</span> <span style="color: #990000;">floor</span><span style="color: #164;">&#40;</span><span style="color: #05a;">$len</span><span style="color: #000000;">/</span><span style="color: #164;">2</span><span style="color: #164;">&#41;</span><span style="color: #000000;">;</span> <span style="color: #05a;">$i</span> <span style="color: #000000;">&gt;=</span> <span style="color: #164;">0</span><span style="color: #000000;">;</span> <span style="color: #05a;">$i</span><span style="color: #000000;">--</span><span style="color: #164;">&#41;</span> <span style="color: #164;">&#123;</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; heapify<span style="color: #164;">&#40;</span><span style="color: #05a;">$arr</span><span style="color: #000000;">,</span> <span style="color: #05a;">$i</span><span style="color: #164;">&#41;</span><span style="color: #000000;">;</span><br />
+&nbsp; &nbsp; <span style="color: #164;">&#125;</span><br />
+<span style="color: #164;">&#125;</span><br />
+<br />
+<span style="color: #000000; ">function</span> heapify<span style="color: #164;">&#40;</span><span style="color: #000000;">&amp;</span><span style="color: #05a;">$arr</span><span style="color: #000000;">,</span> <span style="color: #05a;">$i</span><span style="color: #164;">&#41;</span><br />
+<span style="color: #164;">&#123;</span><br />
+&nbsp; &nbsp; <span style="color: #000000; ">global</span> <span style="color: #05a;">$len</span><span style="color: #000000;">;</span><br />
+&nbsp; &nbsp; <span style="color: #05a;">$left</span> <span style="color: #000000;">=</span> <span style="color: #164;">2</span> <span style="color: #000000;">*</span> <span style="color: #05a;">$i</span> <span style="color: #000000;">+</span> <span style="color: #164;">1</span><span style="color: #000000;">;</span><br />
+&nbsp; &nbsp; <span style="color: #05a;">$right</span> <span style="color: #000000;">=</span> <span style="color: #164;">2</span> <span style="color: #000000;">*</span> <span style="color: #05a;">$i</span> <span style="color: #000000;">+</span> <span style="color: #164;">2</span><span style="color: #000000;">;</span><br />
+&nbsp; &nbsp; <span style="color: #05a;">$largest</span> <span style="color: #000000;">=</span> <span style="color: #05a;">$i</span><span style="color: #000000;">;</span><br />
+<br />
+&nbsp; &nbsp; <span style="color: #708;">if</span> <span style="color: #164;">&#40;</span><span style="color: #05a;">$left</span> <span style="color: #000000;">&lt;</span> <span style="color: #05a;">$len</span> <span style="color: #000000;">&amp;&amp;</span> <span style="color: #05a;">$arr</span><span style="color: #164;">&#91;</span><span style="color: #05a;">$left</span><span style="color: #164;">&#93;</span> <span style="color: #000000;">&gt;</span> <span style="color: #05a;">$arr</span><span style="color: #164;">&#91;</span><span style="color: #05a;">$largest</span><span style="color: #164;">&#93;</span><span style="color: #164;">&#41;</span> <span style="color: #164;">&#123;</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; <span style="color: #05a;">$largest</span> <span style="color: #000000;">=</span> <span style="color: #05a;">$left</span><span style="color: #000000;">;</span><br />
+&nbsp; &nbsp; <span style="color: #164;">&#125;</span><br />
+<br />
+&nbsp; &nbsp; <span style="color: #708;">if</span> <span style="color: #164;">&#40;</span><span style="color: #05a;">$right</span> <span style="color: #000000;">&lt;</span> <span style="color: #05a;">$len</span> <span style="color: #000000;">&amp;&amp;</span> <span style="color: #05a;">$arr</span><span style="color: #164;">&#91;</span><span style="color: #05a;">$right</span><span style="color: #164;">&#93;</span> <span style="color: #000000;">&gt;</span> <span style="color: #05a;">$arr</span><span style="color: #164;">&#91;</span><span style="color: #05a;">$largest</span><span style="color: #164;">&#93;</span><span style="color: #164;">&#41;</span> <span style="color: #164;">&#123;</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; <span style="color: #05a;">$largest</span> <span style="color: #000000;">=</span> <span style="color: #05a;">$right</span><span style="color: #000000;">;</span><br />
+&nbsp; &nbsp; <span style="color: #164;">&#125;</span><br />
+<br />
+&nbsp; &nbsp; <span style="color: #708;">if</span> <span style="color: #164;">&#40;</span><span style="color: #05a;">$largest</span> <span style="color: #000000;">!=</span> <span style="color: #05a;">$i</span><span style="color: #164;">&#41;</span> <span style="color: #164;">&#123;</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; swap<span style="color: #164;">&#40;</span><span style="color: #05a;">$arr</span><span style="color: #000000;">,</span> <span style="color: #05a;">$i</span><span style="color: #000000;">,</span> <span style="color: #05a;">$largest</span><span style="color: #164;">&#41;</span><span style="color: #000000;">;</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; heapify<span style="color: #164;">&#40;</span><span style="color: #05a;">$arr</span><span style="color: #000000;">,</span> <span style="color: #05a;">$largest</span><span style="color: #164;">&#41;</span><span style="color: #000000;">;</span><br />
+&nbsp; &nbsp; <span style="color: #164;">&#125;</span><br />
+<span style="color: #164;">&#125;</span><br />
+<br />
+<span style="color: #000000; ">function</span> swap<span style="color: #164;">&#40;</span><span style="color: #000000;">&amp;</span><span style="color: #05a;">$arr</span><span style="color: #000000;">,</span> <span style="color: #05a;">$i</span><span style="color: #000000;">,</span> <span style="color: #05a;">$j</span><span style="color: #164;">&#41;</span><br />
+<span style="color: #164;">&#123;</span><br />
+&nbsp; &nbsp; <span style="color: #05a;">$temp</span> <span style="color: #000000;">=</span> <span style="color: #05a;">$arr</span><span style="color: #164;">&#91;</span><span style="color: #05a;">$i</span><span style="color: #164;">&#93;</span><span style="color: #000000;">;</span><br />
+&nbsp; &nbsp; <span style="color: #05a;">$arr</span><span style="color: #164;">&#91;</span><span style="color: #05a;">$i</span><span style="color: #164;">&#93;</span> <span style="color: #000000;">=</span> <span style="color: #05a;">$arr</span><span style="color: #164;">&#91;</span><span style="color: #05a;">$j</span><span style="color: #164;">&#93;</span><span style="color: #000000;">;</span><br />
+&nbsp; &nbsp; <span style="color: #05a;">$arr</span><span style="color: #164;">&#91;</span><span style="color: #05a;">$j</span><span style="color: #164;">&#93;</span> <span style="color: #000000;">=</span> <span style="color: #05a;">$temp</span><span style="color: #000000;">;</span><br />
+<span style="color: #164;">&#125;</span><br />
+<br />
+<span style="color: #000000; ">function</span> heapSort<span style="color: #164;">&#40;</span><span style="color: #05a;">$arr</span><span style="color: #164;">&#41;</span> <span style="color: #164;">&#123;</span><br />
+&nbsp; &nbsp; <span style="color: #000000; ">global</span> <span style="color: #05a;">$len</span><span style="color: #000000;">;</span><br />
+&nbsp; &nbsp; <span style="color: #05a;">$len</span> <span style="color: #000000;">=</span> <span style="color: #990000;">count</span><span style="color: #164;">&#40;</span><span style="color: #05a;">$arr</span><span style="color: #164;">&#41;</span><span style="color: #000000;">;</span><br />
+&nbsp; &nbsp; buildMaxHeap<span style="color: #164;">&#40;</span><span style="color: #05a;">$arr</span><span style="color: #164;">&#41;</span><span style="color: #000000;">;</span><br />
+&nbsp; &nbsp; <span style="color: #708;">for</span> <span style="color: #164;">&#40;</span><span style="color: #05a;">$i</span> <span style="color: #000000;">=</span> <span style="color: #990000;">count</span><span style="color: #164;">&#40;</span><span style="color: #05a;">$arr</span><span style="color: #164;">&#41;</span> <span style="color: #000000;">-</span> <span style="color: #164;">1</span><span style="color: #000000;">;</span> <span style="color: #05a;">$i</span> <span style="color: #000000;">&gt;</span> <span style="color: #164;">0</span><span style="color: #000000;">;</span> <span style="color: #05a;">$i</span><span style="color: #000000;">--</span><span style="color: #164;">&#41;</span> <span style="color: #164;">&#123;</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; swap<span style="color: #164;">&#40;</span><span style="color: #05a;">$arr</span><span style="color: #000000;">,</span> <span style="color: #164;">0</span><span style="color: #000000;">,</span> <span style="color: #05a;">$i</span><span style="color: #164;">&#41;</span><span style="color: #000000;">;</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; <span style="color: #05a;">$len</span><span style="color: #000000;">--;</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; heapify<span style="color: #164;">&#40;</span><span style="color: #05a;">$arr</span><span style="color: #000000;">,</span> <span style="color: #164;">0</span><span style="color: #164;">&#41;</span><span style="color: #000000;">;</span><br />
+&nbsp; &nbsp; <span style="color: #164;">&#125;</span><br />
+&nbsp; &nbsp; <span style="color: #708;">return</span> <span style="color: #05a;">$arr</span><span style="color: #000000;">;</span><br />
+<span style="color: #164;">&#125;</span><br />
+</div></div>
+
+<h3>C</h3>
+
+<div class="example"><h2 class="example">实例</h2> <div class="example_code">
+<span style="color: #085;">#include &lt;stdio.h&gt;</span><br />
+<span style="color: #085;">#include &lt;stdlib.h&gt;</span><br />
+<br />
+<span style="color: #993333;">void</span> swap<span style="color: #000;">&#40;</span><span style="color: #993333;">int</span> <span style="color: #339933;">*</span>a<span style="color: #339933;">,</span> <span style="color: #993333;">int</span> <span style="color: #339933;">*</span>b<span style="color: #000;">&#41;</span> <span style="color: #000;">&#123;</span><br />
+&nbsp; &nbsp; <span style="color: #993333;">int</span> temp <span style="color: #339933;">=</span> <span style="color: #339933;">*</span>b<span style="color: #339933;">;</span><br />
+&nbsp; &nbsp; <span style="color: #339933;">*</span>b <span style="color: #339933;">=</span> <span style="color: #339933;">*</span>a<span style="color: #339933;">;</span><br />
+&nbsp; &nbsp; <span style="color: #339933;">*</span>a <span style="color: #339933;">=</span> temp<span style="color: #339933;">;</span><br />
+<span style="color: #000;">&#125;</span><br />
+<br />
+<span style="color: #993333;">void</span> max_heapify<span style="color: #000;">&#40;</span><span style="color: #993333;">int</span> arr<span style="color: #000;">&#91;</span><span style="color: #000;">&#93;</span><span style="color: #339933;">,</span> <span style="color: #993333;">int</span> start<span style="color: #339933;">,</span> <span style="color: #993333;">int</span> end<span style="color: #000;">&#41;</span> <span style="color: #000;">&#123;</span><br />
+&nbsp; &nbsp; <span style="color: #666666; font-style: italic;">// 建立父節點指標和子節點指標</span><br />
+&nbsp; &nbsp; <span style="color: #993333;">int</span> dad <span style="color: #339933;">=</span> start<span style="color: #339933;">;</span><br />
+&nbsp; &nbsp; <span style="color: #993333;">int</span> son <span style="color: #339933;">=</span> dad <span style="color: #339933;">*</span> <span style="color: #164;">2</span> <span style="color: #339933;">+</span> <span style="color: #164;">1</span><span style="color: #339933;">;</span><br />
+&nbsp; &nbsp; <span style="color: #708;">while</span> <span style="color: #000;">&#40;</span>son <span style="color: #339933;">&lt;=</span> end<span style="color: #000;">&#41;</span> <span style="color: #000;">&#123;</span> <span style="color: #666666; font-style: italic;">// 若子節點指標在範圍內才做比較</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; <span style="color: #708;">if</span> <span style="color: #000;">&#40;</span>son <span style="color: #339933;">+</span> <span style="color: #164;">1</span> <span style="color: #339933;">&lt;=</span> end <span style="color: #339933;">&amp;&amp;</span> arr<span style="color: #000;">&#91;</span>son<span style="color: #000;">&#93;</span> <span style="color: #339933;">&lt;</span> arr<span style="color: #000;">&#91;</span>son <span style="color: #339933;">+</span> <span style="color: #164;">1</span><span style="color: #000;">&#93;</span><span style="color: #000;">&#41;</span> <span style="color: #666666; font-style: italic;">// 先比較兩個子節點大小，選擇最大的</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; son<span style="color: #339933;">++;</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; <span style="color: #708;">if</span> <span style="color: #000;">&#40;</span>arr<span style="color: #000;">&#91;</span>dad<span style="color: #000;">&#93;</span> <span style="color: #339933;">&gt;</span> arr<span style="color: #000;">&#91;</span>son<span style="color: #000;">&#93;</span><span style="color: #000;">&#41;</span> <span style="color: #666666; font-style: italic;">//如果父節點大於子節點代表調整完畢，直接跳出函數</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; <span style="color: #708;">return</span><span style="color: #339933;">;</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; <span style="color: #708;">else</span> <span style="color: #000;">&#123;</span> <span style="color: #666666; font-style: italic;">// 否則交換父子內容再繼續子節點和孫節點比較</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; swap<span style="color: #000;">&#40;</span><span style="color: #339933;">&amp;</span>arr<span style="color: #000;">&#91;</span>dad<span style="color: #000;">&#93;</span><span style="color: #339933;">,</span> <span style="color: #339933;">&amp;</span>arr<span style="color: #000;">&#91;</span>son<span style="color: #000;">&#93;</span><span style="color: #000;">&#41;</span><span style="color: #339933;">;</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; dad <span style="color: #339933;">=</span> son<span style="color: #339933;">;</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; son <span style="color: #339933;">=</span> dad <span style="color: #339933;">*</span> <span style="color: #164;">2</span> <span style="color: #339933;">+</span> <span style="color: #164;">1</span><span style="color: #339933;">;</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; <span style="color: #000;">&#125;</span><br />
+&nbsp; &nbsp; <span style="color: #000;">&#125;</span><br />
+<span style="color: #000;">&#125;</span><br />
+<br />
+<span style="color: #993333;">void</span> heap_sort<span style="color: #000;">&#40;</span><span style="color: #993333;">int</span> arr<span style="color: #000;">&#91;</span><span style="color: #000;">&#93;</span><span style="color: #339933;">,</span> <span style="color: #993333;">int</span> len<span style="color: #000;">&#41;</span> <span style="color: #000;">&#123;</span><br />
+&nbsp; &nbsp; <span style="color: #993333;">int</span> i<span style="color: #339933;">;</span><br />
+&nbsp; &nbsp; <span style="color: #666666; font-style: italic;">// 初始化，i從最後一個父節點開始調整</span><br />
+&nbsp; &nbsp; <span style="color: #708;">for</span> <span style="color: #000;">&#40;</span>i <span style="color: #339933;">=</span> len <span style="color: #339933;">/</span> <span style="color: #164;">2</span> <span style="color: #339933;">-</span> <span style="color: #164;">1</span><span style="color: #339933;">;</span> i <span style="color: #339933;">&gt;=</span> <span style="color: #164;">0</span><span style="color: #339933;">;</span> i<span style="color: #339933;">--</span><span style="color: #000;">&#41;</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; max_heapify<span style="color: #000;">&#40;</span>arr<span style="color: #339933;">,</span> i<span style="color: #339933;">,</span> len <span style="color: #339933;">-</span> <span style="color: #164;">1</span><span style="color: #000;">&#41;</span><span style="color: #339933;">;</span><br />
+&nbsp; &nbsp; <span style="color: #666666; font-style: italic;">// 先將第一個元素和已排好元素前一位做交換，再重新調整，直到排序完畢</span><br />
+&nbsp; &nbsp; <span style="color: #708;">for</span> <span style="color: #000;">&#40;</span>i <span style="color: #339933;">=</span> len <span style="color: #339933;">-</span> <span style="color: #164;">1</span><span style="color: #339933;">;</span> i <span style="color: #339933;">&gt;</span> <span style="color: #164;">0</span><span style="color: #339933;">;</span> i<span style="color: #339933;">--</span><span style="color: #000;">&#41;</span> <span style="color: #000;">&#123;</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; swap<span style="color: #000;">&#40;</span><span style="color: #339933;">&amp;</span>arr<span style="color: #000;">&#91;</span><span style="color: #164;">0</span><span style="color: #000;">&#93;</span><span style="color: #339933;">,</span> <span style="color: #339933;">&amp;</span>arr<span style="color: #000;">&#91;</span>i<span style="color: #000;">&#93;</span><span style="color: #000;">&#41;</span><span style="color: #339933;">;</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; max_heapify<span style="color: #000;">&#40;</span>arr<span style="color: #339933;">,</span> <span style="color: #164;">0</span><span style="color: #339933;">,</span> i <span style="color: #339933;">-</span> <span style="color: #164;">1</span><span style="color: #000;">&#41;</span><span style="color: #339933;">;</span><br />
+&nbsp; &nbsp; <span style="color: #000;">&#125;</span><br />
+<span style="color: #000;">&#125;</span><br />
+<br />
+<span style="color: #993333;">int</span> main<span style="color: #000;">&#40;</span><span style="color: #000;">&#41;</span> <span style="color: #000;">&#123;</span><br />
+&nbsp; &nbsp; <span style="color: #993333;">int</span> arr<span style="color: #000;">&#91;</span><span style="color: #000;">&#93;</span> <span style="color: #339933;">=</span> <span style="color: #000;">&#123;</span> <span style="color: #164;">3</span><span style="color: #339933;">,</span> <span style="color: #164;">5</span><span style="color: #339933;">,</span> <span style="color: #164;">3</span><span style="color: #339933;">,</span> <span style="color: #164;">0</span><span style="color: #339933;">,</span> <span style="color: #164;">8</span><span style="color: #339933;">,</span> <span style="color: #164;">6</span><span style="color: #339933;">,</span> <span style="color: #164;">1</span><span style="color: #339933;">,</span> <span style="color: #164;">5</span><span style="color: #339933;">,</span> <span style="color: #164;">8</span><span style="color: #339933;">,</span> <span style="color: #164;">6</span><span style="color: #339933;">,</span> <span style="color: #164;">2</span><span style="color: #339933;">,</span> <span style="color: #164;">4</span><span style="color: #339933;">,</span> <span style="color: #164;">9</span><span style="color: #339933;">,</span> <span style="color: #164;">4</span><span style="color: #339933;">,</span> <span style="color: #164;">7</span><span style="color: #339933;">,</span> <span style="color: #164;">0</span><span style="color: #339933;">,</span> <span style="color: #164;">1</span><span style="color: #339933;">,</span> <span style="color: #164;">8</span><span style="color: #339933;">,</span> <span style="color: #164;">9</span><span style="color: #339933;">,</span> <span style="color: #164;">7</span><span style="color: #339933;">,</span> <span style="color: #164;">3</span><span style="color: #339933;">,</span> <span style="color: #164;">1</span><span style="color: #339933;">,</span> <span style="color: #164;">2</span><span style="color: #339933;">,</span> <span style="color: #164;">5</span><span style="color: #339933;">,</span> <span style="color: #164;">9</span><span style="color: #339933;">,</span> <span style="color: #164;">7</span><span style="color: #339933;">,</span> <span style="color: #164;">4</span><span style="color: #339933;">,</span> <span style="color: #164;">0</span><span style="color: #339933;">,</span> <span style="color: #164;">2</span><span style="color: #339933;">,</span> <span style="color: #164;">6</span> <span style="color: #000;">&#125;</span><span style="color: #339933;">;</span><br />
+&nbsp; &nbsp; <span style="color: #993333;">int</span> len <span style="color: #339933;">=</span> <span style="color: #000;">&#40;</span><span style="color: #993333;">int</span><span style="color: #000;">&#41;</span> <span style="color: #993333;">sizeof</span><span style="color: #000;">&#40;</span>arr<span style="color: #000;">&#41;</span> <span style="color: #339933;">/</span> <span style="color: #993333;">sizeof</span><span style="color: #000;">&#40;</span><span style="color: #339933;">*</span>arr<span style="color: #000;">&#41;</span><span style="color: #339933;">;</span><br />
+&nbsp; &nbsp; heap_sort<span style="color: #000;">&#40;</span>arr<span style="color: #339933;">,</span> len<span style="color: #000;">&#41;</span><span style="color: #339933;">;</span><br />
+&nbsp; &nbsp; <span style="color: #993333;">int</span> i<span style="color: #339933;">;</span><br />
+&nbsp; &nbsp; <span style="color: #708;">for</span> <span style="color: #000;">&#40;</span>i <span style="color: #339933;">=</span> <span style="color: #164;">0</span><span style="color: #339933;">;</span> i <span style="color: #339933;">&lt;</span> len<span style="color: #339933;">;</span> i<span style="color: #339933;">++</span><span style="color: #000;">&#41;</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; <span style="color: #000066;">printf</span><span style="color: #000;">&#40;</span><span style="color: #a11;">&quot;%d &quot;</span><span style="color: #339933;">,</span> arr<span style="color: #000;">&#91;</span>i<span style="color: #000;">&#93;</span><span style="color: #000;">&#41;</span><span style="color: #339933;">;</span><br />
+&nbsp; &nbsp; <span style="color: #000066;">printf</span><span style="color: #000;">&#40;</span><span style="color: #a11;">&quot;<span style="color: #000099; font-weight: bold;">\n</span>&quot;</span><span style="color: #000;">&#41;</span><span style="color: #339933;">;</span><br />
+&nbsp; &nbsp; <span style="color: #708;">return</span> <span style="color: #164;">0</span><span style="color: #339933;">;</span><br />
+<span style="color: #000;">&#125;</span><br />
+</div></div>
+
+<h3>C++</h3>
+
+<div class="example"><h2 class="example">实例</h2> <div class="example_code">
+<span style="color: #060;">#include &lt;iostream&gt;</span><br />
+<span style="color: #060;">#include &lt;algorithm&gt;</span><br />
+<span style="color: #05a;">using</span> <span style="color: #05a;">namespace</span> std<span style="color: #008080;">;</span><br />
+<br />
+<span style="color: #05a;">void</span> max_heapify<span style="color: #008000;">&#40;</span><span style="color: #05a;">int</span> arr<span style="color: #008000;">&#91;</span><span style="color: #008000;">&#93;</span>, <span style="color: #05a;">int</span> start, <span style="color: #05a;">int</span> end<span style="color: #008000;">&#41;</span> <span style="color: #008000;">&#123;</span><br />
+&nbsp; &nbsp; <span style="color: #666666;">// 建立父節點指標和子節點指標</span><br />
+&nbsp; &nbsp; <span style="color: #05a;">int</span> dad <span style="color: #000080;">=</span> start<span style="color: #008080;">;</span><br />
+&nbsp; &nbsp; <span style="color: #05a;">int</span> son <span style="color: #000080;">=</span> dad <span style="color: #000040;">*</span> <span style="color: #0000dd;">2</span> <span style="color: #000040;">+</span> <span style="color: #0000dd;">1</span><span style="color: #008080;">;</span><br />
+&nbsp; &nbsp; <span style="color: #05a;">while</span> <span style="color: #008000;">&#40;</span>son <span style="color: #000080;">&lt;=</span> end<span style="color: #008000;">&#41;</span> <span style="color: #008000;">&#123;</span> <span style="color: #666666;">// 若子節點指標在範圍內才做比較</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; <span style="color: #05a;">if</span> <span style="color: #008000;">&#40;</span>son <span style="color: #000040;">+</span> <span style="color: #0000dd;">1</span> <span style="color: #000080;">&lt;=</span> end <span style="color: #000040;">&amp;&amp;</span> arr<span style="color: #008000;">&#91;</span>son<span style="color: #008000;">&#93;</span> <span style="color: #000080;">&lt;</span> arr<span style="color: #008000;">&#91;</span>son <span style="color: #000040;">+</span> <span style="color: #0000dd;">1</span><span style="color: #008000;">&#93;</span><span style="color: #008000;">&#41;</span> <span style="color: #666666;">// 先比較兩個子節點大小，選擇最大的</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; son<span style="color: #000040;">++</span><span style="color: #008080;">;</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; <span style="color: #05a;">if</span> <span style="color: #008000;">&#40;</span>arr<span style="color: #008000;">&#91;</span>dad<span style="color: #008000;">&#93;</span> <span style="color: #000080;">&gt;</span> arr<span style="color: #008000;">&#91;</span>son<span style="color: #008000;">&#93;</span><span style="color: #008000;">&#41;</span> <span style="color: #666666;">// 如果父節點大於子節點代表調整完畢，直接跳出函數</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; <span style="color: #05a;">return</span><span style="color: #008080;">;</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; <span style="color: #05a;">else</span> <span style="color: #008000;">&#123;</span> <span style="color: #666666;">// 否則交換父子內容再繼續子節點和孫節點比較</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; swap<span style="color: #008000;">&#40;</span>arr<span style="color: #008000;">&#91;</span>dad<span style="color: #008000;">&#93;</span>, arr<span style="color: #008000;">&#91;</span>son<span style="color: #008000;">&#93;</span><span style="color: #008000;">&#41;</span><span style="color: #008080;">;</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; dad <span style="color: #000080;">=</span> son<span style="color: #008080;">;</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; son <span style="color: #000080;">=</span> dad <span style="color: #000040;">*</span> <span style="color: #0000dd;">2</span> <span style="color: #000040;">+</span> <span style="color: #0000dd;">1</span><span style="color: #008080;">;</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; <span style="color: #008000;">&#125;</span><br />
+&nbsp; &nbsp; <span style="color: #008000;">&#125;</span><br />
+<span style="color: #008000;">&#125;</span><br />
+<br />
+<span style="color: #05a;">void</span> heap_sort<span style="color: #008000;">&#40;</span><span style="color: #05a;">int</span> arr<span style="color: #008000;">&#91;</span><span style="color: #008000;">&#93;</span>, <span style="color: #05a;">int</span> len<span style="color: #008000;">&#41;</span> <span style="color: #008000;">&#123;</span><br />
+&nbsp; &nbsp; <span style="color: #666666;">// 初始化，i從最後一個父節點開始調整</span><br />
+&nbsp; &nbsp; <span style="color: #05a;">for</span> <span style="color: #008000;">&#40;</span><span style="color: #05a;">int</span> i <span style="color: #000080;">=</span> len <span style="color: #000040;">/</span> <span style="color: #0000dd;">2</span> <span style="color: #000040;">-</span> <span style="color: #0000dd;">1</span><span style="color: #008080;">;</span> i <span style="color: #000080;">&gt;=</span> <span style="color: #0000dd;">0</span><span style="color: #008080;">;</span> i<span style="color: #000040;">--</span><span style="color: #008000;">&#41;</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; max_heapify<span style="color: #008000;">&#40;</span>arr, i, len <span style="color: #000040;">-</span> <span style="color: #0000dd;">1</span><span style="color: #008000;">&#41;</span><span style="color: #008080;">;</span><br />
+&nbsp; &nbsp; <span style="color: #666666;">// 先將第一個元素和已经排好的元素前一位做交換，再從新調整(刚调整的元素之前的元素)，直到排序完畢</span><br />
+&nbsp; &nbsp; <span style="color: #05a;">for</span> <span style="color: #008000;">&#40;</span><span style="color: #05a;">int</span> i <span style="color: #000080;">=</span> len <span style="color: #000040;">-</span> <span style="color: #0000dd;">1</span><span style="color: #008080;">;</span> i <span style="color: #000080;">&gt;</span> <span style="color: #0000dd;">0</span><span style="color: #008080;">;</span> i<span style="color: #000040;">--</span><span style="color: #008000;">&#41;</span> <span style="color: #008000;">&#123;</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; swap<span style="color: #008000;">&#40;</span>arr<span style="color: #008000;">&#91;</span><span style="color: #0000dd;">0</span><span style="color: #008000;">&#93;</span>, arr<span style="color: #008000;">&#91;</span>i<span style="color: #008000;">&#93;</span><span style="color: #008000;">&#41;</span><span style="color: #008080;">;</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; max_heapify<span style="color: #008000;">&#40;</span>arr, <span style="color: #0000dd;">0</span>, i <span style="color: #000040;">-</span> <span style="color: #0000dd;">1</span><span style="color: #008000;">&#41;</span><span style="color: #008080;">;</span><br />
+&nbsp; &nbsp; <span style="color: #008000;">&#125;</span><br />
+<span style="color: #008000;">&#125;</span><br />
+<br />
+<span style="color: #05a;">int</span> main<span style="color: #008000;">&#40;</span><span style="color: #008000;">&#41;</span> <span style="color: #008000;">&#123;</span><br />
+&nbsp; &nbsp; <span style="color: #05a;">int</span> arr<span style="color: #008000;">&#91;</span><span style="color: #008000;">&#93;</span> <span style="color: #000080;">=</span> <span style="color: #008000;">&#123;</span> <span style="color: #0000dd;">3</span>, <span style="color: #0000dd;">5</span>, <span style="color: #0000dd;">3</span>, <span style="color: #0000dd;">0</span>, <span style="color: #0000dd;">8</span>, <span style="color: #0000dd;">6</span>, <span style="color: #0000dd;">1</span>, <span style="color: #0000dd;">5</span>, <span style="color: #0000dd;">8</span>, <span style="color: #0000dd;">6</span>, <span style="color: #0000dd;">2</span>, <span style="color: #0000dd;">4</span>, <span style="color: #0000dd;">9</span>, <span style="color: #0000dd;">4</span>, <span style="color: #0000dd;">7</span>, <span style="color: #0000dd;">0</span>, <span style="color: #0000dd;">1</span>, <span style="color: #0000dd;">8</span>, <span style="color: #0000dd;">9</span>, <span style="color: #0000dd;">7</span>, <span style="color: #0000dd;">3</span>, <span style="color: #0000dd;">1</span>, <span style="color: #0000dd;">2</span>, <span style="color: #0000dd;">5</span>, <span style="color: #0000dd;">9</span>, <span style="color: #0000dd;">7</span>, <span style="color: #0000dd;">4</span>, <span style="color: #0000dd;">0</span>, <span style="color: #0000dd;">2</span>, <span style="color: #0000dd;">6</span> <span style="color: #008000;">&#125;</span><span style="color: #008080;">;</span><br />
+&nbsp; &nbsp; <span style="color: #05a;">int</span> len <span style="color: #000080;">=</span> <span style="color: #008000;">&#40;</span><span style="color: #05a;">int</span><span style="color: #008000;">&#41;</span> <span style="color: #05a;">sizeof</span><span style="color: #008000;">&#40;</span>arr<span style="color: #008000;">&#41;</span> <span style="color: #000040;">/</span> <span style="color: #05a;">sizeof</span><span style="color: #008000;">&#40;</span><span style="color: #000040;">*</span>arr<span style="color: #008000;">&#41;</span><span style="color: #008080;">;</span><br />
+&nbsp; &nbsp; heap_sort<span style="color: #008000;">&#40;</span>arr, len<span style="color: #008000;">&#41;</span><span style="color: #008080;">;</span><br />
+&nbsp; &nbsp; <span style="color: #05a;">for</span> <span style="color: #008000;">&#40;</span><span style="color: #05a;">int</span> i <span style="color: #000080;">=</span> <span style="color: #0000dd;">0</span><span style="color: #008080;">;</span> i <span style="color: #000080;">&lt;</span> len<span style="color: #008080;">;</span> i<span style="color: #000040;">++</span><span style="color: #008000;">&#41;</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; <span style="color: #05a;">cout</span> <span style="color: #000080;">&lt;&lt;</span> arr<span style="color: #008000;">&#91;</span>i<span style="color: #008000;">&#93;</span> <span style="color: #000080;">&lt;&lt;</span> <span style="color: #a11;">' '</span><span style="color: #008080;">;</span><br />
+&nbsp; &nbsp; <span style="color: #05a;">cout</span> <span style="color: #000080;">&lt;&lt;</span> endl<span style="color: #008080;">;</span><br />
+&nbsp; &nbsp; <span style="color: #05a;">return</span> <span style="color: #0000dd;">0</span><span style="color: #008080;">;</span><br />
+<span style="color: #008000;">&#125;</span><br />
+</div></div>
+
+
+<blockquote><p>参考文章：</p><p>
+https://github.com/hustcc/JS-Sorting-Algorithm/blob/master/7.heapSort.md</p>
+<p>https://zh.wikipedia.org/wiki/%E5%A0%86%E6%8E%92%E5%BA%8F</p></blockquote>
+
+				</div>
+			</div>
+			<div class="previous-next-links">
+			<div class="previous-design-link">← <a href="http://www.runoob.com/w3cnote/quick-sort-2.html" rel="prev"> 1.6 快速排序</a> </div>
+			<div class="next-design-link"><a href="http://www.runoob.com/w3cnote/counting-sort.html" rel="next"> 1.8 计数排序</a> →</div>
+			</div>
+			<style>
+.wrapper {
+  /*text-transform: uppercase; */
+  background: #ececec;
+  color: #555;
+  cursor: help;
+  font-family: "Gill Sans", Impact, sans-serif;
+  font-size: 20px;
+  position: relative;
+  text-align: center;
+  width: 200px;
+  -webkit-transform: translateZ(0); /* webkit flicker fix */
+  -webkit-font-smoothing: antialiased; /* webkit text rendering fix */
+}
+
+.wrapper .tooltip {
+  white-space: nowrap;
+  font-size: 14px;
+  text-align: left;
+  background: #96b97d;
+  bottom: 100%;
+  color: #fff;
+  display: block;
+  left: -25px;
+  margin-bottom: 15px;
+  opacity: 0;
+  padding: 14px;
+  pointer-events: none;
+  position: absolute;
+  
+  -webkit-transform: translateY(10px);
+     -moz-transform: translateY(10px);
+      -ms-transform: translateY(10px);
+       -o-transform: translateY(10px);
+          transform: translateY(10px);
+  -webkit-transition: all .25s ease-out;
+     -moz-transition: all .25s ease-out;
+      -ms-transition: all .25s ease-out;
+       -o-transition: all .25s ease-out;
+          transition: all .25s ease-out;
+  -webkit-box-shadow: 2px 2px 6px rgba(0, 0, 0, 0.28);
+     -moz-box-shadow: 2px 2px 6px rgba(0, 0, 0, 0.28);
+      -ms-box-shadow: 2px 2px 6px rgba(0, 0, 0, 0.28);
+       -o-box-shadow: 2px 2px 6px rgba(0, 0, 0, 0.28);
+          box-shadow: 2px 2px 6px rgba(0, 0, 0, 0.28);
+}
+.tooltip a {
+	color:#fff;
+}
+/* This bridges the gap so you can mouse into the tooltip without it disappearing */
+.wrapper .tooltip:before {
+  bottom: -20px;
+  content: " ";
+  display: block;
+  height: 20px;
+  left: 0;
+  position: absolute;
+  width: 100%;
+}  
+
+/* CSS Triangles - see Trevor's post */
+.wrapper .tooltip:after {
+  border-left: solid transparent 10px;
+  border-right: solid transparent 10px;
+  border-top: solid #96b97d 10px;
+  bottom: -10px;
+  content: " ";
+  height: 0;
+  left: 20%;
+  margin-left: -13px;
+  position: absolute;
+  width: 0;
+}
+.wrapper .tooltip1 {
+	margin-left: 50px;
+	padding-top: 0px;
+}
+/*
+.wrapper:hover .tooltip {
+  opacity: 1;
+  pointer-events: auto;
+  -webkit-transform: translateY(0px);
+     -moz-transform: translateY(0px);
+      -ms-transform: translateY(0px);
+       -o-transform: translateY(0px);
+          transform: translateY(0px);
+}
+*/
+/* IE can just show/hide with no transition */
+.lte8 .wrapper .tooltip {
+  display: none;
+}
+
+.lte8 .wrapper:hover .tooltip {
+  display: block;
+}
+
+</style>
+
+<link rel="stylesheet" href="https://static.runoob.com/assets/upvotejs/dist/upvotejs/upvotejs.css">
+<script src="https://static.runoob.com/assets/upvotejs/dist/upvotejs/upvotejs.vanilla.js"></script>
+<script src="https://static.runoob.com/assets/upvotejs/dist/upvotejs/upvotejs.jquery.js"></script>
+<div class="title" id="comments">
+	<h2 class="">
+    <div class="altblock">
+		    	<i style="font-size:28px;margin-top: 8px;" class="fa fa-pencil-square-o" aria-hidden="true"></i>
+    	    </div>
+    <span class="mw-headline" id="qa_headline">2  篇笔记</span>
+	<span class="mw-headline" id="user_add_note" style="float:right;line-height: 62px;padding-right: 14px;"><i class="fa fa-pencil-square-o" aria-hidden="true"></i>  写笔记</span>
+    </h2>
+</div>
+
+<div id="postcomments"   >
+	<ol class="commentlist">
+		<li class="comment even thread-even depth-1" id="comment-57609"><span class="comt-f">#0</span><div class="comt-avatar wrapper"><i style="font-size:36px;" class="fa fa-user-circle" aria-hidden="true"></i><div class="tooltip"><p><i class="fa fa-user" aria-hidden="true"></i>&nbsp;&nbsp;&nbsp;艾孜尔江</p><p><i class="fa fa-envelope" aria-hidden="true"></i>&nbsp;&nbsp;bju***ft@sina.com</p></div><div id="runoobvote-id-57609" data-commid = "57609" class="upvotejs"><a class="upvote"></a> <span class="count">55</span></div></div><div class="comt-main" id="div-comment-57609"><p>上方又没些 C# 的堆排序，艾孜尔江补充如下：</p>
+
+<pre>/// &lt;summary&gt;
+/// 堆排序
+/// &lt;/summary&gt;
+/// &lt;param name="arr"&gt;待排序数组&lt;/param&gt;
+static void HeapSort(int[] arr)
+{
+    int vCount = arr.Length;
+    int[] tempKey = new int[vCount + 1];
+    // 元素索引从1开始
+    for (int i = 0; i &lt; vCount; i++)
+    {
+        tempKey[i + 1] = arr[i];
+    }
+    // 初始数据建堆（从含最后一个结点的子树开始构建，依次向前，形成整个二叉堆）
+    for (int i = vCount / 2; i &gt;= 1; i--)
+    {
+        Restore(tempKey, i, vCount);
+    }
+    // 不断输出堆顶元素、重构堆，进行排序
+    for (int i = vCount; i &gt; 1; i--)
+    {
+        int temp = tempKey[i];
+        tempKey[i] = tempKey[1];
+        tempKey[1] = temp;
+        Restore(tempKey, 1, i - 1);
+    }
+    //排序结果
+    for (int i = 0; i &lt; vCount; i++)
+    {
+        arr[i] = tempKey[i + 1];
+    }
+}
+/// &lt;summary&gt;
+/// 二叉堆的重构（针对于已构建好的二叉堆首尾互换之后的重构）
+/// &lt;/summary&gt;
+/// &lt;param name="arr"&gt;&lt;/param&gt;
+/// &lt;param name="rootNode"&gt;根结点j&lt;/param&gt;
+/// &lt;param name="nodeCount"&gt;结点数&lt;/param&gt;
+static void Restore(int[] arr, int rootNode, int nodeCount)
+{
+    while (rootNode &lt;= nodeCount / 2) // 保证根结点有子树
+    {
+        //找出左右儿子的最大值
+        int m = (2 * rootNode + 1 &lt;= nodeCount &amp;&amp; arr[2 * rootNode + 1] &gt; arr[2 * rootNode]) ? 2 * rootNode + 1 : 2 * rootNode;
+        if (arr[m] &gt; arr[rootNode])
+        {
+            int temp = arr[m];
+            arr[m] = arr[rootNode];
+            arr[rootNode] = temp;
+            rootNode = m;
+        }
+        else
+        {
+            break;
+        }
+    }
+}</pre><div class="comt-meta wrapper"><span class="comt-author"><a target="_blank" href="javascript:;">艾孜尔江</a><div class="tooltip tooltip1"><p><i class="fa fa-user" aria-hidden="true"></i>&nbsp;&nbsp;&nbsp;艾孜尔江</p><p><i class="fa fa-envelope" aria-hidden="true"></i>&nbsp;&nbsp;bju***ft@sina.com</p></div></span>3年前 (2020-10-08)</div></div></li><!-- #comment-## -->
+<li class="comment odd alt thread-odd thread-alt depth-1" id="comment-62251"><span class="comt-f">#0</span><div class="comt-avatar wrapper"><i style="font-size:36px;" class="fa fa-user-circle" aria-hidden="true"></i><div class="tooltip"><p><i class="fa fa-user" aria-hidden="true"></i>&nbsp;&nbsp;&nbsp;大兵小将</p><p><i class="fa fa-envelope" aria-hidden="true"></i>&nbsp;&nbsp;111***1283@qq.com</p></div><div id="runoobvote-id-62251" data-commid = "62251" class="upvotejs"><a class="upvote"></a> <span class="count">34</span></div></div><div class="comt-main" id="div-comment-62251"><p>堆排序是不稳定的排序！</p>
+
+<p>既然如此，每次构建大顶堆时，在 父节点、左子节点、右子节点取三者中最大者作为父节点就行。我们追寻的只是最终排序后的结果，所以可以简化其中的步骤。</p>
+<p>
+我将个人写的 Java 代码核心放在下方，有兴趣的同学可以一起讨论下：</p>
+
+<pre>public int[] sort(int a[]) {
+    int len = a.length - 1;    
+    for (int i = len; i &gt; 0; i--) {
+        maxHeap(a, i);        
+        //交换 跟节点root 与 最后一个子节点i 的位置        
+        swap(a, 0, i);        
+        //i--无序数组尺寸减少了 
+    }  
+    return a;
+}
+
+/**构建一个大顶堆（完全二叉树 ） 
+* 从  最后一个非叶子节点  开始，若父节点小于子节点，则互换他们两的位置。然后依次从右至左，从下到上进行！ 
+* 最后一个非叶子节点，它的叶子节点 必定包括了最后一个（叶子）节点，所以 最后一个非叶子节点是 a[（n+1）/2-1] 
+ 
+* @param a 
+* @param lastIndex 这个数组的最后一个元素 
+*/
+static void maxHeap(int a[], int lastIndex) {
+    for (int i = (lastIndex + 1) / 2 - 1; i &gt;= 0; i--) {
+       //反正 堆排序不稳定，先比较父与左子，大则交换；与右子同理。（不care 左子与右子位置是否变了！） 
+        if (i * 2 + 1 &lt;= lastIndex &amp;&amp; a[i] &lt; a[i * 2 + 1]) {
+            swap(a, i, i * 2 + 1);        
+        }    
+        if (i * 2 + 2 &lt;= lastIndex &amp;&amp; a[i] &lt; a[i * 2 + 2]) {
+            swap(a, i, i * 2 + 2);        
+        }
+    }
+}
+
+private void swap(int[] arr, int i, int j) {
+    int temp = arr[i];
+    arr[i] = arr[j];
+    arr[j] = temp;
+}
+</pre>
+<div class="comt-meta wrapper"><span class="comt-author"><a target="_blank" href="javascript:;">大兵小将</a><div class="tooltip tooltip1"><p><i class="fa fa-user" aria-hidden="true"></i>&nbsp;&nbsp;&nbsp;大兵小将</p><p><i class="fa fa-envelope" aria-hidden="true"></i>&nbsp;&nbsp;111***1283@qq.com</p></div></span>2年前 (2021-03-17)</div></div></li><!-- #comment-## -->
+	</ol>
+	<div class="pagenav">
+			</div>
+</div>
+<div id="respond" class="no_webshot"> 
+		<div class="comment-signarea" style="display:none; padding: 20px 20px;"> 
+	<h3 class="text-muted" id="share_code" style="color: #799961;"><i class="fa fa-pencil-square-o" aria-hidden="true"></i> 点我分享笔记</h3>
+	<!--
+	<p style="font-size:14px;">笔记需要是本篇文章的内容扩展！</p><br>
+	<p style="font-size:12px;"><a href="//www.runoob.com/tougao" target="_blank">文章投稿，可点击这里</a></p>
+	<p style="font-size:14px;"><a href="/w3cnote/runoob-user-test-intro.html#invite" target="_blank">注册邀请码获取方式</a></p>
+		<h3 class="text-muted"><i class="fa fa-info-circle" aria-hidden="true"></i> 分享笔记前必须<a href="javascript:;" class="runoob-pop">登录</a>！</h3>
+		<p><a href="/w3cnote/runoob-user-test-intro.html#invite" target="_blank">注册邀请码获取方式</a></p>-->
+	</div>
+		
+	<form action="/wp-content/themes/runoob/option/addnote.php" method="post" id="commentform" style="display:none;">
+		<div class="comt">
+			<div class="comt-title">
+				<i style="font-size:36px;" class="fa fa-user-circle" aria-hidden="true"></i>				<p><a id="cancel-comment-reply-link" href="javascript:;">取消</a></p>
+			</div>
+			<div class="comt-box">
+			<div id="mded"></div>
+			
+				<div class="comt-ctrl">
+					<div class="comt-tips"><input type='hidden' name='comment_post_ID' value='21437' id='comment_post_ID' />
+<input type='hidden' name='comment_parent' id='comment_parent' value='0' />
+</div>
+					<button type="submit" name="submit" id="submit" tabindex="5"><i class="fa fa-pencil" aria-hidden="true"></i> 分享笔记</button>
+				</div>
+			</div>
+		
+				
+					<div class="comt-comterinfo"> 
+						<ul id="comment-author-info">
+							<li class="form-inline"><label class="hide" for="author">昵称</label><input class="ipt" type="text" name="author" id="author" value="" tabindex="2" placeholder="昵称"><span class="text-muted">昵称 (必填)</span></li>
+							<li class="form-inline"><label class="hide" for="email">邮箱</label><input class="ipt" type="text" name="email" id="email" value="" tabindex="3" placeholder="邮箱"><span class="text-muted">邮箱 (必填)</span></li>
+							<li class="form-inline"><label class="hide" for="url">引用地址</label><input class="ipt" type="text" name="url" id="url" value="" tabindex="4" placeholder="引用地址"><span class="text-muted">引用地址</span></li>
+						</ul>
+					</div>
+				
+			
+		</div>
+
+	</form>
+	</div>
+<script type="text/javascript">
+$(function() {
+	//初始化编辑器
+	
+	var editor = new Simditor({
+	  textarea: $('#mded'),
+	  placeholder: '写笔记...',
+	  upload:false,
+	 // upload: {url:'/api/comment_upload_file.php',params: null,fileKey: 'upload_file',connectionCount: 1,leaveConfirm: '文件正在上传，您确定离开?'},
+	  defaultImage: 'https://www.runoob.com/images/logo.png',
+	  codeLanguages: '',
+	  autosave: 'editor-content',
+	  toolbar: [  'bold','code','ul','ol','image' ]
+	});
+	editor.on('selectionchanged', function() {
+		$(".code-popover").hide();
+	});
+
+	// 提交数据
+	$("#share_code").click(function() {
+		$(".comment-signarea").hide();
+		$("#commentform").show();
+		
+	});
+	$("#user_add_note").click(function() {
+		$(".comment-signarea").hide();
+		$("#commentform").show();
+		$('html, body').animate({
+       	    scrollTop: $("#respond").offset().top
+    	}, 200);
+	});
+
+	// 提交笔记
+	var commentform=$('#commentform');
+	commentform.prepend('<div id="comment-status" style="display:none;" ></div>');
+	var statusdiv=$('#comment-status');
+	
+	commentform.submit(function(e){
+		e.preventDefault();
+		var noteContent = editor.getValue();
+		// console.log(noteContent);
+		noteContent = noteContent.replace(/<pre><code>/g,"<pre>");
+		noteContent = noteContent.replace(/<\/code><\/pre>/g,"</pre>");
+		
+		// 系列化表单数据
+		var comment_parent = 0;
+		var is_user_logged_in = $("#is_user_logged_in").val();
+		var comment_post_ID =  21437;
+		var _wp_unfiltered_html_comment = $("#_wp_unfiltered_html_comment").val();
+		var comment = noteContent;
+		var author = $("#author").val();
+		var url = $("#url").val();
+		var email = $("#email").val();
+		if(isBlank(author) && is_user_logged_in==0) {
+			statusdiv.html('<p  class="ajax-error">请输入昵称！</p>').show();
+		} else if(isBlank(email)  && is_user_logged_in==0) {
+			statusdiv.html('<p  class="ajax-error">请输入邮箱！</p>').show();
+		} else {
+			// var formdata=commentform.serialize() + "&comment=" + noteContent ;
+			// 添加状态信息
+			statusdiv.html('<p>Processing...</p>').show();
+			// 获取表单提交地址
+			var formurl=commentform.attr('action');
+			
+			// 异步提交
+			$.ajax({
+					type: 'post',
+					url: formurl,
+					dataType:'json',
+					data: {"comment_parent":comment_parent,"comment_post_ID":comment_post_ID, "_wp_unfiltered_html_comment":_wp_unfiltered_html_comment,"comment":comment,"url":url, "email":email,"author":author},
+					error: function(XMLHttpRequest, textStatus, errorThrown){
+					statusdiv.html('<p class="ajax-error" >数据不完整或表单提交太快了！</p>').show();
+				},
+				success: function(data, textStatus){
+					if(data.errorno=="0") {
+						$("#submit").prop('disabled', true);
+						statusdiv.html('<p class="ajax-success" >笔记已提交审核，感谢分享笔记！</p>').show();
+						alert('笔记已提交审核，感谢分享笔记！');
+					}else{
+						statusdiv.html('<p class="ajax-error" >'+data.msg+'</p>').show();
+					}
+					commentform.find('textarea[name=comment]').val('');
+				}
+			});
+			setTimeout(function(){
+		        $("#submit").prop('disabled', false);
+		    }, 10*1000);
+		}
+		return false;
+
+	});
+	$(".comt-author").click(function() {
+		href = $(this).children("a").attr("href");
+		if(href.indexOf("/note/")!=-1) {
+			var win = window.open(href, '_blank');
+  			win.focus();
+		}
+	});
+	$(".comt-meta span").hover(function(){
+		$(this).children(".tooltip").css({ "opacity": 1, "pointer-events": "auto"});
+	},function(){
+		$(this).children(".tooltip").removeAttr("style");
+	});
+	/*
+	$(".wrapper i").hover(function(){
+		$(this).siblings(".tooltip").css({ "opacity": 1, "pointer-events": "auto"});
+	},function(){
+		$(this).siblings(".tooltip").css({ "opacity": 0, "pointer-events": "auto"});
+	});
+	*/
+	//Upvote.create('runoobvote-id', {callback: vote_callback});
+	var ajaxurl = 'https://www.runoob.com/wp-admin/admin-ajax.php';
+	var callback = function(data) {
+		//console.log($('#runoobvote-id').upvote('upvoted'));
+		//console.log($('#runoobvote-id').upvote('downvoted'));
+		//console.log(data);
+		_vote_action = data.action;
+		id_arr = data.id.split('-');
+		um_id= id_arr[2];
+		//console.log(um_id);
+		
+		var re = /^[1-9]+/;
+		if (re.test(um_id)) { 
+			var ajax_data = {
+				_vote_action: _vote_action,
+				action: "pinglun_zan",
+				um_id: um_id,
+				um_action: "ding"
+			};
+			//console.log(ajax_data);
+			$.post(ajaxurl,ajax_data,function(status){
+				//if(status.vote_num>999) {
+				//	_voteHtml = '<span style="display: block; text-align: center;font-size: 20px; color: #6a737c; margin: 8px 0;">'+kFormatter(status.vote_num) +'</span>';
+				//	$("#runoobvote-id-" + um_id + " .count").hide().after(_voteHtml);
+				//}
+				
+			});
+		}
+	};
+	if($('#comments').length && $('.upvotejs').length){
+		$('.upvotejs').upvote({id: 21437, callback: callback});
+	
+		$.post(ajaxurl,{"action":"pinglun_zan","postid":21437},function(data){  
+			$(data).each(function(key,value) {
+				$("#runoobvote-id-" + value.commid + " .upvote").addClass(value.upvotejs_class);
+				$("#runoobvote-id-" + value.commid + " .downvote").addClass(value.downvote_class);
+				$("#runoobvote-id-" + value.commid + " .count").text(value.upvote_count);
+			})
+		},'json');
+		
+	}
+	
+	
+});
+function isBlank(str) {
+    return (!str || /^\s*$/.test(str));
+}
+function kFormatter(num) {
+	// return num;
+    return Math.abs(num) > 999 ? Math.sign(num)*((Math.abs(num)/1000).toFixed(1)) + 'k' : Math.sign(num)*Math.abs(num)
+}
+
+</script>
+
+<link rel="stylesheet" href="/wp-content/themes/runoob/assets/css/qa.css?1.44">
+<link rel="stylesheet" type="text/css" href="https://cdn.staticfile.org/simditor/2.3.6/styles/simditor.min.css" />
+<script type="text/javascript" src="https://static.runoob.com/assets/simditor/2.3.6/scripts/module.js"></script>
+<script type="text/javascript" src="//static.runoob.com/assets/simditor/2.3.6/scripts/hotkeys.js"></script>
+<script type="text/javascript" src="//static.runoob.com/assets/simditor/2.3.6/scripts/uploader.js"></script>
+<script type="text/javascript" src="https://cdn.staticfile.org/simditor/2.3.6/lib/simditor.min.js"></script>
+<script type="text/javascript" src="https://static.runoob.com/assets/simditor/2.3.6/scripts/simditor-autosave.js"></script>
+			<div class="article-heading-ad" id="w3cnote-ad728">
+			<script async src="//pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script>
+			<!-- 移动版 自动调整 -->
+			<ins class="adsbygoogle"
+			     style="display:inline-block;min-width:300px;max-width:970px;width:100%;height:90px"
+			     data-ad-client="ca-pub-5751451760833794"
+			     data-ad-slot="1691338467"
+			     data-ad-format="horizontal"></ins>
+			<script>
+			(adsbygoogle = window.adsbygoogle || []).push({});
+			</script>
+			</div>
+			<style>
+@media screen and (max-width: 768px) {
+	#w3cnote-ad728 {
+		display: none;
+	}
+}
+p.note-author {
+    border-bottom: 1px solid #ddd;
+    font-size: 18px;
+    font-weight: bold;
+    color: #78a15a;
+    padding-bottom: 2px;
+    margin-bottom: 4px;
+}
+</style>
+<script>
+var aid = 21437;
+</script>
+	</div>
+		
+	</div>
+	<div class="listcol last right-column">
+
+	<script type="text/javascript">
+jQuery(document).ready(function ($){
+	var total = $(".membership li").length;
+	var left_list = '';
+	href = window.location.href;
+	
+	$(".membership li").each(function(index, value){
+
+		left_list += $(this).html();
+
+		cur_href = $(this).find("a").attr("href");
+		cur_obj = $(this);
+		
+		if(href.match(cur_href) != null) {
+			if(index==0) {
+				$(".previous-design-link").hide();
+			}
+			if(index==(total-1)) {
+				$(".next-design-link").hide();
+			}
+			prev_href = cur_obj.prev("li").find("a").attr("href");
+			prev_title = cur_obj.prev("li").find("a").attr("title");
+
+			next_href = cur_obj.next("li").find("a").attr("href");
+			next_title = cur_obj.next("li").find("a").attr("title");
+			if(prev_title) {
+				$(".previous-design-link a").attr("href", prev_href);
+				$(".previous-design-link a").attr("title", prev_title);
+				$(".previous-design-link a").text(prev_title);
+			} else {
+				$(".previous-design-link").html("");
+			}
+
+			if(next_title) {
+				$(".next-design-link a").attr("href", next_href);
+				$(".next-design-link a").attr("title", next_title);
+				$(".next-design-link a").text(next_title);
+			} else {
+				$(".next-design-link").html("");
+			}
+		}
+	});
+
+	$("#leftcolumn").html(left_list);
+});
+	</script>
+	<div class="sidebar-box cate-list">
+	<div class="sidebar-box recommend-here list-link">
+	<a href="javascript:void(0);">算法系列</a>	</div>
+	
+	<ul class="membership">
+		
+	<li><a target="_top" data-id="21423" title="1.0 十大经典排序算法" href="http://www.runoob.com/w3cnote/ten-sorting-algorithm.html" >1.0 十大经典排序算法</a></li>
+	
+		
+	<li><a target="_top" data-id="21425" title="1.1 冒泡排序" href="http://www.runoob.com/w3cnote/bubble-sort.html" >1.1 冒泡排序</a></li>
+	
+		
+	<li><a target="_top" data-id="21427" title="1.2 选择排序" href="http://www.runoob.com/w3cnote/selection-sort.html" >1.2 选择排序</a></li>
+	
+		
+	<li><a target="_top" data-id="21429" title="1.3 插入排序" href="http://www.runoob.com/w3cnote/insertion-sort.html" >1.3 插入排序</a></li>
+	
+		
+	<li><a target="_top" data-id="21431" title="1.4 希尔排序" href="http://www.runoob.com/w3cnote/shell-sort.html" >1.4 希尔排序</a></li>
+	
+		
+	<li><a target="_top" data-id="21433" title="1.5 归并排序" href="http://www.runoob.com/w3cnote/merge-sort.html" >1.5 归并排序</a></li>
+	
+		
+	<li><a target="_top" data-id="21435" title="1.6 快速排序" href="http://www.runoob.com/w3cnote/quick-sort-2.html" >1.6 快速排序</a></li>
+	
+		<li>
+	1.7 堆排序	</li>
+	
+		
+	<li><a target="_top" data-id="21440" title="1.8 计数排序" href="http://www.runoob.com/w3cnote/counting-sort.html" >1.8 计数排序</a></li>
+	
+		
+	<li><a target="_top" data-id="21442" title="1.9 桶排序" href="http://www.runoob.com/w3cnote/bucket-sort.html" >1.9 桶排序</a></li>
+	
+		
+	<li><a target="_top" data-id="21445" title="1.10 基数排序" href="http://www.runoob.com/w3cnote/radix-sort.html" >1.10 基数排序</a></li>
+	
+	</ul></div>	</div>
+</div>
+
+
+<!-- 底部 -->
+<div id="footer" class="mar-t50">
+   <div class="runoob-block">
+    <div class="runoob cf">
+     <dl>
+      <dt>
+       在线实例
+      </dt>
+      <dd>
+       &middot;<a target="_blank" href="/html/html-examples.html">HTML 实例</a>
+      </dd>
+      <dd>
+       &middot;<a target="_blank" href="/css/css-examples.html">CSS 实例</a>
+      </dd>
+      <dd>
+       &middot;<a target="_blank" href="/js/js-examples.html">JavaScript 实例</a>
+      </dd>
+      <dd>
+       &middot;<a target="_blank" href="/ajx/ajax-examples.html">Ajax 实例</a>
+      </dd>
+       <dd>
+       &middot;<a target="_blank" href="/jquery/jquery-examples.html">jQuery 实例</a>
+      </dd>
+      <dd>
+       &middot;<a target="_blank" href="/xml/xml-examples.html">XML 实例</a>
+      </dd>
+      <dd>
+       &middot;<a target="_blank" href="/java/java-examples.html">Java 实例</a>
+      </dd>
+     
+     </dl>
+     <dl>
+      <dt>
+      字符集&工具
+      </dt>
+      <dd>
+       &middot; <a target="_blank" href="/charsets/html-charsets.html">HTML 字符集设置</a>
+      </dd>
+      <dd>
+       &middot; <a target="_blank" href="/tags/html-ascii.html">HTML ASCII 字符集</a>
+      </dd>
+     <dd>
+       &middot; <a target="_blank" href="https://c.runoob.com/front-end/6939/">JS 混淆/加密</a>
+      </dd> 
+      <dd>
+       &middot; <a target="_blank" href="https://c.runoob.com/front-end/6232/">PNG/JPEG 图片压缩</a>
+      </dd>
+      <dd>
+       &middot; <a target="_blank" href="/tags/html-colorpicker.html">HTML 拾色器</a>
+      </dd>
+      <dd>
+       &middot; <a target="_blank" href="//c.runoob.com/front-end/53">JSON 格式化工具</a>
+      </dd>
+      <dd>
+       &middot; <a target="_blank" href="//c.runoob.com/front-end/6680/">随机数生成器</a>
+      </dd>
+     </dl>
+     <dl>
+      <dt>
+       最新更新
+      </dt>
+                   <dd>
+       &middot;
+      <a href="http://www.runoob.com/matplotlib/matplotlib-imread.html" title="Matplotlib imread() 方法">Matplotlib imre...</a>
+      </dd>
+              <dd>
+       &middot;
+      <a href="http://www.runoob.com/matplotlib/matplotlib-imsave.html" title="Matplotlib imsave() 方法">Matplotlib imsa...</a>
+      </dd>
+              <dd>
+       &middot;
+      <a href="http://www.runoob.com/matplotlib/matplotlib-imshow.html" title="Matplotlib imshow() 方法">Matplotlib imsh...</a>
+      </dd>
+              <dd>
+       &middot;
+      <a href="http://www.runoob.com/matplotlib/matplotlib-hist.html" title="Matplotlib 直方图">Matplotlib 直方图</a>
+      </dd>
+              <dd>
+       &middot;
+      <a href="http://www.runoob.com/python3/python-func-object.html" title="Python object() 函数">Python object()...</a>
+      </dd>
+              <dd>
+       &middot;
+      <a href="http://www.runoob.com/python3/python-ai-draw.html" title="Python AI 绘画">Python AI 绘画</a>
+      </dd>
+              <dd>
+       &middot;
+      <a href="http://www.runoob.com/w3cnote/cursor-editor.html" title="神辅助 Cursor 编辑器，加入 GPT-4 让编码更轻松！">神辅助 Cursor ...</a>
+      </dd>
+             </dl>
+     <dl>
+      <dt>
+       站点信息
+      </dt>
+      <dd>
+       &middot;
+       <a target="_blank" href="mailto:admin@runoob.com" rel="external nofollow">意见反馈</a>
+       </dd>
+      <dd>
+       &middot;
+      <a target="_blank" href="/disclaimer">免责声明</a>
+       </dd>
+      <dd>
+       &middot;
+       <a target="_blank" href="/aboutus">关于我们</a>
+       </dd>
+      <dd>
+       &middot;
+      <a target="_blank" href="/archives">文章归档</a>
+      </dd>
+    
+     </dl>
+    
+     <div class="search-share">
+      <div class="app-download">
+        <div>
+         <strong>关注微信</strong>
+        </div>
+      </div>
+      <div class="share">
+      <img width="128" height="128" src="/wp-content/themes/runoob/assets/images/qrcode.png" />
+       </div>
+     </div>
+     
+    </div>
+   </div>
+   <div class="w-1000 copyright">
+     Copyright &copy; 2013-2023    <strong><a href="//www.runoob.com/" target="_blank">菜鸟教程</a></strong>&nbsp;
+    <strong><a href="//www.runoob.com/" target="_blank">runoob.com</a></strong> All Rights Reserved. 备案号：<a target="_blank" rel="nofollow" href="https://beian.miit.gov.cn/">闽ICP备15012807号-1</a>
+   </div>
+  </div>
+  <div class="fixed-btn">
+    <a class="go-top" href="javascript:void(0)" title="返回顶部"> <i class="fa fa-angle-up"></i></a>
+    <a class="qrcode"  href="javascript:void(0)" title="关注我们"><i class="fa fa-qrcode"></i></a>
+    <a class="writer" style="display:none" href="javascript:void(0)"   title="标记/收藏"><i class="fa fa-star" aria-hidden="true"></i></a>
+    <!-- qrcode modal -->
+    <div id="bottom-qrcode" class="modal panel-modal hide fade in">
+      <h4>微信关注</h4>
+      <div class="panel-body"><img alt="微信关注" width="128" height="128" src="/wp-content/themes/runoob/assets/images/qrcode.png"></div> 
+    </div>
+  </div>
+
+ <div style="display:none;">
+<script async src="https://www.googletagmanager.com/gtag/js?id=UA-84264393-2"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+
+  gtag('config', 'UA-84264393-2');
+</script>
+<script>
+var _hmt = _hmt || [];
+(function() {
+  var hm = document.createElement("script");
+  hm.src = "https://hm.baidu.com/hm.js?3eec0b7da6548cf07db3bc477ea905ee";
+  var s = document.getElementsByTagName("script")[0]; 
+  s.parentNode.insertBefore(hm, s);
+})();
+</script>
+
+</div>
+<script>
+window.jsui={
+    www: 'https://www.runoob.com',
+    uri: 'https://www.runoob.com/wp-content/themes/runoob'
+};
+</script>
+
+<script src="https://static.runoob.com/assets/libs/hl/run_prettify.js"></script>
+<script src="/wp-content/themes/runoob/assets/js/main.min.js?v=1.156"></script>
+
+</body>
+</html>

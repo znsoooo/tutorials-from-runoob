@@ -1,0 +1,98 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><title>35.2. 管理数据库连接</title><link rel="stylesheet" type="text/css" href="stylesheet.css" /><link rev="made" href="pgsql-docs@postgresql.org" /><meta name="generator" content="DocBook XSL Stylesheets V1.79.1" /><link rel="prev" href="ecpg-concept.html" title="35.1. 概念" /><link rel="next" href="ecpg-commands.html" title="35.3. 运行 SQL 命令" /></head><body><div xmlns="http://www.w3.org/TR/xhtml1/transitional" class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="5" align="center">35.2. 管理数据库连接</th></tr><tr><td width="10%" align="left"><a accesskey="p" href="ecpg-concept.html" title="35.1. 概念">上一页</a> </td><td width="10%" align="left"><a accesskey="u" href="ecpg.html" title="第 35 章 ECPG - C 中的嵌入式 SQL">上一级</a></td><th width="60%" align="center">第 35 章 <span xmlns="http://www.w3.org/1999/xhtml" class="application">ECPG</span> - C 中的嵌入式 <acronym xmlns="http://www.w3.org/1999/xhtml" class="acronym">SQL</acronym></th><td width="10%" align="right"><a accesskey="h" href="index.html" title="PostgreSQL 10.1 手册">起始页</a></td><td width="10%" align="right"> <a accesskey="n" href="ecpg-commands.html" title="35.3. 运行 SQL 命令">下一页</a></td></tr></table><hr></hr></div><div class="sect1" id="ECPG-CONNECT"><div class="titlepage"><div><div><h2 class="title" style="clear: both">35.2. 管理数据库连接</h2></div></div></div><div class="toc"><dl class="toc"><dt><span class="sect2"><a href="ecpg-connect.html#ECPG-CONNECTING">35.2.1. 连接到数据库服务器</a></span></dt><dt><span class="sect2"><a href="ecpg-connect.html#ECPG-SET-CONNECTION">35.2.2. 选择一个连接</a></span></dt><dt><span class="sect2"><a href="ecpg-connect.html#ECPG-DISCONNECT">35.2.3. 关闭一个连接</a></span></dt></dl></div><p>   这一节描述如何打开、关闭以及切换数据库连接。
+  </p><div class="sect2" id="ECPG-CONNECTING"><div class="titlepage"><div><div><h3 class="title">35.2.1. 连接到数据库服务器</h3></div></div></div><p>   我们可以使用下列语句连接到一个数据库：
+</p><pre class="programlisting">EXEC SQL CONNECT TO <em class="replaceable"><code>target</code></em> [<span class="optional">AS <em class="replaceable"><code>connection-name</code></em></span>] [<span class="optional">USER <em class="replaceable"><code>user-name</code></em></span>];</pre><p>
+   <em class="replaceable"><code>target</code></em>可以用下列方法指定：
+
+   </p><div class="itemizedlist"><ul class="itemizedlist" style="list-style-type: disc; "><li class="listitem">      <code class="literal"><em class="replaceable"><code>dbname</code></em>[<span class="optional">@<em class="replaceable"><code>hostname</code></em></span>][<span class="optional">:<em class="replaceable"><code>port</code></em></span>]</code>
+     </li><li class="listitem">      <code class="literal">tcp:postgresql://<em class="replaceable"><code>hostname</code></em>[<span class="optional">:<em class="replaceable"><code>port</code></em></span>][<span class="optional">/<em class="replaceable"><code>dbname</code></em></span>][<span class="optional">?<em class="replaceable"><code>options</code></em></span>]</code>
+     </li><li class="listitem">      <code class="literal">unix:postgresql://<em class="replaceable"><code>hostname</code></em>[<span class="optional">:<em class="replaceable"><code>port</code></em></span>][<span class="optional">/<em class="replaceable"><code>dbname</code></em></span>][<span class="optional">?<em class="replaceable"><code>options</code></em></span>]</code>
+     </li><li class="listitem">      一个包含上述形式之一的 SQL 字符串
+     </li><li class="listitem">      到一个包含上述形式之一（参见例子）的字符变量的引用
+     </li><li class="listitem">      <code class="literal">DEFAULT</code>
+     </li></ul></div><p>
+
+   如果你用字面（也就是不通过一个变量引用）指定连接目标并且你没有引用该值，那么将会应用普通 SQL 的大小写不敏感性规则。在那种情况中，你也能够按照需要单独将个体参数放置在双引号中。实际上，使用一个（单引号引用）的字符串或一个变量引用出错的可能性更小。连接目标<code class="literal">DEFAULT</code>会以默认用户名发起一个到默认数据库的连接。在那种情况中不能指定单独的用户名或连接名。
+  </p><p>   也有不同的方法来指定用户名：
+
+   </p><div class="itemizedlist"><ul class="itemizedlist" style="list-style-type: disc; "><li class="listitem">      <code class="literal"><em class="replaceable"><code>username</code></em></code>
+     </li><li class="listitem">      <code class="literal"><em class="replaceable"><code>username</code></em>/<em class="replaceable"><code>password</code></em></code>
+     </li><li class="listitem">      <code class="literal"><em class="replaceable"><code>username</code></em> IDENTIFIED BY <em class="replaceable"><code>password</code></em></code>
+     </li><li class="listitem">      <code class="literal"><em class="replaceable"><code>username</code></em> USING <em class="replaceable"><code>password</code></em></code>
+     </li></ul></div><p>
+
+   如上所述，参数<em class="replaceable"><code>username</code></em>以及<em class="replaceable"><code>password</code></em>可以是一个 SQL 标识符、一个 SQL 字符串或者一个对字符变量的引用。
+  </p><p>   <em class="replaceable"><code>connection-name</code></em>被用来在一个程序中处理多个连接。如果一个程序只使用一个连接，它可以被忽略。最近被打开的连接将成为当前连接，当一个 SQL 语句要被执行时，将默认使用它（见这一章稍后的部分）。
+  </p><p>   这里有一些<code class="command">CONNECT</code>语句的例子：
+</p><pre class="programlisting">EXEC SQL CONNECT TO mydb@sql.mydomain.com;
+
+EXEC SQL CONNECT TO unix:postgresql://sql.mydomain.com/mydb AS myconnection USER john;
+
+EXEC SQL BEGIN DECLARE SECTION;
+const char *target = "mydb@sql.mydomain.com";
+const char *user = "john";
+const char *passwd = "secret";
+EXEC SQL END DECLARE SECTION;
+ ...
+EXEC SQL CONNECT TO :target USER :user USING :passwd;
+/* 或者 EXEC SQL CONNECT TO :target USER :user/:passwd; */</pre><p>
+   最后一种形式利用被上文成为字符变量引用的变体。你将在后面的小节中看到当你把 C 变量前放上一个冒号时，它们是怎样被用于 SQL 语句的。
+  </p><p>   注意连接目标的格式没有在 SQL 标准中说明。因此如果你想要开发可移植的应用，你可能想要使用某种基于上述最后一个例子的方法来把连接目标字符串封装在某个地方。
+  </p></div><div class="sect2" id="ECPG-SET-CONNECTION"><div class="titlepage"><div><div><h3 class="title">35.2.2. 选择一个连接</h3></div></div></div><p>   嵌入式 SQL 程序中的 SQL 语句默认是在当前连接（也就是最近打开的那一个）上执行的。如果一个应用需要管理多个连接，那么有两种方法来处理这种需求。
+  </p><p>   第一个选项是显式地为每一个 SQL 语句选择一个连接，例如：
+</p><pre class="programlisting">EXEC SQL AT <em class="replaceable"><code>connection-name</code></em> SELECT ...;</pre><p>
+   如果应用需要以混合的顺序使用多个连接，这个选项特别合适。
+  </p><p>   如果你的应用使用多个线程执行，它们不能并发地共享一个连接。你必须显式地控制对连接的访问（使用互斥量）或者为每个线程使用一个连接。
+  </p><p>   第二个选项是执行一个语句来切换当前的连接。该语句是：
+</p><pre class="programlisting">EXEC SQL SET CONNECTION <em class="replaceable"><code>connection-name</code></em>;</pre><p>
+   如果很多语句要被在同一个连接上执行，这个选项特别方便。
+  </p><p>   这里有一个管理多个数据库连接的例子程序：
+</p><pre class="programlisting">#include &lt;stdio.h&gt;
+
+EXEC SQL BEGIN DECLARE SECTION;
+    char dbname[1024];
+EXEC SQL END DECLARE SECTION;
+
+int
+main()
+{
+    EXEC SQL CONNECT TO testdb1 AS con1 USER testuser;
+    EXEC SQL CONNECT TO testdb2 AS con2 USER testuser;
+    EXEC SQL CONNECT TO testdb3 AS con3 USER testuser;
+
+    /* 这个查询将在最近打开的数据库 "testdb3" 中执行 */
+    EXEC SQL SELECT current_database() INTO :dbname;
+    printf("current=%s (should be testdb3)\n", dbname);
+
+    /* 使用 "AT" 在 "testdb2" 中运行一个查询 */
+    EXEC SQL AT con2 SELECT current_database() INTO :dbname;
+    printf("current=%s (should be testdb2)\n", dbname);
+
+    /* 切换当前连接到 "testdb1" */
+    EXEC SQL SET CONNECTION con1;
+
+    EXEC SQL SELECT current_database() INTO :dbname;
+    printf("current=%s (should be testdb1)\n", dbname);
+
+    EXEC SQL DISCONNECT ALL;
+    return 0;
+}</pre><p>
+
+   这个例子将产生这样的输出：
+</p><pre class="screen">current=testdb3 (should be testdb3)
+current=testdb2 (should be testdb2)
+current=testdb1 (should be testdb1)</pre><p>
+  </p></div><div class="sect2" id="ECPG-DISCONNECT"><div class="titlepage"><div><div><h3 class="title">35.2.3. 关闭一个连接</h3></div></div></div><p>   要关闭一个连接，使用下列语句：
+</p><pre class="programlisting">EXEC SQL DISCONNECT [<span class="optional"><em class="replaceable"><code>connection</code></em></span>];</pre><p>
+   <em class="replaceable"><code>connection</code></em>可以用下列方法指定：
+
+   </p><div class="itemizedlist"><ul class="itemizedlist" style="list-style-type: disc; "><li class="listitem">      <code class="literal"><em class="replaceable"><code>connection-name</code></em></code>
+     </li><li class="listitem">      <code class="literal">DEFAULT</code>
+     </li><li class="listitem">      <code class="literal">CURRENT</code>
+     </li><li class="listitem">      <code class="literal">ALL</code>
+     </li></ul></div><p>
+
+   如果没有指定连接名，当前连接将被关闭。
+  </p><p>   在一个应用中总是显式地从它打开的每一个连接断开是一种好的风格。
+  </p></div></div><div class="navfooter"><hr /><table width="100%" summary="Navigation footer"><tr><td width="40%" align="left"><a accesskey="p" href="ecpg-concept.html">上一页</a> </td><td width="20%" align="center"><a accesskey="u" href="ecpg.html">上一级</a></td><td width="40%" align="right"> <a accesskey="n" href="ecpg-commands.html">下一页</a></td></tr><tr><td width="40%" align="left" valign="top">35.1. 概念 </td><td width="20%" align="center"><a accesskey="h" href="index.html">起始页</a></td><td width="40%" align="right" valign="top"> 35.3. 运行 SQL 命令</td></tr></table></div></body></html>

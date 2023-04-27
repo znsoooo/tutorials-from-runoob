@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><title>E.179. 版本 8.2.23</title><link rel="stylesheet" type="text/css" href="stylesheet.css" /><link rev="made" href="pgsql-docs@postgresql.org" /><meta name="generator" content="DocBook XSL Stylesheets V1.79.1" /><link rel="prev" href="release-8-3.html" title="E.178. 版本8.3" /><link rel="next" href="release-8-2-22.html" title="E.180. 版本 8.2.22" /></head><body><div xmlns="http://www.w3.org/TR/xhtml1/transitional" class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="5" align="center">E.179. 版本 8.2.23</th></tr><tr><td width="10%" align="left"><a accesskey="p" href="release-8-3.html" title="E.178. 版本8.3">上一页</a> </td><td width="10%" align="left"><a accesskey="u" href="release.html" title="附录 E. 版本说明">上一级</a></td><th width="60%" align="center">附录 E. 版本说明</th><td width="10%" align="right"><a accesskey="h" href="index.html" title="PostgreSQL 10.1 手册">起始页</a></td><td width="10%" align="right"> <a accesskey="n" href="release-8-2-22.html" title="E.180. 版本 8.2.22">下一页</a></td></tr></table><hr></hr></div><div class="sect1" id="RELEASE-8-2-23"><div class="titlepage"><div><div><h2 class="title" style="clear: both">E.179. 版本 8.2.23</h2></div></div></div><div class="toc"><dl class="toc"><dt><span class="sect2"><a href="release-8-2-23.html#idp79380768">E.179.1. 迁移到版本 8.2.23</a></span></dt><dt><span class="sect2"><a href="release-8-2-23.html#idp79384080">E.179.2. 修改列表</a></span></dt></dl></div><p><strong>发布日期：. </strong>2011-12-05</p><p>这个版本包含各种自8.2.22以来的修复。关于8.2主版本的新特性信息，
+请查看<a class="xref" href="release-8-2.html" title="E.202. 版本 8.2">第 E.202 节</a>。</p><p>这预计是8.2.X系列的最后一个<span class="productname">PostgreSQL</span>版本。
+建议用户尽快更新到一个新的版本分支。</p><div class="sect2" id="idp79380768"><div class="titlepage"><div><div><h3 class="title">E.179.1. 迁移到版本 8.2.23</h3></div></div></div><p>运行8.2.X的用户不需要转储/恢复。</p><p>不过，在<code class="literal">information_schema.referential_constraints</code>
+视图的定义中发现一个长期存在的错误。如果你依赖于该视图的正确结果，
+你应该像下面解释的第一个更新日志项一样替换它的定义。</p><p>还有，如果你是从一个早于8.2.14的版本升级而来，那么请查看<a class="xref" href="release-8-2-14.html" title="E.188. 版本 8.2.14">第 E.188 节</a>。</p></div><div class="sect2" id="idp79384080"><div class="titlepage"><div><div><h3 class="title">E.179.2. 修改列表</h3></div></div></div><div class="itemizedlist"><ul class="itemizedlist" style="list-style-type: disc; "><li class="listitem"><p>修复在<code class="literal">information_schema.referential_constraints</code>视图中的错误 (Tom Lane)</p><p>这个视图在匹配外键约束到决定性的主键或唯一键约束上不够细心。
+这会导致未能显示外键约束，或者多次显示外键约束，
+或者抱怨它依赖于一个与它实际依赖的不同的约束。</p><p>因为视图定义是通过<span class="application">initdb</span>安装的，只是升级将不能修复该问题。
+如果你需要在一个现有的安装中修复该问题，你可以（作为超级用户）
+删除<code class="literal">information_schema</code>模式，然后通过来源
+<code class="filename"><em class="replaceable"><code>SHAREDIR</code></em>/information_schema.sql</code>
+重新创建它。（如果不确定<em class="replaceable"><code>SHAREDIR</code></em>在哪里，运行
+<code class="literal">pg_config --sharedir</code>。）必须在每个要修复的数据库中重复该步骤。</p></li><li class="listitem"><p>修复<code class="literal">CREATE TABLE dest AS SELECT * FROM src</code>或
+<code class="literal">INSERT INTO dest SELECT * FROM src</code>期间TOAST相关的数据损坏 (Tom Lane)</p><p>如果一个表通过<code class="command">ALTER TABLE ADD COLUMN</code>修改了，
+那么尝试逐字的拷贝它的数据到另外一个表可能在极端情况下产生损坏的结果。
+这个问题只能在8.4及以后的版本中以这个精确的形式来验证，
+不过我们也给早期的版本打了补丁，以防有其他的代码路径会触发相同的错误。</p></li><li class="listitem"><p>修复toast表访问陈旧的系统缓存记录时的竞态条件 (Tom Lane)</p><p>典型的症状是像<span class="quote">“<span class="quote">missing chunk number 0 for toast value NNNNN in pg_toast_2619</span>”</span>
+这样的瞬态错误，这里引用的toast表将总是属于一个系统目录。</p></li><li class="listitem"><p>改善<code class="type">money</code>类型的输入和输出中的本地支持 (Tom Lane)</p><p>除了不支持所有标准的<a class="link" href="runtime-config-client.html#GUC-LC-MONETARY"><code class="varname">lc_monetary</code></a>
+格式选项之外，输入和输出函数是不考虑的，意味着有的环境中转储的<code class="type">money</code>
+值不能被重新读取。</p></li><li class="listitem"><p>让<a class="link" href="runtime-config-compatible.html#GUC-TRANSFORM-NULL-EQUALS"><code class="varname">transform_null_equals</code></a>
+不影响<code class="literal">CASE foo WHEN NULL ...</code>结构 (Heikki Linnakangas)</p><p><code class="varname">transform_null_equals</code>只应该影响直接由用户编写的<code class="literal">foo = NULL</code>
+表达式，不等于<code class="literal">CASE</code>的这个格式内部产生的检查。</p></li><li class="listitem"><p>修改外键触发器创建，要求更好的支持自我引用的外键 (Tom Lane)</p><p>对于一个引用自身的表的级联外键，一个行更新将作为一个事件触发<code class="literal">ON UPDATE</code>
+触发器和<code class="literal">CHECK</code>触发器。必须先执行<code class="literal">ON UPDATE</code>触发器，
+否则<code class="literal">CHECK</code>将检查一个行的非最终状态，并且可能抛出一个不合适的错误。
+然而，这些触发器的触发顺序是通过他们的名字决定的，通常以特定的顺序排序，
+因为触发器有自动生成的名字，遵从约定<span class="quote">“<span class="quote">RI_ConstraintTrigger_NNNN</span>”</span>。
+修改该约定将需要一个适当的修复，我们将在9.2中实现，
+但是在现有的版本中修改它似乎是危险的。所以这个路径只是改变了触发器的创建顺序。
+用户遇到这个类型的错误时应该删除并重建外键约束，以使它的触发器的顺序正确。</p></li><li class="listitem"><p>保护<span class="application">psql</span>命令历史中的命令中的空行 (Robert Haas)</p><p>例如，如果从一个字符串文本中删除了一个空行，前者的行为会导致问题。</p></li><li class="listitem"><p>使用<span class="application">xsubpp</span>的首选版本建立PL/Perl，
+不一定是操作系统的主要拷贝 (David Wheeler 和 Alex Hunsaker)</p></li><li class="listitem"><p>遵从<code class="function">pgstatindex()</code>中的查询取消立即中断 (Robert Haas)</p></li><li class="listitem"><p>确保VPATH构建适当的安装所有的服务器头文件 (Peter Eisentraut)</p></li><li class="listitem"><p>缩短在详细错误消息中报告的文件名 (Peter Eisentraut)</p><p>常规的构建总是只是报告包含错误消息调用的C文件的名字，
+但是VPATH构建以前报告一个绝对路径名。</p></li><li class="listitem"><p>为Central America修复Windows时区名的解释 (Tom Lane)</p><p>映射<span class="quote">“<span class="quote">Central America Standard Time</span>”</span>到<code class="literal">CST6</code>，
+而不是<code class="literal">CST6CDT</code>，因为DST通常没有观察到Central America的每一个地方。</p></li><li class="listitem"><p>更新时区数据文件到<span class="application">tzdata</span>版本2011n，因为DST规律在
+Brazil、Cuba、Fiji、Palestine、Russia和Samoa发生了改变；
+还为Alaska和British East Africa做了历史纠正。</p></li></ul></div></div></div><div class="navfooter"><hr /><table width="100%" summary="Navigation footer"><tr><td width="40%" align="left"><a accesskey="p" href="release-8-3.html">上一页</a> </td><td width="20%" align="center"><a accesskey="u" href="release.html">上一级</a></td><td width="40%" align="right"> <a accesskey="n" href="release-8-2-22.html">下一页</a></td></tr><tr><td width="40%" align="left" valign="top">E.178. 版本8.3 </td><td width="20%" align="center"><a accesskey="h" href="index.html">起始页</a></td><td width="40%" align="right" valign="top"> E.180. 版本 8.2.22</td></tr></table></div></body></html>

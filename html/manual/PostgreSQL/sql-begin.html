@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><title>BEGIN</title><link rel="stylesheet" type="text/css" href="stylesheet.css" /><link rev="made" href="pgsql-docs@postgresql.org" /><meta name="generator" content="DocBook XSL Stylesheets V1.79.1" /><link rel="prev" href="sql-analyze.html" title="ANALYZE" /><link rel="next" href="sql-checkpoint.html" title="CHECKPOINT" /></head><body><div xmlns="http://www.w3.org/TR/xhtml1/transitional" class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="5" align="center">BEGIN</th></tr><tr><td width="10%" align="left"><a accesskey="p" href="sql-analyze.html" title="ANALYZE">上一页</a> </td><td width="10%" align="left"><a accesskey="u" href="sql-commands.html" title="SQL 命令">上一级</a></td><th width="60%" align="center">SQL 命令</th><td width="10%" align="right"><a accesskey="h" href="index.html" title="PostgreSQL 10.1 手册">起始页</a></td><td width="10%" align="right"> <a accesskey="n" href="sql-checkpoint.html" title="CHECKPOINT">下一页</a></td></tr></table><hr></hr></div><div class="refentry" id="SQL-BEGIN"><div class="titlepage"></div><a id="idp41856032" class="indexterm"></a><div class="refnamediv"><h2><span class="refentrytitle">BEGIN</span></h2><p>BEGIN — 开始一个事务块</p></div><div class="refsynopsisdiv"><h2>大纲</h2><pre class="synopsis">BEGIN [ WORK | TRANSACTION ] [ <em class="replaceable"><code>transaction_mode</code></em> [, ...] ]
+
+<span class="phrase">其中 <em class="replaceable"><code>transaction_mode</code></em> 是以下之一：</span>
+
+    ISOLATION LEVEL { SERIALIZABLE | REPEATABLE READ | READ COMMITTED | READ UNCOMMITTED }
+    READ WRITE | READ ONLY
+    [ NOT ] DEFERRABLE</pre></div><div class="refsect1" id="idp41861488"><h2>描述</h2><p>   <code class="command">BEGIN</code>开始一个事务块，也就是说所有
+   <code class="command">BEGIN</code>命令之后的所有语句将被在一个
+   事务中执行，直到给出一个显式的<a class="xref" href="sql-commit.html" title="COMMIT"><span class="refentrytitle">COMMIT</span></a>或
+   者<a class="xref" href="sql-rollback.html" title="ROLLBACK"><span class="refentrytitle">ROLLBACK</span></a>。默认情况下（没有
+   <code class="command">BEGIN</code>），
+   <span class="productname">PostgreSQL</span>在
+   <span class="quote">“<span class="quote">自动提交</span>”</span>模式中执行事务，也就是说每个语句都
+   在自己的事务中执行并且在语句结束时隐式地执行一次提交（如果执
+   行成功，否则会完成一次回滚）。
+  </p><p>   在一个事务块内的语句会执行得更快，因为事务的开始/提交也要求可观
+   的 CPU 和磁盘活动。在进行多个相关更改时，在一个事务内执行多个语
+   句也有助于保证一致性：在所有相关更新还没有完成之前，其他会话将不
+   能看到中间状态。
+  </p><p>   如果指定了隔离级别、读/写模式或者延迟模式，新事务也会有那些特性，
+   就像执行了<a class="xref" href="sql-set-transaction.html" title="SET TRANSACTION"><span class="refentrytitle">SET TRANSACTION</span></a>一样。
+  </p></div><div class="refsect1" id="idp41869200"><h2>参数</h2><div class="variablelist"><dl class="variablelist"><dt><span class="term"><code class="literal">WORK</code><br /></span><span class="term"><code class="literal">TRANSACTION</code></span></dt><dd><p>      可选的关键词。它们没有效果。
+     </p></dd></dl></div><p>   这个语句其他参数的含义请参考
+   <a class="xref" href="sql-set-transaction.html" title="SET TRANSACTION"><span class="refentrytitle">SET TRANSACTION</span></a>。
+  </p></div><div class="refsect1" id="idp41872800"><h2>注解</h2><p>   <a class="xref" href="sql-start-transaction.html" title="START TRANSACTION"><span class="refentrytitle">START TRANSACTION</span></a>具有和<code class="command">BEGIN</code>
+   相同的功能。
+  </p><p>   使用<a class="xref" href="sql-commit.html" title="COMMIT"><span class="refentrytitle">COMMIT</span></a>或者
+   <a class="xref" href="sql-rollback.html" title="ROLLBACK"><span class="refentrytitle">ROLLBACK</span></a>来终止一个事务块。
+  </p><p>   在已经在一个事务块中时发出<code class="command">BEGIN</code>将惹出一个警告
+   消息。事务状态不会被影响。要在一个事务块中嵌套事务，可以使用保
+   存点（见<a class="xref" href="sql-savepoint.html" title="SAVEPOINT"><span class="refentrytitle">SAVEPOINT</span></a>）。
+  </p><p>   由于向后兼容的原因，连续的
+   <em class="replaceable"><code>transaction_modes</code></em>
+   之间的逗号可以被省略。
+  </p></div><div class="refsect1" id="idp41879776"><h2>示例</h2><p>   开始一个事务块：
+
+</p><pre class="programlisting">BEGIN;</pre></div><div class="refsect1" id="idp41881088"><h2>兼容性</h2><p>   <code class="command">BEGIN</code>是一种
+   <span class="productname">PostgreSQL</span>语言扩展。它等效于
+   SQL 标准的命令<a class="xref" href="sql-start-transaction.html" title="START TRANSACTION"><span class="refentrytitle">START TRANSACTION</span></a>，它的参考页
+   包含额外的兼容性信息。
+  </p><p>   <code class="literal">DEFERRABLE</code>
+   <em class="replaceable"><code>transaction_mode</code></em>
+   是一种<span class="productname">PostgreSQL</span>语言扩展。
+  </p><p>   附带地，<code class="literal">BEGIN</code>关键词被用于嵌入式 SQL 中的一种
+   不同目的。在移植数据库应用时，我们建议小心对待事务语义。
+  </p></div><div class="refsect1" id="idp41887488"><h2>另见</h2><span class="simplelist"><a class="xref" href="sql-commit.html" title="COMMIT"><span class="refentrytitle">COMMIT</span></a>, <a class="xref" href="sql-rollback.html" title="ROLLBACK"><span class="refentrytitle">ROLLBACK</span></a>, <a class="xref" href="sql-start-transaction.html" title="START TRANSACTION"><span class="refentrytitle">START TRANSACTION</span></a>, <a class="xref" href="sql-savepoint.html" title="SAVEPOINT"><span class="refentrytitle">SAVEPOINT</span></a></span></div></div><div class="navfooter"><hr /><table width="100%" summary="Navigation footer"><tr><td width="40%" align="left"><a accesskey="p" href="sql-analyze.html">上一页</a> </td><td width="20%" align="center"><a accesskey="u" href="sql-commands.html">上一级</a></td><td width="40%" align="right"> <a accesskey="n" href="sql-checkpoint.html">下一页</a></td></tr><tr><td width="40%" align="left" valign="top">ANALYZE </td><td width="20%" align="center"><a accesskey="h" href="index.html">起始页</a></td><td width="40%" align="right" valign="top"> CHECKPOINT</td></tr></table></div></body></html>

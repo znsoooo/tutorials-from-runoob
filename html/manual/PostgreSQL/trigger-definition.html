@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><title>38.1. 触发器行为概述</title><link rel="stylesheet" type="text/css" href="stylesheet.css" /><link rev="made" href="pgsql-docs@postgresql.org" /><meta name="generator" content="DocBook XSL Stylesheets V1.79.1" /><link rel="prev" href="triggers.html" title="第 38 章 触发器" /><link rel="next" href="trigger-datachanges.html" title="38.2. 数据改变的可见性" /></head><body><div xmlns="http://www.w3.org/TR/xhtml1/transitional" class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="5" align="center">38.1. 触发器行为概述</th></tr><tr><td width="10%" align="left"><a accesskey="p" href="triggers.html" title="第 38 章 触发器">上一页</a> </td><td width="10%" align="left"><a accesskey="u" href="triggers.html" title="第 38 章 触发器">上一级</a></td><th width="60%" align="center">第 38 章 触发器</th><td width="10%" align="right"><a accesskey="h" href="index.html" title="PostgreSQL 10.1 手册">起始页</a></td><td width="10%" align="right"> <a accesskey="n" href="trigger-datachanges.html" title="38.2. 数据改变的可见性">下一页</a></td></tr></table><hr></hr></div><div class="sect1" id="TRIGGER-DEFINITION"><div class="titlepage"><div><div><h2 class="title" style="clear: both">38.1. 触发器行为概述</h2></div></div></div><p>    一个触发器声明了当执行一种特定类型的操作时数据库应该自动执行一个特殊的函数。触发器可以被附加到表（分区或不分区）、视图和外部表。
+  </p><p>    在表和外部表上，触发器可以被定义为在
+    <code class="command">INSERT</code>、<code class="command">UPDATE</code>或
+   <code class="command">DELETE</code>操作之前或之后被执行，
+   可以为每个<acronym class="acronym">SQL</acronym>语句被执行一次或者为每个修改的行
+   被执行一次。<code class="command">UPDATE</code>
+    触发器可以进一步地设置为只针对<code class="command">UPDATE</code>
+    语句的<code class="literal">SET</code>子句的特定列出发。触发器也可以被
+    <code class="command">TRUNCATE</code>语句触发。如果一个触发器事件发生，
+    触发器函数会在适当的事件被调用来处理该事件。
+   </p><p>    在视图上，触发器可以被定义来取代<code class="command">INSERT</code>、<code class="command">UPDATE</code>或
+    <code class="command">DELETE</code>操作的执行。<code class="literal">INSTEAD OF</code>触发器对视图中需要被修改的每一行触发一次。触发器函数的职责是对底层的基本表执行必要的修改，并且在合适的时候返回被修改的行以便显示在视图中。视图上的触发器也可以被定义为对每个<acronym class="acronym">SQL</acronym>语句执行一次，在<code class="command">INSERT</code>\<code class="command">UPDATE</code>或<code class="command">DELETE</code>操作之前或之后。
+   </p><p>    触发器函数必须在触发器本身被创建之前被定义好。触发器函数必须被定义成一个没有参数的函数，并且返回类型为<code class="literal">trigger</code>（触发器函数通过一个特殊传递的<code class="structname">TriggerData</code>结构作为其输入，而不是以普通函数参数的形式）。
+   </p><p>    一旦一个合适的触发器函数被创建，就可以使用<a class="xref" href="sql-createtrigger.html" title="CREATE TRIGGER"><span class="refentrytitle">CREATE TRIGGER</span></a>建立触发器。同一个触发器函数可以被用于多个触发器。
+   </p><p>    <span class="productname">PostgreSQL</span>同时提供<em class="firstterm">每行的</em>触发器和<em class="firstterm">每语句的</em>触发器。对于一个每行的触发器，对于触发触发器的语句所修改的每一行都会调用一次触发器函数。相反，一个每语句的触发器对于其触发语句只被调用一次，而不管该语句影响了多少行。特别地，一个不影响任何行的语句仍然会导致任何可用每语句的触发器的执行。这两类触发器有时也分别被称作<em class="firstterm">行级</em>触发器和<em class="firstterm">语句级</em>触发器。
+	<code class="command">TRUNCATE</code>上的触发器只能定义在语句级，而不是每行定义。
+   </p><p>    触发器也可以根据它们是否在操作<em class="firstterm">之前</em>、<em class="firstterm">之后</em>触发，
+	或者被触发来<em class="firstterm">取代</em>操作来分类。它们分别指<code class="literal">BEFORE</code>触发器、
+	<code class="literal">AFTER</code> 触发器以及<code class="literal">INSTEAD OF</code>触发器。语句级<code class="literal">BEFORE</code>
+	触发器在语句开始做任何事情之前被触发，而语句级<code class="literal">AFTER</code>触发器则在语句做完所有事情之后被触发。
+	这些触发器类型可以被定义在表、视图或外部表上。行级<code class="literal">BEFORE</code>触发器在每一个行被操作之前被触发，
+	而行级<code class="literal">AFTER</code>触发器在语句结束之后被触发（但在任何语句级<code class="literal">AFTER</code>触发器之前）。
+	这些触发器类型只能被定义在非分区表和外部表上，不能定义在视图上。<code class="literal">INSTEAD OF</code>
+	触发器只能被定义在视图上，并且只能定义为行级；
+	它们立刻为视图中每一个被标识为需要被操作的行触发。
+   </p><p>    在继承或分区层次结构中定位父表的语句不会导致受影响的子表的语句级触发器被触发；
+	只有父表的语句级触发器被触发。但是，任何受影响的子表的行级触发器都将被触发。
+   </p><p>    如果一个<code class="command">INSERT</code>包含<code class="literal">ON CONFLICT
+    DO UPDATE</code>子句并且引用了<code class="varname">EXCLUDED</code>列，有可能行级
+    <code class="literal">BEFORE</code> <code class="command">INSERT</code>触发器和行级
+    <code class="literal">BEFORE</code> <code class="command">UPDATE</code>触发器的效果可能会以一种对于
+    被更新行最终状态透明的方式被应用。不过，对于要执行的两种集合的行级
+    <code class="literal">BEFORE</code>触发器都不需要有<code class="varname">EXCLUDED</code>列引用。当同时有行级
+    <code class="literal">BEFORE</code> <code class="command">INSERT</code>和
+    <code class="literal">BEFORE</code> <code class="command">UPDATE</code>触发器修改被插入/
+    更新的行时（即使修改或多或少都具有同等效力，但如果它们也不是幂等的，这可能会有问题），
+    应该考虑可能出现的意料之外的结果。注意在指定了
+    <code class="literal">ON CONFLICT DO UPDATE</code>时，不管有没有行被
+    <code class="command">UPDATE</code>影响（并且不管是否采用了其他
+    <code class="command">UPDATE</code>路径），语句级
+    <code class="command">UPDATE</code>都将被执行。一个带有
+    <code class="literal">ON CONFLICT DO UPDATE</code>子句的<code class="command">INSERT</code>
+    将首先执行语句级<code class="literal">BEFORE</code> <code class="command">INSERT</code>，
+    然后执行语句级<code class="literal">BEFORE</code>
+    <code class="command">UPDATE</code>触发器，
+    接着是语句级<code class="literal">AFTER</code> <code class="command">UPDATE</code>触发器，
+    最后是语句级<code class="literal">AFTER</code> <code class="command">INSERT</code>触发器。
+   </p><p>    被语句级触发器调用的触发器函数应该总是返回<code class="symbol">NULL</code>。根据行级触发器的选择，被其调用的触发器函数可以返回一个表行（类型<code class="structname">HeapTuple</code>的一个值）给执行器。在一个操作前触发的行级触发器有下列选择：
+
+    </p><div class="itemizedlist"><ul class="itemizedlist" style="list-style-type: disc; "><li class="listitem"><p>       它可以返回<code class="symbol">NULL</code>来跳过对当前行的操作。这指示执行器不要执行调用触发器的行级操作（对一个特定表行的插入、修改或删除）。
+      </p></li><li class="listitem"><p>       仅对行级<code class="command">INSERT</code>和<code class="command">UPDATE</code>触发器来说，被返回的行称为将要被插入的行或者替代将被更新的行。这允许触发器函数修改将要被插入或更新的行。
+      </p></li></ul></div><p>
+
+    一个无意导致任何这些行为的行级<code class="literal">BEFORE</code>触发器必须小心地它的结果，使之和被传入的行一样（即，<code class="command">INSERT</code>和<code class="command">UPDATE</code>触发器的<code class="varname">NEW</code>行，<code class="command">DELETE</code>触发器的<code class="varname">OLD</code>行）。
+   </p><p>    一个行级<code class="literal">INSTEAD OF</code>触发器可以返回<code class="symbol">NULL</code>来指示它没有修改任何来自于视图底层基表的数据，也可以返回被传入的视图行（<code class="command">INSERT</code>和<code class="command">UPDATE</code>操作的<code class="varname">NEW</code>行，或者<code class="command">DELETE</code>操作的<code class="varname">OLD</code>行）。一个非空返回值被用于标志触发器在视图中执行了必须的数据修改。这将会导致被命令修改的行计数被增加。对于<code class="command">INSERT</code>和<code class="command">UPDATE</code>操作，触发器可能会在返回<code class="varname">NEW</code>行之前对其进行修改。这将会改变<code class="command">INSERT RETURNING</code>或<code class="command">UPDATE RETURNING</code>返回的数据，并在视图无法正确地显示提供给它的相同数据时有用。
+   </p><p>    对于在一个操作之后触发的行级触发器，返回值会被忽略，因此它们可以返回<code class="symbol">NULL</code>。
+   </p><p>    如果为同一个关系上的同一事件定义了超过一个触发器，它们将按照其名称的字母表顺序被触发。在<code class="literal">BEFORE</code>和<code class="literal">INSTEAD OF</code>触发器的情况下，每一个触发器返回的可能被修改的行将成为下一个触发器的输入。如果任何一个<code class="literal">BEFORE</code>或<code class="literal">INSTEAD OF</code>触发器返回<code class="symbol">NULL</code>，该操作将在该行上被禁用并且对于该行不会触发后续的触发器。
+   </p><p>    一个触发器定义也能指定一个布尔的<code class="literal">WHEN</code>条件，它将被测试来看该触发器是否应该被触发。在行级触发器中，<code class="literal">WHEN</code>条件可以检查该行的旧列值和/或新列值（语句级触发器也能有<code class="literal">WHEN</code>条件，但是该特性对它们不太有用）。在一个<code class="literal">BEFORE</code>触发器中，<code class="literal">WHEN</code>条件只是在该函数被或者将被执行前计算，因此使用<code class="literal">WHEN</code>条件与在该触发器函数的开始测试相同的条件没有本质区别。不过，在一个<code class="literal">AFTER</code>触发器中，<code class="literal">WHEN</code>条件只是在行更新发生之后被计算，并且它决定在语句的末尾一个事件是否被排队来触发该触发器。因此当一个<code class="literal">AFTER</code>触发器的<code class="literal">WHEN</code>不返回真时，在语句的末尾没有必要将一个事件进行排队，也没有必要重新取出该行。如果触发器只对少数行触发，这可以使得修改很多行的语句明显加快。<code class="literal">INSTEAD OF</code>触发器不支持<code class="literal">WHEN</code>条件。
+   </p><p>    通常，行级<code class="literal">BEFORE</code>被用来检查或修改即将被插入或更新的数据。例如，一个<code class="literal">BEFORE</code>触发器可以被用来把当前时间插入到一个<code class="type">timestamp</code>列中，或者检查该行的两个元素之间是否一致。行级<code class="literal">AFTER</code>触发器大多数被用来将更新传播到其他表，或者针对其他表进行一致性检查。进行这种工作分工的原因是，一个<code class="literal">AFTER</code>触发器可以肯定它看到的是该行的最终值，而一个<code class="literal">BEFORE</code>触发器则不能，因为还可能有其他<code class="literal">BEFORE</code>触发器在它之后触发。如果你不知道让一个触发器是<code class="literal">BEFORE</code>或<code class="literal">AFTER</code>，则<code class="literal">BEFORE</code>形式更加有效，因为关于该操作的信息直到语句的末尾都不需要被保存。
+   </p><p>    如果一个触发器函数执行 SQL 命令，则这些命令可能会再次引发触发器。这就是所谓的级联触发器。对于级联的层数没有直接的限制。级联有可能会导致对同一个触发器的递归调用。例如，一个<code class="command">INSERT</code>触发器可能执行一个向同一个表插入一个额外行的命令，这就导致该<code class="command">INSERT</code>触发器被再次引发。所以在这种情形下，触发器程序员应该负责避免无限递归。
+   </p><p>    <a id="idp34750400" class="indexterm"></a>
+    在定义一个触发器时，可以为它指定参数。在触发器定义中包括参数的目的是允许具有相似需求的不同触发器调用同一个函数。例如，可能有一个一般性的触发器函数，它需要两个列名作为参数，一个放当前用户而另一个放当前时间戳。在正确编写的情况下，这个触发器函数应该独立于它所触发的表。因此同一个函数可以被用于具有适当列的任意表上的<code class="command">INSERT</code>事件，这样做的用途之一是可以自动追踪一个交易表中记录的创建。如果被定义成一个<code class="command">UPDATE</code>触发器，它也可以被用来追踪最新的更新事件。
+   </p><p>    每一种支持触发器的编程语言都有自己的方法来让触发器输入数据对触发器函数可用。这种输入数据包括触发器事件的类型（如<code class="command">INSERT</code>或<code class="command">UPDATE</code>）以及被列在<code class="command">CREATE TRIGGER</code>中的任何参数。对于一个行级触发器，输入数据还包括用于<code class="command">INSERT</code>和<code class="command">UPDATE</code>触发器的<code class="varname">NEW</code>行，和/或用于<code class="command">UPDATE</code>和<code class="command">DELETE</code>触发器的<code class="varname">OLD</code>行。
+   </p><p>    默认的，语句级触发器没有任何方法检查被语句修改的单个行。
+	但是<code class="literal">AFTER STATEMENT</code>触发器可以请求创建<em class="firstterm">转换表</em>
+	以使受影响的行集可用于触发器。<code class="literal">AFTER ROW</code>触发器也可以请求转换表，
+	以便他们可以看到表中的全部更改以及它们当前正在触发的单个行中的更改。
+	再次检查转换表的方法取决于正在使用的编程语言，但典型方法是使转换表像只读临时表一样，
+	可以通过触发器函数内发出的SQL命令访问。
+   </p></div><div class="navfooter"><hr /><table width="100%" summary="Navigation footer"><tr><td width="40%" align="left"><a accesskey="p" href="triggers.html">上一页</a> </td><td width="20%" align="center"><a accesskey="u" href="triggers.html">上一级</a></td><td width="40%" align="right"> <a accesskey="n" href="trigger-datachanges.html">下一页</a></td></tr><tr><td width="40%" align="left" valign="top">第 38 章 触发器 </td><td width="20%" align="center"><a accesskey="h" href="index.html">起始页</a></td><td width="40%" align="right" valign="top"> 38.2. 数据改变的可见性</td></tr></table></div></body></html>

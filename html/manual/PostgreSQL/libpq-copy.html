@@ -1,0 +1,99 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><title>33.9. COPY命令相关的函数</title><link rel="stylesheet" type="text/css" href="stylesheet.css" /><link rev="made" href="pgsql-docs@postgresql.org" /><meta name="generator" content="DocBook XSL Stylesheets V1.79.1" /><link rel="prev" href="libpq-notify.html" title="33.8. 异步提示" /><link rel="next" href="libpq-control.html" title="33.10. 控制函数" /></head><body><div xmlns="http://www.w3.org/TR/xhtml1/transitional" class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="5" align="center">33.9. <code xmlns="http://www.w3.org/1999/xhtml" class="command">COPY</code>命令相关的函数</th></tr><tr><td width="10%" align="left"><a accesskey="p" href="libpq-notify.html" title="33.8. 异步提示">上一页</a> </td><td width="10%" align="left"><a accesskey="u" href="libpq.html" title="第 33 章 libpq - C 库">上一级</a></td><th width="60%" align="center">第 33 章 <span xmlns="http://www.w3.org/1999/xhtml" class="application">libpq</span> - C 库</th><td width="10%" align="right"><a accesskey="h" href="index.html" title="PostgreSQL 10.1 手册">起始页</a></td><td width="10%" align="right"> <a accesskey="n" href="libpq-control.html" title="33.10. 控制函数">下一页</a></td></tr></table><hr></hr></div><div class="sect1" id="LIBPQ-COPY"><div class="titlepage"><div><div><h2 class="title" style="clear: both">33.9. <code class="command">COPY</code>命令相关的函数</h2></div></div></div><div class="toc"><dl class="toc"><dt><span class="sect2"><a href="libpq-copy.html#LIBPQ-COPY-SEND">33.9.1. 用于发送<code class="command">COPY</code>数据的函数</a></span></dt><dt><span class="sect2"><a href="libpq-copy.html#LIBPQ-COPY-RECEIVE">33.9.2. 用于接收<code class="command">COPY</code>数据的函数</a></span></dt><dt><span class="sect2"><a href="libpq-copy.html#LIBPQ-COPY-DEPRECATED">33.9.3. 用于<code class="command">COPY</code>的废弃函数</a></span></dt></dl></div><a id="idp28148256" class="indexterm"></a><p>   <span class="productname">PostgreSQL</span>中的<code class="command">COPY</code>命令有用于<span class="application">libpq</span>的对网络连接读出或者写入的选项。这一节描述的函数允许应用通过提供或者消耗已拷贝的数据来充分利用这个功能。
+  </p><p>   整个处理是应用首先通过<code class="function">PQexec</code>或者一个等效的函数发出 SQL <code class="command">COPY</code>命令。对这个命令的响应（如果命令无误）将是一个状态代码是<code class="literal">PGRES_COPY_OUT</code>或 者<code class="literal">PGRES_COPY_IN</code>（取决于指定的拷贝方向）的<code class="structname">PGresult</code>对象。应用然后就应该使用这一节的函数接收或者传送数据行。在数据传输结束之后，另外一个<code class="structname">PGresult</code>对象会被返回以表明传输的成功或者失败。它的状态将是：<code class="literal">PGRES_COMMAND_OK</code>表示成功，<code class="literal">PGRES_FATAL_ERROR</code>表示发生了一些问题。此时我们可以通过<code class="function">PQexec</code>发出进一步的 SQL 命令（在<code class="command">COPY</code>操作的处理过程中，不能用同一个连接执行其它 SQL 命令）。
+  </p><p>   如果一个<code class="command">COPY</code>命令是通过<code class="function">PQexec</code>在一个可能包含额外命令的字符串中发出的，那么应用在完成<code class="command">COPY</code>序列之后必须继续用<code class="function">PQgetResult</code>取得结果。只有在<code class="function">PQgetResult</code>返回<code class="symbol">NULL</code>时，我们才能确信<code class="function">PQexec</code>的命令字符串已经处理完毕， 并且可以安全地发出更多命令。 
+  </p><p>   这一节的函数应该只在从<code class="function">PQexec</code>或<code class="function">PQgetResult</code>获得了<code class="literal">PGRES_COPY_OUT</code>或<code class="literal">PGRES_COPY_IN</code>结果状态的后执行。
+  </p><p>   一个承载了这些状态值之一的<code class="structname">PGresult</code>对象携带了正在开始的<code class="command">COPY</code>操作的一些额外数据。这些额外的数据可以用于那些与带查询结果的连接一起使用的函数：
+
+   </p><div class="variablelist"><dl class="variablelist"><dt id="LIBPQ-PQNFIELDS-1"><span class="term">      <code class="function">PQnfields</code>
+      <a id="idp28171456" class="indexterm"></a>
+     </span></dt><dd><p>       返回要拷贝的列（域）的个数。
+      </p></dd><dt id="LIBPQ-PQBINARYTUPLES-1"><span class="term">      <code class="function">PQbinaryTuples</code>
+      <a id="idp28174624" class="indexterm"></a>
+     </span></dt><dd><p>       0 表示整体拷贝格式都是文本（行用新行分隔，列用分隔字符分隔等等）。1 表示整体拷贝格式都是二进制。详见<a class="xref" href="sql-copy.html" title="COPY"><span class="refentrytitle">COPY</span></a>。
+      </p></dd><dt id="LIBPQ-PQFFORMAT-1"><span class="term">      <code class="function">PQfformat</code>
+      <a id="idp28178544" class="indexterm"></a>
+     </span></dt><dd><p>       返回与拷贝操的每列相关的格式代码（0 是文本，1 是二进制）。当整体拷贝格式是文本时，那么每列的格式代码将总是零，但是二进制格式可以同时支持文本和二进制列（不过，就目前的<code class="command">COPY</code>实现而言，二进制拷贝中只会出现二进制列；所以目前每列的格式总是匹配总体格式）。
+      </p></dd></dl></div><p>
+  </p><div class="note"><h3 class="title">注意</h3><p>    这些额外的数据值只在使用协议 3.0 时可用。在使用协议 2.0 时，所有这些函数都返回 0。
+   </p></div><div class="sect2" id="LIBPQ-COPY-SEND"><div class="titlepage"><div><div><h3 class="title">33.9.1. 用于发送<code class="command">COPY</code>数据的函数</h3></div></div></div><p>    这些函数用于在<code class="literal">COPY FROM STDIN</code>期间发送数据。如果在连接不是<code class="literal">COPY_IN</code>状态，调用它们会失败。
+   </p><div class="variablelist"><dl class="variablelist"><dt id="LIBPQ-PQPUTCOPYDATA"><span class="term">      <code class="function">PQputCopyData</code>
+      <a id="idp28187104" class="indexterm"></a>
+     </span></dt><dd><p>       在<code class="literal">COPY_IN</code>状态中向服务器发送数据。
+</p><pre class="synopsis">int PQputCopyData(PGconn *conn,
+                  const char *buffer,
+                  int nbytes);</pre><p>
+      </p><p>       传输指定<em class="parameter"><code>buffer</code></em>中长度为<em class="parameter"><code>nbytes</code></em>的
+       <code class="command">COPY</code>数据到服务器。如果数据排队，结果为1，
+       如果由于填满缓冲区而未排队（这只会发生在非阻塞模式），则结果为零，
+       如果发生错误，则结果为-1。（如果返回值为 -1，那么使用
+       <code class="function">PQerrorMessage</code>检索细节。如果值是零，
+       那么等待写准备好然后重试）。
+      </p><p>       应用可以把<code class="command">COPY</code>数据流划分成任意方便的大小放到缓冲区中。在发送时，缓冲区载荷的边界没有什么语意。数据流的内容必须匹配<code class="command">COPY</code>命令预期的数据格式；详见<a class="xref" href="sql-copy.html" title="COPY"><span class="refentrytitle">COPY</span></a>。
+      </p></dd><dt id="LIBPQ-PQPUTCOPYEND"><span class="term">      <code class="function">PQputCopyEnd</code>
+      <a id="idp28197360" class="indexterm"></a>
+     </span></dt><dd><p>       在<code class="literal">COPY_IN</code>状态中向服务器发送数据结束的指示。
+</p><pre class="synopsis">int PQputCopyEnd(PGconn *conn,
+                 const char *errormsg);</pre><p>
+      </p><p>       如果<em class="parameter"><code>errormsg</code></em>是<code class="symbol">NULL</code>，则成功结束<code class="literal">COPY_IN</code>操作。如果<em class="parameter"><code>errormsg</code></em>不是<code class="symbol">NULL</code>则<code class="command">COPY</code>被强制失败，<em class="parameter"><code>errormsg</code></em>指向的字符串是错误消息（不过，我们不应假定这个准确的错误信息将会从服务器传回，因为服务器可能已经因为其自身原因导致<code class="command">COPY</code>失败。还要注意的是在使用 3.0 协议之前的连接时，强制失败的选项是不能用的）。
+      </p><p>       如果发送了终止消息，结果为1；或者在非阻塞模式中，
+       这可能仅指示终止消息已成功排队。（在非阻塞模式下，为了确保数据已经发送，
+       你应该等待写准备好并调用<code class="function">PQflush</code>，重复直到它返回零。）
+       零表示该函数由于填满缓冲而无法对终止消息进行排队；这只会发生在非阻塞模式。
+       （在这种情况下，等待写准备好并再次尝试<code class="function">PQputCopyEnd</code>调用。）
+       如果发生硬错误，则返回-1; 您可以使用<code class="function">PQerrorMessage</code>
+       检索详细信息。
+      </p><p>       在成功调用<code class="function">PQputCopyEnd</code>之后，调用<code class="function">PQgetResult</code>获取<code class="command">COPY</code>命令的最终结果状态。我们可以用平常的方法来等待这个结果可用。然后返回到正常的操作。
+      </p></dd></dl></div></div><div class="sect2" id="LIBPQ-COPY-RECEIVE"><div class="titlepage"><div><div><h3 class="title">33.9.2. 用于接收<code class="command">COPY</code>数据的函数</h3></div></div></div><p>    这些函数用于在<code class="literal">COPY TO STDOUT</code>的过程中接收数据。如果连接不在<code class="literal">COPY_OUT</code>状态，那么调用它们将会失败。
+   </p><div class="variablelist"><dl class="variablelist"><dt id="LIBPQ-PQGETCOPYDATA"><span class="term">      <code class="function">PQgetCopyData</code>
+      <a id="idp28216688" class="indexterm"></a>
+     </span></dt><dd><p>       在<code class="literal">COPY_OUT</code>状态下从服务器接收数据。
+</p><pre class="synopsis">int PQgetCopyData(PGconn *conn,
+                  char **buffer,
+                  int async);</pre><p>
+      </p><p>       在一个<code class="command">COPY</code>期间尝试从服务器获取另外一行数据。数据总是以每次一个数据行的方式被返回；如果只有一个部分行可用，那么它不会被返回。成功返回一个数据行涉及到分配一块内存来保存该数据。<em class="parameter"><code>buffer</code></em>参数必须为非<code class="symbol">NULL</code>。<em class="parameter"><code>*buffer</code></em>被设置为指向分配到的内存的指针，或者是在没有返回缓冲区的情况下指向<code class="symbol">NULL</code>。一个非<code class="symbol">NULL</code>的结果缓冲区在不需要时必须用<code class="function">PQfreemem</code>释放。
+      </p><p>       在成功返回一行之后，返回的值就是该数据行里数据的字节数（将是大于零）。被返回的字符串总是空终止的，虽然这可能只是对文本<code class="command">COPY</code>有用。 一个零结果表示该<code class="command">COPY</code>仍然在处理中，但是还没有可用的行（只在<em class="parameter"><code>async</code></em>为真时才可能）。一个 -1 结果表示<code class="command">COPY</code>已经完成。-2 结果表示发生了错误（参考<code class="function">PQerrorMessage</code>获取原因）。
+      </p><p>       当<em class="parameter"><code>async</code></em>为真时（非零），<code class="function">PQgetCopyData</code>将不会阻塞等待输入；如果<code class="command">COPY</code>仍在处理过程中并且没有可用的完整行，那么它将返回零（在这种情况下等待读准备好，然后在再次调用<code class="function">PQgetCopyData</code>之前，调用<code class="function">PQconsumeInput</code>）。当<em class="parameter"><code>async</code></em>为假（零）时，<code class="function">PQgetCopyData</code>将阻塞，直到数据可用或者操作完成。
+      </p><p>       在<code class="function">PQgetCopyData</code>返回 -1 之后，调用<code class="function">PQgetResult</code>获取<code class="command">COPY</code>命令的最后结果状态。我们可以用平常的方法来等待这个结果可用。然后返回到正常的操作。
+      </p></dd></dl></div></div><div class="sect2" id="LIBPQ-COPY-DEPRECATED"><div class="titlepage"><div><div><h3 class="title">33.9.3. 用于<code class="command">COPY</code>的废弃函数</h3></div></div></div><p>    这些函数代表了以前的处理<code class="command">COPY</code>的方法。尽管它们还能用，但是现在已经被废弃，因为它们的错误处理很糟糕、检测结束数据的方法也不方便，并且缺少对二进制或非阻塞传输的支持。
+   </p><div class="variablelist"><dl class="variablelist"><dt id="LIBPQ-PQGETLINE"><span class="term">      <code class="function">PQgetline</code>
+      <a id="idp28241280" class="indexterm"></a>
+     </span></dt><dd><p>       读取一个以新行终止的字符行到（由服务器传输） 到一个长度为<em class="parameter"><code>length</code></em>的字符串缓冲区。
+</p><pre class="synopsis">int PQgetline(PGconn *conn,
+              char *buffer,
+              int length);</pre><p>
+      </p><p>       这个函数拷贝最多<em class="parameter"><code>length</code></em>-1 个字符到该缓冲区中，并且把终止的新行转换成一个零字节。<code class="function">PQgetline</code>在输入结束时返回<code class="symbol">EOF</code>，如果整行都被读取则返回 0，如果缓冲区填满了而还没有遇到结束的新行则返回  1。
+       </p><p>       注意，应用必须检查是否一个新行包含两个字符<code class="literal">\.</code>，这表明服务器 已经完成了<code class="command">COPY</code>命令的结果发送。如果应用可能收到超过<em class="parameter"><code>length</code></em>-1 字符长的行， 我们就应该确保正确识别<code class="literal">\.</code>行（例如，不要把一个长数据行的结束当作一个终止行）。
+      </p></dd><dt id="LIBPQ-PQGETLINEASYNC"><span class="term">      <code class="function">PQgetlineAsync</code>
+      <a id="idp28251680" class="indexterm"></a>
+     </span></dt><dd><p>       不阻塞地读取一行<code class="command">COPY</code>数据（由服务器传输）到一个缓冲区中。
+</p><pre class="synopsis">int PQgetlineAsync(PGconn *conn,
+                   char *buffer,
+                   int bufsize);</pre><p>
+      </p><p>       这个函数类似于<code class="function">PQgetline</code>，但是可以被用于那些必须异步读取<code class="command">COPY</code>数据的应用， 也就是不阻塞的应用。在发出了<code class="command">COPY</code>命令并得到了<code class="literal">PGRES_COPY_OUT</code>响应之后，应用应该调用<code class="function">PQconsumeInput</code>和<code class="function">PQgetlineAsync</code>直到检测到结束数据的信号。
+       </p><p>       不像<code class="function">PQgetline</code>，这个函数负责检测结束数据。
+      </p><p>       在每次调用时，如果<span class="application">libpq</span>的输入缓冲区中有一个完整的数据行可用，<code class="function">PQgetlineAsync</code>都将返回数据。否则，在剩余行到达之前不会返回数据。如果识别到拷贝数据结束的标志，此函数返回 -1；如果没有可用数据则返回 0； 或者是给出一个正数给出被返回的字节数。如果返回 -1，调用者下一步必须调用<code class="function">PQendcopy</code>，然后回到正常处理。
+      </p><p>       返回的数据将不超过一个数据行的范围。如果可能，每次将返回一个完整行。但如果调用者提供的缓冲区太小不足以容下服务器发送的行，那么将返回部分行。对于文本数据，这可以通过测试返回的最后一个字节是否<code class="literal">\n</code>来检测（在二进制<code class="command">COPY</code>中， 需要对<code class="command">COPY</code>数据格式进行实际的分析，以便做相同的判断）。被返回的字符串不是空结尾的（如果你想增加一个终止空，确保传递一个比实际可用空间少一字节的<em class="parameter"><code>bufsize</code></em>）。
+      </p></dd><dt id="LIBPQ-PQPUTLINE"><span class="term">      <code class="function">PQputline</code>
+      <a id="idp28268496" class="indexterm"></a>
+     </span></dt><dd><p>       向服务器发送一个空终止的字符串。如果 OK 则返回 0；如果不能发送字符串则返回<code class="symbol">EOF</code>。
+</p><pre class="synopsis">int PQputline(PGconn *conn,
+              const char *string);</pre><p>
+      </p><p>       一系列<code class="function">PQputline</code>调用发送的<code class="command">COPY</code>数据流和<code class="function">PQgetlineAsync</code>返回的数据具有相同的格式， 只是应用不需要每次<code class="function">PQputline</code>调用中发送刚好一个数据行；在每次调用中发送多行或者部分行都是可以的。
+      </p><div class="note"><h3 class="title">注意</h3><p>        在<span class="productname">PostgreSQL</span>协议 3.0 之前，应用必须显式地发送两个字符<code class="literal">\.</code>作为最后一行来指示服务器已经完成发送<code class="command">COPY</code>数据。虽然这么做仍然有效，但是它已经被废弃并且<code class="literal">\.</code>的特殊含义可能在将来的版本中删除。在发送完实际数据之后， 调用<code class="function">PQendcopy</code>就足够了。
+       </p></div></dd><dt id="LIBPQ-PQPUTNBYTES"><span class="term">      <code class="function">PQputnbytes</code>
+      <a id="idp28280064" class="indexterm"></a>
+     </span></dt><dd><p>       向服务器发送一个非空终止的字符串。如果 OK 则返回 0，如果不能发送字符串则返回<code class="symbol">EOF</code>。
+</p><pre class="synopsis">int PQputnbytes(PGconn *conn,
+                const char *buffer,
+                int nbytes);</pre><p>
+      </p><p>       这个函数类似<code class="function">PQputline</code>，除了数据缓冲区不需要是空终止，因为要发送的字节数是直接指定的。在发送二进制数据时使用这个过程。
+      </p></dd><dt id="LIBPQ-PQENDCOPY"><span class="term">      <code class="function">PQendcopy</code>
+      <a id="idp28285424" class="indexterm"></a>
+     </span></dt><dd><p>       与服务器同步。
+</p><pre class="synopsis">int PQendcopy(PGconn *conn);</pre><p>
+       这个函数等待服务器完成拷贝。当最后一个字符串已经用<code class="function">PQputline</code>发送给服务器时或者当最后一个字符串已经用<code class="function">PGgetline</code>从服务器接收到时，就会发出这个函数。这个函数必须被发出，否则服务器将会和客户端<span class="quote">“<span class="quote">不同步</span>”</span>。从这个函数返回后，服务器就已经准备好接收下一个 SQL 命令了。函数成功完成时返回值为 0，否则返回非零值（如果返回值为非零值，用<code class="function">PQerrorMessage</code>检索详情）。
+      </p><p>       在使用<code class="function">PQgetResult</code>时，应用应该通过反复调用<code class="function">PQgetline</code>并且在看到终止行后调用<code class="function">PQendcopy</code>来响应<code class="literal">PGRES_COPY_OUT</code>结果。然后它应该返回到<code class="function">PQgetResult</code>循环直到<code class="function">PQgetResult</code>返回一个空指针。类似地，<code class="literal">PGRES_COPY_IN</code>结果会用一系列<code class="function">PQputline</code>加上之后的<code class="function">PQendcopy</code>来处理，然后返 回到<code class="function">PQgetResult</code>循环。这样的安排将保证嵌入到一系列<acronym class="acronym">SQL</acronym>命令中的<code class="command">COPY</code>命令将被正确执行。
+      </p><p>       旧的应用很可能会通过<code class="function">PQexec</code>提交一个<code class="command">COPY</code>命令并且假定事务在<code class="function">PQendcopy</code>之后完成。只有在<code class="command">COPY</code>是命令字符串中唯一的<acronym class="acronym">SQL</acronym>命令时才能正确工作。
+      </p></dd></dl></div></div></div><div class="navfooter"><hr /><table width="100%" summary="Navigation footer"><tr><td width="40%" align="left"><a accesskey="p" href="libpq-notify.html">上一页</a> </td><td width="20%" align="center"><a accesskey="u" href="libpq.html">上一级</a></td><td width="40%" align="right"> <a accesskey="n" href="libpq-control.html">下一页</a></td></tr><tr><td width="40%" align="left" valign="top">33.8. 异步提示 </td><td width="20%" align="center"><a accesskey="h" href="index.html">起始页</a></td><td width="40%" align="right" valign="top"> 33.10. 控制函数</td></tr></table></div></body></html>

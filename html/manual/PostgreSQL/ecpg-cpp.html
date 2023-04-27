@@ -1,0 +1,141 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><title>35.13. C++ 应用</title><link rel="stylesheet" type="text/css" href="stylesheet.css" /><link rev="made" href="pgsql-docs@postgresql.org" /><meta name="generator" content="DocBook XSL Stylesheets V1.79.1" /><link rel="prev" href="ecpg-lo.html" title="35.12. 大对象" /><link rel="next" href="ecpg-sql-commands.html" title="35.14. 嵌入式 SQL 命令" /></head><body><div xmlns="http://www.w3.org/TR/xhtml1/transitional" class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="5" align="center">35.13. <acronym xmlns="http://www.w3.org/1999/xhtml" class="acronym">C++</acronym> 应用</th></tr><tr><td width="10%" align="left"><a accesskey="p" href="ecpg-lo.html" title="35.12. 大对象">上一页</a> </td><td width="10%" align="left"><a accesskey="u" href="ecpg.html" title="第 35 章 ECPG - C 中的嵌入式 SQL">上一级</a></td><th width="60%" align="center">第 35 章 <span xmlns="http://www.w3.org/1999/xhtml" class="application">ECPG</span> - C 中的嵌入式 <acronym xmlns="http://www.w3.org/1999/xhtml" class="acronym">SQL</acronym></th><td width="10%" align="right"><a accesskey="h" href="index.html" title="PostgreSQL 10.1 手册">起始页</a></td><td width="10%" align="right"> <a accesskey="n" href="ecpg-sql-commands.html" title="35.14. 嵌入式 SQL 命令">下一页</a></td></tr></table><hr></hr></div><div class="sect1" id="ECPG-CPP"><div class="titlepage"><div><div><h2 class="title" style="clear: both">35.13. <acronym class="acronym">C++</acronym> 应用</h2></div></div></div><div class="toc"><dl class="toc"><dt><span class="sect2"><a href="ecpg-cpp.html#ECPG-CPP-SCOPE">35.13.1. 主变量的可见范围</a></span></dt><dt><span class="sect2"><a href="ecpg-cpp.html#ECPG-CPP-AND-C">35.13.2. 使用外部 C 模块的 C++ 应用开发</a></span></dt></dl></div><p>   ECPG 对于 C++ 应用提供了有限的支持。这一节描述了一些忠告。
+  </p><p>   <code class="command">ecpg</code>预处理器采用一个用 C（或者类似 C 的东西）和嵌入式 SQL 命令编写的输入文件，把嵌入式 SQL 命令转换成 C 语言块，并且最终产生一个<code class="filename">.c</code>文件。在 C++ 下使用时，因此它们应该能在 C++ 中无缝地使用。
+  </p><p>   不过，通常<code class="command">ecpg</code>预处理器只理解 C，它无法处理 C++ 语言的特殊语法和保留词。因此，一些写在 C++ 应用代码中的使用了 C++ 特定复杂特性的嵌入式 SQL 代码可能无法被正确地预处理或者无法按预期工作。
+  </p><p>   使用 C++ 应用中嵌入式 SQL 代码的安全方法是把 ECPG 调用隐藏在一个 C 模块中，C++ 应用代码会调用它来访问数据库，还要把它和剩余的 C++ 代码链接起来。详见<a class="xref" href="ecpg-cpp.html#ECPG-CPP-AND-C" title="35.13.2. 使用外部 C 模块的 C++ 应用开发">第 35.13.2 节</a>。
+  </p><div class="sect2" id="ECPG-CPP-SCOPE"><div class="titlepage"><div><div><h3 class="title">35.13.1. 主变量的可见范围</h3></div></div></div><p>    <code class="command">ecpg</code>预处理器能理解 C 中变量的可见范围。在 C 语言中，这是相当简单的，因为变量的可见范围是基于它们的代码块的。不过在 C++ 中，引用类成员变量的代码块是不同于定义它的代码块的，因此<code class="command">ecpg</code>预处理器将无法理解类成员变量的可见范围。
+   </p><p>    例如，在下面的情况中，<code class="command">ecpg</code>预处理器无法为<code class="literal">test</code>方法中的变量<code class="literal">dbname</code>找到任何生命，因此将发生一个错误。
+
+</p><pre class="programlisting">class TestCpp
+{
+    EXEC SQL BEGIN DECLARE SECTION;
+    char dbname[1024];
+    EXEC SQL END DECLARE SECTION;
+
+  public:
+    TestCpp();
+    void test();
+    ~TestCpp();
+};
+
+TestCpp::TestCpp()
+{
+    EXEC SQL CONNECT TO testdb1;
+}
+
+void Test::test()
+{
+    EXEC SQL SELECT current_database() INTO :dbname;
+    printf("current_database = %s\n", dbname);
+}
+
+TestCpp::~TestCpp()
+{
+    EXEC SQL DISCONNECT ALL;
+}</pre><p>
+
+    这段代码将导致一个这样的错误：
+</p><pre class="screen"><strong class="userinput"><code>ecpg test_cpp.pgc</code></strong>
+test_cpp.pgc:28: ERROR: variable "dbname" is not declared</pre><p>
+   </p><p>    为了避免这种可见性问题，可以修改<code class="literal">test</code>方法来把一个本地变量用作中间存储。但是这种方法只是一种比较差的变通方案，因为它让代码变得丑陋并且降低了性能。
+
+</p><pre class="programlisting">void TestCpp::test()
+{
+    EXEC SQL BEGIN DECLARE SECTION;
+    char tmp[1024];
+    EXEC SQL END DECLARE SECTION;
+
+    EXEC SQL SELECT current_database() INTO :tmp;
+    strlcpy(dbname, tmp, sizeof(tmp));
+
+    printf("current_database = %s\n", dbname);
+}</pre><p>
+   </p></div><div class="sect2" id="ECPG-CPP-AND-C"><div class="titlepage"><div><div><h3 class="title">35.13.2. 使用外部 C 模块的 C++ 应用开发</h3></div></div></div><p>    如果你理解了 C++ 中<code class="command">ecpg</code>预处理器的这些技术限制，你可能已经知道在链接阶段把 C 对象和 C++ 对象链接起来让 C++ 应用能使用 ECPG 特性比直接在 C++ 代码中写一些嵌入式 SQL 命令要更好。这一节用一个简单的例子描述了一种将嵌入式 SQL 命令从 C++ 应用代码中独立出去的方法。在这个例子中，应用由 C++ 实现，而 C 和 ECPG 被用来连接到 PostgreSQL 服务器。
+   </p><p>    需要创建三种文件：一个 C 文件（<code class="filename">*.pgc</code>）、一个头文件和一个 C++ 文件：
+
+    </p><div class="variablelist"><dl class="variablelist"><dt><span class="term"><code class="filename">test_mod.pgc</code></span></dt><dd><p>        一个执行嵌入在 C 中的 SQL 命令的子例程模块。它将被预处理器转换成<code class="filename">test_mod.c</code>。
+
+</p><pre class="programlisting">#include "test_mod.h"
+#include &lt;stdio.h&gt;
+
+void
+db_connect()
+{
+    EXEC SQL CONNECT TO testdb1;
+}
+
+void
+db_test()
+{
+    EXEC SQL BEGIN DECLARE SECTION;
+    char dbname[1024];
+    EXEC SQL END DECLARE SECTION;
+
+    EXEC SQL SELECT current_database() INTO :dbname;
+    printf("current_database = %s\n", dbname);
+}
+
+void
+db_disconnect()
+{
+    EXEC SQL DISCONNECT ALL;
+}</pre><p>
+       </p></dd><dt><span class="term"><code class="filename">test_mod.h</code></span></dt><dd><p>        包含 C 模块（<code class="filename">test_mod.pgc</code>）中函数定义的头文件。它会被<code class="filename">test_cpp.cpp</code>包括。这个文件必须在声明周围有一个<code class="literal">extern "C"</code>块，因为它将被链接到 C++ 模块。
+
+</p><pre class="programlisting">#ifdef __cplusplus
+extern "C" {
+#endif
+
+void db_connect();
+void db_test();
+void db_disconnect();
+
+#ifdef __cplusplus
+}
+#endif</pre><p>
+       </p></dd><dt><span class="term"><code class="filename">test_cpp.cpp</code></span></dt><dd><p>        应用的主代码，包括<code class="function">main</code>例程以及这个例子中的一个 C++ 类。
+
+</p><pre class="programlisting">#include "test_mod.h"
+
+class TestCpp
+{
+  public:
+    TestCpp();
+    void test();
+    ~TestCpp();
+};
+
+TestCpp::TestCpp()
+{
+    db_connect();
+}
+
+void
+TestCpp::test()
+{
+    db_test();
+}
+
+TestCpp::~TestCpp()
+{
+    db_disconnect();
+}
+
+int
+main(void)
+{
+    TestCpp *t = new TestCpp();
+
+    t-&gt;test();
+    return 0;
+}</pre><p>
+       </p></dd></dl></div><p>
+   </p><p>    要构建该应用，按以下步骤处理。通过运行<code class="command">ecpg</code>将<code class="filename">test_mod.pgc</code>转换为<code class="filename">test_mod.c</code>，并且用 C 编译器将<code class="filename">test_mod.c</code>编译成<code class="filename">test_mod.o</code>：
+</p><pre class="programlisting">ecpg -o test_mod.c test_mod.pgc
+cc -c test_mod.c -o test_mod.o</pre><p>
+   </p><p>    接着，用 C++ 编译器把<code class="filename">test_cpp.cpp</code>编译成<code class="filename">test_cpp.o</code>：
+</p><pre class="programlisting">c++ -c test_cpp.cpp -o test_cpp.o</pre><p>
+   </p><p>    最后，使用 C++ 编译器链接这些对象文件（<code class="filename">test_cpp.o</code>和<code class="filename">test_mod.o</code>）成为一个可执行文件：
+</p><pre class="programlisting">c++ test_cpp.o test_mod.o -lecpg -o test_cpp</pre><p>
+   </p></div></div><div class="navfooter"><hr /><table width="100%" summary="Navigation footer"><tr><td width="40%" align="left"><a accesskey="p" href="ecpg-lo.html">上一页</a> </td><td width="20%" align="center"><a accesskey="u" href="ecpg.html">上一级</a></td><td width="40%" align="right"> <a accesskey="n" href="ecpg-sql-commands.html">下一页</a></td></tr><tr><td width="40%" align="left" valign="top">35.12. 大对象 </td><td width="20%" align="center"><a accesskey="h" href="index.html">起始页</a></td><td width="40%" align="right" valign="top"> 35.14. 嵌入式 SQL 命令</td></tr></table></div></body></html>

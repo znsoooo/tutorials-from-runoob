@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><title>F.42. tsm_system_rows</title><link rel="stylesheet" type="text/css" href="stylesheet.css" /><link rev="made" href="pgsql-docs@postgresql.org" /><meta name="generator" content="DocBook XSL Stylesheets V1.79.1" /><link rel="prev" href="test-decoding.html" title="F.41. test_decoding" /><link rel="next" href="tsm-system-time.html" title="F.43. tsm_system_time" /></head><body><div xmlns="http://www.w3.org/TR/xhtml1/transitional" class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="5" align="center">F.42. tsm_system_rows</th></tr><tr><td width="10%" align="left"><a accesskey="p" href="test-decoding.html" title="F.41. test_decoding">上一页</a> </td><td width="10%" align="left"><a accesskey="u" href="contrib.html" title="附录 F. 额外提供的模块">上一级</a></td><th width="60%" align="center">附录 F. 额外提供的模块</th><td width="10%" align="right"><a accesskey="h" href="index.html" title="PostgreSQL 10.1 手册">起始页</a></td><td width="10%" align="right"> <a accesskey="n" href="tsm-system-time.html" title="F.43. tsm_system_time">下一页</a></td></tr></table><hr></hr></div><div class="sect1" id="TSM-SYSTEM-ROWS"><div class="titlepage"><div><div><h2 class="title" style="clear: both">F.42. tsm_system_rows</h2></div></div></div><div class="toc"><dl class="toc"><dt><span class="sect2"><a href="tsm-system-rows.html#idp88112512">F.42.1. 示例</a></span></dt></dl></div><a id="idp88104032" class="indexterm"></a><p>  <code class="filename">tsm_system_rows</code>模块提供了表采样方法
+  <code class="literal">SYSTEM_ROWS</code>，它可以用在<a class="xref" href="sql-select.html" title="SELECT"><span class="refentrytitle">SELECT</span></a>
+  命令的<code class="literal">TABLESAMPLE</code>子句中。
+ </p><p>  这种表采样方法接受一个整数参数，它是要读取的最大行数。得到的采样将总是包
+  含正好这么多行，除非该表中没有足够的行，在那种情况下整个表都会被选择出来。
+ </p><p>  和内建的<code class="literal">SYSTEM</code>采样方法一样，
+  <code class="literal">SYSTEM_ROWS</code>执行块级别的采样，所以采样不是完全随机的，
+  而是服从于聚簇效果，特别是只要求少量行时。
+ </p><p>  <code class="literal">SYSTEM_ROWS</code>不支持
+  <code class="literal">REPEATABLE</code>子句。
+ </p><div class="sect2" id="idp88112512"><div class="titlepage"><div><div><h3 class="title">F.42.1. 示例</h3></div></div></div><p>   这里是一个用<code class="literal">SYSTEM_ROWS</code>选择一个表采样的例子。
+   首先安装扩展：
+  </p><pre class="programlisting">CREATE EXTENSION tsm_system_rows;</pre><p>   然后就可以在<code class="command">SELECT</code>命令中使用它，例如：
+
+</p><pre class="programlisting">SELECT * FROM my_table TABLESAMPLE SYSTEM_ROWS(100);</pre><p>
+  </p><p>   这个命令从表<code class="structname">my_table</code>中返回一个 100 行的采样（除非
+   该表没有 100 个可见行，那时将会返回其中所有的行）。
+  </p></div></div><div class="navfooter"><hr /><table width="100%" summary="Navigation footer"><tr><td width="40%" align="left"><a accesskey="p" href="test-decoding.html">上一页</a> </td><td width="20%" align="center"><a accesskey="u" href="contrib.html">上一级</a></td><td width="40%" align="right"> <a accesskey="n" href="tsm-system-time.html">下一页</a></td></tr><tr><td width="40%" align="left" valign="top">F.41. test_decoding </td><td width="20%" align="center"><a accesskey="h" href="index.html">起始页</a></td><td width="40%" align="right" valign="top"> F.43. tsm_system_time</td></tr></table></div></body></html>

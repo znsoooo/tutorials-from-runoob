@@ -1,0 +1,920 @@
+<!Doctype html>
+<html>
+<head>
+	<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+	<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+	<title>7.4 Verilog CIC 滤波器设计 | 菜鸟教程</title>
+
+  <meta name='robots' content='max-image-preview:large' />
+<link rel='stylesheet' id='classic-theme-styles-css' href='http://www.runoob.com/wp-includes/css/classic-themes.min.css?ver=6.2' type='text/css' media='all' />
+<link rel="canonical" href="http://www.runoob.com/w3cnote/verilog-cic.html" />
+<meta name="keywords" content="7.4 Verilog CIC 滤波器设计">
+<meta name="description" content="积分梳状滤波器（CIC，Cascaded Integrator Comb），一般用于数字下变频（DDC）和数字上变频（DUC）系统。CIC 滤波器结构简单，没有乘法器，只有加法器、积分器和寄存器，资源消耗少，运算速率高，可实现高速滤波，常用在输入采样率最高的第一级，在多速率信号处理系统中具有着广泛应用。  DDC 原理 DDC 工作原理 DDC 主要由本地振荡器（NCO） 、混频器、滤波器等组成，如下图所示。  DDC 将中频信号与振荡..">
+		
+	<link rel="shortcut icon" href="https://static.runoob.com/images/favicon.ico">
+	<link rel="stylesheet" href="/wp-content/themes/runoob/style.css?v=1.170" type="text/css" media="all" />	
+	<link rel="stylesheet" href="https://cdn.staticfile.org/font-awesome/4.7.0/css/font-awesome.min.css" media="all" />	
+  <!--[if gte IE 9]><!-->
+  <script src="https://cdn.staticfile.org/jquery/2.0.3/jquery.min.js"></script>
+  <!--<![endif]-->
+  <!--[if lt IE 9]>
+     <script src="https://cdn.staticfile.org/jquery/1.9.1/jquery.min.js"></script>
+     <script src="https://cdn.staticfile.org/html5shiv/r29/html5.min.js"></script>
+  <![endif]-->
+  <link rel="apple-touch-icon" href="https://static.runoob.com/images/icon/mobile-icon.png"/>
+  <meta name="apple-mobile-web-app-title" content="菜鸟教程">
+</head>
+<body>
+
+<!--  头部 -->
+<div class="container logo-search">
+
+  <div class="col search row-search-mobile">
+    <form action="index.php">
+      <input class="placeholder" placeholder="搜索……" name="s" autocomplete="off">
+      
+    </form>
+  </div>
+
+  <div class="row">
+    <div class="col logo">
+      <h1><a href="/">菜鸟教程 -- 学的不仅是技术，更是梦想！</a></h1>
+    </div>
+        <div class="col right-list"> 
+    <button class="btn btn-responsive-nav btn-inverse" data-toggle="collapse" data-target=".nav-main-collapse" id="pull" style=""> <i class="fa fa-navicon"></i> </button>
+    </div>
+        
+    <div class="col search search-desktop last">
+      <div class="search-input" >
+      <form action="//www.runoob.com/" target="_blank">
+        <input class="placeholder" id="s" name="s" placeholder="搜索……"  autocomplete="off" style="height: 44px;">
+      </form>
+      
+      </div>
+    </div>
+  </div>
+</div>
+
+
+
+<!-- 导航栏 -->
+<div class="container navigation">
+    <div class="row">
+        <div class="col nav">
+            
+
+                        <ul class="pc-nav" id="note-nav">
+                <li><a href="//www.runoob.com/">首页</a></li>
+                <li><a href="/w3cnote">笔记首页</a></li>
+                <li><a href="/w3cnote/android-tutorial-intro.html" title="Android 基础入门教程">Android</a></li>
+                <li><a href="/w3cnote/es6-tutorial.html" title="ES6 教程">ES6 教程</a></li>
+                <li><a href="/w3cnote/ten-sorting-algorithm.html" title="排序算法">排序算法</a></li>
+                <li><a href="/w3cnote/hadoop-tutorial.html" title="Hadoop 教程">Hadoop</a></li>
+                <li><a href="/w3cnote/zookeeper-tutorial.html" title="Zookeeper 教程">Zookeeper</a></li>
+                <li><a href="/w3cnote/verilog-tutorial.html" title="Verilog 教程">Verilog</a></li>
+                <li><a href="/w3cnote_genre/code" title="编程技术">编程技术</a></li> 
+                <li><a href="/w3cnote_genre/coderlife" title="程序员人生">程序员人生</a></li>
+                
+                <!--<li><a href="javascript:;" class="runoob-pop">登录</a></li>
+                
+                
+                        <li>
+                <a style="font-weight:bold;" href="https://www.runoob.com/linux/linux-tutorial.html#yunserver" target="_blank" onclick="_hmt.push(['_trackEvent', 'aliyun', 'click', 'aliyun'])" title="kkb">云服务器</a>
+                </li>
+                <li><a href="http://gk.link/a/104mQ" target="_blank" style="font-weight: bold;"onclick="_hmt.push(['_trackEvent', '极客时间', 'click', 'jike'])" title="我的圈子">极客时间</a></li>
+            
+                
+                <li><a target="_blank" href="/shoppinglist" rel="nofollow">知识店铺</a></li> 
+        -->
+            </ul>
+                        
+              
+            <ul class="mobile-nav">
+                <li><a href="/w3cnote">首页</a></li>
+                <li><a href="/w3cnote_genre/android" target="_blank" title="Android 基础入门教程">Android</a></li>
+                <li><a href="/w3cnote/es6-tutorial.html" target="_blank" title="ES6 教程">ES6</a></li>
+                <li><a href="/w3cnote_genre/joke" target="_blank" title="程序员笑话">逗乐</a></li>
+                
+                <a href="javascript:void(0)" class="search-reveal">Search</a> 
+            </ul>
+            
+        </div>
+    </div>
+</div>
+
+
+<!--  内容  -->
+<div class="container main">
+	<div class="row">
+
+		<!--  Android 基础入门教程 start  -->
+	<div class="col left-column" style="display:none;">
+		<div class="tab">Verilog 教程</div>
+		<div class="sidebar-box gallery-list">
+			<div class="design" id="leftcolumn">  
+			</div> 
+		</div> 
+	</div>
+	<!--  Android 基础入门教程 end  -->
+		<div class="col middle-column big-middle-column">
+	 			<div class="article">
+			<div class="article-heading">
+				<h2>7.4 Verilog CIC 滤波器设计</h2>				<h3><em>分类</em> <a href="/w3cnote_genre/verilog" title="Verilog 教程" >Verilog 教程</a> </h3>
+			</div>
+			<div class="article-body note-body">
+				<div class="article-intro">
+					<p>积分梳状滤波器（CIC，Cascaded Integrator Comb），一般用于数字下变频（DDC）和数字上变频（DUC）系统。CIC 滤波器结构简单，没有乘法器，只有加法器、积分器和寄存器，资源消耗少，运算速率高，可实现高速滤波，常用在输入采样率最高的第一级，在多速率信号处理系统中具有着广泛应用。</p>
+
+<h3>DDC 原理</h3>
+<p><strong>DDC 工作原理</strong></p>
+<p>DDC 主要由本地振荡器（NCO） 、混频器、滤波器等组成，如下图所示。</p>
+<p><img decoding="async" src="https://www.runoob.com/wp-content/uploads/2020/10/2m4NPzvfZ6t05QJR.png"></p><p>
+DDC 将中频信号与振荡器产生的载波信号进行混频，信号中心频率被搬移，再经过抽取滤波，恢复原始信号，实现了下变频功能。</p><p>
+中频数据采样时，需要很高的采样频率来确保 ADC（模数转换器）采集到信号的信噪比。经过数字下变频后，得到的基带信号采样频率仍然是 ADC 采样频率，所以数据率很高。此时基带信号的有效带宽往往已经远小于采样频率，所以利用抽取、滤波进行数据速率的转换，使采样率降低，避免资源的浪费和设计的困难，就成为 DDC 不可缺少的一部分。</p><p>
+而采用 CIC 滤波器进行数据处理，是 DDC 抽取滤波部分最常用的方法。</p>
+<p><strong>带通采样定理</strong></p>
+<p>在 DDC 系统中，输入的中频载波信号会根据载波频率进行频移，得到一个带通信号。如果此时仍然采用奈奎斯特采样定理，即采样频率为带通信号最高频率的两倍，那么此时所需的采样频率将会很高，设计会变的复杂。此时可按照带通采样定理来确定抽样频率。</p>
+<p>
+带通采样定理：一个频带限制在<img decoding="async" src="https://www.runoob.com/wp-content/uploads/2020/10/CB3Gz6OG3lRqyVeU.png">的连续带通信号，带宽为<img decoding="async" src="https://www.runoob.com/wp-content/uploads/2020/10/jWnH9TDjFfjOqy98.png">。令<img decoding="async" src="https://www.runoob.com/wp-content/uploads/2020/10/sekAtl6NmQKRoyEH.png"> ，其中 N 为不大于
+ <img decoding="async" src="https://www.runoob.com/wp-content/uploads/2020/10/9NIJyfr2X4H3ers2.png">的最大正整数，如果采样频率满足条件：</p>
+<p><img decoding="async" src="https://www.runoob.com/wp-content/uploads/2020/10/C9desSSp3KHHparq.png"></p>
+<p>则该信号完全可以由其采样值无失真的重建。</p><p>
+当 m=1 时，带通采样定理便是奈奎斯特采样定理。</p><p>
+带通采样定理的另一种描述方式为：若信号最高频率为信号带宽的整数倍，采样频率只需大于信号带宽的两倍即可，此时不会发生频谱混叠。</p><p>
+所以，可以认为采样频率的一半是 CIC 滤波器的截止频率。</p>
+<p><strong>DDC 频谱搬移</strong></p><p>
+例如一个带宽信号中心频率为 60MHz，带宽为 8MHz, 则频率范围为 56MHz ~ 64MHz，m 的可取值范围为 0 ~ 7。取 m=1, 则采样频率范围为 64MHz ~ 112MHz。</p><p>
+取采样频率为 80MHz，设 NCO 中心频率为 20 MHz，下面讨论复信号频谱搬移示意图。</p><p>
+（1）考虑频谱的对称性，输入复信号的频谱示意图如下：</p>
+<p><img decoding="async" src="https://www.runoob.com/wp-content/uploads/2020/10/GjRsFhR9juwnNAQI.png" alt="" /></p><p>
+（2）80MHz 采样频率采样后，56~64MHz 的频带被搬移到了 -24~ -16MHz 与 136 ~ 144MHz（高于采样频率被滤除）的频带处，-64~ -56MHz 的频带被搬移到 -144~ -136MHz（高于采样频率被滤除）与 16~24MHz 的频带处。</p><p>
+采样后频带分布如下：</p>
+<p><img decoding="async" src="https://www.runoob.com/wp-content/uploads/2020/10/kPZgwGWzUVoiUHAn.png" alt="" /></p><p>
+（3）信号经过 20MHz NCO 的正交电路后， -24~ -16MHz 的频带被搬移到 -4~4MHz 与 -44~ -36MHz 的频带处，16~24MHz 的频带被搬移到 -4~4MHz 与 36~44MHz 的频带处，如下所示。</p>
+<p><img decoding="async" src="https://www.runoob.com/wp-content/uploads/2020/10/ssJHBTZboUUiAUVl.png" alt="" /></p>
+<p>（4）此时中频输入的信号已经被搬移到零中频基带处。</p>
+<p>-44~ -36MHz 和 36~44MHz 的带宽信号是不需要的，可以滤除；-4~4MHz 的零中频信号数据速率仍然是 80MHz，可以进行抽取降低数据速率。而 CIC 滤波，就是要完成这个过程。</p>
+
+<p>上述复习了很多数字信号处理的内容，权当抛 DDC 的砖，引 CIC 的玉。</p>
+
+<h3>CIC 滤波器原理</h3>
+<p><strong>单级 CIC 滤波器</strong></p><p>
+设滤波器抽取倍数为 D，则单级滤波器的冲激响应为：</p>
+<p><img decoding="async" width="50%" src="https://www.runoob.com/wp-content/uploads/2020/10/g6tPam4PJNf6JCYG.png" alt="" /></p>
+<p>对其进行 z 变换，可得单级 CIC 滤波器的系统函数为：</p>
+<p><img decoding="async" width="50%" src="https://www.runoob.com/wp-content/uploads/2020/10/UmSSUeYZTs5MRaYz.png" alt="" /></p>
+<p>令</p>
+<p><img decoding="async" width="50%" src="https://www.runoob.com/wp-content/uploads/2020/10/QU2gINl3LaIfRItM.png" alt="" /></p><p>
+可以看出，单级 CIC 滤波器包括两个基本组成部分：积分部分和梳状部分，结构图如下：</p>
+<p><img decoding="async"  src="https://www.runoob.com/wp-content/uploads/2020/10/oiOOZjhrW4cYhcGq.png" alt="" /></p>
+<p>
+<strong>积分器</strong></p><p>
+积分器是一个单级点的 IIR（Infinite Impulse Response，无限长脉冲冲激响应）滤波器，且反馈系数为 1，其状态方程和系统函数分别为：</p>
+<p><img decoding="async" src="https://www.runoob.com/wp-content/uploads/2020/10/qL6qNZcXBKWxZ4ul.png" alt="" /></p>
+<p><img decoding="async" src="https://www.runoob.com/wp-content/uploads/2020/10/EFBW6lL9mBQoxQNO.png" alt="" /></p>
+<p><strong>梳状器</strong></p>
+<p>梳状器是一个 FIR 滤波器，其状态方程和系统函数分别为：</p><p>
+<img decoding="async" src="https://www.runoob.com/wp-content/uploads/2020/10/v1GMYTF5Mrb55Z84.png" alt="" /></p><p>
+<img decoding="async" src="https://www.runoob.com/wp-content/uploads/2020/10/LLqkUraVGcQdoYDZ.png" alt="" /></p>
+<p><strong>抽取器</strong></p><p>
+在积分器之后，还有一个抽取器，抽取倍数与梳状器的延时参数是一致的。利用 z 变换的性质进行恒等变换，将抽取器移动到积分器与梳状器之间，可得到单级 CIC 滤波器结构，如下所示。</p>
+<p>
+<img decoding="async" src="https://www.runoob.com/wp-content/uploads/2020/10/Qfte9w0ahwOmo2o3.png" alt="" /></p>
+
+<p><strong>参数说明</strong></p><p>
+CIC 滤波器结构变换之前的参数 D 可以理解为梳状滤波器的延时或阶数；变换之后，D 的含义 变为抽取倍数，而此时梳状滤波器的延时为 1，即阶数为 1。</p><p>
+很多学者会引入一个变量 M，表示梳状器每一级的延时，此时梳妆部分的延时就不为 1 了。那么梳状器的系统函数就变为：</p>
+<p><img decoding="async" src="https://www.runoob.com/wp-content/uploads/2020/10/yHsYHzAeVvbB8A6j.png" alt="" /></p><p>
+其实把 DM 整体理解为单级滤波器延时，或者抽取倍数，也都是可以的。可能实现的方式或结构不同，但是最后的结果都是一样的。本次设计中，单级滤波器延时都为 M=1，即抽取倍数与滤波延时相同。</p>
+<p><strong>多级 CIC 滤波器</strong></p><p>
+单级 CIC 滤波器的阻带衰减较差，为了提高滤波效果，抽取滤波时往往会采用多级 CIC 滤波器级联的结构。</p><p>
+实现多级直接级联的 CIC 滤波器在设计和资源上并不是最优的方式，需要对其结构进行调整。如下所示，将积分器和梳状滤波器分别移至一组，并将抽取器移到梳状滤波器之前。先抽取再进行滤波，可以减少数据处理的长度，节约硬件资源。</p>
+<p><img decoding="async" src="https://www.runoob.com/wp-content/uploads/2020/10/Vvzxwfm3XATUytdT.jpg" alt="" /></p>
+<p>
+当然，级联数越大，旁瓣抑制越好，但是通带内的平坦度也会变差。所以级联数不宜过多，一般最多 5 级。</p>
+<h3>
+CIC 滤波器设计</h3>
+<p><strong>设计说明</strong></p><p>
+CIC 滤波器本质上就是一个简单的低通滤波器，截止频率为采样频率除以抽取倍数后的一半。输入数据信号仍然是 7.5MHz 和 250KHz，采样频率 50MHz。抽取倍数设置为 5，则截止频率为 5MHz，小于 7.5MHz，可以滤除 7.5MHz 的频率成分。设计参数如下：</p>
+
+<pre>输入频率：    7.5MHz 和 250KHz
+采样频率：    50MHz
+阻带：           5MHz 
+阶数：           1（M=1）
+级数：           3（N=3） 
+</pre>
+<p>
+关于积分时中间数据信号的位宽，很多地方给出了不同的计算方式，计算结果也大相径庭。这里总结一下使用最多的计算方式：</p>
+<p><img decoding="async" src="https://www.runoob.com/wp-content/uploads/2020/10/X5JtffBUWSt61xBG.png" alt="" /></p><p>
+其中，D 为抽取倍数，M 为滤波器阶数，N 为滤波器级数。抽取倍数为 5，滤波器阶数为 1，滤波器级联数为 3，取输入信号数据位宽为 12bit，对数部分向上取整，则积分后数据不溢出的中间信号位宽为 21bit。</p><p>
+为了更加宽裕的设计，滤波器阶数如果理解为未变换结构前的多级 CIC 滤波器直接型结构，则滤波器阶数可以认为是 5，此时中间信号最大位宽为 27bit。</p>
+<p><strong>积分器设计</strong></p><p>
+根据输入数据的有效信号的控制，积分器做一个简单的累加即可，注意数据位宽。</p>
+<div class="example"><h2 class="example">实例</h2> <div class="example_code">
+<span style="color: #00008B; font-style: italic;">//3 stages integrator</span><br />
+<span style="color: #A52A2A; font-weight: bold;">module</span> integrator<br />
+&nbsp; &nbsp; <span style="color: #5D478B;">#</span><span style="color: #9F79EE;">&#40;</span><span style="color: #A52A2A; font-weight: bold;">parameter</span> NIN &nbsp; &nbsp; <span style="color: #5D478B;">=</span> <span style="color: #ff0055;">12</span><span style="color: #5D478B;">,</span><br />
+&nbsp; &nbsp; &nbsp; <span style="color: #A52A2A; font-weight: bold;">parameter</span> NOUT &nbsp; &nbsp;<span style="color: #5D478B;">=</span> <span style="color: #ff0055;">21</span><span style="color: #9F79EE;">&#41;</span><br />
+&nbsp; &nbsp; <span style="color: #9F79EE;">&#40;</span><br />
+&nbsp; &nbsp; &nbsp; <span style="color: #A52A2A; font-weight: bold;">input</span> &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; clk <span style="color: #5D478B;">,</span><br />
+&nbsp; &nbsp; &nbsp; <span style="color: #A52A2A; font-weight: bold;">input</span> &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; rstn <span style="color: #5D478B;">,</span><br />
+&nbsp; &nbsp; &nbsp; <span style="color: #A52A2A; font-weight: bold;">input</span> &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; en <span style="color: #5D478B;">,</span><br />
+&nbsp; &nbsp; &nbsp; <span style="color: #A52A2A; font-weight: bold;">input</span> <span style="color: #9F79EE;">&#91;</span>NIN<span style="color: #5D478B;">-</span><span style="color: #ff0055;">1</span><span style="color: #5D478B;">:</span><span style="color: #ff0055;">0</span><span style="color: #9F79EE;">&#93;</span> &nbsp; &nbsp; din <span style="color: #5D478B;">,</span><br />
+&nbsp; &nbsp; &nbsp; <span style="color: #A52A2A; font-weight: bold;">output</span> &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;valid <span style="color: #5D478B;">,</span><br />
+&nbsp; &nbsp; &nbsp; <span style="color: #A52A2A; font-weight: bold;">output</span> <span style="color: #9F79EE;">&#91;</span>NOUT<span style="color: #5D478B;">-</span><span style="color: #ff0055;">1</span><span style="color: #5D478B;">:</span><span style="color: #ff0055;">0</span><span style="color: #9F79EE;">&#93;</span> &nbsp; dout<span style="color: #9F79EE;">&#41;</span> <span style="color: #5D478B;">;</span><br />
+<br />
+&nbsp; &nbsp; <span style="color: #A52A2A; font-weight: bold;">reg</span> <span style="color: #9F79EE;">&#91;</span>NOUT<span style="color: #5D478B;">-</span><span style="color: #ff0055;">1</span><span style="color: #5D478B;">:</span><span style="color: #ff0055;">0</span><span style="color: #9F79EE;">&#93;</span> &nbsp; &nbsp; &nbsp; &nbsp; int_d0 &nbsp;<span style="color: #5D478B;">;</span><br />
+&nbsp; &nbsp; <span style="color: #A52A2A; font-weight: bold;">reg</span> <span style="color: #9F79EE;">&#91;</span>NOUT<span style="color: #5D478B;">-</span><span style="color: #ff0055;">1</span><span style="color: #5D478B;">:</span><span style="color: #ff0055;">0</span><span style="color: #9F79EE;">&#93;</span> &nbsp; &nbsp; &nbsp; &nbsp; int_d1 &nbsp;<span style="color: #5D478B;">;</span><br />
+&nbsp; &nbsp; <span style="color: #A52A2A; font-weight: bold;">reg</span> <span style="color: #9F79EE;">&#91;</span>NOUT<span style="color: #5D478B;">-</span><span style="color: #ff0055;">1</span><span style="color: #5D478B;">:</span><span style="color: #ff0055;">0</span><span style="color: #9F79EE;">&#93;</span> &nbsp; &nbsp; &nbsp; &nbsp; int_d2 &nbsp;<span style="color: #5D478B;">;</span><br />
+&nbsp; &nbsp; <span style="color: #A52A2A; font-weight: bold;">wire</span> <span style="color: #9F79EE;">&#91;</span>NOUT<span style="color: #5D478B;">-</span><span style="color: #ff0055;">1</span><span style="color: #5D478B;">:</span><span style="color: #ff0055;">0</span><span style="color: #9F79EE;">&#93;</span> &nbsp; &nbsp; &nbsp; &nbsp;sxtx <span style="color: #5D478B;">=</span> <span style="color: #9F79EE;">&#123;</span><span style="color: #9F79EE;">&#123;</span><span style="color: #9F79EE;">&#40;</span>NOUT<span style="color: #5D478B;">-</span>NIN<span style="color: #9F79EE;">&#41;</span><span style="color: #9F79EE;">&#123;</span><span style="color: #ff0055;">1'b0</span><span style="color: #9F79EE;">&#125;</span><span style="color: #9F79EE;">&#125;</span><span style="color: #5D478B;">,</span> din<span style="color: #9F79EE;">&#125;</span> <span style="color: #5D478B;">;</span><br />
+<br />
+&nbsp; &nbsp; <span style="color: #00008B; font-style: italic;">//data input enable delay</span><br />
+&nbsp; &nbsp; <span style="color: #A52A2A; font-weight: bold;">reg</span> <span style="color: #9F79EE;">&#91;</span><span style="color: #ff0055;">2</span><span style="color: #5D478B;">:</span><span style="color: #ff0055;">0</span><span style="color: #9F79EE;">&#93;</span> &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;en_r <span style="color: #5D478B;">;</span><br />
+&nbsp; &nbsp; <span style="color: #A52A2A; font-weight: bold;">always</span> <span style="color: #5D478B;">@</span><span style="color: #9F79EE;">&#40;</span><span style="color: #A52A2A; font-weight: bold;">posedge</span> clk <span style="color: #A52A2A; font-weight: bold;">or</span> <span style="color: #A52A2A; font-weight: bold;">negedge</span> rstn<span style="color: #9F79EE;">&#41;</span> <span style="color: #A52A2A; font-weight: bold;">begin</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; <span style="color: #A52A2A; font-weight: bold;">if</span> <span style="color: #9F79EE;">&#40;</span><span style="color: #5D478B;">!</span>rstn<span style="color: #9F79EE;">&#41;</span> <span style="color: #A52A2A; font-weight: bold;">begin</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; en_r &nbsp; <span style="color: #5D478B;">&lt;=</span> 'b0 <span style="color: #5D478B;">;</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; <span style="color: #A52A2A; font-weight: bold;">end</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; <span style="color: #A52A2A; font-weight: bold;">else</span> <span style="color: #A52A2A; font-weight: bold;">begin</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; en_r &nbsp; <span style="color: #5D478B;">&lt;=</span> <span style="color: #9F79EE;">&#123;</span>en_r<span style="color: #9F79EE;">&#91;</span><span style="color: #ff0055;">1</span><span style="color: #5D478B;">:</span><span style="color: #ff0055;">0</span><span style="color: #9F79EE;">&#93;</span><span style="color: #5D478B;">,</span> en<span style="color: #9F79EE;">&#125;</span><span style="color: #5D478B;">;</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; <span style="color: #A52A2A; font-weight: bold;">end</span><br />
+&nbsp; &nbsp; <span style="color: #A52A2A; font-weight: bold;">end</span><br />
+<br />
+&nbsp; &nbsp; <span style="color: #00008B; font-style: italic;">//integrator</span><br />
+&nbsp; &nbsp; <span style="color: #00008B; font-style: italic;">//stage1</span><br />
+&nbsp; &nbsp; <span style="color: #A52A2A; font-weight: bold;">always</span> <span style="color: #5D478B;">@</span><span style="color: #9F79EE;">&#40;</span><span style="color: #A52A2A; font-weight: bold;">posedge</span> clk <span style="color: #A52A2A; font-weight: bold;">or</span> <span style="color: #A52A2A; font-weight: bold;">negedge</span> rstn<span style="color: #9F79EE;">&#41;</span> <span style="color: #A52A2A; font-weight: bold;">begin</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; <span style="color: #A52A2A; font-weight: bold;">if</span> <span style="color: #9F79EE;">&#40;</span><span style="color: #5D478B;">!</span>rstn<span style="color: #9F79EE;">&#41;</span> <span style="color: #A52A2A; font-weight: bold;">begin</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; int_d0 &nbsp; &nbsp; &nbsp; &nbsp;<span style="color: #5D478B;">&lt;=</span> 'b0 <span style="color: #5D478B;">;</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; <span style="color: #A52A2A; font-weight: bold;">end</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; <span style="color: #A52A2A; font-weight: bold;">else</span> <span style="color: #A52A2A; font-weight: bold;">if</span> <span style="color: #9F79EE;">&#40;</span>en<span style="color: #9F79EE;">&#41;</span> <span style="color: #A52A2A; font-weight: bold;">begin</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; int_d0 &nbsp; &nbsp; &nbsp; &nbsp;<span style="color: #5D478B;">&lt;=</span> int_d0 <span style="color: #5D478B;">+</span> sxtx <span style="color: #5D478B;">;</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; <span style="color: #A52A2A; font-weight: bold;">end</span><br />
+&nbsp; &nbsp; <span style="color: #A52A2A; font-weight: bold;">end</span><br />
+<br />
+&nbsp; &nbsp; <span style="color: #00008B; font-style: italic;">//stage2</span><br />
+&nbsp; &nbsp; <span style="color: #A52A2A; font-weight: bold;">always</span> <span style="color: #5D478B;">@</span><span style="color: #9F79EE;">&#40;</span><span style="color: #A52A2A; font-weight: bold;">posedge</span> clk <span style="color: #A52A2A; font-weight: bold;">or</span> <span style="color: #A52A2A; font-weight: bold;">negedge</span> rstn<span style="color: #9F79EE;">&#41;</span> <span style="color: #A52A2A; font-weight: bold;">begin</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; <span style="color: #A52A2A; font-weight: bold;">if</span> <span style="color: #9F79EE;">&#40;</span><span style="color: #5D478B;">!</span>rstn<span style="color: #9F79EE;">&#41;</span> <span style="color: #A52A2A; font-weight: bold;">begin</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; int_d1 &nbsp; &nbsp; &nbsp; &nbsp;<span style="color: #5D478B;">&lt;=</span> 'b0 <span style="color: #5D478B;">;</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; <span style="color: #A52A2A; font-weight: bold;">end</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; <span style="color: #A52A2A; font-weight: bold;">else</span> <span style="color: #A52A2A; font-weight: bold;">if</span> <span style="color: #9F79EE;">&#40;</span>en_r<span style="color: #9F79EE;">&#91;</span><span style="color: #ff0055;">0</span><span style="color: #9F79EE;">&#93;</span><span style="color: #9F79EE;">&#41;</span> <span style="color: #A52A2A; font-weight: bold;">begin</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; int_d1 &nbsp; &nbsp; &nbsp; &nbsp;<span style="color: #5D478B;">&lt;=</span> int_d1 <span style="color: #5D478B;">+</span> int_d0 <span style="color: #5D478B;">;</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; <span style="color: #A52A2A; font-weight: bold;">end</span><br />
+&nbsp; &nbsp; <span style="color: #A52A2A; font-weight: bold;">end</span><br />
+<br />
+&nbsp; &nbsp;<span style="color: #00008B; font-style: italic;">//stage3</span><br />
+&nbsp; &nbsp; <span style="color: #A52A2A; font-weight: bold;">always</span> <span style="color: #5D478B;">@</span><span style="color: #9F79EE;">&#40;</span><span style="color: #A52A2A; font-weight: bold;">posedge</span> clk <span style="color: #A52A2A; font-weight: bold;">or</span> <span style="color: #A52A2A; font-weight: bold;">negedge</span> rstn<span style="color: #9F79EE;">&#41;</span> <span style="color: #A52A2A; font-weight: bold;">begin</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; <span style="color: #A52A2A; font-weight: bold;">if</span> <span style="color: #9F79EE;">&#40;</span><span style="color: #5D478B;">!</span>rstn<span style="color: #9F79EE;">&#41;</span> <span style="color: #A52A2A; font-weight: bold;">begin</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; int_d2 &nbsp; &nbsp; &nbsp; &nbsp;<span style="color: #5D478B;">&lt;=</span> 'b0 <span style="color: #5D478B;">;</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; <span style="color: #A52A2A; font-weight: bold;">end</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; <span style="color: #A52A2A; font-weight: bold;">else</span> <span style="color: #A52A2A; font-weight: bold;">if</span> <span style="color: #9F79EE;">&#40;</span>en_r<span style="color: #9F79EE;">&#91;</span><span style="color: #ff0055;">1</span><span style="color: #9F79EE;">&#93;</span><span style="color: #9F79EE;">&#41;</span> <span style="color: #A52A2A; font-weight: bold;">begin</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; int_d2 &nbsp; &nbsp; &nbsp; &nbsp;<span style="color: #5D478B;">&lt;=</span> int_d2 <span style="color: #5D478B;">+</span> int_d1 <span style="color: #5D478B;">;</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; <span style="color: #A52A2A; font-weight: bold;">end</span><br />
+&nbsp; &nbsp; <span style="color: #A52A2A; font-weight: bold;">end</span><br />
+&nbsp; &nbsp; <span style="color: #A52A2A; font-weight: bold;">assign</span> dout &nbsp;<span style="color: #5D478B;">=</span> int_d2 <span style="color: #5D478B;">;</span><br />
+&nbsp; &nbsp; <span style="color: #A52A2A; font-weight: bold;">assign</span> valid <span style="color: #5D478B;">=</span> en_r<span style="color: #9F79EE;">&#91;</span><span style="color: #ff0055;">2</span><span style="color: #9F79EE;">&#93;</span><span style="color: #5D478B;">;</span><br />
+<br />
+<span style="color: #A52A2A; font-weight: bold;">endmodule</span><br />
+</div></div>
+<p><strong>抽取器设计</strong></p><p>
+抽取器设计时，对积分器输出的数据进行计数，然后间隔 5 个数据进行抽取即可。</p>
+<div class="example"><h2 class="example">实例</h2> <div class="example_code">
+<span style="color: #A52A2A; font-weight: bold;">module</span> &nbsp;decimation<br />
+&nbsp; &nbsp; <span style="color: #5D478B;">#</span><span style="color: #9F79EE;">&#40;</span><span style="color: #A52A2A; font-weight: bold;">parameter</span> NDEC <span style="color: #5D478B;">=</span> <span style="color: #ff0055;">21</span><span style="color: #9F79EE;">&#41;</span><br />
+&nbsp; &nbsp; <span style="color: #9F79EE;">&#40;</span><br />
+&nbsp; &nbsp; &nbsp;<span style="color: #A52A2A; font-weight: bold;">input</span> &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;clk<span style="color: #5D478B;">,</span><br />
+&nbsp; &nbsp; &nbsp;<span style="color: #A52A2A; font-weight: bold;">input</span> &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;rstn<span style="color: #5D478B;">,</span><br />
+&nbsp; &nbsp; &nbsp;<span style="color: #A52A2A; font-weight: bold;">input</span> &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;en<span style="color: #5D478B;">,</span><br />
+&nbsp; &nbsp; &nbsp;<span style="color: #A52A2A; font-weight: bold;">input</span> <span style="color: #9F79EE;">&#91;</span>NDEC<span style="color: #5D478B;">-</span><span style="color: #ff0055;">1</span><span style="color: #5D478B;">:</span><span style="color: #ff0055;">0</span><span style="color: #9F79EE;">&#93;</span> &nbsp; &nbsp; din<span style="color: #5D478B;">,</span><br />
+&nbsp; &nbsp; &nbsp;<span style="color: #A52A2A; font-weight: bold;">output</span> &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; valid<span style="color: #5D478B;">,</span><br />
+&nbsp; &nbsp; &nbsp;<span style="color: #A52A2A; font-weight: bold;">output</span> <span style="color: #9F79EE;">&#91;</span>NDEC<span style="color: #5D478B;">-</span><span style="color: #ff0055;">1</span><span style="color: #5D478B;">:</span><span style="color: #ff0055;">0</span><span style="color: #9F79EE;">&#93;</span> &nbsp; &nbsp;dout<span style="color: #9F79EE;">&#41;</span><span style="color: #5D478B;">;</span><br />
+<br />
+&nbsp; &nbsp; <span style="color: #A52A2A; font-weight: bold;">reg</span> &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;valid_r <span style="color: #5D478B;">;</span><br />
+&nbsp; &nbsp; <span style="color: #A52A2A; font-weight: bold;">reg</span> <span style="color: #9F79EE;">&#91;</span><span style="color: #ff0055;">2</span><span style="color: #5D478B;">:</span><span style="color: #ff0055;">0</span><span style="color: #9F79EE;">&#93;</span> &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;cnt <span style="color: #5D478B;">;</span><br />
+&nbsp; &nbsp; <span style="color: #A52A2A; font-weight: bold;">reg</span> <span style="color: #9F79EE;">&#91;</span>NDEC<span style="color: #5D478B;">-</span><span style="color: #ff0055;">1</span><span style="color: #5D478B;">:</span><span style="color: #ff0055;">0</span><span style="color: #9F79EE;">&#93;</span> &nbsp; &nbsp; &nbsp; dout_r <span style="color: #5D478B;">;</span><br />
+<br />
+&nbsp; &nbsp; <span style="color: #00008B; font-style: italic;">//counter</span><br />
+&nbsp; &nbsp; <span style="color: #A52A2A; font-weight: bold;">always</span> <span style="color: #5D478B;">@</span><span style="color: #9F79EE;">&#40;</span><span style="color: #A52A2A; font-weight: bold;">posedge</span> clk <span style="color: #A52A2A; font-weight: bold;">or</span> <span style="color: #A52A2A; font-weight: bold;">negedge</span> rstn<span style="color: #9F79EE;">&#41;</span> <span style="color: #A52A2A; font-weight: bold;">begin</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; <span style="color: #A52A2A; font-weight: bold;">if</span> <span style="color: #9F79EE;">&#40;</span><span style="color: #5D478B;">!</span>rstn<span style="color: #9F79EE;">&#41;</span> <span style="color: #A52A2A; font-weight: bold;">begin</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; cnt <span style="color: #5D478B;">&lt;=</span> <span style="color: #ff0055;">3'b0</span><span style="color: #5D478B;">;</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; <span style="color: #A52A2A; font-weight: bold;">end</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; <span style="color: #A52A2A; font-weight: bold;">else</span> <span style="color: #A52A2A; font-weight: bold;">if</span> <span style="color: #9F79EE;">&#40;</span>en<span style="color: #9F79EE;">&#41;</span> <span style="color: #A52A2A; font-weight: bold;">begin</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; <span style="color: #A52A2A; font-weight: bold;">if</span> <span style="color: #9F79EE;">&#40;</span>cnt<span style="color: #5D478B;">==</span><span style="color: #ff0055;">4</span><span style="color: #9F79EE;">&#41;</span> <span style="color: #A52A2A; font-weight: bold;">begin</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; cnt <span style="color: #5D478B;">&lt;=</span> 'b0 <span style="color: #5D478B;">;</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; <span style="color: #A52A2A; font-weight: bold;">end</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; <span style="color: #A52A2A; font-weight: bold;">else</span> <span style="color: #A52A2A; font-weight: bold;">begin</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; cnt <span style="color: #5D478B;">&lt;=</span> cnt <span style="color: #5D478B;">+</span> <span style="color: #ff0055;">1'b1</span> <span style="color: #5D478B;">;</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; <span style="color: #A52A2A; font-weight: bold;">end</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; <span style="color: #A52A2A; font-weight: bold;">end</span><br />
+&nbsp; &nbsp; <span style="color: #A52A2A; font-weight: bold;">end</span><br />
+<br />
+&nbsp; &nbsp; <span style="color: #00008B; font-style: italic;">//data, valid</span><br />
+&nbsp; &nbsp; <span style="color: #A52A2A; font-weight: bold;">always</span> <span style="color: #5D478B;">@</span><span style="color: #9F79EE;">&#40;</span><span style="color: #A52A2A; font-weight: bold;">posedge</span> clk <span style="color: #A52A2A; font-weight: bold;">or</span> <span style="color: #A52A2A; font-weight: bold;">negedge</span> rstn<span style="color: #9F79EE;">&#41;</span> <span style="color: #A52A2A; font-weight: bold;">begin</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; <span style="color: #A52A2A; font-weight: bold;">if</span> <span style="color: #9F79EE;">&#40;</span><span style="color: #5D478B;">!</span>rstn<span style="color: #9F79EE;">&#41;</span> <span style="color: #A52A2A; font-weight: bold;">begin</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; valid_r &nbsp; &nbsp; &nbsp; &nbsp;<span style="color: #5D478B;">&lt;=</span> <span style="color: #ff0055;">1'b0</span> <span style="color: #5D478B;">;</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; dout_r &nbsp; &nbsp; &nbsp; &nbsp; <span style="color: #5D478B;">&lt;=</span> 'b0 <span style="color: #5D478B;">;</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; <span style="color: #A52A2A; font-weight: bold;">end</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; <span style="color: #A52A2A; font-weight: bold;">else</span> <span style="color: #A52A2A; font-weight: bold;">if</span> <span style="color: #9F79EE;">&#40;</span>en<span style="color: #9F79EE;">&#41;</span> <span style="color: #A52A2A; font-weight: bold;">begin</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; <span style="color: #A52A2A; font-weight: bold;">if</span> <span style="color: #9F79EE;">&#40;</span>cnt<span style="color: #5D478B;">==</span><span style="color: #ff0055;">4</span><span style="color: #9F79EE;">&#41;</span> <span style="color: #A52A2A; font-weight: bold;">begin</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; valid_r &nbsp; &nbsp; <span style="color: #5D478B;">&lt;=</span> <span style="color: #ff0055;">1'b1</span> <span style="color: #5D478B;">;</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; dout_r &nbsp; &nbsp; &nbsp;<span style="color: #5D478B;">&lt;=</span> din<span style="color: #5D478B;">;</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; <span style="color: #A52A2A; font-weight: bold;">end</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; <span style="color: #A52A2A; font-weight: bold;">else</span> <span style="color: #A52A2A; font-weight: bold;">begin</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; valid_r &nbsp; &nbsp; <span style="color: #5D478B;">&lt;=</span> <span style="color: #ff0055;">1'b0</span> <span style="color: #5D478B;">;</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; <span style="color: #A52A2A; font-weight: bold;">end</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; <span style="color: #A52A2A; font-weight: bold;">end</span><br />
+&nbsp; &nbsp; <span style="color: #A52A2A; font-weight: bold;">end</span><br />
+&nbsp; &nbsp; <span style="color: #A52A2A; font-weight: bold;">assign</span> dout &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;<span style="color: #5D478B;">=</span> dout_r <span style="color: #5D478B;">;</span><br />
+&nbsp; &nbsp; <span style="color: #A52A2A; font-weight: bold;">assign</span> valid &nbsp; &nbsp; &nbsp; &nbsp; <span style="color: #5D478B;">=</span> valid_r <span style="color: #5D478B;">;</span><br />
+<br />
+<span style="color: #A52A2A; font-weight: bold;">endmodule</span><br />
+</div></div>
+<p><strong>梳状器设计</strong></p><p>
+梳状滤波器就是简单的一阶 FIR 滤波器，每一级的 FIR 滤波器对数据进行一个时钟延时，然后做相减即可。因为系数为 ±1，所以不需要乘法器。</p>
+<div class="example"><h2 class="example">实例</h2> <div class="example_code">
+<span style="color: #A52A2A; font-weight: bold;">module</span> comb<br />
+&nbsp; &nbsp; <span style="color: #5D478B;">#</span><span style="color: #9F79EE;">&#40;</span><span style="color: #A52A2A; font-weight: bold;">parameter</span> NIN &nbsp;<span style="color: #5D478B;">=</span> <span style="color: #ff0055;">21</span><span style="color: #5D478B;">,</span><br />
+&nbsp; &nbsp; &nbsp; <span style="color: #A52A2A; font-weight: bold;">parameter</span> NOUT <span style="color: #5D478B;">=</span> <span style="color: #ff0055;">17</span><span style="color: #9F79EE;">&#41;</span><br />
+&nbsp; &nbsp; <span style="color: #9F79EE;">&#40;</span><br />
+&nbsp; &nbsp; &nbsp;<span style="color: #A52A2A; font-weight: bold;">input</span> &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; clk<span style="color: #5D478B;">,</span><br />
+&nbsp; &nbsp; &nbsp;<span style="color: #A52A2A; font-weight: bold;">input</span> &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; rstn<span style="color: #5D478B;">,</span><br />
+&nbsp; &nbsp; &nbsp;<span style="color: #A52A2A; font-weight: bold;">input</span> &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; en<span style="color: #5D478B;">,</span><br />
+&nbsp; &nbsp; &nbsp;<span style="color: #A52A2A; font-weight: bold;">input</span> <span style="color: #9F79EE;">&#91;</span>NIN<span style="color: #5D478B;">-</span><span style="color: #ff0055;">1</span><span style="color: #5D478B;">:</span><span style="color: #ff0055;">0</span><span style="color: #9F79EE;">&#93;</span> &nbsp; &nbsp; din<span style="color: #5D478B;">,</span><br />
+&nbsp; &nbsp; &nbsp;<span style="color: #A52A2A; font-weight: bold;">input</span> &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; valid<span style="color: #5D478B;">,</span><br />
+&nbsp; &nbsp; &nbsp;<span style="color: #A52A2A; font-weight: bold;">output</span> <span style="color: #9F79EE;">&#91;</span>NOUT<span style="color: #5D478B;">-</span><span style="color: #ff0055;">1</span><span style="color: #5D478B;">:</span><span style="color: #ff0055;">0</span><span style="color: #9F79EE;">&#93;</span> &nbsp; dout<span style="color: #9F79EE;">&#41;</span><span style="color: #5D478B;">;</span><br />
+<br />
+&nbsp; &nbsp; <span style="color: #00008B; font-style: italic;">//en delay</span><br />
+&nbsp; &nbsp; <span style="color: #A52A2A; font-weight: bold;">reg</span> <span style="color: #9F79EE;">&#91;</span><span style="color: #ff0055;">5</span><span style="color: #5D478B;">:</span><span style="color: #ff0055;">0</span><span style="color: #9F79EE;">&#93;</span> &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; en_r <span style="color: #5D478B;">;</span><br />
+&nbsp; &nbsp; <span style="color: #A52A2A; font-weight: bold;">always</span> <span style="color: #5D478B;">@</span><span style="color: #9F79EE;">&#40;</span><span style="color: #A52A2A; font-weight: bold;">posedge</span> clk <span style="color: #A52A2A; font-weight: bold;">or</span> <span style="color: #A52A2A; font-weight: bold;">negedge</span> rstn<span style="color: #9F79EE;">&#41;</span> <span style="color: #A52A2A; font-weight: bold;">begin</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; <span style="color: #A52A2A; font-weight: bold;">if</span> <span style="color: #9F79EE;">&#40;</span><span style="color: #5D478B;">!</span>rstn<span style="color: #9F79EE;">&#41;</span> <span style="color: #A52A2A; font-weight: bold;">begin</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; en_r <span style="color: #5D478B;">&lt;=</span> 'b0 <span style="color: #5D478B;">;</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; <span style="color: #A52A2A; font-weight: bold;">end</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; <span style="color: #A52A2A; font-weight: bold;">else</span> <span style="color: #A52A2A; font-weight: bold;">if</span> <span style="color: #9F79EE;">&#40;</span>en<span style="color: #9F79EE;">&#41;</span> <span style="color: #A52A2A; font-weight: bold;">begin</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; en_r <span style="color: #5D478B;">&lt;=</span> <span style="color: #9F79EE;">&#123;</span>en_r<span style="color: #9F79EE;">&#91;</span><span style="color: #ff0055;">5</span><span style="color: #5D478B;">:</span><span style="color: #ff0055;">0</span><span style="color: #9F79EE;">&#93;</span><span style="color: #5D478B;">,</span> en<span style="color: #9F79EE;">&#125;</span> <span style="color: #5D478B;">;</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; <span style="color: #A52A2A; font-weight: bold;">end</span><br />
+&nbsp; &nbsp; <span style="color: #A52A2A; font-weight: bold;">end</span><br />
+&nbsp;<br />
+&nbsp; &nbsp; <span style="color: #A52A2A; font-weight: bold;">reg</span> <span style="color: #9F79EE;">&#91;</span>NOUT<span style="color: #5D478B;">-</span><span style="color: #ff0055;">1</span><span style="color: #5D478B;">:</span><span style="color: #ff0055;">0</span><span style="color: #9F79EE;">&#93;</span> &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;d1<span style="color: #5D478B;">,</span> d1_d<span style="color: #5D478B;">,</span> d2<span style="color: #5D478B;">,</span> d2_d<span style="color: #5D478B;">,</span> d3<span style="color: #5D478B;">,</span> d3_d <span style="color: #5D478B;">;</span><br />
+&nbsp; &nbsp; <span style="color: #00008B; font-style: italic;">//stage 1, as fir filter, shift and add(sub), </span><br />
+&nbsp; &nbsp; <span style="color: #00008B; font-style: italic;">//no need for multiplier</span><br />
+&nbsp; &nbsp; <span style="color: #A52A2A; font-weight: bold;">always</span> <span style="color: #5D478B;">@</span><span style="color: #9F79EE;">&#40;</span><span style="color: #A52A2A; font-weight: bold;">posedge</span> clk <span style="color: #A52A2A; font-weight: bold;">or</span> <span style="color: #A52A2A; font-weight: bold;">negedge</span> rstn<span style="color: #9F79EE;">&#41;</span> <span style="color: #A52A2A; font-weight: bold;">begin</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; <span style="color: #A52A2A; font-weight: bold;">if</span> <span style="color: #9F79EE;">&#40;</span><span style="color: #5D478B;">!</span>rstn<span style="color: #9F79EE;">&#41;</span> &nbsp; &nbsp; &nbsp; &nbsp;d1 &nbsp; &nbsp; <span style="color: #5D478B;">&lt;=</span> 'b0 <span style="color: #5D478B;">;</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; <span style="color: #A52A2A; font-weight: bold;">else</span> <span style="color: #A52A2A; font-weight: bold;">if</span> <span style="color: #9F79EE;">&#40;</span>en<span style="color: #9F79EE;">&#41;</span> &nbsp; &nbsp; &nbsp;d1 &nbsp; &nbsp; <span style="color: #5D478B;">&lt;=</span> din <span style="color: #5D478B;">;</span><br />
+&nbsp; &nbsp; <span style="color: #A52A2A; font-weight: bold;">end</span><br />
+&nbsp; &nbsp; <span style="color: #A52A2A; font-weight: bold;">always</span> <span style="color: #5D478B;">@</span><span style="color: #9F79EE;">&#40;</span><span style="color: #A52A2A; font-weight: bold;">posedge</span> clk <span style="color: #A52A2A; font-weight: bold;">or</span> <span style="color: #A52A2A; font-weight: bold;">negedge</span> rstn<span style="color: #9F79EE;">&#41;</span> <span style="color: #A52A2A; font-weight: bold;">begin</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; <span style="color: #A52A2A; font-weight: bold;">if</span> <span style="color: #9F79EE;">&#40;</span><span style="color: #5D478B;">!</span>rstn<span style="color: #9F79EE;">&#41;</span> &nbsp; &nbsp; &nbsp; &nbsp;d1_d &nbsp; <span style="color: #5D478B;">&lt;=</span> 'b0 <span style="color: #5D478B;">;</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; <span style="color: #A52A2A; font-weight: bold;">else</span> <span style="color: #A52A2A; font-weight: bold;">if</span> <span style="color: #9F79EE;">&#40;</span>en<span style="color: #9F79EE;">&#41;</span> &nbsp; &nbsp; &nbsp;d1_d &nbsp; <span style="color: #5D478B;">&lt;=</span> d1 <span style="color: #5D478B;">;</span><br />
+&nbsp; &nbsp; <span style="color: #A52A2A; font-weight: bold;">end</span><br />
+&nbsp; &nbsp; <span style="color: #A52A2A; font-weight: bold;">wire</span> <span style="color: #9F79EE;">&#91;</span>NOUT<span style="color: #5D478B;">-</span><span style="color: #ff0055;">1</span><span style="color: #5D478B;">:</span><span style="color: #ff0055;">0</span><span style="color: #9F79EE;">&#93;</span> &nbsp; &nbsp; &nbsp;s1_out <span style="color: #5D478B;">=</span> d1 <span style="color: #5D478B;">-</span> d1_d <span style="color: #5D478B;">;</span><br />
+<br />
+&nbsp; &nbsp; <span style="color: #00008B; font-style: italic;">//stage 2</span><br />
+&nbsp; &nbsp; <span style="color: #A52A2A; font-weight: bold;">always</span> <span style="color: #5D478B;">@</span><span style="color: #9F79EE;">&#40;</span><span style="color: #A52A2A; font-weight: bold;">posedge</span> clk <span style="color: #A52A2A; font-weight: bold;">or</span> <span style="color: #A52A2A; font-weight: bold;">negedge</span> rstn<span style="color: #9F79EE;">&#41;</span> <span style="color: #A52A2A; font-weight: bold;">begin</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; <span style="color: #A52A2A; font-weight: bold;">if</span> <span style="color: #9F79EE;">&#40;</span><span style="color: #5D478B;">!</span>rstn<span style="color: #9F79EE;">&#41;</span> &nbsp; &nbsp; &nbsp; &nbsp;d2 &nbsp; &nbsp; <span style="color: #5D478B;">&lt;=</span> 'b0 <span style="color: #5D478B;">;</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; <span style="color: #A52A2A; font-weight: bold;">else</span> <span style="color: #A52A2A; font-weight: bold;">if</span> <span style="color: #9F79EE;">&#40;</span>en<span style="color: #9F79EE;">&#41;</span> &nbsp; &nbsp; &nbsp;d2 &nbsp; &nbsp; <span style="color: #5D478B;">&lt;=</span> s1_out <span style="color: #5D478B;">;</span><br />
+&nbsp; &nbsp; <span style="color: #A52A2A; font-weight: bold;">end</span><br />
+&nbsp; &nbsp; <span style="color: #A52A2A; font-weight: bold;">always</span> <span style="color: #5D478B;">@</span><span style="color: #9F79EE;">&#40;</span><span style="color: #A52A2A; font-weight: bold;">posedge</span> clk <span style="color: #A52A2A; font-weight: bold;">or</span> <span style="color: #A52A2A; font-weight: bold;">negedge</span> rstn<span style="color: #9F79EE;">&#41;</span> <span style="color: #A52A2A; font-weight: bold;">begin</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; <span style="color: #A52A2A; font-weight: bold;">if</span> <span style="color: #9F79EE;">&#40;</span><span style="color: #5D478B;">!</span>rstn<span style="color: #9F79EE;">&#41;</span> &nbsp; &nbsp; &nbsp; &nbsp;d2_d &nbsp; <span style="color: #5D478B;">&lt;=</span> 'b0 <span style="color: #5D478B;">;</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; <span style="color: #A52A2A; font-weight: bold;">else</span> <span style="color: #A52A2A; font-weight: bold;">if</span> <span style="color: #9F79EE;">&#40;</span>en<span style="color: #9F79EE;">&#41;</span> &nbsp; &nbsp; &nbsp;d2_d &nbsp; <span style="color: #5D478B;">&lt;=</span> d2 <span style="color: #5D478B;">;</span><br />
+&nbsp; &nbsp; <span style="color: #A52A2A; font-weight: bold;">end</span><br />
+&nbsp; &nbsp; <span style="color: #A52A2A; font-weight: bold;">wire</span> <span style="color: #9F79EE;">&#91;</span>NOUT<span style="color: #5D478B;">-</span><span style="color: #ff0055;">1</span><span style="color: #5D478B;">:</span><span style="color: #ff0055;">0</span><span style="color: #9F79EE;">&#93;</span> &nbsp; &nbsp; &nbsp;s2_out <span style="color: #5D478B;">=</span> d2 <span style="color: #5D478B;">-</span> d2_d <span style="color: #5D478B;">;</span><br />
+<br />
+&nbsp; &nbsp; <span style="color: #00008B; font-style: italic;">//stage 3</span><br />
+&nbsp; &nbsp; <span style="color: #A52A2A; font-weight: bold;">always</span> <span style="color: #5D478B;">@</span><span style="color: #9F79EE;">&#40;</span><span style="color: #A52A2A; font-weight: bold;">posedge</span> clk <span style="color: #A52A2A; font-weight: bold;">or</span> <span style="color: #A52A2A; font-weight: bold;">negedge</span> rstn<span style="color: #9F79EE;">&#41;</span> <span style="color: #A52A2A; font-weight: bold;">begin</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; <span style="color: #A52A2A; font-weight: bold;">if</span> <span style="color: #9F79EE;">&#40;</span><span style="color: #5D478B;">!</span>rstn<span style="color: #9F79EE;">&#41;</span> &nbsp; &nbsp; &nbsp; &nbsp;d3 &nbsp; &nbsp; <span style="color: #5D478B;">&lt;=</span> 'b0 <span style="color: #5D478B;">;</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; <span style="color: #A52A2A; font-weight: bold;">else</span> <span style="color: #A52A2A; font-weight: bold;">if</span> <span style="color: #9F79EE;">&#40;</span>en<span style="color: #9F79EE;">&#41;</span> &nbsp; &nbsp; &nbsp;d3 &nbsp; &nbsp; <span style="color: #5D478B;">&lt;=</span> s2_out <span style="color: #5D478B;">;</span><br />
+&nbsp; &nbsp; <span style="color: #A52A2A; font-weight: bold;">end</span><br />
+&nbsp; &nbsp; <span style="color: #A52A2A; font-weight: bold;">always</span> <span style="color: #5D478B;">@</span><span style="color: #9F79EE;">&#40;</span><span style="color: #A52A2A; font-weight: bold;">posedge</span> clk <span style="color: #A52A2A; font-weight: bold;">or</span> <span style="color: #A52A2A; font-weight: bold;">negedge</span> rstn<span style="color: #9F79EE;">&#41;</span> <span style="color: #A52A2A; font-weight: bold;">begin</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; <span style="color: #A52A2A; font-weight: bold;">if</span> <span style="color: #9F79EE;">&#40;</span><span style="color: #5D478B;">!</span>rstn<span style="color: #9F79EE;">&#41;</span> &nbsp; &nbsp; &nbsp; &nbsp;d3_d &nbsp; <span style="color: #5D478B;">&lt;=</span> 'b0 <span style="color: #5D478B;">;</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; <span style="color: #A52A2A; font-weight: bold;">else</span> <span style="color: #A52A2A; font-weight: bold;">if</span> <span style="color: #9F79EE;">&#40;</span>en<span style="color: #9F79EE;">&#41;</span> &nbsp; &nbsp; &nbsp;d3_d &nbsp; <span style="color: #5D478B;">&lt;=</span> d3 <span style="color: #5D478B;">;</span><br />
+&nbsp; &nbsp; <span style="color: #A52A2A; font-weight: bold;">end</span><br />
+&nbsp; &nbsp; <span style="color: #A52A2A; font-weight: bold;">wire</span> <span style="color: #9F79EE;">&#91;</span>NOUT<span style="color: #5D478B;">-</span><span style="color: #ff0055;">1</span><span style="color: #5D478B;">:</span><span style="color: #ff0055;">0</span><span style="color: #9F79EE;">&#93;</span> &nbsp; &nbsp; &nbsp;s3_out <span style="color: #5D478B;">=</span> d3 <span style="color: #5D478B;">-</span> d3_d <span style="color: #5D478B;">;</span><br />
+<br />
+&nbsp; &nbsp; <span style="color: #00008B; font-style: italic;">//tap the output data for better display</span><br />
+&nbsp; &nbsp; <span style="color: #A52A2A; font-weight: bold;">reg</span> <span style="color: #9F79EE;">&#91;</span>NOUT<span style="color: #5D478B;">-</span><span style="color: #ff0055;">1</span><span style="color: #5D478B;">:</span><span style="color: #ff0055;">0</span><span style="color: #9F79EE;">&#93;</span> &nbsp; &nbsp; &nbsp; dout_r <span style="color: #5D478B;">;</span><br />
+&nbsp; &nbsp; <span style="color: #A52A2A; font-weight: bold;">reg</span> &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;valid_r <span style="color: #5D478B;">;</span><br />
+&nbsp; &nbsp; <span style="color: #A52A2A; font-weight: bold;">always</span> <span style="color: #5D478B;">@</span><span style="color: #9F79EE;">&#40;</span><span style="color: #A52A2A; font-weight: bold;">posedge</span> clk <span style="color: #A52A2A; font-weight: bold;">or</span> <span style="color: #A52A2A; font-weight: bold;">negedge</span> rstn<span style="color: #9F79EE;">&#41;</span> <span style="color: #A52A2A; font-weight: bold;">begin</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; <span style="color: #A52A2A; font-weight: bold;">if</span> <span style="color: #9F79EE;">&#40;</span><span style="color: #5D478B;">!</span>rstn<span style="color: #9F79EE;">&#41;</span> <span style="color: #A52A2A; font-weight: bold;">begin</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; dout_r &nbsp; &nbsp; &nbsp; &nbsp; <span style="color: #5D478B;">&lt;=</span> 'b0 <span style="color: #5D478B;">;</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; valid_r &nbsp; &nbsp; &nbsp; &nbsp;<span style="color: #5D478B;">&lt;=</span> 'b0 <span style="color: #5D478B;">;</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; <span style="color: #A52A2A; font-weight: bold;">end</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; <span style="color: #A52A2A; font-weight: bold;">else</span> <span style="color: #A52A2A; font-weight: bold;">if</span> <span style="color: #9F79EE;">&#40;</span>en<span style="color: #9F79EE;">&#41;</span> <span style="color: #A52A2A; font-weight: bold;">begin</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; dout_r &nbsp; &nbsp; &nbsp; &nbsp; <span style="color: #5D478B;">&lt;=</span> s3_out <span style="color: #5D478B;">;</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; valid_r &nbsp; &nbsp; &nbsp; &nbsp;<span style="color: #5D478B;">&lt;=</span> <span style="color: #ff0055;">1'b1</span> <span style="color: #5D478B;">;</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; <span style="color: #A52A2A; font-weight: bold;">end</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; <span style="color: #A52A2A; font-weight: bold;">else</span> <span style="color: #A52A2A; font-weight: bold;">begin</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; valid_r &nbsp; &nbsp; &nbsp; &nbsp;<span style="color: #5D478B;">&lt;=</span> <span style="color: #ff0055;">1'b0</span> <span style="color: #5D478B;">;</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; <span style="color: #A52A2A; font-weight: bold;">end</span><br />
+&nbsp; &nbsp; <span style="color: #A52A2A; font-weight: bold;">end</span><br />
+&nbsp; &nbsp; <span style="color: #A52A2A; font-weight: bold;">assign</span> &nbsp; &nbsp; &nbsp; dout &nbsp; &nbsp;<span style="color: #5D478B;">=</span> dout_r <span style="color: #5D478B;">;</span><br />
+&nbsp; &nbsp; <span style="color: #A52A2A; font-weight: bold;">assign</span> &nbsp; &nbsp; &nbsp; valid &nbsp; <span style="color: #5D478B;">=</span> valid_r <span style="color: #5D478B;">;</span><br />
+<br />
+<span style="color: #A52A2A; font-weight: bold;">endmodule</span><br />
+</div></div>
+<p><strong>顶层例化 </strong></p><p>
+按信号的流向将积分器、抽取器、梳状器分别例化，即可组成最后的 CIC 滤波器模块。</p><p>
+梳状滤波器的最终输出位宽一般会比输入信号小一些，这里取 17bit。当然输出位宽完全可以与输入数据的位宽一致。</p>
+<div class="example"><h2 class="example">实例</h2> <div class="example_code">
+<span style="color: #A52A2A; font-weight: bold;">module</span> cic<br />
+&nbsp; &nbsp; <span style="color: #5D478B;">#</span><span style="color: #9F79EE;">&#40;</span><span style="color: #A52A2A; font-weight: bold;">parameter</span> NIN &nbsp;<span style="color: #5D478B;">=</span> <span style="color: #ff0055;">12</span><span style="color: #5D478B;">,</span><br />
+&nbsp; &nbsp; &nbsp; <span style="color: #A52A2A; font-weight: bold;">parameter</span> NMAX <span style="color: #5D478B;">=</span> <span style="color: #ff0055;">21</span><span style="color: #5D478B;">,</span><br />
+&nbsp; &nbsp; &nbsp; <span style="color: #A52A2A; font-weight: bold;">parameter</span> NOUT <span style="color: #5D478B;">=</span> <span style="color: #ff0055;">17</span><span style="color: #9F79EE;">&#41;</span><br />
+&nbsp; &nbsp; <span style="color: #9F79EE;">&#40;</span><br />
+&nbsp; &nbsp; &nbsp;<span style="color: #A52A2A; font-weight: bold;">input</span> &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; clk<span style="color: #5D478B;">,</span><br />
+&nbsp; &nbsp; &nbsp;<span style="color: #A52A2A; font-weight: bold;">input</span> &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; rstn<span style="color: #5D478B;">,</span><br />
+&nbsp; &nbsp; &nbsp;<span style="color: #A52A2A; font-weight: bold;">input</span> &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; en<span style="color: #5D478B;">,</span><br />
+&nbsp; &nbsp; &nbsp;<span style="color: #A52A2A; font-weight: bold;">input</span> <span style="color: #9F79EE;">&#91;</span>NIN<span style="color: #5D478B;">-</span><span style="color: #ff0055;">1</span><span style="color: #5D478B;">:</span><span style="color: #ff0055;">0</span><span style="color: #9F79EE;">&#93;</span> &nbsp; &nbsp; din<span style="color: #5D478B;">,</span><br />
+&nbsp; &nbsp; &nbsp;<span style="color: #A52A2A; font-weight: bold;">input</span> &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; valid<span style="color: #5D478B;">,</span><br />
+&nbsp; &nbsp; &nbsp;<span style="color: #A52A2A; font-weight: bold;">output</span> <span style="color: #9F79EE;">&#91;</span>NOUT<span style="color: #5D478B;">-</span><span style="color: #ff0055;">1</span><span style="color: #5D478B;">:</span><span style="color: #ff0055;">0</span><span style="color: #9F79EE;">&#93;</span> &nbsp; dout<span style="color: #9F79EE;">&#41;</span><span style="color: #5D478B;">;</span><br />
+<br />
+&nbsp; &nbsp; <span style="color: #A52A2A; font-weight: bold;">wire</span> <span style="color: #9F79EE;">&#91;</span>NMAX<span style="color: #5D478B;">-</span><span style="color: #ff0055;">1</span><span style="color: #5D478B;">:</span><span style="color: #ff0055;">0</span><span style="color: #9F79EE;">&#93;</span> &nbsp; &nbsp; &nbsp;itg_out <span style="color: #5D478B;">;</span><br />
+&nbsp; &nbsp; <span style="color: #A52A2A; font-weight: bold;">wire</span> <span style="color: #9F79EE;">&#91;</span>NMAX<span style="color: #5D478B;">-</span><span style="color: #ff0055;">1</span><span style="color: #5D478B;">:</span><span style="color: #ff0055;">0</span><span style="color: #9F79EE;">&#93;</span> &nbsp; &nbsp; &nbsp;dec_out <span style="color: #5D478B;">;</span><br />
+&nbsp; &nbsp; <span style="color: #A52A2A; font-weight: bold;">wire</span> <span style="color: #9F79EE;">&#91;</span><span style="color: #ff0055;">1</span><span style="color: #5D478B;">:</span><span style="color: #ff0055;">0</span><span style="color: #9F79EE;">&#93;</span> &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; en_r <span style="color: #5D478B;">;</span><br />
+<br />
+&nbsp; &nbsp; integrator &nbsp; <span style="color: #5D478B;">#</span><span style="color: #9F79EE;">&#40;</span>.NIN<span style="color: #9F79EE;">&#40;</span>NIN<span style="color: #9F79EE;">&#41;</span><span style="color: #5D478B;">,</span> .NOUT<span style="color: #9F79EE;">&#40;</span>NMAX<span style="color: #9F79EE;">&#41;</span><span style="color: #9F79EE;">&#41;</span><br />
+&nbsp; &nbsp; u_integrator <span style="color: #9F79EE;">&#40;</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp;.clk &nbsp; &nbsp; &nbsp; &nbsp; <span style="color: #9F79EE;">&#40;</span>clk<span style="color: #9F79EE;">&#41;</span><span style="color: #5D478B;">,</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp;.rstn &nbsp; &nbsp; &nbsp; &nbsp;<span style="color: #9F79EE;">&#40;</span>rstn<span style="color: #9F79EE;">&#41;</span><span style="color: #5D478B;">,</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp;.en &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;<span style="color: #9F79EE;">&#40;</span>en<span style="color: #9F79EE;">&#41;</span><span style="color: #5D478B;">,</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp;.din &nbsp; &nbsp; &nbsp; &nbsp; <span style="color: #9F79EE;">&#40;</span>din<span style="color: #9F79EE;">&#41;</span><span style="color: #5D478B;">,</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp;.valid &nbsp; &nbsp; &nbsp; <span style="color: #9F79EE;">&#40;</span>en_r<span style="color: #9F79EE;">&#91;</span><span style="color: #ff0055;">0</span><span style="color: #9F79EE;">&#93;</span><span style="color: #9F79EE;">&#41;</span><span style="color: #5D478B;">,</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp;.dout &nbsp; &nbsp; &nbsp; &nbsp;<span style="color: #9F79EE;">&#40;</span>itg_out<span style="color: #9F79EE;">&#41;</span><span style="color: #9F79EE;">&#41;</span><span style="color: #5D478B;">;</span><br />
+<br />
+&nbsp; &nbsp; decimation &nbsp; <span style="color: #5D478B;">#</span><span style="color: #9F79EE;">&#40;</span>.NDEC<span style="color: #9F79EE;">&#40;</span>NMAX<span style="color: #9F79EE;">&#41;</span><span style="color: #9F79EE;">&#41;</span><br />
+&nbsp; &nbsp; u_decimator <span style="color: #9F79EE;">&#40;</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp;.clk &nbsp; &nbsp; &nbsp; &nbsp; <span style="color: #9F79EE;">&#40;</span>clk<span style="color: #9F79EE;">&#41;</span><span style="color: #5D478B;">,</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp;.rstn &nbsp; &nbsp; &nbsp; &nbsp;<span style="color: #9F79EE;">&#40;</span>rstn<span style="color: #9F79EE;">&#41;</span><span style="color: #5D478B;">,</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp;.en &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;<span style="color: #9F79EE;">&#40;</span>en_r<span style="color: #9F79EE;">&#91;</span><span style="color: #ff0055;">0</span><span style="color: #9F79EE;">&#93;</span><span style="color: #9F79EE;">&#41;</span><span style="color: #5D478B;">,</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp;.din &nbsp; &nbsp; &nbsp; &nbsp; <span style="color: #9F79EE;">&#40;</span>itg_out<span style="color: #9F79EE;">&#41;</span><span style="color: #5D478B;">,</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp;.dout &nbsp; &nbsp; &nbsp; &nbsp;<span style="color: #9F79EE;">&#40;</span>dec_out<span style="color: #9F79EE;">&#41;</span><span style="color: #5D478B;">,</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp;.valid &nbsp; &nbsp; &nbsp; <span style="color: #9F79EE;">&#40;</span>en_r<span style="color: #9F79EE;">&#91;</span><span style="color: #ff0055;">1</span><span style="color: #9F79EE;">&#93;</span><span style="color: #9F79EE;">&#41;</span><span style="color: #9F79EE;">&#41;</span><span style="color: #5D478B;">;</span><br />
+<br />
+&nbsp; &nbsp; comb &nbsp; &nbsp; &nbsp; &nbsp; <span style="color: #5D478B;">#</span><span style="color: #9F79EE;">&#40;</span>.NIN<span style="color: #9F79EE;">&#40;</span>NMAX<span style="color: #9F79EE;">&#41;</span><span style="color: #5D478B;">,</span> .NOUT<span style="color: #9F79EE;">&#40;</span>NOUT<span style="color: #9F79EE;">&#41;</span><span style="color: #9F79EE;">&#41;</span><br />
+&nbsp; &nbsp; u_comb <span style="color: #9F79EE;">&#40;</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp;.clk &nbsp; &nbsp; &nbsp; &nbsp; <span style="color: #9F79EE;">&#40;</span>clk<span style="color: #9F79EE;">&#41;</span><span style="color: #5D478B;">,</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp;.rstn &nbsp; &nbsp; &nbsp; &nbsp;<span style="color: #9F79EE;">&#40;</span>rstn<span style="color: #9F79EE;">&#41;</span><span style="color: #5D478B;">,</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp;.en &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;<span style="color: #9F79EE;">&#40;</span>en_r<span style="color: #9F79EE;">&#91;</span><span style="color: #ff0055;">1</span><span style="color: #9F79EE;">&#93;</span><span style="color: #9F79EE;">&#41;</span><span style="color: #5D478B;">,</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp;.din &nbsp; &nbsp; &nbsp; &nbsp; <span style="color: #9F79EE;">&#40;</span>dec_out<span style="color: #9F79EE;">&#41;</span><span style="color: #5D478B;">,</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp;.valid &nbsp; &nbsp; &nbsp; <span style="color: #9F79EE;">&#40;</span>valid<span style="color: #9F79EE;">&#41;</span><span style="color: #5D478B;">,</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp;.dout &nbsp; &nbsp; &nbsp; &nbsp;<span style="color: #9F79EE;">&#40;</span>dout<span style="color: #9F79EE;">&#41;</span><span style="color: #9F79EE;">&#41;</span><span style="color: #5D478B;">;</span><br />
+<br />
+<span style="color: #A52A2A; font-weight: bold;">endmodule</span><br />
+</div></div>
+<p><strong>testbench </strong></p><p>
+testbench 编写如下，主要功能就是不间断连续的输入 250KHz 与 7.5MHz 的正弦波混合信号数据。输入的混合信号数据也可由 matlab 生成，具体过程参考<a href="https://www.runoob.com/w3cnote/verilog-fir.html" rel="noopener noreferrer" target="_blank">《并行 FIR 滤波器设计》</a>一节。</p>
+<div class="example"><h2 class="example">实例</h2> <div class="example_code">
+<span style="color: #A52A2A; font-weight: bold;">module</span> test <span style="color: #5D478B;">;</span><br />
+&nbsp; &nbsp; <span style="color: #A52A2A; font-weight: bold;">parameter</span> &nbsp; &nbsp;NIN &nbsp;<span style="color: #5D478B;">=</span> <span style="color: #ff0055;">12</span> <span style="color: #5D478B;">;</span><br />
+&nbsp; &nbsp; <span style="color: #A52A2A; font-weight: bold;">parameter</span> &nbsp; &nbsp;NMAX <span style="color: #5D478B;">=</span> <span style="color: #ff0055;">21</span> <span style="color: #5D478B;">;</span><br />
+&nbsp; &nbsp; <span style="color: #A52A2A; font-weight: bold;">parameter</span> &nbsp; &nbsp;NOUT <span style="color: #5D478B;">=</span> NMAX <span style="color: #5D478B;">;</span><br />
+<br />
+&nbsp; &nbsp; <span style="color: #A52A2A; font-weight: bold;">reg</span> &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;clk <span style="color: #5D478B;">;</span><br />
+&nbsp; &nbsp; <span style="color: #A52A2A; font-weight: bold;">reg</span> &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;rstn <span style="color: #5D478B;">;</span><br />
+&nbsp; &nbsp; <span style="color: #A52A2A; font-weight: bold;">reg</span> &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;en <span style="color: #5D478B;">;</span><br />
+&nbsp; &nbsp; <span style="color: #A52A2A; font-weight: bold;">reg</span> &nbsp;<span style="color: #9F79EE;">&#91;</span>NIN<span style="color: #5D478B;">-</span><span style="color: #ff0055;">1</span><span style="color: #5D478B;">:</span><span style="color: #ff0055;">0</span><span style="color: #9F79EE;">&#93;</span> &nbsp; &nbsp; &nbsp; din <span style="color: #5D478B;">;</span><br />
+&nbsp; &nbsp; <span style="color: #A52A2A; font-weight: bold;">wire</span> &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; valid <span style="color: #5D478B;">;</span><br />
+&nbsp; &nbsp; <span style="color: #A52A2A; font-weight: bold;">wire</span> <span style="color: #9F79EE;">&#91;</span>NOUT<span style="color: #5D478B;">-</span><span style="color: #ff0055;">1</span><span style="color: #5D478B;">:</span><span style="color: #ff0055;">0</span><span style="color: #9F79EE;">&#93;</span> &nbsp; &nbsp; &nbsp;dout <span style="color: #5D478B;">;</span><br />
+<br />
+&nbsp; &nbsp; <span style="color: #00008B; font-style: italic;">//=====================================</span><br />
+&nbsp; &nbsp; <span style="color: #00008B; font-style: italic;">// 50MHz clk generating</span><br />
+&nbsp; &nbsp; <span style="color: #A52A2A; font-weight: bold;">localparam</span> &nbsp; T50M_HALF &nbsp; &nbsp;<span style="color: #5D478B;">=</span> <span style="color: #ff0055;">10000</span><span style="color: #5D478B;">;</span><br />
+&nbsp; &nbsp; <span style="color: #A52A2A; font-weight: bold;">initial</span> <span style="color: #A52A2A; font-weight: bold;">begin</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; clk <span style="color: #5D478B;">=</span> <span style="color: #ff0055;">1'b0</span> <span style="color: #5D478B;">;</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; <span style="color: #A52A2A; font-weight: bold;">forever</span> <span style="color: #A52A2A; font-weight: bold;">begin</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; <span style="color: #5D478B;">#</span> T50M_HALF clk <span style="color: #5D478B;">=</span> <span style="color: #5D478B;">~</span>clk <span style="color: #5D478B;">;</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; <span style="color: #A52A2A; font-weight: bold;">end</span><br />
+&nbsp; &nbsp; <span style="color: #A52A2A; font-weight: bold;">end</span><br />
+<br />
+&nbsp; &nbsp; <span style="color: #00008B; font-style: italic;">//============================</span><br />
+&nbsp; &nbsp; <span style="color: #00008B; font-style: italic;">// &nbsp;reset and finish</span><br />
+&nbsp; &nbsp; <span style="color: #A52A2A; font-weight: bold;">initial</span> <span style="color: #A52A2A; font-weight: bold;">begin</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; rstn <span style="color: #5D478B;">=</span> <span style="color: #ff0055;">1'b0</span> <span style="color: #5D478B;">;</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; <span style="color: #5D478B;">#</span> <span style="color: #ff0055;">30</span> <span style="color: #5D478B;">;</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; rstn <span style="color: #5D478B;">=</span> <span style="color: #ff0055;">1'b1</span> <span style="color: #5D478B;">;</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; <span style="color: #5D478B;">#</span> <span style="color: #9F79EE;">&#40;</span>T50M_HALF <span style="color: #5D478B;">*</span> <span style="color: #ff0055;">2</span> <span style="color: #5D478B;">*</span> <span style="color: #ff0055;">2000</span><span style="color: #9F79EE;">&#41;</span> <span style="color: #5D478B;">;</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; <span style="color: #9932CC;">$finish</span> <span style="color: #5D478B;">;</span><br />
+&nbsp; &nbsp; <span style="color: #A52A2A; font-weight: bold;">end</span><br />
+<br />
+&nbsp; &nbsp; <span style="color: #00008B; font-style: italic;">//=======================================</span><br />
+&nbsp; &nbsp; <span style="color: #00008B; font-style: italic;">// read cos data into register</span><br />
+&nbsp; &nbsp; <span style="color: #A52A2A; font-weight: bold;">parameter</span> &nbsp; &nbsp;SIN_DATA_NUM <span style="color: #5D478B;">=</span> <span style="color: #ff0055;">200</span> <span style="color: #5D478B;">;</span><br />
+&nbsp; &nbsp; <span style="color: #A52A2A; font-weight: bold;">reg</span> &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;<span style="color: #9F79EE;">&#91;</span>NIN<span style="color: #5D478B;">-</span><span style="color: #ff0055;">1</span><span style="color: #5D478B;">:</span><span style="color: #ff0055;">0</span><span style="color: #9F79EE;">&#93;</span> stimulus <span style="color: #9F79EE;">&#91;</span><span style="color: #ff0055;">0</span><span style="color: #5D478B;">:</span> SIN_DATA_NUM<span style="color: #5D478B;">-</span><span style="color: #ff0055;">1</span><span style="color: #9F79EE;">&#93;</span> <span style="color: #5D478B;">;</span><br />
+&nbsp; &nbsp; <span style="color: #A52A2A; font-weight: bold;">integer</span> &nbsp; &nbsp; &nbsp;i <span style="color: #5D478B;">;</span><br />
+&nbsp; &nbsp; <span style="color: #A52A2A; font-weight: bold;">initial</span> <span style="color: #A52A2A; font-weight: bold;">begin</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; <span style="color: #9932CC;">$readmemh</span><span style="color: #9F79EE;">&#40;</span><span style="color: #FF00FF;">&quot;../tb/cosx0p25m7p5m12bit.txt&quot;</span><span style="color: #5D478B;">,</span> stimulus<span style="color: #9F79EE;">&#41;</span> <span style="color: #5D478B;">;</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; i &nbsp; &nbsp; &nbsp; &nbsp; <span style="color: #5D478B;">=</span> <span style="color: #ff0055;">0</span> <span style="color: #5D478B;">;</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; en &nbsp; &nbsp; &nbsp; &nbsp;<span style="color: #5D478B;">=</span> <span style="color: #ff0055;">0</span> <span style="color: #5D478B;">;</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; din &nbsp; &nbsp; &nbsp; <span style="color: #5D478B;">=</span> <span style="color: #ff0055;">0</span> <span style="color: #5D478B;">;</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; <span style="color: #5D478B;">#</span> <span style="color: #ff0055;">200</span> <span style="color: #5D478B;">;</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; <span style="color: #A52A2A; font-weight: bold;">forever</span> <span style="color: #A52A2A; font-weight: bold;">begin</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; <span style="color: #5D478B;">@</span><span style="color: #9F79EE;">&#40;</span><span style="color: #A52A2A; font-weight: bold;">negedge</span> clk<span style="color: #9F79EE;">&#41;</span> <span style="color: #A52A2A; font-weight: bold;">begin</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; en &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;<span style="color: #5D478B;">=</span> <span style="color: #ff0055;">1</span> <span style="color: #5D478B;">;</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; din &nbsp; &nbsp; &nbsp; &nbsp; <span style="color: #5D478B;">=</span> stimulus<span style="color: #9F79EE;">&#91;</span>i<span style="color: #9F79EE;">&#93;</span> <span style="color: #5D478B;">;</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; <span style="color: #A52A2A; font-weight: bold;">if</span> <span style="color: #9F79EE;">&#40;</span>i <span style="color: #5D478B;">==</span> SIN_DATA_NUM<span style="color: #5D478B;">-</span><span style="color: #ff0055;">1</span><span style="color: #9F79EE;">&#41;</span> <span style="color: #A52A2A; font-weight: bold;">begin</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; i <span style="color: #5D478B;">=</span> <span style="color: #ff0055;">0</span> <span style="color: #5D478B;">;</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; <span style="color: #A52A2A; font-weight: bold;">end</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; <span style="color: #A52A2A; font-weight: bold;">else</span> <span style="color: #A52A2A; font-weight: bold;">begin</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; i <span style="color: #5D478B;">=</span> i <span style="color: #5D478B;">+</span> <span style="color: #ff0055;">1</span> <span style="color: #5D478B;">;</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; <span style="color: #A52A2A; font-weight: bold;">end</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; <span style="color: #A52A2A; font-weight: bold;">end</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; <span style="color: #A52A2A; font-weight: bold;">end</span><br />
+&nbsp; &nbsp; <span style="color: #A52A2A; font-weight: bold;">end</span><br />
+<br />
+&nbsp; &nbsp; cic <span style="color: #5D478B;">#</span><span style="color: #9F79EE;">&#40;</span>.NIN<span style="color: #9F79EE;">&#40;</span>NIN<span style="color: #9F79EE;">&#41;</span><span style="color: #5D478B;">,</span> .NMAX<span style="color: #9F79EE;">&#40;</span>NMAX<span style="color: #9F79EE;">&#41;</span><span style="color: #5D478B;">,</span> .NOUT<span style="color: #9F79EE;">&#40;</span>NOUT<span style="color: #9F79EE;">&#41;</span><span style="color: #9F79EE;">&#41;</span><br />
+&nbsp; &nbsp; u_cic <span style="color: #9F79EE;">&#40;</span><br />
+&nbsp; &nbsp; &nbsp;.clk &nbsp; &nbsp; &nbsp; &nbsp; <span style="color: #9F79EE;">&#40;</span>clk<span style="color: #9F79EE;">&#41;</span><span style="color: #5D478B;">,</span><br />
+&nbsp; &nbsp; &nbsp;.rstn &nbsp; &nbsp; &nbsp; &nbsp;<span style="color: #9F79EE;">&#40;</span>rstn<span style="color: #9F79EE;">&#41;</span><span style="color: #5D478B;">,</span><br />
+&nbsp; &nbsp; &nbsp;.en &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;<span style="color: #9F79EE;">&#40;</span>en<span style="color: #9F79EE;">&#41;</span><span style="color: #5D478B;">,</span><br />
+&nbsp; &nbsp; &nbsp;.din &nbsp; &nbsp; &nbsp; &nbsp; <span style="color: #9F79EE;">&#40;</span>din<span style="color: #9F79EE;">&#41;</span><span style="color: #5D478B;">,</span><br />
+&nbsp; &nbsp; &nbsp;.valid &nbsp; &nbsp; &nbsp; <span style="color: #9F79EE;">&#40;</span>valid<span style="color: #9F79EE;">&#41;</span><span style="color: #5D478B;">,</span><br />
+&nbsp; &nbsp; &nbsp;.dout &nbsp; &nbsp; &nbsp; &nbsp;<span style="color: #9F79EE;">&#40;</span>dout<span style="color: #9F79EE;">&#41;</span><span style="color: #9F79EE;">&#41;</span><span style="color: #5D478B;">;</span><br />
+<br />
+<span style="color: #A52A2A; font-weight: bold;">endmodule</span> <span style="color: #00008B; font-style: italic;">// test</span><br />
+</div></div>
+<p><strong>仿真结果</strong></p><p>
+由下图仿真结果可知，经过 CIC 滤波器后的信号只有一种低频率信号（250KHz），高频信号（7.5MHz）被滤除了。</p><p>
+但是波形不是非常完美，这与设计的截止频率、数据不是持续输出等有一定关系。</p><p>
+此时发现，积分器输出的数据信号也非常的不规则，这与其位宽有关系。</p>
+<p><img decoding="async" src="https://www.runoob.com/wp-content/uploads/2020/10/CXBickL1DuFgadEe.png" alt="" /></p><p>
+
+为了更好的观察积分器输出的数据，将其位宽由 21bit 改为 34bit，仿真结果如下。</p><p>
+此时发现，CIC 滤波器的数据输出并没有实质性的变化，但是积分器输出的数据信号呈现锯齿状，也称之为梳状。这也是梳状滤波器名字的由来。</p>
+<p><img decoding="async" src="https://www.runoob.com/wp-content/uploads/2020/10/VuYWYLeLqjinV87n.png" alt="" /></p>
+<h3>源码下载</h3>
+<p><a href="https://www.runoob.com/wp-content/uploads/2020/10/7.4cic.zip" download class="download">Download</a></p>
+
+				</div>
+			</div>
+			<div class="previous-next-links">
+			<div class="previous-design-link">← <a href="http://www.runoob.com/w3cnote/verilog-serial-fir.html" rel="prev"> 7.3 Verilog 串行 FIR 滤波器设计</a> </div>
+			<div class="next-design-link"><a href="http://www.runoob.com/w3cnote/verilog-fft.html" rel="next"> 7.5 Verilog FFT 设计</a> →</div>
+			</div>
+						<div class="article-heading-ad" id="w3cnote-ad728">
+			<script async src="//pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script>
+			<!-- 移动版 自动调整 -->
+			<ins class="adsbygoogle"
+			     style="display:inline-block;min-width:300px;max-width:970px;width:100%;height:90px"
+			     data-ad-client="ca-pub-5751451760833794"
+			     data-ad-slot="1691338467"
+			     data-ad-format="horizontal"></ins>
+			<script>
+			(adsbygoogle = window.adsbygoogle || []).push({});
+			</script>
+			</div>
+			<style>
+@media screen and (max-width: 768px) {
+	#w3cnote-ad728 {
+		display: none;
+	}
+}
+p.note-author {
+    border-bottom: 1px solid #ddd;
+    font-size: 18px;
+    font-weight: bold;
+    color: #78a15a;
+    padding-bottom: 2px;
+    margin-bottom: 4px;
+}
+</style>
+<script>
+var aid = 23236;
+</script>
+	</div>
+		
+	</div>
+	<div class="listcol last right-column">
+
+	<script type="text/javascript">
+jQuery(document).ready(function ($){
+	var total = $(".membership li").length;
+	var left_list = '';
+	href = window.location.href;
+	
+	$(".membership li").each(function(index, value){
+
+		left_list += $(this).html();
+
+		cur_href = $(this).find("a").attr("href");
+		cur_obj = $(this);
+		
+		if(href.match(cur_href) != null) {
+			if(index==0) {
+				$(".previous-design-link").hide();
+			}
+			if(index==(total-1)) {
+				$(".next-design-link").hide();
+			}
+			prev_href = cur_obj.prev("li").find("a").attr("href");
+			prev_title = cur_obj.prev("li").find("a").attr("title");
+
+			next_href = cur_obj.next("li").find("a").attr("href");
+			next_title = cur_obj.next("li").find("a").attr("title");
+			if(prev_title) {
+				$(".previous-design-link a").attr("href", prev_href);
+				$(".previous-design-link a").attr("title", prev_title);
+				$(".previous-design-link a").text(prev_title);
+			} else {
+				$(".previous-design-link").html("");
+			}
+
+			if(next_title) {
+				$(".next-design-link a").attr("href", next_href);
+				$(".next-design-link a").attr("title", next_title);
+				$(".next-design-link a").text(next_title);
+			} else {
+				$(".next-design-link").html("");
+			}
+		}
+	});
+
+	$("#leftcolumn").html(left_list);
+});
+	</script>
+	<div class="sidebar-box cate-list">
+	<div class="sidebar-box recommend-here list-link">
+	<a href="javascript:void(0);">Verilog 教程</a>	</div>
+	
+	<ul class="membership">
+		
+	<li><a target="_top" data-id="22850" title="1.1 Verilog 教程" href="http://www.runoob.com/w3cnote/verilog-tutorial.html" >1.1 Verilog 教程</a></li>
+	
+		
+	<li><a target="_top" data-id="22851" title="1.2 Verilog 简介" href="http://www.runoob.com/w3cnote/verilog-intro.html" >1.2 Verilog 简介</a></li>
+	
+		
+	<li><a target="_top" data-id="22852" title="1.3 Verilog 环境搭建" href="http://www.runoob.com/w3cnote/verilog-install.html" >1.3 Verilog 环境搭建</a></li>
+	
+		
+	<li><a target="_top" data-id="22866" title="1.4 Verilog 设计方法" href="http://www.runoob.com/w3cnote/verilog-design-method.html" >1.4 Verilog 设计方法</a></li>
+	
+		
+	<li><a target="_top" data-id="22869" title="2.1 Verilog 基础语法" href="http://www.runoob.com/w3cnote/verilog-basic-syntax.html" >2.1 Verilog 基础语法</a></li>
+	
+		
+	<li><a target="_top" data-id="22870" title="2.2 Verilog 数值表示" href="http://www.runoob.com/w3cnote/verilog-number.html" >2.2 Verilog 数值表示</a></li>
+	
+		
+	<li><a target="_top" data-id="22871" title="2.3 Verilog 数据类型" href="http://www.runoob.com/w3cnote/verilog-data-type.html" >2.3 Verilog 数据类型</a></li>
+	
+		
+	<li><a target="_top" data-id="22872" title="2.4 Verilog 表达式" href="http://www.runoob.com/w3cnote/verilog-expression.html" >2.4 Verilog 表达式</a></li>
+	
+		
+	<li><a target="_top" data-id="22935" title="2.5 Verilog 编译指令" href="http://www.runoob.com/w3cnote/verilog-compile-instruction.html" >2.5 Verilog 编译指令</a></li>
+	
+		
+	<li><a target="_top" data-id="22931" title="3.1 Verilog 连续赋值" href="http://www.runoob.com/w3cnote/verilog-assign.html" >3.1 Verilog 连续赋值</a></li>
+	
+		
+	<li><a target="_top" data-id="22933" title="3.2 Verilog 时延" href="http://www.runoob.com/w3cnote/verilog-time-delay.html" >3.2 Verilog 时延</a></li>
+	
+		
+	<li><a target="_top" data-id="22936" title="4.1 Verilog 过程结构" href="http://www.runoob.com/w3cnote/verilog-process-structure.html" >4.1 Verilog 过程结构</a></li>
+	
+		
+	<li><a target="_top" data-id="22939" title="4.2 Verilog 过程赋值" href="http://www.runoob.com/w3cnote/verilog-process-assign.html" >4.2 Verilog 过程赋值</a></li>
+	
+		
+	<li><a target="_top" data-id="22941" title="4.3 Verilog 时序控制" href="http://www.runoob.com/w3cnote/verilog-timing-control.html" >4.3 Verilog 时序控制</a></li>
+	
+		
+	<li><a target="_top" data-id="22943" title="4.4 Verilog 语句块" href="http://www.runoob.com/w3cnote/verilog-statements-block.html" >4.4 Verilog 语句块</a></li>
+	
+		
+	<li><a target="_top" data-id="22948" title="4.5 Verilog 条件语句" href="http://www.runoob.com/w3cnote/verilog-condition-statement.html" >4.5 Verilog 条件语句</a></li>
+	
+		
+	<li><a target="_top" data-id="22950" title="4.6 Verilog 多路分支语句" href="http://www.runoob.com/w3cnote/verilog-case.html" >4.6 Verilog 多路分支语句</a></li>
+	
+		
+	<li><a target="_top" data-id="22951" title="4.7 Verilog 循环语句" href="http://www.runoob.com/w3cnote/verilog-loop.html" >4.7 Verilog 循环语句</a></li>
+	
+		
+	<li><a target="_top" data-id="22954" title="4.8 Verilog 过程连续赋值" href="http://www.runoob.com/w3cnote/verilog-deassign.html" >4.8 Verilog 过程连续赋值</a></li>
+	
+		
+	<li><a target="_top" data-id="22966" title="5.1 Verilog 模块与端口" href="http://www.runoob.com/w3cnote/verilog-module-port.html" >5.1 Verilog 模块与端口</a></li>
+	
+		
+	<li><a target="_top" data-id="22969" title="5.2 Verilog 模块例化" href="http://www.runoob.com/w3cnote/verilog-generate.html" >5.2 Verilog 模块例化</a></li>
+	
+		
+	<li><a target="_top" data-id="22972" title="5.3 Verilog 带参数例化" href="http://www.runoob.com/w3cnote/verilog-defparam.html" >5.3 Verilog 带参数例化</a></li>
+	
+		
+	<li><a target="_top" data-id="22975" title="6.1 Verilog 函数" href="http://www.runoob.com/w3cnote/verilog-function.html" >6.1 Verilog 函数</a></li>
+	
+		
+	<li><a target="_top" data-id="22982" title="6.2 Verilog 任务" href="http://www.runoob.com/w3cnote/verilog-task.html" >6.2 Verilog 任务</a></li>
+	
+		
+	<li><a target="_top" data-id="22990" title="6.3 Verilog 状态机" href="http://www.runoob.com/w3cnote/verilog-fsm.html" >6.3 Verilog 状态机</a></li>
+	
+		
+	<li><a target="_top" data-id="22999" title="6.4 Verilog 竞争与冒险" href="http://www.runoob.com/w3cnote/verilog-competition-hazard.html" >6.4 Verilog 竞争与冒险</a></li>
+	
+		
+	<li><a target="_top" data-id="23008" title="6.5 Verilog 避免 Latch" href="http://www.runoob.com/w3cnote/verilog-latch.html" >6.5 Verilog 避免 Latch</a></li>
+	
+		
+	<li><a target="_top" data-id="23011" title="6.6 Verilog 仿真激励" href="http://www.runoob.com/w3cnote/verilog-testbench.html" >6.6 Verilog 仿真激励</a></li>
+	
+		
+	<li><a target="_top" data-id="23015" title="6.7 Verilog 流水线" href="http://www.runoob.com/w3cnote/verilog-pipeline-design.html" >6.7 Verilog 流水线</a></li>
+	
+		
+	<li><a target="_top" data-id="23021" title="7.1 Verilog 除法器设计" href="http://www.runoob.com/w3cnote/verilog-dividend.html" >7.1 Verilog 除法器设计</a></li>
+	
+		
+	<li><a target="_top" data-id="23222" title="7.2 Verilog 并行 FIR 滤波器设计" href="http://www.runoob.com/w3cnote/verilog-fir.html" >7.2 Verilog 并行 FIR 滤波器设计</a></li>
+	
+		
+	<li><a target="_top" data-id="23230" title="7.3 Verilog 串行 FIR 滤波器设计" href="http://www.runoob.com/w3cnote/verilog-serial-fir.html" >7.3 Verilog 串行 FIR 滤波器设计</a></li>
+	
+		<li>
+	7.4 Verilog CIC 滤波器设计	</li>
+	
+		
+	<li><a target="_top" data-id="23260" title="7.5 Verilog FFT 设计" href="http://www.runoob.com/w3cnote/verilog-fft.html" >7.5 Verilog FFT 设计</a></li>
+	
+		
+	<li><a target="_top" data-id="23309" title="7.6 Verilog DDS 设计" href="http://www.runoob.com/w3cnote/verilog-dds.html" >7.6 Verilog DDS 设计</a></li>
+	
+		
+	<li><a target="_top" data-id="23281" title="8.1 Verilog 数值转换" href="http://www.runoob.com/w3cnote/verilog-numerical-conversion.html" >8.1 Verilog 数值转换</a></li>
+	
+	<li><a target="_top" title="Verilog 教程高级篇" href="/w3cnote/verilog2-tutorial.html" >Verilog 教程高级篇</a></li></ul></div>	</div>
+</div>
+
+
+<!-- 底部 -->
+<div id="footer" class="mar-t50">
+   <div class="runoob-block">
+    <div class="runoob cf">
+     <dl>
+      <dt>
+       在线实例
+      </dt>
+      <dd>
+       &middot;<a target="_blank" href="/html/html-examples.html">HTML 实例</a>
+      </dd>
+      <dd>
+       &middot;<a target="_blank" href="/css/css-examples.html">CSS 实例</a>
+      </dd>
+      <dd>
+       &middot;<a target="_blank" href="/js/js-examples.html">JavaScript 实例</a>
+      </dd>
+      <dd>
+       &middot;<a target="_blank" href="/ajx/ajax-examples.html">Ajax 实例</a>
+      </dd>
+       <dd>
+       &middot;<a target="_blank" href="/jquery/jquery-examples.html">jQuery 实例</a>
+      </dd>
+      <dd>
+       &middot;<a target="_blank" href="/xml/xml-examples.html">XML 实例</a>
+      </dd>
+      <dd>
+       &middot;<a target="_blank" href="/java/java-examples.html">Java 实例</a>
+      </dd>
+     
+     </dl>
+     <dl>
+      <dt>
+      字符集&工具
+      </dt>
+      <dd>
+       &middot; <a target="_blank" href="/charsets/html-charsets.html">HTML 字符集设置</a>
+      </dd>
+      <dd>
+       &middot; <a target="_blank" href="/tags/html-ascii.html">HTML ASCII 字符集</a>
+      </dd>
+     <dd>
+       &middot; <a target="_blank" href="https://c.runoob.com/front-end/6939/">JS 混淆/加密</a>
+      </dd> 
+      <dd>
+       &middot; <a target="_blank" href="https://c.runoob.com/front-end/6232/">PNG/JPEG 图片压缩</a>
+      </dd>
+      <dd>
+       &middot; <a target="_blank" href="/tags/html-colorpicker.html">HTML 拾色器</a>
+      </dd>
+      <dd>
+       &middot; <a target="_blank" href="//c.runoob.com/front-end/53">JSON 格式化工具</a>
+      </dd>
+      <dd>
+       &middot; <a target="_blank" href="//c.runoob.com/front-end/6680/">随机数生成器</a>
+      </dd>
+     </dl>
+     <dl>
+      <dt>
+       最新更新
+      </dt>
+                   <dd>
+       &middot;
+      <a href="http://www.runoob.com/matplotlib/matplotlib-imread.html" title="Matplotlib imread() 方法">Matplotlib imre...</a>
+      </dd>
+              <dd>
+       &middot;
+      <a href="http://www.runoob.com/matplotlib/matplotlib-imsave.html" title="Matplotlib imsave() 方法">Matplotlib imsa...</a>
+      </dd>
+              <dd>
+       &middot;
+      <a href="http://www.runoob.com/matplotlib/matplotlib-imshow.html" title="Matplotlib imshow() 方法">Matplotlib imsh...</a>
+      </dd>
+              <dd>
+       &middot;
+      <a href="http://www.runoob.com/matplotlib/matplotlib-hist.html" title="Matplotlib 直方图">Matplotlib 直方图</a>
+      </dd>
+              <dd>
+       &middot;
+      <a href="http://www.runoob.com/python3/python-func-object.html" title="Python object() 函数">Python object()...</a>
+      </dd>
+              <dd>
+       &middot;
+      <a href="http://www.runoob.com/python3/python-ai-draw.html" title="Python AI 绘画">Python AI 绘画</a>
+      </dd>
+              <dd>
+       &middot;
+      <a href="http://www.runoob.com/w3cnote/cursor-editor.html" title="神辅助 Cursor 编辑器，加入 GPT-4 让编码更轻松！">神辅助 Cursor ...</a>
+      </dd>
+             </dl>
+     <dl>
+      <dt>
+       站点信息
+      </dt>
+      <dd>
+       &middot;
+       <a target="_blank" href="mailto:admin@runoob.com" rel="external nofollow">意见反馈</a>
+       </dd>
+      <dd>
+       &middot;
+      <a target="_blank" href="/disclaimer">免责声明</a>
+       </dd>
+      <dd>
+       &middot;
+       <a target="_blank" href="/aboutus">关于我们</a>
+       </dd>
+      <dd>
+       &middot;
+      <a target="_blank" href="/archives">文章归档</a>
+      </dd>
+    
+     </dl>
+    
+     <div class="search-share">
+      <div class="app-download">
+        <div>
+         <strong>关注微信</strong>
+        </div>
+      </div>
+      <div class="share">
+      <img width="128" height="128" src="/wp-content/themes/runoob/assets/images/qrcode.png" />
+       </div>
+     </div>
+     
+    </div>
+   </div>
+   <div class="w-1000 copyright">
+     Copyright &copy; 2013-2023    <strong><a href="//www.runoob.com/" target="_blank">菜鸟教程</a></strong>&nbsp;
+    <strong><a href="//www.runoob.com/" target="_blank">runoob.com</a></strong> All Rights Reserved. 备案号：<a target="_blank" rel="nofollow" href="https://beian.miit.gov.cn/">闽ICP备15012807号-1</a>
+   </div>
+  </div>
+  <div class="fixed-btn">
+    <a class="go-top" href="javascript:void(0)" title="返回顶部"> <i class="fa fa-angle-up"></i></a>
+    <a class="qrcode"  href="javascript:void(0)" title="关注我们"><i class="fa fa-qrcode"></i></a>
+    <a class="writer" style="display:none" href="javascript:void(0)"   title="标记/收藏"><i class="fa fa-star" aria-hidden="true"></i></a>
+    <!-- qrcode modal -->
+    <div id="bottom-qrcode" class="modal panel-modal hide fade in">
+      <h4>微信关注</h4>
+      <div class="panel-body"><img alt="微信关注" width="128" height="128" src="/wp-content/themes/runoob/assets/images/qrcode.png"></div> 
+    </div>
+  </div>
+
+ <div style="display:none;">
+<script async src="https://www.googletagmanager.com/gtag/js?id=UA-84264393-2"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+
+  gtag('config', 'UA-84264393-2');
+</script>
+<script>
+var _hmt = _hmt || [];
+(function() {
+  var hm = document.createElement("script");
+  hm.src = "https://hm.baidu.com/hm.js?3eec0b7da6548cf07db3bc477ea905ee";
+  var s = document.getElementsByTagName("script")[0]; 
+  s.parentNode.insertBefore(hm, s);
+})();
+</script>
+
+</div>
+<script>
+window.jsui={
+    www: 'https://www.runoob.com',
+    uri: 'https://www.runoob.com/wp-content/themes/runoob'
+};
+</script>
+
+<script src="https://static.runoob.com/assets/libs/hl/run_prettify.js"></script>
+<script src="/wp-content/themes/runoob/assets/js/main.min.js?v=1.156"></script>
+
+</body>
+</html>

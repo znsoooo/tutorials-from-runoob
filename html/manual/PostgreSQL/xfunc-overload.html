@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><title>37.5. 函数重载</title><link rel="stylesheet" type="text/css" href="stylesheet.css" /><link rev="made" href="pgsql-docs@postgresql.org" /><meta name="generator" content="DocBook XSL Stylesheets V1.79.1" /><link rel="prev" href="xfunc-sql.html" title="37.4. 查询语言（SQL）函数" /><link rel="next" href="xfunc-volatility.html" title="37.6. 函数易变性分类" /></head><body><div xmlns="http://www.w3.org/TR/xhtml1/transitional" class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="5" align="center">37.5. 函数重载</th></tr><tr><td width="10%" align="left"><a accesskey="p" href="xfunc-sql.html" title="37.4. 查询语言（SQL）函数">上一页</a> </td><td width="10%" align="left"><a accesskey="u" href="extend.html" title="第 37 章 扩展 SQL">上一级</a></td><th width="60%" align="center">第 37 章 扩展 <acronym xmlns="http://www.w3.org/1999/xhtml" class="acronym">SQL</acronym></th><td width="10%" align="right"><a accesskey="h" href="index.html" title="PostgreSQL 10.1 手册">起始页</a></td><td width="10%" align="right"> <a accesskey="n" href="xfunc-volatility.html" title="37.6. 函数易变性分类">下一页</a></td></tr></table><hr></hr></div><div class="sect1" id="XFUNC-OVERLOAD"><div class="titlepage"><div><div><h2 class="title" style="clear: both">37.5. 函数重载</h2></div></div></div><a id="idp33320272" class="indexterm"></a><p>    可以用同样的 SQL 名称定义多于一个函数，只要它们的参数不同即可。
+    换句话说，函数名可以被<em class="firstterm">重载</em>。当一个查询
+    被执行时，服务器将从数据类型和所提供的参数个数来决定要调用哪个
+    函数。重载也可用来模拟具有可变参数个数（最大个数有限）的函数。
+   </p><p>    在创建一个重载函数家族时，应该小心不要创建歧义。例如，给定函数：
+</p><pre class="programlisting">CREATE FUNCTION test(int, real) RETURNS ...
+CREATE FUNCTION test(smallint, double precision) RETURNS ...</pre><p>
+    对于<code class="literal">test(1, 1.5)</code>这样的输入就无法立刻清楚地知道
+    应该调用哪个函数。当前实现的解决规则在<a class="xref" href="typeconv.html" title="第 10 章 类型转换">第 10 章</a>
+    中有描述，但是设计一个依赖于这种行为的系统是不明智的。
+   </p><p>    一个具有单个组合类型参数的函数通常不应与该类型的任何属性（域）
+    重名。回想一下，<code class="literal"><em class="replaceable"><code>attribute</code></em>(<em class="replaceable"><code>table</code></em>)</code>被认为等效于
+    <code class="literal"><em class="replaceable"><code>table</code></em>.<em class="replaceable"><code>attribute</code></em></code>。在出现“一个组合类型
+    上的函数”与“组合类型的一个属性”的情况下，将总是使用属性。
+    可以通过用模式限定该函数名（即
+    <code class="literal"><em class="replaceable"><code>schema</code></em>.<em class="replaceable"><code>func</code></em>(<em class="replaceable"><code>table</code></em>)
+    </code>）来覆盖这种选择，但是最好
+    不要选择有冲突的名称以避免此类问题。
+   </p><p>    另一种可能的冲突在于 variadic 和非 variadic 函数之间。例如，可以创建
+    <code class="literal">foo(numeric)</code>和<code class="literal">foo(VARIADIC numeric[])</code>。
+    在这种情况下，对于提供了一个数字参数的调用（例如<code class="literal">foo(10.1)</code>）
+    就不清楚应该匹配哪一个函数。规则是使用在搜索路径中出现得较早的
+    函数，或者当两者都在同一个模式中时优先使用非 variadic 的那一个函数。
+   </p><p>    在重载 C 语言函数时有一个额外的约束：重载函数家族中的每一个
+    函数的 C 名称必须与其他所有函数的 C 名称不同，不管是内部的
+    还是动态载入的。如果这条规则被违背，该行为将不可移植。你可能
+    会得到一个运行时链接器错误，或者这些函数之一将被调用（通常
+    是内部的那一个）。SQL <code class="command">CREATE
+    FUNCTION</code>命令的<code class="literal">AS</code>子句的另一种形式
+    可以把 SQL 函数名和 C 源代码中的函数名分离。例如：
+</p><pre class="programlisting">CREATE FUNCTION test(int) RETURNS int
+    AS '<em class="replaceable"><code>filename</code></em>', 'test_1arg'
+    LANGUAGE C;
+CREATE FUNCTION test(int, int) RETURNS int
+    AS '<em class="replaceable"><code>filename</code></em>', 'test_2arg'
+    LANGUAGE C;</pre><p>
+    这里的 C 函数名称反映了很多种可能的习惯之一。
+   </p></div><div class="navfooter"><hr /><table width="100%" summary="Navigation footer"><tr><td width="40%" align="left"><a accesskey="p" href="xfunc-sql.html">上一页</a> </td><td width="20%" align="center"><a accesskey="u" href="extend.html">上一级</a></td><td width="40%" align="right"> <a accesskey="n" href="xfunc-volatility.html">下一页</a></td></tr><tr><td width="40%" align="left" valign="top">37.4. 查询语言（<acronym class="acronym">SQL</acronym>）函数 </td><td width="20%" align="center"><a accesskey="h" href="index.html">起始页</a></td><td width="40%" align="right" valign="top"> 37.6. 函数易变性分类</td></tr></table></div></body></html>

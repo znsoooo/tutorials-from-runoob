@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><title>ALTER INDEX</title><link rel="stylesheet" type="text/css" href="stylesheet.css" /><link rev="made" href="pgsql-docs@postgresql.org" /><meta name="generator" content="DocBook XSL Stylesheets V1.79.1" /><link rel="prev" href="sql-altergroup.html" title="ALTER GROUP" /><link rel="next" href="sql-alterlanguage.html" title="ALTER LANGUAGE" /></head><body><div xmlns="http://www.w3.org/TR/xhtml1/transitional" class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="5" align="center">ALTER INDEX</th></tr><tr><td width="10%" align="left"><a accesskey="p" href="sql-altergroup.html" title="ALTER GROUP">上一页</a> </td><td width="10%" align="left"><a accesskey="u" href="sql-commands.html" title="SQL 命令">上一级</a></td><th width="60%" align="center">SQL 命令</th><td width="10%" align="right"><a accesskey="h" href="index.html" title="PostgreSQL 10.1 手册">起始页</a></td><td width="10%" align="right"> <a accesskey="n" href="sql-alterlanguage.html" title="ALTER LANGUAGE">下一页</a></td></tr></table><hr></hr></div><div class="refentry" id="SQL-ALTERINDEX"><div class="titlepage"></div><a id="idp40335888" class="indexterm"></a><div class="refnamediv"><h2><span class="refentrytitle">ALTER INDEX</span></h2><p>ALTER INDEX — 更改一个索引的定义</p></div><div class="refsynopsisdiv"><h2>大纲</h2><pre class="synopsis">ALTER INDEX [ IF EXISTS ] <em class="replaceable"><code>name</code></em> RENAME TO <em class="replaceable"><code>new_name</code></em>
+ALTER INDEX [ IF EXISTS ] <em class="replaceable"><code>name</code></em> SET TABLESPACE <em class="replaceable"><code>tablespace_name</code></em>
+ALTER INDEX <em class="replaceable"><code>name</code></em> DEPENDS ON EXTENSION <em class="replaceable"><code>extension_name</code></em>
+ALTER INDEX [ IF EXISTS ] <em class="replaceable"><code>name</code></em> SET ( <em class="replaceable"><code>storage_parameter</code></em> = <em class="replaceable"><code>value</code></em> [, ... ] )
+ALTER INDEX [ IF EXISTS ] <em class="replaceable"><code>name</code></em> RESET ( <em class="replaceable"><code>storage_parameter</code></em> [, ... ] )
+ALTER INDEX ALL IN TABLESPACE <em class="replaceable"><code>name</code></em> [ OWNED BY <em class="replaceable"><code>role_name</code></em> [, ... ] ]
+    SET TABLESPACE <em class="replaceable"><code>new_tablespace</code></em> [ NOWAIT ]</pre></div><div class="refsect1" id="idp40349472"><h2>描述</h2><p>   <code class="command">ALTER INDEX</code>更改一个现有索引的定义。
+   它有几种形式：
+
+  </p><div class="variablelist"><dl class="variablelist"><dt><span class="term"><code class="literal">RENAME</code></span></dt><dd><p>      <code class="literal">RENAME</code>形式更改该索引的名称。这对已存储的数据没有
+      影响。
+     </p></dd><dt><span class="term"><code class="literal">SET TABLESPACE</code></span></dt><dd><p>      这种形式更改该索引的表空间为指定的表空间，并且把与该索引相关联的数据文件
+      移动到新的表空间中。要更改一个索引的表空间，你必须拥有该索引并且具有新表
+      空间上的<code class="literal">CREATE</code>特权。可以使用
+      <code class="literal">ALL IN TABLESPACE</code>形式把当前数据库中在一个表空间内的
+      所有索引全部移动到另一个表空间中，这将会锁定所有要被移动的索引然后挨个移
+      动它们。这种形式也支持<code class="literal">OWNED BY</code>，即只移动属于指定角色
+      的索引。如果指定了<code class="literal">NOWAIT</code>选项，那么当该命令无法立刻获
+      得所有锁时将会失败。注意这个命令不会移动系统目录，如果想要移动系统目录，
+      应使用<code class="command">ALTER DATABASE</code>或者显式的
+      <code class="command">ALTER INDEX</code>调用。另见
+      <a class="xref" href="sql-createtablespace.html" title="CREATE TABLESPACE"><span class="refentrytitle">CREATE TABLESPACE</span></a>。
+     </p></dd><dt><span class="term"><code class="literal">DEPENDS ON EXTENSION</code></span></dt><dd><p>      这种形式把该索引标记为依赖于扩展，这样如果该扩展被删除，该索引也将被
+      自动删除。
+     </p></dd><dt><span class="term"><code class="literal">SET ( <em class="replaceable"><code>storage_parameter</code></em> = <em class="replaceable"><code>value</code></em> [, ... ] )</code></span></dt><dd><p>      这种形式为该索引更改一个或者多个索引方法相关的存储参数。可用的参数详见
+      <a class="xref" href="sql-createindex.html" title="CREATE INDEX"><span class="refentrytitle">CREATE INDEX</span></a>。注意这个命令不会立刻修改索引内容，
+      根据参数你可能需要用<a class="xref" href="sql-reindex.html" title="REINDEX"><span class="refentrytitle">REINDEX</span></a>重建索引来得到想要的
+      效果。
+     </p></dd><dt><span class="term"><code class="literal">RESET ( <em class="replaceable"><code>storage_parameter</code></em> [, ... ] )</code></span></dt><dd><p>      这种形式把一个或者多个索引方法相关的存储参数重置为其默认值。正如
+      <code class="literal">SET</code>一样，可能需要一次<code class="literal">REINDEX</code>来完全更新
+      该索引。
+     </p></dd></dl></div><p>
+  </p></div><div class="refsect1" id="idp40369696"><h2>参数</h2><div class="variablelist"><dl class="variablelist"><dt><span class="term"><code class="literal">IF EXISTS</code></span></dt><dd><p>        如果该索引不存在不要抛出错误。这种情况下将发出一个提示。
+       </p></dd><dt><span class="term"><em class="replaceable"><code>name</code></em></span></dt><dd><p>        要更改的一个现有索引的名称（可能被模式限定）。
+       </p></dd><dt><span class="term"><em class="replaceable"><code>new_name</code></em></span></dt><dd><p>        该索引的新名称。
+       </p></dd><dt><span class="term"><em class="replaceable"><code>tablespace_name</code></em></span></dt><dd><p>        该索引将被移动到的表空间。
+       </p></dd><dt><span class="term"><em class="replaceable"><code>extension_name</code></em></span></dt><dd><p>        该索引所依赖的扩展的名称。
+       </p></dd><dt><span class="term"><em class="replaceable"><code>storage_parameter</code></em></span></dt><dd><p>        一个索引方法相关的存储参数的名称。
+       </p></dd><dt><span class="term"><em class="replaceable"><code>value</code></em></span></dt><dd><p>        一个索引方法相关的存储参数的新值。根据该参数，这可能是一个数字或者一个
+        词。
+       </p></dd></dl></div></div><div class="refsect1" id="idp40379840"><h2>注解</h2><p>    也可以用<a class="xref" href="sql-altertable.html" title="ALTER TABLE"><span class="refentrytitle">ALTER TABLE</span></a>来做这些操作。实际上，
+    <code class="command">ALTER INDEX</code>只是<code class="command">ALTER TABLE</code>应用在索引
+    上的形式的别名而已。
+   </p><p>    以前有一种<code class="command">ALTER INDEX OWNER</code>变体，但现在已被忽略（会出现
+    一个警告）。一个索引的拥有者不能与其基表的拥有者不同。更改基表的拥有者
+    会自动地更改索引的拥有者。
+   </p><p>    不允许更改系统目录索引的任何部分。
+   </p></div><div class="refsect1" id="idp40384320"><h2>示例</h2><p>   要重命名一个现有索引：
+</p><pre class="programlisting">ALTER INDEX distributors RENAME TO suppliers;</pre><p>
+  </p><p>   把一个索引移动到一个不同的表空间：
+</p><pre class="programlisting">ALTER INDEX distributors SET TABLESPACE fasttablespace;</pre><p>
+  </p><p>   更改一个索引的填充因子（假设该索引方法支持填充因子）：
+</p><pre class="programlisting">ALTER INDEX distributors SET (fillfactor = 75);
+REINDEX INDEX distributors;</pre></div><div class="refsect1" id="idp40387984"><h2>兼容性</h2><p>   <code class="command">ALTER INDEX</code>是一种
+   <span class="productname">PostgreSQL</span>扩展。
+  </p></div><div class="refsect1" id="idp40390096"><h2>另见</h2><span class="simplelist"><a class="xref" href="sql-createindex.html" title="CREATE INDEX"><span class="refentrytitle">CREATE INDEX</span></a>, <a class="xref" href="sql-reindex.html" title="REINDEX"><span class="refentrytitle">REINDEX</span></a></span></div></div><div class="navfooter"><hr /><table width="100%" summary="Navigation footer"><tr><td width="40%" align="left"><a accesskey="p" href="sql-altergroup.html">上一页</a> </td><td width="20%" align="center"><a accesskey="u" href="sql-commands.html">上一级</a></td><td width="40%" align="right"> <a accesskey="n" href="sql-alterlanguage.html">下一页</a></td></tr><tr><td width="40%" align="left" valign="top">ALTER GROUP </td><td width="20%" align="center"><a accesskey="h" href="index.html">起始页</a></td><td width="40%" align="right" valign="top"> ALTER LANGUAGE</td></tr></table></div></body></html>

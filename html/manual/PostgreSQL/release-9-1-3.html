@@ -1,0 +1,113 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><title>E.104. 版本9.1.3</title><link rel="stylesheet" type="text/css" href="stylesheet.css" /><link rev="made" href="pgsql-docs@postgresql.org" /><meta name="generator" content="DocBook XSL Stylesheets V1.79.1" /><link rel="prev" href="release-9-1-4.html" title="E.103. 版本9.1.4" /><link rel="next" href="release-9-1-2.html" title="E.105. 版本9.1.2" /></head><body><div xmlns="http://www.w3.org/TR/xhtml1/transitional" class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="5" align="center">E.104. 版本9.1.3</th></tr><tr><td width="10%" align="left"><a accesskey="p" href="release-9-1-4.html" title="E.103. 版本9.1.4">上一页</a> </td><td width="10%" align="left"><a accesskey="u" href="release.html" title="附录 E. 版本说明">上一级</a></td><th width="60%" align="center">附录 E. 版本说明</th><td width="10%" align="right"><a accesskey="h" href="index.html" title="PostgreSQL 10.1 手册">起始页</a></td><td width="10%" align="right"> <a accesskey="n" href="release-9-1-2.html" title="E.105. 版本9.1.2">下一页</a></td></tr></table><hr></hr></div><div class="sect1" id="RELEASE-9-1-3"><div class="titlepage"><div><div><h2 class="title" style="clear: both">E.104. 版本9.1.3</h2></div></div></div><div class="toc"><dl class="toc"><dt><span class="sect2"><a href="release-9-1-3.html#idp73560048">E.104.1. 迁移到版本9.1.3</a></span></dt><dt><span class="sect2"><a href="release-9-1-3.html#idp73561888">E.104.2. 变化</a></span></dt></dl></div><p><strong>发布日期：. </strong>2012-02-27</p><p>   该发布包含了9.1.2的各种修复。
+   为了9.1主要版本的新功能的更多信息，
+   参阅<a class="xref" href="release-9-1.html" title="E.107. 版本9.1">第 E.107 节</a>。
+   </p><div class="sect2" id="idp73560048"><div class="titlepage"><div><div><h3 class="title">E.104.1. 迁移到版本9.1.3</h3></div></div></div><p>   为运行9.1.X不需要转储/恢复。</p><p>   然而，如果你从9.1.2的更早版本更新，
+   请参阅<a class="xref" href="release-9-1-2.html" title="E.105. 版本9.1.2">第 E.105 节</a>。</p></div><div class="sect2" id="idp73561888"><div class="titlepage"><div><div><h3 class="title">E.104.2. 变化</h3></div></div></div><div class="itemizedlist"><ul class="itemizedlist" style="list-style-type: disc; "><li class="listitem"><p>   需要为<code class="command">CREATE TRIGGER</code>触发器函数上的执行权限(Robert Haas)</p><p>    这个丢失检查可能允许其他用户执行带有伪造输入数据的触发器函数，
+通过安装它到它拥有的表上。
+对于触发器函数标记<code class="literal">SECURITY DEFINER</code>是唯一重要的，
+因为否则触发器函数运行为表所有者。(CVE-2012-0866)
+</p></li><li class="listitem"><p>    删除SSL证书中常见名称长度的任意限制(Heikki Linnakangas)</p><p>   <span class="application">libpq</span>和服务器截断从32字节SSL证书中提取的通用名。
+   这通常会导致没有什么比一个意想不到的验证失败更糟糕的，但是有一些
+   令人难以置信的情况，它可能允许一个证书持有者模仿另外一个。
+   该受害者必须有32字节长的通用名。并且攻击者必须说服可信任CA发布证书，
+   其中通用名有字符串作为前缀。
+   伪装服务器也需要一些额外的开发重定向客户端连接。(CVE-2012-0867)
+   </p></li><li class="listitem"><p> 
+    在名字写入<span class="application">pg_dump</span>说明中转换新行到空白(Robert Haas)</p><p>   <span class="application">pg_dump</span>关于审查输出脚本中SQL注释发出的对象名是不谨慎的。
+   包含换行符的名字至少使得脚本语法上不正确。
+   当脚本被重新加载时，恶意制作对象名可能出现SQL注射风险。(CVE-2012-0868)</p></li><li class="listitem"><p>    修复来自并行清理插入的btree索引崩溃(Tom Lane)</p><p>   通过插入引起的索引页分裂有时可以导致同时运行<code class="command">VACUUM</code>
+   而错过删除本应该删除的索引项。相应表行被删除后，
+   该悬挂索引项可能导致错误（比如<span class="quote">“<span class="quote">不能读取文件中块N...</span>”</span>）或者更糟，
+   无关行后默默的错误查询结果被重新插入到当前自由表位置。
+    这个错误自从发布8.2就出现了，
+但是发生如此罕见以致它没有被诊断直到现在。
+如果你有理由怀疑它已经在你的数据库中发生，
+那么重新索引受影响索引将修复这问题。</p></li><li class="listitem"><p>  修复WAL回放期间共享缓冲区临时调零(Tom Lane)</p><p>   重放逻辑有时归零并且重填共享缓冲区，因此内容瞬时无效。
+   在热备模式中这可以导致正在并行执行的查询看到垃圾数据。
+   可能导致不同症状，
+   但是最常见的是<span class="quote">“<span class="quote">无效内存分配请求大小</span>”</span>。</p></li><li class="listitem"><p>   修复<code class="literal">READ COMMITTED</code>复查中数据修改<code class="literal">WITH</code>子计划处理(Tom Lane)</p><p>    如果父<code class="command">UPDATE</code>或者<code class="command">DELETE</code>命令需要被重新评估一行或多行，
+由于<code class="literal">READ COMMITTED</code>模式中并发更新，那么包含
+ <code class="command">INSERT</code>/<code class="command">UPDATE</code>/<code class="command">DELETE</code>
+ 的<code class="literal">WITH</code>子句可能崩溃。</p></li><li class="listitem"><p>    修复SSI事务清理中困境情况(Dan Ports)</p><p>   当结束一个读写串行化事务时，如果所有剩余的活跃的可串行化事务是
+   只读的，那么可能产生崩溃。</p></li><li class="listitem"><p>   在热备份崩溃后修复postmaster以尝试重启(Tom Lane)</p><p>   
+   当在热备模式中进行操作时如果任何后端进程崩溃，那么
+   逻辑错误导致postmaster终止，而不是尝试重启集群。</p></li><li class="listitem"><p>   修复通过最新更新行拥有的toast值的
+   <code class="command">CLUSTER</code>/<code class="command">VACUUM FULL</code>的处理(Tom Lane)</p><p>    这种疏忽可能导致<span class="quote">“<span class="quote">重复关键值违背唯一约束</span>”</span>错误
+被报告给这些命令之一中的
+    toast表的索引。</p></li><li class="listitem"><p>   当改变表所有者时，更新每列权限，不仅仅每个表权限(Tom Lane)</p><p>    不这样做就意味着 任何先前已授权列权限
+仍然显示为已被旧的所有者授权。
+这意味着既不是新所有者也不是
+超级用户可以撤销目前难以寻找的到表所有者权限。</p></li><li class="listitem"><p>    支持外数据封装和<code class="command">REASSIGN OWNED</code>中的外服务器(Alvaro Herrera)</p><p>   如果它需要改变任何对象的所有权，
+   那么该命令伴随<span class="quote">“<span class="quote">意外数字</span>”</span>错误失败。</p></li><li class="listitem"><p>    允许<code class="command">ALTER USER/DATABASE SET</code>中
+一些设置的不存在值(Heikki Linnakangas)</p><p>   允许<code class="varname">default_text_search_config</code>，
+   <code class="varname">default_tablespace</code>和<code class="varname">temp_tablespaces</code>
+    被设置为不知道的名字。
+这是因为它们可能在另一个数据库中已知，
+该设置打算使用的地方，
+或者为了表空间情况因为表空间可能不会被创建。
+同样问题是先前已确认为<code class="varname">search_path</code>，
+并且这些设置像那一个。</p></li><li class="listitem"><p>   修复<code class="command">INSERT</code>表达式中通过<code class="literal">COLLATE</code>产生的
+   <span class="quote">“<span class="quote">不支持节点类型</span>”</span>错误(Tom Lane)</p></li><li class="listitem"><p>    当我们删除后提交表文件有问题时，避免崩溃(Tom Lane)</p><p>   删除表导致事务提交之后删除底层磁盘文件。
+   在失败的情况中（比如，由于错误文件权限）
+   那么该代码应该发出警告消息并且继续，
+   因为它太晚了而终止了事务。
+   这个逻辑已作为发布8.4被打破，
+   导致这种情况引起PANIC和不可重新启动的数据库。</p></li><li class="listitem"><p>    在<code class="command">DROP TABLESPACE</code>的WAL回放期间从发生的错误中恢复(Tom Lane)</p><p>   重播将尝试删除该表空间目录，但是
+可能会失败的原因是多方面的（例如，这些目录上不正确的
+所有权和权限）。以前该重播代码会恐慌，
+导致数据库没有手册干预不能重新启动。
+似乎记录问题并且继续是更好的，因为
+删除该目录失败的唯一结果是一些浪费的磁盘空间。</p></li><li class="listitem"><p>    修复为热备在记录AccessExclusiveLocks中的竞争条件(Simon Riggs)</p><p>     有时锁可能被记录为通过<span class="quote">“<span class="quote">事务零</span>”</span>持有。
+ 这对于从服务器上产生断言失败至少是已知的，
+ 并且可能是更严重问题的原因。</p></li><li class="listitem"><p>    在WAL回放期间正确跟踪OID计数器，即使当它包围周围(Tom Lane)</p><p>   先前OID计数器可以保持在较高的值上直到系统退出回放模式。
+   实际结果通常为零，但是存在这样一种情况，
+   备用服务器提升到主服务器可能需要很长时间
+   增加OID计数器到一个合理值，一旦该值是必须的。</p></li><li class="listitem"><p>    在崩溃恢复开始时阻止发出误导性的
+<span class="quote">“<span class="quote">一致的恢复状态到达</span>”</span>
+日志信息(Heikki Linnakangas)</p></li><li class="listitem"><p>     修复<code class="structname">pg_stat_replication</code>.<code class="structfield">replay_location</code>
+ 的初始值(Fujii Masao)</p><p>    以前，显示的值可能是错误的直到至少一个WAL记录已被回放。</p></li><li class="listitem"><p>    修复带有<code class="literal">*</code>附属的正则表达式逆向引用(Tom Lane)</p><p>    而不是执行一个确切的字符串匹配，
+该代码有效地接受任何满足模式子表达式引用逆向引用符号的字符串。</p><p>    类似问题仍然困扰着被嵌入到大的量化表达式中的逆向引用，而不是量词的直接主题。
+这将在未来<span class="productname">PostgreSQL</span>发布中得以解决。</p></li><li class="listitem"><p>    修复<code class="type">inet</code>/<code class="type">cidr</code>值处理中最新引进的内存泄露(Heikki Linnakangas)</p><p>    <span class="productname">PostgreSQL</span>的2011年12月份发布的补丁
+导致了这些操作中内存泄露，这可能是重要情况比如在这样的列上
+编译btree索引。
+</p></li><li class="listitem"><p>   修复规划器的能力通过<code class="literal">UNION ALL</code>推动索引表达式限制(Tom Lane)</p><p>   优化这种类型通过9.1.2中另一个问题修复被无意识禁用。</p></li><li class="listitem"><p>    修复引用继承表上<code class="command">UPDATE</code>/<code class="command">DELETE</code>中的
+<code class="literal">WITH</code>子句规划(Tom Lane)</p><p>   这个错误导致<span class="quote">“<span class="quote">不能找到CTE规划</span>”</span>错误。</p></li><li class="listitem"><p>   修复GIN估计成本以处理<code class="literal">column IN (...)</code>索引条件(Marti Raudsepp)</p><p>   如果这一条件与GIN索引一起使用，那么这种疏忽通常导致崩溃。</p></li><li class="listitem"><p>   当退出打开的失败事务会话，防止断言失败(Tom Lane)</p><p>   这个错误对正常编译未启用断言没有影响。</p></li><li class="listitem"><p>    修复SQL语言函数中
+<code class="command">CREATE TABLE AS</code>/<code class="command">SELECT INTO</code>之后的悬挂指针(Tom Lane)</p><p>    在大多数情况中这导致断言启用编译中断言失败，
+但是更糟结果是可能的。</p></li><li class="listitem"><p>   避免Windows上syslogger中文件句柄的双关闭(MauMau)</p><p>   通常这个错误是无形的，但是当在Windows的调试版本上运行时，它可能导致异常。</p></li><li class="listitem"><p>   修复plpgsql中I/O转换关系内存泄露(Andres Freund, Jan Urbanski, Tom Lane)</p><p>   某些操作可能泄露内存直到当前函数结束。</p></li><li class="listitem"><p>   解决perl的SvPVutf8()函数中的错误(Andrew Dunstan)</p><p>    当操作的typeglob或者某个只读对象比如<code class="literal">$^V</code>时，该函数崩溃。
+使得plperl避免传递这些给它。</p></li><li class="listitem"><p>    在<span class="application">pg_dump</span>中，如果扩展本身没有被备份，
+那么不备份扩展的配置表的内容(Tom Lane)</p></li><li class="listitem"><p>   提升继承表列的<span class="application">pg_dump</span>的处理(Tom Lane)</p><p>    <span class="application">pg_dump</span>处理不当的情况下，一个子列
+比它的父列有不同的缺省表达式。
+如果缺省文本上与父类的缺省是相同的，但不是真的
+相同（例如，由于模式搜索路径的差异）不会被认为是不同的，
+所以在转储和恢复后
+子类可以被允许继承父的缺省。在它们的父类不能微妙地错误地被恢复的地方
+子列<code class="literal">非空</code>。</p></li><li class="listitem"><p>   为了INSERT形式表数据修复<span class="application">pg_restore</span>的
+   直接到数据库模式(Tom Lane)</p><p>    
+
+当使用发布日期2011年九月或者十二月的<span class="application">pg_restore</span>的时候，
+从归档文件中恢复直接到数据库伴随
+<code class="option">--inserts</code>或者<code class="option">--column-inserts</code>选项而失败，
+作为另外一个问题修复的疏忽结果。
+归档文件本身没有错，而且文本模式输出是好的。</p></li><li class="listitem"><p>    <span class="application">pg_upgrade</span>处理<span class="application">plpython</span>
+的共享库的重命名(Bruce Momjian)</p><p>  更新包含plpython的9.1之前数据库可能失败，因为这种疏忽。</p></li><li class="listitem"><p>   允许<span class="application">pg_upgrade</span>处理包含<code class="type">regclass</code>列的表(Bruce Momjian)</p><p>   因为<span class="application">pg_upgrade</span>现在负责保存<code class="structname">pg_class</code> OID，
+   这一限制没有任何理由。</p></li><li class="listitem"><p>   当正在寻找SSL客户端证书文件时，使得
+   <span class="application">libpq</span>忽略<code class="literal">ENOTDIR</code>错误(Magnus Hagander)</p><p>   这允许建立SSL连接，虽然没有证书，
+   即使当用户的家目录被设置为像<code class="literal">/dev/null</code>的目录。 </p></li><li class="listitem"><p>    修复<span class="application">ecpg</span>的SQLDA区域中
+一些字段对齐问题(Zoltan Boszormenyi)</p></li><li class="listitem"><p>   在<span class="application">ecpg</span><code class="literal">DEALLOCATE</code>语句
+   中允许<code class="literal">AT</code>选项(Michael Meskes)</p><p>    支持这个的基础设施已有一段时间了，
+但由于疏忽仍然有拒绝这种情况的错误检查。</p></li><li class="listitem"><p>   当在ecpg中定义varchar结构时，不要使用变量名(Michael Meskes)</p></li><li class="listitem"><p>    修复<code class="filename">contrib/auto_explain</code>的
+JSON模式以产生有效的JSON(Andrew Dunstan)</p><p>   当它使用花括号时，该输出使用顶层方括号。</p></li><li class="listitem"><p>   修复<code class="filename">contrib/intarray</code>的<code class="literal">int[] &amp;int[]</code>操作符
+   中的错误(Guillaume Lelarge)</p><p>   如果最小整数的两个输入数组中常见的是1，
+并且在其中之一数组中有较小的值，然后将1
+从结果中错误地省略。</p></li><li class="listitem"><p>    修复<code class="filename">contrib/pgcrypto</code>的
+      <code class="function">encrypt_iv()</code>和<code class="function">decrypt_iv()</code>中的错误检查(Marko Kreen)</p><p>    这些函数没有成功报告无效输入错误的某些类型，
+并且反而为不正确输入返回随机垃圾值。</p></li><li class="listitem"><p>   修复<code class="filename">contrib/test_parser</code>中一字节缓冲区超出范围(Paul Guyot)</p><p>   该代码将尝试读取比它应该的又一个字节，这将在困境情况下崩溃。
+因为<code class="filename">contrib/test_parser</code>只是示例代码，
+这本身不是一个安全问题，但不好的例子代码仍然是差的。</p></li><li class="listitem"><p>   如果可用，那么
+   在ARM上为spinlocks使用<code class="function">__sync_lock_test_and_set()</code> (Martin Pitt)</p><p>   这个函数替换<code class="literal">SWPB</code>指令先前用法，它已经废弃并且在ARMv6和之后的不可用。
+   报告建议该旧代码在最新ARM上以显著方式使用，
+   但是不能简单地连锁并发访问，导致多进程操作中的离奇失败。</p></li><li class="listitem"><p>    当编译接受它的gcc版本时，
+使用<code class="option">-fexcess-precision=standard</code>选项(Andrew Dunstan)</p><p>    这阻止各种各样的情节，其中gcc最新版本将产生创造性结果。</p></li><li class="listitem"><p>     允许FreeBSD上线程Python的使用(Chris Rees)</p><p>   我们配置脚本先前认为这种组合不会允许；但是FreeBSD修复该问题，
+   因此删除错误检查。</p></li><li class="listitem"><p>    允许MinGW建立使用标准命名OpenSSL库(Tomasz Ostrowski)</p></li></ul></div></div></div><div class="navfooter"><hr /><table width="100%" summary="Navigation footer"><tr><td width="40%" align="left"><a accesskey="p" href="release-9-1-4.html">上一页</a> </td><td width="20%" align="center"><a accesskey="u" href="release.html">上一级</a></td><td width="40%" align="right"> <a accesskey="n" href="release-9-1-2.html">下一页</a></td></tr><tr><td width="40%" align="left" valign="top">E.103. 版本9.1.4 </td><td width="20%" align="center"><a accesskey="h" href="index.html">起始页</a></td><td width="40%" align="right" valign="top"> E.105. 版本9.1.2</td></tr></table></div></body></html>

@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><title>11.9. 操作符类和操作符族</title><link rel="stylesheet" type="text/css" href="stylesheet.css" /><link rev="made" href="pgsql-docs@postgresql.org" /><meta name="generator" content="DocBook XSL Stylesheets V1.79.1" /><link rel="prev" href="indexes-partial.html" title="11.8. 部分索引" /><link rel="next" href="indexes-collations.html" title="11.10. 索引和排序规则" /></head><body><div xmlns="http://www.w3.org/TR/xhtml1/transitional" class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="5" align="center">11.9. 操作符类和操作符族</th></tr><tr><td width="10%" align="left"><a accesskey="p" href="indexes-partial.html" title="11.8. 部分索引">上一页</a> </td><td width="10%" align="left"><a accesskey="u" href="indexes.html" title="第 11 章 索引">上一级</a></td><th width="60%" align="center">第 11 章 索引</th><td width="10%" align="right"><a accesskey="h" href="index.html" title="PostgreSQL 10.1 手册">起始页</a></td><td width="10%" align="right"> <a accesskey="n" href="indexes-collations.html" title="11.10. 索引和排序规则">下一页</a></td></tr></table><hr></hr></div><div class="sect1" id="INDEXES-OPCLASS"><div class="titlepage"><div><div><h2 class="title" style="clear: both">11.9. 操作符类和操作符族</h2></div></div></div><a id="idp16761024" class="indexterm"></a><a id="idp16762064" class="indexterm"></a><p>   一个索引定义可以为索引中的每一列都指定一个<em class="firstterm">操作符类</em>。
+</p><pre class="synopsis">CREATE INDEX <em class="replaceable"><code>name</code></em> ON <em class="replaceable"><code>table</code></em> (<em class="replaceable"><code>column</code></em> <em class="replaceable"><code>opclass</code></em> [<span class="optional"><em class="replaceable"><code>sort options</code></em></span>] [<span class="optional">, ...</span>]);</pre><p>
+   操作符类标识该列上索引要使用的操作符。例如，一个<code class="type">int4</code>类型上的B树索引会使用<code class="literal">int4_ops</code>类，这个操作符类包括用于<code class="type">int4</code>类型值的比较函数。实际上列的数据类型的默认操作符类通常就足够了。存在多个操作符类的原因是，对于某些数据类型可能会有多于一种的有意义的索引行为。例如，我们可能想要对一种复数数据类型按照绝对值排序或者按照实数部分排序。我们可以通过为该数据类型定义两个操作符类来实现，并且在创建一个索引时选择合适的类。操作符类会决定基本的排序顺序（可以通过增加排序选项<code class="literal">COLLATE</code>、
+   <code class="literal">ASC</code>/<code class="literal">DESC</code>和/或
+   <code class="literal">NULLS FIRST</code>/<code class="literal">NULLS LAST</code>来修改）。
+  </p><p>   除了默认的操作符类，还有一些内建的操作符类：
+
+   </p><div class="itemizedlist"><ul class="itemizedlist" style="list-style-type: disc; "><li class="listitem"><p>      操作符类<code class="literal">text_pattern_ops</code>、<code class="literal">varchar_pattern_ops</code>和
+      <code class="literal">bpchar_pattern_ops</code>分别支持类型<code class="type">text</code>、<code class="type">varchar</code>和
+      <code class="type">char</code>上的B树索引。它们与默认操作符类的区别是值的比较是严格按照字符进行而不是根据区域相关的排序规则。这使得这些操作符类适合于当一个数据库没有使用标准<span class="quote">“<span class="quote">C</span>”</span>区域时被使用在涉及模式匹配表达式（<code class="literal">LIKE</code>或POSIX正则表达式）的查询中。一个例子是，你可以这样索引一个<code class="type">varchar</code>列：
+</p><pre class="programlisting">CREATE INDEX test_index ON test_table (col varchar_pattern_ops);</pre><p>
+      注意如果你希望涉及到<code class="literal">&lt;</code>、<code class="literal">&lt;=</code>、<code class="literal">&gt;</code>或<code class="literal">&gt;=</code>比较的查询使用一个索引，你也应该创建一个使用默认操作符类的索引。这些查询不能使用<code class="literal"><em class="replaceable"><code>xxx</code></em>_pattern_ops</code>操作符类（但是普通的等值比较可以使用这些操作符类）。可以在同一个列上创建多个使用不同操作符类的索引。如果你正在使用C区域，你并不需要<code class="literal"><em class="replaceable"><code>xxx</code></em>_pattern_ops</code>操作符类，因为在C区域中的模式匹配查询可以用带有默认操作符类的索引。
+     </p></li></ul></div><p>
+  </p><p>    下面的查询展示了所有已定义的操作符类：
+
+</p><pre class="programlisting">SELECT am.amname AS index_method,
+       opc.opcname AS opclass_name,
+       opc.opcintype::regtype AS indexed_type,
+       opc.opcdefault AS is_default
+    FROM pg_am am, pg_opclass opc
+    WHERE opc.opcmethod = am.oid
+    ORDER BY index_method, opclass_name;</pre><p>
+  </p><p>   一个操作符类实际上只是一个更大的被称为<em class="firstterm">操作符族</em>的结构的一个子集。在多种数据类型具有相似行为的情况下，常常会定义跨数据类型的操作符并且允许索引使用它们。为了实现该目的，这些类型的操作符类必须被分组到同一个操作符族中。跨类型的操作符是该族的成员，但是并不与族内任意一个单独的类相关联。
+  </p><p>    前一个查询的扩展版本展示了每个操作符类所属的操作符族：
+</p><pre class="programlisting">SELECT am.amname AS index_method,
+       opc.opcname AS opclass_name,
+       opf.opfname AS opfamily_name,
+       opc.opcintype::regtype AS indexed_type,
+       opc.opcdefault AS is_default
+    FROM pg_am am, pg_opclass opc, pg_opfamily opf
+    WHERE opc.opcmethod = am.oid AND
+          opc.opcfamily = opf.oid
+    ORDER BY index_method, opclass_name;</pre><p>
+  </p><p>    这个查询展示所有已定义的操作符族和每一个族中包含的所有操作符：
+</p><pre class="programlisting">SELECT am.amname AS index_method,
+       opf.opfname AS opfamily_name,
+       amop.amopopr::regoperator AS opfamily_operator
+    FROM pg_am am, pg_opfamily opf, pg_amop amop
+    WHERE opf.opfmethod = am.oid AND
+          amop.amopfamily = opf.oid
+    ORDER BY index_method, opfamily_name, opfamily_operator;</pre><p>
+  </p></div><div class="navfooter"><hr /><table width="100%" summary="Navigation footer"><tr><td width="40%" align="left"><a accesskey="p" href="indexes-partial.html">上一页</a> </td><td width="20%" align="center"><a accesskey="u" href="indexes.html">上一级</a></td><td width="40%" align="right"> <a accesskey="n" href="indexes-collations.html">下一页</a></td></tr><tr><td width="40%" align="left" valign="top">11.8. 部分索引 </td><td width="20%" align="center"><a accesskey="h" href="index.html">起始页</a></td><td width="40%" align="right" valign="top"> 11.10. 索引和排序规则</td></tr></table></div></body></html>

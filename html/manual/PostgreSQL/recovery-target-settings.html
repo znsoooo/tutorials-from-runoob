@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><title>27.2. 恢复目标设置</title><link rel="stylesheet" type="text/css" href="stylesheet.css" /><link rev="made" href="pgsql-docs@postgresql.org" /><meta name="generator" content="DocBook XSL Stylesheets V1.79.1" /><link rel="prev" href="archive-recovery-settings.html" title="27.1. 归档恢复设置" /><link rel="next" href="standby-settings.html" title="27.3. 后备服务器设置" /></head><body><div xmlns="http://www.w3.org/TR/xhtml1/transitional" class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="5" align="center">27.2. 恢复目标设置</th></tr><tr><td width="10%" align="left"><a accesskey="p" href="archive-recovery-settings.html" title="27.1. 归档恢复设置">上一页</a> </td><td width="10%" align="left"><a accesskey="u" href="recovery-config.html" title="第 27 章 恢复配置">上一级</a></td><th width="60%" align="center">第 27 章 恢复配置</th><td width="10%" align="right"><a accesskey="h" href="index.html" title="PostgreSQL 10.1 手册">起始页</a></td><td width="10%" align="right"> <a accesskey="n" href="standby-settings.html" title="27.3. 后备服务器设置">下一页</a></td></tr></table><hr></hr></div><div class="sect1" id="RECOVERY-TARGET-SETTINGS"><div class="titlepage"><div><div><h2 class="title" style="clear: both">27.2. 恢复目标设置</h2></div></div></div><p>      默认情况下，恢复将会一直恢复到 WAL 日志的末尾。下面的参数可以被用来指定一个更早的停止点。在<code class="varname">recovery_target</code>、<code class="varname">recovery_target_lsn</code>、<code class="varname">recovery_target_name</code>、<code class="varname">recovery_target_time</code>和<code class="varname">recovery_target_xid</code>中，最多只能使用一个，如果在配置文件中使用了多个，将使用最后一个。
+     </p><div class="variablelist"><dl class="variablelist"><dt id="RECOVERY-TARGET"><span class="term"><code class="varname">recovery_target</code><code class="literal"> = 'immediate'</code>
+      <a id="idp25201856" class="indexterm"></a>
+      </span></dt><dd><p>        这个参数指定恢复应该在达到一个一致状态后尽快结束，即尽早结束。在从一个在线备份中恢复时，这意味着备份结束的那个点。
+       </p><p>        在技术上，这是一个字符串参数，但是<code class="literal">'immediate'</code>是目前唯一允许的值。
+       </p></dd><dt id="RECOVERY-TARGET-NAME"><span class="term"><code class="varname">recovery_target_name</code>
+           (<code class="type">string</code>)      
+      <a id="idp25206608" class="indexterm"></a>
+      </span></dt><dd><p>        这个参数指定（<code class="function">pg_create_restore_point()</code>所创建）的已命名的恢复点，恢复将进入该恢复点。
+       </p></dd><dt id="RECOVERY-TARGET-TIME"><span class="term"><code class="varname">recovery_target_time</code>
+           (<code class="type">timestamp</code>)      
+      <a id="idp25210848" class="indexterm"></a>
+      </span></dt><dd><p>        这个参数指定恢复将进入的时间戳。
+       </p></dd><dt id="RECOVERY-TARGET-XID"><span class="term"><code class="varname">recovery_target_xid</code> (<code class="type">string</code>)
+      <a id="idp25214304" class="indexterm"></a>
+      </span></dt><dd><p>        这个参数指定恢复将进入的事务 ID。记住虽然事务 ID 是在事务开始时顺序分配的，但是事务可能以不同的数字顺序完成。那些在指定事务之前（也可以包括该事务）提交的事务将被恢复。精确的停止点也受到<a class="xref" href="recovery-target-settings.html#RECOVERY-TARGET-INCLUSIVE">recovery_target_inclusive</a>的影响。
+       </p></dd><dt id="RECOVERY-TARGET-LSN"><span class="term"><code class="varname">recovery_target_lsn</code> (<code class="type">pg_lsn</code>)
+      <a id="idp25219072" class="indexterm"></a>
+      </span></dt><dd><p>        此参数指定恢复将继续进行的预写日志位置的LSN。精确的停靠点也受
+		<a class="xref" href="recovery-target-settings.html#RECOVERY-TARGET-INCLUSIVE">recovery_target_inclusive</a>的影响。
+		使用系统数据类型<a class="link" href="datatype-pg-lsn.html" title="8.19. pg_lsn Type"><code class="type">pg_lsn</code></a>解析此参数。
+       </p></dd></dl></div><p>       下列选项进一步指定恢复目标，并且影响到达目标时会发生什么：
+     </p><div class="variablelist"><dl class="variablelist"><dt id="RECOVERY-TARGET-INCLUSIVE"><span class="term"><code class="varname">recovery_target_inclusive</code>
+        (<code class="type">boolean</code>)      
+      <a id="idp25224960" class="indexterm"></a>
+      </span></dt><dd><p>        指定我们是否仅在指定的恢复目标之后停止（<code class="literal">true</code>），
+		或者仅在恢复目标之前停止（<code class="literal">false</code>）。
+		适用于<a class="xref" href="recovery-target-settings.html#RECOVERY-TARGET-LSN">recovery_target_lsn</a>、<a class="xref" href="recovery-target-settings.html#RECOVERY-TARGET-TIME">recovery_target_time</a>
+		或者<a class="xref" href="recovery-target-settings.html#RECOVERY-TARGET-XID">recovery_target_xid</a>被指定的情况。
+		这个设置分别控制事务是否有准确的目标WAL位置(LAN)、提交时间或事务ID将被包括在该恢复中。
+		默认值为<code class="literal">true</code>。
+       </p></dd><dt id="RECOVERY-TARGET-TIMELINE"><span class="term"><code class="varname">recovery_target_timeline</code>
+        (<code class="type">string</code>)      
+      <a id="idp25233280" class="indexterm"></a>
+      </span></dt><dd><p>        指定恢复到一个特定的时间线中。默认值是沿着基础备份建立时的当前时间线恢复。将这个参数设置为<code class="literal">latest</code>会恢复到该归档中能找到的最新的时间线，这在一个后备服务器中有用。除此之外，你只需要在复杂的重恢复情况下设置这个参数，在这种情况下你需要返回到一个状态，该状态本身是在一次时间点恢复之后到达的。相关讨论见<a class="xref" href="continuous-archiving.html#BACKUP-TIMELINES" title="25.3.5. 时间线">第 25.3.5 节</a>。
+       </p></dd><dt id="RECOVERY-TARGET-ACTION"><span class="term"><code class="varname">recovery_target_action</code> (<code class="type">enum</code>)
+      <a id="idp25238656" class="indexterm"></a>
+      </span></dt><dd><p>        指定在达到恢复目标时服务器应该立刻采取的动作。默认动作是<code class="literal">pause</code>，这表示恢复将会被暂停。<code class="literal">promote</code>表示恢复处理将会结束并且服务器将开始接受连接。最后，<code class="literal">shutdown</code>将在达到恢复目标之后停止服务器。
+       </p><p>        使用<code class="literal">pause</code>设置的目的是：如果这个恢复目标就是恢复最想要的位置，就允许对数据库执行查询。暂停的状态可以使用<code class="function">pg_wal_replay_resume()</code>（见<a class="xref" href="functions-admin.html#FUNCTIONS-RECOVERY-CONTROL-TABLE" title="表 9.81. 恢复控制函数">表 9.81</a>）继续，这会让恢复终结。如果这个恢复目标不是想要的停止点，那么关闭服务器，将恢复目标设置改为一个稍后的目标并且重启以继续恢复。
+       </p><p>        要让实例在想要的重放点那里准备好，<code class="literal">shutdown</code>设置可以派上用场。该实例将仍能重放更多 WAL 记录（并且事实上将不得不重放从下一次它被启动后最后一个检查点以来的 WAL 记录）。
+       </p><p>        注意由于在<code class="varname">recovery_target_action</code>被设置为<code class="literal">shutdown</code>时，<code class="filename">recovery.conf</code>将不会被重命名，任何后续的启动都将会以立刻关闭为终结，除非该配置被改变或者<code class="filename">recovery.conf</code>文件被手工移除。
+       </p><p>        如果没有设置恢复目标，这个设置没有效果。如果没有启用<a class="xref" href="runtime-config-replication.html#GUC-HOT-STANDBY">hot_standby</a>，<code class="literal">pause</code>设置的动作将和<code class="literal">shutdown</code>一样。
+       </p></dd></dl></div></div><div class="navfooter"><hr /><table width="100%" summary="Navigation footer"><tr><td width="40%" align="left"><a accesskey="p" href="archive-recovery-settings.html">上一页</a> </td><td width="20%" align="center"><a accesskey="u" href="recovery-config.html">上一级</a></td><td width="40%" align="right"> <a accesskey="n" href="standby-settings.html">下一页</a></td></tr><tr><td width="40%" align="left" valign="top">27.1. 归档恢复设置 </td><td width="20%" align="center"><a accesskey="h" href="index.html">起始页</a></td><td width="40%" align="right" valign="top"> 27.3. 后备服务器设置</td></tr></table></div></body></html>

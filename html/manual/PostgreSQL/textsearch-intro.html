@@ -1,0 +1,115 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><title>12.1. 介绍</title><link rel="stylesheet" type="text/css" href="stylesheet.css" /><link rev="made" href="pgsql-docs@postgresql.org" /><meta name="generator" content="DocBook XSL Stylesheets V1.79.1" /><link rel="prev" href="textsearch.html" title="第 12 章 全文搜索" /><link rel="next" href="textsearch-tables.html" title="12.2. 表和索引" /></head><body><div xmlns="http://www.w3.org/TR/xhtml1/transitional" class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="5" align="center">12.1. 介绍</th></tr><tr><td width="10%" align="left"><a accesskey="p" href="textsearch.html" title="第 12 章 全文搜索">上一页</a> </td><td width="10%" align="left"><a accesskey="u" href="textsearch.html" title="第 12 章 全文搜索">上一级</a></td><th width="60%" align="center">第 12 章 全文搜索</th><td width="10%" align="right"><a accesskey="h" href="index.html" title="PostgreSQL 10.1 手册">起始页</a></td><td width="10%" align="right"> <a accesskey="n" href="textsearch-tables.html" title="12.2. 表和索引">下一页</a></td></tr></table><hr></hr></div><div class="sect1" id="TEXTSEARCH-INTRO"><div class="titlepage"><div><div><h2 class="title" style="clear: both">12.1. 介绍</h2></div></div></div><div class="toc"><dl class="toc"><dt><span class="sect2"><a href="textsearch-intro.html#TEXTSEARCH-DOCUMENT">12.1.1. 什么是一个文档？</a></span></dt><dt><span class="sect2"><a href="textsearch-intro.html#TEXTSEARCH-MATCHING">12.1.2. 基本文本匹配</a></span></dt><dt><span class="sect2"><a href="textsearch-intro.html#TEXTSEARCH-INTRO-CONFIGURATIONS">12.1.3. 配置</a></span></dt></dl></div><p>   全文搜索（或者<em class="firstterm">文本搜索</em>）提供了确定满足一个<em class="firstterm">查询</em>的自然语言<em class="firstterm">文档</em>的能力，并可以选择将它们按照与查询的相关度排序。最常用的搜索类型是找到所有包含给定<em class="firstterm">查询词</em>的文档并按照它们与查询的<em class="firstterm">相似性</em>顺序返回它们。<code class="varname">查询</code>和<code class="varname">相似性</code>的概念非常灵活并且依赖于特定的应用。最简单的搜索认为<code class="varname">查询</code>是一组词而<code class="varname">相似性</code>是查询词在文档中的频度。
+  </p><p>  文本搜索操作符已经在数据库中存在很多年了。<span class="productname">PostgreSQL</span>对文本数据类型提供了<code class="literal">~</code>、<code class="literal">~*</code>、<code class="literal">LIKE</code>和<code class="literal">ILIKE</code>操作符，但是它们缺少现代信息系统所要求的很多基本属性：
+  </p><div class="itemizedlist"><ul class="itemizedlist compact" style="list-style-type: bullet; "><li class="listitem" style="list-style-type: disc"><p>     即使对英语也缺乏语言的支持。正则表达式是不够的，因为它们不能很容易地处理派生词，例如<code class="literal">satisfies</code>和<code class="literal">satisfy</code>。你可能会错过包含<code class="literal">satisfies</code>的文档，尽管你可能想要在对于<code class="literal">satisfy</code>的搜索中找到它们。可以使用<code class="literal">OR</code>来搜索多个派生形式，但是这样做太罗嗦也容易出错（有些词可能有数千种派生）。
+    </p></li><li class="listitem" style="list-style-type: disc"><p>     它们不提供对搜索结果的排序（排名），这使它们面对数以千计被找到的文档时变得无效。
+    </p></li><li class="listitem" style="list-style-type: disc"><p>     它们很慢因为没有索引支持，因此它们必须为每次搜索处理所有的文档。
+    </p></li></ul></div><p>   全文索引允许文档被<span class="emphasis"><em>预处理</em></span>并且保存一个索引用于以后快速的搜索。预处理包括：
+  </p><div class="itemizedlist"><ul class="itemizedlist" style="list-style-type: none; "><li class="listitem" style="list-style-type: none"><p>     <span class="emphasis"><em>将文档解析成<em class="firstterm">记号</em></em></span>。标识出多种类型的记号是有所帮助的，例如数字、词、复杂的词、电子邮件地址，这样它们可以被以不同的方式处理。原则上记号分类取决于相关的应用，但是对于大部分目的都可以使用一套预定义的分类。<span class="productname">PostgreSQL</span>使用一个<em class="firstterm">解析器</em>来执行这个步骤。其中提供了一个标准的解析器，并且为特定的需要也可以创建定制的解析器。
+    </p></li><li class="listitem" style="list-style-type: none"><p>     <span class="emphasis"><em>将记号转换成<em class="firstterm">词位</em></em></span>。和一个记号一样，一个词位是一个字符串，但是它已经被<em class="firstterm">正规化</em>，这样同一个词的不同形式被变成一样。例如，正规化几乎总是包括将大写字母转换成小写形式，并且经常涉及移除后缀（例如英语中的<code class="literal">s</code>或<code class="literal">es</code>）。这允许搜索找到同一个词的变体形式，而不需要冗长地输入所有可能的变体。此外，这个步骤通常会消除<em class="firstterm">停用词</em>，它们是那些太普通的词，它们对于搜索是无用的（简而言之，记号是文档文本的原始片段，而词位是那些被认为对索引和搜索有用的词）。<span class="productname">PostgreSQL</span>使用<em class="firstterm">词典</em>来执行这个步骤。已经提供了多种标准词典，并且为特定的需要也可以创建定制的词典。
+    </p></li><li class="listitem" style="list-style-type: none"><p>     <span class="emphasis"><em>为搜索优化存储预处理好的文档</em></span>。例如，每一个文档可以被表示为正规化的词位的一个有序数组。与词位一起，通常还想要存储用于<em class="firstterm">近似排名</em>的位置信息，这样一个包含查询词更<span class="quote">“<span class="quote">密集</span>”</span>区域的文档要比那些包含分散的查询词的文档有更高的排名。
+    </p></li></ul></div><p>   词典允许对记号如何被正规化进行细粒度的控制。使用合适的词典，你可以：
+  </p><div class="itemizedlist"><ul class="itemizedlist compact" style="list-style-type: bullet; "><li class="listitem" style="list-style-type: disc"><p>     定义不应该被索引的停用词。
+    </p></li><li class="listitem" style="list-style-type: disc"><p>     使用<span class="application">Ispell</span>把同义词映射到一个单一词。
+    </p></li><li class="listitem" style="list-style-type: disc"><p>     使用一个分类词典把短语映射到一个单一词。
+    </p></li><li class="listitem" style="list-style-type: disc"><p>     使用一个<span class="application">Ispell</span>词典把一个词的不同变体映射到一种规范的形式。
+    </p></li><li class="listitem" style="list-style-type: disc"><p>     使用<span class="application">Snowball</span>词干分析器规则将一个词的不同变体映射到一种规范的形式。
+    </p></li></ul></div><p>   我们提供了一种数据类型<code class="type">tsvector</code>来存储预处理后的文档，还提供了一种类型<code class="type">tsquery</code>来表示处理过的查询（<a class="xref" href="datatype-textsearch.html" title="8.11. 文本搜索类型">第 8.11 节</a>）。有很多函数和操作符可以用于这些数据类型（<a class="xref" href="functions-textsearch.html" title="9.13. 文本搜索函数和操作符">第 9.13 节</a>），其中最重要的是匹配操作符<code class="literal">@@</code>，它在<a class="xref" href="textsearch-intro.html#TEXTSEARCH-MATCHING" title="12.1.2. 基本文本匹配">第 12.1.2 节</a>中介绍。全文搜索可以使用索引来加速（<a class="xref" href="textsearch-indexes.html" title="12.9. GIN 和 GiST 索引类型">第 12.9 节</a>）。
+  </p><div class="sect2" id="TEXTSEARCH-DOCUMENT"><div class="titlepage"><div><div><h3 class="title">12.1.1. 什么是一个文档？</h3></div></div></div><a id="idp16908784" class="indexterm"></a><p>    一个<em class="firstterm">document</em>是在一个全文搜索系统中进行搜索的单元，例如，一篇杂志文章或电子邮件消息。文本搜索引擎必须能够解析文档并存储词位（关键词）与它们的父文档之间的关联。随后，这些关联会被用来搜索包含查询词的文档。
+   </p><p>    对于<span class="productname">PostgreSQL</span>中的搜索，一个文档通常是一个数据库表中一行内的一个文本形式的域，或者可能是这类域的一个组合（连接），这些域可能存储在多个表或者是动态获取。换句话说，一个文档可能从用于索引的不同部分构建，并且它可能被作为一个整体存储在某个地方。例如：
+
+</p><pre class="programlisting">SELECT title || ' ' ||  author || ' ' ||  abstract || ' ' || body AS document
+FROM messages
+WHERE mid = 12;
+
+SELECT m.title || ' ' || m.author || ' ' || m.abstract || ' ' || d.body AS document
+FROM messages m, docs d
+WHERE mid = did AND mid = 12;</pre><p>
+   </p><div class="note"><h3 class="title">注意</h3><p>     实际上在这些例子查询中，<code class="function">coalesce</code>应该被用来防止一个单一<code class="literal">NULL</code>属性导致整个文档的一个<code class="literal">NULL</code>结果。
+    </p></div><p>    另一种存储文档的可能性是作为文件系统中的简单文本文件。在这种情况下，数据库可以被用来存储全文索引并执行搜索，并且某些唯一标识符可以被用来从文件系统检索文档。但是，从数据库的外面检索文件要求超级用户权限或者特殊函数支持，因此这种方法通常不如把所有数据放在<span class="productname">PostgreSQL</span>内部方便。另外，把所有东西放在数据库内部允许方便地访问文档元数据来协助索引和现实。
+   </p><p>    对于文本搜索目的，每一个文档必须被缩减成预处理后的<code class="type">tsvector</code>格式。搜索和排名被整个在一个文档的<code class="type">tsvector</code>表示上执行 — 只有当文档被选择来显示给用户时才需要检索原始文本。我们因此经常把<code class="type">tsvector</code>说成是文档，但是当然它只是完整文档的一种紧凑表示。
+   </p></div><div class="sect2" id="TEXTSEARCH-MATCHING"><div class="titlepage"><div><div><h3 class="title">12.1.2. 基本文本匹配</h3></div></div></div><p>    <span class="productname">PostgreSQL</span>中的全文搜索基于匹配操作符<code class="literal">@@</code>，它在一个<code class="type">tsvector</code>（文档）匹配一个<code class="type">tsquery</code>（查询）时返回<code class="literal">true</code>。哪种数据类型写在前面没有影响：
+
+</p><pre class="programlisting">SELECT 'a fat cat sat on a mat and ate a fat rat'::tsvector @@ 'cat &amp; rat'::tsquery;
+ ?column?
+----------
+ t
+
+SELECT 'fat &amp; cow'::tsquery @@ 'a fat cat sat on a mat and ate a fat rat'::tsvector;
+ ?column?
+----------
+ f</pre><p>
+   </p><p>    正如以上例子所建议的，一个<code class="type">tsquery</code>并不只是一个未经处理的文本，
+	顶多一个<code class="type">tsvector</code>是这样。一个<code class="type">tsquery</code>包含搜索术语，
+	它们必须是已经正规化的词位，并且可以使用 AND 、OR、NOT 以及 FOLLOWED BY 操作符结合多个术语
+	（语法细节请见<a class="xref" href="datatype-textsearch.html#DATATYPE-TSQUERY" title="8.11.2. tsquery">第 8.11.2 节</a>）。有几个函数<code class="function">to_tsquery</code>、<code class="function">plainto_tsquery</code>以及<code class="function">phraseto_tsquery</code>可用于将用户书写的文本转换为正确的<code class="type">tsquery</code>，它们会主要采用正则化出现在文本中的词的方法。相似地，<code class="function">to_tsvector</code>被用来解析和正规化一个文档字符串。因此在实际上一个文本搜索匹配可能看起来更像：
+
+</p><pre class="programlisting">SELECT to_tsvector('fat cats ate fat rats') @@ to_tsquery('fat &amp; rat');
+ ?column? 
+----------
+ t</pre><p>
+
+    注意如果这个匹配被写成下面这样它将不会成功：
+
+</p><pre class="programlisting">SELECT 'fat cats ate fat rats'::tsvector @@ to_tsquery('fat &amp; rat');
+ ?column? 
+----------
+ f</pre><p>
+
+    因为这里不会发生词<code class="literal">rats</code>的正规化。一个<code class="type">tsvector</code>的元素是词位，它被假定为已经正规化好，因此<code class="literal">rats</code>不匹配<code class="literal">rat</code>。
+   </p><p>    <code class="literal">@@</code>操作符也支持<code class="type">text</code>输出，它允许在简单情况下跳过从文本字符串到<code class="type">tsvector</code>或<code class="type">tsquery</code>的显式转换。可用的变体是：
+
+</p><pre class="programlisting">tsvector @@ tsquery
+tsquery  @@ tsvector
+text @@ tsquery
+text @@ text</pre><p>
+   </p><p>    前两种我们已经见过。形式<code class="type">text</code> <code class="literal">@@</code> <code class="type">tsquery</code>等价于<code class="literal">to_tsvector(x) @@ y</code>。形式<code class="type">text</code> <code class="literal">@@</code> <code class="type">text</code>等价于<code class="literal">to_tsvector(x) @@ plainto_tsquery(y)</code>。
+   </p><p>    在<code class="type">tsquery</code>中，<code class="literal">&amp;</code>（AND）操作符指定它的两个参数都必须出现在文档中才表示匹配。类似地，<code class="literal">|</code>（OR）操作符指定至少一个参数必须出现，而<code class="literal">!</code>（NOT）操作符指定它的参数<span class="emphasis"><em>不</em></span>出现才能匹配。
+	例如，查询<code class="literal">fat &amp; ! rat</code>匹配包含<code class="literal">fat</code>但是不包含
+	<code class="literal">rat</code>的文档。
+   </p><p>    在<code class="literal">&lt;-&gt;</code>（FOLLOWED BY） <code class="type">tsquery</code>操作符的帮助下搜索可能的短语，只有该操作符的参数的匹配是相邻的并且符合给定顺序时，该操作符才算是匹配。例如：
+
+</p><pre class="programlisting">SELECT to_tsvector('fatal error') @@ to_tsquery('fatal &lt;-&gt; error');
+ ?column? 
+----------
+ t
+
+SELECT to_tsvector('error is not fatal') @@ to_tsquery('fatal &lt;-&gt; error');
+ ?column? 
+----------
+ f</pre><p>
+
+    FOLLOWED BY 操作符还有一种更一般的版本，形式是<code class="literal">&lt;<em class="replaceable"><code>N</code></em>&gt;</code>，其中<em class="replaceable"><code>N</code></em>是一个表示匹配词位位置之间的差。<code class="literal">&lt;1&gt;</code>和<code class="literal">&lt;-&gt;</code>相同，而<code class="literal">&lt;2&gt;</code>允许刚好一个其他词位出现在匹配之间，以此类推。当有些词是停用词时，<code class="literal">phraseto_tsquery</code>函数利用这个操作符来构造一个能够匹配多词短语的<code class="literal">tsquery</code>。例如：
+
+</p><pre class="programlisting">SELECT phraseto_tsquery('cats ate rats');
+       phraseto_tsquery        
+-------------------------------
+ 'cat' &lt;-&gt; 'ate' &lt;-&gt; 'rat'
+
+SELECT phraseto_tsquery('the cats ate the rats');
+       phraseto_tsquery        
+-------------------------------
+ 'cat' &lt;-&gt; 'ate' &lt;2&gt; 'rat'</pre><p>
+   </p><p>    一种有时候有用的特殊情况是，<code class="literal">&lt;0&gt;</code>可以被用来要求两个匹配同一个词的模式。
+   </p><p>    圆括号可以被用来控制<code class="type">tsquery</code>操作符的嵌套。如果没有圆括号，<code class="literal">|</code>的计算优先级最低，然后从低到高依次是<code class="literal">&amp;</code>、<code class="literal">&lt;-&gt;</code>、<code class="literal">!</code>。
+   </p><p>    值得注意的是，AND/OR/NOT运算符意味着当它们在FOLLOWED BY运算符的参数范围内，
+	与它们没有在范围内的时候有细微的不同，因为在FOLLOWED BY中，匹配的确切位置是很重要的。
+	例如，通常<code class="literal">!x</code>仅匹配不包含<code class="literal">x</code>的文档。但是，如果不是紧跟在<code class="literal">x</code>之后，
+	那么<code class="literal">!x &lt;-&gt; y</code>匹配<code class="literal">y</code>；文档中其他地方出现的<code class="literal">x</code>并不妨碍匹配。
+	另一个例子是<code class="literal">x &amp; y</code>通常只要求<code class="literal">x</code>和<code class="literal">y</code>都出现在文档的某处，
+	但是<code class="literal">(x &amp; y) &lt;-&gt; z</code>要求<code class="literal">x</code>和<code class="literal">y</code>匹配在<code class="literal">z</code>
+	之前的相同位置。因此，这个查询的行为不同于<code class="literal">x &lt;-&gt; z &amp; y &lt;-&gt; z</code>，
+	它将与包含两个单独的序列<code class="literal">x z</code>和<code class="literal">y z</code>的文档相匹配。
+	（由于<code class="literal">x</code>和<code class="literal">y</code>无法在相同位置匹配，因此此特定查询没有任何用处；
+	但是在更复杂的情况下（如前缀匹配模式），此形式的查询可能会有用。）
+   </p></div><div class="sect2" id="TEXTSEARCH-INTRO-CONFIGURATIONS"><div class="titlepage"><div><div><h3 class="title">12.1.3. 配置</h3></div></div></div><p>    前述的都是简单的文本搜索例子。正如前面所提到的，全文搜索功能包括做更多事情的能力：跳过索引特定词（停用词）、处理同义词并使用更高级的解析，例如基于空白之外的解析。这个功能由<em class="firstterm">文本搜索配置</em>控制。<span class="productname">PostgreSQL</span>中有多种语言的预定义配置，并且你可以很容易地创建你自己的配置（<span class="application">psql</span>的<code class="command">\dF</code>命令显示所有可用的配置）。
+   </p><p>    在安装期间一个合适的配置将被选择并且<a class="xref" href="runtime-config-client.html#GUC-DEFAULT-TEXT-SEARCH-CONFIG">default_text_search_config</a>也被相应地设置在<code class="filename">postgresql.conf</code>中。如果你正在对整个集簇使用相同的文本搜索配置，你可以使用在<code class="filename">postgresql.conf</code>中使用该值。要在集簇中使用不同的配置但是在任何一个数据库内部使用同一种配置，使用<code class="command">ALTER DATABASE ... SET</code>。否则，你可以在每个会话中设置<code class="varname">default_text_search_config</code>。
+   </p><p>    依赖一个配置的每一个文本搜索函数都有一个可选的<code class="type">regconfig</code>参数，因此要使用的配置可以被显式指定。只有当这个参数被忽略时，<code class="varname">default_text_search_config</code>才被使用。
+   </p><p>    为了让建立自定义文本搜索配置更容易，一个配置可以从更简单的数据库对象来建立。<span class="productname">PostgreSQL</span>的文本搜索功能提供了四类配置相关的数据库对象：
+   </p><div class="itemizedlist"><ul class="itemizedlist compact" style="list-style-type: bullet; "><li class="listitem" style="list-style-type: disc"><p>     <em class="firstterm">文本搜索解析器</em>将文档拆分成记号并分类每个记号（例如，作为词或者数字）。
+    </p></li><li class="listitem" style="list-style-type: disc"><p>     <em class="firstterm">文本搜索词典</em>将记号转变成正规化的形式并拒绝停用词。
+    </p></li><li class="listitem" style="list-style-type: disc"><p>     <em class="firstterm">文本搜索模板</em>提供位于词典底层的函数（一个词典简单地指定一个模板和一组用于模板的参数）。
+    </p></li><li class="listitem" style="list-style-type: disc"><p>     <em class="firstterm">文本搜索配置</em>选择一个解析器和一组用于将解析器产生的记号正规化的词典。
+    </p></li></ul></div><p>    文本搜索解析器和模板是从低层 C 函数构建而来，因此它要求 C 编程能力来开发新的解析器和模板，并且还需要超级用户权限来把它们安装到一个数据库中（在<span class="productname">PostgreSQL</span>发布的<code class="filename">contrib/</code>区域中有一些附加的解析器和模板的例子）。由于词典和配置只是对底层解析器和模板的参数化和连接，不需要特殊的权限来创建一个新词典或配置。创建定制词典和配置的例子将在本章稍后的部分给出。
+   </p></div></div><div class="navfooter"><hr /><table width="100%" summary="Navigation footer"><tr><td width="40%" align="left"><a accesskey="p" href="textsearch.html">上一页</a> </td><td width="20%" align="center"><a accesskey="u" href="textsearch.html">上一级</a></td><td width="40%" align="right"> <a accesskey="n" href="textsearch-tables.html">下一页</a></td></tr><tr><td width="40%" align="left" valign="top">第 12 章 全文搜索 </td><td width="20%" align="center"><a accesskey="h" href="index.html">起始页</a></td><td width="40%" align="right" valign="top"> 12.2. 表和索引</td></tr></table></div></body></html>

@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><title>GET DESCRIPTOR</title><link rel="stylesheet" type="text/css" href="stylesheet.css" /><link rev="made" href="pgsql-docs@postgresql.org" /><meta name="generator" content="DocBook XSL Stylesheets V1.79.1" /><link rel="prev" href="ecpg-sql-execute-immediate.html" title="EXECUTE IMMEDIATE" /><link rel="next" href="ecpg-sql-open.html" title="OPEN" /></head><body><div xmlns="http://www.w3.org/TR/xhtml1/transitional" class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="5" align="center">GET DESCRIPTOR</th></tr><tr><td width="10%" align="left"><a accesskey="p" href="ecpg-sql-execute-immediate.html" title="EXECUTE IMMEDIATE">上一页</a> </td><td width="10%" align="left"><a accesskey="u" href="ecpg-sql-commands.html" title="35.14. 嵌入式 SQL 命令">上一级</a></td><th width="60%" align="center">35.14. 嵌入式 SQL 命令</th><td width="10%" align="right"><a accesskey="h" href="index.html" title="PostgreSQL 10.1 手册">起始页</a></td><td width="10%" align="right"> <a accesskey="n" href="ecpg-sql-open.html" title="OPEN">下一页</a></td></tr></table><hr></hr></div><div class="refentry" id="ECPG-SQL-GET-DESCRIPTOR"><div class="titlepage"></div><div class="refnamediv"><h2>GET DESCRIPTOR</h2><p>GET DESCRIPTOR — 从一个 SQL 描述符区域得到信息</p></div><div class="refsynopsisdiv"><h2>大纲</h2><pre class="synopsis">GET DESCRIPTOR <em class="replaceable"><code>descriptor_name</code></em> <em class="replaceable"><code>:cvariable</code></em> = <em class="replaceable"><code>descriptor_header_item</code></em> [, ... ]
+GET DESCRIPTOR <em class="replaceable"><code>descriptor_name</code></em> VALUE <em class="replaceable"><code>column_number</code></em> <em class="replaceable"><code>:cvariable</code></em> = <em class="replaceable"><code>descriptor_item</code></em> [, ... ]</pre></div><div class="refsect1" id="idp30607200"><h2>描述</h2><p>     <code class="command">GET DESCRIPTOR</code>从一个 SQL 描述符区域检索关于一个查询结果集的信息并且把它存储在主变量中。在使用这个命令把信息传输到主语言变量之前，一个描述符区域通常是用<code class="command">FETCH</code>或<code class="command">SELECT</code>填充的。
+    </p><p>     这个命令有两种形式：第一种形式检索描述符的<span class="quote">“<span class="quote">头部</span>”</span>项，它适用于全面地查看结果集。一种例子是行计数。第二种形式要求列号作为附加参数，它检索有关一个特定列的信息。其例子是查看列名和实际列值。
+    </p></div><div class="refsect1" id="idp30611280"><h2>参数</h2><div class="variablelist"><dl class="variablelist"><dt><span class="term"><em class="replaceable"><code>descriptor_name</code></em></span></dt><dd><p>        一个描述符名称。
+       </p></dd><dt><span class="term"><em class="replaceable"><code>descriptor_header_item</code></em></span></dt><dd><p>        一个标识要检索哪一个头部信息项的记号。当前只支持用于得到结果集中列数的<code class="literal">COUNT</code>。
+       </p></dd><dt><span class="term"><em class="replaceable"><code>column_number</code></em></span></dt><dd><p>        要检索其信息的列号。计数从 1 开始。
+       </p></dd><dt><span class="term"><em class="replaceable"><code>descriptor_item</code></em></span></dt><dd><p>        一个标识要检索哪一个有关一列信息的项的记号。被支持的项可见<a class="xref" href="ecpg-descriptors.html#ECPG-NAMED-DESCRIPTORS" title="35.7.1. 命名 SQL 描述符区域">第 35.7.1 节</a>。
+       </p></dd><dt><span class="term"><em class="replaceable"><code>cvariable</code></em></span></dt><dd><p>        接收从描述符区域检索到的数据的主变量。
+       </p></dd></dl></div></div><div class="refsect1" id="idp30620064"><h2>例子</h2><p>     检索一个结果集中列数的例子：
+</p><pre class="programlisting">EXEC SQL GET DESCRIPTOR d :d_count = COUNT;</pre><p>
+    </p><p>     检索第一列中数据长度的例子：
+</p><pre class="programlisting">EXEC SQL GET DESCRIPTOR d VALUE 1 :d_returned_octet_length = RETURNED_OCTET_LENGTH;</pre><p>
+    </p><p>     把第二列的数据体检索成一个字符串的例子：
+</p><pre class="programlisting">EXEC SQL GET DESCRIPTOR d VALUE 2 :d_data = DATA;</pre><p>
+    </p><p>     这里是执行<code class="literal">SELECT current_database();</code>并且显示列数、列数据长度和列数据的完整过程的例子：
+</p><pre class="programlisting">int
+main(void)
+{
+EXEC SQL BEGIN DECLARE SECTION;
+    int  d_count;
+    char d_data[1024];
+    int  d_returned_octet_length;
+EXEC SQL END DECLARE SECTION;
+
+    EXEC SQL CONNECT TO testdb AS con1 USER testuser;
+    EXEC SQL ALLOCATE DESCRIPTOR d;
+
+    /* 描述、打开一个游标，并且分配一个描述符给该游标  */
+    EXEC SQL DECLARE cur CURSOR FOR SELECT current_database();
+    EXEC SQL OPEN cur;
+    EXEC SQL FETCH NEXT FROM cur INTO SQL DESCRIPTOR d;
+
+    /* 得到全部列的数量 */
+    EXEC SQL GET DESCRIPTOR d :d_count = COUNT;
+    printf("d_count                 = %d\n", d_count);
+
+    /* 得到一个返回列的长度 */
+    EXEC SQL GET DESCRIPTOR d VALUE 1 :d_returned_octet_length = RETURNED_OCTET_LENGTH;
+    printf("d_returned_octet_length = %d\n", d_returned_octet_length);
+
+    /* 将返回的列取出成一个字符串 */
+    EXEC SQL GET DESCRIPTOR d VALUE 1 :d_data = DATA;
+    printf("d_data                  = %s\n", d_data);
+
+    /* 关闭 */
+    EXEC SQL CLOSE cur;
+    EXEC SQL COMMIT;
+
+    EXEC SQL DEALLOCATE DESCRIPTOR d;
+    EXEC SQL DISCONNECT ALL;
+
+    return 0;
+}</pre><p>
+     当该例子被执行时，结果看起来是：
+</p><pre class="screen">d_count                 = 1
+d_returned_octet_length = 6
+d_data                  = testdb</pre><p>
+    </p></div><div class="refsect1" id="idp30629232"><h2>兼容性</h2><p>     SQL 标准中说明了<code class="command">GET DESCRIPTOR</code>。
+    </p></div><div class="refsect1" id="idp30630688"><h2>参见</h2><span class="simplelist"><a class="xref" href="ecpg-sql-allocate-descriptor.html" title="ALLOCATE DESCRIPTOR">ALLOCATE DESCRIPTOR</a>, <a class="xref" href="ecpg-sql-set-descriptor.html" title="SET DESCRIPTOR">SET DESCRIPTOR</a></span></div></div><div class="navfooter"><hr /><table width="100%" summary="Navigation footer"><tr><td width="40%" align="left"><a accesskey="p" href="ecpg-sql-execute-immediate.html">上一页</a> </td><td width="20%" align="center"><a accesskey="u" href="ecpg-sql-commands.html">上一级</a></td><td width="40%" align="right"> <a accesskey="n" href="ecpg-sql-open.html">下一页</a></td></tr><tr><td width="40%" align="left" valign="top">EXECUTE IMMEDIATE </td><td width="20%" align="center"><a accesskey="h" href="index.html">起始页</a></td><td width="40%" align="right" valign="top"> OPEN</td></tr></table></div></body></html>

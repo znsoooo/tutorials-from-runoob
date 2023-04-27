@@ -1,0 +1,82 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><title>E.132. 版本 8.4.22</title><link rel="stylesheet" type="text/css" href="stylesheet.css" /><link rev="made" href="pgsql-docs@postgresql.org" /><meta name="generator" content="DocBook XSL Stylesheets V1.79.1" /><link rel="prev" href="release-9-0.html" title="E.131. 版本 9.0" /><link rel="next" href="release-8-4-21.html" title="E.133. 版本 8.4.21" /></head><body><div xmlns="http://www.w3.org/TR/xhtml1/transitional" class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="5" align="center">E.132. 版本 8.4.22</th></tr><tr><td width="10%" align="left"><a accesskey="p" href="release-9-0.html" title="E.131. 版本 9.0">上一页</a> </td><td width="10%" align="left"><a accesskey="u" href="release.html" title="附录 E. 版本说明">上一级</a></td><th width="60%" align="center">附录 E. 版本说明</th><td width="10%" align="right"><a accesskey="h" href="index.html" title="PostgreSQL 10.1 手册">起始页</a></td><td width="10%" align="right"> <a accesskey="n" href="release-8-4-21.html" title="E.133. 版本 8.4.21">下一页</a></td></tr></table><hr></hr></div><div class="sect1" id="RELEASE-8-4-22"><div class="titlepage"><div><div><h2 class="title" style="clear: both">E.132. 版本 8.4.22</h2></div></div></div><div class="toc"><dl class="toc"><dt><span class="sect2"><a href="release-8-4-22.html#idp76193344">E.132.1. 迁移到版本 8.4.22</a></span></dt><dt><span class="sect2"><a href="release-8-4-22.html#idp76196000">E.132.2. 修改列表</a></span></dt></dl></div><p><strong>发布日期：. </strong>2014-07-24</p><p>   这个版本包含自8.4.21以来的各种修复。
+   关于8.4主版本的新特性信息，请查看<a class="xref" href="release-8-4.html" title="E.154. 版本8.4">第 E.154 节</a>。
+  </p><p>   这预计是<span class="productname">PostgreSQL</span>在8.4.X系列的最后一个版本。
+   建议用户尽快更新到最新的版本。
+  </p><div class="sect2" id="idp76193344"><div class="titlepage"><div><div><h3 class="title">E.132.1. 迁移到版本 8.4.22</h3></div></div></div><p>    运行8.4.X的用户不需要转储/恢复。
+   </p><p>    这个版本纠正了在一些GiST索引中索引损坏的问题。查看下面第一条修改日志项，
+    找出你的安装是否受到影响和应该采取什么步骤。
+   </p><p>    另外，如果你是从一个早于8.4.19的版本升级而来，请查看<a class="xref" href="release-8-4-19.html" title="E.135. 版本 8.4.19">第 E.135 节</a>。
+   </p></div><div class="sect2" id="idp76196000"><div class="titlepage"><div><div><h3 class="title">E.132.2. 修改列表</h3></div></div></div><div class="itemizedlist"><ul class="itemizedlist" style="list-style-type: disc; "><li class="listitem"><p>      正确的初始化<code class="type">bit</code>字段上<code class="filename">contrib/btree_gist</code>
+      索引里的填充字节 (Heikki Linnakangas)
+     </p><p>      这个错误由于值应该是比较相等而不是看做相等而导致不正确的查询结果。
+      在<code class="type">bit</code>或<code class="type">bit varying</code>字段上拥有GiST索引的用户应该在安装此次更新后
+      <code class="command">REINDEX</code>这些索引。
+     </p></li><li class="listitem"><p>      在删除GIN列表页时防止页面破损 (Heikki
+      Linnakangas)
+     </p><p>      如果系统崩溃发生在页更新正在写入磁盘时，这个修复阻止了可能的索引损坏。
+     </p></li><li class="listitem"><p>      修复嵌套调用<code class="function">ReceiveSharedInvalidMessages</code>期间，
+      可能不正确的缓存失效 (Andres Freund)
+     </p></li><li class="listitem"><p>      如果子查询的目标列表中有一个设置-返回函数，那么不要假设它的输出是唯一的 (David Rowley)
+     </p><p>      这个疏忽可能会导致错误的最佳化像
+      <code class="literal">WHERE x IN (SELECT y, generate_series(1,10) FROM t GROUP
+      BY y)</code>这样的构造。
+     </p></li><li class="listitem"><p>      修复结构化类型的复合元素中未能detoast字段(Tom Lane)
+     </p><p>     这纠正了TOAST指针没被间接引用就拷贝到其他表的情况。
+     如果原始数据稍后删除，则当新的悬挂指针正在使用时，会导致像<span class="quote">“<span class="quote">missing chunk number 0
+      for toast value ...</span>”</span>这样的错误。
+     </p></li><li class="listitem"><p>      修复整行引用附加规划节点的输出时<span class="quote">“<span class="quote">record type has not been registered</span>”</span>
+      错误 (Tom Lane)
+     </p></li><li class="listitem"><p>      修复游标倒回时调用一个用户定义的函数时可能的崩溃 (Tom Lane)
+     </p></li><li class="listitem"><p>      修复评估<code class="literal">FROM</code>中的一个函数的参数时查询寿命内存泄露 (Tom Lane)
+     </p></li><li class="listitem"><p>      修复规则表达式处理中的会话寿命内存泄露 (Tom Lane, Arthur O'Dwyer, Greg Stark)
+     </p></li><li class="listitem"><p>      修复<code class="filename">hungarian.stop</code>中的数据编码错误 (Tom Lane)
+     </p></li><li class="listitem"><p>      修复对插入到当前事务中然后被一个新回滚的子事务删除的行的活跃度检查 (Andres Freund)
+     </p><p>      如果稍后在相同的事务中执行<code class="command">CREATE INDEX</code>或<code class="command">CLUSTER</code>，
+      这会导致问题（至少是虚假警告，最坏是一个无限循环）。
+     </p></li><li class="listitem"><p>      在<code class="command">PREPARE TRANSACTION</code>期间清理
+      <code class="structname">pg_stat_activity</code>.<code class="structfield">xact_start</code> (Andres Freund)
+     </p><p>      在<code class="command">PREPARE</code>之后，原始的会话不再在事务中，
+      所以它应该不能继续显示会话的开始时间。
+     </p></li><li class="listitem"><p>      修复<code class="command">REASSIGN OWNED</code>，文本搜索对象不会失败
+      (Álvaro Herrera)
+     </p></li><li class="listitem"><p>      在postmaster启动期间封锁信号 (Tom Lane)
+     </p><p>      这保证了postmaster在仍然启动时，例如，收到<span class="systemitem">SIGINT</span>
+      之后能够正确的清理。
+     </p></li><li class="listitem"><p>      保护在<code class="literal">make check</code>期间启动的临时postmasters的Unix域套接字 (Noah Misch)
+     </p><p>      任何可以访问该套接字文件的本地用户都可以作为服务器的bootstrap超级用户连接，
+      然后如同操作系统用户运行测试一样继续执行任意代码，就像我们之前在
+      CVE-2014-0067观察到的那样。这个修改通过在一个临时文件中存放服务器的套接字防止该风险，
+      临时文件是<code class="filename">/tmp</code>的子目录，模式0700。
+      在不支持Unix套接字的平台上仍然存在该风险，尤其是Windows，
+      因为临时postmaster必须接受本地TCP连接。
+     </p><p>      这个修改的一个有用的副作用是简化了重载<code class="literal">DEFAULT_PGSOCKET_DIR</code>
+      建立中的<code class="literal">make check</code>测试。像<code class="filename">/var/run/postgresql</code>
+      这样的普通非缺省值通常不是建立用户可写的，将不再需要请求绕开它。
+     </p></li><li class="listitem"><p>      在Windows上，允许新的会话接收来自配置文件的PGC_BACKEND
+      参数（比如<a class="xref" href="runtime-config-logging.html#GUC-LOG-CONNECTIONS">log_connections</a>）的值 (Amit Kapila)
+     </p><p>      以前，如果这样的参数在文件启动之后修改，那么该修改将不会有任何影响。
+     </p></li><li class="listitem"><p>      在Windows中正确的引用可执行的路径名 (Nikhil Deshpande)
+     </p><p>      如果安装路径包含空白和<code class="literal">@</code>符号，会导致<span class="application">initdb</span>
+      和<span class="application">pg_upgrade</span>在Windows上失败，。
+     </p></li><li class="listitem"><p>      修复macOS上的<span class="application">libpython</span>链接 (Tom Lane)
+     </p><p>      我们之前使用的方法在使用Xcode 5.0及更高版本提供的Python库时会失败。
+     </p></li><li class="listitem"><p>      当服务器发送数据速度持续比客户端可接受的速度快时，
+      避免<span class="application">libpq</span>中的缓冲区膨胀 (Shin-ichi Morita, Tom Lane)
+     </p><p>      <span class="application">libpq</span>可以强制扩大它的输入缓冲区，直到它内存溢出
+      （它可能会误报为<span class="quote">“<span class="quote">丢失与服务器的同步</span>”</span>）。在普通情况下，
+      它可以持续的比<code class="function">recv()</code>循环更快的传输数据，因此可以吸收数据，
+      但是通过调节约束人工的降低客户端速度是，可以观察到这种现象。
+     </p></li><li class="listitem"><p>      确保<span class="application">libpq</span>中的LDAP查找尝试像预计的那样超时 (Laurenz Albe)
+     </p></li><li class="listitem"><p>      修复<span class="application">pg_restore</span>对老旧风格的大对象注释的处理 (Tom Lane)
+     </p><p>      如果9.0之前版本的<span class="application">pg_dump</span>生成的归档包含几个大对象的注释，
+      那么从该归档文件直接到数据库的恢复通常会失败。
+     </p></li><li class="listitem"><p>      在<code class="filename">contrib/pgcrypto</code>函数中，确保在返回之前清理堆栈变量中的敏感信息
+      (Marko Kreen)
+     </p></li><li class="listitem"><p>      在<code class="filename">contrib/uuid-ossp</code>中，在调用间缓存OSSP UUID库的状态 (Tom Lane)
+     </p><p>      这提高了UUID产生的效率并降低了从<code class="filename">/dev/urandom</code>
+      中提取熵的数量，在拥有它们的平台上。
+     </p></li><li class="listitem"><p>      更新时区数据文件到<span class="application">tzdata</span>版本2014e，
+      因为DAT规则在Crimea、Egypt和Morocco发生了改变。
+     </p></li></ul></div></div></div><div class="navfooter"><hr /><table width="100%" summary="Navigation footer"><tr><td width="40%" align="left"><a accesskey="p" href="release-9-0.html">上一页</a> </td><td width="20%" align="center"><a accesskey="u" href="release.html">上一级</a></td><td width="40%" align="right"> <a accesskey="n" href="release-8-4-21.html">下一页</a></td></tr><tr><td width="40%" align="left" valign="top">E.131. 版本 9.0 </td><td width="20%" align="center"><a accesskey="h" href="index.html">起始页</a></td><td width="40%" align="right" valign="top"> E.133. 版本 8.4.21</td></tr></table></div></body></html>

@@ -1,0 +1,191 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><title>E.16. 版本 9.5.4</title><link rel="stylesheet" type="text/css" href="stylesheet.css" /><link rev="made" href="pgsql-docs@postgresql.org" /><meta name="generator" content="DocBook XSL Stylesheets V1.79.1" /><link rel="prev" href="release-9-5-5.html" title="E.15. 版本 9.5.5" /><link rel="next" href="release-9-5-3.html" title="E.17. 版本 9.5.3" /></head><body><div xmlns="http://www.w3.org/TR/xhtml1/transitional" class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="5" align="center">E.16. 版本 9.5.4</th></tr><tr><td width="10%" align="left"><a accesskey="p" href="release-9-5-5.html" title="E.15. 版本 9.5.5">上一页</a> </td><td width="10%" align="left"><a accesskey="u" href="release.html" title="附录 E. 版本说明">上一级</a></td><th width="60%" align="center">附录 E. 版本说明</th><td width="10%" align="right"><a accesskey="h" href="index.html" title="PostgreSQL 10.1 手册">起始页</a></td><td width="10%" align="right"> <a accesskey="n" href="release-9-5-3.html" title="E.17. 版本 9.5.3">下一页</a></td></tr></table><hr></hr></div><div class="sect1" id="RELEASE-9-5-4"><div class="titlepage"><div><div><h2 class="title" style="clear: both">E.16. 版本 9.5.4</h2></div></div></div><div class="toc"><dl class="toc"><dt><span class="sect2"><a href="release-9-5-4.html#idp65763152">E.16.1. 迁移到版本 9.5.4</a></span></dt><dt><span class="sect2"><a href="release-9-5-4.html#idp65765088">E.16.2. 修改列表</a></span></dt></dl></div><p><strong>发布日期：. </strong>2016-08-11</p><p>   这个版本包含各种自9.5.3以来的修复。
+   关于9.5主版本的新特性信息，请查看
+   <a class="xref" href="release-9-5.html" title="E.20. 版本 9.5">第 E.20 节</a>.
+  </p><div class="sect2" id="idp65763152"><div class="titlepage"><div><div><h3 class="title">E.16.1. 迁移到版本 9.5.4</h3></div></div></div><p>
+    运行9.5.X版本的用户不需要转储/恢复。
+   </p><p>    不过，如果您是从一个早于9.5.2的版本升级而来，那么请查看
+    <a class="xref" href="release-9-5-2.html" title="E.18. 版本 9.5.2">第 E.18 节</a>。
+   </p></div><div class="sect2" id="idp65765088"><div class="titlepage"><div><div><h3 class="title">E.16.2. 修改列表</h3></div></div></div><div class="itemizedlist"><ul class="itemizedlist" style="list-style-type: disc; "><li class="listitem"><p>
+      修复嵌套的<code class="literal">CASE</code>-<code class="literal">WHEN</code>表达式可能的错误估算 (Heikki
+      Linnakangas, Michael Paquier, Tom Lane)
+     </p><p>      出现在另一个<code class="literal">CASE</code>的测试值子表达式中的<code class="literal">CASE</code>
+      表达式可能会困惑自己的测试值是否为空。此外，
+      <code class="literal">CASE</code>表达式使用的实现等式运算符的SQL函数的内联，
+      可能会导致将错误的测试值传递给在SQL函数体内的<code class="literal">CASE</code>
+      表达式中调用的函数。如果测试值是不同的数据类型，可能会导致崩溃; 
+      此外，这种情况可能被滥用以允许披露服务器存储器的一部分。 (CVE-2016-5423)
+     </p></li><li class="listitem"><p>
+      修复客户端程序在数据库和角色名称中对特殊字符的处理
+      (Noah Misch, Nathan Bossart, Michael Paquier)
+     </p><p>      <span class="application">vacuumdb</span>
+      和其他客户端程序中的许多地方可能会被包含双引号或反斜杠的数据库和角色名称混淆。
+      加强引用规则以使其是安全的。此外，确保将conninfo字符串用作这些程序的数据库名称参数时，
+      它将被正确地对待。
+     </p><p>      修正在<span class="application">psql</span>的<code class="command">\connect</code>和<code class="command">\password</code>
+      命令中配对双引号的处理，以匹配文档。
+     </p><p>      在<span class="application">psql</span>的<code class="command">\connect</code>命令中引入一个新的
+      <code class="option">-reuse-previous</code>选项，以允许显式控制是否重新使用先前连接的连接参数。
+      （没有这个选择是基于数据库名称是否像以前一样是conninfo字符串。）
+      这允许在<span class="application">pg_dumpall</span>脚本中安全处理包含特殊字符的数据库名称。
+     </p><p>      <span class="application">pg_dumpall</span>现在拒绝处理包含回车或换行的数据库或角色名，
+      因为在Windows上安全的引用这些字符似乎是不切实际的。
+      将来我们可能在服务器端拒绝这样的名称，但是现在还未采取这一步骤。
+     </p><p>      这些被认为是安全修复程序，
+      因为包含特殊字符的制作对象名称可能已被用于在下次超级用户执行
+      <span class="application">pg_dumpall</span>或其他例行维护操作时执行具有超级用户权限的命令。
+      (CVE-2016-5424)
+     </p></li><li class="listitem"><p>
+      修复针对<code class="literal">IS NULL</code>/<code class="literal">IS NOT
+      NULL</code>应用于嵌套复合值的极端情况错误行为 (Andrew Gierth, Tom Lane)
+     </p><p>      SQL标准指定<code class="literal">IS NULL</code>应该为所有空值的行返回TRUE（因此
+      <code class="literal">ROW(NULL,NULL) IS NULL</code>产生TRUE），但这并不意味着应用递归
+      （因此<code class="literal">ROW(NULL, ROW(NULL,NULL)) IS NULL</code>产生FALSE）。
+      内核执行器正确执行了，但某些计划器优化将测试视为递归
+      （因此在这两种情况下都会产生TRUE），并且<code class="filename">contrib/postgres_fdw</code>
+      可能会产生类似错误的远程查询。
+     </p></li><li class="listitem"><p>
+      修复递归CTE（一个<code class="literal">WITH</code>条目）中<code class="command">INSERT ... ON
+      CONFLICT</code>的<span class="quote">“<span class="quote">未识别的节点类型</span>”</span>错误 (Peter
+      Geoghegan)
+     </p></li><li class="listitem"><p>
+
+      修复<code class="command">INSERT ... ON CONFLICT</code>，
+      以成功匹配在规划器的表达式预处理阶段简化了的索引表达式或索引谓词
+      (Tom Lane)
+     </p></li><li class="listitem"><p>
+      正确处理应用到<code class="literal">INSERT ... ON CONFLICT</code>命令的目标表中的排除约束违反，
+      但不是选中的仲裁者索引之一 (Tom Lane)
+     </p><p>      这种情况应该引发一个正常的约束违反错误，但是它进入了一个无限循环。
+     </p></li><li class="listitem"><p>      修复<code class="command">INSERT ... ON CONFLICT</code>，
+      如果目标表在OID上有一个唯一约束时不要失败 (Tom Lane)
+     </p></li><li class="listitem"><p>
+      使<code class="type">inet</code>和<code class="type">cidr</code>
+      数据类型正确拒绝具有太多冒号分隔字段的IPv6地址 (Tom Lane)
+     </p></li><li class="listitem"><p>      防止NaN输入坐标的<code class="function">close_ps()</code>中的崩溃
+      (<code class="type">point</code> <code class="literal">##</code> <code class="type">lseg</code>操作符)
+      (Tom Lane)
+     </p><p>      使其返回NULL而不是崩溃。
+     </p></li><li class="listitem"><p>      避免在<code class="function">pg_get_expr()</code>中传递不一致的值时发生崩溃
+      (Michael Paquier, Thomas Munro)
+     </p></li><li class="listitem"><p>      修复<code class="function">to_number()</code>中的几个单字节缓冲区溢出
+      (Peter Eisentraut)
+     </p><p>      在某些情况下<code class="function">to_number()</code>函数将从输入字符串中多读取一个字符。
+      如果输入恰好与内存的结束相邻，那么会有可能崩溃。
+     </p></li><li class="listitem"><p>      当指定了<code class="literal">WITH NO DATA</code>时，不要在包含在<code class="literal">CREATE
+      MATERIALIZED VIEW</code>或<code class="literal">CREATE TABLE AS</code>
+      中的查询上运行规划器 (Michael Paquier,
+      Tom Lane)
+     </p><p>      这避免了一些不必要的失败条件，例如，如果物化视图调用的稳定函数依赖于尚不存在的表。
+     </p></li><li class="listitem"><p>      通过<code class="function">heap_update()</code>在昂贵的路径中避免不安全的中间状态
+      (Masahiko Sawada, Andres Freund)
+     </p><p>      以前，这些情况锁定了目标元组（通过设置其XMAX），但没有WAL-log这个操作，
+      因此如果页面溢出到磁盘，然后在元组更新完成之前发生数据库崩溃，
+      就会有数据完整性问题的风险。
+     </p></li><li class="listitem"><p>      在行锁定操作的WAL重放期间修正提示位更新
+      (Andres Freund)
+     </p><p>      这个问题的唯一已知后果是，由准备但未提交的事务持有的行锁在崩溃和重新启动后可能无法执行。
+     </p></li><li class="listitem"><p>      当在序列化模式中请求<code class="literal">FOR KEY SHARE</code>行锁时，
+      避免不必要的<span class="quote">“<span class="quote">could not serialize access</span>”</span>错误
+      (Álvaro Herrera)
+     </p></li><li class="listitem"><p>      确保计划节点返回的<span class="quote">“<span class="quote">扩展</span>”</span>基准是只读的 (Tom Lane)
+     </p><p>      这在一些情况下避免了故障，其中在较高节点的多个地方引用较低计划节点的结果。
+      就核心<span class="productname">PostgreSQL</span>而言，只有PL/pgSQL函数返回的数组值有风险；
+      但扩展可能会使用扩展的基准来做其他事情。
+     </p></li><li class="listitem"><p>      当指定的变量具有空字符串值时，避免在<code class="literal">postgres -C</code>中崩溃
+      (Michael Paquier)
+     </p></li><li class="listitem"><p>      防止在WALL发送者进程中意外等待接收者
+      (Kyotaro Horiguchi)
+     </p></li><li class="listitem"><p>      修复逻辑解码中可能的大量子事务丢失
+      (Petru-Florin Mihancea)
+     </p></li><li class="listitem"><p>      当子事务不包含实际修改时，修复逻辑解码失败 (Marko Tiikkaja, Andrew Gierth)
+     </p></li><li class="listitem"><p>      确保后端查看共享目录的最新统计信息
+      (Tom Lane)
+     </p><p>      在普通后端的请求后，统计信息收集器无法更新共享目录的统计信息文件。
+      这个问题被部分掩盖了，因为自动清理启动器定期发出导致这种更新的请求;
+      然而，禁用自动清理后变得明显。
+     </p></li><li class="listitem"><p>      当多个后端请求更新时，请避免对统计文件进行冗余写入 (Tom Lane, Tomas Vondra)
+     </p></li><li class="listitem"><p>      避免在<code class="command">VACUUM</code>期间使用事务ID
+      (Alexander Korotkov)
+     </p><p>      <code class="command">VACUUM</code>中的某些情况不必要地导致将XID分配给当前事务。
+      通常这是可以忽略不计的，但如果是针对XID环绕限制，
+      在反包装清理中消耗更多的XID是一件非常糟糕的事情。
+     </p></li><li class="listitem"><p>      在从9.3之前pg_upgrade的安装中清理多重ID时，防止可能的失败
+      (Andrew Gierth,Álvaro Herrera)
+     </p><p>      这个bug的常见情况是像<span class="quote">“<span class="quote">MultiXactId <em class="replaceable"><code>NNN</code></em> has not been created
+      yet -- apparent wraparound</span>”</span>这样的错误。
+     </p></li><li class="listitem"><p>      当手动<code class="command">ANALYZE</code>指定列列表时，请不要重置表的
+      <code class="literal">changes_since_analyze</code>计数器 (Tom Lane)
+     </p><p>      如果我们只是分析一些列，我们不应该阻止对其他列的日常自动分析。
+     </p></li><li class="listitem"><p>      修复<code class="command">ANALYZE</code>对具有许多空条目的唯一或几乎唯一的列进行过高估计
+      <code class="literal">n_distinct</code> (Tom Lane)
+     </p><p>      空值可以被计数就像它们本身是不同的值，导致在某些类型的查询中严重的规划器错误估计。
+     </p></li><li class="listitem"><p>      防止autovacuum启动为同一个共享目录的多个工作进程 (Álvaro Herrera)
+     </p><p>      通常这不是很大的问题，因为清理不需要很长时间；但是在目录严重膨胀的情况下，
+      除了一个工作进程外，所有工作进程都将无用地等待，而不是在其他表格上进行有用的工作。
+     </p></li><li class="listitem"><p>      修复b-tree标记/恢复处理中的错误 (Kevin Grittner)
+     </p><p>      这个错误会导致内部源节点是b-tree索引扫描的合并连接中不正确的连接结果或断言失败。
+     </p></li><li class="listitem"><p>      在放弃b-tree索引页删除尝试时避免重复的缓冲区锁释放 (Tom Lane)
+     </p><p>      在某些情况下，包括损坏的b-tree索引，这种错误阻止了<code class="command">VACUUM</code>完成。
+     </p></li><li class="listitem"><p>      修复大的（大于<code class="varname">shared_buffers</code>）哈希索引的建立 (Tom Lane)
+     </p><p>      用于大索引的代码路径包含一个错误，导致不正确的哈希值插入到索引中，
+      因此后续索引搜索总是失败，除了在初始构建后插入到索引中的元组。
+     </p></li><li class="listitem"><p>      阻止GiST索引构建中包含NaN组件值的几何列的无限循环 (Tom Lane)
+     </p></li><li class="listitem"><p>      修复在<code class="type">interval</code>列上的<code class="filename">contrib/btree_gist</code>
+      索引的最近邻（<code class="literal">ORDER BY</code>距离）索引扫描期间可能的崩溃
+      (Peter Geoghegan)
+     </p></li><li class="listitem"><p>      修复尝试更新BRIN索引项时<span class="quote">“<span class="quote">PANIC: failed to add BRIN tuple</span>”</span>
+      错误 (Álvaro Herrera)
+     </p></li><li class="listitem"><p>      修复后台工作进程关闭时的可能崩溃 (Dmitry Ivanov)
+     </p></li><li class="listitem"><p>      修复PL/pgSQL对<code class="command">IMPORT FOREIGN SCHEMA</code>命令中
+      <code class="literal">INTO</code>子句的处理 (Tom Lane)
+     </p></li><li class="listitem"><p>      修复<code class="filename">contrib/btree_gin</code>，以正确处理最小可能的
+      <code class="type">bigint</code>值 (Peter Eisentraut)
+     </p></li><li class="listitem"><p>      教会libpq正确解码未来服务器的服务器版本
+      (Peter Eisentraut)
+     </p><p>      计划在9.6之后的版本切换到两部分而不是三部分服务器版本号。确保
+      <code class="function">PQserverVersion()</code>为这种情况返回正确的值。
+     </p></li><li class="listitem"><p>      修复<span class="application">ecpg</span>为<code class="literal">unsigned long long</code>
+      数组元素的编码 (Michael Meskes)
+     </p></li><li class="listitem"><p>      在同时具有<code class="option">-c</code>和<code class="option">-C</code>选项的<span class="application">pg_dump</span>中，
+      避免发出不需要的<code class="literal">CREATE SCHEMA public</code>命令 (David Johnston, Tom Lane)
+     </p></li><li class="listitem"><p>      改进并行<span class="application">pg_dump</span>和<span class="application">pg_restore</span>
+      中<span class="systemitem">SIGTERM</span>/control-C的处理 (Tom
+      Lane)
+     </p><p>      确保工作进程将立即退出，并且还安排向所连接的后端发送查询取消请求，
+      以防万一他们正在进行长时间的运行，例如<code class="command">CREATE INDEX</code>。
+     </p></li><li class="listitem"><p>      修复并行<span class="application">pg_dump</span>和<span class="application">pg_restore</span>
+      中的错误报告 (Tom Lane)
+     </p><p>      以前，<span class="application">pg_dump</span>或<span class="application">pg_restore</span>
+      工作进程报告的错误可能永远不会发送给用户的控制台，因为消息通过主进程，
+      并且有各种死锁情况会阻止主进程传递消息。相反，只需打印一切到
+      <code class="literal">stderr</code>。在某些情况下，这将导致重复的消息（例如，
+      如果所有的工作进程都报告服务器关闭），但这似乎比没有消息更好。
+     </p></li><li class="listitem"><p>      确保Windows上并行的<span class="application">pg_dump</span>或
+      <span class="application">pg_restore</span>在错误后正确关闭 (Kyotaro Horiguchi)
+     </p><p>      以前，它会报告错误，但是之后会等待直到用户手动停止。
+     </p></li><li class="listitem"><p>      当在备用服务器运行时，使并行<span class="application">pg_dump</span>干净的失败
+      (Magnus Hagander)
+     </p><p>      除非指定了<code class="option">--no-synchronized-snapshots</code>，否则不支持此用法，
+      但错误的处理不是很好。
+     </p></li><li class="listitem"><p>      在不使用zlib支持的情况下，使<span class="application">pg_dump</span>的行为更好
+      (Kyotaro Horiguchi)
+     </p><p>      它并不适用于并行转储，并在其他情况下发出了一些相当无意义的警告。
+     </p></li><li class="listitem"><p>      让<span class="application">pg_basebackup</span>接受<code class="literal">-Z 0</code>
+      指定不压缩 (Fujii Masao)
+     </p></li><li class="listitem"><p>      修复用于构建AIX共享库的makefile文件规则对于并行make是安全的 (Noah Misch)
+     </p></li><li class="listitem"><p>      修复TAP测试和MSVC脚本使其在构建目录的路径名中包含空格时可以运行
+      (Michael Paquier, Kyotaro Horiguchi)
+     </p></li><li class="listitem"><p>      针对<span class="quote">“<span class="quote">锁定超时</span>”</span>报告<span class="quote">“<span class="quote">语句超时</span>”</span>
+      更加可预测 (Tom Lane)
+     </p><p>      在负载较重的机器上，即使应该已经先发生了语句超时，
+      因为报告<span class="quote">“<span class="quote">锁定超时</span>”</span>，回归测试有时也会失败。
+     </p></li><li class="listitem"><p>      使回归测试对丹麦和威尔士环境是安全的 (Jeff Janes,
+      Tom Lane)
+     </p><p>      更改一些触发这些区域设置的异常排序规则的测试数据。
+     </p></li><li class="listitem"><p>      更新或拷贝时区代码以匹配IANA的<span class="application">tzcode</span>版本2016c (Tom Lane)
+     </p><p>      这需要应对时区数据文件中预期的未来变化。它还修复了一些处理异常时区的角落错误。
+     </p></li><li class="listitem"><p>      将时区数据文件更新为Kemerovo和新西伯利亚的DST法律变更的
+      <span class="application">tzdata</span>版本2016f，以及阿塞拜疆、白俄罗斯和摩洛哥的历史更正。
+     </p></li></ul></div></div></div><div class="navfooter"><hr /><table width="100%" summary="Navigation footer"><tr><td width="40%" align="left"><a accesskey="p" href="release-9-5-5.html">上一页</a> </td><td width="20%" align="center"><a accesskey="u" href="release.html">上一级</a></td><td width="40%" align="right"> <a accesskey="n" href="release-9-5-3.html">下一页</a></td></tr><tr><td width="40%" align="left" valign="top">E.15. 版本 9.5.5 </td><td width="20%" align="center"><a accesskey="h" href="index.html">起始页</a></td><td width="40%" align="right" valign="top"> E.17. 版本 9.5.3</td></tr></table></div></body></html>

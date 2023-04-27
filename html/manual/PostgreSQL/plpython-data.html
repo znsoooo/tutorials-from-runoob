@@ -1,0 +1,207 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><title>45.3. 数据值</title><link rel="stylesheet" type="text/css" href="stylesheet.css" /><link rev="made" href="pgsql-docs@postgresql.org" /><meta name="generator" content="DocBook XSL Stylesheets V1.79.1" /><link rel="prev" href="plpython-funcs.html" title="45.2. PL/Python 函数" /><link rel="next" href="plpython-sharing.html" title="45.4. 共享数据" /></head><body><div xmlns="http://www.w3.org/TR/xhtml1/transitional" class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="5" align="center">45.3. 数据值</th></tr><tr><td width="10%" align="left"><a accesskey="p" href="plpython-funcs.html" title="45.2. PL/Python 函数">上一页</a> </td><td width="10%" align="left"><a accesskey="u" href="plpython.html" title="第 45 章 PL/Python - Python 过程语言">上一级</a></td><th width="60%" align="center">第 45 章 PL/Python - Python 过程语言</th><td width="10%" align="right"><a accesskey="h" href="index.html" title="PostgreSQL 10.1 手册">起始页</a></td><td width="10%" align="right"> <a accesskey="n" href="plpython-sharing.html" title="45.4. 共享数据">下一页</a></td></tr></table><hr></hr></div><div class="sect1" id="PLPYTHON-DATA"><div class="titlepage"><div><div><h2 class="title" style="clear: both">45.3. 数据值</h2></div></div></div><div class="toc"><dl class="toc"><dt><span class="sect2"><a href="plpython-data.html#idp38052304">45.3.1. 数据类型映射</a></span></dt><dt><span class="sect2"><a href="plpython-data.html#idp38078928">45.3.2. Null, None</a></span></dt><dt><span class="sect2"><a href="plpython-data.html#PLPYTHON-ARRAYS">45.3.3. 数组、列表</a></span></dt><dt><span class="sect2"><a href="plpython-data.html#idp38092320">45.3.4. 组合类型</a></span></dt><dt><span class="sect2"><a href="plpython-data.html#idp38107184">45.3.5. 集合返回函数</a></span></dt></dl></div><p>   一般来讲，PL/Python 的目标是提供在 PostgreSQL 和 Python 世界之间的一种<span class="quote">“<span class="quote">自然的</span>”</span>映射。这包括下面介绍的数据映射规则。
+  </p><div class="sect2" id="idp38052304"><div class="titlepage"><div><div><h3 class="title">45.3.1. 数据类型映射</h3></div></div></div><p>    在调用一个 PL/Python 函数时，它的参数会被从 PostgreSQL 的数据类型转换成相应的 Python 类型：
+
+    </p><div class="itemizedlist"><ul class="itemizedlist" style="list-style-type: disc; "><li class="listitem"><p>       PostgreSQL 的<code class="type">boolean</code>被转换成 Python 的<code class="type">bool</code>。
+      </p></li><li class="listitem"><p>       PostgreSQL 的<code class="type">smallint</code>和<code class="type">int</code>被转换成 Python 的<code class="type">int</code>。 PostgreSQL 的<code class="type">bigint</code>和<code class="type">oid</code>被转换成 Python 2 的<code class="type">long</code>或者 Python 3 的<code class="type">int</code>。
+      </p></li><li class="listitem"><p>       PostgreSQL 的<code class="type">real</code>和<code class="type">double</code>被转换成 Python 的<code class="type">float</code>。
+      </p></li><li class="listitem"><p>       PostgreSQL 的<code class="type">numeric</code>被转换成 Python 的<code class="type">Decimal</code>。如果存在<code class="literal">cdecimal</code>包，则会从其中导入该类型。否则将使用来自标准库的<code class="literal">decimal.Decimal</code>。<code class="literal">cdecimal</code>比<code class="literal">decimal</code>要更快。不过，在 Python 3.3 以及更高的版本中，<code class="literal">cdecimal</code>已经被整合到了标准库中（也是用<code class="literal">decimal</code>这个名字），因此也就不再有什么区别。
+      </p></li><li class="listitem"><p>       PostgreSQL 的<code class="type">bytea</code>被转换成 Python 的<code class="type">str</code>（Python 2）和<code class="type">bytes</code>（Python 3）。在 Python 2 中，串应该被当做没有任何字符编码的字节序列对待。
+      </p></li><li class="listitem"><p>       包括 PostgreSQL 字符串类型在内的所有其他数据类型会被转换成一个 Python 的<code class="type">str</code>。在 Python 2 中，这个串将用 PostgreSQL 服务器编码；在 Python 3 中，它将和所有串一样使用 Unicode。
+      </p></li><li class="listitem"><p>       对于非标量数据类型，请见下文。
+      </p></li></ul></div><p>
+   </p><p>    当一个 PL/Python 函数返回时，会按照下列规则把它的返回值转换成该函数声明的 PostgreSQL 返回数据类型：
+
+    </p><div class="itemizedlist"><ul class="itemizedlist" style="list-style-type: disc; "><li class="listitem"><p>       当 PostgreSQL 返回类型是<code class="type">boolean</code>时，返回值会被根据<span class="emphasis"><em>Python</em></span>规则计算真假。也就是说，0 和空串是假，但是要特别注意<code class="literal">'f'</code>是真。
+      </p></li><li class="listitem"><p>       当 PostgreSQL 返回类型是<code class="type">bytea</code>时，返回值会被使用相应的 Python 内建机制转换成串（Python 2）或者字节（Python 3），结果将被转换成<code class="type">bytea</code>。
+      </p></li><li class="listitem"><p>       对于所有其他 PostgreSQL 返回类型，返回值被使用 Python 内建的<code class="literal">str</code>转换成一个串，并且结果会被传递给 PostgreSQL 数据类型的输入函数（如果该 Python 值是一个<code class="type">float</code>，它会被用内建的<code class="literal">repr</code>而不是<code class="literal">str</code>转换，这是为了避免精度损失）。
+      </p><p>       当 Python 2 的串被传递给 PostgreSQL 时，它们被要求是 PostgreSQL 服务器编码。在当前服务器编码中不可用的串将会产生错误，但是并非所有的编码失配都能被检测到，因此当没有正确地将串编码时，垃圾数据仍然会产生。Unicode 串会被自动地转换为正确的编码，因此使用 Unicode 串更加安全并且更加方便。在 Python 3 中，所有串都是 Unicode 串。
+      </p></li><li class="listitem"><p>       对于非标量数据类型，请见下文。
+      </p></li></ul></div><p>
+
+    注意所声明的 PostgreSQL 返回类型和实际返回对象的 Python 数据类型之间的逻辑失配不会被标志，无论怎样该值都会被转换。
+   </p></div><div class="sect2" id="idp38078928"><div class="titlepage"><div><div><h3 class="title">45.3.2. Null, None</h3></div></div></div><p>   如果一个 SQL 空值<a id="idp38079664" class="indexterm"></a>被传递给一个函数，该参数值将作为 Python 中的<code class="symbol">None</code>出现。例如，<a class="xref" href="plpython-funcs.html" title="45.2. PL/Python 函数">第 45.2 节</a>中展示的<code class="function">pymax</code>的函数定义对于空值输入将会返回错误的回答。我们可以为函数定义增加<code class="literal">STRICT</code>让<span class="productname">PostgreSQL</span>做得更加合理：如果一个空值被传入，该函数将根本不会被调用，而只是自动地返回一个空结果。此外，我们可以在函数体中检查空输入：
+
+</p><pre class="programlisting">CREATE FUNCTION pymax (a integer, b integer)
+  RETURNS integer
+AS $$
+  if (a is None) or (b is None):
+    return None
+  if a &gt; b:
+    return a
+  return b
+$$ LANGUAGE plpythonu;</pre><p>
+
+   如前所示，要从一个 PL/Python 函数返回一个 SQL 空值，可返回值<code class="symbol">None</code>。不管该函数严格与否都可以这样做。
+  </p></div><div class="sect2" id="PLPYTHON-ARRAYS"><div class="titlepage"><div><div><h3 class="title">45.3.3. 数组、列表</h3></div></div></div><p>   SQL 数组会被作为一个 Python 列表传递到 PL/Python 中。要从一个 PL/Python 函数中返回出一个 SQL 数组值，可返回一个列表：
+
+</p><pre class="programlisting">CREATE FUNCTION return_arr()
+  RETURNS int[]
+AS $$
+return [1, 2, 3, 4, 5]
+$$ LANGUAGE plpythonu;
+
+SELECT return_arr();
+ return_arr  
+-------------
+ {1,2,3,4,5}
+(1 row)</pre><p>
+   
+   多维数组作为嵌套Python列表传递到PL/Python中。例如，二维数组是列表的列表。
+   从PL/Python函数中返回多维SQL数组时，每个级别的内部列表都必须具有相同的大小。
+   例如：
+
+</p><pre class="programlisting">CREATE FUNCTION test_type_conversion_array_int4(x int4[]) RETURNS int4[] AS $$
+plpy.info(x, type(x))
+return x
+$$ LANGUAGE plpythonu;
+
+SELECT * FROM test_type_conversion_array_int4(ARRAY[[1,2,3],[4,5,6]]);
+INFO:  ([[1, 2, 3], [4, 5, 6]], &lt;type 'list'&gt;)
+ test_type_conversion_array_int4 
+---------------------------------
+ {{1,2,3},{4,5,6}}
+(1 row)</pre><p>
+
+   当多维数组不支持时，其他Python序列（如元组）
+   也被接受用于向后兼容PostgreSQL版本9.6及更低版本。但是，它们始终被视为一维数组，
+   因为它们与复合类型不明确。出于同样的原因，当在多维数组中使用复合类型时，
+   它必须由元组而不是列表表示。
+  </p><p>   注意在 Python 中，串是序列，这可能产生与 Python 程序员所熟悉的不同的效果：
+
+</p><pre class="programlisting">CREATE FUNCTION return_str_arr()
+  RETURNS varchar[]
+AS $$
+return "hello"
+$$ LANGUAGE plpythonu;
+
+SELECT return_str_arr();
+ return_str_arr
+----------------
+ {h,e,l,l,o}
+(1 row)</pre><p>
+  </p></div><div class="sect2" id="idp38092320"><div class="titlepage"><div><div><h3 class="title">45.3.4. 组合类型</h3></div></div></div><p>   组合类型参数被作为 Python 映射传递给函数。映射的元素名称就是组合类型的属性名。如果被传递的行中有一个属性是空值，在映射中它的值是<code class="symbol">None</code>。这里是一个例子：
+
+</p><pre class="programlisting">CREATE TABLE employee (
+  name text,
+  salary integer,
+  age integer
+);
+
+CREATE FUNCTION overpaid (e employee)
+  RETURNS boolean
+AS $$
+  if e["salary"] &gt; 200000:
+    return True
+  if (e["age"] &lt; 30) and (e["salary"] &gt; 100000):
+    return True
+  return False
+$$ LANGUAGE plpythonu;</pre><p>
+  </p><p>   有多种方式从一个 Python 函数返回行或者组合类型。下面的例子假设我们有：
+
+</p><pre class="programlisting">CREATE TYPE named_value AS (
+  name   text,
+  value  integer
+);</pre><p>
+
+   一个组合结果可以被返回为：
+
+   </p><div class="variablelist"><dl class="variablelist"><dt><span class="term">序列类型（一个元组或者列表，但不是集合，因为
+     集合不能被索引）</span></dt><dd><p>       被返回的序列对象必须具有和组合结果类型的域个数相同的项。索引号为 0 的项被分配给组合类型的第一个域，为 1 的项给第二个域，以此类推。例如：
+
+</p><pre class="programlisting">CREATE FUNCTION make_pair (name text, value integer)
+  RETURNS named_value
+AS $$
+  return ( name, value )
+  # or alternatively, as tuple: return [ name, value ]
+$$ LANGUAGE plpythonu;</pre><p>
+
+       要为任意列返回一个 SQL 空，应在对应的位置插入<code class="symbol">None</code>。
+      </p><p>       当返回一个复合类型数组时，它不能作为列表返回，
+	   因为它不明确Python列表是表示复合类型还是其他数组维数。
+      </p></dd><dt><span class="term">映射（字典）</span></dt><dd><p>       用列名作为键从映射中检索每一个结果类型列的值。例如：
+
+</p><pre class="programlisting">CREATE FUNCTION make_pair (name text, value integer)
+  RETURNS named_value
+AS $$
+  return { "name": name, "value": value }
+$$ LANGUAGE plpythonu;</pre><p>
+
+       任何额外的字典键/值对都会被忽略。丢失的键会被当做错误。要为任意列返回一个 SQL 空，应用相应的列名作为键插入<code class="symbol">None</code>。
+      </p></dd><dt><span class="term">对象（任何提供方法<code class="literal">__getattr__</code>的对象）</span></dt><dd><p>       这和映射的运作方式相同。例如：
+
+</p><pre class="programlisting">CREATE FUNCTION make_pair (name text, value integer)
+  RETURNS named_value
+AS $$
+  class named_value:
+    def __init__ (self, n, v):
+      self.name = n
+      self.value = v
+  return named_value(name, value)
+
+  # 或简单地
+  class nv: pass
+  nv.name = name
+  nv.value = value
+  return nv
+$$ LANGUAGE plpythonu;</pre><p>
+      </p></dd></dl></div><p>
+  </p><p>    也支持具有<code class="literal">OUT</code>参数的函数。例如：
+</p><pre class="programlisting">CREATE FUNCTION multiout_simple(OUT i integer, OUT j integer) AS $$
+return (1, 2)
+$$ LANGUAGE plpythonu;
+
+SELECT * FROM multiout_simple();</pre><p>
+   </p></div><div class="sect2" id="idp38107184"><div class="titlepage"><div><div><h3 class="title">45.3.5. 集合返回函数</h3></div></div></div><p>   <span class="application">PL/Python</span>函数也能返回标量类型或者组合类型的集合。有多种方法可以做到这一点，因为被返回的对象在内部会被转变成一个迭代器。下面的例子假设我们有组合类型：
+
+</p><pre class="programlisting">CREATE TYPE greeting AS (
+  how text,
+  who text
+);</pre><p>
+
+   可从以下类型返回集合结果：
+
+   </p><div class="variablelist"><dl class="variablelist"><dt><span class="term">序列类型（元组、列表、集合）</span></dt><dd><pre class="programlisting">CREATE FUNCTION greet (how text)
+  RETURNS SETOF greeting
+AS $$
+  # 把包含列表的元组返回为组合类型
+  # 所有其他组合也能行
+  return ( [ how, "World" ], [ how, "PostgreSQL" ], [ how, "PL/Python" ] )
+$$ LANGUAGE plpythonu;</pre><p>
+      </p></dd><dt><span class="term">迭代器（任何提供<code class="symbol">__iter__</code>以及
+      <code class="symbol">next</code>方法的对象）</span></dt><dd><pre class="programlisting">CREATE FUNCTION greet (how text)
+  RETURNS SETOF greeting
+AS $$
+  class producer:
+    def __init__ (self, how, who):
+      self.how = how
+      self.who = who
+      self.ndx = -1
+
+    def __iter__ (self):
+      return self
+
+    def next (self):
+      self.ndx += 1
+      if self.ndx == len(self.who):
+        raise StopIteration
+      return ( self.how, self.who[self.ndx] )
+
+  return producer(how, [ "World", "PostgreSQL", "PL/Python" ])
+$$ LANGUAGE plpythonu;</pre><p>
+      </p></dd><dt><span class="term">发生器（<code class="literal">yield</code>）</span></dt><dd><pre class="programlisting">CREATE FUNCTION greet (how text)
+  RETURNS SETOF greeting
+AS $$
+  for who in [ "World", "PostgreSQL", "PL/Python" ]:
+    yield ( how, who )
+$$ LANGUAGE plpythonu;</pre><p>
+
+      </p></dd></dl></div><p>
+  </p><p>    也支持有<code class="literal">OUT</code>参数的集合返回函数（使用<code class="literal">RETURNS SETOF record</code>）。例如：
+</p><pre class="programlisting">CREATE FUNCTION multiout_simple_setof(n integer, OUT integer, OUT integer) RETURNS SETOF record AS $$
+return [(1, 2)] * n
+$$ LANGUAGE plpythonu;
+
+SELECT * FROM multiout_simple_setof(3);</pre><p>
+   </p></div></div><div class="navfooter"><hr /><table width="100%" summary="Navigation footer"><tr><td width="40%" align="left"><a accesskey="p" href="plpython-funcs.html">上一页</a> </td><td width="20%" align="center"><a accesskey="u" href="plpython.html">上一级</a></td><td width="40%" align="right"> <a accesskey="n" href="plpython-sharing.html">下一页</a></td></tr><tr><td width="40%" align="left" valign="top">45.2. PL/Python 函数 </td><td width="20%" align="center"><a accesskey="h" href="index.html">起始页</a></td><td width="40%" align="right" valign="top"> 45.4. 共享数据</td></tr></table></div></body></html>

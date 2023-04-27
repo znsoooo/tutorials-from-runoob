@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><title>CREATE SCHEMA</title><link rel="stylesheet" type="text/css" href="stylesheet.css" /><link rev="made" href="pgsql-docs@postgresql.org" /><meta name="generator" content="DocBook XSL Stylesheets V1.79.1" /><link rel="prev" href="sql-createrule.html" title="CREATE RULE" /><link rel="next" href="sql-createsequence.html" title="CREATE SEQUENCE" /></head><body><div xmlns="http://www.w3.org/TR/xhtml1/transitional" class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="5" align="center">CREATE SCHEMA</th></tr><tr><td width="10%" align="left"><a accesskey="p" href="sql-createrule.html" title="CREATE RULE">上一页</a> </td><td width="10%" align="left"><a accesskey="u" href="sql-commands.html" title="SQL 命令">上一级</a></td><th width="60%" align="center">SQL 命令</th><td width="10%" align="right"><a accesskey="h" href="index.html" title="PostgreSQL 10.1 手册">起始页</a></td><td width="10%" align="right"> <a accesskey="n" href="sql-createsequence.html" title="CREATE SEQUENCE">下一页</a></td></tr></table><hr></hr></div><div class="refentry" id="SQL-CREATESCHEMA"><div class="titlepage"></div><a id="idp44284960" class="indexterm"></a><div class="refnamediv"><h2><span class="refentrytitle">CREATE SCHEMA</span></h2><p>CREATE SCHEMA — 定义一个新模式</p></div><div class="refsynopsisdiv"><h2>大纲</h2><pre class="synopsis">CREATE SCHEMA <em class="replaceable"><code>schema_name</code></em> [ AUTHORIZATION <em class="replaceable"><code>role_specification</code></em> ] [ <em class="replaceable"><code>schema_element</code></em> [ ... ] ]
+CREATE SCHEMA AUTHORIZATION <em class="replaceable"><code>role_specification</code></em> [ <em class="replaceable"><code>schema_element</code></em> [ ... ] ]
+CREATE SCHEMA IF NOT EXISTS <em class="replaceable"><code>schema_name</code></em> [ AUTHORIZATION <em class="replaceable"><code>role_specification</code></em> ]
+CREATE SCHEMA IF NOT EXISTS AUTHORIZATION <em class="replaceable"><code>role_specification</code></em>
+
+<span class="phrase">其中 <em class="replaceable"><code>role_specification</code></em> 可以是：</span>
+
+    <em class="replaceable"><code>user_name</code></em>
+  | CURRENT_USER
+  | SESSION_USER</pre></div><div class="refsect1" id="idp44296016"><h2>描述</h2><p>   <code class="command">CREATE SCHEMA</code>输入一个新模式到当前数据库中。
+   该模式名必须与当前数据库中任何现有模式的名称不同。
+  </p><p>   一个模式本质上是一个名字空间：它包含命令对象（表、数据类型、函数以及操作符），
+   对象可以与在其他模式中存在的对象重名。可以通过用模式名作为一个前缀
+   <span class="quote">“<span class="quote">限定</span>”</span>命名对象的名称来访问它们，或者通过把要求的模式包括
+   在搜索路径中来访问命名对象。一个指定非限定对象名的
+   <code class="literal">CREATE</code>命令在当前模式（搜索路径中的第一个模式，由函数
+   <code class="function">current_schema</code>决定）中创建对象。
+  </p><p>   <code class="command">CREATE SCHEMA</code>中可以选择包括子命令用以在
+   新模式中创建对象。这些子命令实际被当做独立的在创建该模式后被发出的命令
+   一样，除非使用<code class="literal">AUTHORIZATION</code>子句，所有被创建的对象都会
+   由该用户拥有。
+  </p></div><div class="refsect1" id="idp44302256"><h2>参数</h2><div class="variablelist"><dl class="variablelist"><dt><span class="term"><em class="replaceable"><code>schema_name</code></em></span></dt><dd><p>        要创建的一个模式名。如果省略，
+        <em class="replaceable"><code>user_name</code></em>将被用作模式名。
+        该名称不能以<code class="literal">pg_</code>开始，因为这样的名称是用作系统模式的。
+       </p></dd><dt><span class="term"><em class="replaceable"><code>user_name</code></em></span></dt><dd><p>        将拥有新模式的用户的角色名。如果省略，默认为执行该命令的用户。要
+        创建由另一个角色拥有的角色，你必须是那个角色的一个直接或者间接成员，
+        或者是一个超级用户。
+       </p></dd><dt><span class="term"><em class="replaceable"><code>schema_element</code></em></span></dt><dd><p>        要在该模式中创建的对象的定义 SQL 语句。当前，只有<code class="command">CREATE
+        TABLE</code>、<code class="command">CREATE VIEW</code>、<code class="command">CREATE
+        INDEX</code>、<code class="command">CREATE SEQUENCE</code>、<code class="command">CREATE
+        TRIGGER</code>以及<code class="command">GRANT</code>被接受为
+        <code class="command">CREATE SCHEMA</code>中的子句。其他类型的对象可以在模式被
+        创建之后用单独的命令创建。
+       </p></dd><dt><span class="term"><code class="literal">IF NOT EXISTS</code></span></dt><dd><p>        如果一个具有同名的模式已经存在，则什么也不做（不过发出一个提示）。
+        使用这个选项时不能包括
+        <em class="replaceable"><code>schema_element</code></em>子命令。
+       </p></dd></dl></div></div><div class="refsect1" id="idp44316144"><h2>注解</h2><p>   要创建一个模式，调用用户必须拥有当前数据库的<code class="literal">CREATE</code>
+   特权（当然，超级用户可以绕过这种检查）。
+  </p></div><div class="refsect1" id="idp44317808"><h2>示例</h2><p>   创建一个模式：
+</p><pre class="programlisting">CREATE SCHEMA myschema;</pre><p>
+  </p><p>   为用户<code class="literal">joe</code>创建一个模式，该模式也将被命名为
+   <code class="literal">joe</code>：
+</p><pre class="programlisting">CREATE SCHEMA AUTHORIZATION joe;</pre><p>
+  </p><p>   创建一个被用户<code class="literal">joe</code>拥有的名为<code class="literal">test</code>的模式，
+   除非已经有一个名为<code class="literal">test</code>的模式（不管<code class="literal">joe</code>
+   是否拥有该已经存在的模式）。
+</p><pre class="programlisting">CREATE SCHEMA IF NOT EXISTS test AUTHORIZATION joe;</pre><p>
+  </p><p>   创建一个模式并且在其中创建一个表和视图：
+</p><pre class="programlisting">CREATE SCHEMA hollywood
+    CREATE TABLE films (title text, release date, awards text[])
+    CREATE VIEW winners AS
+        SELECT title, release FROM films WHERE awards IS NOT NULL;</pre><p>
+   注意子命令不以分号结束。
+  </p><p>   下面是达到相同结果的等效的方法：
+</p><pre class="programlisting">CREATE SCHEMA hollywood;
+CREATE TABLE hollywood.films (title text, release date, awards text[]);
+CREATE VIEW hollywood.winners AS
+    SELECT title, release FROM hollywood.films WHERE awards IS NOT NULL;</pre></div><div class="refsect1" id="idp44328096"><h2>兼容性</h2><p>   SQL 标准允许在<code class="command">CREATE SCHEMA</code>中有一个
+   <code class="literal">DEFAULT CHARACTER SET</code>子句，以及当前
+   <span class="productname">PostgreSQL</span>接受的更多子命令类型。
+  </p><p>   SQL 标准制定<code class="command">CREATE SCHEMA</code>中的子命令
+   可以以任何顺序出现。当前的
+   <span class="productname">PostgreSQL</span>实现不能处理子命令中
+   所有情况的向前引用。有时候可能有必要对子命令进行重排序以避免向前
+   引用。
+  </p><p>   根据 SQL 标准，模式的拥有者总是拥有其中的所有对象。
+   <span class="productname">PostgreSQL</span>允许模式包含非模式
+   拥有者所拥有的对象。只有模式拥有者把其模式上的<code class="literal">CREATE</code>
+   特权授予给了其他人或者一个超级用户选择在该模式中创建对象时才会
+   发生这种事情。
+  </p><p>   <code class="literal">IF NOT EXISTS</code>选项是一种
+   <span class="productname">PostgreSQL</span>扩展。
+  </p></div><div class="refsect1" id="idp44336832"><h2>另见</h2><span class="simplelist"><a class="xref" href="sql-alterschema.html" title="ALTER SCHEMA"><span class="refentrytitle">ALTER SCHEMA</span></a>, <a class="xref" href="sql-dropschema.html" title="DROP SCHEMA"><span class="refentrytitle">DROP SCHEMA</span></a></span></div></div><div class="navfooter"><hr /><table width="100%" summary="Navigation footer"><tr><td width="40%" align="left"><a accesskey="p" href="sql-createrule.html">上一页</a> </td><td width="20%" align="center"><a accesskey="u" href="sql-commands.html">上一级</a></td><td width="40%" align="right"> <a accesskey="n" href="sql-createsequence.html">下一页</a></td></tr><tr><td width="40%" align="left" valign="top">CREATE RULE </td><td width="20%" align="center"><a accesskey="h" href="index.html">起始页</a></td><td width="40%" align="right" valign="top"> CREATE SEQUENCE</td></tr></table></div></body></html>

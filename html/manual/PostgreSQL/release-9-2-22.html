@@ -1,0 +1,147 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><title>E.60. 版本 9.2.22</title><link rel="stylesheet" type="text/css" href="stylesheet.css" /><link rev="made" href="pgsql-docs@postgresql.org" /><meta name="generator" content="DocBook XSL Stylesheets V1.79.1" /><link rel="prev" href="release-9-2-23.html" title="E.59. 版本 9.2.23" /><link rel="next" href="release-9-2-21.html" title="E.61. 版本 9.2.21" /></head><body><div xmlns="http://www.w3.org/TR/xhtml1/transitional" class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="5" align="center">E.60. 版本 9.2.22</th></tr><tr><td width="10%" align="left"><a accesskey="p" href="release-9-2-23.html" title="E.59. 版本 9.2.23">上一页</a> </td><td width="10%" align="left"><a accesskey="u" href="release.html" title="附录 E. 版本说明">上一级</a></td><th width="60%" align="center">附录 E. 版本说明</th><td width="10%" align="right"><a accesskey="h" href="index.html" title="PostgreSQL 10.1 手册">起始页</a></td><td width="10%" align="right"> <a accesskey="n" href="release-9-2-21.html" title="E.61. 版本 9.2.21">下一页</a></td></tr></table><hr></hr></div><div class="sect1" id="RELEASE-9-2-22"><div class="titlepage"><div><div><h2 class="title" style="clear: both">E.60. 版本 9.2.22</h2></div></div></div><div class="toc"><dl class="toc"><dt><span class="sect2"><a href="release-9-2-22.html#idp70223456">E.60.1. 迁移到版本 9.2.22</a></span></dt><dt><span class="sect2"><a href="release-9-2-22.html#idp70226080">E.60.2. 修改列表</a></span></dt></dl></div><p><strong>发布日期: </strong>2017-08-10</p><p>   此版本包含来自9.2.21的各种修补程序。
+   关于9.2主版本中的新特性信息，请查看
+   <a class="xref" href="release-9-2.html" title="E.82. 版本9.2">第 E.82 节</a>。
+  </p><p>   <span class="productname">PostgreSQL</span>社区将于2017年9月停止发布9.2.X版本系列的更新。
+   鼓励用户尽快更新到更新的发行版分支。
+  </p><div class="sect2" id="idp70223456"><div class="titlepage"><div><div><h3 class="title">E.60.1. 迁移到版本 9.2.22</h3></div></div></div><p>    运行9.2.X的用户不需要转储/恢复。
+   </p><p>    但是，如果您使用使用用户密码进行身份验证的外部数据服务器，
+	请参阅下面的第一个更改日志条目。
+   </p><p>    另外，如果您从早于9.2.20的版本进行升级，
+    请查看<a class="xref" href="release-9-2-20.html" title="E.62. 版本 9.2.20">第 E.62 节</a>。
+   </p></div><div class="sect2" id="idp70226080"><div class="titlepage"><div><div><h3 class="title">E.60.2. 修改列表</h3></div></div></div><div class="itemizedlist"><ul class="itemizedlist" style="list-style-type: disc; "><li class="listitem"><p>      进一步限制<code class="structname">pg_user_mappings</code>.<code class="structfield">umoptions</code>
+	  的可见性，以保护存储为用户映射选项的密码 (Noah Misch)
+     </p><p>      CVE-2017-7486的修补程序不正确：它允许用户在自己的用户映射中查看选项，
+	  即使她在关联的外部服务器上没有<code class="literal">USAGE</code>权限也是如此。
+	  这些选项可能包括服务器所有者提供的密码，而不是用户自己提供的密码。
+	  由于<code class="structname">information_schema.user_mapping_options</code>
+	  在这种情况下不显示选项，所以<code class="structname">pg_user_mappings</code>也不应该。
+      (CVE-2017-7547)
+     </p><p>      就其本身而言，该修补程序将仅修复新initdb的数据库中的行为。
+	  如果您希望在现有数据库中应用此更改，则需要执行以下操作：
+     </p><div class="procedure"><ol class="procedure" type="1"><li class="step"><p>        在将<code class="literal">allow_system_table_mods = true</code>添加到
+		<code class="filename">postgresql.conf</code>之后重启postmaster。
+		（在支持<code class="command">ALTER SYSTEM</code>的版本中，可以使用它使配置更改，
+		但是仍然需要重启。）
+       </p></li><li class="step"><p>        在集群的<span class="emphasis"><em>每个</em></span>数据库中，
+        作为超级用户运行下列命令：
+</p><pre class="programlisting">SET search_path = pg_catalog;
+CREATE OR REPLACE VIEW pg_user_mappings AS
+    SELECT
+        U.oid       AS umid,
+        S.oid       AS srvid,
+        S.srvname   AS srvname,
+        U.umuser    AS umuser,
+        CASE WHEN U.umuser = 0 THEN
+            'public'
+        ELSE
+            A.rolname
+        END AS usename,
+        CASE WHEN (U.umuser &lt;&gt; 0 AND A.rolname = current_user
+                     AND (pg_has_role(S.srvowner, 'USAGE')
+                          OR has_server_privilege(S.oid, 'USAGE')))
+                    OR (U.umuser = 0 AND pg_has_role(S.srvowner, 'USAGE'))
+                    OR (SELECT rolsuper FROM pg_authid WHERE rolname = current_user)
+                    THEN U.umoptions
+                 ELSE NULL END AS umoptions
+    FROM pg_user_mapping U
+         LEFT JOIN pg_authid A ON (A.oid = U.umuser) JOIN
+        pg_foreign_server S ON (U.umserver = S.oid);</pre><p>
+       </p></li><li class="step"><p>        不要忘记包括<code class="literal">template0</code>和<code class="literal">template1</code>数据库，
+		否则隐患仍然存在于你稍后创建的数据库中。要修复<code class="literal">template0</code>，
+		你需要临时允许它接受连接。在<span class="productname">PostgreSQL</span> 9.5和更高版本中，
+		你可以使用
+</p><pre class="programlisting">ALTER DATABASE template0 WITH ALLOW_CONNECTIONS true;</pre><p>
+        然后再修复<code class="literal">template0</code>之后，使用下面的命令取消设置
+</p><pre class="programlisting">ALTER DATABASE template0 WITH ALLOW_CONNECTIONS false;</pre><p>
+        在以前的版本中，使用
+</p><pre class="programlisting">UPDATE pg_database SET datallowconn = true WHERE datname = 'template0';
+UPDATE pg_database SET datallowconn = false WHERE datname = 'template0';</pre><p>
+       </p></li><li class="step"><p>        最后，删除<code class="literal">allow_system_table_mods</code>配置设置，再次重启postmaster。
+       </p></li></ol></div></li><li class="listitem"><p>      禁止在所有基于密码的身份验证方法中使用空密码
+      (Heikki Linnakangas)
+     </p><p>      <span class="application">libpq</span>忽略空密码规范，并且不会将它们传输到服务器。
+	  因此，如果用户的密码已设置为空字符串，则无法通过<span class="application">psql</span>
+	  或其他基于<span class="application">libpq</span>的客户端使用该密码登录。
+	  管理员可能认为将密码设置为空将与禁用密码登录等效。但是，
+	  对于基于修改或非基于<span class="application">libpq</span>的客户端，
+	  根据配置的身份验证方法，可能可以进行登录。特别是最常见的方法，即<code class="literal">md5</code>
+	  接受空密码。在所有情况下更改服务器拒绝空密码。
+      (CVE-2017-7546)
+     </p></li><li class="listitem"><p>      在Windows上，如果我们未能在新进程中保留共享内存的地址范围，请重试进程创建
+	  (Tom Lane, Amit Kapila)
+     </p><p>      预计这将修复罕见的子进程启动失败，这可能是由于防病毒产品的干扰造成的。
+     </p></li><li class="listitem"><p>      修复Windows构建中共享谓词锁散列表的低概率损坏 (Thomas Munro, Tom Lane)
+     </p></li><li class="listitem"><p>      避免记录干净的SSL连接关闭，就像连接重置一样 (Michael Paquier)
+     </p></li><li class="listitem"><p>      阻止向客户端发送SSL会话票据 (Tom Lane)
+     </p><p>      此修复程序可防止票证感知的客户端SSL代码重新连接失败。
+     </p></li><li class="listitem"><p>      修复在Solaris上设置<a class="xref" href="runtime-config-connection.html#GUC-TCP-KEEPALIVES-IDLE">tcp_keepalives_idle</a>的代码
+	  (Tom Lane)
+     </p></li><li class="listitem"><p>      修复统计收集器以遵守postmaster关闭和立即重新启动后发出的查询消息
+	  (Tom Lane)
+     </p><p>      在之前的postmaster停工半秒内发出的统计查询被有效地忽略了。
+     </p></li><li class="listitem"><p>      确保统计收集器的接收缓冲区大小至少为100KB (Tom Lane)
+     </p><p>      这可以降低在默认接收缓冲区大小小于此值的较早平台上丢失统计数据的风险。
+     </p></li><li class="listitem"><p>      修复在备用数据库处理<code class="literal">XLOG_SWITCH</code> WAL记录之后立即将其提升时，
+	  创建无效的WAL段的可能性 (Andres Freund)
+     </p></li><li class="listitem"><p>      在walsender进程中修复<span class="systemitem">SIGHUP</span>和<span class="systemitem">SIGUSR1</span>处理
+      (Petr Jelinek, Andres Freund)
+     </p></li><li class="listitem"><p>      修复由于postmaster中的争用情况而导致的<span class="application">walreceiver</span>
+	  进程不必要的重启缓慢 (Tom Lane)
+     </p></li><li class="listitem"><p>      修复了<code class="command">INSERT</code>或<code class="command">UPDATE</code>
+	  分配给数组域类型的列多个元素的情况 (Tom Lane)
+     </p></li><li class="listitem"><p>      在<code class="command">ALTER ... RENAME</code>中移动自动生成的数组类型 (Vik Fearing)
+     </p><p>      以前，我们会在<code class="command">CREATE</code>过程中重新命名冲突的自动生成数组类型。
+	  此修复将该行为扩展到重命名操作。
+     </p></li><li class="listitem"><p>      确保<code class="command">ALTER USER ... SET</code>和
+      <code class="command">ALTER ROLE ... SET</code>一样接受所有的语法变体 (Peter Eisentraut)
+     </p></li><li class="listitem"><p>      在将数据类型I/O函数的参数或返回类型从<code class="type">opaque</code>
+	  更改为正确类型时正确更新依赖项信息 (Heikki Linnakangas)
+     </p><p>      <code class="command">CREATE TYPE</code>更新在这种废弃很久的风格中声明的I/O函数时，
+	  忘记记录对该类型的依赖关系，允许后续的<code class="command">DROP TYPE</code>
+	  留下破损的函数定义。
+     </p></li><li class="listitem"><p>      当<code class="command">ANALYZE</code>处理<code class="type">tsvector</code>列时，
+	  减少内存使用量 (Heikki Linnakangas)
+     </p></li><li class="listitem"><p>      将整数或浮点数乘以或除以<code class="type">money</code>值时，
+	  修正不必要的精确度损失和粗糙舍入 (Tom Lane)
+     </p></li><li class="listitem"><p>      加紧检查解析标识符的函数中的空格，例如<code class="function">regprocedurein()</code>
+	  (Tom Lane)
+     </p><p>      根据流行的语言环境，这些函数可能会将多字节字符的片段误解为空白。
+     </p></li><li class="listitem"><p>      在编译<span class="application">PL/Perl</span>时使用Perl中的相关
+	  <code class="literal">#define</code>符号 (Ashutosh Sharma, Tom Lane)
+     </p><p>      这样可以避免可移植性问题，在使用最新的Perl版本时，
+	  通常会在库加载期间显示为<span class="quote">“<span class="quote">握手</span>”</span>不匹配。
+     </p></li><li class="listitem"><p>      在<span class="application">psql</span>中，当<code class="command">COPY FROM STDIN</code>
+	  以键盘EOF信号结束，然后尝试另一个<code class="command">COPY FROM STDIN</code>时修复失败
+	  (Thomas Munro)
+     </p><p>      在BSD派生的平台（包括macOS）上观察到这种不当行为，但在大多数其他平台上没有。
+     </p></li><li class="listitem"><p>      修复<span class="application">pg_dump</span>以避免为空操作符类发出无效SQL
+	  (Daniel Gustafsson)
+     </p></li><li class="listitem"><p>      修复<span class="application">pg_dump</span>在Windows上输出到stdout (Kuntal Ghosh)
+     </p><p>      写入标准输出的压缩纯文本转储将包含由于无法将文件描述符置于二进制模式而导致的损坏数据。
+     </p></li><li class="listitem"><p>      修复<code class="function">pg_get_ruledef()</code>为重命名了列的视图的
+	  <code class="literal">ON SELECT</code>规则打印正确的输出 (Tom Lane)
+     </p><p>      在某些极端情况下，<span class="application">pg_dump</span>依赖于
+	  <code class="function">pg_get_ruledef()</code>转储视图，所以该错误会导致转储/重载失败。
+     </p></li><li class="listitem"><p>      修复<code class="literal">FROM</code>子句中函数表达式不会解析为看起来像函数调用的东西情况时，
+	  函数表达式转储的情况 (Tom Lane)
+     </p></li><li class="listitem"><p>      修复<span class="application">pg_basebackup</span>在Windows上输出到stdout
+      (Haribabu Kommi)
+     </p><p>      写入stdout的备份将包含由于无法将文件描述符置于二进制模式而导致的损坏数据。
+     </p></li><li class="listitem"><p>      修复<span class="application">pg_upgrade</span>确保结束WAL记录没有
+	  <a class="xref" href="runtime-config-wal.html#GUC-WAL-LEVEL">wal_level</a> = <code class="literal">minimum</code>
+      (Bruce Momjian)
+     </p><p>      这种情况可能会阻止升级后的备用服务器重新连接。
+     </p></li><li class="listitem"><p>      在使用gcc构建共享库时，总是使用<code class="option">-fPIC</code>而不是<code class="option">-fpic</code>
+      (Tom Lane)
+     </p><p>      这在有所区分的平台上支持更大的扩展库。
+     </p></li><li class="listitem"><p>      修复Microsoft MSVC的构建脚本中的未转义大括号问题，以避免最近的Perl版本发出警告或错误
+	  (Andrew Dunstan)
+     </p></li><li class="listitem"><p>      在MSVC构建中，处理<span class="application">openssl</span>库不在
+	  <code class="filename">VC</code>子目录中的情况 (Andrew Dunstan)
+     </p></li><li class="listitem"><p>      在MSVC构建中，为<span class="application">libxml2</span>头文件添加适当的包含路径
+	  (Andrew Dunstan)
+     </p><p>      这修复了以前需要在<span class="application">libxml2</span>的标准Windows安装中移动东西的问题。
+     </p></li><li class="listitem"><p>      在MSVC构建中，识别一个名为<code class="filename">tcl86.lib</code>的Tcl库 (Noah Misch)
+     </p></li></ul></div></div></div><div class="navfooter"><hr /><table width="100%" summary="Navigation footer"><tr><td width="40%" align="left"><a accesskey="p" href="release-9-2-23.html">上一页</a> </td><td width="20%" align="center"><a accesskey="u" href="release.html">上一级</a></td><td width="40%" align="right"> <a accesskey="n" href="release-9-2-21.html">下一页</a></td></tr><tr><td width="40%" align="left" valign="top">E.59. 版本 9.2.23 </td><td width="20%" align="center"><a accesskey="h" href="index.html">起始页</a></td><td width="40%" align="right" valign="top"> E.61. 版本 9.2.21</td></tr></table></div></body></html>

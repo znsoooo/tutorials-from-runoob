@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><title>65.1. 简介</title><link rel="stylesheet" type="text/css" href="stylesheet.css" /><link rev="made" href="pgsql-docs@postgresql.org" /><meta name="generator" content="DocBook XSL Stylesheets V1.79.1" /><link rel="prev" href="brin.html" title="第 65 章 BRIN 索引" /><link rel="next" href="brin-builtin-opclasses.html" title="65.2. 内建操作符类" /></head><body><div xmlns="http://www.w3.org/TR/xhtml1/transitional" class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="5" align="center">65.1. 简介</th></tr><tr><td width="10%" align="left"><a accesskey="p" href="brin.html" title="第 65 章 BRIN 索引">上一页</a> </td><td width="10%" align="left"><a accesskey="u" href="brin.html" title="第 65 章 BRIN 索引">上一级</a></td><th width="60%" align="center">第 65 章 BRIN 索引</th><td width="10%" align="right"><a accesskey="h" href="index.html" title="PostgreSQL 10.1 手册">起始页</a></td><td width="10%" align="right"> <a accesskey="n" href="brin-builtin-opclasses.html" title="65.2. 内建操作符类">下一页</a></td></tr></table><hr></hr></div><div class="sect1" id="BRIN-INTRO"><div class="titlepage"><div><div><h2 class="title" style="clear: both">65.1. 简介</h2></div></div></div><div class="toc"><dl class="toc"><dt><span class="sect2"><a href="brin-intro.html#BRIN-OPERATION">65.1.1. 索引维护</a></span></dt></dl></div><p>  <acronym class="acronym">BRIN</acronym>表示块范围索引。 
+  <acronym class="acronym">BRIN</acronym>是为处理这样的表而设计的：表的规模非常大，
+  并且其中某些列与它们在表中的物理位置存在某种自然关联。一个
+  <em class="firstterm">块范围</em>是一组在表中物理上相邻的页面，对于每一个块范围在
+  索引中存储了一些摘要信息。例如，一个存储商店销售订单的表可能有一个日期
+  列记录每个订单产生的时间，并且很多时候较早的订单项也将出现在表中较早的
+  地方。一个存储 ZIP 代码列的表中一个城市的所有代码可能自然地聚在一起。
+ </p><p>  如果索引中存储的摘要信息与查询条件<em class="firstterm">一致</em>，<acronym class="acronym">BRIN</acronym>
+  索引可以通过常规的位图索引扫描满足查询，并且将会返回每个范围中所有页面
+  中的所有元组。查询执行器负责再次检查这些元组并且抛弃掉那些不匹配查询条
+  件的元组 — 换句话说，这些索引是有损的。由于一个<acronym class="acronym">BRIN</acronym>
+  索引很小，扫描这种索引虽然比使用顺序扫描多出了一点点开销，但是可能会避
+  免扫描表中很多已知不包含匹配元组的部分。
+ </p><p>  一个<acronym class="acronym">BRIN</acronym>索引将存储的特定数据以及该索引将能
+  满足的特定查询，都依赖于为该索引的每一列所选择的操作符类。具有一种
+  线性排序顺序的数据类型的操作符类可以存储在每个块范围内的最小和最大
+  值，例如几何类型可能会存储在块范围内的所有对象的外包盒。
+ </p><p>  块范围的尺寸在索引创建时由<code class="literal">pages_per_range</code>存储参数决定。
+  索引项的数量将等于该关系的尺寸（以页面计）除以为
+  <code class="literal">pages_per_range</code>选择的值。因此，该值越小，索引会变得越大
+  （因为需要存储更多索引项），但是与此同时存储的摘要数据可以更加精确并
+  且在索引扫描期间可以跳过更多数据块。
+ </p><div class="sect2" id="BRIN-OPERATION"><div class="titlepage"><div><div><h3 class="title">65.1.1. 索引维护</h3></div></div></div><p>   在创建时，所有已有的堆页面将被扫描并且会为每一个范围创建一个摘要
+   索引元组，对于末尾的可能不完整的范围也是这样做。随着新页面被数据填
+   充，已经创建摘要的页面范围的摘要信息会被来自新元组的数据所更新。
+   当一个创建的新页面没有落在最后一个被摘要的范围内时，该范围不会自
+   动获得一个摘要元组，那些元组将保持未被摘要的状态，直到后面调用一次
+   摘要操作来创建初始的摘要。这种处理可以用
+   <code class="function">brin_summarize_range(regclass, bigint)</code>或
+   <code class="function">brin_summarize_new_values(regclass)</code>函数手工
+   调用，或者在<code class="command">VACUUM</code>处理该表时自动调用。
+   或者在发生插入时通过autovacuum执行自动汇总。
+   （最后一个触发器默认是禁用的，可以使用<code class="literal">autosummarize</code>
+   参数启用。）相反，可以使用<code class="function">brin_desummarize_range(regclass, bigint)</code>
+   函数对范围进行解除摘要 ，当现有的值已经改变，索引元组不再是一个很好的表示形式时，
+   这是很有用的。
+  </p></div></div><div class="navfooter"><hr /><table width="100%" summary="Navigation footer"><tr><td width="40%" align="left"><a accesskey="p" href="brin.html">上一页</a> </td><td width="20%" align="center"><a accesskey="u" href="brin.html">上一级</a></td><td width="40%" align="right"> <a accesskey="n" href="brin-builtin-opclasses.html">下一页</a></td></tr><tr><td width="40%" align="left" valign="top">第 65 章 BRIN 索引 </td><td width="20%" align="center"><a accesskey="h" href="index.html">起始页</a></td><td width="40%" align="right" valign="top"> 65.2. 内建操作符类</td></tr></table></div></body></html>

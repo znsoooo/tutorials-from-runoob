@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><title>ALTER TEXT SEARCH DICTIONARY</title><link rel="stylesheet" type="text/css" href="stylesheet.css" /><link rev="made" href="pgsql-docs@postgresql.org" /><meta name="generator" content="DocBook XSL Stylesheets V1.79.1" /><link rel="prev" href="sql-altertsconfig.html" title="ALTER TEXT SEARCH CONFIGURATION" /><link rel="next" href="sql-altertsparser.html" title="ALTER TEXT SEARCH PARSER" /></head><body><div xmlns="http://www.w3.org/TR/xhtml1/transitional" class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="5" align="center">ALTER TEXT SEARCH DICTIONARY</th></tr><tr><td width="10%" align="left"><a accesskey="p" href="sql-altertsconfig.html" title="ALTER TEXT SEARCH CONFIGURATION">上一页</a> </td><td width="10%" align="left"><a accesskey="u" href="sql-commands.html" title="SQL 命令">上一级</a></td><th width="60%" align="center">SQL 命令</th><td width="10%" align="right"><a accesskey="h" href="index.html" title="PostgreSQL 10.1 手册">起始页</a></td><td width="10%" align="right"> <a accesskey="n" href="sql-altertsparser.html" title="ALTER TEXT SEARCH PARSER">下一页</a></td></tr></table><hr></hr></div><div class="refentry" id="SQL-ALTERTSDICTIONARY"><div class="titlepage"></div><a id="idp41521536" class="indexterm"></a><div class="refnamediv"><h2><span class="refentrytitle">ALTER TEXT SEARCH DICTIONARY</span></h2><p>ALTER TEXT SEARCH DICTIONARY — 更改一个文本搜索字典的定义</p></div><div class="refsynopsisdiv"><h2>大纲</h2><pre class="synopsis">ALTER TEXT SEARCH DICTIONARY <em class="replaceable"><code>name</code></em> (
+    <em class="replaceable"><code>option</code></em> [ = <em class="replaceable"><code>value</code></em> ] [, ... ]
+)
+ALTER TEXT SEARCH DICTIONARY <em class="replaceable"><code>name</code></em> RENAME TO <em class="replaceable"><code>new_name</code></em>
+ALTER TEXT SEARCH DICTIONARY <em class="replaceable"><code>name</code></em> OWNER TO { <em class="replaceable"><code>new_owner</code></em> | CURRENT_USER | SESSION_USER }
+ALTER TEXT SEARCH DICTIONARY <em class="replaceable"><code>name</code></em> SET SCHEMA <em class="replaceable"><code>new_schema</code></em></pre></div><div class="refsect1" id="idp41529664"><h2>描述</h2><p>   <code class="command">ALTER TEXT SEARCH DICTIONARY</code>更改一个
+   文本搜索字典的定义。你可以更改该字典的与模板相关的选项，或者更改该
+   字典的名称或者拥有者。
+  </p><p>   要使用
+   <code class="command">ALTER TEXT SEARCH DICTIONARY</code>，你必须是超级用户。
+  </p></div><div class="refsect1" id="idp41532272"><h2>参数</h2><div class="variablelist"><dl class="variablelist"><dt><span class="term"><em class="replaceable"><code>name</code></em></span></dt><dd><p>      一个现有的文本搜索字典的名称（可以是模式限定的）。
+     </p></dd><dt><span class="term"><em class="replaceable"><code>option</code></em></span></dt><dd><p>      要为这个字典设置的与模板相关的选项的名称。
+     </p></dd><dt><span class="term"><em class="replaceable"><code>value</code></em></span></dt><dd><p>      用于一个模板相关选项的新值。如果等号和值被忽略，则会从该字典
+      中移除该选项之前的设置而允许使用默认值。
+     </p></dd><dt><span class="term"><em class="replaceable"><code>new_name</code></em></span></dt><dd><p>      该文本搜索字典的新名称。
+     </p></dd><dt><span class="term"><em class="replaceable"><code>new_owner</code></em></span></dt><dd><p>      该文本搜索字典的新拥有者。
+     </p></dd><dt><span class="term"><em class="replaceable"><code>new_schema</code></em></span></dt><dd><p>      该文本搜索字典的新模式。
+     </p></dd></dl></div><p>   模板相关的选项可以以任何顺序出现。
+  </p></div><div class="refsect1" id="idp41541440"><h2>示例</h2><p>   下面的命令更改一个基于 Snowball 的字典的停用词列表。其他参数保持不变。
+  </p><pre class="programlisting">ALTER TEXT SEARCH DICTIONARY my_dict ( StopWords = newrussian );</pre><p>   下面的命令更改语言选项为<code class="literal">dutch</code>，并且完全移除停用词选项。
+  </p><pre class="programlisting">ALTER TEXT SEARCH DICTIONARY my_dict ( language = dutch, StopWords );</pre><p>   下面的命令<span class="quote">“<span class="quote">更新</span>”</span>该字典的定义，但是实际没有做任何更改。
+
+</p><pre class="programlisting">ALTER TEXT SEARCH DICTIONARY my_dict ( dummy );</pre><p>
+
+   （之所以能这样做是因为选项移除代码在选项不存在时也不会抱怨）。
+   这种技巧在为该字典更改配置文件时有用：<code class="command">ALTER</code>
+   将强制现有的数据库会话重读配置文件，否则如果会话之前已经读取过
+   就不会再次读取。
+  </p></div><div class="refsect1" id="idp41547472"><h2>兼容性</h2><p>   在 SQL 标准中没有
+   <code class="command">ALTER TEXT SEARCH DICTIONARY</code>语句。
+  </p></div><div class="refsect1" id="idp41548960"><h2>另见</h2><span class="simplelist"><a class="xref" href="sql-createtsdictionary.html" title="CREATE TEXT SEARCH DICTIONARY"><span class="refentrytitle">CREATE TEXT SEARCH DICTIONARY</span></a>, <a class="xref" href="sql-droptsdictionary.html" title="DROP TEXT SEARCH DICTIONARY"><span class="refentrytitle">DROP TEXT SEARCH DICTIONARY</span></a></span></div></div><div class="navfooter"><hr /><table width="100%" summary="Navigation footer"><tr><td width="40%" align="left"><a accesskey="p" href="sql-altertsconfig.html">上一页</a> </td><td width="20%" align="center"><a accesskey="u" href="sql-commands.html">上一级</a></td><td width="40%" align="right"> <a accesskey="n" href="sql-altertsparser.html">下一页</a></td></tr><tr><td width="40%" align="left" valign="top">ALTER TEXT SEARCH CONFIGURATION </td><td width="20%" align="center"><a accesskey="h" href="index.html">起始页</a></td><td width="40%" align="right" valign="top"> ALTER TEXT SEARCH PARSER</td></tr></table></div></body></html>

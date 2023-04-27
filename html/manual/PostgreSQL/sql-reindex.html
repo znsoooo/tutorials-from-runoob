@@ -1,0 +1,91 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><title>REINDEX</title><link rel="stylesheet" type="text/css" href="stylesheet.css" /><link rev="made" href="pgsql-docs@postgresql.org" /><meta name="generator" content="DocBook XSL Stylesheets V1.79.1" /><link rel="prev" href="sql-refreshmaterializedview.html" title="REFRESH MATERIALIZED VIEW" /><link rel="next" href="sql-release-savepoint.html" title="RELEASE SAVEPOINT" /></head><body><div xmlns="http://www.w3.org/TR/xhtml1/transitional" class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="5" align="center">REINDEX</th></tr><tr><td width="10%" align="left"><a accesskey="p" href="sql-refreshmaterializedview.html" title="REFRESH MATERIALIZED VIEW">上一页</a> </td><td width="10%" align="left"><a accesskey="u" href="sql-commands.html" title="SQL 命令">上一级</a></td><th width="60%" align="center">SQL 命令</th><td width="10%" align="right"><a accesskey="h" href="index.html" title="PostgreSQL 10.1 手册">起始页</a></td><td width="10%" align="right"> <a accesskey="n" href="sql-release-savepoint.html" title="RELEASE SAVEPOINT">下一页</a></td></tr></table><hr></hr></div><div class="refentry" id="SQL-REINDEX"><div class="titlepage"></div><a id="idp48111904" class="indexterm"></a><div class="refnamediv"><h2><span class="refentrytitle">REINDEX</span></h2><p>REINDEX — 重建索引</p></div><div class="refsynopsisdiv"><h2>大纲</h2><pre class="synopsis">REINDEX [ ( VERBOSE ) ] { INDEX | TABLE | SCHEMA | DATABASE | SYSTEM } <em class="replaceable"><code>name</code></em></pre></div><div class="refsect1" id="idp48115872"><h2>描述</h2><p>   <code class="command">REINDEX</code>使用索引的表里存储的数据重建一个索引，
+   并且替换该索引的旧拷贝。有一些场景需要使用<code class="command">REINDEX</code>：
+
+   </p><div class="itemizedlist"><ul class="itemizedlist" style="list-style-type: disc; "><li class="listitem"><p>      一个索引已经损坏，并且不再包含合法数据。尽管理论上这不会发生，
+      实际上索引会因为软件缺陷或硬件失效损坏。
+      <code class="command">REINDEX</code>提供了一种恢复方法。
+     </p></li><li class="listitem"><p>      一个索引变得<span class="quote">“<span class="quote">臃肿</span>”</span>，其中包含很多空的或者近乎为空的页面。
+      <span class="productname">PostgreSQL</span>中的 B-树索引在特定的非
+      常规访问模式下可能会发生这种情况。<code class="command">REINDEX</code>
+      提供了一种方法来减少索引的空间消耗，即制造一个新版本的索引，其中没有
+      死亡页面。详见<a class="xref" href="routine-reindex.html" title="24.2. 日常重建索引">第 24.2 节</a>。
+     </p></li><li class="listitem"><p>      修改了一个索引的存储参数（例如填充因子），并且希望确保这种修改完全
+      生效。
+     </p></li><li class="listitem"><p>      用<code class="literal">CONCURRENTLY</code>选项进行的一次索引创建失败，留下了
+      一个<span class="quote">“<span class="quote">无效的</span>”</span>索引。这类索引是没有用处的，但是可以用
+      <code class="command">REINDEX</code>来重建它们。注意，
+      <code class="command">REINDEX</code>将不会执行一次并发构建。要构建该索引并且
+      不干扰生产，应该先删除索引并且重新发出
+      <code class="command">CREATE INDEX CONCURRENTLY</code>命令。
+     </p></li></ul></div></div><div class="refsect1" id="idp48127744"><h2>参数</h2><div class="variablelist"><dl class="variablelist"><dt><span class="term"><code class="literal">INDEX</code></span></dt><dd><p>      重新创建指定的索引。
+     </p></dd><dt><span class="term"><code class="literal">TABLE</code></span></dt><dd><p>      重新创建指定表的所有索引。如果该表有一个二级
+      <span class="quote">“<span class="quote">TOAST</span>”</span>表，它也会被重索引。
+     </p></dd><dt><span class="term"><code class="literal">SCHEMA</code></span></dt><dd><p>===================
+      Recreate all indexes of the specified schema.  If a table of this
+      schema has a secondary <span class="quote">“<span class="quote">TOAST</span>”</span> table, that is reindexed as
+      well. Indexes on shared system catalogs are also processed.
+      This form of <code class="command">REINDEX</code> cannot be executed inside a
+      transaction block.
+     </p></dd><dt><span class="term"><code class="literal">DATABASE</code></span></dt><dd><p>      重新创建当前数据库内的所有索引。共享的系统目录上的索引也会被
+      处理。这种形式的<code class="command">REINDEX</code>不能在一个
+      事务块内执行。
+     </p></dd><dt><span class="term"><code class="literal">SYSTEM</code></span></dt><dd><p>      重新创建当前数据库中在系统目录上的所有索引。共享系统目录上的
+      索引也被包括在内。用户表上的索引则不会被处理。这种形式的
+      <code class="command">REINDEX</code>不能在一个事务块内执行。
+     </p></dd><dt><span class="term"><em class="replaceable"><code>name</code></em></span></dt><dd><p>      要被重索引的特定索引、表或者数据库的名字。索引和表名可以被
+      模式限定。当前，<code class="command">REINDEX DATABASE</code>和
+      <code class="command">REINDEX SYSTEM</code>只能重索引当前数据库，因此
+      它们的参数必须匹配当前数据库的名称。
+     </p></dd><dt><span class="term"><code class="literal">VERBOSE</code></span></dt><dd><p>      在每个索引被重建时打印进度报告。
+     </p></dd></dl></div></div><div class="refsect1" id="idp48143008"><h2>注解</h2><p>   如果怀疑一个用户表上的索引损坏，可以使用
+   <code class="command">REINDEX INDEX</code>或者
+   <code class="command">REINDEX TABLE</code>简单地重建该索引
+   或者表上的所有索引。
+  </p><p>   如果你需要从一个系统表上的索引损坏中恢复，就更困难一些。在
+   这种情况下，对系统来说重要的是没有使用过任何可疑的索引本身（
+   实际上，这种场景中，你可能会发现服务器进程会在启动时立刻崩溃，
+   这是因为对于损坏的索引的依赖）。要安全地恢复，服务器必须用
+   <code class="option">-P</code>选项启动，这将阻止它使用索引来进行系统
+   目录查找。
+  </p><p>   这样做的一种方法是关闭服务器，并且启动一个单用户的
+   <span class="productname">PostgreSQL</span>服务器，在其命令行
+   中包括<code class="option">-P</code>选项。然后，可以发出
+   <code class="command">REINDEX DATABASE</code>、<code class="command">REINDEX SYSTEM</code>、
+   <code class="command">REINDEX TABLE</code>或者<code class="command">REINDEX INDEX</code>，
+   具体使用哪个命令取决于你想要重构多少东西。如果有疑问，可以使用
+   <code class="command">REINDEX SYSTEM</code>来选择重建数据库中的所有系统索引。
+   然后退出单用户服务器会话并且重启常规的服务器。更多关于如何与
+   单用户服务器接口交互的内容请见<a class="xref" href="app-postgres.html" title="postgres"><span class="refentrytitle"><span class="application">postgres</span></span></a>参考页。
+  </p><p>   在另一种方法中，可以开始一个常规的服务器会话，在其命令行选项
+   中包括<code class="option">-P</code>。这样做的方法与客户端有关，但是在
+   所有基于<span class="application">libpq</span>的客户端中都可以在开始客户端
+   之前设置<code class="envar">PGOPTIONS</code>环境变量为<code class="literal">-P</code>。
+   注意虽然这种方法不要求用锁排斥其他客户端，在修复完成之前避免
+   其他用户连接到受损的数据库才是更加明智的。
+  </p><p>   <code class="command">REINDEX</code>类似于删除索引并且重建索引，在其中
+   索引内容会被从头开始建立。不过，锁定方面的考虑却相当不同。
+   <code class="command">REINDEX</code>会用锁排斥写，但不会排斥在索引的父表上的读。
+   它也会在被处理的索引上取得一个排他锁，该锁将会阻塞对该索引的使用尝试。
+   相反，<code class="command">DROP INDEX</code> 会暂时在附表上取得一个排他锁，阻塞
+   写和读。后续的<code class="command">CREATE INDEX</code>会排斥写但不排斥读，由于
+   该索引不存在，所以不会有读取它的尝试，这意味着不会有阻塞但是读操作可能
+   被强制成昂贵的顺序扫描。
+  </p><p>   重索引单独一个索引或者表要求用户是该索引或表的拥有者。重索引一个
+   数据库要求用户是该数据库的拥有者（注意拥有者因此可以重建由其他
+   用户拥有的索引或者表）。当然，超级用户总是能够重索引任何东西。
+  </p></div><div class="refsect1" id="idp48160448"><h2>示例</h2><p>   重建单个索引：
+
+</p><pre class="programlisting">REINDEX INDEX my_index;</pre><p>
+  </p><p>   重建表<code class="literal">my_table</code>上的所有索引：
+
+</p><pre class="programlisting">REINDEX TABLE my_table;</pre><p>
+  </p><p>   重建一个特定数据库中的所有索引，且不假设系统索引已经可用：
+
+</p><pre class="programlisting">$ <strong class="userinput"><code>export PGOPTIONS="-P"</code></strong>
+$ <strong class="userinput"><code>psql broken_db</code></strong>
+...
+broken_db=&gt; REINDEX DATABASE broken_db;
+broken_db=&gt; \q</pre></div><div class="refsect1" id="idp48166160"><h2>兼容性</h2><p>   在 SQL 标准中没有<code class="command">REINDEX</code>命令。
+  </p></div></div><div class="navfooter"><hr /><table width="100%" summary="Navigation footer"><tr><td width="40%" align="left"><a accesskey="p" href="sql-refreshmaterializedview.html">上一页</a> </td><td width="20%" align="center"><a accesskey="u" href="sql-commands.html">上一级</a></td><td width="40%" align="right"> <a accesskey="n" href="sql-release-savepoint.html">下一页</a></td></tr><tr><td width="40%" align="left" valign="top">REFRESH MATERIALIZED VIEW </td><td width="20%" align="center"><a accesskey="h" href="index.html">起始页</a></td><td width="40%" align="right" valign="top"> RELEASE SAVEPOINT</td></tr></table></div></body></html>

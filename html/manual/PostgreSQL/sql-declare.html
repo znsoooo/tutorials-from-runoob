@@ -1,0 +1,121 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><title>DECLARE</title><link rel="stylesheet" type="text/css" href="stylesheet.css" /><link rev="made" href="pgsql-docs@postgresql.org" /><meta name="generator" content="DocBook XSL Stylesheets V1.79.1" /><link rel="prev" href="sql-deallocate.html" title="DEALLOCATE" /><link rel="next" href="sql-delete.html" title="DELETE" /></head><body><div xmlns="http://www.w3.org/TR/xhtml1/transitional" class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="5" align="center">DECLARE</th></tr><tr><td width="10%" align="left"><a accesskey="p" href="sql-deallocate.html" title="DEALLOCATE">上一页</a> </td><td width="10%" align="left"><a accesskey="u" href="sql-commands.html" title="SQL 命令">上一级</a></td><th width="60%" align="center">SQL 命令</th><td width="10%" align="right"><a accesskey="h" href="index.html" title="PostgreSQL 10.1 手册">起始页</a></td><td width="10%" align="right"> <a accesskey="n" href="sql-delete.html" title="DELETE">下一页</a></td></tr></table><hr></hr></div><div class="refentry" id="SQL-DECLARE"><div class="titlepage"></div><a id="idp45979232" class="indexterm"></a><a id="idp45980272" class="indexterm"></a><div class="refnamediv"><h2><span class="refentrytitle">DECLARE</span></h2><p>DECLARE — 定义一个游标</p></div><div class="refsynopsisdiv"><h2>大纲</h2><pre class="synopsis">DECLARE <em class="replaceable"><code>name</code></em> [ BINARY ] [ INSENSITIVE ] [ [ NO ] SCROLL ]
+    CURSOR [ { WITH | WITHOUT } HOLD ] FOR <em class="replaceable"><code>query</code></em></pre></div><div class="refsect1" id="idp45985360"><h2>描述</h2><p>   <code class="command">DECLARE</code>允许用户创建游标，
+   游标可以被用来在大型查询暂停时检索少量的行。游标被创建后，
+   可以用<a class="xref" href="sql-fetch.html" title="FETCH"><span class="refentrytitle">FETCH</span></a>从中取得行。
+  </p><div class="note"><h3 class="title">注意</h3><p>    这个页面描述在 SQL 命令层面上游标的用法。如果想要在
+    <span class="application">PL/pgSQL</span>函数中使用游标，其规则是不同的
+     — 详见<a class="xref" href="plpgsql-cursors.html" title="42.7. 游标">第 42.7 节</a>。
+   </p></div></div><div class="refsect1" id="idp45989664"><h2>参数</h2><div class="variablelist"><dl class="variablelist"><dt><span class="term"><em class="replaceable"><code>name</code></em></span></dt><dd><p>      要创建的游标的名称。
+     </p></dd><dt><span class="term"><code class="literal">BINARY</code></span></dt><dd><p>      让游标返回二进制数据而不是返回文本格式数据。
+     </p></dd><dt><span class="term"><code class="literal">INSENSITIVE</code></span></dt><dd><p>      指示从游标中检索数据的过程不受游标创建之后在其底层表上发生的更新的
+      影响。在<span class="productname">PostgreSQL</span>中，这是默认的
+      行为。因此这个关键词没有实际效果，仅仅被用于兼容 SQL 标准。
+     </p></dd><dt><span class="term"><code class="literal">SCROLL</code><br /></span><span class="term"><code class="literal">NO SCROLL</code></span></dt><dd><p><code class="literal">SCROLL</code>指定游标可以用非顺序（例如，反向）
+     的方式从中检索行。根据查询的执行计划的复杂度，指定
+     <code class="literal">SCROLL</code>可能导致查询执行时间上的性能损失。
+      <code class="literal">NO SCROLL</code>指定游标不能以非顺序的方式从中检索
+      行。默认是允许在某些情况下滚动，但这和指定
+      <code class="literal">SCROLL</code>不完全相同。详情请见
+      <a class="xref" href="sql-declare.html#SQL-DECLARE-NOTES" title="注解">注解</a>。
+     </p></dd><dt><span class="term"><code class="literal">WITH HOLD</code><br /></span><span class="term"><code class="literal">WITHOUT HOLD</code></span></dt><dd><p><code class="literal">WITH HOLD</code>指定该游标在创建它的事务提交
+     之后还能被继续使用。<code class="literal">WITHOUT HOLD</code>指定该游标
+     不能在创建它的事务之外使用。如果两者都没有指定，则默认为
+     <code class="literal">WITHOUT HOLD</code>。
+     </p></dd><dt><span class="term"><em class="replaceable"><code>query</code></em></span></dt><dd><p>      用于提供该游标返回的行的<a class="xref" href="sql-select.html" title="SELECT"><span class="refentrytitle">SELECT</span></a>或者
+      <a class="xref" href="sql-values.html" title="VALUES"><span class="refentrytitle">VALUES</span></a>命令。
+     </p></dd></dl></div><p>   关键词<code class="literal">BINARY</code>、
+   <code class="literal">INSENSITIVE</code>和<code class="literal">SCROLL</code>
+   可以以任意顺序出现。
+  </p></div><div class="refsect1" id="SQL-DECLARE-NOTES"><h2>注解</h2><p>   普通游标以文本格式返回数据，这和<code class="command">SELECT</code>产生的数据一样。
+   <code class="literal">BINARY</code>选项指定游标应该以二进制格式返回数据。这减少了服务
+   器和客户端的转换负担，但程序员需要付出更多工作来处理与平台相关的二进制
+   数据格式。例如，如果一个查询从一个整数列中返回一个值一，用一个默认游标
+   将得到一个字符串<code class="literal">1</code>，而使用一个二进制游标将得到该值的四字节
+   内部表示（big-endian 大端字节顺序）。
+  </p><p>   使用二进制游标时应该小心。很多应用（包括
+   <span class="application">psql</span>）还没有准备好处理二进制游标，
+   它们仍然期待数据以文本格式到来。
+  </p><div class="note"><h3 class="title">注意</h3><p>    当客户端应用使用<span class="quote">“<span class="quote">扩展查询</span>”</span>协议发出一个
+    <code class="command">FETCH</code>命令，绑定协议消息会指定使用文本还是
+    二进制格式检索数据。这种选择会覆盖定义游标时指定的方式。因此
+    在使用扩展查询协议时，这样一个二进制游标的概念实际是被废弃的
+    — 任何游标都可以被视作文本或者二进制。
+   </p></div><p>    除非指定了<code class="literal">WITH HOLD</code>，这个命令创建的游标
+    只能在当前事务中使用。因此，没有<code class="literal">WITH HOLD</code>
+    的<code class="command">DECLARE</code>在事务块外是没有用的：游标只会生存
+    到该语句结束。因此如果这种命令在事务块之外被使用，
+    <span class="productname">PostgreSQL</span>会报告一个错误。
+    定义事务块需要使用<a class="xref" href="sql-begin.html" title="BEGIN"><span class="refentrytitle">BEGIN</span></a>和
+    <a class="xref" href="sql-commit.html" title="COMMIT"><span class="refentrytitle">COMMIT</span></a>（或者<a class="xref" href="sql-rollback.html" title="ROLLBACK"><span class="refentrytitle">ROLLBACK</span></a>）。
+   </p><p>    如果指定了<code class="literal">WITH HOLD</code>并且创建游标的事务
+    成功提交，在同一个会话中的后续事务中还能够继续访问该游标（
+    但是如果创建事务被中止，游标会被移除）。一个用
+    <code class="literal">WITH HOLD</code>创建的游标可以用一个显式的
+    <code class="command">CLOSE</code>命令关闭，或者会话结束时它
+    也会被关闭。在当前的实现中，由一个被保持游标表示的行会被复
+    制到一个临时文件或者内存区域中，这样它们才会在后续事务中保
+    持可用。
+   </p><p>    当查询包括<code class="literal">FOR UPDATE</code>或<code class="literal">FOR SHARE</code>时，
+    不能指定<code class="literal">WITH HOLD</code>。
+   </p><p>    在定义一个将被反向取元组的游标时，应该指定<code class="literal">SCROLL</code>
+    选项。这是 SQL 标准所要求的。不过，为了和早期版本兼容，
+    如果游标的查询计划足够简单到支持它不需要额外的开销，
+    <span class="productname">PostgreSQL</span>会允许在没有
+    <code class="literal">SCROLL</code>的情况下反向取元组。不过，建议应用开发者
+    不要依赖于从没有用<code class="literal">SCROLL</code>创建的游标中反向取
+    元组。如果指定了<code class="literal">NO SCROLL</code>，那么任何情况下都不
+    允许反向取元组。
+   </p><p>    当查询包括<code class="literal">FOR UPDATE</code>或<code class="literal">FOR SHARE</code>时，
+    也不允许反向取元组。因此在这种情况下不能指定
+    <code class="literal">SCROLL</code>。
+   </p><div class="caution"><h3 class="title">小心</h3><p>     如果可滚动和<code class="literal">WITH HOLD</code>游标调用了任何不稳定的
+     函数（见<a class="xref" href="xfunc-volatility.html" title="37.6. 函数易变性分类">第 37.6 节</a>），它们可能给出预期之外
+     的结果。当重新取得一个之前取得过的行时，那些函数会被重新执行，这
+     可能导致得到与第一次不同的结果。对这类情况的一种变通方法是，声明
+     游标为<code class="literal">WITH HOLD</code>并且在从其中读取任何行之前提交
+     事务。这将强制该游标的整个输出被物化在临时存储中，这样针对每一行
+     只会执行一次不稳定函数。
+    </p></div><p>    如果游标的查询包括<code class="literal">FOR UPDATE</code>或者<code class="literal">FOR
+    SHARE</code>，那么被返回的行会在它们第一次被取得时被锁定，这和带有
+    这些选项的常规<a class="xref" href="sql-select.html" title="SELECT"><span class="refentrytitle">SELECT</span></a>命令一样。此外，被返回的
+    行将是最新的版本，因此这些选项提供了被 SQL 标准称为
+    <span class="quote">“<span class="quote">敏感游标</span>”</span>的等效体（把<code class="literal">INSENSITIVE</code>与
+    <code class="literal">FOR UPDATE</code>或者<code class="literal">FOR SHARE</code>一起指定是错误）。
+   </p><div class="caution"><h3 class="title">小心</h3><p>     如果游标要和<code class="command">UPDATE ... WHERE CURRENT OF</code>或者
+     <code class="command">DELETE ... WHERE CURRENT OF</code>一起使用，通常推荐
+     使用<code class="literal">FOR UPDATE</code>。使用<code class="literal">FOR UPDATE</code>可以
+     阻止其他会话在行被取得和被更新之间修改行。如果没有
+     <code class="literal">FOR UPDATE</code>，当行在游标创建后被更改后，一个后续的
+     <code class="literal">WHERE CURRENT OF</code>命令将不会产生效果。
+    </p><p>     另一个使用<code class="literal">FOR UPDATE</code>的原因是，如果没有它，当游标查询不符合
+     SQL 标准的<span class="quote">“<span class="quote">简单可更新</span>”</span>规则时，后续的
+     <code class="literal">WHERE CURRENT OF</code>可能会失败（特别地，该游标必须只引用一个
+     表并且没有使用分组或者<code class="literal">ORDER BY</code>）。不是简单可更新的游标可能
+     成功也可能不成功，这取决于计划选择的细节。因此在最坏的情况下，应用可能会
+     在测试时成功但是在生产中失败。
+    </p><p>     不把<code class="literal">FOR UPDATE</code>和<code class="literal">WHERE CURRENT OF</code>一起用的
+     主要原因是，需要游标时可滚动的或者对于后续更新不敏感（也就是说，继续显示
+     旧的数据）。如果这是你的需求，应密切关注安上述警示。
+    </p></div><p>    SQL 标准只对嵌入式<acronym class="acronym">SQL</acronym>中的游标做出了规定。
+    <span class="productname">PostgreSQL</span>服务器没有为游标实现
+    <code class="command">OPEN</code>语句。当游标被声明时就被认为已经
+    被打开。不过，<span class="application">ECPG</span>（
+    <span class="productname">PostgreSQL</span>的嵌入式 SQL 预处理器）
+    支持标准 SQL 游标习惯，包括那些<code class="command">DECLARE</code>
+    和<code class="command">OPEN</code>语句。
+   </p><p>    你可以通过查询<a class="link" href="view-pg-cursors.html" title="51.68. pg_cursors"><code class="structname">pg_cursors</code></a>
+    系统视图可以看到所有可用的游标。
+   </p></div><div class="refsect1" id="idp46061504"><h2>示例</h2><p>   声明一个游标：
+</p><pre class="programlisting">DECLARE liahona CURSOR FOR SELECT * FROM films;</pre><p>
+   更多游标的例子请见<a class="xref" href="sql-fetch.html" title="FETCH"><span class="refentrytitle">FETCH</span></a>。
+  </p></div><div class="refsect1" id="idp46063712"><h2>兼容性</h2><p>   SQL 标准认为游标是否默认对底层数据的并发更新敏感是与实现相关的。在
+   <span class="productname">PostgreSQL</span>中，默认游标对此是不敏
+   感的，并且可以通过指定<code class="literal">FOR UPDATE</code>让它变得对此敏感。其他
+   产品的行为可能有所不同。
+  </p><p>   SQL 标准只允许在嵌入式<acronym class="acronym">SQL</acronym>和模块中使用游标。
+   <span class="productname">PostgreSQL</span>允许以交互的方式使用游标。
+  </p><p>   二进制游标是一种<span class="productname">PostgreSQL</span>
+   扩展。
+  </p></div><div class="refsect1" id="idp46068736"><h2>另见</h2><span class="simplelist"><a class="xref" href="sql-close.html" title="CLOSE"><span class="refentrytitle">CLOSE</span></a>, <a class="xref" href="sql-fetch.html" title="FETCH"><span class="refentrytitle">FETCH</span></a>, <a class="xref" href="sql-move.html" title="MOVE"><span class="refentrytitle">MOVE</span></a></span></div></div><div class="navfooter"><hr /><table width="100%" summary="Navigation footer"><tr><td width="40%" align="left"><a accesskey="p" href="sql-deallocate.html">上一页</a> </td><td width="20%" align="center"><a accesskey="u" href="sql-commands.html">上一级</a></td><td width="40%" align="right"> <a accesskey="n" href="sql-delete.html">下一页</a></td></tr><tr><td width="40%" align="left" valign="top">DEALLOCATE </td><td width="20%" align="center"><a accesskey="h" href="index.html">起始页</a></td><td width="40%" align="right" valign="top"> DELETE</td></tr></table></div></body></html>

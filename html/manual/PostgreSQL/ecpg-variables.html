@@ -1,0 +1,471 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><title>35.4. 使用主变量</title><link rel="stylesheet" type="text/css" href="stylesheet.css" /><link rev="made" href="pgsql-docs@postgresql.org" /><meta name="generator" content="DocBook XSL Stylesheets V1.79.1" /><link rel="prev" href="ecpg-commands.html" title="35.3. 运行 SQL 命令" /><link rel="next" href="ecpg-dynamic.html" title="35.5. 动态 SQL" /></head><body><div xmlns="http://www.w3.org/TR/xhtml1/transitional" class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="5" align="center">35.4. 使用主变量</th></tr><tr><td width="10%" align="left"><a accesskey="p" href="ecpg-commands.html" title="35.3. 运行 SQL 命令">上一页</a> </td><td width="10%" align="left"><a accesskey="u" href="ecpg.html" title="第 35 章 ECPG - C 中的嵌入式 SQL">上一级</a></td><th width="60%" align="center">第 35 章 <span xmlns="http://www.w3.org/1999/xhtml" class="application">ECPG</span> - C 中的嵌入式 <acronym xmlns="http://www.w3.org/1999/xhtml" class="acronym">SQL</acronym></th><td width="10%" align="right"><a accesskey="h" href="index.html" title="PostgreSQL 10.1 手册">起始页</a></td><td width="10%" align="right"> <a accesskey="n" href="ecpg-dynamic.html" title="35.5. 动态 SQL">下一页</a></td></tr></table><hr></hr></div><div class="sect1" id="ECPG-VARIABLES"><div class="titlepage"><div><div><h2 class="title" style="clear: both">35.4. 使用主变量</h2></div></div></div><div class="toc"><dl class="toc"><dt><span class="sect2"><a href="ecpg-variables.html#ECPG-VARIABLES-OVERVIEW">35.4.1. 概述</a></span></dt><dt><span class="sect2"><a href="ecpg-variables.html#ECPG-DECLARE-SECTIONS">35.4.2. 声明小节</a></span></dt><dt><span class="sect2"><a href="ecpg-variables.html#ECPG-RETRIEVING">35.4.3. 检索查询结果</a></span></dt><dt><span class="sect2"><a href="ecpg-variables.html#ECPG-VARIABLES-TYPE-MAPPING">35.4.4. 类型映射</a></span></dt><dt><span class="sect2"><a href="ecpg-variables.html#ECPG-VARIABLES-NONPRIMITIVE-SQL">35.4.5. 处理非简单 SQL 数据类型</a></span></dt><dt><span class="sect2"><a href="ecpg-variables.html#ECPG-INDICATORS">35.4.6. 指示符</a></span></dt></dl></div><p>   在<a class="xref" href="ecpg-commands.html" title="35.3. 运行 SQL 命令">第 35.3 节</a>中，你了解了如何从一个嵌入式 SQL 程序执行 SQL 语句。某些那种语句只使用固定值并且没有提供方法来插入用户提供的值到语句中或者让程序处理查询返回的值。那种语句在实际应用中其实没有什么用处。这一节详细解释了如何使用一种简单的机制（<em class="firstterm">主变量</em>）在 C 程序和嵌入式 SQL 语句之间传递数据。在一个嵌入式 SQL 程序中，我们认为 SQL 语句是 C 程序代码中的<em class="firstterm">客人</em>，而 C 代码是<em class="firstterm">主语言</em>。因此 C 程序的变量被称为<em class="firstterm">主变量</em>。
+  </p><p>   另一种在 PostgreSQL 后端和 ECPG 应用之间交换值的方式是使用 SQL 描述符，它在<a class="xref" href="ecpg-descriptors.html" title="35.7. 使用描述符区域">第 35.7 节</a>中介绍。
+  </p><div class="sect2" id="ECPG-VARIABLES-OVERVIEW"><div class="titlepage"><div><div><h3 class="title">35.4.1. 概述</h3></div></div></div><p>    在嵌入式 SQL 中进行 C 程序和 SQL 语句见的数据传递特别简单。我们不需要让程序把数据粘贴到语句（这会导致很多复杂性，例如正确地引用值），我们可以简单地在 SQL 语句中写 C 变量的名称，只要在它前面放上一个冒号。例如：
+</p><pre class="programlisting">EXEC SQL INSERT INTO sometable VALUES (:v1, 'foo', :v2);</pre><p>
+    这个语句引用了两个 C 变量（名为<code class="varname">v1</code>和<code class="varname">v2</code>）并且还使用了一个常规的 SQL 字符串来说明你没有被限制于使用某一种数据。
+   </p><p>    这种在 SQL 语句中插入 C 变量的风格可以用在 SQL 语句中每一个应该出现值表达式的地方。
+   </p></div><div class="sect2" id="ECPG-DECLARE-SECTIONS"><div class="titlepage"><div><div><h3 class="title">35.4.2. 声明小节</h3></div></div></div><p>    要从程序传递数据给数据库（例如作为一个查询的参数）或者从数据库传数据回程序，用于包含这些数据的 C 变量必须在特别标记的节中被声明，这样嵌入式 SQL 预处理器才会注意它们。
+   </p><p>    这个节开始于：
+</p><pre class="programlisting">EXEC SQL BEGIN DECLARE SECTION;</pre><p>
+    并且结束于：
+</p><pre class="programlisting">EXEC SQL END DECLARE SECTION;</pre><p>
+    在这两行之间，必须是正常的 C 变量声明，例如：
+</p><pre class="programlisting">int   x = 4;
+char  foo[16], bar[16];</pre><p>
+    如你所见，你可以选择为变量赋一个初始值。变量的可见范围由定义它的节在程序中的位置决定。你也可以使用下面的语法声明变量，这种语法将会隐式地创建一个声明节：
+</p><pre class="programlisting">EXEC SQL int i = 4;</pre><p>
+    你可以按照你的意愿在一个程序中放上多个声明节。
+   </p><p>    这些声明也会作为 C 变量被重复在输出文件中，因此无需再次声明它们。不准备在 SQL 命令中使用的变量可以正常地在这些特殊节之外声明。
+   </p><p>    一个结构或联合的定义也必须被列在一个<code class="literal">DECLARE</code>节中。否则预处理器无法处理这些类型，因为它不知道它们的定义。
+   </p></div><div class="sect2" id="ECPG-RETRIEVING"><div class="titlepage"><div><div><h3 class="title">35.4.3. 检索查询结果</h3></div></div></div><p>    现在你应该能够把程序产生的数据传递到一个 SQL 命令中了。但是怎么检索一个查询的结果呢？为此，嵌入式  SQL 提供了常规命令<code class="command">SELECT</code>和<code class="command">FETCH</code>的特殊变体。这些命令有一个特殊的<code class="literal">INTO</code>子句，它指定被检索到的值要被存储在哪些主变量中。<code class="command">SELECT</code>被用于只返回单一行的查询，而<code class="command">FETCH</code>被用于使用一个游标返回多行的查询。
+   </p><p>    这里是一个例子：
+</p><pre class="programlisting">/*
+ * 假定有这个表：
+ * CREATE TABLE test1 (a int, b varchar(50));
+ */
+
+EXEC SQL BEGIN DECLARE SECTION;
+int v1;
+VARCHAR v2;
+EXEC SQL END DECLARE SECTION;
+
+ ...
+
+EXEC SQL SELECT a, b INTO :v1, :v2 FROM test;</pre><p>
+    那么<code class="literal">INTO</code>子句出现在选择列表和<code class="literal">FROM</code>子句之间。选择列表中的元素数量必须和<code class="literal">INTO</code>后面列表（也被称为目标列表）的元素数量相等。
+   </p><p>    这里有一个使用命令<code class="command">FETCH</code>的例子：
+</p><pre class="programlisting">EXEC SQL BEGIN DECLARE SECTION;
+int v1;
+VARCHAR v2;
+EXEC SQL END DECLARE SECTION;
+
+ ...
+
+EXEC SQL DECLARE foo CURSOR FOR SELECT a, b FROM test;
+
+ ...
+
+do
+{
+    ...
+    EXEC SQL FETCH NEXT FROM foo INTO :v1, :v2;
+    ...
+} while (...);</pre><p>
+    这里<code class="literal">INTO</code>子句出现在所有正常子句的后面。
+   </p></div><div class="sect2" id="ECPG-VARIABLES-TYPE-MAPPING"><div class="titlepage"><div><div><h3 class="title">35.4.4. 类型映射</h3></div></div></div><p>    当 ECPG 应用在 PostgreSQL 服务器和 C 应用之间交换值时（例如从服务器检索查询结果时或者用输入参数执行 SQL 语句时），值需要在 PostgreSQL 数据类型和主语言变量类型（具体来说是 C 语言数据类型）之间转换。ECPG 的要点之一就是它会在大多数情况下自动搞定这种转换。
+   </p><p>    在这方面有两类数据类型：一些简单 PostgreSQL 数据类型（例如<code class="type">integer</code>和<code class="type">text</code>）可以被应用直接读取和写入。其他 PostgreSQL 数据类型（例如<code class="type">timestamp</code>和<code class="type">numeric</code>）只能通过特殊库函数访问，见<a class="xref" href="ecpg-variables.html#ECPG-SPECIAL-TYPES" title="35.4.4.2. 访问特殊数据类型">第 35.4.4.2 节</a>。
+   </p><p>    <a class="xref" href="ecpg-variables.html#ECPG-DATATYPE-HOSTVARS-TABLE" title="表 35.1. 在 PostgreSQL 数据类型和 C 变量类型之间映射">表 35.1</a>展示了哪种 PostgreSQL 数据类型对应于哪一种 C 数据类型。当你希望发送或接收一种给定 PostgreSQL 数据类型的值时，你应该在声明节中声明一个具有相应 C 数据类型的 C 变量。
+   </p><div class="table" id="ECPG-DATATYPE-HOSTVARS-TABLE"><p class="title"><strong>表 35.1. 在 PostgreSQL 数据类型和 C 变量类型之间映射</strong></p><div class="table-contents"><table class="table" summary="在 PostgreSQL 数据类型和 C 变量类型之间映射" border="1"><colgroup><col /><col /></colgroup><thead><tr><th>PostgreSQL 数据类型</th><th>主变量类型</th></tr></thead><tbody><tr><td><code class="type">smallint</code></td><td><code class="type">short</code></td></tr><tr><td><code class="type">integer</code></td><td><code class="type">int</code></td></tr><tr><td><code class="type">bigint</code></td><td><code class="type">long long int</code></td></tr><tr><td><code class="type">decimal</code></td><td><code class="type">decimal</code><a href="#ftn.ECPG-DATATYPE-TABLE-FN" class="footnote"><sup class="footnote" id="ECPG-DATATYPE-TABLE-FN">[a]</sup></a></td></tr><tr><td><code class="type">numeric</code></td><td><code class="type">numeric</code><a href="ecpg-variables.html#ftn.ECPG-DATATYPE-TABLE-FN" class="footnoteref"><sup class="footnoteref">[a]</sup></a></td></tr><tr><td><code class="type">real</code></td><td><code class="type">float</code></td></tr><tr><td><code class="type">double precision</code></td><td><code class="type">double</code></td></tr><tr><td><code class="type">smallserial</code></td><td><code class="type">short</code></td></tr><tr><td><code class="type">serial</code></td><td><code class="type">int</code></td></tr><tr><td><code class="type">bigserial</code></td><td><code class="type">long long int</code></td></tr><tr><td><code class="type">oid</code></td><td><code class="type">unsigned int</code></td></tr><tr><td><code class="type">character(<em class="replaceable"><code>n</code></em>)</code>, <code class="type">varchar(<em class="replaceable"><code>n</code></em>)</code>, <code class="type">text</code></td><td><code class="type">char[<em class="replaceable"><code>n</code></em>+1]</code>, <code class="type">VARCHAR[<em class="replaceable"><code>n</code></em>+1]</code><a href="#ftn.idp29363632" class="footnote"><sup class="footnote" id="idp29363632">[b]</sup></a></td></tr><tr><td><code class="type">name</code></td><td><code class="type">char[NAMEDATALEN]</code></td></tr><tr><td><code class="type">timestamp</code></td><td><code class="type">timestamp</code><a href="ecpg-variables.html#ftn.ECPG-DATATYPE-TABLE-FN" class="footnoteref"><sup class="footnoteref">[a]</sup></a></td></tr><tr><td><code class="type">interval</code></td><td><code class="type">interval</code><a href="ecpg-variables.html#ftn.ECPG-DATATYPE-TABLE-FN" class="footnoteref"><sup class="footnoteref">[a]</sup></a></td></tr><tr><td><code class="type">date</code></td><td><code class="type">date</code><a href="ecpg-variables.html#ftn.ECPG-DATATYPE-TABLE-FN" class="footnoteref"><sup class="footnoteref">[a]</sup></a></td></tr><tr><td><code class="type">boolean</code></td><td><code class="type">bool</code><a href="#ftn.idp29371104" class="footnote"><sup class="footnote" id="idp29371104">[c]</sup></a></td></tr><tr><td><code class="type">bytea</code></td><td><code class="type">char *</code></td></tr></tbody><tbody class="footnotes"><tr><td colspan="2"><div id="ftn.ECPG-DATATYPE-TABLE-FN" class="footnote"><p><a href="#ECPG-DATATYPE-TABLE-FN" class="para"><sup class="para">[a] </sup></a>这种类型只能通过特殊的库函数访问，见<a class="xref" href="ecpg-variables.html#ECPG-SPECIAL-TYPES" title="35.4.4.2. 访问特殊数据类型">第 35.4.4.2 节</a>。</p></div><div id="ftn.idp29363632" class="footnote"><p><a href="#idp29363632" class="para"><sup class="para">[b] </sup></a> 在<code class="filename">ecpglib.h</code>中声明</p></div><div id="ftn.idp29371104" class="footnote"><p><a href="#idp29371104" class="para"><sup class="para">[c] </sup></a>如果不是本地化类型，则声明在<code class="filename">ecpglib.h</code>中</p></div></td></tr></tbody></table></div></div><br class="table-break" /><div class="sect3" id="ECPG-CHAR"><div class="titlepage"><div><div><h4 class="title">35.4.4.1. 处理字符串</h4></div></div></div><p>     要处理 SQL 字符串数据类型（例如<code class="type">varchar</code>以及<code class="type">text</code>），有两种可能的方式来声明主变量。
+    </p><p>     一种方式是使用<code class="type">char[]</code>（一个<code class="type">char</code>字符串），这是在 C 中处理字符数据最常见的方式。
+</p><pre class="programlisting">EXEC SQL BEGIN DECLARE SECTION;
+    char str[50];
+EXEC SQL END DECLARE SECTION;</pre><p>
+     注意你必须自己照看长度。如果你把这个主变量用作一个查询的目标变量并且该查询返回超过 49 个字符的字符串，那么将会发生缓冲区溢出。
+    </p><p>     另一种方式是使用<code class="type">VARCHAR</code>类型，它是 ECPG 提供的一种特殊类型。在一个<code class="type">VARCHAR</code>类型数组上的定义会被转变成一个命名的<code class="type">struct</code>。这样一个声明：
+</p><pre class="programlisting">VARCHAR var[180];</pre><p>
+     会被转变成：
+</p><pre class="programlisting">struct varchar_var { int len; char arr[180]; } var;</pre><p>
+     成员<code class="structfield">arr</code>容纳包含一个终止零字节的字符串。因此，要在一个<code class="type">VARCHAR</code>主变量中存储一个字符串，该主变量必须被声明为具有包括零字节终止符的长度。成员<code class="structfield">len</code>保存存储在<code class="structfield">arr</code>中的字符串的长度，不包括终止零字节。当一个主变量被用做一个查询的输入时，如果<code class="literal">strlen(arr)</code>和<code class="structfield">len</code>不同，将使用短的那一个。
+    </p><p>     <code class="type">VARCHAR</code>可以被写成大写或小写形式，但是不能大小写混合。
+    </p><p>     <code class="type">char</code>和<code class="type">VARCHAR</code>主变量也可以保存其他 SQL 类型的值，它们将被存储为字符串形式。
+    </p></div><div class="sect3" id="ECPG-SPECIAL-TYPES"><div class="titlepage"><div><div><h4 class="title">35.4.4.2. 访问特殊数据类型</h4></div></div></div><p>     ECPG 包含一些特殊类型帮助你容易地与来自 PostgreSQL 服务器的一些特殊数据类型交互。特别地，它已经实现了对于<code class="type">numeric</code>、<code class="type">decimal</code>、<code class="type">date</code>、<code class="type">timestamp</code>以及<code class="type">interval</code>类型的支持。这些数据类型无法有效地被映射到原始的主变量类型（例如<code class="type">int</code>、<code class="type">long long int</code>或者<code class="type">char[]</code>），因为它们有一种复杂的内部结构。应用通过声明特殊类型的主变量以及使用 pgtypes 库中的函数来处理这些类型。pgtypes 库（在<a class="xref" href="ecpg-pgtypes.html" title="35.6. pgtypes 库">第 35.6 节</a>中详细描述）包含了处理这些类型的基本函数，这样你不需要仅仅为了给一个时间戳增加一个时段而发送一个查询给 SQL 服务器。
+    </p><p>     下面的小节描述了这些特殊数据类型。关于 pgtypes 库函数的更多细节，请参考<a class="xref" href="ecpg-pgtypes.html" title="35.6. pgtypes 库">第 35.6 节</a>。
+    </p><div class="sect4" id="idp29393536"><div class="titlepage"><div><div><h5 class="title">35.4.4.2.1. timestamp, date</h5></div></div></div><p>      这里有一种在 ECPG 主应用中处理<code class="type">timestamp</code>变量的模式。
+     </p><p>      首先，程序必须包括用于<code class="type">timestamp</code>类型的头文件：
+</p><pre class="programlisting">#include &lt;pgtypes_timestamp.h&gt;</pre><p>
+     </p><p>      接着，在声明节中声明一个主变量为类型<code class="type">timestamp</code>：
+</p><pre class="programlisting">EXEC SQL BEGIN DECLARE SECTION;
+timestamp ts;
+EXEC SQL END DECLARE SECTION;</pre><p>
+     </p><p>      并且在读入一个值到该主变量中之后，使用 pgtypes 库函数处理它。在下面的例子中，<code class="type">timestamp</code>值被<code class="function">PGTYPEStimestamp_to_asc()</code>函数转变成文本（ASCII）形式：
+</p><pre class="programlisting">EXEC SQL SELECT now()::timestamp INTO :ts;
+
+printf("ts = %s\n", PGTYPEStimestamp_to_asc(ts));</pre><p>
+      这个例子将展示像下面形式的一些结果：
+</p><pre class="screen">ts = 2010-06-27 18:03:56.949343</pre><p>
+     </p><p>      另外，DATE 类型可以用相同的方式处理。程序必须包括<code class="filename">pgtypes_date.h</code>，声明一个主变量为日期类型并且将一个 DATE 值使用<code class="function">PGTYPESdate_to_asc()</code>函数转变成一种文本形式。关于 pgtypes 库函数的更多细节，请参考<a class="xref" href="ecpg-pgtypes.html" title="35.6. pgtypes 库">第 35.6 节</a>。
+     </p></div><div class="sect4" id="ECPG-TYPE-INTERVAL"><div class="titlepage"><div><div><h5 class="title">35.4.4.2.2. interval</h5></div></div></div><p>      对<code class="type">interval</code>类型的处理也类似于<code class="type">timestamp</code>和<code class="type">date</code>类型。不过，必须显式为一个<code class="type">interval</code>类型分配内存。换句话说，该变量的内存空间必须在堆内存中分配，而不是在栈内存中分配。
+     </p><p>      这里是一个例子程序：
+</p><pre class="programlisting">#include &lt;stdio.h&gt;
+#include &lt;stdlib.h&gt;
+#include &lt;pgtypes_interval.h&gt;
+
+int
+main(void)
+{
+EXEC SQL BEGIN DECLARE SECTION;
+    interval *in;
+EXEC SQL END DECLARE SECTION;
+
+    EXEC SQL CONNECT TO testdb;
+
+    in = PGTYPESinterval_new();
+    EXEC SQL SELECT '1 min'::interval INTO :in;
+    printf("interval = %s\n", PGTYPESinterval_to_asc(in));
+    PGTYPESinterval_free(in);
+
+    EXEC SQL COMMIT;
+    EXEC SQL DISCONNECT ALL;
+    return 0;
+}</pre><p>
+     </p></div><div class="sect4" id="ECPG-TYPE-NUMERIC-DECIMAL"><div class="titlepage"><div><div><h5 class="title">35.4.4.2.3. numeric, decimal</h5></div></div></div><p>      <code class="type">numeric</code>和<code class="type">decimal</code>类型的处理类似于<code class="type">interval</code>类型：需要定义一个指针、在堆上分配一些内存空间并且使用 pgtypes 库函数访问该变量。关于 pgtypes 库函数的更多细节，请参考<a class="xref" href="ecpg-pgtypes.html" title="35.6. pgtypes 库">第 35.6 节</a>。
+     </p><p>      pgtypes 库没有特别为<code class="type">decimal</code>类型提供函数。一个应用必须使用一个 pgtypes 库函数把它转变成一个<code class="type">numeric</code>变量以便进一步处理。
+     </p><p>      这里是一个处理<code class="type">numeric</code>和<code class="type">decimal</code>类型变量的例子程序。
+</p><pre class="programlisting">#include &lt;stdio.h&gt;
+#include &lt;stdlib.h&gt;
+#include &lt;pgtypes_numeric.h&gt;
+
+EXEC SQL WHENEVER SQLERROR STOP;
+
+int
+main(void)
+{
+EXEC SQL BEGIN DECLARE SECTION;
+    numeric *num;
+    numeric *num2;
+    decimal *dec;
+EXEC SQL END DECLARE SECTION;
+
+    EXEC SQL CONNECT TO testdb;
+
+    num = PGTYPESnumeric_new();
+    dec = PGTYPESdecimal_new();
+
+    EXEC SQL SELECT 12.345::numeric(4,2), 23.456::decimal(4,2) INTO :num, :dec;
+
+    printf("numeric = %s\n", PGTYPESnumeric_to_asc(num, 0));
+    printf("numeric = %s\n", PGTYPESnumeric_to_asc(num, 1));
+    printf("numeric = %s\n", PGTYPESnumeric_to_asc(num, 2));
+
+    /* 将一个decimal转变成numeric以显示一个decimal值。 */
+    num2 = PGTYPESnumeric_new();
+    PGTYPESnumeric_from_decimal(dec, num2);
+
+    printf("decimal = %s\n", PGTYPESnumeric_to_asc(num2, 0));
+    printf("decimal = %s\n", PGTYPESnumeric_to_asc(num2, 1));
+    printf("decimal = %s\n", PGTYPESnumeric_to_asc(num2, 2));
+
+    PGTYPESnumeric_free(num2);
+    PGTYPESdecimal_free(dec);
+    PGTYPESnumeric_free(num);
+
+    EXEC SQL COMMIT;
+    EXEC SQL DISCONNECT ALL;
+    return 0;
+}</pre><p>
+     </p></div></div><div class="sect3" id="ECPG-VARIABLES-NONPRIMITIVE-C"><div class="titlepage"><div><div><h4 class="title">35.4.4.3. 非简单类型的主变量</h4></div></div></div><p>     你也可以把数组、typedefs、结构和指针用作主变量。
+    </p><div class="sect4" id="ECPG-VARIABLES-ARRAYS"><div class="titlepage"><div><div><h5 class="title">35.4.4.3.1. 数组</h5></div></div></div><p>      将数组用作主变量有两种情况。第一种如<a class="xref" href="ecpg-variables.html#ECPG-CHAR" title="35.4.4.1. 处理字符串">第 35.4.4.1 节</a>所述，是一种将一些文本字符串存储在<code class="type">char[]</code>或<code class="type">VARCHAR[]</code>中的方法。第二种是不用一个游标从一个查询结果中检索多行。如果没有一个数组，要处理由多个行组成的查询结果，我们需要使用一个游标以及<code class="command">FETCH</code>命令。但是使用数组主变量，多个行可以被一次收取。该数组的长度必须被定义成足以容纳所有的行，否则很可能会发生一次缓冲区溢出。
+     </p><p>      下面的例子扫描<code class="literal">pg_database</code>系统表并且显示所有可用数据库的 OID 和名称：
+</p><pre class="programlisting">int
+main(void)
+{
+EXEC SQL BEGIN DECLARE SECTION;
+    int dbid[8];
+    char dbname[8][16];
+    int i;
+EXEC SQL END DECLARE SECTION;
+
+    memset(dbname, 0, sizeof(char)* 16 * 8);
+    memset(dbid, 0, sizeof(int) * 8);
+
+    EXEC SQL CONNECT TO testdb;
+
+    /* 一次检索多行到数组中。 */
+    EXEC SQL SELECT oid,datname INTO :dbid, :dbname FROM pg_database;
+
+    for (i = 0; i &lt; 8; i++)
+        printf("oid=%d, dbname=%s\n", dbid[i], dbname[i]);
+
+    EXEC SQL COMMIT;
+    EXEC SQL DISCONNECT ALL;
+    return 0;
+}</pre><p>
+
+    这个例子显示下面的结果（确切的值取决于本地环境）。
+</p><pre class="screen">oid=1, dbname=template1
+oid=11510, dbname=template0
+oid=11511, dbname=postgres
+oid=313780, dbname=testdb
+oid=0, dbname=
+oid=0, dbname=
+oid=0, dbname=</pre><p>
+     </p></div><div class="sect4" id="ECPG-VARIABLES-STRUCT"><div class="titlepage"><div><div><h5 class="title">35.4.4.3.2. 结构</h5></div></div></div><p>      一个成员名称匹配查询结果列名的结构可以被用来一次检索多列。该结构使得我们能够在一个单一主变量中处理多列值。
+     </p><p>      下面的例子从<code class="literal">pg_database</code>系统表以及使用<code class="function">pg_database_size()</code>函数检索可用数据库的 OID、名称和尺寸。在这个例子中，一个成员名匹配<code class="literal">SELECT</code>结果的每一列的结构变量<code class="varname">dbinfo_t</code>被用来检索结果行，而不需要把多个主变量放在<code class="literal">FETCH</code>语句中。
+</p><pre class="programlisting">EXEC SQL BEGIN DECLARE SECTION;
+    typedef struct
+    {
+       int oid;
+       char datname[65];
+       long long int size;
+    } dbinfo_t;
+
+    dbinfo_t dbval;
+EXEC SQL END DECLARE SECTION;
+
+    memset(&amp;dbval, 0, sizeof(dbinfo_t));
+
+    EXEC SQL DECLARE cur1 CURSOR FOR SELECT oid, datname, pg_database_size(oid) AS size FROM pg_database;
+    EXEC SQL OPEN cur1;
+
+    /* 在达到结果集末尾时，跳出 while 循环 */
+    EXEC SQL WHENEVER NOT FOUND DO BREAK;
+
+    while (1)
+    {
+        /* 将多列取到一个结构中。 */
+        EXEC SQL FETCH FROM cur1 INTO :dbval;
+
+        /* 打印该结构的成员。 */
+        printf("oid=%d, datname=%s, size=%lld\n", dbval.oid, dbval.datname, dbval.size);
+    }
+
+    EXEC SQL CLOSE cur1;</pre><p>
+     </p><p>      这个例子会显示下列结果（确切的值取决于本地环境）。
+</p><pre class="screen">oid=1, datname=template1, size=4324580
+oid=11510, datname=template0, size=4243460
+oid=11511, datname=postgres, size=4324580
+oid=313780, datname=testdb, size=8183012</pre><p>
+     </p><p>      结构主变量将列尽数<span class="quote">“<span class="quote">吸收</span>”</span>成结构的域。额外的列可以被分配给其他主变量。例如，上面的程序也可以使用结构外部的<code class="varname">size</code>变量重新构造：
+</p><pre class="programlisting">EXEC SQL BEGIN DECLARE SECTION;
+    typedef struct
+    {
+       int oid;
+       char datname[65];
+    } dbinfo_t;
+
+    dbinfo_t dbval;
+    long long int size;
+EXEC SQL END DECLARE SECTION;
+
+    memset(&amp;dbval, 0, sizeof(dbinfo_t));
+
+    EXEC SQL DECLARE cur1 CURSOR FOR SELECT oid, datname, pg_database_size(oid) AS size FROM pg_database;
+    EXEC SQL OPEN cur1;
+
+    /* 在达到结果集末尾时，跳出 while 循环 */
+    EXEC SQL WHENEVER NOT FOUND DO BREAK;
+
+    while (1)
+    {
+        /* 将多列取到一个结构中。 */
+        EXEC SQL FETCH FROM cur1 INTO :dbval, :size;
+
+        /* 打印该结构的成员。 */
+        printf("oid=%d, datname=%s, size=%lld\n", dbval.oid, dbval.datname, size);
+    }
+
+    EXEC SQL CLOSE cur1;</pre><p>
+     </p></div><div class="sect4" id="idp29438336"><div class="titlepage"><div><div><h5 class="title">35.4.4.3.3. Typedefs</h5></div></div></div><p>      使用<code class="literal">typedef</code>关键词可以把新类型映射到已经存在的类型。
+</p><pre class="programlisting">EXEC SQL BEGIN DECLARE SECTION;
+    typedef char mychartype[40];
+    typedef long serial_t;
+EXEC SQL END DECLARE SECTION;</pre><p>
+      注意你也可以使用：
+</p><pre class="programlisting">EXEC SQL TYPE serial_t IS long;</pre><p>
+      这种声明不需要位于一个声明节之中。
+     </p></div><div class="sect4" id="idp29441552"><div class="titlepage"><div><div><h5 class="title">35.4.4.3.4. 指针</h5></div></div></div><p>      你可以声明最常见类型的指针。不过注意，你不能使用指针作为不带自动分配内存的查询的目标变量。关于自动分配内存的详情请参考<a class="xref" href="ecpg-descriptors.html" title="35.7. 使用描述符区域">第 35.7 节</a>。
+     </p><pre class="programlisting">EXEC SQL BEGIN DECLARE SECTION;
+    int   *intp;
+    char **charp;
+EXEC SQL END DECLARE SECTION;</pre><p>
+     </p></div></div></div><div class="sect2" id="ECPG-VARIABLES-NONPRIMITIVE-SQL"><div class="titlepage"><div><div><h3 class="title">35.4.5. 处理非简单 SQL 数据类型</h3></div></div></div><p>    这一节包含关于如何处理 ECPG 应用中非标量以及用户定义的 SQL 级别数据类型。注意这和上一节中描述的简单类型主变量的处理有所不同。
+   </p><div class="sect3" id="idp29445728"><div class="titlepage"><div><div><h4 class="title">35.4.5.1. 数组</h4></div></div></div><p>     ECPG 中不直接支持 SQL 级别的多维数组。一维 SQL 数组可以被映射到 C 数组主机变量，反之
+     亦然。不过，在创建一个语句时，ecpg并不知道列的类型，因此它无法检查一个 C 数组否是一个
+     SQL 数组的输入。在处理一个 SQL 语句的输出时，ecpg 有必需的信息并且进而检查是否两者都是
+     数组。
+    </p><p>     如果一个查询个别地访问一个数组的<span class="emphasis"><em>元素</em></span>，那么这可以避免使用 ECPG 中的数组。然后，应该使用一个能被映射到该元素类型的类型的主变量。例如，如果一个列类型是<code class="type">integer</code>数组，可以使用一个类型<code class="type">int</code>的主变量。还有如果元素类型是<code class="type">varchar</code>或<code class="type">text</code>，可以使用一个类型<code class="type">char[]</code>或<code class="type">VARCHAR[]</code>的主变量。
+    </p><p>     这里是一个例子。假定有下面的表：
+</p><pre class="programlisting">CREATE TABLE t3 (
+    ii integer[]
+);
+
+testdb=&gt; SELECT * FROM t3;
+     ii
+-------------
+ {1,2,3,4,5}
+(1 row)</pre><p>
+
+     下面的例子程序检索数组的第四个元素并且把它存储到一个类型为<code class="type">int</code>的主变量中：
+</p><pre class="programlisting">EXEC SQL BEGIN DECLARE SECTION;
+int ii;
+EXEC SQL END DECLARE SECTION;
+
+EXEC SQL DECLARE cur1 CURSOR FOR SELECT ii[4] FROM t3;
+EXEC SQL OPEN cur1;
+
+EXEC SQL WHENEVER NOT FOUND DO BREAK;
+
+while (1)
+{
+    EXEC SQL FETCH FROM cur1 INTO :ii ;
+    printf("ii=%d\n", ii);
+}
+
+EXEC SQL CLOSE cur1;</pre><p>
+
+     这个例子会显示下面的结果：
+</p><pre class="screen">ii=4</pre><p>
+    </p><p>     要把多个数组元素映射到一个数组类型主变量中的多个元素，数组列的每一个元素以及主变量数组的每一个元素都必须被单独管理，例如：
+</p><pre class="programlisting">EXEC SQL BEGIN DECLARE SECTION;
+int ii_a[8];
+EXEC SQL END DECLARE SECTION;
+
+EXEC SQL DECLARE cur1 CURSOR FOR SELECT ii[1], ii[2], ii[3], ii[4] FROM t3;
+EXEC SQL OPEN cur1;
+
+EXEC SQL WHENEVER NOT FOUND DO BREAK;
+
+while (1)
+{
+    EXEC SQL FETCH FROM cur1 INTO :ii_a[0], :ii_a[1], :ii_a[2], :ii_a[3];
+    ...
+}</pre><p>
+    </p><p>     注意
+</p><pre class="programlisting">EXEC SQL BEGIN DECLARE SECTION;
+int ii_a[8];
+EXEC SQL END DECLARE SECTION;
+
+EXEC SQL DECLARE cur1 CURSOR FOR SELECT ii FROM t3;
+EXEC SQL OPEN cur1;
+
+EXEC SQL WHENEVER NOT FOUND DO BREAK;
+
+while (1)
+{
+    /* 错误 */
+    EXEC SQL FETCH FROM cur1 INTO :ii_a;
+    ...
+}</pre><p>
+     在这种情况中不会正确工作，因为你无法把一个数组类型列直接映射到一个数组主变量。
+    </p><p>     另一种变通方案是在类型<code class="type">char[]</code>或<code class="type">VARCHAR[]</code>的主变量中存储数组的外部字符串表达。关于这种表达的详情请见<a class="xref" href="arrays.html#ARRAYS-INPUT" title="8.15.2. 数组值输入">第 8.15.2 节</a>。注意这意味着该数组无法作为一个主程序中的数组被自然地访问（没有解析文本表达的进一步处理）。
+    </p></div><div class="sect3" id="idp29460176"><div class="titlepage"><div><div><h4 class="title">35.4.5.2. 组合类型</h4></div></div></div><p>     ECPG 中并不直接支持组合类型，但是有一种可能的简单变通方案。可用的变通方案和上述用于数组的方案相似：要么单独访问每一个属性或者使用外部字符串表达。
+    </p><p>     对于下列例子，假定有下面的类型和表：
+</p><pre class="programlisting">CREATE TYPE comp_t AS (intval integer, textval varchar(32));
+CREATE TABLE t4 (compval comp_t);
+INSERT INTO t4 VALUES ( (256, 'PostgreSQL') );</pre><p>
+
+     最显而易见的解决方案是单独访问每一个属性。下面的程序通过单独选择类型<code class="type">comp_t</code>的每一个属性从例子表中检索数据：
+</p><pre class="programlisting">EXEC SQL BEGIN DECLARE SECTION;
+int intval;
+varchar textval[33];
+EXEC SQL END DECLARE SECTION;
+
+/* 将组合类型列的每一个元素放在 SELECT 列表中。 */
+EXEC SQL DECLARE cur1 CURSOR FOR SELECT (compval).intval, (compval).textval FROM t4;
+EXEC SQL OPEN cur1;
+
+EXEC SQL WHENEVER NOT FOUND DO BREAK;
+
+while (1)
+{
+    /* 将组合类型列的每一个元素取到主变量中。 */
+    EXEC SQL FETCH FROM cur1 INTO :intval, :textval;
+
+    printf("intval=%d, textval=%s\n", intval, textval.arr);
+}
+
+EXEC SQL CLOSE cur1;</pre><p>
+    </p><p>     为了加强这个例子，在<code class="command">FETCH</code>命令中存储值的主变量可以被集中在一个结构中。结构形式的主变量的详情可见<a class="xref" href="ecpg-variables.html#ECPG-VARIABLES-STRUCT" title="35.4.4.3.2. 结构">第 35.4.4.3.2 节</a>。要切换到结构形式，该例子可以被改成下面的样子。两个主变量<code class="varname">intval</code>和<code class="varname">textval</code>变成<code class="structname">comp_t</code>结构的成员，并且该结构在<code class="command">FETCH</code>命令中指定。
+</p><pre class="programlisting">EXEC SQL BEGIN DECLARE SECTION;
+typedef struct
+{
+    int intval;
+    varchar textval[33];
+} comp_t;
+
+comp_t compval;
+EXEC SQL END DECLARE SECTION;
+
+/* 将组合类型列的每一个元素放在 SELECT 列表中。 */
+EXEC SQL DECLARE cur1 CURSOR FOR SELECT (compval).intval, (compval).textval FROM t4;
+EXEC SQL OPEN cur1;
+
+EXEC SQL WHENEVER NOT FOUND DO BREAK;
+
+while (1)
+{
+    /* 将 SELECT 列表中的所有值放入一个结构。 */
+    EXEC SQL FETCH FROM cur1 INTO :compval;
+
+    printf("intval=%d, textval=%s\n", compval.intval, compval.textval.arr);
+}
+
+EXEC SQL CLOSE cur1;</pre><p>
+
+     尽管在<code class="command">FETCH</code>命令中使用了一个结构，<code class="command">SELECT</code>子句中的属性名还是要一个一个指定。可以通过使用一个<code class="literal">*</code>来要求该组合类型值的所有属性来改进。
+</p><pre class="programlisting">...
+EXEC SQL DECLARE cur1 CURSOR FOR SELECT (compval).* FROM t4;
+EXEC SQL OPEN cur1;
+
+EXEC SQL WHENEVER NOT FOUND DO BREAK;
+
+while (1)
+{
+    /* 将 SELECT 列表中的所有值放入一个结构。 */
+    EXEC SQL FETCH FROM cur1 INTO :compval;
+
+    printf("intval=%d, textval=%s\n", compval.intval, compval.textval.arr);
+}
+...</pre><p>
+     通过这种方法，即便 ECPG 不理解组合类型本身，组合类型也能够几乎无缝地被映射到结构。
+    </p><p>     最后，也可以在类型<code class="type">char[]</code>或<code class="type">VARCHAR[]</code>的主变量中把组合类型值存储成它们的外部字符串表达。但是如果使用那种方法，就不太可能从主程序中访问该值的各个域了。
+    </p></div><div class="sect3" id="idp29475568"><div class="titlepage"><div><div><h4 class="title">35.4.5.3. 用户定义的基础类型</h4></div></div></div><p>     ECPG 并不直接支持新的用户定义的基本类型。你可以使用外部字符串表达以及类型<code class="type">char[]</code>或<code class="type">VARCHAR[]</code>的主变量，并且这种方案事实上对很多类型都是合适和足够的。
+    </p><p>     这里有一个使用来自<a class="xref" href="xtypes.html" title="37.11. 用户定义的类型">第 37.11 节</a>中例子里的数据类型<code class="type">complex</code>的例子。该类型的外部字符串表达是<code class="literal">(%lf,%lf)</code>，它被定义在函数<code class="function">complex_in()</code>以及<a class="xref" href="xtypes.html" title="37.11. 用户定义的类型">第 37.11 节</a>中的<code class="function">complex_out()</code>函数内。下面的例子把复杂类型值<code class="literal">(1,1)</code>和<code class="literal">(3,3)</code>插入到列<code class="literal">a</code>和<code class="literal">b</code>，并且之后把它们从表中选择出来。
+
+</p><pre class="programlisting">EXEC SQL BEGIN DECLARE SECTION;
+    varchar a[64];
+    varchar b[64];
+EXEC SQL END DECLARE SECTION;
+
+    EXEC SQL INSERT INTO test_complex VALUES ('(1,1)', '(3,3)');
+
+    EXEC SQL DECLARE cur1 CURSOR FOR SELECT a, b FROM test_complex;
+    EXEC SQL OPEN cur1;
+
+    EXEC SQL WHENEVER NOT FOUND DO BREAK;
+
+    while (1)
+    {
+        EXEC SQL FETCH FROM cur1 INTO :a, :b;
+        printf("a=%s, b=%s\n", a.arr, b.arr);
+    }
+
+    EXEC SQL CLOSE cur1;</pre><p>
+
+     这个例子会显示下列结果：
+</p><pre class="screen">a=(1,1), b=(3,3)</pre><p>
+   </p><p>     另一种变通方案是避免在 ECPG 中直接使用用户定义的类型，而是创建一个在用户定义的类型和 ECPG 能处理的简单类型之间转换的函数或者造型。不过要注意，在类型系统中引入类型造型（特别是隐式造型）要非常小心。
+    </p><p>     例如，
+</p><pre class="programlisting">CREATE FUNCTION create_complex(r double, i double) RETURNS complex
+LANGUAGE SQL
+IMMUTABLE
+AS $$ SELECT $1 * complex '(1,0')' + $2 * complex '(0,1)' $$;</pre><p>
+    在这个定义之后 ，下面的语句
+</p><pre class="programlisting">EXEC SQL BEGIN DECLARE SECTION;
+double a, b, c, d;
+EXEC SQL END DECLARE SECTION;
+
+a = 1;
+b = 2;
+c = 3;
+d = 4;
+
+EXEC SQL INSERT INTO test_complex VALUES (create_complex(:a, :b), create_complex(:c, :d));</pre><p>
+    具有和
+</p><pre class="programlisting">EXEC SQL INSERT INTO test_complex VALUES ('(1,2)', '(3,4)');</pre><p>
+    相同的效果。
+    </p></div></div><div class="sect2" id="ECPG-INDICATORS"><div class="titlepage"><div><div><h3 class="title">35.4.6. 指示符</h3></div></div></div><p>    上述例子并没有处理空值。事实上，如果检索的例子从数据库取到了一个空值，它们将会产生一个错误。要能够向数据库传递空值或者从数据库检索空值，你需要对每一个包含数据的主变量追加一个次要主变量说明。这个次要主变量被称为<em class="firstterm">指示符</em>并且包含一个说明数据是否为空的标志，如果为空真正的主变量中的值就应该被忽略。这里有一个能正确处理检索空值的例子：
+</p><pre class="programlisting">EXEC SQL BEGIN DECLARE SECTION;
+VARCHAR val;
+int val_ind;
+EXEC SQL END DECLARE SECTION:
+
+ ...
+
+EXEC SQL SELECT b INTO :val :val_ind FROM test1;</pre><p>
+    如果值不为空，指示符变量<code class="varname">val_ind</code>将为零；否则它将为负值。
+   </p><p>    指示符有另一种功能：如果指示符值为正，它表示值不为空，但是当它被存储在主变量中时已被截断。
+   </p><p>    如果参数<code class="literal">-r no_indicator</code>被传递给预处理器<code class="command">ecpg</code>，它会工作在<span class="quote">“<span class="quote">无指示符</span>”</span>模式。在无指示符模式中，如果没有指定指示符变量，对于字符串类型空值被标志（在输入和输出上）为空串，对于整数类型空值被标志为类型的最低可能值（例如，<code class="type">int</code>的是<code class="symbol">INT_MIN</code>）。
+   </p></div></div><div class="navfooter"><hr /><table width="100%" summary="Navigation footer"><tr><td width="40%" align="left"><a accesskey="p" href="ecpg-commands.html">上一页</a> </td><td width="20%" align="center"><a accesskey="u" href="ecpg.html">上一级</a></td><td width="40%" align="right"> <a accesskey="n" href="ecpg-dynamic.html">下一页</a></td></tr><tr><td width="40%" align="left" valign="top">35.3. 运行 SQL 命令 </td><td width="20%" align="center"><a accesskey="h" href="index.html">起始页</a></td><td width="40%" align="right" valign="top"> 35.5. 动态 SQL</td></tr></table></div></body></html>

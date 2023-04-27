@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><title>F.15. file_fdw</title><link rel="stylesheet" type="text/css" href="stylesheet.css" /><link rev="made" href="pgsql-docs@postgresql.org" /><meta name="generator" content="DocBook XSL Stylesheets V1.79.1" /><link rel="prev" href="earthdistance.html" title="F.14. earthdistance" /><link rel="next" href="fuzzystrmatch.html" title="F.16. fuzzystrmatch" /></head><body><div xmlns="http://www.w3.org/TR/xhtml1/transitional" class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="5" align="center">F.15. file_fdw</th></tr><tr><td width="10%" align="left"><a accesskey="p" href="earthdistance.html" title="F.14. earthdistance">上一页</a> </td><td width="10%" align="left"><a accesskey="u" href="contrib.html" title="附录 F. 额外提供的模块">上一级</a></td><th width="60%" align="center">附录 F. 额外提供的模块</th><td width="10%" align="right"><a accesskey="h" href="index.html" title="PostgreSQL 10.1 手册">起始页</a></td><td width="10%" align="right"> <a accesskey="n" href="fuzzystrmatch.html" title="F.16. fuzzystrmatch">下一页</a></td></tr></table><hr></hr></div><div class="sect1" id="FILE-FDW"><div class="titlepage"><div><div><h2 class="title" style="clear: both">F.15. file_fdw</h2></div></div></div><a id="idp85681744" class="indexterm"></a><p>  <code class="filename">file_fdw</code>模块提供外部数据包装器<code class="function">file_fdw</code>，
+  它能被用来访问服务器的文件系统中的数据文件，或者在服务器上执行程序并读取它们的输出。
+  数据文件或程序输出必须是能够被<code class="command">COPY FROM</code>读取的格式，
+  详见<a class="xref" href="sql-copy.html" title="COPY"><span class="refentrytitle">COPY</span></a>。当前只能读取数据文件。
+ </p><p>  用这个包装器创建的一个外部表可以有下列选项：
+ </p><div class="variablelist"><dl class="variablelist"><dt><span class="term"><code class="literal">filename</code></span></dt><dd><p>     指定要被读取的文件。必须是一个绝对路径名。
+	 必须指定<code class="literal">filename</code>或<code class="literal">program</code>，
+	 但不能同时指定两个。
+    </p></dd><dt><span class="term"><code class="literal">program</code></span></dt><dd><p>     指定要执行的命令。该命令的标准输出将被读取，
+	 就像使用<code class="command">COPY FROM PROGRAM</code>一样。必须指定<code class="literal">program</code>
+	 或<code class="literal">filename</code>，但不能同时指定两个。
+    </p></dd><dt><span class="term"><code class="literal">format</code></span></dt><dd><p>     指定数据的格式，和<code class="command">COPY</code>的<code class="literal">FORMAT</code>选项相同。
+    </p></dd><dt><span class="term"><code class="literal">header</code></span></dt><dd><p>     指定数据是否具有一个头部行，和<code class="command">COPY</code>的<code class="literal">HEADER</code>选项相同。
+    </p></dd><dt><span class="term"><code class="literal">delimiter</code></span></dt><dd><p>     指定数据的定界符字符，和<code class="command">COPY</code>的<code class="literal">DELIMITER</code>选项相同。
+    </p></dd><dt><span class="term"><code class="literal">quote</code></span></dt><dd><p>     指定数据的引用字符，和<code class="command">COPY</code>的<code class="literal">QUOTE</code>选项相同。
+    </p></dd><dt><span class="term"><code class="literal">escape</code></span></dt><dd><p>     指定数据的转义字符，和<code class="command">COPY</code>的<code class="literal">ESCAPE</code>选项相同。
+    </p></dd><dt><span class="term"><code class="literal">null</code></span></dt><dd><p>     指定数据的空字符串，和<code class="command">COPY</code>的<code class="literal">NULL</code>选项相同。
+    </p></dd><dt><span class="term"><code class="literal">encoding</code></span></dt><dd><p>     指定数据的编码，和<code class="command">COPY</code>的<code class="literal">ENCODING</code>选项相同。
+    </p></dd></dl></div><p>  注意虽然<code class="command">COPY</code>允许诸如<code class="literal">HEADER</code>的选项不用一个相应的值指定，
+  但是外部表选项语法要求在所有情况下都出现一个值。要激活通常写入没有值的
+  <code class="command">COPY</code>选项，你可以传递值 TRUE，因为所有这些选项都是布尔值。
+ </p><p>  使用这个包装器创建的表的一列可以具有下列选项：
+ </p><div class="variablelist"><dl class="variablelist"><dt><span class="term"><code class="literal">force_not_null</code></span></dt><dd><p>     这是一个布尔选项。如果为真，它指定该列的值不应该与空字符串匹配（也就是表级别的<code class="literal">null</code>选项）。这和把该列放在<code class="command">COPY</code>的<code class="literal">FORCE_NOT_NULL</code>选项中具有相同的效果。
+    </p></dd><dt><span class="term"><code class="literal">force_null</code></span></dt><dd><p>     这是一个布尔选项。如果为真，它指定匹配空值字符串的列值会被返回为<code class="literal">NULL</code>，
+     即使该值被引号引用。如果没有这个选项，只有匹配空值字符串的未被引用的值会被返回为
+     <code class="literal">NULL</code>。这和在<code class="command">COPY</code>的<code class="literal">FORCE_NULL</code>
+     选项中列出该列有同样的效果。
+    </p></dd></dl></div><p>  <code class="command">COPY</code>的<code class="literal">OIDS</code>和<code class="literal">FORCE_QUOTE</code>选项当前不被<code class="literal">file_fdw</code>支持。
+ </p><p>  这些选项只能为一个外部表及其列指定，而不能在<code class="literal">file_fdw</code>外部数据包装器的选项中指定，也不能在使用该包装器的服务器或者用户映射的选项中指定。
+ </p><p>  出于安全原因，改变表级别的选项要求超级用户特权：
+  只有超级用户能够控制读取哪个文件或者运行哪个程序。
+  原则上非超级用户可以被允许改变其它选项，但是当前还不支持这样做。
+ </p><p>  当指定<code class="literal">program</code>选项时，请记住，选项字符串是通过shell执行的。
+  如果想传递任何参数到来自不受信任的源的命令，
+  必须小心去掉或逃逸任何对shell来说可能有特殊含义的字符。安全起见，最好使用固定的命令字符串，
+  或者至少避免传递任何用户输入。
+ </p><p>  对于一个使用<code class="literal">file_fdw</code>的外部表，<code class="command">EXPLAIN</code>显示要读取的文件名或要运行的程序。对于文件来说，除非指定<code class="literal">COSTS OFF</code>，否则文件尺寸（以字节计）也会被显示。
+ </p><div class="example" id="idp85732976"><p class="title"><strong>例 F.1. 为 PostgreSQL CSV 日志创建一个外部表</strong></p><div class="example-contents"><p>   一种<code class="literal">file_fdw</code>的用法是把可用的 PostgreSQL 活动日志变成一个表用于查询。要这样做，首先你必须正在将日志记录到一个 CSV 文件，这里我们称其为<code class="literal">pglog.csv</code>。首先，将<code class="literal">file_fdw</code>安装为一个扩展：
+  </p><pre class="programlisting">CREATE EXTENSION file_fdw;</pre><p>   然后创建一个外部服务器：
+
+</p><pre class="programlisting">CREATE SERVER pglog FOREIGN DATA WRAPPER file_fdw;</pre><p>
+  </p><p>   现在你已经准备好创建外部数据表。使用<code class="command">CREATE FOREIGN TABLE</code>命令，你将需要为该表定义列、CSV 文件名以及格式：
+
+</p><pre class="programlisting">CREATE FOREIGN TABLE pglog (
+  log_time timestamp(3) with time zone,
+  user_name text,
+  database_name text,
+  process_id integer,
+  connection_from text,
+  session_id text,
+  session_line_num bigint,
+  command_tag text,
+  session_start_time timestamp with time zone,
+  virtual_transaction_id text,
+  transaction_id bigint,
+  error_severity text,
+  sql_state_code text,
+  message text,
+  detail text,
+  hint text,
+  internal_query text,
+  internal_query_pos integer,
+  context text,
+  query text,
+  query_pos integer,
+  location text,
+  application_name text
+) SERVER pglog
+OPTIONS ( filename '/home/josh/data/log/pglog.csv', format 'csv' );</pre><p>
+  </p><p>   就是这样了 — 现在你能够直接查询你的日志了。当然，在生产中你会需要定义一些方法来处理日志轮转。
+  </p></div></div><br class="example-break" /></div><div class="navfooter"><hr /><table width="100%" summary="Navigation footer"><tr><td width="40%" align="left"><a accesskey="p" href="earthdistance.html">上一页</a> </td><td width="20%" align="center"><a accesskey="u" href="contrib.html">上一级</a></td><td width="40%" align="right"> <a accesskey="n" href="fuzzystrmatch.html">下一页</a></td></tr><tr><td width="40%" align="left" valign="top">F.14. earthdistance </td><td width="20%" align="center"><a accesskey="h" href="index.html">起始页</a></td><td width="40%" align="right" valign="top"> F.16. fuzzystrmatch</td></tr></table></div></body></html>

@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><title>60.6. 索引开销估计函数</title><link rel="stylesheet" type="text/css" href="stylesheet.css" /><link rev="made" href="pgsql-docs@postgresql.org" /><meta name="generator" content="DocBook XSL Stylesheets V1.79.1" /><link rel="prev" href="index-unique-checks.html" title="60.5. 索引唯一性检查" /><link rel="next" href="generic-wal.html" title="第 61 章 通用WAL 记录" /></head><body><div xmlns="http://www.w3.org/TR/xhtml1/transitional" class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="5" align="center">60.6. 索引开销估计函数</th></tr><tr><td width="10%" align="left"><a accesskey="p" href="index-unique-checks.html" title="60.5. 索引唯一性检查">上一页</a> </td><td width="10%" align="left"><a accesskey="u" href="indexam.html" title="第 60 章 索引访问方法接口定义">上一级</a></td><th width="60%" align="center">第 60 章 索引访问方法接口定义</th><td width="10%" align="right"><a accesskey="h" href="index.html" title="PostgreSQL 10.1 手册">起始页</a></td><td width="10%" align="right"> <a accesskey="n" href="generic-wal.html" title="第 61 章 通用WAL 记录">下一页</a></td></tr></table><hr></hr></div><div class="sect1" id="INDEX-COST-ESTIMATION"><div class="titlepage"><div><div><h2 class="title" style="clear: both">60.6. 索引开销估计函数</h2></div></div></div><p>   <code class="function">amcostestimate</code>函数被给定描述一个可能的索引扫描的信息，包括决定在索引中使用的 WHERE 和 ORDER BY 子句的列表。它必须返回访问该索引的开销估计以及 WHERE 子句的选择度（也就是说，在索引扫描期间将检索的行在父表中所占据的比例）。对于简单情况，几乎开销估计器的所有工作都可以通过调用优化器中的标准过程完成；有<code class="function">amcostestimate</code>函数的目的是允许索引访问方法提供和索引类型相关的知识，这种情况下可以改进标准的估计。
+  </p><p>   每个<code class="function">amcostestimate</code>函数必须有 signature：
+
+</p><pre class="programlisting">void
+amcostestimate (PlannerInfo *root,
+                IndexPath *path,
+                double loop_count,
+                Cost *indexStartupCost,
+                Cost *indexTotalCost,
+                Selectivity *indexSelectivity,
+                double *indexCorrelation);</pre><p>
+
+   前三个参数是输入参数：
+
+   </p><div class="variablelist"><dl class="variablelist"><dt><span class="term"><em class="parameter"><code>root</code></em></span></dt><dd><p>       规划器的有关正在被处理的查询的信息。
+      </p></dd><dt><span class="term"><em class="parameter"><code>path</code></em></span></dt><dd><p>       被考虑的索引访问路径。其中除了开销和选择度值之外的域都有效。
+      </p></dd><dt><span class="term"><em class="parameter"><code>loop_count</code></em></span></dt><dd><p>       应该被开销估计所考虑的索引扫描重复次数。当考虑用在一个嵌套循环连接中的参数化扫描时，这个参数通常会大于 1 。注意代价估计应该仍然是对于一次扫描的，一个更大的<em class="parameter"><code>loop_count</code></em>意味着可能在多次扫描间允许一些缓冲效果比较合适。
+      </p></dd></dl></div><p>
+  </p><p>   后四个参数是传引用的输出参数：
+
+   </p><div class="variablelist"><dl class="variablelist"><dt><span class="term"><em class="parameter"><code>*indexStartupCost</code></em></span></dt><dd><p>       设置为索引启动处理的开销。
+      </p></dd><dt><span class="term"><em class="parameter"><code>*indexTotalCost</code></em></span></dt><dd><p>       设置为索引处理的总开销。
+      </p></dd><dt><span class="term"><em class="parameter"><code>*indexSelectivity</code></em></span></dt><dd><p>       设置为索引的选择度。
+      </p></dd><dt><span class="term"><em class="parameter"><code>*indexCorrelation</code></em></span></dt><dd><p>       设置为索引扫描顺序和下层的表的顺序之间的相关性。
+      </p></dd></dl></div><p>
+  </p><p>   请注意开销估计函数必须用 C 编写，而不能用 SQL 或者任何可用的过程语言，因为它们必须访问规划器/优化器的内部数据结构。
+  </p><p>   索引访问开销应该采用被<code class="filename">src/backend/optimizer/path/costsize.c</code>使用的参数进行计算：一次顺序磁盘块获取的开销是<code class="varname">seq_page_cost</code>、一次非顺序获取的开销是<code class="varname">random_page_cost</code>并且处理一个索引行的开销通常应该是<code class="varname">cpu_index_tuple_cost</code>。另外，在索引处理期间（尤其是索引条件本身的计算）调用的任何比较操作符都会耗费<code class="varname">cpu_operator_cost</code>倍数的开销。
+  </p><p>   访问开销应该包括所有与扫描索引本身相关的磁盘和 CPU 开销，但是<span class="emphasis"><em>不</em></span>包括检索或者处理被索引标识出来的父表行的开销。
+  </p><p>   <span class="quote">“<span class="quote">启动开销</span>”</span>是整个扫描开销中的一部分：在能够开始取第一行之前必须花掉的开销。对于大多数索引这个开销是零，但 是那些启动开销很大的索引类型不会把它设置为零。
+  </p><p>   <em class="parameter"><code>indexSelectivity</code></em>应该设置成在索引扫描期间，父表行被检索的估计比例。在一个有损查询的情况下，这个值通常高于实际通过 给定查询条件的行的比例。
+  </p><p>   <em class="parameter"><code>indexCorrelation</code></em>应该被设置成索引顺序和表顺序之间的相关性（范围从 -1.0 到 1.0）。这个数值被用于调整从父表中取出行的开销估计。
+  </p><p>   当<em class="parameter"><code>loop_count</code></em>大于一时，返回的数应该是该索引任何一次扫描的平均期望值。
+  </p><div class="procedure" id="idp59636064"><p class="title"><strong>开销估计</strong></p><p>    一个典型的开销估计器会像下面这样进行处理：
+   </p><ol class="procedure" type="1"><li class="step"><p>     基于给出的条件情况，估计并返回父表行将被访问的比例。如果缺乏索引类型相关的知识，那么使用标准的优化器函数<code class="function">clauselist_selectivity()</code>：
+
+</p><pre class="programlisting">*indexSelectivity = clauselist_selectivity(root, path-&gt;indexquals,
+                                           path-&gt;indexinfo-&gt;rel-&gt;relid,
+                                           JOIN_INNER, NULL);</pre><p>
+    </p></li><li class="step"><p>     估计在扫描过程中将被访问的索引行数。对于许多索引类型，这个等于<em class="parameter"><code>indexSelectivity</code></em>乘以索引中的行数，但是可能更多（请注意，页面和行中的索引尺寸从<code class="literal">path-&gt;indexinfo</code>结构中获得）。
+    </p></li><li class="step"><p>     估计在扫描中将检索的索引页面数量。这个可能就是<em class="parameter"><code>indexSelectivity</code></em>乘以索引的总页面数。
+    </p></li><li class="step"><p>     计算索引访问开销。一个通用的估计器可能会：
+
+</p><pre class="programlisting">/*
+ * Our generic assumption is that the index pages will be read
+ * sequentially, so they cost seq_page_cost each, not random_page_cost.
+ * Also, we charge for evaluation of the indexquals at each index row.
+ * All the costs are assumed to be paid incrementally during the scan.
+ */
+cost_qual_eval(&amp;index_qual_cost, path-&gt;indexquals, root);
+*indexStartupCost = index_qual_cost.startup;
+*indexTotalCost = seq_page_cost * numIndexPages +
+    (cpu_index_tuple_cost + index_qual_cost.per_tuple) * numIndexTuples;</pre><p>
+
+     不过，上面没有考虑重复索引扫描间的索引读分期补偿（amortization）。
+    </p></li><li class="step"><p>     估计索引的相关性。对于一个简单的在单列有序索引，这个值可以从 pg_statistic 中检索。如果相关性是未知，那么保守的估计是零（没有相关性）。
+    </p></li></ol></div><p>   开销估计器函数的例子可以在<code class="filename">src/backend/utils/adt/selfuncs.c</code>中找到。
+  </p></div><div class="navfooter"><hr /><table width="100%" summary="Navigation footer"><tr><td width="40%" align="left"><a accesskey="p" href="index-unique-checks.html">上一页</a> </td><td width="20%" align="center"><a accesskey="u" href="indexam.html">上一级</a></td><td width="40%" align="right"> <a accesskey="n" href="generic-wal.html">下一页</a></td></tr><tr><td width="40%" align="left" valign="top">60.5. 索引唯一性检查 </td><td width="20%" align="center"><a accesskey="h" href="index.html">起始页</a></td><td width="40%" align="right" valign="top"> 第 61 章 通用WAL 记录</td></tr></table></div></body></html>

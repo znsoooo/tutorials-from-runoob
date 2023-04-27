@@ -1,0 +1,302 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><title>9.7. 模式匹配</title><link rel="stylesheet" type="text/css" href="stylesheet.css" /><link rev="made" href="pgsql-docs@postgresql.org" /><meta name="generator" content="DocBook XSL Stylesheets V1.79.1" /><link rel="prev" href="functions-bitstring.html" title="9.6. 位串函数和操作符" /><link rel="next" href="functions-formatting.html" title="9.8. 数据类型格式化函数" /></head><body><div xmlns="http://www.w3.org/TR/xhtml1/transitional" class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="5" align="center">9.7. 模式匹配</th></tr><tr><td width="10%" align="left"><a accesskey="p" href="functions-bitstring.html" title="9.6. 位串函数和操作符">上一页</a> </td><td width="10%" align="left"><a accesskey="u" href="functions.html" title="第 9 章 函数和操作符">上一级</a></td><th width="60%" align="center">第 9 章 函数和操作符</th><td width="10%" align="right"><a accesskey="h" href="index.html" title="PostgreSQL 10.1 手册">起始页</a></td><td width="10%" align="right"> <a accesskey="n" href="functions-formatting.html" title="9.8. 数据类型格式化函数">下一页</a></td></tr></table><hr></hr></div><div class="sect1" id="FUNCTIONS-MATCHING"><div class="titlepage"><div><div><h2 class="title" style="clear: both">9.7. 模式匹配</h2></div></div></div><div class="toc"><dl class="toc"><dt><span class="sect2"><a href="functions-matching.html#FUNCTIONS-LIKE">9.7.1. <code class="function">LIKE</code></a></span></dt><dt><span class="sect2"><a href="functions-matching.html#FUNCTIONS-SIMILARTO-REGEXP">9.7.2. <code class="function">SIMILAR TO</code>正则表达式</a></span></dt><dt><span class="sect2"><a href="functions-matching.html#FUNCTIONS-POSIX-REGEXP">9.7.3. <acronym class="acronym">POSIX</acronym>正则表达式</a></span></dt></dl></div><a id="idp10883088" class="indexterm"></a><p>    <span class="productname">PostgreSQL</span>提供了三种独立的实现模式匹配的方法：<acronym class="acronym">SQL</acronym> <code class="function">LIKE</code>操作符、更近一些的<code class="function">SIMILAR TO</code>操作符（SQL:1999 里添加进来的）和<acronym class="acronym">POSIX</acronym>-风格的正则表达式。除了这些基本的<span class="quote">“<span class="quote">这个串匹配这个模式吗？</span>”</span>操作符外，还有一些函数可用于提取或替换匹配子串并在匹配位置分离一个串。
+   </p><div class="tip"><h3 class="title">提示</h3><p>     如果你的模式匹配的要求超出了这些，请考虑用 Perl 或 Tcl 写一个用户定义的函数。
+    </p></div><div class="caution"><h3 class="title">小心</h3><p>     当大多数正则表达式搜索可以很快执行时，
+     正则表达式可以被设计，采取时间和存储过程的任意数量。
+     警惕接受来自敌对来源的正则表达式搜索模式。
+     如果你必须这样做，那么建议强加语句超时。
+    </p><p>     使用<code class="function">SIMILAR TO</code>模式的搜索具有相同的安全隐患，
+     因为<code class="function">SIMILAR TO</code>
+     提供了许多诸如<acronym class="acronym">POSIX</acronym>风格的规则表达式相同的能力。
+    </p><p>     <code class="function">LIKE</code>搜索，比其它两个选项更简单，安全使用可能的敌对模式源。
+    </p></div><div class="sect2" id="FUNCTIONS-LIKE"><div class="titlepage"><div><div><h3 class="title">9.7.1. <code class="function">LIKE</code></h3></div></div></div><a id="idp10894368" class="indexterm"></a><pre class="synopsis"><em class="replaceable"><code>string</code></em> LIKE <em class="replaceable"><code>pattern</code></em> [<span class="optional">ESCAPE <em class="replaceable"><code>escape-character</code></em></span>]
+<em class="replaceable"><code>string</code></em> NOT LIKE <em class="replaceable"><code>pattern</code></em> [<span class="optional">ESCAPE <em class="replaceable"><code>escape-character</code></em></span>]</pre><p>     如果该<em class="replaceable"><code>string</code></em>匹配了提供的<em class="replaceable"><code>pattern</code></em>，那么<code class="function">LIKE</code>表达式返回真（和预期的一样，如果<code class="function">LIKE</code>返回真，那么<code class="function">NOT LIKE</code>表达式返回假， 反之亦然。一个等效的表达式是<code class="literal">NOT (<em class="replaceable"><code>string</code></em> LIKE <em class="replaceable"><code>pattern</code></em>)</code>）。
+    </p><p>     如果<em class="replaceable"><code>pattern</code></em>不包含百分号或者下划线，那么该模式只代表它本身的串；这时候<code class="function">LIKE</code>的行为就象等号操作符。在<em class="replaceable"><code>pattern</code></em>里的下划线 （<code class="literal">_</code>）代表（匹配）任何单个字符； 而一个百分号（<code class="literal">%</code>）匹配任何零或更多个字符的序列。
+    </p><p>    一些例子：
+</p><pre class="programlisting">'abc' LIKE 'abc'    <em class="lineannotation"><span class="lineannotation">true</span></em>
+'abc' LIKE 'a%'     <em class="lineannotation"><span class="lineannotation">true</span></em>
+'abc' LIKE '_b_'    <em class="lineannotation"><span class="lineannotation">true</span></em>
+'abc' LIKE 'c'      <em class="lineannotation"><span class="lineannotation">false</span></em></pre><p>
+   </p><p>    <code class="function">LIKE</code>模式匹配总是覆盖整个串。因此，要匹配在串内任何位置的序列，该模式必须以百分号开头和结尾。
+   </p><p>    要匹配文本的下划线或者百分号，而不是匹配其它字符， 在<em class="replaceable"><code>pattern</code></em>里相应的字符必须 前导逃逸字符。缺省的逃逸字符是反斜线，但是你可以用<code class="literal">ESCAPE</code>子句指定一个不同的逃逸字符。 要匹配逃逸字符本身，写两个逃逸字符。
+   </p><div class="note"><h3 class="title">注意</h3><p>     如果你关掉了<a class="xref" href="runtime-config-compatible.html#GUC-STANDARD-CONFORMING-STRINGS">standard_conforming_strings</a>，你在文串常量中写的任何反斜线都需要被双写。详见<a class="xref" href="sql-syntax-lexical.html#SQL-SYNTAX-STRINGS" title="4.1.2.1. 字符串常量">第 4.1.2.1 节</a>。
+    </p></div><p>    请注意反斜线在串文本里已经有特殊含义了，所以如果你写一个 包含反斜线的模式常量，那你就要在 SQL 语句里写两个反斜线。 因此，写一个匹配单个反斜线的模式实际上要在语句里写四个反斜线。 你可以通过用 ESCAPE 选择一个不同的逃逸字符 来避免这样；这样反斜线就不再是 LIKE 的特殊字符了。 但仍然是字符文本分析器的特殊字符，所以你还是需要两个反斜线。)
+    我们也可以通过写<code class="literal">ESCAPE ''</code>的方式不选择逃逸字符，这样可以有效地禁用逃逸机制，但是没有办法关闭下划线和百分号在模式中的特殊含义。
+   </p><p>    关键字<code class="token">ILIKE</code>可以用于替换<code class="token">LIKE</code>， 它令该匹配根据活动区域成为大小写无关。这个不属于<acronym class="acronym">SQL</acronym>标准而是一个<span class="productname">PostgreSQL</span>扩展。
+   </p><p>    操作符<code class="literal">~~</code>等效于<code class="function">LIKE</code>， 而<code class="literal">~~*</code>对应<code class="function">ILIKE</code>。 还有 <code class="literal">!~~</code>和<code class="literal">!~~*</code>操作符分别代表<code class="function">NOT LIKE</code>和<code class="function">NOT ILIKE</code>。所有这些操作符都是<span class="productname">PostgreSQL</span>特有的。
+   </p></div><div class="sect2" id="FUNCTIONS-SIMILARTO-REGEXP"><div class="titlepage"><div><div><h3 class="title">9.7.2. <code class="function">SIMILAR TO</code>正则表达式</h3></div></div></div><a id="idp10926752" class="indexterm"></a><a id="idp10927440" class="indexterm"></a><a id="idp10928128" class="indexterm"></a><pre class="synopsis"><em class="replaceable"><code>string</code></em> SIMILAR TO <em class="replaceable"><code>pattern</code></em> [<span class="optional">ESCAPE <em class="replaceable"><code>escape-character</code></em></span>]
+<em class="replaceable"><code>string</code></em> NOT SIMILAR TO <em class="replaceable"><code>pattern</code></em> [<span class="optional">ESCAPE <em class="replaceable"><code>escape-character</code></em></span>]</pre><p>    <code class="function">SIMILAR TO</code>操作符根据自己的模式是否匹配给定串而返回真或者假。 它和<code class="function">LIKE</code>非常类似，只不过它使用 SQL 标准定义的正则表达式理解模式。 SQL 正则表达式是在<code class="function">LIKE</code>标记和普通的正则表达式标记的奇怪的杂交。
+   </p><p>    类似<code class="function">LIKE</code>，<code class="function">SIMILAR TO</code>操作符只有在它的模式匹配整个串的时候才能成功；这一点和普通的 正则表达式的行为不同，在普通的正则表达式里，模式匹配串的任意部分。 和<code class="function">LIKE</code>类似的地方还有，<code class="function">SIMILAR TO</code>使用<code class="literal">_</code>和<code class="literal">%</code>作为分别代表任意单个字符和任意串的通配符（这些可以比得上 POSIX 正则表达式里的<code class="literal">.</code>和<code class="literal">.*</code>）。
+   </p><p>    除了这些从<code class="function">LIKE</code>借用的功能之外，<code class="function">SIMILAR TO</code>支持下面这些从 POSIX 正则表达式借用的 模式匹配元字符：
+
+   </p><div class="itemizedlist"><ul class="itemizedlist" style="list-style-type: disc; "><li class="listitem"><p>      <code class="literal">|</code>表示选择（两个候选之一）。
+     </p></li><li class="listitem"><p>      <code class="literal">*</code>表示重复前面的项零次或更多次。
+     </p></li><li class="listitem"><p>      <code class="literal">+</code>表示重复前面的项一次或更多次。
+     </p></li><li class="listitem"><p>      <code class="literal">?</code>表示重复前面的项零次或一次。
+     </p></li><li class="listitem"><p>      <code class="literal">{</code><em class="replaceable"><code>m</code></em><code class="literal">}</code>表示重复前面的项刚好<em class="replaceable"><code>m</code></em>次。
+     </p></li><li class="listitem"><p>      <code class="literal">{</code><em class="replaceable"><code>m</code></em><code class="literal">,}</code>表示重复前面的项<em class="replaceable"><code>m</code></em>次或更多次。
+     </p></li><li class="listitem"><p>      <code class="literal">{</code><em class="replaceable"><code>m</code></em><code class="literal">,</code><em class="replaceable"><code>n</code></em><code class="literal">}</code>表示重复前面的项至少<em class="replaceable"><code>m</code></em>次并且不超过<em class="replaceable"><code>n</code></em>次。
+     </p></li><li class="listitem"><p>      可以使用圆括号<code class="literal">()</code>把多个项组合成一个逻辑项。
+     </p></li><li class="listitem"><p>      一个方括号表达式<code class="literal">[...]</code>声明一个字符类，就像 POSIX 正则表达式一样。
+     </p></li></ul></div><p>
+
+    注意点号（<code class="literal">.</code>）不是<code class="function">SIMILAR TO</code>的一个元字符。
+   </p><p>    和<code class="function">LIKE</code>一样，反斜线禁用所有这些元字符的特殊含义；当然我们也可以用<code class="literal">ESCAPE</code>指定一个不同的逃逸字符。
+   </p><p>    一些例子：
+</p><pre class="programlisting">'abc' SIMILAR TO 'abc'      <em class="lineannotation"><span class="lineannotation">true</span></em>
+'abc' SIMILAR TO 'a'        <em class="lineannotation"><span class="lineannotation">false</span></em>
+'abc' SIMILAR TO '%(b|d)%'  <em class="lineannotation"><span class="lineannotation">true</span></em>
+'abc' SIMILAR TO '(b|c)%'   <em class="lineannotation"><span class="lineannotation">false</span></em></pre><p>
+   </p><p>    带三个参数的<code class="function">substring</code>，即<code class="function">substring(<em class="replaceable"><code>string</code></em> from <em class="replaceable"><code>pattern</code></em> for <em class="replaceable"><code>escape-character</code></em>)</code>，提供了抽取一个匹配 SQL 正则表达式的子串的方法。和<code class="literal">SIMILAR TO</code>一样，声明的模式必须匹配整个数据串，否则函数失败并返回空值。为了标识在成功的时候应该返回的模式部分，模式 必须包含逃逸字符的两次出现，并且后面要跟上双引号（<code class="literal">"</code>）。匹配这两个标记之间的模式的文本将被返回。
+   </p><p>    一些例子，使用<code class="literal">#"</code>定界返回串：
+</p><pre class="programlisting">substring('foobar' from '%#"o_b#"%' for '#')   <em class="lineannotation"><span class="lineannotation">oob</span></em>
+substring('foobar' from '#"o_b#"%' for '#')    <em class="lineannotation"><span class="lineannotation">NULL</span></em></pre><p>
+   </p></div><div class="sect2" id="FUNCTIONS-POSIX-REGEXP"><div class="titlepage"><div><div><h3 class="title">9.7.3. <acronym class="acronym">POSIX</acronym>正则表达式</h3></div></div></div><a id="idp10972496" class="indexterm"></a><a id="idp10973856" class="indexterm"></a><a id="idp10974544" class="indexterm"></a><a id="idp10975232" class="indexterm"></a><a id="idp10975920" class="indexterm"></a><a id="idp10976608" class="indexterm"></a><a id="idp10977296" class="indexterm"></a><p>    <a class="xref" href="functions-matching.html#FUNCTIONS-POSIX-TABLE" title="表 9.14. 正则表达式匹配操作符">表 9.14</a>列出了所有可用于 POSIX 正则表达式模式匹配的操作符。
+   </p><div class="table" id="FUNCTIONS-POSIX-TABLE"><p class="title"><strong>表 9.14. 正则表达式匹配操作符</strong></p><div class="table-contents"><table class="table" summary="正则表达式匹配操作符" border="1"><colgroup><col /><col /><col /></colgroup><thead><tr><th>操作符</th><th>描述</th><th>例子</th></tr></thead><tbody><tr><td> <code class="literal">~</code> </td><td>匹配正则表达式，大小写敏感</td><td><code class="literal">'thomas' ~ '.*thomas.*'</code></td></tr><tr><td> <code class="literal">~*</code> </td><td>匹配正则表达式，大小写不敏感</td><td><code class="literal">'thomas' ~* '.*Thomas.*'</code></td></tr><tr><td> <code class="literal">!~</code> </td><td>不匹配正则表达式，大小写敏感</td><td><code class="literal">'thomas' !~ '.*Thomas.*'</code></td></tr><tr><td> <code class="literal">!~*</code> </td><td>不匹配正则表达式，大小写不敏感</td><td><code class="literal">'thomas' !~* '.*vadim.*'</code></td></tr></tbody></table></div></div><br class="table-break" /><p>     <acronym class="acronym">POSIX</acronym>正则表达式提供了比<code class="function">LIKE</code>和<code class="function">SIMILAR TO</code>操作符更强大的含义。许多 Unix 工具，例如<code class="command">egrep</code>、<code class="command">sed</code>或<code class="command">awk</code>使用一种与我们这里描述的类似的模式匹配语言。
+    </p><p>     正则表达式是一个字符序列，它是定义一个串集合 （一个<em class="firstterm">正则集</em>）的缩写。 如果一个串是正则表达式描述的正则集中的一员时， 我们就说这个串匹配该正则表达式。 和<code class="function">LIKE</code>一样，模式字符准确地匹配串字符， 除非在正则表达式语言里有特殊字符 — 不过正则表达式用的 特殊字符和<code class="function">LIKE</code>用的不同。 和<code class="function">LIKE</code>模式不一样的是，正则表达式允许匹配串里的任何位置，除非该正则表达式显式地挂接在串的开头或者结尾。
+    </p><p>     一些例子：
+</p><pre class="programlisting">'abc' ~ 'abc'    <em class="lineannotation"><span class="lineannotation">true</span></em>
+'abc' ~ '^a'     <em class="lineannotation"><span class="lineannotation">true</span></em>
+'abc' ~ '(b|d)'  <em class="lineannotation"><span class="lineannotation">true</span></em>
+'abc' ~ '^(b|c)' <em class="lineannotation"><span class="lineannotation">false</span></em></pre><p>
+    </p><p>     <acronym class="acronym">POSIX</acronym>模式语言的详细描述见下文。
+    </p><p>     带两个参数的<code class="function">substring</code>函数，即<code class="function">substring(<em class="replaceable"><code>string</code></em> from <em class="replaceable"><code>pattern</code></em>)</code>，提供了抽取一个匹配 POSIX 正则表达式模式的子串的方法。如果没有匹配它返回空值，否则就是文本中匹配模式的那部分。 但是如果该模式包含任何圆括号，那么将返回匹配第一对子表达式（对应第一个左圆括号的） 的文本。如果你想在表达式里使用圆括号而又不想导致这个例外，那么你可以在整个表达式外边放上一对圆括号。 如果你需要在想抽取的子表达式前有圆括号，参阅后文描述的非捕获性圆括号。
+    </p><p>    一些例子：
+</p><pre class="programlisting">substring('foobar' from 'o.b')     <em class="lineannotation"><span class="lineannotation">oob</span></em>
+substring('foobar' from 'o(.)b')   <em class="lineannotation"><span class="lineannotation">o</span></em></pre><p>
+   </p><p>     <code class="function">regexp_replace</code>函数提供了将匹配 POSIX 正则表达式模式的子串替换为新文本的功能。 它的语法是 <code class="function">regexp_replace</code>(<em class="replaceable"><code>source</code></em>, <em class="replaceable"><code>pattern</code></em>, <em class="replaceable"><code>replacement</code></em> [<span class="optional">, <em class="replaceable"><code>flags</code></em> </span>])。 如果没有匹配<em class="replaceable"><code>pattern</code></em>，那么返回不加修改的<em class="replaceable"><code>source</code></em>串。 如果有匹配，则返回的<em class="replaceable"><code>source</code></em>串里面的匹配子串将被<em class="replaceable"><code>replacement</code></em>串替换掉。<em class="replaceable"><code>replacement</code></em>串可以包含<code class="literal">\</code><em class="replaceable"><code>n</code></em>， 其中<code class="literal">\</code><em class="replaceable"><code>n</code></em>是 1 到 9， 表明源串里匹配模式里第<em class="replaceable"><code>n</code></em>个圆括号子表达式的子串应该被插入， 并且它可以包含<code class="literal">\&amp;</code>表示应该插入匹配整个模式的子串。如果你需要放一个文字形式的反斜线在替换文本里，那么写<code class="literal">\\</code>。<em class="replaceable"><code>flags</code></em>参数是一个可选的文本串，它包含另个或更多单字母标志，这些标志可以改变函数的行为。标志<code class="literal">i</code>指定大小写无关的匹配，而标志<code class="literal">g</code>指定替换每一个匹配的子串而不仅仅是第一个。支持的标志（但不是<code class="literal">g</code>）在<a class="xref" href="functions-matching.html#POSIX-EMBEDDED-OPTIONS-TABLE" title="表 9.22. ARE 嵌入选项字母">表 9.22</a>中描述。
+    </p><p>    一些例子：
+</p><pre class="programlisting">regexp_replace('foobarbaz', 'b..', 'X')
+                                   <em class="lineannotation"><span class="lineannotation">fooXbaz</span></em>
+regexp_replace('foobarbaz', 'b..', 'X', 'g')
+                                   <em class="lineannotation"><span class="lineannotation">fooXX</span></em>
+regexp_replace('foobarbaz', 'b(..)', E'X\\1Y', 'g')
+                                   <em class="lineannotation"><span class="lineannotation">fooXarYXazY</span></em></pre><p>
+   </p><p>     <code class="function">regexp_match</code>
+	 函数返回从POSIX正则表达式模式首次匹配到字符串后捕获的子字符串的文本数组。
+	 其语法是<code class="function">regexp_match</code>(<em class="replaceable"><code>string</code></em>,
+     <em class="replaceable"><code>pattern</code></em> [<span class="optional">, <em class="replaceable"><code>flags</code></em> </span>])。
+	 如果没有匹配，结果是<code class="literal">NULL</code>。如果找到匹配，
+	 并且<em class="replaceable"><code>pattern</code></em>不包含括起来的子表达式，
+	 那么结果是包含匹配整个模式的子串的单元素文本数组。
+	 如果找到匹配，并且<em class="replaceable"><code>pattern</code></em>包含带括号的子表达式，
+	 那么结果是一个文本数组，其中的第<em class="replaceable"><code>n</code></em>个元素是匹配
+	 <em class="replaceable"><code>pattern</code></em>的括号括起来的第<em class="replaceable"><code>n</code></em>
+	 个子表达式的子字符串（不包括<span class="quote">“<span class="quote">非捕获</span>”</span>括号；详见下文）。
+     <em class="replaceable"><code>flags</code></em>参数是一个可选的文本字符串，
+	 包含零个或多个单字母标志，用于更改函数的行为。支持的标志在
+	 <a class="xref" href="functions-matching.html#POSIX-EMBEDDED-OPTIONS-TABLE" title="表 9.22. ARE 嵌入选项字母">表 9.22</a>中描述。
+    </p><p>    一些例子：
+</p><pre class="programlisting">SELECT regexp_match('foobarbequebaz', 'bar.*que');
+ regexp_match
+--------------
+ {barbeque}
+(1 row)
+
+SELECT regexp_match('foobarbequebaz', '(bar)(beque)');
+ regexp_match
+--------------
+ {bar,beque}
+(1 row)
+</pre><p>
+    在通常情况下，您只需要匹配的整个子字符串或<code class="literal">NULL</code>来匹配，请写下类似的内容
+</p><pre class="programlisting">SELECT (regexp_match('foobarbequebaz', 'bar.*que'))[1];
+ regexp_match
+--------------
+ barbeque
+(1 row)</pre><p>
+   </p><p>     <code class="function">regexp_matches</code>函数返回一组捕获的字符串的文本数组，
+	 该字符串是通过将POSIX正则表达式模式匹配到字符串而得到的。
+	 它具有与<code class="function">regexp_match</code>相同的语法。如果没有匹配，
+	 则此函数不返回任何行，如果有一个匹配且没有给出<code class="literal">g</code>标志，则返回一行；
+	 如果有<em class="replaceable"><code>N</code></em>个匹配，并给出<code class="literal">g</code>标志，则返回<em class="replaceable"><code>N</code></em>行。
+	 每个返回的行都是一个文本数组，它包含整个匹配的子字符串或匹配
+	 <em class="replaceable"><code>pattern</code></em>的括号子表达式的子字符串，就像上面针对
+	 <code class="function">regexp_match</code>所描述的一样。<code class="function">regexp_matches</code>
+	 接受<a class="xref" href="functions-matching.html#POSIX-EMBEDDED-OPTIONS-TABLE" title="表 9.22. ARE 嵌入选项字母">表 9.22</a>中显示的所有标志，
+	 再加上命令它返回所有匹配而不仅仅是第一个匹配的<code class="literal">g</code>标志。
+    </p><p>    一些例子:
+</p><pre class="programlisting">SELECT regexp_matches('foo', 'not there');
+ regexp_matches
+----------------
+(0 rows)
+   
+SELECT regexp_matches('foobarbequebazilbarfbonk', '(b[^b]+)(b[^b]+)', 'g');
+ regexp_matches
+----------------
+ {bar,beque}
+ {bazil,barf}
+(2 rows)</pre><p>
+   </p><div class="tip"><h3 class="title">提示</h3><p>     在大多数情况下，<code class="function">regexp_matches()</code>应该与<code class="literal">g</code>
+	 标志一起使用，因为如果你只想要第一次匹配，使用<code class="function">regexp_match()</code>
+	 更简单有效。但是，<code class="function">regexp_match()</code>仅存在于
+	 <span class="productname">PostgreSQL</span>版本10及更高版本中。在较旧版本中工作时，
+	 常见的技巧是将<code class="function">regexp_matches()</code>调用放在子查询中，例如：
+</p><pre class="programlisting">SELECT col1, (SELECT regexp_matches(col2, '(bar)(beque)')) FROM tab;</pre><p>
+     如果有匹配，这将生成一个文本数组，如果不匹配则返回<code class="literal">NULL</code>，
+	 就像<code class="function">regexp_match()</code>所做的一样。如果没有子查询，
+	 那么这个查询根本就不会产生输出，因为没有匹配的表行，这通常不是所需的行为。
+    </p></div><p>     <code class="function">regexp_split_to_table</code>把一个 POSIX 正则表达式模式当作一个定界符来分离一个串。它的语法形式是<code class="function">regexp_split_to_table</code>(<em class="replaceable"><code>string</code></em>, <em class="replaceable"><code>pattern</code></em> [<span class="optional">, <em class="replaceable"><code>flags</code></em> </span>])。如果没有与<em class="replaceable"><code>pattern</code></em>的匹配，该函数返回<em class="replaceable"><code>string</code></em>。如果有至少有一个匹配，对每一个匹配它都返回从上一个匹配的末尾（或者串的开头）到这次匹配开头之间的文本。当没有更多匹配时，它返回从上一次匹配的末尾到串末尾之间的文本。<em class="replaceable"><code>flags</code></em>参数是一个可选的文本串，它包含零个或更多单字母标志，这些标识可以改变该函数的行为。<code class="function">regexp_split_to_table</code>能支持的标志在<a class="xref" href="functions-matching.html#POSIX-EMBEDDED-OPTIONS-TABLE" title="表 9.22. ARE 嵌入选项字母">表 9.22</a>中描述。
+    </p><p>     <code class="function">regexp_split_to_array</code>函数的行为和<code class="function">regexp_split_to_table</code>相同，不过<code class="function">regexp_split_to_array</code>会把它的结果以一个<code class="type">text</code>数组的形式返回。它的语法是<code class="function">regexp_split_to_array</code>(<em class="replaceable"><code>string</code></em>, <em class="replaceable"><code>pattern</code></em> [<span class="optional">, <em class="replaceable"><code>flags</code></em> </span>])。这些参数和<code class="function">regexp_split_to_table</code>的相同。
+    </p><p>    一些例子：
+</p><pre class="programlisting">
+SELECT foo FROM regexp_split_to_table('the quick brown fox jumps over the lazy dog', E'\\s+') AS foo;
+  foo   
+-------
+ the    
+ quick  
+ brown  
+ fox    
+ jumps 
+ over   
+ the    
+ lazy   
+ dog    
+(9 rows)
+
+SELECT regexp_split_to_array('the quick brown fox jumps over the lazy dog', E'\\s+');
+              regexp_split_to_array             
+-----------------------------------------------
+ {the,quick,brown,fox,jumps,over,the,lazy,dog}
+(1 row)
+
+SELECT foo FROM regexp_split_to_table('the quick brown fox', E'\\s*') AS foo;
+ foo 
+-----
+ t         
+ h         
+ e         
+ q         
+ u         
+ i         
+ c         
+ k         
+ b         
+ r         
+ o         
+ w         
+ n         
+ f         
+ o         
+ x         
+(16 rows)</pre><p>
+   </p><p>    正如上一个例子所示，正则表达式分离函数会忽略零长度的匹配，这种匹配发生在串的开头或结尾或者正好发生在前一个匹配之后。这和正则表达式匹配的严格定义是相悖的，后者由<code class="function">regexp_match</code>和<code class="function">regexp_matches</code>实现，但是通常前者是实际中最常用的行为。其他软件系统如Perl也使用相似的定义。
+   </p><div class="sect3" id="POSIX-SYNTAX-DETAILS"><div class="titlepage"><div><div><h4 class="title">9.7.3.1. 正则表达式细节</h4></div></div></div><p>    <span class="productname">PostgreSQL</span>的正则表达式是使用 Henry Spencer 写的一个包来实现的。下面的正则表达式的大部分描述都是从他的手册页中逐字拷贝过来的。
+   </p><p>    正则表达式（<acronym class="acronym">RE</acronym>），在<acronym class="acronym">POSIX</acronym> 1003.2 中定义， 它有两种形式：<em class="firstterm">扩展</em>的<acronym class="acronym">RE</acronym>或者是<acronym class="acronym">ERE</acronym>（大概地说就是那些在<code class="command">egrep</code>里的）， <em class="firstterm">基本</em>的<acronym class="acronym">RE</acronym>或者是<acronym class="acronym">BRE</acronym>（大概地说就是那些在<code class="command">ed</code>里的）。<span class="productname">PostgreSQL</span>支持两种形式，并且还实现了一些POSIX标准中没有但是在类似 Perl 或者 Tcl 这样的语言中得到广泛应用的一些扩展。使用了那些非POSIX扩展的<acronym class="acronym">RE</acronym>叫<em class="firstterm">高级</em><acronym class="acronym">RE</acronym>， 或者本文档里说的<acronym class="acronym">ARE</acronym>。ARE 几乎完全是 ERE 的超集，但是 BRE 有几个符号上的不兼容（以及更多的限制）。我们首先描述 ARE 和 ERE 形式， 描述那些只适用于 ARE 的特性，然后描述 BRE 的区别是什么。
+   </p><div class="note"><h3 class="title">注意</h3><p>     <span class="productname">PostgreSQL</span>初始时总是推测一个正则表达式遵循 ARE 规则。但是，可以通过为 RE 模式预置一个<em class="firstterm">embedded option</em>来选择限制更多的 ERE 或 BRE 规则，如<a class="xref" href="functions-matching.html#POSIX-METASYNTAX" title="9.7.3.4. 正则表达式元语法">第 9.7.3.4 节</a>中所述。这对为期望准确的<acronym class="acronym">POSIX</acronym> 1003.2 规则的应用提供兼容性很有用。
+    </p></div><p>    一个正则表达式被定义为一个或更多<em class="firstterm">分支</em>，它们之间被<code class="literal">|</code>分隔。只要能匹配其中一个分支的东西都能匹配正则表达式。
+   </p><p>    一个分支是一个或多个<em class="firstterm">量化原子</em>或者<em class="firstterm">约束</em>连接而成。一个原子匹配第一个，然后后面的原子匹配第二个， 以此类推；一个空分支匹配空串。
+   </p><p>    一个量化原子是一个<em class="firstterm">原子</em>， 后面可能跟着一个<em class="firstterm">量词</em>。没有量词的时候，它匹配一个原子， 有量词的时候，它可以匹配若干个原子。一个<em class="firstterm">原子</em>可以是在<a class="xref" href="functions-matching.html#POSIX-ATOMS-TABLE" title="表 9.15. 正则表达式原子">表 9.15</a>里面显示的任何可能。 可能的量词和它们的含义在<a class="xref" href="functions-matching.html#POSIX-QUANTIFIERS-TABLE" title="表 9.16. 正则表达式量词">表 9.16</a>里显示。
+   </p><p>    一个<em class="firstterm">约束</em>匹配一个空串，但只是在满足特定条件下才匹配。 约束可以在能够使用原子的地方使用，只是它不能跟着量词。简单的约束在<a class="xref" href="functions-matching.html#POSIX-CONSTRAINTS-TABLE" title="表 9.17. 正则表达式约束">表 9.17</a>里显示； 更多的约束稍后描述。
+   </p><div class="table" id="POSIX-ATOMS-TABLE"><p class="title"><strong>表 9.15. 正则表达式原子</strong></p><div class="table-contents"><table class="table" summary="正则表达式原子" border="1"><colgroup><col /><col /></colgroup><thead><tr><th>原子</th><th>描述</th></tr></thead><tbody><tr><td> <code class="literal">(</code><em class="replaceable"><code>re</code></em><code class="literal">)</code> </td><td>（其中<em class="replaceable"><code>re</code></em>是任何正则表达式） 匹配一个对<em class="replaceable"><code>re</code></em>的匹配，匹配将为可能的报告被记下</td></tr><tr><td> <code class="literal">(?:</code><em class="replaceable"><code>re</code></em><code class="literal">)</code> </td><td>同上，但是匹配不会为了报告而被记下 （一个<span class="quote">“<span class="quote">非捕获</span>”</span>圆括号集） （只对 ARE）</td></tr><tr><td> <code class="literal">.</code> </td><td>匹配任意单个字符</td></tr><tr><td> <code class="literal">[</code><em class="replaceable"><code>chars</code></em><code class="literal">]</code> </td><td> 一个<em class="firstterm">方括号表达式</em>， 匹配<em class="replaceable"><code>chars</code></em>中的任意一个（详见<a class="xref" href="functions-matching.html#POSIX-BRACKET-EXPRESSIONS" title="9.7.3.2. 方括号表达式">第 9.7.3.2 节</a>）</td></tr><tr><td> <code class="literal">\</code><em class="replaceable"><code>k</code></em> </td><td>（其中<em class="replaceable"><code>k</code></em>是一个非字母数字字符） 匹配一个被当作普通字符看待的特定字符， 例如，<code class="literal">\\</code>匹配一个反斜线字符</td></tr><tr><td> <code class="literal">\</code><em class="replaceable"><code>c</code></em> </td><td>其中<em class="replaceable"><code>c</code></em>是一个字母数字 （可能跟着其它字符），它是一个<em class="firstterm">逃逸</em>， 参阅<a class="xref" href="functions-matching.html#POSIX-ESCAPE-SEQUENCES" title="9.7.3.3. 正则表达式逃逸">第 9.7.3.3 节</a>（仅对 ARE； 在 ERE 和 BRE 中，它匹配<em class="replaceable"><code>c</code></em>）</td></tr><tr><td> <code class="literal">{</code> </td><td>如果后面跟着一个字符，而不是数字， 那么就匹配左花括弧<code class="literal">{</code>；如果跟着一个数字， 那么它是<em class="replaceable"><code>范围</code></em>的开始（见下文）</td></tr><tr><td> <em class="replaceable"><code>x</code></em> </td><td>其中<em class="replaceable"><code>x</code></em>是一个没有其它意义的单个字符，则匹配该字符</td></tr></tbody></table></div></div><br class="table-break" /><p>    RE 不能以反斜线（<code class="literal">\</code>）结尾。
+   </p><div class="note"><h3 class="title">注意</h3><p>     如果你关掉了<a class="xref" href="runtime-config-compatible.html#GUC-STANDARD-CONFORMING-STRINGS">standard_conforming_strings</a>，任何你写在文字串常量中的反斜线都需要被双写。详见<a class="xref" href="sql-syntax-lexical.html#SQL-SYNTAX-STRINGS" title="4.1.2.1. 字符串常量">第 4.1.2.1 节</a>。
+    </p></div><div class="table" id="POSIX-QUANTIFIERS-TABLE"><p class="title"><strong>表 9.16. 正则表达式量词</strong></p><div class="table-contents"><table class="table" summary="正则表达式量词" border="1"><colgroup><col /><col /></colgroup><thead><tr><th>量词</th><th>匹配</th></tr></thead><tbody><tr><td> <code class="literal">*</code> </td><td>一个由原子的 0 次或更多次匹配组成的序列</td></tr><tr><td> <code class="literal">+</code> </td><td>一个由原子的 1 次或更多次匹配组成的序列</td></tr><tr><td> <code class="literal">?</code> </td><td>一个由原子的 0 次或 1 次匹配组成的序列</td></tr><tr><td> <code class="literal">{</code><em class="replaceable"><code>m</code></em><code class="literal">}</code> </td><td>一个由原子的正好<em class="replaceable"><code>m</code></em>次匹配组成的序列</td></tr><tr><td> <code class="literal">{</code><em class="replaceable"><code>m</code></em><code class="literal">,}</code> </td><td>一个由原子的<em class="replaceable"><code>m</code></em>次或更多次匹配组成的序列</td></tr><tr><td>       <code class="literal">{</code><em class="replaceable"><code>m</code></em><code class="literal">,</code><em class="replaceable"><code>n</code></em><code class="literal">}</code> </td><td>一个由原子的从<em class="replaceable"><code>m</code></em>次到<em class="replaceable"><code>n</code></em>次（包括）匹配组成的序列；<em class="replaceable"><code>m</code></em>不能超过<em class="replaceable"><code>n</code></em> </td></tr><tr><td> <code class="literal">*?</code> </td><td><code class="literal">*</code>的非贪婪版本</td></tr><tr><td> <code class="literal">+?</code> </td><td><code class="literal">+</code>的非贪婪版本</td></tr><tr><td> <code class="literal">??</code> </td><td><code class="literal">?</code>的非贪婪版本</td></tr><tr><td> <code class="literal">{</code><em class="replaceable"><code>m</code></em><code class="literal">}?</code> </td><td><code class="literal">{</code><em class="replaceable"><code>m</code></em><code class="literal">}</code>的非贪婪版本 </td></tr><tr><td> <code class="literal">{</code><em class="replaceable"><code>m</code></em><code class="literal">,}?</code> </td><td><code class="literal">{</code><em class="replaceable"><code>m</code></em><code class="literal">,}</code>的非贪婪版本 </td></tr><tr><td>       <code class="literal">{</code><em class="replaceable"><code>m</code></em><code class="literal">,</code><em class="replaceable"><code>n</code></em><code class="literal">}?</code> </td><td><code class="literal">{</code><em class="replaceable"><code>m</code></em><code class="literal">,</code><em class="replaceable"><code>n</code></em><code class="literal">}</code>的非贪婪版本 </td></tr></tbody></table></div></div><br class="table-break" /><p>    使用<code class="literal">{</code><em class="replaceable"><code>...</code></em><code class="literal">}</code>的形式被称作<em class="firstterm">范围</em>。 一个范围内的数字<em class="replaceable"><code>m</code></em>和<em class="replaceable"><code>n</code></em>都是无符号十进制整数， 允许的数值从 0 到 255（包含）。
+   </p><p>     <em class="firstterm">非贪婪</em>的量词（只在 ARE 中可用）匹配对应的正常 （<em class="firstterm">贪婪</em>）模式，区别是它寻找最少的匹配，而不是最多的匹配。详见<a class="xref" href="functions-matching.html#POSIX-MATCHING-RULES" title="9.7.3.5. 正则表达式匹配规则">第 9.7.3.5 节</a>。
+   </p><div class="note"><h3 class="title">注意</h3><p>     一个量词不能紧跟在另外一个量词后面，例如<code class="literal">**</code>是非法的。量词不能作为表达式或者子表达式的开头，也不能跟在<code class="literal">^</code>或者<code class="literal">|</code>后面。
+    </p></div><div class="table" id="POSIX-CONSTRAINTS-TABLE"><p class="title"><strong>表 9.17. 正则表达式约束</strong></p><div class="table-contents"><table class="table" summary="正则表达式约束" border="1"><colgroup><col /><col /></colgroup><thead><tr><th>约束</th><th>描述</th></tr></thead><tbody><tr><td> <code class="literal">^</code> </td><td>串开头的匹配</td></tr><tr><td> <code class="literal">$</code> </td><td>串末尾的匹配</td></tr><tr><td> <code class="literal">(?=</code><em class="replaceable"><code>re</code></em><code class="literal">)</code> </td><td>在匹配<em class="replaceable"><code>re</code></em>的子串开始的任何点的<em class="firstterm">positive lookahead</em>匹配（只对 ARE）</td></tr><tr><td> <code class="literal">(?!</code><em class="replaceable"><code>re</code></em><code class="literal">)</code> </td><td>在匹配<em class="replaceable"><code>re</code></em>的子串开始的任何点的<em class="firstterm">negative lookahead</em>匹配（只对 ARE）</td></tr><tr><td> <code class="literal">(?&lt;=</code><em class="replaceable"><code>re</code></em><code class="literal">)</code> </td><td> 只要有一个点上有一个子串匹配<em class="replaceable"><code>re</code></em>端，
+       <em class="firstterm">positive lookbehind</em>就在这个点上匹配（只对 ARE）</td></tr><tr><td> <code class="literal">(?&lt;!</code><em class="replaceable"><code>re</code></em><code class="literal">)</code> </td><td> 只要有一个点上没有子串匹配<em class="replaceable"><code>re</code></em>端，
+       <em class="firstterm">negative lookbehind</em>就在这个点上匹配（只对 ARE）</td></tr></tbody></table></div></div><br class="table-break" /><p>    Lookahead和lookbehind约束不能包含<em class="firstterm">后引用</em> 
+    （参阅<a class="xref" href="functions-matching.html#POSIX-ESCAPE-SEQUENCES" title="9.7.3.3. 正则表达式逃逸">第 9.7.3.3 节</a>），
+    并且其中的所有圆括号都被认为是非捕获的。
+   </p></div><div class="sect3" id="POSIX-BRACKET-EXPRESSIONS"><div class="titlepage"><div><div><h4 class="title">9.7.3.2. 方括号表达式</h4></div></div></div><p>    <em class="firstterm">方括号表达式</em>是一个包围在<code class="literal">[]</code>中的字符列表。它通常匹配列表中的任意单个字符（但见下文）。 如果列表以<code class="literal">^</code>开头，它匹配任意单个<span class="emphasis"><em>不</em></span>在该列表参与部分中的字符。如果该列表中两个字符用<code class="literal">-</code>隔开， 那它就是那两个字符（包括在内）之间的所有字符范围的缩写，例如，在<acronym class="acronym">ASCII</acronym>中<code class="literal">[0-9]</code>匹配任何十进制数字。两个范围共享一个端点是非法的，例如，<code class="literal">a-c-e</code>。范围与字符集关系密切， 可移植的程序应该避免依靠它们。
+   </p><p>    想在列表中包含文本<code class="literal">]</code>，可以让它做列表的首字符（如果使用了<code class="literal">^</code>，需要放在其后）。 想在列表中包含文本<code class="literal">-</code>，可以让它做列表的首字符或者尾字符，或者一个范围的第二个端点。 想在列表中把文本<code class="literal">-</code>当做范围的起点， 把它用<code class="literal">[.</code>和<code class="literal">.]</code>包围起来，这样它就成为一个排序元素（见下文）。 除了这些字符本身、一些用<code class="literal">[</code>的组合（见下段）以及逃逸（只在 ARE 中有效）以外，所有其它特殊字符 在方括号表达式里都失去它们的特殊含义。特别是，在 ERE 和 BRE 规则下<code class="literal">\</code>不是特殊的， 但在 ARE 里，它是特殊的（引入一个逃逸）。
+   </p><p>    在一个方括号表达式里，一个排序元素（一个字符、一个被当做一个单一字符排序的多字符序列或者一个表示上面两种情况的排序序列名称） 包含在<code class="literal">[.</code>和<code class="literal">.]</code>里面的时候表示该排序元素的字符序列。该序列被当做该方括号列表 的一个单一元素。这允许一个包含多字符排序元素的方括号表达式去匹配多于一个字符，例如，如果排序序列包含一个<code class="literal">ch</code>排序元素， 那么 RE <code class="literal">[[.ch.]]*c</code>匹配<code class="literal">chchcc</code>的头五个字符。
+   </p><div class="note"><h3 class="title">注意</h3><p>     <span class="productname">PostgreSQL</span>当前不支持多字符排序元素。这些信息描述了将来可能有的行为。
+    </p></div><p>    在方括号表达式里，包围在<code class="literal">[=</code>和<code class="literal">=]</code>里的排序元素是一个<em class="firstterm">等价类</em>， 代表等效于那一个的所有排序元素的字符序列，包括它本身（如果没有其它等效排序元素，那么就好象封装定界符是<code class="literal">[.</code>和 <code class="literal">.]</code>）。例如，如果<code class="literal">o</code>和<code class="literal">^</code>是一个等价类的成员，那么<code class="literal">[[=o=]]</code>、<code class="literal">[[=^=]]</code>和<code class="literal">[o^]</code>都是同义的。一个等价类不能是一个范围的端点。
+   </p><p>    在方括号表达式里，在<code class="literal">[:</code>和<code class="literal">:]</code>里面封装的字符类的名字代表属于该类的所有字符的列表。 标准的字符类名字是：<code class="literal">alnum</code>、
+    <code class="literal">alpha</code>、<code class="literal">blank</code>、
+    <code class="literal">cntrl</code>、<code class="literal">digit</code>、
+    <code class="literal">graph</code>、<code class="literal">lower</code>、
+    <code class="literal">print</code>、<code class="literal">punct</code>、
+    <code class="literal">space</code>、<code class="literal">upper</code>、
+    <code class="literal">xdigit</code>。 它们代表在<span class="citerefentry"><span class="refentrytitle">ctype</span></span>中定义的字符类。 一个区域可以会提供其他的类。字符类不能用做一个范围的端点。
+   </p><p>    方括号表达式里有两个特例：方括号表达式<code class="literal">[[:&lt;:]]</code>和<code class="literal">[[:&gt;:]]</code>是约束，分别匹配一个单词开头和结束的空串。 单词定义为一个单词字符序列，前面和后面都没有其它单词字符。单词字符是一个<code class="literal">alnum</code>字符（和<span class="citerefentry"><span class="refentrytitle">ctype</span></span>中定义的一样） 或者一个下划线。这是一个扩展，兼容<acronym class="acronym">POSIX</acronym> 1003.2， 但那里面并没有说明， 而且在准备移植到其他系统里去的软件里一定要小心使用。通常下文描述的约束逃逸更好些（它们并非更标准，但是更容易键入）。
+   </p></div><div class="sect3" id="POSIX-ESCAPE-SEQUENCES"><div class="titlepage"><div><div><h4 class="title">9.7.3.3. 正则表达式逃逸</h4></div></div></div><p>    <em class="firstterm">逃逸</em>是以<code class="literal">\</code>开头，后面跟着一个字母数字字符得特殊序列。 逃逸有好几种变体：字符项、类缩写、约束逃逸以及后引用。在 ARE 里， 如果一个<code class="literal">\</code>后面跟着一个字母数字，但是并未组成一个合法的逃逸， 那么它是非法的。在 ERE 中没有逃逸：在方括号表达式之外，一个后面跟着字母数字字符的<code class="literal">\</code>只是表示该字符是一个普通的字符，而且在一个方括号表达式里，<code class="literal">\</code>是一个普通的字符（后者实际上在 ERE 和 ARE 不兼容）。
+   </p><p>    <em class="firstterm">字符项逃逸</em>用于便于我们在 RE 中声明那些不可打印的或其他习惯的字符。它们显示在<a class="xref" href="functions-matching.html#POSIX-CHARACTER-ENTRY-ESCAPES-TABLE" title="表 9.18. 正则表达式字符项逃逸">表 9.18</a>中。
+   </p><p>    <em class="firstterm">类缩写逃逸</em>用来提供一些常用的字符类缩写。它们显示在<a class="xref" href="functions-matching.html#POSIX-CLASS-SHORTHAND-ESCAPES-TABLE" title="表 9.19. 正则表达式类缩写逃逸">表 9.19</a>中。
+   </p><p>    <em class="firstterm">约束逃逸</em>是一个约束，如果满足特定的条件，它匹配该空串。它们显示在<a class="xref" href="functions-matching.html#POSIX-CONSTRAINT-ESCAPES-TABLE" title="表 9.20. 正则表达式约束逃逸">表 9.20</a>中。
+   </p><p>    <em class="firstterm">后引用</em>（<code class="literal">\</code><em class="replaceable"><code>n</code></em>）匹配数字<code class="literal">\</code><em class="replaceable"><code>n</code></em>指定的被前面的圆括号子表达式匹配的同一个串 （参阅<a class="xref" href="functions-matching.html#POSIX-CONSTRAINT-BACKREF-TABLE" title="表 9.21. 正则表达式后引用">表 9.21</a>）。例如， <code class="literal">([bc])\1</code>匹配<code class="literal">bb</code>或者<code class="literal">cc</code>， 但是不匹配<code class="literal">bc</code>或者<code class="literal">cb</code>。RE 中子表达式必须完全在后引用前面。子表达式以它们的先导圆括号的顺序编号。非捕获圆括号并不定义子表达式。
+   </p><div class="table" id="POSIX-CHARACTER-ENTRY-ESCAPES-TABLE"><p class="title"><strong>表 9.18. 正则表达式字符项逃逸</strong></p><div class="table-contents"><table class="table" summary="正则表达式字符项逃逸" border="1"><colgroup><col /><col /></colgroup><thead><tr><th>逃逸</th><th>描述</th></tr></thead><tbody><tr><td> <code class="literal">\a</code> </td><td>警告（响铃）字符，和 C 中一样</td></tr><tr><td> <code class="literal">\b</code> </td><td>退格，和 C 中一样</td></tr><tr><td> <code class="literal">\B</code> </td><td>反斜线（<code class="literal">\</code>）的同义词，用来减少双写反斜线</td></tr><tr><td> <code class="literal">\c</code><em class="replaceable"><code>X</code></em> </td><td>（其中<em class="replaceable"><code>X</code></em>是任意字符）低序5位和<em class="replaceable"><code>X</code></em>相同的字符，它的其他位都是零</td></tr><tr><td> <code class="literal">\e</code> </td><td>排序序列名为<code class="literal">ESC</code>的字符，如果无法做到该字符为八进制值<code class="literal">033</code></td></tr><tr><td> <code class="literal">\f</code> </td><td>换页，和 C 中一样</td></tr><tr><td> <code class="literal">\n</code> </td><td>新行，和 C 中一样</td></tr><tr><td> <code class="literal">\r</code> </td><td>回车，和 C 中一样</td></tr><tr><td> <code class="literal">\t</code> </td><td>水平制表符，和 C 中一样</td></tr><tr><td> <code class="literal">\u</code><em class="replaceable"><code>wxyz</code></em> </td><td>       （其中<em class="replaceable"><code>wxyz</code></em>正好是四个十六进制位）
+        字符十六进制值是<code class="literal">0x</code><em class="replaceable"><code>wxyz</code></em>
+       </td></tr><tr><td> <code class="literal">\U</code><em class="replaceable"><code>stuvwxyz</code></em> </td><td>（其中<em class="replaceable"><code>stuvwxyz</code></em>正好是八个十六进制位）
+       字符十六进制值是<code class="literal">0x</code><em class="replaceable"><code>stuvwxyz</code></em> 
+       </td></tr><tr><td> <code class="literal">\v</code> </td><td>垂直制表符，和 C 中一样</td></tr><tr><td> <code class="literal">\x</code><em class="replaceable"><code>hhh</code></em> </td><td>（其中<em class="replaceable"><code>hhh</code></em>是十六进制位的任意序列）十六进制值为<code class="literal">0x</code><em class="replaceable"><code>hhh</code></em>的字符（一个单一字符，不管用了多少个十六进制位）
+       </td></tr><tr><td> <code class="literal">\0</code> </td><td>值为<code class="literal">0</code>（空字节）的字符</td></tr><tr><td> <code class="literal">\</code><em class="replaceable"><code>xy</code></em> </td><td>（其中<em class="replaceable"><code>xy</code></em>正好是两个八进制位，并且不是一个<em class="firstterm">后引用</em>）八进制值为<code class="literal">0</code><em class="replaceable"><code>xy</code></em>的字符</td></tr><tr><td> <code class="literal">\</code><em class="replaceable"><code>xyz</code></em> </td><td>（其中<em class="replaceable"><code>xyz</code></em>正好是三个八进制位，并且不是一个<em class="firstterm">后引用</em>）八进制值为<code class="literal">0</code><em class="replaceable"><code>xyz</code></em>的字符</td></tr></tbody></table></div></div><br class="table-break" /><p>    十六进制位是<code class="literal">0</code>-<code class="literal">9</code>、<code class="literal">a</code>-<code class="literal">f</code>和<code class="literal">A</code>-<code class="literal">F</code>。八进制位是<code class="literal">0</code>-<code class="literal">7</code>。
+   </p><p>     指定ASCII范围以外的值（0-127）数字字符输入逃逸依赖于数据库编码。
+     当编码是UTF-8的时候，逃避值相当于Unicode代码点，
+     例如<code class="literal">\u1234</code>即字符<code class="literal">U+1234</code>。
+     对于其它多字节编码，字符输入转义通常只指定字符的字节值的连接。
+     如果逃逸值不与数据库编码中的任何合法字符相对应，不会抛出错误，
+     但它永远不会匹配任何数据。
+   </p><p>    字符项逃逸总是被当作普通字符。例如，<code class="literal">\135</code>是 ASCII 中的<code class="literal">]</code>， 但<code class="literal">\135</code>并不终止一个方括号表达式。
+   </p><div class="table" id="POSIX-CLASS-SHORTHAND-ESCAPES-TABLE"><p class="title"><strong>表 9.19. 正则表达式类缩写逃逸</strong></p><div class="table-contents"><table class="table" summary="正则表达式类缩写逃逸" border="1"><colgroup><col /><col /></colgroup><thead><tr><th>逃逸</th><th>描述</th></tr></thead><tbody><tr><td> <code class="literal">\d</code> </td><td> <code class="literal">[[:digit:]]</code> </td></tr><tr><td> <code class="literal">\s</code> </td><td> <code class="literal">[[:space:]]</code> </td></tr><tr><td> <code class="literal">\w</code> </td><td> <code class="literal">[[:alnum:]_]</code>（注意下划线是被包括的）</td></tr><tr><td> <code class="literal">\D</code> </td><td> <code class="literal">[^[:digit:]]</code> </td></tr><tr><td> <code class="literal">\S</code> </td><td> <code class="literal">[^[:space:]]</code> </td></tr><tr><td> <code class="literal">\W</code> </td><td> <code class="literal">[^[:alnum:]_]</code>
+      （注意下划线是被包括的）</td></tr></tbody></table></div></div><br class="table-break" /><p>    在方括号表达式里，<code class="literal">\d</code>、<code class="literal">\s</code>和<code class="literal">\w</code>会失去它们的外层方括号，而<code class="literal">\D</code>、<code class="literal">\S</code>和 <code class="literal">\W</code>是非法的（也就是说，例如<code class="literal">[a-c\d]</code>等效于<code class="literal">[a-c[:digit:]]</code>。同样<code class="literal">[a-c\D]</code>等效于 <code class="literal">[a-c^[:digit:]]</code>的，也是非法的）。
+   </p><div class="table" id="POSIX-CONSTRAINT-ESCAPES-TABLE"><p class="title"><strong>表 9.20. 正则表达式约束逃逸</strong></p><div class="table-contents"><table class="table" summary="正则表达式约束逃逸" border="1"><colgroup><col /><col /></colgroup><thead><tr><th>逃逸</th><th>描述</th></tr></thead><tbody><tr><td> <code class="literal">\A</code> </td><td>只在串开头匹配（与<code class="literal">^</code>的不同请参见<a class="xref" href="functions-matching.html#POSIX-MATCHING-RULES" title="9.7.3.5. 正则表达式匹配规则">第 9.7.3.5 节</a>）</td></tr><tr><td> <code class="literal">\m</code> </td><td>只在一个词的开头匹配</td></tr><tr><td> <code class="literal">\M</code> </td><td>只在一个词的末尾匹配</td></tr><tr><td> <code class="literal">\y</code> </td><td>只在一个词的开头或末尾匹配</td></tr><tr><td> <code class="literal">\Y</code> </td><td>只在一个词的不是开头或末尾的点上匹配</td></tr><tr><td> <code class="literal">\Z</code> </td><td>只在串的末尾匹配（与<code class="literal">$</code>的不同请参见<a class="xref" href="functions-matching.html#POSIX-MATCHING-RULES" title="9.7.3.5. 正则表达式匹配规则">第 9.7.3.5 节</a>）</td></tr></tbody></table></div></div><br class="table-break" /><p>    一个词被定义成在上面<code class="literal">[[:&lt;:]]</code>和<code class="literal">[[:&gt;:]]</code>中的声明。在方括号表达式里，约束逃逸是非法的。
+   </p><div class="table" id="POSIX-CONSTRAINT-BACKREF-TABLE"><p class="title"><strong>表 9.21. 正则表达式后引用</strong></p><div class="table-contents"><table class="table" summary="正则表达式后引用" border="1"><colgroup><col /><col /></colgroup><thead><tr><th>逃逸</th><th>描述</th></tr></thead><tbody><tr><td> <code class="literal">\</code><em class="replaceable"><code>m</code></em> </td><td>（其中<em class="replaceable"><code>m</code></em>是一个非零位）一个到第<em class="replaceable"><code>m</code></em>个子表达式的后引用</td></tr><tr><td> <code class="literal">\</code><em class="replaceable"><code>mnn</code></em> </td><td>（其中<em class="replaceable"><code>m</code></em>是一个非零位，并且<em class="replaceable"><code>nn</code></em>是一些更多的位，并且十六进制值<em class="replaceable"><code>mnn</code></em>不超过目前能看到的封闭捕获圆括号的数目）一个到第<em class="replaceable"><code>mnn</code></em>个子表达式的后引用</td></tr></tbody></table></div></div><br class="table-break" /><div class="note"><h3 class="title">注意</h3><p>     在八进制字符项逃逸和后引用之间有一个历史继承的歧义存在，这个歧义是 通过下面的启发式规则解决的，像上面描述地那样。前导零总是表示这是一个八进制逃逸。 而单个非零数字，如果没有跟着任何其它位，那么总是被认为后引用。 一个多位的非零开头的序列也被认为是后引用，只要它出现在合适的子表达式后面 （也就是说，在后引用的合法范围中的数），否则就被认为是一个八进制。
+    </p></div></div><div class="sect3" id="POSIX-METASYNTAX"><div class="titlepage"><div><div><h4 class="title">9.7.3.4. 正则表达式元语法</h4></div></div></div><p>    除了上面描述的主要语法之外，还有几种特殊形式和杂项语法。
+   </p><p>    如果一个 RE 以<code class="literal">***:</code>开头，那么剩下的 RE 都被当作 ARE（这在<span class="productname">PostgreSQL</span>中通常是无效的，因为 RE 被假定为 ARE，但是如果 ERE 或 BRE 模式通过<em class="replaceable"><code>flags</code></em>参数被指定为一个正则表达式函数时，它确实能产生效果）。如果一个 RE 以<code class="literal">***=</code>开头， 那么剩下的 RE 被当作一个文本串，所有的字符都被认为是一个普通字符。
+   </p><p>    一个 ARE 可以以<em class="firstterm">嵌入选项</em>开头：一个序列<code class="literal">(?</code><em class="replaceable"><code>xyz</code></em><code class="literal">)</code>（这里的<em class="replaceable"><code>xyz</code></em>是一个或多个字母字符）声明影响剩余 RE 的选项。 这些选项覆盖任何前面判断的选项 — 特别地，它们可以覆盖一个正则表达式操作符隐含的大小写敏感的行为，或者覆盖<em class="replaceable"><code>flags</code></em>参数中的正则表达式函数。可用的选项字母在<a class="xref" href="functions-matching.html#POSIX-EMBEDDED-OPTIONS-TABLE" title="表 9.22. ARE 嵌入选项字母">表 9.22</a>中显示。注意这些同样的选项字母也被用在正则表达式函数的<em class="replaceable"><code>flags</code></em>参数中。
+   </p><div class="table" id="POSIX-EMBEDDED-OPTIONS-TABLE"><p class="title"><strong>表 9.22. ARE 嵌入选项字母</strong></p><div class="table-contents"><table class="table" summary="ARE 嵌入选项字母" border="1"><colgroup><col /><col /></colgroup><thead><tr><th>选项</th><th>描述</th></tr></thead><tbody><tr><td> <code class="literal">b</code> </td><td>RE的剩余部分是一个BRE </td></tr><tr><td> <code class="literal">c</code> </td><td>大小写敏感的匹配（覆盖操作符类型）</td></tr><tr><td> <code class="literal">e</code> </td><td>RE的剩余部分是一个ERE </td></tr><tr><td> <code class="literal">i</code> </td><td>大小写不敏感的匹配（见<a class="xref" href="functions-matching.html#POSIX-MATCHING-RULES" title="9.7.3.5. 正则表达式匹配规则">第 9.7.3.5 节</a>）（覆盖操作符类型）</td></tr><tr><td> <code class="literal">m</code> </td><td><code class="literal">n</code>的历史原因的同义词 </td></tr><tr><td> <code class="literal">n</code> </td><td>新行敏感的匹配（见<a class="xref" href="functions-matching.html#POSIX-MATCHING-RULES" title="9.7.3.5. 正则表达式匹配规则">第 9.7.3.5 节</a>）</td></tr><tr><td> <code class="literal">p</code> </td><td>部分新行敏感的匹配（见<a class="xref" href="functions-matching.html#POSIX-MATCHING-RULES" title="9.7.3.5. 正则表达式匹配规则">第 9.7.3.5 节</a>）</td></tr><tr><td> <code class="literal">q</code> </td><td>RE的剩余部分是一个文字（<span class="quote">“<span class="quote">quoted</span>”</span>）串，全部是普通字符</td></tr><tr><td> <code class="literal">s</code> </td><td>非新行敏感的匹配（默认）</td></tr><tr><td> <code class="literal">t</code> </td><td>紧语法（默认，见下文）</td></tr><tr><td> <code class="literal">w</code> </td><td>逆部分新行敏感（<span class="quote">“<span class="quote">怪异</span>”</span>）的匹配（见<a class="xref" href="functions-matching.html#POSIX-MATCHING-RULES" title="9.7.3.5. 正则表达式匹配规则">第 9.7.3.5 节</a>）</td></tr><tr><td> <code class="literal">x</code> </td><td>扩展语法（见下文）</td></tr></tbody></table></div></div><br class="table-break" /><p>    嵌入选项在<code class="literal">)</code>终止序列时发生作用。它们只在 ARE 的开始处起作用 （在任何可能存在的<code class="literal">***:</code>控制器后面）。
+   </p><p>    除了通常的（<em class="firstterm">紧</em>）RE 语法（这种情况下所有字符都有效）， 还有一种<em class="firstterm">扩展</em>语法，可以通过声明嵌入的<code class="literal">x</code>选项获得。在扩展语法里，RE 中的空白字符被忽略，就像那些在<code class="literal">#</code>和其后的新行（或 RE 的末尾）之间的字符一样。这样就允许我们给一个复杂的 RE 分段和注释。不过这个基本规则有三种例外：
+
+    </p><div class="itemizedlist"><ul class="itemizedlist" style="list-style-type: disc; "><li class="listitem"><p>       空白字符或前置了<code class="literal">\</code>的<code class="literal">#</code>将被保留
+      </p></li><li class="listitem"><p>       方括号表达式里的空白或者<code class="literal">#</code>将被保留
+      </p></li><li class="listitem"><p>       在多字符符号里面不能出现空白和注释，例如<code class="literal">(?:</code>
+      </p></li></ul></div><p>
+
+    为了这个目的，空白是空格、制表符、新行和任何属于<em class="replaceable"><code>空白</code></em>字符类的字符。
+   </p><p>    最后，在 ARE 里，方括号表达式外面，序列<code class="literal">(?#</code><em class="replaceable"><code>ttt</code></em><code class="literal">)</code>（其中<em class="replaceable"><code>ttt</code></em>是任意不包含一个<code class="literal">)</code>)的文本）是一个注释， 它被完全忽略。同样，这样的东西是不允许出现在多字符符号的字符中间的，例如 <code class="literal">(?:</code>。这种注释更像是一种历史产物而不是一种有用的设施，并且它们的使用已经被废弃；请使用扩展语法来替代。   </p><p>    如果声明了一个初始的<code class="literal">***=</code>控制器，那么所有这些元语法扩展<span class="emphasis"><em>都不能</em></span>使用，因为这样表示把用户输入当作一个文字串而不是 RE 对待。
+   </p></div><div class="sect3" id="POSIX-MATCHING-RULES"><div class="titlepage"><div><div><h4 class="title">9.7.3.5. 正则表达式匹配规则</h4></div></div></div><p>    在 RE 可以在给定串中匹配多于一个子串的情况下， RE 匹配串中最靠前的那个子串。如果 RE 可以匹配在那个位置开始 的多个子串，要么是取最长的子串，要么是最短的，具体哪种， 取决于 RE 是<em class="firstterm">贪婪</em>的还是<em class="firstterm">非贪婪</em>的。
+   </p><p>    一个 RE 是否贪婪取决于下面规则：
+    </p><div class="itemizedlist"><ul class="itemizedlist" style="list-style-type: disc; "><li class="listitem"><p>       大多数原子以及所有约束，都没有贪婪属性（因为它们毕竟无法匹配个数变化的文本）。
+      </p></li><li class="listitem"><p>       在一个 RE 周围加上圆括号并不会改变其贪婪性。
+      </p></li><li class="listitem"><p>       带一个固定重复次数量词 （<code class="literal">{</code><em class="replaceable"><code>m</code></em><code class="literal">}</code>或者<code class="literal">{</code><em class="replaceable"><code>m</code></em><code class="literal">}?</code>） 的量化原子和原子自身具有同样的贪婪性（可能是没有）。
+      </p></li><li class="listitem"><p>       一个带其他普通的量词（包括<code class="literal">{</code><em class="replaceable"><code>m</code></em><code class="literal">,</code><em class="replaceable"><code>n</code></em><code class="literal">}</code>中<em class="replaceable"><code>m</code></em>等于<em class="replaceable"><code>n</code></em>的情况）的量化原子是贪婪的（首选最长匹配）。
+      </p></li><li class="listitem"><p>       一个带非贪婪量词（包括<code class="literal">{</code><em class="replaceable"><code>m</code></em><code class="literal">,</code><em class="replaceable"><code>n</code></em><code class="literal">}?</code>中<em class="replaceable"><code>m</code></em>等于 <em class="replaceable"><code>n</code></em>的情况）的量化原子是非贪婪的（首选最短匹配）。
+      </p></li><li class="listitem"><p>       一个分支 — 也就是说，一个没有顶级<code class="literal">|</code>操作符的 RE — 和它里面的第一个有贪婪属性的量化原子有着同样的贪婪性。
+      </p></li><li class="listitem"><p>       一个由<code class="literal">|</code>操作符连接起来的两个或者更多分支组成的 RE 总是贪婪的。
+      </p></li></ul></div><p>
+   </p><p>    上面的规则所描述的贪婪属性不仅仅适用于独立的量化原子， 而且也适用于包含量化原子的分支和整个 RE。这里的意思是， 匹配是按照分支或者整个 RE <span class="emphasis"><em>作为一个整体</em></span>匹配最长或者最短的可能子串。 一旦整个匹配的长度确定，那么匹配任意特定子表达式的部分就基于该子表达式的贪婪属性进行判断，在 RE 里面靠前的子表达式的优先级高于靠后的子表达式。
+   </p><p>    一个相应的例子：
+</p><pre class="screen">SELECT SUBSTRING('XY1234Z', 'Y*([0-9]{1,3})');
+<em class="lineannotation"><span class="lineannotation">结果：</span></em><code class="computeroutput">123</code>
+SELECT SUBSTRING('XY1234Z', 'Y*?([0-9]{1,3})');
+<em class="lineannotation"><span class="lineannotation">结果：</span></em><code class="computeroutput">1</code></pre><p>
+    在第一个例子里，RE 作为整体是贪婪的，因为<code class="literal">Y*</code>是贪婪的。它可以匹配从<code class="literal">Y</code>开始的东西，并且它匹配从这个位置开始的最长的串， 也就是，<code class="literal">Y123</code>。输出是这里的圆括号包围的部分，或者说是<code class="literal">123</code>。在第二个例子里， RE 总体上是一个非贪婪的 RE，因为<code class="literal">Y*?</code>是非贪婪的。它可以匹配从<code class="literal">Y</code>开始的最短的子串，也就是说<code class="literal">Y1</code>。子表达式<code class="literal">[0-9]{1,3}</code>是贪婪的，但是它不能修改总体匹配长度的决定； 因此它被迫只匹配<code class="literal">1</code>。
+   </p><p>    简而言之，如果一个 RE 同时包含贪婪和非贪婪的子表达式，那么总的匹配长度要么是尽可能长，要么是尽可能短，这取决于给整个 RE 赋予的属性。给子表达式赋予的属性只影响在这个匹配里，各个子表达式之间相互允许<span class="quote">“<span class="quote">吃掉</span>”</span>的多少。
+   </p><p>    量词<code class="literal">{1,1}</code>和<code class="literal">{1,1}?</code>可以分别用于在一个子表达式或者整个 RE 上强制
+    贪婪或者非贪婪。
+    当你需要整个RE具有不同于从它的元素推导出的贪婪属性，这是非常有用的。
+    作为一个例子，
+    假设我们正在尝试分隔包含一些数字到它们之前和之后的数字和部分的字符串。
+    我们可能会尝试这样做：
+</p><pre class="screen">SELECT regexp_match('abc01234xyz', '(.*)(\d+)(.*)');
+<em class="lineannotation"><span class="lineannotation">Result: </span></em><code class="computeroutput">{abc0123,4,xyz}</code></pre><p>
+    这不工作：第一个<code class="literal">.*</code>是贪婪的，因此它可以尽可能多的<span class="quote">“<span class="quote">吃</span>”</span>，
+    剩下的<code class="literal">\d+</code>在最后可能的位置上匹配最后一个数字。
+    我们可能会通过使它不贪婪尝试修复：    
+</p><pre class="screen">SELECT regexp_match('abc01234xyz', '(.*?)(\d+)(.*)');
+<em class="lineannotation"><span class="lineannotation">Result: </span></em><code class="computeroutput">{abc,0,""}</code></pre><p>
+    这也不能工作，因为现在RE作为一个整体是非贪婪的，
+    并且它尽快结束了整体匹配。
+    我们可以得到我们想要通过迫使RE作为一个整体是贪婪的东西：
+</p><pre class="screen">SELECT regexp_match('abc01234xyz', '(?:(.*?)(\d+)(.*)){1,1}');
+<em class="lineannotation"><span class="lineannotation">Result: </span></em><code class="computeroutput">{abc,01234,xyz}</code></pre><p>
+    控制从组件贪婪中分离出RE整体贪婪允许处理可变长度的模式更加灵活。
+   </p><p>    当决定什么是较长或较短匹配的时候，
+    匹配长度是以字符衡量的，而不是排序元素。一个空串会被认为比什么都不匹配长。例如：<code class="literal">bb*</code>匹配<code class="literal">abbbc</code>的中间三个字符；<code class="literal">(week|wee)(night|knights)</code>匹配<code class="literal">weeknights</code>的所有十个字符； 而<code class="literal">(.*).*</code>匹配 <code class="literal">abc</code>的时候，圆括号包围的子表达式匹配所有三个字符；当<code class="literal">(a*)*</code>被拿来匹配<code class="literal">bc</code>时，整个 RE 和圆括号 子表达式都匹配一个空串。
+   </p><p>    如果声明了大小写无关的匹配，那么效果就好像所有大小写区别在字母表中消失了。如果在多个情况中一个字母以一个普通字符的形式出现在方括号表达式外面，那么它实际上被转换成 一个包含大小写的方括号表达式，也就是说，x 变成 [xX]。 如果它出现在一个方括号表达式里面，那么它的所有大小写的同族都被加入 方括号表达式中，也就是说，<code class="literal">x</code>变成<code class="literal">[xX]</code>。当它出现在一个方括号表达式内时，它的所有大小写副本都被加入到方括号表达式中，例如， <code class="literal">[x]</code>会变成<code class="literal">[xX]</code>，而<code class="literal">[^x]</code>会变成<code class="literal">[^xX]</code>。
+   </p><p>    如果指定了新行敏感的匹配，<code class="literal">.</code>和使用<code class="literal">^</code>的方括号表达式 将永远不会匹配新行字符（这样，匹配就绝对不会跨越新行，除非 RE 显式地安排了这样的情况）并且<code class="literal">^</code>和<code class="literal">$</code>除了分别匹配串开头和结尾之外，还将分别匹配新行后面和前面的空串。但是 ARE 逃逸<code class="literal">\A</code>和<code class="literal">\Z</code>仍然<span class="emphasis"><em>只</em></span>匹配串的开头和结尾。
+   </p><p>    如果指定了部分新行敏感的匹配，那么它影响<code class="literal">.</code>和方括号表达式， 这个时候和新行敏感的匹配一样，但是不影响<code class="literal">^</code>和<code class="literal">$</code>。
+   </p><p>    如果指定了逆新行敏感匹配，那么它影响<code class="literal">^</code>和<code class="literal">$</code>，其作用和在新行敏感的匹配里一样，但是不影响<code class="literal">.</code>和方括号表达式。这个并不是很有用，只是为了满足对称性而提供的。
+   </p></div><div class="sect3" id="POSIX-LIMITS-COMPATIBILITY"><div class="titlepage"><div><div><h4 class="title">9.7.3.6. 限制和兼容性</h4></div></div></div><p>    在这个实现里，对 RE 的长度没有特别的限制。但是，那些希望高移植性的程序应该避免使用长度超过 256 字节的 RE，因为 POSIX 兼容 的实现可以拒绝接受这样的 RE。
+   </p><p>    ARE 实际上和 POSIX ERE 不兼容的唯一的特性是在方括号表达式里<code class="literal">\</code>并不失去它特殊的含义。所有其它 ARE 特性都使用在 POSIX ERE 里面是非法或者是未定义、未声明效果的语法；指示器的<code class="literal">***</code>就是在 POSIX 的 BRE 和 ERE 之外的语法。
+   </p><p>    许多 ARE 扩展都是从 Perl 那里借来的（但是有些被做了修改来清理它们），以及一些 Perl 里没有出现的扩展。要注意的不兼容性包括<code class="literal">\b</code>、<code class="literal">\B</code>、对结尾的新行缺乏特别的处理、对那些被新行敏感匹配的东西附加的补齐方括号表达式、在 lookahead 约束里对圆括号和后引用的限制以及最长/最短 匹配（而不是第一匹配）的语义。
+   </p><p>    <span class="productname">PostgreSQL</span> 7.4 之前的版本中识别的 ARE 和 ERE 语法存在两个非常明显的不兼容：
+
+    </p><div class="itemizedlist"><ul class="itemizedlist" style="list-style-type: disc; "><li class="listitem"><p>       在 ARE 中，后面跟着一个字母数字字符的<code class="literal">\</code>要么是一个逃逸要么是一个错误， 但是在以前的版本里，它只是写该字母数字字符的另外一种方法。这个应该不是什么问题， 因为在以前的版本里没有什么理由会让我们写这样的序列。
+      </p></li><li class="listitem"><p>       在 ARE 里，<code class="literal">\</code>在<code class="literal">[]</code>里还是一个特殊字符， 因此在方括号表达式里的一个文本<code class="literal">\</code>必须被写成<code class="literal">\\</code>。
+      </p></li></ul></div><p>
+   </p></div><div class="sect3" id="POSIX-BASIC-REGEXES"><div class="titlepage"><div><div><h4 class="title">9.7.3.7. 基本正则表达式</h4></div></div></div><p>    BRE 在几个方面和 ERE 不太一样。在 BRE 中，<code class="literal">|</code>、<code class="literal">+</code>和<code class="literal">?</code>都是普通字符并且没有与它们功能等价的东西。范围的定界符是<code class="literal">\{</code>和<code class="literal">\}</code>， 因为 <code class="literal">{</code>和<code class="literal">}</code>本身是普通字符。嵌套的子表达式的圆括号是<code class="literal">\(</code>和<code class="literal">\)</code>，因为<code class="literal">(</code>和<code class="literal">)</code>自身是普通字符。除非在 RE 开头或者是圆括号子表达式开头，<code class="literal">^</code>都是一个普通字符。 除非在 RE 结尾或者是圆括号子表达式的结尾，<code class="literal">$</code>是一个普通字符。如果<code class="literal">*</code>出现在 RE 开头或者是圆括号封装的子表达式开头 （前面可能有<code class="literal">^</code>），那么它是个普通字符。最后，可以用单数字的后引用，<code class="literal">\&lt;</code>和<code class="literal">\&gt;</code>分别是<code class="literal">[[:&lt;:]]</code>和<code class="literal">[[:&gt;:]]</code>的同义词；在 BRE 中没有其它可用的逃逸。
+   </p></div></div></div><div class="navfooter"><hr /><table width="100%" summary="Navigation footer"><tr><td width="40%" align="left"><a accesskey="p" href="functions-bitstring.html">上一页</a> </td><td width="20%" align="center"><a accesskey="u" href="functions.html">上一级</a></td><td width="40%" align="right"> <a accesskey="n" href="functions-formatting.html">下一页</a></td></tr><tr><td width="40%" align="left" valign="top">9.6. 位串函数和操作符 </td><td width="20%" align="center"><a accesskey="h" href="index.html">起始页</a></td><td width="40%" align="right" valign="top"> 9.8. 数据类型格式化函数</td></tr></table></div></body></html>

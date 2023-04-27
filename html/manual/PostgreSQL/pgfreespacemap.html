@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><title>F.27. pg_freespacemap</title><link rel="stylesheet" type="text/css" href="stylesheet.css" /><link rev="made" href="pgsql-docs@postgresql.org" /><meta name="generator" content="DocBook XSL Stylesheets V1.79.1" /><link rel="prev" href="pgcrypto.html" title="F.26. pgcrypto" /><link rel="next" href="pgprewarm.html" title="F.28. pg_prewarm" /></head><body><div xmlns="http://www.w3.org/TR/xhtml1/transitional" class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="5" align="center">F.27. pg_freespacemap</th></tr><tr><td width="10%" align="left"><a accesskey="p" href="pgcrypto.html" title="F.26. pgcrypto">上一页</a> </td><td width="10%" align="left"><a accesskey="u" href="contrib.html" title="附录 F. 额外提供的模块">上一级</a></td><th width="60%" align="center">附录 F. 额外提供的模块</th><td width="10%" align="right"><a accesskey="h" href="index.html" title="PostgreSQL 10.1 手册">起始页</a></td><td width="10%" align="right"> <a accesskey="n" href="pgprewarm.html" title="F.28. pg_prewarm">下一页</a></td></tr></table><hr></hr></div><div class="sect1" id="PGFREESPACEMAP"><div class="titlepage"><div><div><h2 class="title" style="clear: both">F.27. pg_freespacemap</h2></div></div></div><div class="toc"><dl class="toc"><dt><span class="sect2"><a href="pgfreespacemap.html#idp86953680">F.27.1. 函数</a></span></dt><dt><span class="sect2"><a href="pgfreespacemap.html#idp86962576">F.27.2. 样例输出</a></span></dt><dt><span class="sect2"><a href="pgfreespacemap.html#idp86964032">F.27.3. 作者</a></span></dt></dl></div><a id="idp86948784" class="indexterm"></a><p>  <code class="filename">pg_freespacemap</code>模块提供了一种方法来检查空闲空间映射（FSM）。它提供了一个称为<code class="function">pg_freespace</code>的函数，或者准确地说是两个重载的函数。这些函数显示空闲空间映射中为一个给定页面所记录的值，或者显示关系中所有页面的记录值。
+ </p><p>  默认情况下，使用仅限于超级用户和<code class="literal">pg_stat_scan_tables</code>
+  角色的成员。可以使用<code class="command">GRANT</code>给其他人授予访问权限。
+ </p><div class="sect2" id="idp86953680"><div class="titlepage"><div><div><h3 class="title">F.27.1. 函数</h3></div></div></div><div class="variablelist"><dl class="variablelist"><dt><span class="term">     <code class="function">pg_freespace(rel regclass IN, blkno bigint IN) 返回 int2</code>
+    <a id="idp86955392" class="indexterm"></a>    
+    </span></dt><dd><p>      根据 FSM，返回由<code class="literal">blkno</code>指定的关系页面上的空闲空间总量。
+     </p></dd><dt><span class="term">     <code class="function">pg_freespace(rel regclass IN, blkno OUT bigint, avail OUT int2)</code>
+    </span></dt><dd><p>      根据 FSM，显示关系的每个页面上的空闲空间总量。一个<code class="literal">(blkno bigint, avail int2)</code>元组的集合会被返回，每一个元组对应关系中的一个页面。
+     </p></dd></dl></div><p>   存储在空闲空间映射中的值不准确。它们被圆整到<code class="symbol">BLCKSZ</code>的 1/256（对于默认的<code class="symbol">BLCKSZ</code>是 32  字节），并且在元组被插入和更新时它们不会被实时更新。
+  </p><p>   对于索引，被跟踪的是整个没有使用的页面，而不是页面中的空闲空间。因此，这些值可能没有意义，只是表示一个页面是满的还是空的。
+  </p><div class="note"><h3 class="title">注意</h3><p>    在版本 8.4 中接口已被更改，以反映在同一个版本中新引入的 FSM 实现。
+   </p></div></div><div class="sect2" id="idp86962576"><div class="titlepage"><div><div><h3 class="title">F.27.2. 样例输出</h3></div></div></div><pre class="screen">postgres=# SELECT * FROM pg_freespace('foo');
+ blkno | avail 
+-------+-------
+     0 |     0
+     1 |     0
+     2 |     0
+     3 |    32
+     4 |   704
+     5 |   704
+     6 |   704
+     7 |  1216
+     8 |   704
+     9 |   704
+    10 |   704
+    11 |   704
+    12 |   704
+    13 |   704
+    14 |   704
+    15 |   704
+    16 |   704
+    17 |   704
+    18 |   704
+    19 |  3648
+(20 rows)
+
+postgres=# SELECT * FROM pg_freespace('foo', 7);
+ pg_freespace 
+--------------
+         1216
+(1 row)</pre></div><div class="sect2" id="idp86964032"><div class="titlepage"><div><div><h3 class="title">F.27.3. 作者</h3></div></div></div><p>   最初的版本由 Mark Kirkwood <code class="email">&lt;<a class="email" href="mailto:markir@paradise.net.nz">markir@paradise.net.nz</a>&gt;</code>完成。在版本 8.4 中由 Heikki
+   Linnakangas <code class="email">&lt;<a class="email" href="mailto:heikki@enterprisedb.com">heikki@enterprisedb.com</a>&gt;</code>重写以适应新的 FSM 实现。
+  </p></div></div><div class="navfooter"><hr /><table width="100%" summary="Navigation footer"><tr><td width="40%" align="left"><a accesskey="p" href="pgcrypto.html">上一页</a> </td><td width="20%" align="center"><a accesskey="u" href="contrib.html">上一级</a></td><td width="40%" align="right"> <a accesskey="n" href="pgprewarm.html">下一页</a></td></tr><tr><td width="40%" align="left" valign="top">F.26. pgcrypto </td><td width="20%" align="center"><a accesskey="h" href="index.html">起始页</a></td><td width="40%" align="right" valign="top"> F.28. pg_prewarm</td></tr></table></div></body></html>

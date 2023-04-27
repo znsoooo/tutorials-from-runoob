@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><title>53.3. 错误消息风格指导</title><link rel="stylesheet" type="text/css" href="stylesheet.css" /><link rev="made" href="pgsql-docs@postgresql.org" /><meta name="generator" content="DocBook XSL Stylesheets V1.79.1" /><link rel="prev" href="error-message-reporting.html" title="53.2. 在服务器中报告错误" /><link rel="next" href="source-conventions.html" title="53.4. 其他编码习惯" /></head><body><div xmlns="http://www.w3.org/TR/xhtml1/transitional" class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="5" align="center">53.3. 错误消息风格指导</th></tr><tr><td width="10%" align="left"><a accesskey="p" href="error-message-reporting.html" title="53.2. 在服务器中报告错误">上一页</a> </td><td width="10%" align="left"><a accesskey="u" href="source.html" title="第 53 章 PostgreSQL编码习惯">上一级</a></td><th width="60%" align="center">第 53 章 PostgreSQL编码习惯</th><td width="10%" align="right"><a accesskey="h" href="index.html" title="PostgreSQL 10.1 手册">起始页</a></td><td width="10%" align="right"> <a accesskey="n" href="source-conventions.html" title="53.4. 其他编码习惯">下一页</a></td></tr></table><hr></hr></div><div class="sect1" id="ERROR-STYLE-GUIDE"><div class="titlepage"><div><div><h2 class="title" style="clear: both">53.3. 错误消息风格指导</h2></div></div></div><p>    提供这个风格指导是希望在所有由<span class="productname">PostgreSQL</span>产生的消息间维护一种一致的、用户友好的风格。
+   </p><div class="simplesect" id="idp58397616"><div class="titlepage"><div><div><h3 class="title">什么去哪里</h3></div></div></div><p>    主要的消息应该简短、实事求是并且避免引用诸如特定函数名这样的实现细节。<span class="quote">“<span class="quote">简短</span>”</span>意味着<span class="quote">“<span class="quote">在正常情况下应该能放在一行内</span>”</span>。如果需要保持主要消息简短，或者如果你觉得有必要提到诸如特定系统调用失败这样的实现细节，可以使用一个详细消息。主要消息和详细消息都应该实事求是。对于有关如何修复问题的建议可以使用一个提示消息，特别是该建议可能不总是合适时。
+   </p><p>    例如，与其用：
+</p><pre class="programlisting">IpcMemoryCreate: shmget(key=%d, size=%u, 0%o) failed: %m
+(plus a long addendum that is basically a hint)</pre><p>
+    不如写：
+</p><pre class="programlisting">Primary:    could not create shared memory segment: %m
+Detail:     Failed syscall was shmget(key=%d, size=%u, 0%o).
+Hint:       the addendum</pre><p>
+   </p><p>    原理：保持主要消息简短有助于扣住主题并且有助于客户端基于错误消息放在一行足以的假设来安排屏幕空间。详细消息和提示消息可以被归入一种详情模式，或者可能是一种弹出式错误细节窗口。还有，详细消息和提示消息通常会被排除在服务器日志之外以解决空间。最好避免对实现细节的引用，因为用户根本就不想知道细节。
+   </p></div><div class="simplesect" id="idp58402960"><div class="titlepage"><div><div><h3 class="title">格式化</h3></div></div></div><p>    不要对消息文本的格式化做任何特定假设。可以期望客户端和服务器日志换行来适应其自身的需要。在长消息中，新行字符（\n）可以被用来指示建议的分段。不要用一个新行结束一个消息。不要使用制表符或其他格式化字符（在错误上下文显示中，新行会自动被增加来分割上下文的层次，例如函数调用）。
+   </p><p>    原理：消息不一定非得显示在终端上。在 GUI 显示或浏览器中，这些格式化指令最多会被忽略。
+   </p></div><div class="simplesect" id="idp58404800"><div class="titlepage"><div><div><h3 class="title">引号</h3></div></div></div><p>    在引用时，英语文本应该使用双引号。其他语言中的文本应该一致地使用一种符合出版习惯和其他程序计算机输出的引号。
+   </p><p>    原理：选择双引号而不是单引号其实有点武断，但是更倾向于是首选用法。有人建议过按照 SQL 习惯根据对象类型来选择引号的种类（即，字符串单引号，标识符双引号）。但是这是一个很多用户根本不熟悉的语言内部的技术问题，它不会扩散到其他种类的被引用术语，也不会翻译成其他语言，并且也相当没有意义。
+   </p></div><div class="simplesect" id="idp58406704"><div class="titlepage"><div><div><h3 class="title">引号的使用</h3></div></div></div><p>    总是用引号界定文件名、用户提供的标识符以及其他可能包含词的变量。不要用它们来标记不会包含词的变量（例如，操作符名称）。
+   </p><p>    在后端有函数会根据需要对其自身的输出加上双引号（例如<code class="function">format_type_be()</code>）。不要在这种函数的输出周围再加上额外的引号。
+   </p><p>    原理：在被嵌入到一个消息时，对象可能具有产生歧义的名称。对于标记一个插入名称的开始和结束要始终如一。但不要在消息中混入不必要的或者重复的引号。
+   </p></div><div class="simplesect" id="idp58409696"><div class="titlepage"><div><div><h3 class="title">语法和标点</h3></div></div></div><p>    主要错误消息的规则与详细/提示消息的规则不同：
+   </p><p>    主要错误消息：不要大写第一个字母。不要用一个句点结束一个消息。甚至不要考虑用一个感叹号结束一个消息。
+   </p><p>    详细和提示消息：使用完整的句子，并且每一个都用句点结束。对句子的第一个词进行首字母大写。如果后面跟着另一个句子，在据点后面放两个空格（对于英语文本有效，在其他语言中可能不合适）。
+   </p><p>    错误上下文字符串：不要大写第一个字母并且不要用一个句点结束字符串。上下文字符串通常不应该是完整的句子。
+   </p><p>    原理：避免标点让客户端应用能更容易地把消息嵌入到各种各样的语法上下文中。主要消息场上不是语法上完整的句子（并且如果它们比一个句子还长，它们应该被分成主要和详细部分）。不过，详细和提示消息会更长并且需要包括多个句子。为了一致，即便它们只是一个句子，它们也应该遵循完整句子的风格。
+   </p></div><div class="simplesect" id="idp58413408"><div class="titlepage"><div><div><h3 class="title">大写 vs. 小写</h3></div></div></div><p>    对消息用于使用小写形式，包括一个主要错误消息的第一个字母。如果 SQL 命令或者关键词出现在消息中，为它们使用大写形式。
+   </p><p>    原理：用这种方式能更容易使所有的东西看起来更加一致，因为一些消息是完整的句子而另一些不是。
+   </p></div><div class="simplesect" id="idp58415008"><div class="titlepage"><div><div><h3 class="title">避免被动态</h3></div></div></div><p>    使用主动语态。在有主语时使用完整句子（<span class="quote">“<span class="quote">A could not do B</span>”</span>）。如果主语是程序本身，使用没有主语的电报风格，但不要为程序使用<span class="quote">“<span class="quote">I</span>”</span>。
+   </p><p>    原理：程序不是人类。所以不要假装。
+   </p></div><div class="simplesect" id="idp58417152"><div class="titlepage"><div><div><h3 class="title">现在式 vs. 过去式</h3></div></div></div><p>    如果一次尝试做某事失败但是可能在下一次成功（也许在修复某个问题之后），则使用过去式。如果失败必定是持久的，使用现在式。
+   </p><p>    在以下形式的句子之间存在着非平凡的语义区别：
+</p><pre class="programlisting">could not open file "%s": %m</pre><p>
+和
+</p><pre class="programlisting">cannot open file "%s"</pre><p>
+    第一个表示打开文件的尝试失败。该消息应该给出一个原因，例如<span class="quote">“<span class="quote">磁盘满</span>”</span>或者<span class="quote">“<span class="quote">文件不存在</span>”</span>。过去式更合适，因为下一次磁盘可能不再满或者请求的文件可能就存在了。
+   </p><p>    第二种形式指示打开所提及文件的功能在程序中根本就不存在，或者概念上是不可能的。现在式更合适，因为该情况将无限期保持。
+   </p><p>    原理：诚然，普通用户没有能力从消息的时态上得出重要的结论，但是由于语言为我们提供了语法，我们就应该正确地使用它。
+   </p></div><div class="simplesect" id="idp58422512"><div class="titlepage"><div><div><h3 class="title">对象类型</h3></div></div></div><p>    在引用一个对象的名称时，说明该对象的种类。
+   </p><p>    原理：否则没有人会了解什么<span class="quote">“<span class="quote">foo.bar.baz</span>”</span>。
+    refers to.
+   </p></div><div class="simplesect" id="idp58424144"><div class="titlepage"><div><div><h3 class="title">括号</h3></div></div></div><p>    方括号只被用于： (1) 在命令对照表中标记可选参数，或者 (2) 用于标记一个数组下标。
+   </p><p>    原理：任何其他用法都无法符合总所周知的习惯用法并且将使人们混乱。
+   </p></div><div class="simplesect" id="idp58425552"><div class="titlepage"><div><div><h3 class="title">组装错误消息</h3></div></div></div><p>   当一个消息包括在别处产生的文本时，这样将它嵌入：
+</p><pre class="programlisting">could not open file %s: %m</pre><p>
+   </p><p>    原理：将这种文本粘贴到一个单一的语句中很难解释所有可能的错误代码，因此需要某种标点。也有人建议把被嵌入的文本放在圆括号中，但是如果被嵌入的文本可能是消息中最重要的一部分（这是常有的事）时就显得不自然。
+   </p></div><div class="simplesect" id="idp58427984"><div class="titlepage"><div><div><h3 class="title">错误原因</h3></div></div></div><p>    消息应该总是说明为什么错误会发生的原因。例如：
+</p><pre class="programlisting">BAD:    could not open file %s
+BETTER: could not open file %s (I/O failure)</pre><p>
+    如果没有已知原因，你最好修复代码。
+   </p></div><div class="simplesect" id="idp58429712"><div class="titlepage"><div><div><h3 class="title">函数名</h3></div></div></div><p>    不要在错误文本中包括报告例程的名称。需要时，我们有其他机制能够知道这些，并且对于大部分用户来说这种信息没有用处。如果没有函数名错误文本就没有意义，那么请重写它。
+</p><pre class="programlisting">BAD:    pg_atoi: error in "z": cannot parse "z"
+BETTER: invalid input syntax for integer: "z"</pre><p>
+   </p><p>    也要避免提及被调用的函数，而不是说代码尝试做过什么：
+</p><pre class="programlisting">BAD:    open() failed: %m
+BETTER: could not open file %s: %m</pre><p>
+    如果它真地看起来必要，在详细消息中提及系统调用（在某些情况中，可以为详细消息提供传递给系统调用的实际值）。
+   </p><p>    原理：用户不知道所有那些函数做了什么。
+   </p></div><div class="simplesect" id="idp58433584"><div class="titlepage"><div><div><h3 class="title">应该避免的捣蛋词</h3></div></div></div><p><strong>Unable. </strong>    <span class="quote">“<span class="quote">Unable</span>”</span>接近于被动态。酌情使用<span class="quote">“<span class="quote">cannot</span>”</span>或者<span class="quote">“<span class="quote">could not</span>”</span>更好。
+   </p><p><strong>Bad. </strong>    <span class="quote">“<span class="quote">bad result</span>”</span>之类的错误消息实在很难被解释。最好写出为什么结果<span class="quote">“<span class="quote">不好</span>”</span>，例如<span class="quote">“<span class="quote">无效格式</span>”</span>。
+   </p><p><strong>Illegal. </strong>    <span class="quote">“<span class="quote">Illegal</span>”</span>表示未被了法律，剩下的才是<span class="quote">“<span class="quote">invalid</span>”</span>。同样，说明为什么无效。
+   </p><p><strong>Unknown. </strong>    尝试避免<span class="quote">“<span class="quote">unknown</span>”</span>。考虑<span class="quote">“<span class="quote">error: unknown
+    response</span>”</span>。如果你不知道响应是什么，你怎么知道它是错误的？<span class="quote">“<span class="quote">Unrecognized</span>”</span>常常是一个更好的选择。还有，确定不要包括被抱怨的值。
+</p><pre class="programlisting">BAD:    unknown node type
+BETTER: unrecognized node type: 42</pre><p>
+   </p><p><strong>找到 vs. 存在. </strong>    如果程序使用了一个非平凡的算法来定位一个资源（例如一个路径搜索）并且该算法失败了，说该程序无法<span class="quote">“<span class="quote">找到</span>”</span>该资源比较公平。换句话说，如果该资源应该在的位置是已知的，但是程序无法在那里访问它，那么才说该资源不<span class="quote">“<span class="quote">存在</span>”</span>。在这种情况中使用<span class="quote">“<span class="quote">找到</span>”</span>听起来很弱并且会使问题混淆。
+   </p><p><strong>May vs. Can vs. Might. </strong>    <span class="quote">“<span class="quote">May</span>”</span>表示权限（例如，"You may borrow my rake."），并且在文档或错误消息中用处有限。
+    <span class="quote">“<span class="quote">Can</span>”</span>表示能力（例如，"I can lift that log."），而<span class="quote">“<span class="quote">might</span>”</span>表示可能性（例如，"It might rain
+    today."）。请使用合适的词来使含义清晰并且便于翻译。
+   </p><p><strong>缩略形式. </strong>    避免缩略，如<span class="quote">“<span class="quote">can't</span>”</span>，请使用<span class="quote">“<span class="quote">cannot</span>”</span>。
+   </p></div><div class="simplesect" id="idp58449072"><div class="titlepage"><div><div><h3 class="title">适当的拼写</h3></div></div></div><p>    完整地拼出单词。例如，避免：
+  </p><div class="itemizedlist"><ul class="itemizedlist" style="list-style-type: disc; "><li class="listitem"><p>     spec
+    </p></li><li class="listitem"><p>     stats
+    </p></li><li class="listitem"><p>     parens
+    </p></li><li class="listitem"><p>     auth
+    </p></li><li class="listitem"><p>     xact
+    </p></li></ul></div><p>
+   </p><p>    基本原理：这将增强一致性。
+   </p></div><div class="simplesect" id="idp58452560"><div class="titlepage"><div><div><h3 class="title">本地化</h3></div></div></div><p>    记住错误消息文本需要被翻译成其他语言。请遵循<a class="xref" href="nls-programmer.html#NLS-GUIDELINES" title="54.2.2. 消息书写指南">第 54.2.2 节</a>中的方针以避免让翻译者为难。
+   </p></div></div><div class="navfooter"><hr /><table width="100%" summary="Navigation footer"><tr><td width="40%" align="left"><a accesskey="p" href="error-message-reporting.html">上一页</a> </td><td width="20%" align="center"><a accesskey="u" href="source.html">上一级</a></td><td width="40%" align="right"> <a accesskey="n" href="source-conventions.html">下一页</a></td></tr><tr><td width="40%" align="left" valign="top">53.2. 在服务器中报告错误 </td><td width="20%" align="center"><a accesskey="h" href="index.html">起始页</a></td><td width="40%" align="right" valign="top"> 53.4. 其他编码习惯</td></tr></table></div></body></html>

@@ -1,0 +1,450 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><title>35.7. 使用描述符区域</title><link rel="stylesheet" type="text/css" href="stylesheet.css" /><link rev="made" href="pgsql-docs@postgresql.org" /><meta name="generator" content="DocBook XSL Stylesheets V1.79.1" /><link rel="prev" href="ecpg-pgtypes.html" title="35.6. pgtypes 库" /><link rel="next" href="ecpg-errors.html" title="35.8. 错误处理" /></head><body><div xmlns="http://www.w3.org/TR/xhtml1/transitional" class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="5" align="center">35.7. 使用描述符区域</th></tr><tr><td width="10%" align="left"><a accesskey="p" href="ecpg-pgtypes.html" title="35.6. pgtypes 库">上一页</a> </td><td width="10%" align="left"><a accesskey="u" href="ecpg.html" title="第 35 章 ECPG - C 中的嵌入式 SQL">上一级</a></td><th width="60%" align="center">第 35 章 <span xmlns="http://www.w3.org/1999/xhtml" class="application">ECPG</span> - C 中的嵌入式 <acronym xmlns="http://www.w3.org/1999/xhtml" class="acronym">SQL</acronym></th><td width="10%" align="right"><a accesskey="h" href="index.html" title="PostgreSQL 10.1 手册">起始页</a></td><td width="10%" align="right"> <a accesskey="n" href="ecpg-errors.html" title="35.8. 错误处理">下一页</a></td></tr></table><hr></hr></div><div class="sect1" id="ECPG-DESCRIPTORS"><div class="titlepage"><div><div><h2 class="title" style="clear: both">35.7. 使用描述符区域</h2></div></div></div><div class="toc"><dl class="toc"><dt><span class="sect2"><a href="ecpg-descriptors.html#ECPG-NAMED-DESCRIPTORS">35.7.1. 命名 SQL 描述符区域</a></span></dt><dt><span class="sect2"><a href="ecpg-descriptors.html#ECPG-SQLDA-DESCRIPTORS">35.7.2. SQLDA 描述符区域</a></span></dt></dl></div><p>   一个 SQL 描述符区域是一种处理<code class="command">SELECT</code>、<code class="command">FETCH</code>或者<code class="command">DESCRIBE</code>语句结果的高级方法。一个 SQL 描述符区域把数据中一行的数据及元数据项组合到一个数据结构中。在执行动态 SQL 语句时（结果行的性质无法提前预知），元数据特别有用。PostgreSQL 提供两种方法来使用描述符区域：命名 SQL 描述符区域和 C 结构 SQLDA。
+  </p><div class="sect2" id="ECPG-NAMED-DESCRIPTORS"><div class="titlepage"><div><div><h3 class="title">35.7.1. 命名 SQL 描述符区域</h3></div></div></div><p>    一个命名 SQL 描述符区域由一个头部以及一个或多个条目描述符区域构成，头部包含与整个描述符相关的信息，而条目描述符区域则描述结果行中的每一列。
+   </p><p>    在使用 SQL 描述符区域之前，需要先分配一个：
+</p><pre class="programlisting">EXEC SQL ALLOCATE DESCRIPTOR <em class="replaceable"><code>identifier</code></em>;</pre><p>
+    identifier 会作为该描述符区域的<span class="quote">“<span class="quote">变量名</span>”</span>。当不再需要该描述符时，应当释放它：
+</p><pre class="programlisting">EXEC SQL DEALLOCATE DESCRIPTOR <em class="replaceable"><code>identifier</code></em>;</pre><p>
+   </p><p>    要使用一个描述符区域，把它指定为<code class="literal">INTO</code>子句的存储目标（而不是列出主变量）：
+</p><pre class="programlisting">EXEC SQL FETCH NEXT FROM mycursor INTO SQL DESCRIPTOR mydesc;</pre><p>
+    如果结果集为空，该描述符区域仍然会包含查询的元数据，即域的名称。
+   </p><p>    对于还没有执行的预备查询，<code class="command">DESCRIBE</code>可以被用来得到其结果集的元数据：
+</p><pre class="programlisting">EXEC SQL BEGIN DECLARE SECTION;
+char *sql_stmt = "SELECT * FROM table1";
+EXEC SQL END DECLARE SECTION;
+
+EXEC SQL PREPARE stmt1 FROM :sql_stmt;
+EXEC SQL DESCRIBE stmt1 INTO SQL DESCRIPTOR mydesc;</pre><p>
+   </p><p>    在 PostgreSQL 9.0 之前，<code class="literal">SQL</code>关键词是可选的，因此使用<code class="literal">DESCRIPTOR</code>和<code class="literal">SQL DESCRIPTOR</code>都会产生命名 SQL 描述符区域。现在该关键词是强制性的，省略<code class="literal">SQL</code>关键词会产生 SQLDA 描述符区域（见<a class="xref" href="ecpg-descriptors.html#ECPG-SQLDA-DESCRIPTORS" title="35.7.2. SQLDA 描述符区域">第 35.7.2 节</a>）。
+   </p><p>    在<code class="command">DESCRIBE</code>和<code class="command">FETCH</code>语句中，<code class="literal">INTO</code>和<code class="literal">USING</code>关键词的使用相似：它们产生结果集以及一个描述符区域中的元数据。
+   </p><p>    现在我们如何从描述符区域得到数据呢？你可以把描述符区域看成是一个具有命名域的结构。要从头部检索一个域的值并且把它存储到一个主变量中，可使用下面的命令：
+</p><pre class="programlisting">EXEC SQL GET DESCRIPTOR <em class="replaceable"><code>name</code></em> :<em class="replaceable"><code>hostvar</code></em> = <em class="replaceable"><code>field</code></em>;</pre><p>
+    当前，只定义了一个头部域：<em class="replaceable"><code>COUNT</code></em>，它告诉我们有多少个条目描述符区域（也就是，结果中包含多少列）。主变量需要是一个整数类型。要从条目描述符区域中得到一个域，可使用下面的命令：
+</p><pre class="programlisting">EXEC SQL GET DESCRIPTOR <em class="replaceable"><code>name</code></em> VALUE <em class="replaceable"><code>num</code></em> :<em class="replaceable"><code>hostvar</code></em> = <em class="replaceable"><code>field</code></em>;</pre><p>
+    <em class="replaceable"><code>num</code></em>可以是一个字面整数或者包含一个整数的主变量。可能的域有：
+
+    </p><div class="variablelist"><dl class="variablelist"><dt><span class="term"><code class="literal">CARDINALITY</code> （整数）</span></dt><dd><p>        结果集中的行数
+       </p></dd><dt><span class="term"><code class="literal">DATA</code></span></dt><dd><p>        实际的数据项（因此，这个域的数据类型取决于查询）
+       </p></dd><dt><span class="term"><code class="literal">DATETIME_INTERVAL_CODE</code> （整数）</span></dt><dd><p>        当<code class="literal">TYPE</code>是<code class="literal">9</code>时，
+        <code class="literal">DATETIME_INTERVAL_CODE</code>将具有以下值之一：
+        <code class="literal">1</code> 表示 <code class="literal">DATE</code>，
+        <code class="literal">2</code> 表示 <code class="literal">TIME</code>，
+        <code class="literal">3</code> 表示 <code class="literal">TIMESTAMP</code>，
+        <code class="literal">4</code> 表示 <code class="literal">TIME WITH TIME ZONE</code>，
+        <code class="literal">5</code> 表示 <code class="literal">TIMESTAMP WITH TIME ZONE</code>。
+       </p></dd><dt><span class="term"><code class="literal">DATETIME_INTERVAL_PRECISION</code> （整数）</span></dt><dd><p>        没有实现
+       </p></dd><dt><span class="term"><code class="literal">INDICATOR</code> （整数）</span></dt><dd><p>        指示符（表示一个空值或者一个值截断）
+       </p></dd><dt><span class="term"><code class="literal">KEY_MEMBER</code> （整数）</span></dt><dd><p>        没有实现
+       </p></dd><dt><span class="term"><code class="literal">LENGTH</code> （整数）</span></dt><dd><p>        以字符计的数据长度
+       </p></dd><dt><span class="term"><code class="literal">NAME</code> (string)</span></dt><dd><p>        列名
+       </p></dd><dt><span class="term"><code class="literal">NULLABLE</code> （整数）</span></dt><dd><p>        没有实现
+       </p></dd><dt><span class="term"><code class="literal">OCTET_LENGTH</code> （整数）</span></dt><dd><p>        以字节计的数据字符表达的长度
+       </p></dd><dt><span class="term"><code class="literal">PRECISION</code> （整数）</span></dt><dd><p>        精度（用于类型<code class="type">numeric</code>）
+       </p></dd><dt><span class="term"><code class="literal">RETURNED_LENGTH</code> （整数）</span></dt><dd><p>        以字符计的数据长度
+       </p></dd><dt><span class="term"><code class="literal">RETURNED_OCTET_LENGTH</code> （整数）</span></dt><dd><p>        以字节计的数据字符表达的长度
+       </p></dd><dt><span class="term"><code class="literal">SCALE</code> （整数）</span></dt><dd><p>        比例（用于类型<code class="type">numeric</code>）
+       </p></dd><dt><span class="term"><code class="literal">TYPE</code> （整数）</span></dt><dd><p>        列的数据类型的数字编码
+       </p></dd></dl></div><p>
+   </p><p>    在<code class="command">EXECUTE</code>、<code class="command">DECLARE</code>以及<code class="command">OPEN</code>语句中，<code class="literal">INTO</code>和<code class="literal">USING</code>关键词的效果不同。也可以手工建立一个描述符区域来为一个查询或者游标提供输入参数，并且<code class="literal">USING SQL DESCRIPTOR <em class="replaceable"><code>name</code></em></code>是用来传递输入参数给参数化查询的方法。建立一个命名 SQL 描述符区域的语句如下：
+</p><pre class="programlisting">EXEC SQL SET DESCRIPTOR <em class="replaceable"><code>name</code></em> VALUE <em class="replaceable"><code>num</code></em> <em class="replaceable"><code>field</code></em> = :<em class="replaceable"><code>hostvar</code></em>;</pre><p>
+   </p><p>    PostgreSQL 支持在一个<code class="command">FETCH</code>语句中检索多于一个记录并且在这种情况下把主变量假定为一个数组来存储数据。例如：
+</p><pre class="programlisting">EXEC SQL BEGIN DECLARE SECTION;
+int id[5];
+EXEC SQL END DECLARE SECTION;
+
+EXEC SQL FETCH 5 FROM mycursor INTO SQL DESCRIPTOR mydesc;
+
+EXEC SQL GET DESCRIPTOR mydesc VALUE 1 :id = DATA;</pre><p>
+
+   </p></div><div class="sect2" id="ECPG-SQLDA-DESCRIPTORS"><div class="titlepage"><div><div><h3 class="title">35.7.2. SQLDA 描述符区域</h3></div></div></div><p>    SQLDA 描述符区域是一个 C 语言结构，它也能被用来得到一个查询的结果集和元数据。一个结构存储一个来自结果集的记录。
+</p><pre class="programlisting">EXEC SQL include sqlda.h;
+sqlda_t         *mysqlda;
+
+EXEC SQL FETCH 3 FROM mycursor INTO DESCRIPTOR mysqlda;</pre><p>
+    注意<code class="literal">SQL</code>关键词被省略了。<a class="xref" href="ecpg-descriptors.html#ECPG-NAMED-DESCRIPTORS" title="35.7.1. 命名 SQL 描述符区域">第 35.7.1 节</a>中关于<code class="literal">INTO</code>和<code class="literal">USING</code>关键词用例的段落在一定条件下也适用于这里。在一个<code class="command">DESCRIBE</code>语句中，如果使用了<code class="literal">INTO</code>关键词，则<code class="literal">DESCRIPTOR</code>关键词可以完全被省略：
+</p><pre class="programlisting">EXEC SQL DESCRIBE prepared_statement INTO mysqlda;</pre><p>
+   </p><div class="procedure"><p>      使用 SQLDA 的程序的一般流程是：
+     </p><ol class="procedure" type="1"><li class="step"><p>准备一个查询，并且为它声明一个游标。</p></li><li class="step"><p>为结果行声明一个 SQLDA 。</p></li><li class="step"><p>为输入参数声明一个 SQLDA，并且初始化它们（内存分配、参数设置）。</p></li><li class="step"><p>用输入 SQLDA 打开一个游标。</p></li><li class="step"><p>从游标中取得行，并且把它们存储到一个输出 SQLDA。</p></li><li class="step"><p>从输出 SQLDA 读取值到主变量中（必要时使用转换）。</p></li><li class="step"><p>关闭游标。</p></li><li class="step"><p>关闭为输入 SQLDA 分配的内存区域。</p></li></ol></div><div class="sect3" id="idp30041776"><div class="titlepage"><div><div><h4 class="title">35.7.2.1. SQLDA 数据结构</h4></div></div></div><p>     SQLDA 使用三种数据结构类型：<code class="type">sqlda_t</code>、<code class="type">sqlvar_t</code>以及<code class="type">struct sqlname</code>。
+    </p><div class="tip"><h3 class="title">提示</h3><p>      PostgreSQL 的 SQLDA 与 IBM DB2 Unversal 数据库中相似的数据结构，因此一些 DB2 的 SQLDA 的技术信息有助于更好地理解 PostgreSQL 的 SQLDA。
+     </p></div><div class="sect4" id="ECPG-SQLDA-SQLDA"><div class="titlepage"><div><div><h5 class="title">35.7.2.1.1. sqlda_t 结构</h5></div></div></div><p>      结构类型<code class="type">sqlda_t</code>是实际 SQLDA 的类型。它保存一个记录。并且两个或者更多个<code class="type">sqlda_t</code>结构能够以<code class="structfield">desc_next</code>域中的指针连接成一个链表，这样可以表示一个有序的行集合。因此，当两个或多个行被取得时，应用可以通过沿着每一个<code class="type">sqlda_t</code>节点中的<code class="structfield">desc_next</code>指针读取它们。
+     </p><p>      <code class="type">sqlda_t</code>的定义是：
+</p><pre class="programlisting">struct sqlda_struct
+{
+    char            sqldaid[8];
+    long            sqldabc;
+    short           sqln;
+    short           sqld;
+    struct sqlda_struct *desc_next;
+    struct sqlvar_struct sqlvar[1];
+};
+
+typedef struct sqlda_struct sqlda_t;</pre><p>
+
+      域的含义是：
+
+    </p><div class="variablelist"><dl class="variablelist"><dt><span class="term"><code class="literal">sqldaid</code></span></dt><dd><p>        它包含一个字符串<code class="literal">"SQLDA  "</code>。
+       </p></dd><dt><span class="term"><code class="literal">sqldabc</code></span></dt><dd><p>        它包含已分配空间的尺寸（以字节计）。
+       </p></dd><dt><span class="term"><code class="literal">sqln</code></span></dt><dd><p>        当它被传递给使用<code class="literal">USING</code>关键词的<code class="command">OPEN</code>、<code class="command">DECLARE</code>或者<code class="command">EXECUTE</code>语句时，它包含用于一个参数化查询实例的输入参数的数目。在它被用作<code class="command">SELECT</code>、<code class="command">EXECUTE</code>或<code class="command">FETCH</code>语句的输出时，它的值和<code class="literal">sqld</code>一样
+       </p></dd><dt><span class="term"><code class="literal">sqld</code></span></dt><dd><p>        它包含一个结果集中的域的数量。
+       </p></dd><dt><span class="term"><code class="literal">desc_next</code></span></dt><dd><p>        如果查询返回不止一个记录，会返回多个链接在一起的 SQLDA 结构，并且<code class="literal">desc_next</code>保存一个指向下一个项的指针。
+       </p></dd><dt><span class="term"><code class="literal">sqlvar</code></span></dt><dd><p>        这是结果集中列的数组。
+       </p></dd></dl></div><p>
+     </p></div><div class="sect4" id="ECPG-SQLDA-SQLVAR"><div class="titlepage"><div><div><h5 class="title">35.7.2.1.2. sqlvar_t 结构</h5></div></div></div><p>      结构类型<code class="type">sqlvar_t</code>保存一个列值和元数据（例如类型和长度）。该类型的定义是：
+
+</p><pre class="programlisting">struct sqlvar_struct
+{
+    short          sqltype;
+    short          sqllen;
+    char          *sqldata;
+    short         *sqlind;
+    struct sqlname sqlname;
+};
+
+typedef struct sqlvar_struct sqlvar_t;</pre><p>
+
+      各个域的含义是：
+
+        </p><div class="variablelist"><dl class="variablelist"><dt><span class="term"><code class="literal">sqltype</code></span></dt><dd><p>            包含该域的类型标识符。值可以参考<code class="literal">ecpgtype.h</code>中的<code class="literal">enum ECPGttype</code>。
+           </p></dd><dt><span class="term"><code class="literal">sqllen</code></span></dt><dd><p>            包含域的二进制长度，例如<code class="type">ECPGt_int</code>是 4 字节。
+           </p></dd><dt><span class="term"><code class="literal">sqldata</code></span></dt><dd><p>            指向数据。数据的格式在<a class="xref" href="ecpg-variables.html#ECPG-VARIABLES-TYPE-MAPPING" title="35.4.4. 类型映射">第 35.4.4 节</a>中描述。
+           </p></dd><dt><span class="term"><code class="literal">sqlind</code></span></dt><dd><p>            指向空指示符。0 表示非空，-1 表示空。
+           </p></dd><dt><span class="term"><code class="literal">sqlname</code></span></dt><dd><p>            域的名称。
+           </p></dd></dl></div><p>
+     </p></div><div class="sect4" id="ECPG-SQLDA-SQLNAME"><div class="titlepage"><div><div><h5 class="title">35.7.2.1.3. struct sqlname 结构</h5></div></div></div><p>      一个<code class="type">struct sqlname</code>结构保持一个列名。它被用作<code class="type">sqlvar_t</code>结构的一个成员。该结构的定义是：
+</p><pre class="programlisting">#define NAMEDATALEN 64
+
+struct sqlname
+{
+        short           length;
+        char            data[NAMEDATALEN];
+};</pre><p>
+      各个域的含义是：
+            </p><div class="variablelist"><dl class="variablelist"><dt><span class="term"><code class="literal">length</code></span></dt><dd><p>                 包含域名称的长度。
+                </p></dd><dt><span class="term"><code class="literal">data</code></span></dt><dd><p>                 包含实际的域名称。
+                </p></dd></dl></div><p>
+     </p></div></div><div class="sect3" id="ECPG-SQLDA-OUTPUT"><div class="titlepage"><div><div><h4 class="title">35.7.2.2. 使用一个 SQLDA 检索一个结果集</h4></div></div></div><div class="procedure"><p>      通过一个 SQLDA 检索一个查询结果集的一般步骤是：
+     </p><ol class="procedure" type="1"><li class="step"><p>声明一个<code class="type">sqlda_t</code>结构来接收结果集。</p></li><li class="step"><p>执行 <code class="command">FETCH</code>/<code class="command">EXECUTE</code>/<code class="command">DESCRIBE</code> 命令来处理一个指定已声明 SQLDA 的查询。</p></li><li class="step"><p>通过查看<code class="type">sqlda_t</code>结构的成员<code class="structfield">sqln</code>来检查结果集中记录的数量。</p></li><li class="step"><p>从<code class="type">sqlda_t</code>结构的成员<code class="literal">sqlvar[0]</code>、<code class="literal">sqlvar[1]</code>等中得到每一列的值。</p></li><li class="step"><p>沿着<code class="type">sqlda_t</code>结构的成员<code class="structfield">desc_next</code>指针到达下一行（<code class="type">sqlda_t</code>）。</p></li><li class="step"><p>根据你的需要重复上述步骤。</p></li></ol></div><p>     这里是一个通过 SQLDA 检索结果集的例子。
+    </p><p>     首先，声明一个<code class="type">sqlda_t</code>结构来接收结果集。
+</p><pre class="programlisting">sqlda_t *sqlda1;</pre><p>
+    </p><p>     接下来，指定一个命令中的 SQLDA。这是一个<code class="command">FETCH</code>命令的例子。
+</p><pre class="programlisting">EXEC SQL FETCH NEXT FROM cur1 INTO DESCRIPTOR sqlda1;</pre><p>
+    </p><p>     运行一个循环顺着链表来检索行。
+</p><pre class="programlisting">sqlda_t *cur_sqlda;
+
+for (cur_sqlda = sqlda1;
+     cur_sqlda != NULL;
+     cur_sqlda = cur_sqlda-&gt;desc_next)
+{
+    ...
+}</pre><p>
+    </p><p>     在循环内部，运行另一个循环来检索行中每一列的数据（<code class="type">sqlvar_t</code>结构）。
+</p><pre class="programlisting">for (i = 0; i &lt; cur_sqlda-&gt;sqld; i++)
+{
+    sqlvar_t v = cur_sqlda-&gt;sqlvar[i];
+    char *sqldata = v.sqldata;
+    short sqllen  = v.sqllen;
+    ...
+}</pre><p>
+    </p><p>     要得到一列的值，应检查<code class="type">sqlvar_t</code>结构的成员<code class="structfield">sqltype</code>的值。然后，根据列类型切换到一种合适的方法从<code class="structfield">sqlvar</code>域中复制数据到一个主变量。
+</p><pre class="programlisting">char var_buf[1024];
+
+switch (v.sqltype)
+{
+    case ECPGt_char:
+        memset(&amp;var_buf, 0, sizeof(var_buf));
+        memcpy(&amp;var_buf, sqldata, (sizeof(var_buf) &lt;= sqllen ? sizeof(var_buf) - 1 : sqllen));
+        break;
+
+    case ECPGt_int: /* integer */
+        memcpy(&amp;intval, sqldata, sqllen);
+        snprintf(var_buf, sizeof(var_buf), "%d", intval);
+        break;
+
+    ...
+}</pre><p>
+    </p></div><div class="sect3" id="ECPG-SQLDA-INPUT"><div class="titlepage"><div><div><h4 class="title">35.7.2.3. 使用一个 SQLDA 传递查询参数</h4></div></div></div><div class="procedure"><p>      使用一个 SQLDA 传递输入参数给一个预备查询的一般步骤是：
+     </p><ol class="procedure" type="1"><li class="step"><p>创建一个预备查询（预备语句）。</p></li><li class="step"><p>声明一个 sqlda_t 结构作为输入 SQLDA。</p></li><li class="step"><p>为输入 SQLDA 分配内存区域（作为 sqlda_t 结构）。</p></li><li class="step"><p>在分配好的内存中设置（复制）输入值。</p></li><li class="step"><p>打开一个说明了输入 SQLDA 的游标。</p></li></ol></div><p>     这里是一个例子。
+    </p><p>     首先，创建一个预备语句。
+</p><pre class="programlisting">EXEC SQL BEGIN DECLARE SECTION;
+char query[1024] = "SELECT d.oid, * FROM pg_database d, pg_stat_database s WHERE d.oid = s.datid AND (d.datname = ? OR d.oid = ?)";
+EXEC SQL END DECLARE SECTION;
+
+EXEC SQL PREPARE stmt1 FROM :query;</pre><p>
+    </p><p>     接下来为一个 SQLDA 分配内存，并且在<code class="type">sqlda_t</code>结构的<code class="structfield">sqln</code>成员变量中设置输入参数的数量。当预备查询要求两个或多个输入参数时，应用必须分配额外的内存空间，空间的大小为 (参数数目 - 1) * sizeof(sqlvar_t)。这里的例子展示了为两个输入参数分配内存空间。
+</p><pre class="programlisting">sqlda_t *sqlda2;
+
+sqlda2 = (sqlda_t *) malloc(sizeof(sqlda_t) + sizeof(sqlvar_t));
+memset(sqlda2, 0, sizeof(sqlda_t) + sizeof(sqlvar_t));
+
+sqlda2-&gt;sqln = 2; /* 输入变量的数目 */</pre><p>
+    </p><p>     内存分配之后，把参数值存储到<code class="literal">sqlvar[]</code>数组（当 SQLDA 在接收结果集时，这也是用来检索列值的数组）。在这个例子中，输入参数是<code class="literal">"postgres"</code>（字符串类型）和<code class="literal">1</code>（整数类型）。
+</p><pre class="programlisting">sqlda2-&gt;sqlvar[0].sqltype = ECPGt_char;
+sqlda2-&gt;sqlvar[0].sqldata = "postgres";
+sqlda2-&gt;sqlvar[0].sqllen  = 8;
+
+int intval = 1;
+sqlda2-&gt;sqlvar[1].sqltype = ECPGt_int;
+sqlda2-&gt;sqlvar[1].sqldata = (char *) &amp;intval;
+sqlda2-&gt;sqlvar[1].sqllen  = sizeof(intval);</pre><p>
+    </p><p>     通过打开一个游标并且说明之前已经建立好的 SQLDA，输入参数被传递给预备语句。
+</p><pre class="programlisting">EXEC SQL OPEN cur1 USING DESCRIPTOR sqlda2;</pre><p>
+    </p><p>     最后，用完输入 SQLDA 后必须显式地释放已分配的内存空间，这与用于接收查询结果的 SQLDA 不同。
+</p><pre class="programlisting">free(sqlda2);</pre><p>
+    </p></div><div class="sect3" id="ECPG-SQLDA-EXAMPLE"><div class="titlepage"><div><div><h4 class="title">35.7.2.4. 一个使用 SQLDA 的应用例子</h4></div></div></div><p>     这里是一个例子程序，它描述了如何按照输入参数的指定从系统目录中取得数据库的访问统计。
+    </p><p>     这个应用在数据库 OID 上连接两个系统表（pg_database 和 pg_stat_database），并且还取得和显示通过两个输入参数（一个数据库<code class="literal">postgres</code>和 OID <code class="literal">1</code>）检索到的数据库统计。
+    </p><p>     首先，为输入和输出分别声明一个 SQLDA。
+</p><pre class="programlisting">EXEC SQL include sqlda.h;
+
+sqlda_t *sqlda1; /* 一个输出描述符 */
+sqlda_t *sqlda2; /* 一个输入描述符  */</pre><p>
+    </p><p>     接下来，连接到数据库，准备一个语句并且为预备语句声明一个游标。
+</p><pre class="programlisting">int
+main(void)
+{
+    EXEC SQL BEGIN DECLARE SECTION;
+    char query[1024] = "SELECT d.oid,* FROM pg_database d, pg_stat_database s WHERE d.oid=s.datid AND ( d.datname=? OR d.oid=? )";
+    EXEC SQL END DECLARE SECTION;
+
+    EXEC SQL CONNECT TO testdb AS con1 USER testuser;
+
+    EXEC SQL PREPARE stmt1 FROM :query;
+    EXEC SQL DECLARE cur1 CURSOR FOR stmt1;</pre><p>
+    </p><p>     然后，为输入参数在输入 SQLDA 中放入一些值。为输入 SQLDA 分配内存，并且在<code class="literal">sqln</code>中设置输入参数的数目。在<code class="literal">sqlvar</code>结构的<code class="literal">sqltype</code>、<code class="literal">sqldata</code>和<code class="literal">sqllen</code>中存入类型、值和值长度。
+
+</p><pre class="programlisting">    /* 为输入参数创建 SQLDA 结构。 */
+    sqlda2 = (sqlda_t *) malloc(sizeof(sqlda_t) + sizeof(sqlvar_t));
+    memset(sqlda2, 0, sizeof(sqlda_t) + sizeof(sqlvar_t));
+    sqlda2-&gt;sqln = 2; /* 输入变量的数量 */
+
+    sqlda2-&gt;sqlvar[0].sqltype = ECPGt_char;
+    sqlda2-&gt;sqlvar[0].sqldata = "postgres";
+    sqlda2-&gt;sqlvar[0].sqllen  = 8;
+
+    intval = 1;
+    sqlda2-&gt;sqlvar[1].sqltype = ECPGt_int;
+    sqlda2-&gt;sqlvar[1].sqldata = (char *)&amp;intval;
+    sqlda2-&gt;sqlvar[1].sqllen  = sizeof(intval);</pre><p>
+    </p><p>     设置完输入 SQLDA 之后，用输入 SQLDA 打开一个游标。
+
+</p><pre class="programlisting">    /* 用输入参数打开一个游标。 */
+    EXEC SQL OPEN cur1 USING DESCRIPTOR sqlda2;</pre><p>
+    </p><p>     从打开的游标中取行到输出 SQLDA 中（通常，你不得不在循环中反复调用<code class="command">FETCH</code>来取出结果集中的所有行）。
+</p><pre class="programlisting">    while (1)
+    {
+        sqlda_t *cur_sqlda;
+
+        /* 分配描述符给游标  */
+        EXEC SQL FETCH NEXT FROM cur1 INTO DESCRIPTOR sqlda1;</pre><p>
+    </p><p>     再后，沿着<code class="type">sqlda_t</code>结构的链表从 SQLDA 中检索取得的记录。
+</p><pre class="programlisting">    for (cur_sqlda = sqlda1 ;
+         cur_sqlda != NULL ;
+         cur_sqlda = cur_sqlda-&gt;desc_next)
+    {
+        ...</pre><p>
+    </p><p>     读取第一个记录中的每一列。列的数量被存储在<code class="structfield">sqld</code>中，第一列的实际数据被存储在<code class="literal">sqlvar[0]</code>中，两者都是<code class="type">sqlda_t</code>结构的成员。
+
+</p><pre class="programlisting">        /* 打印一行中的每一列。 */
+        for (i = 0; i &lt; sqlda1-&gt;sqld; i++)
+        {
+            sqlvar_t v = sqlda1-&gt;sqlvar[i];
+            char *sqldata = v.sqldata;
+            short sqllen  = v.sqllen;
+
+            strncpy(name_buf, v.sqlname.data, v.sqlname.length);
+            name_buf[v.sqlname.length] = '\0';</pre><p>
+    </p><p>     现在，列数据已经被存在了变量<code class="varname">v</code>中。把每个数据复制到主变量中，列的类型可以查看。
+</p><pre class="programlisting">            switch (v.sqltype) {
+                int intval;
+                double doubleval;
+                unsigned long long int longlongval;
+
+                case ECPGt_char:
+                    memset(&amp;var_buf, 0, sizeof(var_buf));
+                    memcpy(&amp;var_buf, sqldata, (sizeof(var_buf) &lt;= sqllen ? sizeof(var_buf)-1 : sqllen));
+                    break;
+
+                case ECPGt_int: /* 整数 */
+                    memcpy(&amp;intval, sqldata, sqllen);
+                    snprintf(var_buf, sizeof(var_buf), "%d", intval);
+                    break;
+
+                ...
+
+                default:
+                    ...
+            }
+
+            printf("%s = %s (type: %d)\n", name_buf, var_buf, v.sqltype);
+        }</pre><p>
+    </p><p>     处理所有记录后关闭游标，并且从数据库断开连接。
+</p><pre class="programlisting">    EXEC SQL CLOSE cur1;
+    EXEC SQL COMMIT;
+
+    EXEC SQL DISCONNECT ALL;</pre><p>
+    </p><p>     整个程序显示在<a class="xref" href="ecpg-descriptors.html#ECPG-SQLDA-EXAMPLE-EXAMPLE" title="例 35.1. 示例 SQLDA 程序">例 35.1</a>中。
+    </p><div class="example" id="ECPG-SQLDA-EXAMPLE-EXAMPLE"><p class="title"><strong>例 35.1. 示例 SQLDA 程序</strong></p><div class="example-contents"><pre class="programlisting">#include &lt;stdlib.h&gt;
+#include &lt;string.h&gt;
+#include &lt;stdlib.h&gt;
+#include &lt;stdio.h&gt;
+#include &lt;unistd.h&gt;
+
+EXEC SQL include sqlda.h;
+
+sqlda_t *sqlda1; /* 用于输出的描述符 */
+sqlda_t *sqlda2; /* 用于输入的描述符 */
+
+EXEC SQL WHENEVER NOT FOUND DO BREAK;
+EXEC SQL WHENEVER SQLERROR STOP;
+
+int
+main(void)
+{
+    EXEC SQL BEGIN DECLARE SECTION;
+    char query[1024] = "SELECT d.oid,* FROM pg_database d, pg_stat_database s WHERE d.oid=s.datid AND ( d.datname=? OR d.oid=? )";
+
+    int intval;
+    unsigned long long int longlongval;
+    EXEC SQL END DECLARE SECTION;
+
+    EXEC SQL CONNECT TO uptimedb AS con1 USER uptime;
+
+    EXEC SQL PREPARE stmt1 FROM :query;
+    EXEC SQL DECLARE cur1 CURSOR FOR stmt1;
+
+    /* 为一个输入参数创建一个 SQLDA 结构 */
+    sqlda2 = (sqlda_t *)malloc(sizeof(sqlda_t) + sizeof(sqlvar_t));
+    memset(sqlda2, 0, sizeof(sqlda_t) + sizeof(sqlvar_t));
+    sqlda2-&gt;sqln = 2; /* 输入变量的数量 */
+
+    sqlda2-&gt;sqlvar[0].sqltype = ECPGt_char;
+    sqlda2-&gt;sqlvar[0].sqldata = "postgres";
+    sqlda2-&gt;sqlvar[0].sqllen  = 8;
+
+    intval = 1;
+    sqlda2-&gt;sqlvar[1].sqltype = ECPGt_int;
+    sqlda2-&gt;sqlvar[1].sqldata = (char *) &amp;intval;
+    sqlda2-&gt;sqlvar[1].sqllen  = sizeof(intval);
+
+    /* 用输入参数打开一个游标。 */
+    EXEC SQL OPEN cur1 USING DESCRIPTOR sqlda2;
+
+    while (1)
+    {
+        sqlda_t *cur_sqlda;
+
+        /* 给游标分配描述符  */
+        EXEC SQL FETCH NEXT FROM cur1 INTO DESCRIPTOR sqlda1;
+
+        for (cur_sqlda = sqlda1 ;
+             cur_sqlda != NULL ;
+             cur_sqlda = cur_sqlda-&gt;desc_next)
+        {
+            int i;
+            char name_buf[1024];
+            char var_buf[1024];
+
+            /* 打印一行中的每一列。 */
+            for (i=0 ; i&lt;cur_sqlda-&gt;sqld ; i++)
+            {
+                sqlvar_t v = cur_sqlda-&gt;sqlvar[i];
+                char *sqldata = v.sqldata;
+                short sqllen  = v.sqllen;
+
+                strncpy(name_buf, v.sqlname.data, v.sqlname.length);
+                name_buf[v.sqlname.length] = '\0';
+
+                switch (v.sqltype)
+                {
+                    case ECPGt_char:
+                        memset(&amp;var_buf, 0, sizeof(var_buf));
+                        memcpy(&amp;var_buf, sqldata, (sizeof(var_buf)&lt;=sqllen ? sizeof(var_buf)-1 : sqllen) );
+                        break;
+
+                    case ECPGt_int: /* 整数 */
+                        memcpy(&amp;intval, sqldata, sqllen);
+                        snprintf(var_buf, sizeof(var_buf), "%d", intval);
+                        break;
+
+                    case ECPGt_long_long: /* 大整数 */
+                        memcpy(&amp;longlongval, sqldata, sqllen);
+                        snprintf(var_buf, sizeof(var_buf), "%lld", longlongval);
+                        break;
+
+                    default:
+                    {
+                        int i;
+                        memset(var_buf, 0, sizeof(var_buf));
+                        for (i = 0; i &lt; sqllen; i++)
+                        {
+                            char tmpbuf[16];
+                            snprintf(tmpbuf, sizeof(tmpbuf), "%02x ", (unsigned char) sqldata[i]);
+                            strncat(var_buf, tmpbuf, sizeof(var_buf));
+                        }
+                    }
+                        break;
+                }
+
+                printf("%s = %s (type: %d)\n", name_buf, var_buf, v.sqltype);
+            }
+
+            printf("\n");
+        }
+    }
+
+    EXEC SQL CLOSE cur1;
+    EXEC SQL COMMIT;
+
+    EXEC SQL DISCONNECT ALL;
+
+    return 0;
+}</pre><p>      这个例子的输出应该看起来类似下面的结果（一些数字会变化）。
+     </p><pre class="screen">oid = 1 (type: 1)
+datname = template1 (type: 1)
+datdba = 10 (type: 1)
+encoding = 0 (type: 5)
+datistemplate = t (type: 1)
+datallowconn = t (type: 1)
+datconnlimit = -1 (type: 5)
+datlastsysoid = 11510 (type: 1)
+datfrozenxid = 379 (type: 1)
+dattablespace = 1663 (type: 1)
+datconfig =  (type: 1)
+datacl = {=c/uptime,uptime=CTc/uptime} (type: 1)
+datid = 1 (type: 1)
+datname = template1 (type: 1)
+numbackends = 0 (type: 5)
+xact_commit = 113606 (type: 9)
+xact_rollback = 0 (type: 9)
+blks_read = 130 (type: 9)
+blks_hit = 7341714 (type: 9)
+tup_returned = 38262679 (type: 9)
+tup_fetched = 1836281 (type: 9)
+tup_inserted = 0 (type: 9)
+tup_updated = 0 (type: 9)
+tup_deleted = 0 (type: 9)
+
+oid = 11511 (type: 1)
+datname = postgres (type: 1)
+datdba = 10 (type: 1)
+encoding = 0 (type: 5)
+datistemplate = f (type: 1)
+datallowconn = t (type: 1)
+datconnlimit = -1 (type: 5)
+datlastsysoid = 11510 (type: 1)
+datfrozenxid = 379 (type: 1)
+dattablespace = 1663 (type: 1)
+datconfig =  (type: 1)
+datacl =  (type: 1)
+datid = 11511 (type: 1)
+datname = postgres (type: 1)
+numbackends = 0 (type: 5)
+xact_commit = 221069 (type: 9)
+xact_rollback = 18 (type: 9)
+blks_read = 1176 (type: 9)
+blks_hit = 13943750 (type: 9)
+tup_returned = 77410091 (type: 9)
+tup_fetched = 3253694 (type: 9)
+tup_inserted = 0 (type: 9)
+tup_updated = 0 (type: 9)
+tup_deleted = 0 (type: 9)</pre></div></div><br class="example-break" /></div></div></div><div class="navfooter"><hr /><table width="100%" summary="Navigation footer"><tr><td width="40%" align="left"><a accesskey="p" href="ecpg-pgtypes.html">上一页</a> </td><td width="20%" align="center"><a accesskey="u" href="ecpg.html">上一级</a></td><td width="40%" align="right"> <a accesskey="n" href="ecpg-errors.html">下一页</a></td></tr><tr><td width="40%" align="left" valign="top">35.6. pgtypes 库 </td><td width="20%" align="center"><a accesskey="h" href="index.html">起始页</a></td><td width="40%" align="right" valign="top"> 35.8. 错误处理</td></tr></table></div></body></html>

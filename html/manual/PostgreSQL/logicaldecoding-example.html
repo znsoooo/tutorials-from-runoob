@@ -1,0 +1,102 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><title>48.1. 逻辑解码的例子</title><link rel="stylesheet" type="text/css" href="stylesheet.css" /><link rev="made" href="pgsql-docs@postgresql.org" /><meta name="generator" content="DocBook XSL Stylesheets V1.79.1" /><link rel="prev" href="logicaldecoding.html" title="第 48 章 逻辑解码" /><link rel="next" href="logicaldecoding-explanation.html" title="48.2. 逻辑解码概念" /></head><body><div xmlns="http://www.w3.org/TR/xhtml1/transitional" class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="5" align="center">48.1. 逻辑解码的例子</th></tr><tr><td width="10%" align="left"><a accesskey="p" href="logicaldecoding.html" title="第 48 章 逻辑解码">上一页</a> </td><td width="10%" align="left"><a accesskey="u" href="logicaldecoding.html" title="第 48 章 逻辑解码">上一级</a></td><th width="60%" align="center">第 48 章 逻辑解码</th><td width="10%" align="right"><a accesskey="h" href="index.html" title="PostgreSQL 10.1 手册">起始页</a></td><td width="10%" align="right"> <a accesskey="n" href="logicaldecoding-explanation.html" title="48.2. 逻辑解码概念">下一页</a></td></tr></table><hr></hr></div><div class="sect1" id="LOGICALDECODING-EXAMPLE"><div class="titlepage"><div><div><h2 class="title" style="clear: both">48.1. 逻辑解码的例子</h2></div></div></div><p>    下面的例子演示了使用 SQL 接口控制逻辑解码。
+   </p><p>    在你能使用逻辑解码之前，你必须设置<a class="xref" href="runtime-config-wal.html#GUC-WAL-LEVEL">wal_level</a>为
+    <code class="literal">logical</code>，并且<a class="xref" href="runtime-config-replication.html#GUC-MAX-REPLICATION-SLOTS">max_replication_slots</a>
+    必须至少被设置为 1。然后，你应该作为一个超级用户连接到目标数据库（在下面
+    的例子中是<code class="literal">postgres</code>）。
+   </p><pre class="programlisting">postgres=# -- 使用输出插件'test_decoding'创建一个名为'regression_slot'的槽
+postgres=# SELECT * FROM pg_create_logical_replication_slot('regression_slot', 'test_decoding');
+    slot_name    |    lsn
+-----------------+-----------
+ regression_slot | 0/16B1970
+(1 row)
+
+postgres=# SELECT slot_name, plugin, slot_type, database, active, restart_lsn, confirmed_flush_lsn FROM pg_replication_slots;
+    slot_name    |    plugin     | slot_type | database | active | restart_lsn | confirmed_flush_lsn
+-----------------+---------------+-----------+----------+--------+-------------+-----------------
+ regression_slot | test_decoding | logical   | postgres | f      | 0/16A4408   | 0/16A4440
+(1 row)
+
+postgres=# -- 目前还看不到更改
+postgres=# SELECT * FROM pg_logical_slot_get_changes('regression_slot', NULL, NULL);
+ lsn | xid | data 
+-----+-----+------
+(0 rows)
+
+postgres=# CREATE TABLE data(id serial primary key, data text);
+CREATE TABLE
+
+postgres=# -- DDL 没有被复制，因此你将看到的东西只有事务
+postgres=# SELECT * FROM pg_logical_slot_get_changes('regression_slot', NULL, NULL);
+    lsn    |  xid  |     data     
+-----------+-------+--------------
+ 0/BA2DA58 | 10297 | BEGIN 10297
+ 0/BA5A5A0 | 10297 | COMMIT 10297
+(2 rows)
+
+postgres=# -- 一单读到更改，它们会被消费掉并且不会在一个后续调用中被发出：
+postgres=# SELECT * FROM pg_logical_slot_get_changes('regression_slot', NULL, NULL);
+ lsn | xid | data 
+-----+-----+------
+(0 rows)
+
+postgres=# BEGIN;
+postgres=# INSERT INTO data(data) VALUES('1');
+postgres=# INSERT INTO data(data) VALUES('2');
+postgres=# COMMIT;
+
+postgres=# SELECT * FROM pg_logical_slot_get_changes('regression_slot', NULL, NULL);
+    lsn    |  xid  |                          data                           
+-----------+-------+---------------------------------------------------------
+ 0/BA5A688 | 10298 | BEGIN 10298
+ 0/BA5A6F0 | 10298 | table public.data: INSERT: id[integer]:1 data[text]:'1'
+ 0/BA5A7F8 | 10298 | table public.data: INSERT: id[integer]:2 data[text]:'2'
+ 0/BA5A8A8 | 10298 | COMMIT 10298
+(4 rows)
+
+postgres=# INSERT INTO data(data) VALUES('3');
+
+postgres=# -- 你也可以不消费更改而在更改流中先看一看
+postgres=# SELECT * FROM pg_logical_slot_peek_changes('regression_slot', NULL, NULL);
+    lsn    |  xid  |                          data                           
+-----------+-------+---------------------------------------------------------
+ 0/BA5A8E0 | 10299 | BEGIN 10299
+ 0/BA5A8E0 | 10299 | table public.data: INSERT: id[integer]:3 data[text]:'3'
+ 0/BA5A990 | 10299 | COMMIT 10299
+(3 rows)
+
+postgres=# -- 接下来对 pg_logical_slot_peek_changes() 的调用再次返回相同的更改
+postgres=# SELECT * FROM pg_logical_slot_peek_changes('regression_slot', NULL, NULL);
+    lsn    |  xid  |                          data                           
+-----------+-------+---------------------------------------------------------
+ 0/BA5A8E0 | 10299 | BEGIN 10299
+ 0/BA5A8E0 | 10299 | table public.data: INSERT: id[integer]:3 data[text]:'3'
+ 0/BA5A990 | 10299 | COMMIT 10299
+(3 rows)
+
+postgres=# -- 可以向输出插件传递选项来影响格式化
+postgres=# SELECT * FROM pg_logical_slot_peek_changes('regression_slot', NULL, NULL, 'include-timestamp', 'on');
+    lsn    |  xid  |                          data                           
+-----------+-------+---------------------------------------------------------
+ 0/BA5A8E0 | 10299 | BEGIN 10299
+ 0/BA5A8E0 | 10299 | table public.data: INSERT: id[integer]:3 data[text]:'3'
+ 0/BA5A990 | 10299 | COMMIT 10299 (at 2017-05-10 12:07:21.272494-04)
+(3 rows)
+
+postgres=# -- 当不再需要一个槽后记住销毁它以停止消耗服务器资源：
+postgres=# SELECT pg_drop_replication_slot('regression_slot');
+ pg_drop_replication_slot
+-----------------------
+
+(1 row)</pre><p>    下面的例子展示了如何在流复制协议上使用 PostgreSQL 发布所包括的程序<a class="xref" href="app-pgrecvlogical.html" title="pg_recvlogical"><span class="refentrytitle"><span class="application">pg_recvlogical</span></span></a>来控制逻辑解码。这要求设置客户端认证以允许复制连接（见<a class="xref" href="warm-standby.html#STREAMING-REPLICATION-AUTHENTICATION" title="26.2.5.1. 认证">第 26.2.5.1 节</a>），并且把<code class="varname">max_wal_senders</code>设置成足够高以允许一个额外的连接。
+   </p><pre class="programlisting">$ pg_recvlogical -d postgres --slot test --create-slot
+$ pg_recvlogical -d postgres --slot test --start -f -
+<span class="keycap"><strong>Control</strong></span>+<span class="keycap"><strong>Z</strong></span>
+$ psql -d postgres -c "INSERT INTO data(data) VALUES('4');"
+$ fg
+BEGIN 693
+table public.data: INSERT: id[integer]:4 data[text]:'4'
+COMMIT 693
+<span class="keycap"><strong>Control</strong></span>+<span class="keycap"><strong>C</strong></span>
+$ pg_recvlogical -d postgres --slot test --drop-slot</pre></div><div class="navfooter"><hr /><table width="100%" summary="Navigation footer"><tr><td width="40%" align="left"><a accesskey="p" href="logicaldecoding.html">上一页</a> </td><td width="20%" align="center"><a accesskey="u" href="logicaldecoding.html">上一级</a></td><td width="40%" align="right"> <a accesskey="n" href="logicaldecoding-explanation.html">下一页</a></td></tr><tr><td width="40%" align="left" valign="top">第 48 章 逻辑解码 </td><td width="20%" align="center"><a accesskey="h" href="index.html">起始页</a></td><td width="40%" align="right" valign="top"> 48.2. 逻辑解码概念</td></tr></table></div></body></html>

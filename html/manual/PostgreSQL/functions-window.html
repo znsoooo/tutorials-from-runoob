@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><title>9.21. 窗口函数</title><link rel="stylesheet" type="text/css" href="stylesheet.css" /><link rev="made" href="pgsql-docs@postgresql.org" /><meta name="generator" content="DocBook XSL Stylesheets V1.79.1" /><link rel="prev" href="functions-aggregate.html" title="9.20. 聚集函数" /><link rel="next" href="functions-subquery.html" title="9.22. 子查询表达式" /></head><body><div xmlns="http://www.w3.org/TR/xhtml1/transitional" class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="5" align="center">9.21. 窗口函数</th></tr><tr><td width="10%" align="left"><a accesskey="p" href="functions-aggregate.html" title="9.20. 聚集函数">上一页</a> </td><td width="10%" align="left"><a accesskey="u" href="functions.html" title="第 9 章 函数和操作符">上一级</a></td><th width="60%" align="center">第 9 章 函数和操作符</th><td width="10%" align="right"><a accesskey="h" href="index.html" title="PostgreSQL 10.1 手册">起始页</a></td><td width="10%" align="right"> <a accesskey="n" href="functions-subquery.html" title="9.22. 子查询表达式">下一页</a></td></tr></table><hr></hr></div><div class="sect1" id="FUNCTIONS-WINDOW"><div class="titlepage"><div><div><h2 class="title" style="clear: both">9.21. 窗口函数</h2></div></div></div><a id="idp14309248" class="indexterm"></a><p>   <em class="firstterm">窗口函数</em>提供在与当前查询行相关的行集合上执行计算的能力。有关这个特性的介绍请见<a class="xref" href="tutorial-window.html" title="3.5. 窗口函数">第 3.5 节</a>。
+   语法细节则请见<a class="xref" href="sql-expressions.html#SYNTAX-WINDOW-FUNCTIONS" title="4.2.8. 窗口函数调用">第 4.2.8 节</a>。
+  </p><p>   <a class="xref" href="functions-window.html#FUNCTIONS-WINDOW-TABLE" title="表 9.57. 通用窗口函数">表 9.57</a>列出了内建的窗口函数。注意<span class="emphasis"><em>必须</em></span>使用窗口函数的语法调用这些函数，也就是，一个<code class="literal">OVER</code>子句是必需的。
+  </p><p>   除了这些函数外，任何内建的或用户定义的通用或统计聚集（也就是有序集或假想集聚集除外）都可以作为窗口函数（内建聚集函数的列表见<a class="xref" href="functions-aggregate.html" title="9.20. 聚集函数">第 9.20 节</a>）。仅当调用跟着<code class="literal">OVER</code>子句时，聚集函数才会作为窗口函数；否则它们作为非窗口的聚集并为剩余的集合返回单行。
+  </p><div class="table" id="FUNCTIONS-WINDOW-TABLE"><p class="title"><strong>表 9.57. 通用窗口函数</strong></p><div class="table-contents"><table class="table" summary="通用窗口函数" border="1"><colgroup><col /><col /><col /></colgroup><thead><tr><th>函数</th><th>返回类型</th><th>描述</th></tr></thead><tbody><tr><td>       <a id="idp14319968" class="indexterm"></a>
+       <code class="function">row_number()</code>
+      </td><td>       <code class="type">bigint</code>
+      </td><td>当前行在其分区中的行号，从1计</td></tr><tr><td>       <a id="idp14322848" class="indexterm"></a>
+       <code class="function">rank()</code>
+      </td><td>       <code class="type">bigint</code>
+      </td><td>带间隙的当前行排名； 与该行的第一个同等行的<code class="function">row_number</code>相同</td></tr><tr><td>       <a id="idp14326464" class="indexterm"></a>
+       <code class="function">dense_rank()</code>
+      </td><td>       <code class="type">bigint</code>
+      </td><td>不带间隙的当前行排名； 这个函数计数同等组</td></tr><tr><td>       <a id="idp14329360" class="indexterm"></a>
+       <code class="function">percent_rank()</code>
+      </td><td>       <code class="type">double precision</code>
+      </td><td>当前行的相对排名： (<code class="function">rank</code>- 1) / (总分区行数 - 1)</td></tr><tr><td>       <a id="idp14332992" class="indexterm"></a>
+       <code class="function">cume_dist()</code>
+      </td><td>       <code class="type">double precision</code>
+      </td><td>累积分配： (当前行前面的分区行数 或 与当前行同等的行的分区行数)/(总分区行数)</td></tr><tr><td>       <a id="idp14335936" class="indexterm"></a>
+       <code class="function">ntile(<em class="replaceable"><code>num_buckets</code></em> <code class="type">integer</code>)</code>
+      </td><td>       <code class="type">integer</code>
+      </td><td>从1到参数值的整数范围，尽可能等分分区</td></tr><tr><td>       <a id="idp14339920" class="indexterm"></a>
+       <code class="function">          lag(<em class="replaceable"><code>value</code></em> <code class="type">anyelement</code>
+             [, <em class="replaceable"><code>offset</code></em> <code class="type">integer</code>
+             [, <em class="replaceable"><code>default</code></em> <code class="type">anyelement</code> ]])
+       </code>
+      </td><td>       <code class="type">和<em class="replaceable"><code>value</code></em>的类型相同</code>
+      </td><td>       返回<em class="replaceable"><code>value</code></em>，
+       它在分区内当前行的之前<em class="replaceable"><code>offset</code></em>个位置的行上计算；如果没有这样的行，返回<em class="replaceable"><code>default</code></em>替代。
+       (作为<em class="replaceable"><code>value</code></em>必须是相同类型)。
+       <em class="replaceable"><code>offset</code></em>和<em class="replaceable"><code>default</code></em>都是根据当前行计算的结果。如果忽略它们，则<em class="replaceable"><code>offset</code></em>默认是1，<em class="replaceable"><code>default</code></em>默认是空值
+      </td></tr><tr><td>       <a id="idp14352800" class="indexterm"></a>
+       <code class="function">          lead(<em class="replaceable"><code>value</code></em> <code class="type">anyelement</code>
+              [, <em class="replaceable"><code>offset</code></em> <code class="type">integer</code>
+              [, <em class="replaceable"><code>default</code></em> <code class="type">anyelement</code> ]])
+       </code>
+      </td><td>       <code class="type">和<em class="replaceable"><code>value</code></em>类型相同</code>
+      </td><td>       返回<em class="replaceable"><code>value</code></em>，它在分区内当前行的之后<em class="replaceable"><code>offset</code></em>个位置的行上计算；如果没有这样的行，返回<em class="replaceable"><code>default</code></em>替代。(作为<em class="replaceable"><code>value</code></em>必须是相同类型)。<em class="replaceable"><code>offset</code></em>和<em class="replaceable"><code>default</code></em>都是根据当前行计算的结果。如果忽略它们，则<em class="replaceable"><code>offset</code></em>默认是1，<em class="replaceable"><code>default</code></em>默认是空值
+      </td></tr><tr><td>       <a id="idp14365680" class="indexterm"></a>
+       <code class="function">first_value(<em class="replaceable"><code>value</code></em> <code class="type">any</code>)</code>
+      </td><td>       <code class="type">same type as <em class="replaceable"><code>value</code></em></code>
+      </td><td>       返回在窗口帧中第一行上计算的<em class="replaceable"><code>value</code></em>
+      </td></tr><tr><td>       <a id="idp14370928" class="indexterm"></a>
+       <code class="function">last_value(<em class="replaceable"><code>value</code></em> <code class="type">any</code>)</code>
+      </td><td>       <code class="type">和<em class="replaceable"><code>value</code></em>类型相同</code>
+      </td><td>       返回在窗口帧中最后一行上计算的<em class="replaceable"><code>value</code></em>
+      </td></tr><tr><td>       <a id="idp14376352" class="indexterm"></a>
+       <code class="function">         nth_value(<em class="replaceable"><code>value</code></em> <code class="type">any</code>, <em class="replaceable"><code>nth</code></em> <code class="type">integer</code>)
+       </code>
+      </td><td>       <code class="type">和<em class="replaceable"><code>value</code></em>类型相同</code>
+      </td><td>       返回在窗口帧中第<em class="replaceable"><code>nth</code></em>行（行从1计数）上计算的<em class="replaceable"><code>value</code></em>；没有这样的行则返回空值
+      </td></tr></tbody></table></div></div><br class="table-break" /><p>   在<a class="xref" href="functions-window.html#FUNCTIONS-WINDOW-TABLE" title="表 9.57. 通用窗口函数">表 9.57</a>中列出的所有函数都依赖于相关窗口定义的<code class="literal">ORDER BY</code>子句指定的排序顺序。当仅考虑<code class="literal">ORDER BY</code>列时，不能区分的行被称为是<em class="firstterm">同等行</em>。定义的这四个排名函数(包括<code class="function">cume_dist</code>) ，对于所有同等行的答案相同。
+  </p><p>   注意<code class="function">first_value</code>、<code class="function">last_value</code>和<code class="function">nth_value</code>只考虑<span class="quote">“<span class="quote">窗口帧</span>”</span>内的行，它默认情况下包含从分区的开始行直到当前行的最后一个同等行。这对<code class="function">last_value</code>可能不会给出有用的结果，有时对<code class="function">nth_value</code>也一样。你可以通过向<code class="literal">OVER</code>子句增加一个合适的帧声明（<code class="literal">RANGE</code>或<code class="literal">ROWS</code>）来重定义帧。关于帧声明的更多信息请参考<a class="xref" href="sql-expressions.html#SYNTAX-WINDOW-FUNCTIONS" title="4.2.8. 窗口函数调用">第 4.2.8 节</a>。
+  </p><p>   当一个聚集函数被用作窗口函数时，它将在当前行的窗口帧内的行上聚集。 一个使用<code class="literal">ORDER BY</code>和默认窗口帧定义的聚集产生一种<span class="quote">“<span class="quote">运行时求和</span>”</span>类型的行为，这可能是或者不是想要的结果。为了获取在整个分区上的聚集，忽略<code class="literal">ORDER BY</code>或者使用<code class="literal">ROWS BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING</code>。 其它窗口帧声明可以用来获得其它的效果。
+  </p><div class="note"><h3 class="title">注意</h3><p>    SQL 标准为<code class="function">lead</code>、<code class="function">lag</code>、<code class="function">first_value</code>、<code class="function">last_value</code>和<code class="function">nth_value</code>定义了 一个<code class="literal">RESPECT NULLS</code>或<code class="literal">IGNORE NULLS</code>选项。 这在<span class="productname">PostgreSQL</span>中没有实现：行为总是与标准的默认相同，即<code class="literal">RESPECT NULLS</code>。 同样，标准中用于<code class="function">nth_value</code>的<code class="literal">FROM FIRST</code>或<code class="literal">FROM LAST</code>选项没有实现： 只有支持默认的<code class="literal">FROM FIRST</code>行为（你可以通过反转<code class="literal">ORDER BY</code>的排序达到<code class="literal">FROM LAST</code>的结果）。
+   </p></div><p>   <code class="function">cume_dist</code>计算小于或等于当前行及其同级的分区行的比例，
+   而<code class="function">percent_rank</code>计算小于当前行的分区行的比例，假设当前行在分区中不存在。
+  </p></div><div class="navfooter"><hr /><table width="100%" summary="Navigation footer"><tr><td width="40%" align="left"><a accesskey="p" href="functions-aggregate.html">上一页</a> </td><td width="20%" align="center"><a accesskey="u" href="functions.html">上一级</a></td><td width="40%" align="right"> <a accesskey="n" href="functions-subquery.html">下一页</a></td></tr><tr><td width="40%" align="left" valign="top">9.20. 聚集函数 </td><td width="20%" align="center"><a accesskey="h" href="index.html">起始页</a></td><td width="40%" align="right" valign="top"> 9.22. 子查询表达式</td></tr></table></div></body></html>

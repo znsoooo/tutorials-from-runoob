@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><title>10.3. 函数</title><link rel="stylesheet" type="text/css" href="stylesheet.css" /><link rev="made" href="pgsql-docs@postgresql.org" /><meta name="generator" content="DocBook XSL Stylesheets V1.79.1" /><link rel="prev" href="typeconv-oper.html" title="10.2. 操作符" /><link rel="next" href="typeconv-query.html" title="10.4. 值存储" /></head><body><div xmlns="http://www.w3.org/TR/xhtml1/transitional" class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="5" align="center">10.3. 函数</th></tr><tr><td width="10%" align="left"><a accesskey="p" href="typeconv-oper.html" title="10.2. 操作符">上一页</a> </td><td width="10%" align="left"><a accesskey="u" href="typeconv.html" title="第 10 章 类型转换">上一级</a></td><th width="60%" align="center">第 10 章 类型转换</th><td width="10%" align="right"><a accesskey="h" href="index.html" title="PostgreSQL 10.1 手册">起始页</a></td><td width="10%" align="right"> <a accesskey="n" href="typeconv-query.html" title="10.4. 值存储">下一页</a></td></tr></table><hr></hr></div><div class="sect1" id="TYPECONV-FUNC"><div class="titlepage"><div><div><h2 class="title" style="clear: both">10.3. 函数</h2></div></div></div><a id="idp16408640" class="indexterm"></a><p>   被一个函数调用引用的特定函数使用下面的过程来决定。
+  </p><div class="procedure" id="idp16410576"><p class="title"><strong>函数类型决定</strong></p><ol class="procedure" type="1"><li class="step"><p>从<code class="classname">pg_proc</code>系统目录中选择要被考虑的函数。 如果使用一个非模式限定的函数名称，那么函数被认为是那些在当前搜索路径中可见并有匹配的名字和参数个数的函数（参见<a class="xref" href="ddl-schemas.html#DDL-SCHEMAS-PATH" title="5.8.3. 模式搜索路径">第 5.8.3 节</a>）。如果给出一个被限定的函数名，那么只考虑指定模式中的函数。</p><ol type="a" class="substeps"><li class="step"><p>如果搜索路径发现多个参数类型相同的函数，那么只考虑最早在搜索路径中出现的那个。 不同参数类型的函数被平等对待，不受在搜索路径中位置的影响。</p></li><li class="step"><p>如果使用一个<code class="literal">VARIADIC</code>数组参数声明一个函数，并且调用不使用关键字<code class="literal">VARIADIC</code>， 那么该函数就好像其数组参数被它的元素类型的一次或多次出现所替换，根据需要去匹配调用。 这样的扩展之后，函数可能会有和非可变函数相同的参数类型。在这种情况下，在搜索路径中出现比较早的函数将被使用，或者如果两个函数在相同的模式中时首选非可变的那一个。</p></li><li class="step"><p>考虑使用有默认参数值的函数来匹配任何省略了零个或者多个可默认参数位置的调用。如果有超出一个的这种函数匹配一个调用，那么使用最早出现在搜索路径中的那个。如果同一个模式中在同一个非默认位置上有两个或者更多这样的函数（如果它们有 不同的默认参数设置，这是可能的），系统将不能确定去选择哪一个，并且如果不能找到该调用更好的匹配，将会导致一个<span class="quote">“<span class="quote">有歧义的函数调用</span>”</span> 错误。</p></li></ol></li><li class="step"><p>检查一个函数正好接受输入参数类型。如果存在一个（在所考虑的一组函数中只能有一个准确匹配），则使用之（在该步骤中，涉及<code class="type">unknown</code>的情况将永远找不到一个匹配）。</p></li><li class="step"><p>如果没有发现准确匹配，那么查看函数调用是否作为一个特定的类型转换请求出现。 如果函数调用仅有一个参数并且函数名和一些数据类型的（内部）名称相同，那么该情况将会发生。 并且，该函数参数必须是一个未知类型的文字，或者是一个可以被二进制强制转换到命名数据类型的类型， 或者是一个可以通过应用其I/O函数被转换为命名数据类型的类型（也就是，转换是转到标准字符串类型或者从标准字符串类型转来）。当满足这些条件的时候，函数调用被当做<code class="literal">CAST</code>声明的一种形式来对待。
+  <a href="#ftn.idp16423312" class="footnote"><sup class="footnote" id="idp16423312">[8]</sup></a></p></li><li class="step"><p>查找最佳匹配。</p><ol type="a" class="substeps"><li class="step"><p>如果候选函数的输入类型不匹配并且不能通过转换（使用一个隐式转换）达到匹配，则丢弃它。为了这个目的，<code class="type">unknown</code>文字被假定可被转换成任何东西。如果仅有一个候选项，则使用之；否则继续下一步。</p></li><li class="step"><p>如果任何输入参数是一种域类型，在所有后续步骤中都把它当做
+该域的基类型。这确保在做有歧义的操作符解析时，域的举止像它们
+的基类型。</p></li><li class="step"><p>遍历所有候选函数并保留那些最匹配输入类型的。如果没有准确匹配，则保留所有候选项。 如果仅有一个候选项，则使用之；否则继续下一步。</p></li><li class="step"><p>遍历所有候选函数并保留那些在最多要求类型转换的位置上接受首选类型（属于输入数据类型的类型分类）的候选项。如果没有接受首选类型的候选项，则保留所有候选项。如果仅有一个候选项，则使用之；否则继续下一步。</p></li><li class="step"><p>如果任何输入参数是<code class="type">unknown</code>，那么检查那些被剩余候选项在那些参数位置上接受的类型分类。在每一个位置上，如果任何候选项接受该分类则选择<code class="type">string</code>分类 （这个偏向于字符串是恰当的，因为一个未知类型文字看起来像字符）。 否则，如果所有剩余的候选项接受相同的类型分类，那么选择那个分类； 否则将失败，因为缺乏更多线索来推断出正确的选择。现在，丢弃不接受被选中类型分类的候选项。此外，如果任何候选项接受那个分类中的一个首选类型，则丢弃对该参数接受非首选类型的候选项。如果没有候选项能通过这些测试，则保留所有候选项。如果只剩下一个候选项，则使用之；否则继续下一步。</p></li><li class="step"><p>如果既有<code class="type">unknown</code>参数也有已知类型的参数，并且所有已知类型参数具有相同的类型，则假定该<code class="type">unknown</code>参数也是那种类型的，并且检查哪些候选函数可以在该<code class="type">unknown</code>参数的位置上接受那个类型。如果正好有一个候选者通过了这个测试，则使用之；否则失败。</p></li></ol></li></ol></div><p>注意，对于操作符和函数类型决定来说<span class="quote">“<span class="quote">最优匹配</span>”</span>规则是完全相同的。下面是一些例子。</p><div class="example" id="idp16436016"><p class="title"><strong>例 10.6. 圆整函数参数类型决定</strong></p><div class="example-contents"><p>只有一个带有两个参数的<code class="function">圆整</code>函数； 它采用第一个参数类型为<code class="type">numeric</code>和第二个参数类型为<code class="type">integer</code>。这样下面的查询自动将第一个类型为<code class="type">integer</code>参数转换为<code class="type">numeric</code>：
+
+</p><pre class="screen">SELECT round(4, 4);
+
+ round
+--------
+ 4.0000
+(1 row)</pre><p>
+
+该查询实际上被解析器转换为：
+</p><pre class="screen">SELECT round(CAST (4 AS numeric), 4);</pre><p>因为包含小数点的数字常数初始会被分配类型<code class="type">numeric</code>，下面的查询将不需要类型转换并因此可能会稍稍高效一些：</p><pre class="screen">SELECT round(4.0, 4);</pre></div></div><br class="example-break" /><div class="example" id="idp16442160"><p class="title"><strong>例 10.7. 子串函数类型决定</strong></p><div class="example-contents"><p>有几个<code class="function">substr</code>函数，其中一个用于<code class="type">text</code>和<code class="type">integer</code>类型。如果使用一个未指定类型的字符常量调用，那么系统选择接受一个首选分类<code class="literal">string</code>（也就是<code class="type">text</code>类型）的参数的候选函数。
+
+</p><pre class="screen">SELECT substr('1234', 3);
+
+ substr
+--------
+     34
+(1 row)</pre><p>如果字符串被声明为类型<code class="type">varchar</code>（如果它来自于一个表就会这样），那么解析器将尝试转换它为<code class="type">text</code>：
+</p><pre class="screen">SELECT substr(varchar '1234', 3);
+
+ substr
+--------
+     34
+(1 row)</pre><p>
+
+解析器所作的转换：
+</p><pre class="screen">SELECT substr(CAST (varchar '1234' AS text), 3);</pre><div class="note"><h3 class="title">注意</h3><p>解析器从<code class="structname">pg_cast</code>目录中知道<code class="type">text</code>和<code class="type">varchar</code>是二进制可兼容的， 意思是其中一个可以被传递给接受另一种类型的函数而不需要做任何物理转换。因此，在这种情况下不会真正使用类型转换调用。</p></div><p>并且，如果该函数使用一个<code class="type">integer</code>类型的参数调用，那么解析器将尝试将它转换为<code class="type">text</code>：
+</p><pre class="screen">SELECT substr(1234, 3);
+ERROR:  function substr(integer, integer) does not exist
+HINT:  No function matches the given name and argument types. You might need
+to add explicit type casts.</pre><p>
+
+由于<code class="type">integer</code>类型没有到<code class="type">text</code>的一个隐式造型，这将不会工作。但是一次显式造型则可以工作：
+</p><pre class="screen">SELECT substr(CAST (1234 AS text), 3);
+
+ substr
+--------
+     34
+(1 row)</pre></div></div><br class="example-break" /><div class="footnotes"><br /><hr style="width:100; text-align:left;margin-left: 0" /><div id="ftn.idp16423312" class="footnote"><p><a href="#idp16423312" class="para"><sup class="para">[8] </sup></a>    这一步的原因是在没有一个实际的造型函数的情况下支持函数风格的造型声明。如果有一个造型函数，它被按惯例以其输出类型命名，并且不需要有特殊情况。更多信息请见<a class="xref" href="sql-createcast.html" title="CREATE CAST"><span class="refentrytitle">CREATE CAST</span></a>。
+   </p></div></div></div><div class="navfooter"><hr /><table width="100%" summary="Navigation footer"><tr><td width="40%" align="left"><a accesskey="p" href="typeconv-oper.html">上一页</a> </td><td width="20%" align="center"><a accesskey="u" href="typeconv.html">上一级</a></td><td width="40%" align="right"> <a accesskey="n" href="typeconv-query.html">下一页</a></td></tr><tr><td width="40%" align="left" valign="top">10.2. 操作符 </td><td width="20%" align="center"><a accesskey="h" href="index.html">起始页</a></td><td width="40%" align="right" valign="top"> 10.4. 值存储</td></tr></table></div></body></html>

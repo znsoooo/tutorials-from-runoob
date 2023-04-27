@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><title>E.96. 版本 9.1.11</title><link rel="stylesheet" type="text/css" href="stylesheet.css" /><link rev="made" href="pgsql-docs@postgresql.org" /><meta name="generator" content="DocBook XSL Stylesheets V1.79.1" /><link rel="prev" href="release-9-1-12.html" title="E.95. 版本 9.1.12" /><link rel="next" href="release-9-1-10.html" title="E.97. 版本9.1.10" /></head><body><div xmlns="http://www.w3.org/TR/xhtml1/transitional" class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="5" align="center">E.96. 版本 9.1.11</th></tr><tr><td width="10%" align="left"><a accesskey="p" href="release-9-1-12.html" title="E.95. 版本 9.1.12">上一页</a> </td><td width="10%" align="left"><a accesskey="u" href="release.html" title="附录 E. 版本说明">上一级</a></td><th width="60%" align="center">附录 E. 版本说明</th><td width="10%" align="right"><a accesskey="h" href="index.html" title="PostgreSQL 10.1 手册">起始页</a></td><td width="10%" align="right"> <a accesskey="n" href="release-9-1-10.html" title="E.97. 版本9.1.10">下一页</a></td></tr></table><hr></hr></div><div class="sect1" id="RELEASE-9-1-11"><div class="titlepage"><div><div><h2 class="title" style="clear: both">E.96. 版本 9.1.11</h2></div></div></div><div class="toc"><dl class="toc"><dt><span class="sect2"><a href="release-9-1-11.html#idp73065984">E.96.1. 迁移到版本 9.1.11</a></span></dt><dt><span class="sect2"><a href="release-9-1-11.html#idp73068448">E.96.2. 修改列表</a></span></dt></dl></div><p><strong>发布日期：. </strong>2013-12-05</p><p>   这个版本包含各种自9.1.10以来的修复。关于9.1主版本的新特性信息，
+   请查看<a class="xref" href="release-9-1.html" title="E.107. 版本9.1">第 E.107 节</a>。
+  </p><div class="sect2" id="idp73065984"><div class="titlepage"><div><div><h3 class="title">E.96.1. 迁移到版本 9.1.11</h3></div></div></div><p>    运行9.1.X版本的用户不需要转储/恢复。
+   </p><p>不过，这个版本纠正了一些潜在的数据损坏问题。查看下面的前两条修改日志项，
+找出你的安装是否受到了影响，和受到影响后要采取的步骤。</p><p>另外，如果你是从一个早于9.1.9的版本升级而来，请查看<a class="xref" href="release-9-1-9.html" title="E.98. 版本9.1.9">第 E.98 节</a>。</p></div><div class="sect2" id="idp73068448"><div class="titlepage"><div><div><h3 class="title">E.96.2. 修改列表</h3></div></div></div><div class="itemizedlist"><ul class="itemizedlist" style="list-style-type: disc; "><li class="listitem"><p>修复<code class="command">VACUUM</code>的测试，查看它是否可以更新<code class="structfield">relfrozenxid</code> (Andres Freund)</p><p>在某些情况下，<code class="command">VACUUM</code>（手动或者自动）会不正确的增加一个表的
+<code class="structfield">relfrozenxid</code>值，允许元组逃过冻结，
+导致一旦执行了2^31个事务，这些行就变得不可见。数据丢失的概率比较低，
+因为在实际丢失数据发生之前需要发生多次错误增加。
+从版本9.0.4或8.4.8或更早版本升级而来的用户没有受到影响，
+但是所有后来的版本都包含该bug。</p><p>这个问题可以通过在升级之后，将<a class="link" href="runtime-config-client.html#GUC-VACUUM-FREEZE-TABLE-AGE"><code class="varname">vacuum_freeze_table_age</code></a>
+设置为0，在所有数据库中清理所有表来改善。这将修复任何潜在的损坏，
+但是不能修复所有已经存在的数据错误。不过，
+一个在它的生命期中执行了少于2^31个更新（使用<code class="literal">SELECT txid_current() &lt; 2^31</code>
+检查）事务的安装，在执行这个清理之后，可以假设是安全的。</p></li><li class="listitem"><p>修复热备启动期间<code class="filename">pg_clog</code>和<code class="filename">pg_subtrans</code>的安装
+(Andres Freund, Heikki Linnakangas)</p><p>这个bug会导致备用服务器开始接受热备份查询时它们上面的数据丢失，
+通过标记已提交事务为未提交。这种损坏的可能性比较小，
+除非是在备用服务器启动的时候，主服务器自最后一个检查点以来已经执行了许多的更新事务。
+表现包括丢失行、应该已经删除了的行仍然可见和更新了的行的老版本仍然可见。</p><p>这个bug是在版本9.3.0、9.2.5、9.1.10和9.0.14中引入的。
+运行较早版本的备用服务器没有风险。
+建议曾经运行过有错误版本的备用服务器在升级后重新克隆主服务器
+（例如，使用一个新的基础备份）。</p></li><li class="listitem"><p>在WAL重放期间截断<code class="filename">pg_multixact</code>内容 (Andres Freund)</p><p>这避免了备用服务器上不断增长的磁盘空间消耗。</p></li><li class="listitem"><p>修复GIN索引发布树页面删除中的竞态条件 (Heikki Linnakangas)</p><p>这会导致瞬间的错误回复或查询失败。</p></li><li class="listitem"><p>避免压缩一个<code class="literal">SELECT</code>列表中包含一个包含在子<code class="literal">SELECT</code>
+中的不稳定函数的子查询 (Tom Lane)</p><p>这避免了由于额外评估该不稳定函数引起的意外结果。</p></li><li class="listitem"><p>修复规划器对非简单变量子查询输出嵌套在外连接中的处理 (Tom Lane)</p><p>这个错误会导致在<code class="literal">JOIN</code>语法中包含多级别子查询的查询的错误规划。</p></li><li class="listitem"><p>修复为继承树不正确的生成优化的MIN()/MAX()规划 (Tom Lane)</p><p>在MIN()/MAX()参数是表达式而不是简单的变量的情况下，该规划会失败。</p></li><li class="listitem"><p>修复临时文件的过早删除 (Andres Freund)</p></li><li class="listitem"><p>修复规则打印中可能读取过去的内存 (Peter Eisentraut)</p></li><li class="listitem"><p>修复<code class="type">int2vector</code>和 <code class="type">oidvector</code>值的数组切片 (Tom Lane)</p><p>这种类型的表达式现在隐式的转换成普通的<code class="type">int2</code>或<code class="type">oid</code>数组。</p></li><li class="listitem"><p>修复使用SQL标准、简单GMT偏移时区时的错误行为 (Tom Lane)</p><p>在某些情况下，系统会在它应该使用在简单偏移被选择之前盛行的常规时区设置时，
+使用了简单GMT偏移值。这个修改也使<code class="function">timeofday</code>
+函数遵守简单GMT偏移时区。</p></li><li class="listitem"><p>在记录Windows错误代码的翻译时阻止可能的错误行为 (Tom Lane)</p></li><li class="listitem"><p>在<span class="application">pg_ctl</span>中正确的引用生成的命令行 (Naoya Anzai and Tom Lane)</p><p>这个修复仅适用于Windows。</p></li><li class="listitem"><p>修复<span class="application">pg_dumpall</span>，使其在源数据库通过<code class="command">ALTER DATABASE SET</code>
+设置<a class="link" href="runtime-config-client.html#GUC-DEFAULT-TRANSACTION-READ-ONLY"><code class="varname">default_transaction_read_only</code></a>
+时工作 (Kevin Grittner)</p><p>以前，生成的脚本在恢复期间会失败。</p></li><li class="listitem"><p>让<span class="application">ecpg</span>对引用的游标名搜索大小写敏感 (Zoltán Böszörményi)</p></li><li class="listitem"><p>修复<span class="application">ecpg</span>对<code class="type">varchar</code>声明的变量列表的处理
+ (Zoltán Böszörményi)</p></li><li class="listitem"><p>让<code class="filename">contrib/lo</code>防卫不正确的触发器定义 (Marc Cousin)</p></li><li class="listitem"><p>更新时区数据文件到<span class="application">tzdata</span>版本2013h，
+因为DST规律在Argentina、Brazil、Jordan、Libya、Liechtenstein、
+Morocco和Palestine发生了改变。另外，Indonesia
+的新时区缩写WIB、WIT、WITA。</p></li></ul></div></div></div><div class="navfooter"><hr /><table width="100%" summary="Navigation footer"><tr><td width="40%" align="left"><a accesskey="p" href="release-9-1-12.html">上一页</a> </td><td width="20%" align="center"><a accesskey="u" href="release.html">上一级</a></td><td width="40%" align="right"> <a accesskey="n" href="release-9-1-10.html">下一页</a></td></tr><tr><td width="40%" align="left" valign="top">E.95. 版本 9.1.12 </td><td width="20%" align="center"><a accesskey="h" href="index.html">起始页</a></td><td width="40%" align="right" valign="top"> E.97. 版本9.1.10</td></tr></table></div></body></html>

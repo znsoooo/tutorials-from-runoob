@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><title>58.3. 执行自定义扫描</title><link rel="stylesheet" type="text/css" href="stylesheet.css" /><link rev="made" href="pgsql-docs@postgresql.org" /><meta name="generator" content="DocBook XSL Stylesheets V1.79.1" /><link rel="prev" href="custom-scan-plan.html" title="58.2. 创建自定义扫描计划" /><link rel="next" href="geqo.html" title="第 59 章 遗传查询优化器" /></head><body><div xmlns="http://www.w3.org/TR/xhtml1/transitional" class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="5" align="center">58.3. 执行自定义扫描</th></tr><tr><td width="10%" align="left"><a accesskey="p" href="custom-scan-plan.html" title="58.2. 创建自定义扫描计划">上一页</a> </td><td width="10%" align="left"><a accesskey="u" href="custom-scan.html" title="第 58 章 编写一个自定义扫描提供者">上一级</a></td><th width="60%" align="center">第 58 章 编写一个自定义扫描提供者</th><td width="10%" align="right"><a accesskey="h" href="index.html" title="PostgreSQL 10.1 手册">起始页</a></td><td width="10%" align="right"> <a accesskey="n" href="geqo.html" title="第 59 章 遗传查询优化器">下一页</a></td></tr></table><hr></hr></div><div class="sect1" id="CUSTOM-SCAN-EXECUTION"><div class="titlepage"><div><div><h2 class="title" style="clear: both">58.3. 执行自定义扫描</h2></div></div></div><div class="toc"><dl class="toc"><dt><span class="sect2"><a href="custom-scan-execution.html#CUSTOM-SCAN-EXECUTION-CALLBACKS">58.3.1. 自定义扫描执行回调</a></span></dt></dl></div><p>   在执行一个<code class="structfield">CustomScan</code>时，它的执行状态由一个<code class="structfield">CustomScanState</code>表示，其定义如下：
+</p><pre class="programlisting">typedef struct CustomScanState
+{
+    ScanState ss;
+    uint32    flags;
+    const CustomExecMethods *methods;
+} CustomScanState;</pre><p>
+  </p><p>   <code class="structfield">ss</code>和任何其他扫描状态一样被初始化，不过如果该扫描是用于连接而不是基本关系，则<code class="literal">ss.ss_currentRelation</code>会被留成 NULL。<code class="structfield">flags</code>是一个位掩码，它的含义与<code class="structname">CustomPath</code>和<code class="structname">CustomScan</code>中的一样。<code class="structfield">methods</code>必须指向一个实现了所需自定义扫描状态方法的对象（通常是静态分配的），将进一步在下文详细介绍。通常一个<code class="structname">CustomScanState</code>（不需要支持<code class="function">copyObject</code>）实际将是一个较大的结构，上面的结构将嵌入在其中作为第一个成员。
+  </p><div class="sect2" id="CUSTOM-SCAN-EXECUTION-CALLBACKS"><div class="titlepage"><div><div><h3 class="title">58.3.1. 自定义扫描执行回调</h3></div></div></div><pre class="programlisting">void (*BeginCustomScan) (CustomScanState *node,
+                         EState *estate,
+                         int eflags);</pre><p>
+    完成所提供的<code class="structname">CustomScanState</code>的初始化。标准的域已经被<code class="function">ExecInitCustomScan</code>初始化，但是任何私有的域应该在这里被初始化。
+   </p><pre class="programlisting">TupleTableSlot *(*ExecCustomScan) (CustomScanState *node);</pre><p>
+    取下一个扫描元组。如果还有任何元组剩余，它应该用当前扫描方向的下一个元组填充<code class="literal">ps_ResultTupleSlot</code>，并且接着返回该元组槽。如果没有，则用<code class="literal">NULL</code>填充或者返回一个空槽。
+   </p><pre class="programlisting">void (*EndCustomScan) (CustomScanState *node);</pre><p>
+    清除任何与<code class="literal">CustomScanState</code>相关的私有数据。这个方法是必需的，但是如果没有相关的数据或者相关数据将被自动清除，则它不需要做任何事情。
+   </p><pre class="programlisting">void (*ReScanCustomScan) (CustomScanState *node);</pre><p>
+    把当前扫描倒回到开始处，并且准备重新扫描该关系。
+   </p><pre class="programlisting">void (*MarkPosCustomScan) (CustomScanState *node);</pre><p>
+    保存当前的扫描位置，这样可以在以后由<code class="function">RestrPosCustomScan</code>回调函数恢复。这个回调函数是可选的，只有在<code class="literal">CUSTOMPATH_SUPPORT_MARK_RESTORE</code>标志被设置时才需要提供。
+   </p><pre class="programlisting">void (*RestrPosCustomScan) (CustomScanState *node);</pre><p>
+    恢复由<code class="function">MarkPosCustomScan</code>回调函数保存的扫描位置。这个回调函数是可选的，只有在<code class="literal">CUSTOMPATH_SUPPORT_MARK_RESTORE</code>标志被设置时才需要提供。
+   </p><pre class="programlisting">Size (*EstimateDSMCustomScan) (CustomScanState *node,
+                               ParallelContext *pcxt);</pre><p>
+    估计并行操作所需要的动态共享内存的数量。这可能会比实际使用的量更大，但是绝不能更低。返回值的单位是字节。这个回调是可选的，只有在这个自定义扫描提供者支持并行执行时才必须提供这个回调。
+   </p><pre class="programlisting">void (*InitializeDSMCustomScan) (CustomScanState *node,
+                                 ParallelContext *pcxt,
+                                 void *coordinate);</pre><p>
+    初始化并行操作所需的动态共享内存。<code class="literal">coordinate</code>
+	指向一块大小等于<code class="function">EstimateDSMCustomScan</code>
+	返回值的共享内存区域。这个回调是可选的，
+	只有在这个自定义扫描提供者支持并行执行时才必须提供这个回调。
+   </p><pre class="programlisting">void (*ReInitializeDSMCustomScan) (CustomScanState *node,
+                                   ParallelContext *pcxt,
+                                   void *coordinate);</pre><p>
+    当自定义扫描计划节点即将被重新扫描时，
+	重新初始化并行操作所需的动态共享内存。这个回调是可选的，
+	只有在这个自定义扫描提供者支持并行执行时才必须提供这个回调。
+	推荐的做法是，此回调仅重置共享状态，而<code class="function">ReScanCustomScan</code>
+	回调仅重置本地状态。目前，该回调将在<code class="function">ReScanCustomScan</code>
+	之前调用，但最好不要依赖该顺序。
+   </p><pre class="programlisting">void (*InitializeWorkerCustomScan) (CustomScanState *node,
+                                    shm_toc *toc,
+                                    void *coordinate);</pre><p>
+    基于<code class="function">InitializeDSMCustomScan</code>期间通过领导者
+	设置的共享状态初始化并行工作者的本地状态。这个回调是可选的，
+	只有在这个自定义扫描提供者支持并行执行时才必须提供这个回调。
+   </p><pre class="programlisting">void (*ShutdownCustomScan) (CustomScanState *node);</pre><p>
+    预计节点将不会执行完成时释放资源。并不是在所有情况下都调用；
+	有时，<code class="literal">EndCustomScan</code>可能会在调用此函数之前调用。
+	由于并行查询使用的DSM段在调用此回调后即被销毁，
+	因此希望在DSM段消失之前采取某些操作的自定义扫描提供程序应实现此方法。
+   </p><pre class="programlisting">void (*ExplainCustomScan) (CustomScanState *node,
+                           List *ancestors,
+                           ExplainState *es);</pre><p>
+    为一个自定义扫描计划节点的<code class="command">EXPLAIN</code>输出额外的信息。这个回调函数是可选的。即使没有这个回调函数，被存储在<code class="structname">ScanState</code>中的公共的数据（例如目标列表和扫描关系）也将被显示，但是该回调函数允许显示额外的信息（例如私有状态）。
+   </p></div></div><div class="navfooter"><hr /><table width="100%" summary="Navigation footer"><tr><td width="40%" align="left"><a accesskey="p" href="custom-scan-plan.html">上一页</a> </td><td width="20%" align="center"><a accesskey="u" href="custom-scan.html">上一级</a></td><td width="40%" align="right"> <a accesskey="n" href="geqo.html">下一页</a></td></tr><tr><td width="40%" align="left" valign="top">58.2. 创建自定义扫描计划 </td><td width="20%" align="center"><a accesskey="h" href="index.html">起始页</a></td><td width="40%" align="right" valign="top"> 第 59 章 遗传查询优化器</td></tr></table></div></body></html>

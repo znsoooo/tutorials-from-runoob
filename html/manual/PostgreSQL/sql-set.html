@@ -1,0 +1,93 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><title>SET</title><link rel="stylesheet" type="text/css" href="stylesheet.css" /><link rev="made" href="pgsql-docs@postgresql.org" /><meta name="generator" content="DocBook XSL Stylesheets V1.79.1" /><link rel="prev" href="sql-selectinto.html" title="SELECT INTO" /><link rel="next" href="sql-set-constraints.html" title="SET CONSTRAINTS" /></head><body><div xmlns="http://www.w3.org/TR/xhtml1/transitional" class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="5" align="center">SET</th></tr><tr><td width="10%" align="left"><a accesskey="p" href="sql-selectinto.html" title="SELECT INTO">上一页</a> </td><td width="10%" align="left"><a accesskey="u" href="sql-commands.html" title="SQL 命令">上一级</a></td><th width="60%" align="center">SQL 命令</th><td width="10%" align="right"><a accesskey="h" href="index.html" title="PostgreSQL 10.1 手册">起始页</a></td><td width="10%" align="right"> <a accesskey="n" href="sql-set-constraints.html" title="SET CONSTRAINTS">下一页</a></td></tr></table><hr></hr></div><div class="refentry" id="SQL-SET"><div class="titlepage"></div><a id="idp49258928" class="indexterm"></a><div class="refnamediv"><h2><span class="refentrytitle">SET</span></h2><p>SET — 更改一个运行时参数</p></div><div class="refsynopsisdiv"><h2>大纲</h2><pre class="synopsis">SET [ SESSION | LOCAL ] <em class="replaceable"><code>configuration_parameter</code></em> { TO | = } { <em class="replaceable"><code>value</code></em> | '<em class="replaceable"><code>value</code></em>' | DEFAULT }
+SET [ SESSION | LOCAL ] TIME ZONE { <em class="replaceable"><code>timezone</code></em> | LOCAL | DEFAULT }</pre></div><div class="refsect1" id="idp49265184"><h2>描述</h2><p>   <code class="command">SET</code>命令更改运行时配置参数。很多
+   <a class="xref" href="runtime-config.html" title="第 19 章 服务器配置">第 19 章</a>中列出的参数可以用
+   <code class="command">SET</code>即时更改（但是有些需要超级用户
+   特权才能更改，并且还有一些在服务器或者会话启动之后不能被更改）。
+   <code class="command">SET</code>只影响当前会话所使用的值。
+  </p><p>   如果在一个事务内发出<code class="command">SET</code>
+   （或者等效的<code class="command">SET SESSION</code>）而该事务后来
+   中止，在该事务被回滚时<code class="command">SET</code>命令的效果会
+   消失。一旦所在的事务被提交，这些效果将会持续到会话结束（除非被另
+   一个<code class="command">SET</code>所覆盖）。
+  </p><p>   <code class="command">SET LOCAL</code>的效果只持续到当前事务结束，
+   不管事务是否被提交。一种特殊情况是在一个事务内
+   <code class="command">SET</code>后面跟着
+   <code class="command">SET LOCAL</code>：
+   <code class="command">SET LOCAL</code>值将会在该事务结束前一直可见，
+   但是之后（如果该事务被提交）<code class="command">SET</code>值将会生效。
+  </p><p>   <code class="command">SET</code>或<code class="command">SET LOCAL</code>
+   的效果也会因为回滚到早于它们的保存点而消失。
+  </p><p>   如果在一个函数内使用<code class="command">SET LOCAL</code>并且该函数
+   还有对同一变量的<code class="literal">SET</code>选项（见
+   <a class="xref" href="sql-createfunction.html" title="CREATE FUNCTION"><span class="refentrytitle">CREATE FUNCTION</span></a>），在函数退出时
+   <code class="command">SET LOCAL</code>命令的效果会消失。也就是说，该
+   函数被调用时的值会被恢复。这允许用
+   <code class="command">SET LOCAL</code>在函数内动态地或者重复地更改
+   一个参数，同时仍然能便利地使用<code class="literal">SET</code>选项来保存以及恢复调用
+   者的值。不过，一个常规的<code class="command">SET</code>命令会覆盖它所在的任何函
+   数的<code class="literal">SET</code>选项，除非回滚，它的效果将一直保持。
+  </p><div class="note"><h3 class="title">注意</h3><p>    在<span class="productname">PostgreSQL</span> 版本 8.0 到 8.2 中，
+    一个<code class="command">SET LOCAL</code>的效果会因为释放较早的
+    保存点或者成功地从一个<span class="application">PL/pgSQL</span>异常块
+    中退出而被取消。这种行为已经被更改，因为它被认为不直观。
+   </p></div></div><div class="refsect1" id="idp49286928"><h2>参数</h2><div class="variablelist"><dl class="variablelist"><dt><span class="term"><code class="literal">SESSION</code></span></dt><dd><p>      指定该命令对当前会话有效（这是默认值）。
+     </p></dd><dt><span class="term"><code class="literal">LOCAL</code></span></dt><dd><p>      指定该命令只对当前事务有效。在<code class="command">COMMIT</code>或者
+      <code class="command">ROLLBACK</code>之后，会话级别的设置会再次生效。
+      在事务块外部发出这个参数会发出一个警告并且不会有效果。
+     </p></dd><dt><span class="term"><em class="replaceable"><code>configuration_parameter</code></em></span></dt><dd><p>      一个可设置运行时参数的名称。可用的参数被记录在
+      <a class="xref" href="runtime-config.html" title="第 19 章 服务器配置">第 19 章</a>和下文中。
+     </p></dd><dt><span class="term"><em class="replaceable"><code>value</code></em></span></dt><dd><p>      参数的新值。根据特定的参数，值可以被指定为字符串常量、标识符、
+      数字或者以上构成的逗号分隔列表。写<code class="literal">DEFAULT</code>
+      可以指定把该参数重置成它的默认值（也就是说在当前会话中还没有
+      执行<code class="command">SET</code>命令时它具有的值）。
+     </p></dd></dl></div><p>   除了在<a class="xref" href="runtime-config.html" title="第 19 章 服务器配置">第 19 章</a>中记录的配置参数，
+   还有一些参数只能用<code class="command">SET</code>命令设置
+   或者具有特殊的语法：
+
+   </p><div class="variablelist"><dl class="variablelist"><dt><span class="term"><code class="literal">SCHEMA</code></span></dt><dd><p><code class="literal">SET SCHEMA '<em class="replaceable"><code>value</code></em>'</code>是
+       <code class="literal">SET search_path TO <em class="replaceable"><code>value</code></em></code>的一个别名。
+       使用这种语法只能指定一个模式。
+      </p></dd><dt><span class="term"><code class="literal">NAMES</code></span></dt><dd><p><code class="literal">SET NAMES <em class="replaceable"><code>value</code></em></code>是
+       <code class="literal">SET client_encoding TO <em class="replaceable"><code>value</code></em></code>的一个别名。
+      </p></dd><dt><span class="term"><code class="literal">SEED</code></span></dt><dd><p>       为随机数生成器（函数<code class="function">random</code>）设置
+       一个内部种子。允许的值是 -1 和 1 之间的浮点数，它会被乘上
+       2<sup>31</sup>-1。
+      </p><p>       也可以通过调用函数<code class="function">setseed</code>来设置种子：
+</p><pre class="programlisting">SELECT setseed(<em class="replaceable"><code>value</code></em>);</pre></dd><dt><span class="term"><code class="literal">TIME ZONE</code></span></dt><dd><p><code class="literal">SET TIME ZONE <em class="replaceable"><code>value</code></em></code>是
+       <code class="literal">SET timezone TO <em class="replaceable"><code>value</code></em></code>的一个别
+       名。语法<code class="literal">SET TIME ZONE</code>允许用于时区指定的特
+       殊语法。这里是合法值的例子：
+
+       </p><div class="variablelist"><dl class="variablelist"><dt><span class="term"><code class="literal">'PST8PDT'</code></span></dt><dd><p>           加州伯克利的时区。
+          </p></dd><dt><span class="term"><code class="literal">'Europe/Rome'</code></span></dt><dd><p>           意大利的时区。
+          </p></dd><dt><span class="term"><code class="literal">-7</code></span></dt><dd><p>           UTC 以西 7 小时的时区（等效于 PDT）。正值则是 UTC 以东。
+          </p></dd><dt><span class="term"><code class="literal">INTERVAL '-08:00' HOUR TO MINUTE</code></span></dt><dd><p>           UTC 以西 8 小时的时区（等效于 PST）。
+          </p></dd><dt><span class="term"><code class="literal">LOCAL</code><br /></span><span class="term"><code class="literal">DEFAULT</code></span></dt><dd><p>           把时区设置为你的本地时区（也就是说服务器的<code class="varname">timezone</code>默认值）。
+          </p></dd></dl></div><p>
+      </p><p>       以数字或区间给出的时区设置在内部被翻译成 POSIX 时区语法。
+       例如，在<code class="literal">SET TIME ZONE -7</code>之后，
+       <code class="command">SHOW TIME ZONE</code>将会报告
+       <code class="literal">&lt;-07&gt;+07</code>。
+      </p><p>       有关时区的更多信息可见<a class="xref" href="datatype-datetime.html#DATATYPE-TIMEZONES" title="8.5.3.  时区">第 8.5.3 节</a>。
+      </p></dd></dl></div><p>
+  </p></div><div class="refsect1" id="idp49325648"><h2>注解</h2><p>   函数<code class="function">set_config</code>提供了等效的功能，见
+   <a class="xref" href="functions-admin.html" title="9.26. 系统管理函数">第 9.26 节</a>。此外，可以更新
+   <a class="link" href="view-pg-settings.html" title="51.85. pg_settings"><code class="structname">pg_settings</code></a>
+   系统视图来执行与<code class="command">SET</code>等效的工作。
+  </p></div><div class="refsect1" id="idp49329472"><h2>示例</h2><p>   设置模式搜索路径：
+</p><pre class="programlisting">SET search_path TO my_schema, public;</pre><p>
+  </p><p>   把日期风格设置为传统
+   <span class="productname">POSTGRES</span>的
+   <span class="quote">“<span class="quote">日在月之前</span>”</span>的输入习惯：
+</p><pre class="screen">SET datestyle TO postgres, dmy;</pre><p>
+  </p><p>   设置时区为加州伯克利：
+</p><pre class="screen">SET TIME ZONE 'PST8PDT';</pre><p>
+  </p><p>   设置时区为意大利：
+</p><pre class="screen">SET TIME ZONE 'Europe/Rome';</pre></div><div class="refsect1" id="idp49335120"><h2>兼容性</h2><p>   <code class="literal">SET TIME ZONE</code>扩展了 SQL 标准定义的语法。标准
+   只允许数字的时区偏移量而
+   <span class="productname">PostgreSQL</span>允许更灵活的时区说明。
+   所有其他<code class="literal">SET</code>特性都是
+   <span class="productname">PostgreSQL</span>扩展。
+  </p></div><div class="refsect1" id="idp49338752"><h2>另见</h2><span class="simplelist"><a class="xref" href="sql-reset.html" title="RESET"><span class="refentrytitle">RESET</span></a>, <a class="xref" href="sql-show.html" title="SHOW"><span class="refentrytitle">SHOW</span></a></span></div></div><div class="navfooter"><hr /><table width="100%" summary="Navigation footer"><tr><td width="40%" align="left"><a accesskey="p" href="sql-selectinto.html">上一页</a> </td><td width="20%" align="center"><a accesskey="u" href="sql-commands.html">上一级</a></td><td width="40%" align="right"> <a accesskey="n" href="sql-set-constraints.html">下一页</a></td></tr><tr><td width="40%" align="left" valign="top">SELECT INTO </td><td width="20%" align="center"><a accesskey="h" href="index.html">起始页</a></td><td width="40%" align="right" valign="top"> SET CONSTRAINTS</td></tr></table></div></body></html>

@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><title>ALTER SYSTEM</title><link rel="stylesheet" type="text/css" href="stylesheet.css" /><link rev="made" href="pgsql-docs@postgresql.org" /><meta name="generator" content="DocBook XSL Stylesheets V1.79.1" /><link rel="prev" href="sql-altersubscription.html" title="ALTER SUBSCRIPTION" /><link rel="next" href="sql-altertable.html" title="ALTER TABLE" /></head><body><div xmlns="http://www.w3.org/TR/xhtml1/transitional" class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="5" align="center">ALTER SYSTEM</th></tr><tr><td width="10%" align="left"><a accesskey="p" href="sql-altersubscription.html" title="ALTER SUBSCRIPTION">上一页</a> </td><td width="10%" align="left"><a accesskey="u" href="sql-commands.html" title="SQL 命令">上一级</a></td><th width="60%" align="center">SQL 命令</th><td width="10%" align="right"><a accesskey="h" href="index.html" title="PostgreSQL 10.1 手册">起始页</a></td><td width="10%" align="right"> <a accesskey="n" href="sql-altertable.html" title="ALTER TABLE">下一页</a></td></tr></table><hr></hr></div><div class="refentry" id="SQL-ALTERSYSTEM"><div class="titlepage"></div><a id="idp41030272" class="indexterm"></a><div class="refnamediv"><h2><span class="refentrytitle">ALTER SYSTEM</span></h2><p>ALTER SYSTEM — 更改一个服务器配置参数</p></div><div class="refsynopsisdiv"><h2>大纲</h2><pre class="synopsis">ALTER SYSTEM SET <em class="replaceable"><code>configuration_parameter</code></em> { TO | = } { <em class="replaceable"><code>value</code></em> | '<em class="replaceable"><code>value</code></em>' | DEFAULT }
+
+ALTER SYSTEM RESET <em class="replaceable"><code>configuration_parameter</code></em>
+ALTER SYSTEM RESET ALL</pre></div><div class="refsect1" id="idp41036592"><h2>描述</h2><p>   <code class="command">ALTER SYSTEM</code>被用来在整个数据库集簇范围内更改
+   服务器配置参数。它比传统的手动编辑<code class="filename">postgresql.conf</code>
+   文件的方法更方便。<code class="command">ALTER SYSTEM</code>会把给出的参数
+   设置写入到<code class="filename">postgresql.auto.conf</code>文件中，该文件会随着
+   <code class="filename">postgresql.conf</code>一起被读入。把一个参数设置为
+   <code class="literal">DEFAULT</code>或者使用<code class="command">RESET</code>变体可以
+   把该配置项从<code class="filename">postgresql.auto.conf</code>文件中移除。使用
+   <code class="literal">RESET ALL</code>可以移除所有这类配置项。
+  </p><p>   用<code class="command">ALTER SYSTEM</code>设置的值将在下一次重载服务器
+   配置后生效，那些只能在服务器启动时更改的参数则会在下一次服务器重启后生效。
+   重载服务器配置可以通过以下做法实现：调用 SQL 函数<code class="function">pg_reload_conf()</code>，
+   运行<code class="literal">pg_ctl reload</code>或者向主服务器进程发送一个<span class="systemitem">SIGHUP</span>信号。
+  </p><p>   只有超级用户能够使用<code class="command">ALTER SYSTEM</code>。还有，由于
+   这个命令直接作用于文件系统并且不能被回滚，不允许在一个事务块或者函数中使用它。
+  </p></div><div class="refsect1" id="idp41048592"><h2>参数</h2><div class="variablelist"><dl class="variablelist"><dt><span class="term"><em class="replaceable"><code>configuration_parameter</code></em></span></dt><dd><p>      一个可设置配置参数的名称。可用的参数可见<a class="xref" href="runtime-config.html" title="第 19 章 服务器配置">第 19 章</a>。
+     </p></dd><dt><span class="term"><em class="replaceable"><code>value</code></em></span></dt><dd><p>      该参数的新值。值可以被指定为字符串常量、标识符、数字或者以上这些构成的
+      逗号分隔的列表，值的具体形式取决于特定的参数。写上
+      <code class="literal">DEFAULT</code>可以用来把该参数及其值从
+      <code class="filename">postgresql.auto.conf</code>中移除。
+     </p></dd></dl></div></div><div class="refsect1" id="idp41054240"><h2>注解</h2><p>   不能用这个命令来设置<a class="xref" href="runtime-config-file-locations.html#GUC-DATA-DIRECTORY">data_directory</a>以及
+   <code class="filename">postgresql.conf</code>中不被允许的参数（例如
+   <a class="link" href="runtime-config-preset.html" title="19.15. 预置选项">preset options</a>）。
+  </p><p>   其他设置参数的方法见<a class="xref" href="config-setting.html" title="19.1. 设置参数">第 19.1 节</a>。
+  </p></div><div class="refsect1" id="idp41058432"><h2>示例</h2><p>   设置<code class="literal">wal_level</code>：
+</p><pre class="programlisting">ALTER SYSTEM SET wal_level = replica;</pre><p>
+  </p><p>   撤销以上的设置，恢复<code class="filename">postgresql.conf</code>中有效的设置：
+</p><pre class="programlisting">ALTER SYSTEM RESET wal_level;</pre></div><div class="refsect1" id="idp41062192"><h2>兼容性</h2><p>   <code class="command">ALTER SYSTEM</code>语句是一种
+   <span class="productname">PostgreSQL</span>扩展。
+  </p></div><div class="refsect1" id="idp41064304"><h2>另见</h2><span class="simplelist"><a class="xref" href="sql-set.html" title="SET"><span class="refentrytitle">SET</span></a>, <a class="xref" href="sql-show.html" title="SHOW"><span class="refentrytitle">SHOW</span></a></span></div></div><div class="navfooter"><hr /><table width="100%" summary="Navigation footer"><tr><td width="40%" align="left"><a accesskey="p" href="sql-altersubscription.html">上一页</a> </td><td width="20%" align="center"><a accesskey="u" href="sql-commands.html">上一级</a></td><td width="40%" align="right"> <a accesskey="n" href="sql-altertable.html">下一页</a></td></tr><tr><td width="40%" align="left" valign="top">ALTER SUBSCRIPTION </td><td width="20%" align="center"><a accesskey="h" href="index.html">起始页</a></td><td width="40%" align="right" valign="top"> ALTER TABLE</td></tr></table></div></body></html>

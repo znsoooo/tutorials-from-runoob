@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><title>3.3. 外键</title><link rel="stylesheet" type="text/css" href="stylesheet.css" /><link rev="made" href="pgsql-docs@postgresql.org" /><meta name="generator" content="DocBook XSL Stylesheets V1.79.1" /><link rel="prev" href="tutorial-views.html" title="3.2. 视图" /><link rel="next" href="tutorial-transactions.html" title="3.4. 事务" /></head><body><div xmlns="http://www.w3.org/TR/xhtml1/transitional" class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="5" align="center">3.3. 外键</th></tr><tr><td width="10%" align="left"><a accesskey="p" href="tutorial-views.html" title="3.2. 视图">上一页</a> </td><td width="10%" align="left"><a accesskey="u" href="tutorial-advanced.html" title="第 3 章 高级特性">上一级</a></td><th width="60%" align="center">第 3 章 高级特性</th><td width="10%" align="right"><a accesskey="h" href="index.html" title="PostgreSQL 10.1 手册">起始页</a></td><td width="10%" align="right"> <a accesskey="n" href="tutorial-transactions.html" title="3.4. 事务">下一页</a></td></tr></table><hr></hr></div><div class="sect1" id="TUTORIAL-FK"><div class="titlepage"><div><div><h2 class="title" style="clear: both">3.3. 外键</h2></div></div></div><a id="idp5457248" class="indexterm"></a><a id="idp5458112" class="indexterm"></a><p>    回想第2章中的<code class="classname">weather</code>和<code class="classname">cities</code>表。考虑以下问题：我们希望确保在<code class="classname">cities</code>表中有相应项之前任何人都不能在<code class="classname">weather</code>表中插入行。这叫做维持数据的<em class="firstterm">引用完整性</em>。在过分简化的数据库系统中，可以通过先检查<code class="classname">cities</code>表中是否有匹配的记录存在，然后决定应该接受还是拒绝即将插入<code class="classname">weather</code>表的行。这种方法有一些问题且并不方便，于是<span class="productname">PostgreSQL</span>可以为我们来解决：
+   </p><p>    新的表定义如下：
+
+</p><pre class="programlisting">CREATE TABLE cities (
+        city     varchar(80) primary key,
+        location point
+);
+
+CREATE TABLE weather (
+        city      varchar(80) references cities(city),
+        temp_lo   int,
+        temp_hi   int,
+        prcp      real,
+        date      date
+);</pre><p>
+
+    现在尝试插入一个非法的记录：
+
+</p><pre class="programlisting">INSERT INTO weather VALUES ('Berkeley', 45, 53, 0.0, '1994-11-28');</pre><p>
+
+</p><pre class="screen">ERROR:  insert or update on table "weather" violates foreign key constraint "weather_city_fkey"
+DETAIL:  Key (city)=(Berkeley) is not present in table "cities".</pre><p>
+   </p><p>    外键的行为可以很好地根据应用来调整。我们不会在这个教程里更深入地介绍，读者可以参考<a class="xref" href="ddl.html" title="第 5 章 数据定义">第 5 章</a>中的信息。正确使用外键无疑会提高数据库应用的质量，因此强烈建议用户学会如何使用它们。
+   </p></div><div class="navfooter"><hr /><table width="100%" summary="Navigation footer"><tr><td width="40%" align="left"><a accesskey="p" href="tutorial-views.html">上一页</a> </td><td width="20%" align="center"><a accesskey="u" href="tutorial-advanced.html">上一级</a></td><td width="40%" align="right"> <a accesskey="n" href="tutorial-transactions.html">下一页</a></td></tr><tr><td width="40%" align="left" valign="top">3.2. 视图 </td><td width="20%" align="center"><a accesskey="h" href="index.html">起始页</a></td><td width="40%" align="right" valign="top"> 3.4. 事务</td></tr></table></div></body></html>

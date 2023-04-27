@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><title>67.2. BKI命令</title><link rel="stylesheet" type="text/css" href="stylesheet.css" /><link rev="made" href="pgsql-docs@postgresql.org" /><meta name="generator" content="DocBook XSL Stylesheets V1.79.1" /><link rel="prev" href="bki-format.html" title="67.1. BKI文件格式" /><link rel="next" href="bki-structure.html" title="67.3. 自举BKI文件的结构" /></head><body><div xmlns="http://www.w3.org/TR/xhtml1/transitional" class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="5" align="center">67.2. <acronym xmlns="http://www.w3.org/1999/xhtml" class="acronym">BKI</acronym>命令</th></tr><tr><td width="10%" align="left"><a accesskey="p" href="bki-format.html" title="67.1. BKI文件格式">上一页</a> </td><td width="10%" align="left"><a accesskey="u" href="bki.html" title="第 67 章 BKI后端接口">上一级</a></td><th width="60%" align="center">第 67 章 <acronym xmlns="http://www.w3.org/1999/xhtml" class="acronym">BKI</acronym>后端接口</th><td width="10%" align="right"><a accesskey="h" href="index.html" title="PostgreSQL 10.1 手册">起始页</a></td><td width="10%" align="right"> <a accesskey="n" href="bki-structure.html" title="67.3. 自举BKI文件的结构">下一页</a></td></tr></table><hr></hr></div><div class="sect1" id="BKI-COMMANDS"><div class="titlepage"><div><div><h2 class="title" style="clear: both">67.2. <acronym class="acronym">BKI</acronym>命令</h2></div></div></div><div class="variablelist"><dl class="variablelist"><dt><span class="term">     <code class="literal">create</code>
+     <em class="replaceable"><code>tablename</code></em>
+     <em class="replaceable"><code>tableoid</code></em>
+     [<span class="optional"><code class="literal">bootstrap</code></span>]
+     [<span class="optional"><code class="literal">shared_relation</code></span>]
+     [<span class="optional"><code class="literal">without_oids</code></span>]
+     [<span class="optional"><code class="literal">rowtype_oid</code> <em class="replaceable"><code>oid</code></em></span>]
+     (<em class="replaceable"><code>name1</code></em> =
+     <em class="replaceable"><code>type1</code></em>
+     [<span class="optional">FORCE NOT NULL | FORCE NULL </span>] [<span class="optional">,
+     <em class="replaceable"><code>name2</code></em> =
+     <em class="replaceable"><code>type2</code></em>
+     [<span class="optional">FORCE NOT NULL | FORCE NULL </span>],
+     ...</span>])
+    </span></dt><dd><p>      创建一个叫做<em class="replaceable"><code>tablename</code></em>，OID为<em class="replaceable"><code>tableoid</code></em>的表，它的列在圆括弧中给出。
+     </p><p>      <code class="filename">bootstrap.c</code>直接支持下列列类型：<code class="type">bool</code>、<code class="type">bytea</code>、<code class="type">char</code>（1 字节）、<code class="type">name</code>、<code class="type">int2</code>、<code class="type">int4</code>、<code class="type">regproc</code>、<code class="type">regclass</code>、<code class="type">regtype</code>、<code class="type">text</code>、<code class="type">oid</code>、<code class="type">tid</code>、<code class="type">xid</code>、<code class="type">cid</code>、<code class="type">int2vector</code>、<code class="type">oidvector</code>、<code class="type">_int4</code>（数组）、<code class="type">_text</code>（数组）、<code class="type">_oid</code>（数组）、<code class="type">_char</code>（数组）、<code class="type">_aclitem</code>（数组）。尽管我们可以创建包含其它类型列的表， 但是我们只有在创建完<code class="structname">pg_type</code>并且填充了合适的记录之后才行（这实际上就意味着在自举表中，只能使用这些列类型，而非自举目录可以使用任意内置类型）。
+     </p><p>      如果声明了<code class="literal">bootstrap</code>，那么该表将只在磁盘上创建；不会向<code class="structname">pg_class</code>、<code class="structname">pg_attribute</code>等表里面输入任何与该表相关的东西。因此这样的表将无法被普通的SQL操作访问，直到那些记录被用硬办法（用<code class="literal">insert</code>命令）建立。 这个选项用于创建<code class="structname">pg_class</code>等表本身。
+     </p><p>      如果声明了<code class="literal">shared_relation</code>，那么表就作为共享表创建。除非声明了<code class="literal">without_oids</code>，否则表将会有OID。表的行类型OID（<code class="structname">pg_type</code>的OID）可以有选择性地通过<code class="literal">rowtype_oid</code>子句指定。如果没有指定，会为之自产生一个OID（如果<code class="literal">bootstrap</code>被指定，则<code class="literal">rowtype_oid</code>是无效的，但不管怎样它还是被写在了文档中）。
+     </p></dd><dt><span class="term">     <code class="literal">open</code> <em class="replaceable"><code>tablename</code></em>
+    </span></dt><dd><p>      打开名为<em class="replaceable"><code>tablename</code></em>的表进行数据插入。任何当前打开的表将被关闭。
+     </p></dd><dt><span class="term">     <code class="literal">close</code> [<span class="optional"><em class="replaceable"><code>tablename</code></em></span>]
+    </span></dt><dd><p>      关闭打开着的表。给出的表名用于交叉检查，但并不是必须的。
+     </p></dd><dt><span class="term">     <code class="literal">insert</code> [<span class="optional"><code class="literal">OID =</code> <em class="replaceable"><code>oid_value</code></em></span>] <code class="literal">(</code> <em class="replaceable"><code>value1</code></em> <em class="replaceable"><code>value2</code></em> ... <code class="literal">)</code>
+    </span></dt><dd><p>      用<em class="replaceable"><code>value1</code></em>、<em class="replaceable"><code>value2</code></em> 等作为列值以及<em class="replaceable"><code>oid_value</code></em>作为其 OID向打开的表插入一条新记录。如果<em class="replaceable"><code>oid_value</code></em>为零（0）或者该子句被忽略而表可以具有OID，则会为之赋予下一个可用的OID。
+     </p><p>      NULL 可以用特殊的关键字<code class="literal">_null_</code>指定。包含空白的值必须用双引号引用。
+     </p></dd><dt><span class="term">     <code class="literal">declare</code> [<span class="optional"><code class="literal">unique</code></span>]
+     <code class="literal">index</code> <em class="replaceable"><code>indexname</code></em>
+     <em class="replaceable"><code>indexoid</code></em>
+     <code class="literal">on</code> <em class="replaceable"><code>tablename</code></em>
+     <code class="literal">using</code> <em class="replaceable"><code>amname</code></em>
+     <code class="literal">(</code> <em class="replaceable"><code>opclass1</code></em>
+     <em class="replaceable"><code>name1</code></em>
+     [<span class="optional">, ...</span>] <code class="literal">)</code>
+    </span></dt><dd><p>      在名为<em class="replaceable"><code>tablename</code></em>的表上用<em class="replaceable"><code>amname</code></em>访问方法创建一个OID为<em class="replaceable"><code>indexoid</code></em>的名为<em class="replaceable"><code>indexname</code></em>的索引。 索引的域被称为<em class="replaceable"><code>name1</code></em>、<em class="replaceable"><code>name2</code></em>等，而使用的操作符类分别是<em class="replaceable"><code>opclass1</code></em>, <em class="replaceable"><code>opclass2</code></em>等。 该命令将会创建索引文件和适当的系统目录项，但是索引内容不会被此命令初始化。
+     </p></dd><dt><span class="term">     <code class="literal">declare toast</code>
+     <em class="replaceable"><code>toasttableoid</code></em>
+     <em class="replaceable"><code>toastindexoid</code></em>
+     <code class="literal">on</code> <em class="replaceable"><code>tablename</code></em>
+    </span></dt><dd><p>      为名为<em class="replaceable"><code>tablename</code></em>的表创建一个TOAST表。该TOAST表将被赋予由<em class="replaceable"><code>toasttableoid</code></em>表示的OID，且它的索引将被赋予由<em class="replaceable"><code>toastindexoid</code></em>表示的OID。和<code class="literal">declare index</code>一样，索引的填充将被推迟。
+     </p></dd><dt><span class="term"><code class="literal">build indices</code></span></dt><dd><p>      填充之前声明的索引。
+     </p></dd></dl></div></div><div class="navfooter"><hr /><table width="100%" summary="Navigation footer"><tr><td width="40%" align="left"><a accesskey="p" href="bki-format.html">上一页</a> </td><td width="20%" align="center"><a accesskey="u" href="bki.html">上一级</a></td><td width="40%" align="right"> <a accesskey="n" href="bki-structure.html">下一页</a></td></tr><tr><td width="40%" align="left" valign="top">67.1. <acronym class="acronym">BKI</acronym>文件格式 </td><td width="20%" align="center"><a accesskey="h" href="index.html">起始页</a></td><td width="40%" align="right" valign="top"> 67.3. 自举<acronym class="acronym">BKI</acronym>文件的结构</td></tr></table></div></body></html>

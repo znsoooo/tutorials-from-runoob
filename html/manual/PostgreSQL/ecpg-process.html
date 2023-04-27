@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><title>35.10. 处理嵌入式 SQL 程序</title><link rel="stylesheet" type="text/css" href="stylesheet.css" /><link rev="made" href="pgsql-docs@postgresql.org" /><meta name="generator" content="DocBook XSL Stylesheets V1.79.1" /><link rel="prev" href="ecpg-preproc.html" title="35.9. 预处理器指令" /><link rel="next" href="ecpg-library.html" title="35.11. 库函数" /></head><body><div xmlns="http://www.w3.org/TR/xhtml1/transitional" class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="5" align="center">35.10. 处理嵌入式 SQL 程序</th></tr><tr><td width="10%" align="left"><a accesskey="p" href="ecpg-preproc.html" title="35.9. 预处理器指令">上一页</a> </td><td width="10%" align="left"><a accesskey="u" href="ecpg.html" title="第 35 章 ECPG - C 中的嵌入式 SQL">上一级</a></td><th width="60%" align="center">第 35 章 <span xmlns="http://www.w3.org/1999/xhtml" class="application">ECPG</span> - C 中的嵌入式 <acronym xmlns="http://www.w3.org/1999/xhtml" class="acronym">SQL</acronym></th><td width="10%" align="right"><a accesskey="h" href="index.html" title="PostgreSQL 10.1 手册">起始页</a></td><td width="10%" align="right"> <a accesskey="n" href="ecpg-library.html" title="35.11. 库函数">下一页</a></td></tr></table><hr></hr></div><div class="sect1" id="ECPG-PROCESS"><div class="titlepage"><div><div><h2 class="title" style="clear: both">35.10. 处理嵌入式 SQL 程序</h2></div></div></div><p>   现在你已经对如何构造嵌入式 SQL C 程序有所了解了，你可能希望知道如何编译它们。在编译之前，你需要让该文件通过嵌入式<acronym class="acronym">SQL</acronym> <acronym class="acronym">C</acronym>预处理器，它会把你用到的<acronym class="acronym">SQL</acronym>转换成特殊的函数调用。在编译之后，你必须链接一个包含所需函数的特殊库。这些函数从参数中取得信息、使用<span class="application">libpq</span>执行<acronym class="acronym">SQL</acronym>命令并且把结果放在指定的参数中用来输出。
+  </p><p>   该预处理器程序被称作<code class="filename">ecpg</code>并且被包括在一个正常的<span class="productname">PostgreSQL</span>安装中。嵌入式 SQL 程序通常带有扩展名<code class="filename">.pgc</code>。如果你有一个程序文件<code class="filename">prog1.pgc</code>，你可以调用下面的命令对它进行预处理：
+</p><pre class="programlisting">ecpg prog1.pgc</pre><p>
+   这将创建一个文件<code class="filename">prog1.c</code>。如果你的输入文件不遵循建议的命名模式，你可以用<code class="option">-o</code>选项显式地指定输出文件。
+  </p><p>   预处理过的文件可以被正常地编译，例如：
+</p><pre class="programlisting">cc -c prog1.c</pre><p>
+   产生的 C 源文件从<span class="productname">PostgreSQL</span>安装中包括头文件，因此如果你把<span class="productname">PostgreSQL</span>安装在一个不被默认搜索的位置，你必须在编译命令行中增加一个选项（例如<code class="literal">-I/usr/local/pgsql/include</code>）。
+  </p><p>   要链接一个嵌入式 SQL 程序，你需要包括<code class="filename">libecpg</code>库，像这样：
+</p><pre class="programlisting">cc -o myprog prog1.o prog2.o ... -lecpg</pre><p>
+   再次，你可能不得不在命令行中增加类似<code class="literal">-L/usr/local/pgsql/lib</code>的选项。
+  </p><p>   你可以使用<code class="command">pg_config</code><a id="idp30378144" class="indexterm"></a>
+   或者<code class="command">pkg-config</code><a id="idp30380112" class="indexterm"></a> 加上包名<code class="literal">libecpg</code>来得到你的安装路径。
+  </p><p>   如果你使用<span class="application">make</span>来管理一个大工程的构建过程，把下面的隐式规则包括在你的 makefile 中将会很方便：
+</p><pre class="programlisting">ECPG = ecpg
+
+%.c: %.pgc
+        $(ECPG) $&lt;</pre><p>
+  </p><p>   <code class="command">ecpg</code>命令的完整语法可见<a class="xref" href="app-ecpg.html" title="ecpg"><span class="refentrytitle"><span class="application">ecpg</span></span></a>。
+  </p><p>   <span class="application">ecpg</span>库默认是线程安全的。不过，你可能需要使用一些线程命令行选项来编译你的客户端代码。
+  </p></div><div class="navfooter"><hr /><table width="100%" summary="Navigation footer"><tr><td width="40%" align="left"><a accesskey="p" href="ecpg-preproc.html">上一页</a> </td><td width="20%" align="center"><a accesskey="u" href="ecpg.html">上一级</a></td><td width="40%" align="right"> <a accesskey="n" href="ecpg-library.html">下一页</a></td></tr><tr><td width="40%" align="left" valign="top">35.9. 预处理器指令 </td><td width="20%" align="center"><a accesskey="h" href="index.html">起始页</a></td><td width="40%" align="right" valign="top"> 35.11. 库函数</td></tr></table></div></body></html>

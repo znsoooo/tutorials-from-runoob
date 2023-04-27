@@ -1,0 +1,110 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><title>8.11. 文本搜索类型</title><link rel="stylesheet" type="text/css" href="stylesheet.css" /><link rev="made" href="pgsql-docs@postgresql.org" /><meta name="generator" content="DocBook XSL Stylesheets V1.79.1" /><link rel="prev" href="datatype-bit.html" title="8.10. 位串类型" /><link rel="next" href="datatype-uuid.html" title="8.12. UUID类型" /></head><body><div xmlns="http://www.w3.org/TR/xhtml1/transitional" class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="5" align="center">8.11. 文本搜索类型</th></tr><tr><td width="10%" align="left"><a accesskey="p" href="datatype-bit.html" title="8.10. 位串类型">上一页</a> </td><td width="10%" align="left"><a accesskey="u" href="datatype.html" title="第 8 章 数据类型">上一级</a></td><th width="60%" align="center">第 8 章 数据类型</th><td width="10%" align="right"><a accesskey="h" href="index.html" title="PostgreSQL 10.1 手册">起始页</a></td><td width="10%" align="right"> <a accesskey="n" href="datatype-uuid.html" title="8.12. UUID类型">下一页</a></td></tr></table><hr></hr></div><div class="sect1" id="DATATYPE-TEXTSEARCH"><div class="titlepage"><div><div><h2 class="title" style="clear: both">8.11. 文本搜索类型</h2></div></div></div><div class="toc"><dl class="toc"><dt><span class="sect2"><a href="datatype-textsearch.html#DATATYPE-TSVECTOR">8.11.1. <code class="type">tsvector</code></a></span></dt><dt><span class="sect2"><a href="datatype-textsearch.html#DATATYPE-TSQUERY">8.11.2. <code class="type">tsquery</code></a></span></dt></dl></div><a id="idp8683616" class="indexterm"></a><a id="idp8685104" class="indexterm"></a><p>    <span class="productname">PostgreSQL</span>提供两种数据类型，它们被设计用来支持全文搜索，全文搜索是一种在自然语言的<em class="firstterm">文档</em>集合中搜索以定位那些最匹配一个<em class="firstterm">查询</em>的文档的活动。<code class="type">tsvector</code>类型表示一个为文本搜索优化的形式下的文档，<code class="type">tsquery</code>类型表示一个文本查询。<a class="xref" href="textsearch.html" title="第 12 章 全文搜索">第 12 章</a>提供了对于这种功能的详细解释，并且<a class="xref" href="functions-textsearch.html" title="9.13. 文本搜索函数和操作符">第 9.13 节</a>总结了相关的函数和操作符。
+   </p><div class="sect2" id="DATATYPE-TSVECTOR"><div class="titlepage"><div><div><h3 class="title">8.11.1. <code class="type">tsvector</code></h3></div></div></div><a id="idp8692160" class="indexterm"></a><p>     一个<code class="type">tsvector</code>值是一个排序的可区分<em class="firstterm">词位</em>的列表，<em class="firstterm">词位</em>是被<em class="firstterm">正规化</em>合并了同一个词的不同变种的词（详见<a class="xref" href="textsearch.html" title="第 12 章 全文搜索">第 12 章</a>）。排序和去重是在输入期间自动完成的，如下例所示：
+
+</p><pre class="programlisting">SELECT 'a fat cat sat on a mat and ate a fat rat'::tsvector;
+                      tsvector
+----------------------------------------------------
+ 'a' 'and' 'ate' 'cat' 'fat' 'mat' 'on' 'rat' 'sat'</pre><p>
+
+     要表示包含空白或标点的词位，将它们用引号包围：
+
+</p><pre class="programlisting">SELECT $$the lexeme '    ' contains spaces$$::tsvector;
+                 tsvector
+-------------------------------------------
+ '    ' 'contains' 'lexeme' 'spaces' 'the'</pre><p>
+
+     （我们在这个例子中使用美元符号包围的串文字并且下一个用来避免在文字中包含双引号记号产生的混淆）。嵌入的引号和反斜线必须被双写：
+
+</p><pre class="programlisting">SELECT $$the lexeme 'Joe''s' contains a quote$$::tsvector;
+                    tsvector
+------------------------------------------------
+ 'Joe''s' 'a' 'contains' 'lexeme' 'quote' 'the'</pre><p>
+
+     可选的，整数<em class="firstterm">位置</em>可以被附加给词位：
+
+</p><pre class="programlisting">SELECT 'a:1 fat:2 cat:3 sat:4 on:5 a:6 mat:7 and:8 ate:9 a:10 fat:11 rat:12'::tsvector;
+                                  tsvector
+-------------------------------------------------------------------------------
+ 'a':1,6,10 'and':8 'ate':9 'cat':3 'fat':2,11 'mat':7 'on':5 'rat':12 'sat':4</pre><p>
+
+     一个位置通常表示源词在文档中的定位。位置信息可以被用于<em class="firstterm">邻近排名</em>。位置值可以从 1 到 16383，更大的数字会被 16383。对于相同的词位出现的重复位置将被丢弃。
+    </p><p>     具有位置的词位可以进一步地被标注一个<em class="firstterm">权重</em>，它可以是<code class="literal">A</code>、
+     <code class="literal">B</code>、<code class="literal">C</code>或<code class="literal">D</code>。
+     <code class="literal">D</code>是默认值并且因此在输出中不会显示：
+
+</p><pre class="programlisting">SELECT 'a:1A fat:2B,4C cat:5D'::tsvector;
+          tsvector
+----------------------------
+ 'a':1A 'cat':5 'fat':2B,4C</pre><p>
+
+     权重通常被用来反映文档结构，例如将主题词标记成与正文词不同。文本搜索排名函数可以为不同的权重标记器分配不同的优先级。
+    </p><p>     了解<code class="type">tsvector</code>类型本身并不执行任何词正规化这一点很重要，它假定给它的词已经被恰当地为应用正规化过。例如，
+
+</p><pre class="programlisting">SELECT 'The Fat Rats'::tsvector;
+      tsvector
+--------------------
+ 'Fat' 'Rats' 'The'</pre><p>
+
+     对于大部分英语文本搜索应用，上面的词将会被认为是非正规化的，但是<code class="type">tsvector</code>并不在乎这一点。原始文档文本通常应该经过<code class="function">to_tsvector</code>以恰当地为搜索正规化其中的词：
+
+</p><pre class="programlisting">SELECT to_tsvector('english', 'The Fat Rats');
+   to_tsvector
+-----------------
+ 'fat':2 'rat':3</pre><p>
+
+     再次地，详情请参阅<a class="xref" href="textsearch.html" title="第 12 章 全文搜索">第 12 章</a>。
+    </p></div><div class="sect2" id="DATATYPE-TSQUERY"><div class="titlepage"><div><div><h3 class="title">8.11.2. <code class="type">tsquery</code></h3></div></div></div><a id="idp8712160" class="indexterm"></a><p>     一个<code class="type">tsquery</code>值存储要用于搜索的词位，并且使用布尔操作符<code class="literal">&amp;</code>（AND）、<code class="literal">|</code>（OR）和<code class="literal">!</code>（NOT）来组合它们，还有短语搜索操作符<code class="literal">&lt;-&gt;</code>（FOLLOWED BY）。也有一种 FOLLOWED BY 操作符的变体<code class="literal">&lt;<em class="replaceable"><code>N</code></em>&gt;</code>，其中<em class="replaceable"><code>N</code></em>是一个整数常量，它指定要搜索的两个词位之间的距离。<code class="literal">&lt;-&gt;</code>等效于<code class="literal">&lt;1&gt;</code>。
+    </p><p>   
+     圆括号可以被用来强制对操作符分组。如果没有圆括号，<code class="literal">!</code>（NOT）的优先级最高，其次是<code class="literal">&lt;-&gt;</code>（FOLLOWED BY），然后是<code class="literal">&amp;</code>（AND），最后是<code class="literal">|</code>（OR）。
+    </p><p>     这里有一些例子：
+
+</p><pre class="programlisting">SELECT 'fat &amp; rat'::tsquery;
+    tsquery
+---------------
+ 'fat' &amp; 'rat'
+
+SELECT 'fat &amp; (rat | cat)'::tsquery;
+          tsquery
+---------------------------
+ 'fat' &amp; ( 'rat' | 'cat' )
+
+SELECT 'fat &amp; rat &amp; ! cat'::tsquery;
+        tsquery
+------------------------
+ 'fat' &amp; 'rat' &amp; !'cat'
+ </pre><p>
+
+    </p><p>     可选地，一个<code class="type">tsquery</code>中的词位可以被标注一个或多个权重字母，这将限制它们只能和具有那些权重之一的<code class="type">tsvector</code>词位相匹配：
+
+</p><pre class="programlisting">SELECT 'fat:ab &amp; cat'::tsquery;
+    tsquery
+------------------
+ 'fat':AB &amp; 'cat'</pre><p>
+    </p><p>     此外，一个<code class="type">tsquery</code>中的词位可以被标注为<code class="literal">*</code>来指定前缀匹配：
+</p><pre class="programlisting">SELECT 'super:*'::tsquery;
+  tsquery
+-----------
+ 'super':*</pre><p>
+     这个查询将匹配一个<code class="type">tsvector</code>中以<span class="quote">“<span class="quote">super</span>”</span>开头的任意词。
+    </p><p>     词位的引号规则和之前描述的<code class="type">tsvector</code>中的词位相同；并且，正如<code class="type">tsvector</code>，任何请求的词正规化必须在转换到<code class="type">tsquery</code>类型之前完成。<code class="function">to_tsquery</code>函数可以方便地执行这种正规化：
+
+</p><pre class="programlisting">SELECT to_tsquery('Fat:ab &amp; Cats');
+    to_tsquery
+------------------
+ 'fat':AB &amp; 'cat'</pre><p>
+
+     注意<code class="function">to_tsquery</code>将会以和其他词同样的方式处理前缀，这也意味着下面的比较会返回真：
+
+</p><pre class="programlisting">SELECT to_tsvector( 'postgraduate' ) @@ to_tsquery( 'postgres:*' );
+ ?column?
+----------
+ t</pre><p>
+     因为<code class="literal">postgres</code>会被处理成<code class="literal">postgr</code>：
+</p><pre class="programlisting">SELECT to_tsvector( 'postgraduate' ), to_tsquery( 'postgres:*' );
+  to_tsvector  | to_tsquery
+---------------+------------
+ 'postgradu':1 | 'postgr':*</pre><p>
+     这会匹配<code class="literal">postgraduate</code>被处理后的形式。
+    </p></div></div><div class="navfooter"><hr /><table width="100%" summary="Navigation footer"><tr><td width="40%" align="left"><a accesskey="p" href="datatype-bit.html">上一页</a> </td><td width="20%" align="center"><a accesskey="u" href="datatype.html">上一级</a></td><td width="40%" align="right"> <a accesskey="n" href="datatype-uuid.html">下一页</a></td></tr><tr><td width="40%" align="left" valign="top">8.10. 位串类型 </td><td width="20%" align="center"><a accesskey="h" href="index.html">起始页</a></td><td width="40%" align="right" valign="top"> 8.12. <acronym class="acronym">UUID</acronym>类型</td></tr></table></div></body></html>

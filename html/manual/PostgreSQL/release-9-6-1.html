@@ -1,0 +1,113 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><title>E.8. 版本 9.6.1</title><link rel="stylesheet" type="text/css" href="stylesheet.css" /><link rev="made" href="pgsql-docs@postgresql.org" /><meta name="generator" content="DocBook XSL Stylesheets V1.79.1" /><link rel="prev" href="release-9-6-2.html" title="E.7. 版本 9.6.2" /><link rel="next" href="release-9-6.html" title="E.9. 版本 9.6" /></head><body><div xmlns="http://www.w3.org/TR/xhtml1/transitional" class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="5" align="center">E.8. 版本 9.6.1</th></tr><tr><td width="10%" align="left"><a accesskey="p" href="release-9-6-2.html" title="E.7. 版本 9.6.2">上一页</a> </td><td width="10%" align="left"><a accesskey="u" href="release.html" title="附录 E. 版本说明">上一级</a></td><th width="60%" align="center">附录 E. 版本说明</th><td width="10%" align="right"><a accesskey="h" href="index.html" title="PostgreSQL 10.1 手册">起始页</a></td><td width="10%" align="right"> <a accesskey="n" href="release-9-6.html" title="E.9. 版本 9.6">下一页</a></td></tr></table><hr></hr></div><div class="sect1" id="RELEASE-9-6-1"><div class="titlepage"><div><div><h2 class="title" style="clear: both">E.8. 版本 9.6.1</h2></div></div></div><div class="toc"><dl class="toc"><dt><span class="sect2"><a href="release-9-6-1.html#idp64591536">E.8.1. 迁移到版本 9.6.1</a></span></dt><dt><span class="sect2"><a href="release-9-6-1.html#idp64593024">E.8.2. 修改列表</a></span></dt></dl></div><p><strong>发布日期: </strong>2016-10-27</p><p>   此版本包含9.6.0的各种修补程序。有关9.6主要版本中的新功能的信息，请查看
+   <a class="xref" href="release-9-6.html" title="E.9. 版本 9.6">第 E.9 节</a>。
+   </p><div class="sect2" id="idp64591536"><div class="titlepage"><div><div><h3 class="title">E.8.1. 迁移到版本 9.6.1</h3></div></div></div><p>    运行9.6.X的用户不需要转储/恢复。
+   </p><p>    但是，如果您的安装受到以下修改列表中前面两条描述的错误的影响，
+	那么在更新之后，您可能需要采取措施修复损坏的可用空间映射或可见性映射。。
+   </p></div><div class="sect2" id="idp64593024"><div class="titlepage"><div><div><h3 class="title">E.8.2. 修改列表</h3></div></div></div><div class="itemizedlist"><ul class="itemizedlist" style="list-style-type: disc; "><li class="listitem"><p>      修复关系自由空间映射和可见性映射截断的WAL日志记录
+	  (Pavan Deolasee, Heikki Linnakangas)
+     </p><p>      在故障恢复期间可能无法正确恢复这些文件，或者在备用服务器上写入不正确。
+	  自由空间映射中的伪造条目可能导致尝试访问已从关系本身截断的页面，
+	  通常会产生像<span class="quote">“<span class="quote">could not read block <em class="replaceable"><code>XXX</code></em>：
+	  read only 0 of 8192 bytes</span>”</span>这样的错误。如果启用校验和，
+	  则可见性映射中的校验和失败也是可能的。
+     </p><p>      在<a class="ulink" href="https://wiki.postgresql.org/wiki/Free_Space_Map_Problems" target="_top">https://wiki.postgresql.org/wiki/Free_Space_Map_Problems</a>
+	  中讨论确定这是否存在问题和修复它的步骤。
+     </p></li><li class="listitem"><p>      当<span class="application">pg_upgrade</span>
+	  将关系可见性映射重写为9.6格式时，修复可能的数据损坏 (Tom Lane)
+     </p><p>      在big-endian机器上，新的可见性映射的字节以错误的顺序写入，导致完全不正确的映射。
+	  在Windows中，旧映射是使用文本模式读取的，如果映射碰巧包含匹配回车/换行序列的连续字节，
+	  则会导致错误的结果。后一个错误几乎总是会导致<span class="application">pg_upgrade</span>失败，
+	  因为映射文件看起来是错误的长度。
+     </p><p>      如果您使用的是big-endian机器（许多非英特尔体系结构是big-endian），并且使用
+	  <span class="application">pg_upgrade</span>从9.6之前版本升级，
+	  则应该假定所有可见性映射都不正确，需要重新生成。
+	  用<code class="filename">contrib/pg_visibility</code>的
+	  <code class="function">pg_truncate_visibility_map()</code>
+	  函数截断每个关系的可见性映射就足够了。有关更多信息，请参阅
+	  <a class="ulink" href="https://wiki.postgresql.org/wiki/Visibility_Map_Problems" target="_top">https://wiki.postgresql.org/wiki/Visibility_Map_Problems</a>。
+     </p></li><li class="listitem"><p>      不要在<code class="command">INSERT ... ON CONFLICT</code>中为自冲突插入抛出序列化错误
+	  (Thomas Munro, Peter Geoghegan)
+     </p></li><li class="listitem"><p>      修复使用<code class="literal">DISTINCT</code>的集合函数执行中的免费后使用危害
+	  (Peter Geoghegan)
+     </p><p>      这可能会导致崩溃或不正确的查询结果。
+     </p></li><li class="listitem"><p>      修复用作窗口函数的多态聚合的错误处理 (Tom Lane)
+     </p><p>      聚合的转换函数被告知它的第一个参数和结果是聚合的输出类型，而不是状态类型。
+	  这导致了多态转换函数的错误或崩溃。
+     </p></li><li class="listitem"><p>      修复<code class="command">COPY</code>启用了行级安全性的表中的列名列表
+	  (Adam Brightwell)
+     </p></li><li class="listitem"><p>      当<a class="xref" href="runtime-config-statistics.html#GUC-TRACK-IO-TIMING">track_io_timing</a>打开时，修复
+	  <code class="command">EXPLAIN</code>发出有效的XML (Markus Winand)
+     </p><p>      以前，XML输出格式选项会产生语法上无效的标签，例如<code class="literal">&lt;I/O-Read-Time&gt;</code>。
+	  现在这呈现为<code class="literal">&lt;I-O-Read-Time&gt;</code>。
+     </p></li><li class="listitem"><p>      修复准备好的事务中的<code class="command">TRUNCATE</code>的统计信息更新 (Stas Kelvich)
+     </p></li><li class="listitem"><p>      修复在创建或更改表时合并继承的<code class="literal">CHECK</code>约束中的错误
+	  (Tom Lane, Amit Langote)
+     </p><p>      允许按照任意顺序将相同的<code class="literal">CHECK</code>约束添加到父表和子表中。
+	  阻止合并父表中的有效约束与子节点上的<code class="literal">NOT VALID</code>约束。
+	  同样，阻止将<code class="literal">NOT INHERIT</code>子约束与继承约束合并。
+     </p></li><li class="listitem"><p>      在<code class="structname">pg_settings</code>.<code class="structfield">unit</code>
+	  中为<code class="varname">min_wal_size</code>和<code class="varname">max_wal_size</code>
+	  显示一个合理的值 (Tom Lane)
+     </p></li><li class="listitem"><p>      修复<code class="function">jsonb_set()</code>中数组元素的替换
+      (Tom Lane)
+     </p><p>      如果目标是现有的JSON数组元素，则它将被删除而不是被新值替换。
+     </p></li><li class="listitem"><p>      避免由于在不保留缓冲区锁定的情况下测试元组可见性而造成非常低概率的数据损坏 (Thomas Munro, Peter Geoghegan,
+      Tom Lane)
+     </p></li><li class="listitem"><p>      跨服务器重启保留提交时间戳
+      (Julien Rouhaud, Craig Ringer)
+     </p><p>      在打开<a class="xref" href="runtime-config-replication.html#GUC-TRACK-COMMIT-TIMESTAMP">track_commit_timestamp</a>时，
+	  旧的提交时间戳在干净的服务器重新启动后变得不可访问。
+     </p></li><li class="listitem"><p>      当一个子事务的WAL输出足够大以至于溢出到磁盘时，修复逻辑WAL解码以正常工作
+	  (Andres Freund)
+     </p></li><li class="listitem"><p>      修正逻辑WAL解码中的悬挂指针问题 (Stas Kelvich)
+     </p></li><li class="listitem"><p>      当试图在Linux上使用大页面时，将共享内存分配请求四舍五入为实际巨大页面大小的倍数
+	  (Tom Lane)
+     </p><p>      这避免了在具有非典型默认巨大页面大小的系统上的<code class="function">munmap()</code>期间可能的失败。
+	  除了在故障恢复情况下，除了日志消息外，没有任何不良影响。
+     </p></li><li class="listitem"><p>      不要尝试在<span class="application">libpq</span>中的多个连接之间共享SSL上下文
+	  (Heikki Linnakangas)
+     </p><p>      这导致了各种各样的极端情况错误，尤其是在尝试为不同的连接使用不同的SSL参数时。
+     </p></li><li class="listitem"><p>      避免<span class="application">libpq</span>中极端情况内存泄露 (Tom Lane)
+     </p><p>      所报告的问题涉及在<code class="function">PQreset()</code>期间泄漏错误报告，但可能存在相关情况。
+     </p></li><li class="listitem"><p>      在<span class="application">pg_upgrade</span>中，按名称顺序检查库的可载入性
+      (Tom Lane)
+     </p><p>      这是一种解决方法，用于处理从语言转换模块到其基本语言和数据类型模块的跨扩展依赖关系。
+     </p></li><li class="listitem"><p>      修复<span class="application">pg_upgrade</span>以正确处理包含索引访问方法的扩展
+	  (Tom Lane)
+     </p><p>      为了做到这一点，服务器已经扩展为支持<code class="command">ALTER EXTENSION ADD/DROP ACCESS METHOD</code>。
+	  该功能应该包含在原始修补程序中以支持访问方法的动态创建，但它被忽略了。
+     </p></li><li class="listitem"><p>      改进<span class="application">pg_upgrade</span>的文件复制/链接/重写步骤中的错误报告
+	  (Tom Lane, Álvaro Herrera)
+     </p></li><li class="listitem"><p>      修复<span class="application">pg_dump</span>以针对7.4之前的服务器运行
+      (Amit Langote, Tom Lane)
+     </p></li><li class="listitem"><p>      不允许同时为<span class="application">pg_rewind</span>指定<code class="option">--source-server</code>
+      和<code class="option">--source-target</code>
+      (Michael Banck)
+     </p></li><li class="listitem"><p>      让<span class="application">pg_rewind</span>关闭源服务器会话中的
+	  <code class="varname">synchronous_commit</code> (Michael Banck, Michael Paquier)
+     </p><p>      这允许<span class="application">pg_rewind</span>
+	  在源服务器使用的同步复制由于某种原因不起作用时也能工作。
+     </p></li><li class="listitem"><p>      在<span class="application">pg_xlogdump</span>中，使用
+	  <code class="option">--follow</code>选项时重试打开新的WAL段
+	  (Magnus Hagander)
+     </p><p>      这可以使服务器创建下一个段时可能出现延迟。
+     </p></li><li class="listitem"><p>      修复<code class="filename">contrib/pg_visibility</code>
+	  来报告已经成为回滚更新主题的损坏元组的正确TID
+      (Tom Lane)
+     </p></li><li class="listitem"><p>      修复makefile的依赖关系，以便自己并行构建
+	  <span class="application">PL/Python</span>将可靠地成功
+      (Pavel Raiskup)
+     </p></li><li class="listitem"><p>	  将时区数据文件更新为<span class="application">tzdata</span> release 2016h，
+	  用于巴勒斯坦和土耳其的DST法律变更，以及对土耳其和俄罗斯一些地区的历史更正。
+	  切换到南极洲、前苏联和斯里兰卡的一些时区的数字缩写。
+     </p><p>      IANA时区数据库以前为所有时区提供了文本缩写，
+	  有时会提供当地人口中流通很少或没有流通的缩写。他们正在推翻该政策，
+	  赞成在没有现实世界中使用英文缩写的地区使用数字UTC偏移量。至少目前来说，
+	  <span class="productname">PostgreSQL</span>将继续接受此类删除的时间戳输入缩写。
+	  但它们不会显示在<code class="structname">pg_timezone_names</code>视图中，也不会用于输出。
+     </p><p>      在此更新中，<code class="literal">AMT</code>不再显示为用于表示亚美尼亚时间。因此，
+	  我们已将<code class="literal">Default</code>缩写集更改为将其解释为Amazon Time，
+	  因此是UTC-4而不是UTC+4。
+     </p></li></ul></div></div></div><div class="navfooter"><hr /><table width="100%" summary="Navigation footer"><tr><td width="40%" align="left"><a accesskey="p" href="release-9-6-2.html">上一页</a> </td><td width="20%" align="center"><a accesskey="u" href="release.html">上一级</a></td><td width="40%" align="right"> <a accesskey="n" href="release-9-6.html">下一页</a></td></tr><tr><td width="40%" align="left" valign="top">E.7. 版本 9.6.2 </td><td width="20%" align="center"><a accesskey="h" href="index.html">起始页</a></td><td width="40%" align="right" valign="top"> E.9. 版本 9.6</td></tr></table></div></body></html>

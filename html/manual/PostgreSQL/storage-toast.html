@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><title>66.2. TOAST</title><link rel="stylesheet" type="text/css" href="stylesheet.css" /><link rev="made" href="pgsql-docs@postgresql.org" /><meta name="generator" content="DocBook XSL Stylesheets V1.79.1" /><link rel="prev" href="storage-file-layout.html" title="66.1. 数据库文件布局" /><link rel="next" href="storage-fsm.html" title="66.3. 空闲空间映射" /></head><body><div xmlns="http://www.w3.org/TR/xhtml1/transitional" class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="5" align="center">66.2. TOAST</th></tr><tr><td width="10%" align="left"><a accesskey="p" href="storage-file-layout.html" title="66.1. 数据库文件布局">上一页</a> </td><td width="10%" align="left"><a accesskey="u" href="storage.html" title="第 66 章 数据库物理存储">上一级</a></td><th width="60%" align="center">第 66 章 数据库物理存储</th><td width="10%" align="right"><a accesskey="h" href="index.html" title="PostgreSQL 10.1 手册">起始页</a></td><td width="10%" align="right"> <a accesskey="n" href="storage-fsm.html" title="66.3. 空闲空间映射">下一页</a></td></tr></table><hr></hr></div><div class="sect1" id="STORAGE-TOAST"><div class="titlepage"><div><div><h2 class="title" style="clear: both">66.2. TOAST</h2></div></div></div><div class="toc"><dl class="toc"><dt><span class="sect2"><a href="storage-toast.html#STORAGE-TOAST-ONDISK">66.2.1. 线外磁盘上 TOAST 存储</a></span></dt><dt><span class="sect2"><a href="storage-toast.html#STORAGE-TOAST-INMEMORY">66.2.2. 线外内存中 TOAST 存储</a></span></dt></dl></div><a id="idp60672592" class="indexterm"></a><a id="idp60673280" class="indexterm"></a><p>本节提供<acronym class="acronym">TOAST</acronym>的概述（超尺寸属性存储技术－The Oversized-Attribute Storage Technique）。</p><p><span class="productname">PostgreSQL</span>使用固定的页面尺寸（通常是8kB)，并且不允许元组跨越多个额页面。因此不可能直接存储非常大的域值。为了克服这个限制，大的域值会被压缩并/或分解成多个物理行。这些处理对用户都是透明的，只是在大部分的后端代码上有一些小的影响。这个技术的昵称是<acronym class="acronym">TOAST</acronym>（或者<span class="quote">“<span class="quote">切片面包之后的最好的东西</span>”</span>）。<acronym class="acronym">TOAST</acronym> 机制也被用来提升内存中大型数据值的处理。</p><p>只有特定的数据类型支持<acronym class="acronym">TOAST</acronym> — 我们没必要在那些不可能生成大域值的数据类型上强加这种负担。要支持<acronym class="acronym">TOAST</acronym>，数据类型必须有变长（<em class="firstterm">varlena</em>）的表现形式， 通常在存储的值中，头四个字节表示值的总长度（包括长度本身，以字节计）。<acronym class="acronym">TOAST</acronym>并不约束该数据类型的表达的剩余部分。这种特殊的表达被统称为<em class="firstterm">已<acronym class="acronym">TOAST</acronym>值</em>， 对它们的操作都必须通过修改或者重新解释这个初始长度字来进行。因此，支持一种可<acronym class="acronym">TOAST</acronym>数据类型的 C 函数必须要小心它们可能会处理被<acronym class="acronym">TOAST</acronym>过的输入值： 一个输入值可能并不真正由一个四字节长度和内容构成，直到它被<em class="firstterm">反 TOAST</em>（通常是在对一个输入值做任何事情之前，先调用<code class="function">PG_DETOAST_DATUM</code>； 但是在某些情况下也存在更高效的方法，详见<a class="xref" href="xtypes.html#XTYPES-TOAST" title="37.11.1. TOAST Considerations">第 37.11.1 节</a>）。</p><p><acronym class="acronym">TOAST</acronym>占用使用变长类型的长度字的最高两个二进制位（
+大端法机器上的高位，小端法机器上的低位）， 这样就把任何可TOAST值的
+逻辑长度限制在1GB（2<sup>30</sup> - 1字节）。如果两个位都是零，
+那么数值是该数据类型一个普通的未TOAST的值，并且长度字的剩余位给出整
+个数据以字节计的大小（包括长度字）。当最高位或者最低位被设置时，该值
+只是有一个单字节头部而不是通常的四字节头部，并且该字节的剩余位数给出
+了以字节计的总数据尺寸（包括长度字节）。这种节省空间的方案支持对低于 
+127 字节的值的存储，不过需要时仍然允许数据类型增长到 1GB。带有单字节
+头部的值不会按照任何特别的边界对齐，反之带有四字节头部的值会按照至少
+一个四字节边界对齐。这种对齐填充的省略额外地节省了空间，这种节省比起
+短值来说更加显著。作为一种特殊情况，如果一个单字节头部的剩余位全是零
+（对于一个自包含的长度来说是不可能的），该值就是一个线外数据的指针，
+这就可能有下文所述的几种可能的情况。这样一个<em class="firstterm">TOAST 指针</em>
+的类型和尺寸由该数据的第二个字节中存储的一个代码决定。最后，如果最高
+位或最低位被清除而另一位被设置，则表示该数据的内容被压缩过并且在使用
+前必须先解压。在这种情况中四字节长度字的剩余位指出了压缩过的数据的大
+小，而不是原始数据的大小。注意对于线外数据也可能存在压缩，但是变长数
+据的头部不会告诉我们压缩是否发生 — <acronym class="acronym">TOAST</acronym>指针
+的内容将说明这个问题。</p><p>如前所述，有多种类型的<acronym class="acronym">TOAST</acronym>指针数据。最古老且最常见的类型是
+指向存储在一个<em class="firstterm"><acronym class="acronym">TOAST</acronym> 表</em>中的线外数据
+的指针，<em class="firstterm"><acronym class="acronym">TOAST</acronym> 表</em>与包含该
+<acronym class="acronym">TOAST</acronym>指针数据本身的表是相关的，但两者又是被分离存储的。当
+一个要被存储在磁盘上的元组过大时，这些<em class="firstterm">磁盘上的</em>指针数据由
+<acronym class="acronym">TOAST</acronym>管理代码（在<code class="filename">access/heap/tuptoaster.c</code>
+中）所创建。<a class="xref" href="storage-toast.html#STORAGE-TOAST-ONDISK" title="66.2.1. 线外磁盘上 TOAST 存储">第 66.2.1 节</a>中给出了更多的细节。
+或者，一个<acronym class="acronym">TOAST</acronym>指针数据能够包含一个出现在内存中某处的线外
+数据的指针。这种数据必定是短命的并且将不会出现在磁盘上，但是它们对于避免
+大型数据值的复制和冗余处理非常有用。详见
+<a class="xref" href="storage-toast.html#STORAGE-TOAST-INMEMORY" title="66.2.2. 线外内存中 TOAST 存储">第 66.2.2 节</a>。</p><p>线内或者线外压缩数据所使用的压缩技术是 LZ 压缩技术家族中一种
+相对简单且非常快速的成员。详见
+<code class="filename">src/common/pg_lzcompress.c</code>。</p><div class="sect2" id="STORAGE-TOAST-ONDISK"><div class="titlepage"><div><div><h3 class="title">66.2.1. 线外磁盘上 TOAST 存储</h3></div></div></div><p>如果一个表中有任何一个列是可以<acronym class="acronym">TOAST</acronym>的， 那么该表将有一个与之关联的<acronym class="acronym">TOAST</acronym>表，其 OID 存储在表的<code class="structname">pg_class</code>.<code class="structfield">reltoastrelid</code>项中。磁盘上的被<acronym class="acronym">TOAST</acronym>过的值保存在<acronym class="acronym">TOAST</acronym>表里，下文有更详细的描述。</p><p>线外值被分裂成（如果压缩过，在压缩之后分裂）最大为<code class="symbol">TOAST_MAX_CHUNK_SIZE</code>（默认情况下该值应选为使得四个块（chunk）行能放在一个页面中，这个数值大约为2000 字节）字节的块。每个块都作为独立的行存储在从属于所属表的<acronym class="acronym">TOAST</acronym>表中。每个<acronym class="acronym">TOAST</acronym>表都有列<code class="structfield">chunk_id</code>（一个表示特定的被<acronym class="acronym">TOAST</acronym>过的数据的OID）、<code class="structfield">chunk_seq</code>（一个序列号，存储该块在值中的位置）和一个<code class="structfield">chunk_data</code>（该块的实际数据）。在<code class="structfield">chunk_id</code>和<code class="structfield">chunk_seq</code>上有一个唯一索引， 提供对值的快速检索。因此，一个表示线外磁盘上<acronym class="acronym">TOAST</acronym>过的值的指针数据应存储要查看的<acronym class="acronym">TOAST</acronym>表的OID以及 指定值的OID（它的<code class="structfield">chunk_id</code>）。为了方便， 指针数据还存储逻辑数据的尺寸（原始的未压缩的数据长度）以及物理存储的尺寸（如果应用了压缩，则两者不同）。 加上变长数据头部的字节，一个磁盘上<acronym class="acronym">TOAST</acronym>指针数据的总尺寸是18字节，不管它代表的值的实际长度是多大。</p><p><acronym class="acronym">TOAST</acronym>管理代码只有在准备向一个表中存储超过<code class="symbol">TOAST_TUPLE_THRESHOLD</code>字节（通常是2kB）的行值的时候才会触发。<acronym class="acronym">TOAST</acronym>代码将压缩和/或线外存储域值，直到行值比<code class="symbol">TOAST_TUPLE_TARGET</code>字节（通常也是2kB）短，或者无法得到更好的结果的时候才停止。在一个 UPDATE 操作过程中，未改变的域的值通常原样保存； 所以，如果 UPDATE 一个带有线外值的行时，假如线外值没有变化，那么将不会产生<acronym class="acronym">TOAST</acronym>开销。</p><p><acronym class="acronym">TOAST</acronym>代码识别四种不同的在磁盘上存储可<acronym class="acronym">TOAST</acronym>列的策略：
+
+   </p><div class="itemizedlist"><ul class="itemizedlist" style="list-style-type: disc; "><li class="listitem"><p>      <code class="literal">PLAIN</code>避免压缩或者线外存储；而且它禁用变长类型的单字节头部。这是不可<acronym class="acronym">TOAST</acronym>数据类型列的唯一可能的策略。只是对那些不能TOAST的数据类型才有可能。
+     </p></li><li class="listitem"><p>      <code class="literal">EXTENDED</code>允许压缩和线外存储。这是大多数可<acronym class="acronym">TOAST</acronym>数据类型的默认策略。 首先将尝试进行压缩，如果行仍然太大，那么则进行线外存储。
+     </p></li><li class="listitem"><p>      <code class="literal">EXTERNAL</code>允许线外存储，但是不许压缩。使用<code class="literal">EXTERNAL</code>将令那些在宽<code class="type">text</code>和 <code class="type">bytea</code>列上的子串操作更快（代价是增加了存储空间）， 因此这些操作被优化为只抓取未压缩线外数据中需要的部分。
+     </p></li><li class="listitem"><p>      <code class="literal">MAIN</code>允许压缩，但不允许线外存储（实际上，在这样的列上仍然会进行线外存储，但只是作为没有办法把行变得足以放入一页的情况下的最后手段）。
+     </p></li></ul></div><p>
+
+每个可<acronym class="acronym">TOAST</acronym>的数据类型都为该数据类型的列指定了一个缺省策略， 但是一个给定表的列的存储策略可以用<a class="link" href="sql-altertable.html" title="ALTER TABLE"><code class="command">ALTER TABLE ... SET STORAGE</code></a>修改。</p><p>这个方法比那些更直接的方法（比如允许行值跨越多个页面）有更多优点。 假设查询通常是用相对比较短的键值进行匹配的，那么执行器的大多数工作都将使用主行项完成。<acronym class="acronym">TOAST</acronym>过的属性的大值只是在把结果集发送给客户端的时候才被抽出来（如果它被选中）。 因此，主表要小得多，并且它的能放入到共享缓冲区中的行要比没有任何线外存储的方案更多。 排序集也缩小了，并且排序将更多地在内存里完成。一个小测试表明，一个典型的保存 HTML 页面以及它们的 URL 的表占用的存储（包括<acronym class="acronym">TOAST</acronym>表在内）大约只有裸数据的一半，而主表只包含全部数据的 10%（URL和一些小的 HTML 页面）。与在一个非<acronym class="acronym">TOAST</acronym>的对照表里面存储（把全部 HTML 页面裁剪成 7Kb 以匹配页面大小）同样的数据相比，运行时没有任何区别。</p></div><div class="sect2" id="STORAGE-TOAST-INMEMORY"><div class="titlepage"><div><div><h3 class="title">66.2.2. 线外内存中 TOAST 存储</h3></div></div></div><p><acronym class="acronym">TOAST</acronym>指针可以指向不在磁盘上但在当前服务器进程内存中
+的数据。这样的指针显然不是长期存在的，但是它们是有用的。当前有两种
+子情况：指向<em class="firstterm">间接</em>数据的指针以及指向
+<em class="firstterm">扩展</em>数据的指针。</p><p>间接<acronym class="acronym">TOAST</acronym>指针指向存储在内存中某个地方的非间接 varlena
+值。这种情况仅仅作为一种概念验证而创建，但是当前它被用来在逻辑解码期间
+避免创建超过 1GB 的物理元组（把所有线外域值都拉入元组就会这样）。这种
+情况用处有限，因为该指针数据的创建者需要负责确保只要指针存在，被引用数
+据就应该存在，并且没有其他设施来帮助它。</p><p>扩展的<acronym class="acronym">TOAST</acronym>指针对于复杂数据类型有用，这些数据类型的磁盘上
+表示形式不是特别适合计算性的目的。例如，一个<span class="productname">PostgreSQL</span>
+数组的标准 varlena 表达包括了维度信息、一个空值位图（如果有任何空值元素），
+然后按顺序是所有元素的值。当元素类型本身是变长时，找到第<em class="replaceable"><code>N</code></em>
+个元素的唯一方式是扫描所有在它前面的元素。这种表达适合于磁盘上的存储，因为它
+很紧凑。但是为了对该数组进行计算，则<span class="quote">“<span class="quote">扩展</span>”</span>或者<span class="quote">“<span class="quote">结构</span>”</span>表
+达会更好，这些表达中所有元素的开始位置都会被标记出来。为了支持这种需要，
+<acronym class="acronym">TOAST</acronym>指针机制通过允许一个传引用的数据指向一个标准 varlena
+值（磁盘上的表达）或者一个<acronym class="acronym">TOAST</acronym>指针指向内存中某处的一个扩展
+表达。这种扩展表达的细节取决于数据类型，不过它必须具有一个标准的头部并且符合
+<code class="filename">src/include/utils/expandeddatum.h</code>中给定的其他 API 要求。该数据
+类型的 C-级别函数可以选择处理任一表达。不了解扩展表达但简单地在其输入上应用
+<code class="function">PG_DETOAST_DATUM</code>的函数将自动地接收到传统的 varlena 表达。
+因此对于一种扩展表达的支持可以被增量式地引入，一次一个函数。</p><p>扩展值的<acronym class="acronym">TOAST</acronym>指针会被进一步分解成
+<em class="firstterm">read-write</em>和<em class="firstterm">read-only</em>指针。两种方式下被
+指向的表达是相同的，但是收到一个读写指针的函数被允许就地修改被引用值，
+而接收到只读指针的函数则不能。如果后者想要做一个该值的被修改的版本，
+它必须先创建一个副本。这种区分和一些相关的惯例使得可以在查询执行期间
+避免不必要的扩展值副本。</p><p>对于所有类型的内存中<acronym class="acronym">TOAST</acronym>指针，<acronym class="acronym">TOAST</acronym>管理
+代码会确保这类指针数据不会意外地被存储在磁盘上。在存储之前内存中
+<acronym class="acronym">TOAST</acronym>指针会被自动地扩展成通常的线内 varlena 值 — 然后
+可能会被转换成磁盘上的<acronym class="acronym">TOAST</acronym>指针（如果包含的元组不是太大）。</p></div></div><div class="navfooter"><hr /><table width="100%" summary="Navigation footer"><tr><td width="40%" align="left"><a accesskey="p" href="storage-file-layout.html">上一页</a> </td><td width="20%" align="center"><a accesskey="u" href="storage.html">上一级</a></td><td width="40%" align="right"> <a accesskey="n" href="storage-fsm.html">下一页</a></td></tr><tr><td width="40%" align="left" valign="top">66.1. 数据库文件布局 </td><td width="20%" align="center"><a accesskey="h" href="index.html">起始页</a></td><td width="40%" align="right" valign="top"> 66.3. 空闲空间映射</td></tr></table></div></body></html>

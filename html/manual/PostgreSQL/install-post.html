@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><title>16.5. 安装后设置</title><link rel="stylesheet" type="text/css" href="stylesheet.css" /><link rev="made" href="pgsql-docs@postgresql.org" /><meta name="generator" content="DocBook XSL Stylesheets V1.79.1" /><link rel="prev" href="install-procedure.html" title="16.4. 安装过程" /><link rel="next" href="supported-platforms.html" title="16.6. 平台支持" /></head><body><div xmlns="http://www.w3.org/TR/xhtml1/transitional" class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="5" align="center">16.5. 安装后设置</th></tr><tr><td width="10%" align="left"><a accesskey="p" href="install-procedure.html" title="16.4. 安装过程">上一页</a> </td><td width="10%" align="left"><a accesskey="u" href="installation.html" title="第 16 章   从源代码安装">上一级</a></td><th width="60%" align="center">第 16 章   从源代码安装</th><td width="10%" align="right"><a accesskey="h" href="index.html" title="PostgreSQL 10.1 手册">起始页</a></td><td width="10%" align="right"> <a accesskey="n" href="supported-platforms.html" title="16.6. 平台支持">下一页</a></td></tr></table><hr></hr></div><div class="sect1" id="INSTALL-POST"><div class="titlepage"><div><div><h2 class="title" style="clear: both">16.5. 安装后设置</h2></div></div></div><div class="toc"><dl class="toc"><dt><span class="sect2"><a href="install-post.html#idp19139232">16.5.1. 共享库</a></span></dt><dt><span class="sect2"><a href="install-post.html#idp19173536">16.5.2. 环境变量</a></span></dt></dl></div><div class="sect2" id="idp19139232"><div class="titlepage"><div><div><h3 class="title">16.5.1. 共享库</h3></div></div></div><a id="idp19139648" class="indexterm"></a><p>    在一些有共享库的系统里，你需要告诉你的系统如何找到新安装的共享库。那些并<span class="emphasis"><em>不</em></span>是必须做这个工作的系统包括 <span class="systemitem">FreeBSD</span>、<span class="systemitem">HP-UX</span>、<span class="systemitem">Linux</span>、<span class="systemitem">NetBSD</span>、<span class="systemitem">OpenBSD</span>和<span class="systemitem">Solaris</span>。
+   </p><p>    设置共享库的搜索路径的方法因平台而异， 但是最广泛使用的方法是设置环境变量<code class="envar">LD_LIBRARY_PATH</code>，例如在 Bourne shells （<code class="command">sh</code>、<code class="command">ksh</code>、<code class="command">bash</code>、<code class="command">zsh</code>）中：
+</p><pre class="programlisting">LD_LIBRARY_PATH=/usr/local/pgsql/lib
+export LD_LIBRARY_PATH</pre><p>
+    或者在<code class="command">csh</code>或<code class="command">tcsh</code>中：
+</p><pre class="programlisting">setenv LD_LIBRARY_PATH /usr/local/pgsql/lib</pre><p>
+    把<code class="literal">/usr/local/pgsql/lib</code>换成你在<a class="xref" href="install-procedure.html#CONFIGURE" title="配置">步骤 1</a>时设置的<code class="option"><code class="literal">--libdir</code></code>。 你应该把这些命令放到 shell 启动文件，如<code class="filename">/etc/profile</code>或<code class="filename">~/.bash_profile</code>中。 和这个方法相关的一些注意事项和很好的信息可以在<a class="ulink" href="http://xahlee.org/UnixResource_dir/_/ldpath.html" target="_top">http://xahlee.org/UnixResource_dir/_/ldpath.html</a>找到。
+   </p><p>    在有些系统上，更好的方法可能是在编译<span class="emphasis"><em>之前</em></span>设置环境变量<code class="envar">LD_RUN_PATH</code>。
+   </p><p>    在<span class="systemitem">Cygwin</span>上，把库目录放在<code class="envar">PATH</code>中或者把<code class="filename">.dll</code>文件移动到<code class="filename">bin</code>目录。
+   </p><p>    如果有疑问，请参考你的系统的手册页（可能是<code class="command">ld.so</code>或<code class="command">rld</code>）。 如果稍后你收到下面这样的消息：
+</p><pre class="screen">psql: error in loading shared libraries
+libpq.so.2.1: cannot open shared object file: No such file or directory</pre><p>
+    那么这一步就是必须的了。这个只需关注一下就是了。
+   </p><p>    <a id="idp19166112" class="indexterm"></a>
+    如果你用的系统是<span class="systemitem">Linux</span>，并且你还有 root 权限，那么你可以在安装之后运行：
+</p><pre class="programlisting">/sbin/ldconfig /usr/local/pgsql/lib</pre><p>
+    （或者等效的目录）以便让运行时链接器更快地找到共享库。请参考<code class="command">ldconfig</code>的手册页获取更多信息。在<span class="systemitem">FreeBSD</span>、<span class="systemitem">NetBSD</span>和<span class="systemitem">OpenBSD</span>上，命令是：
+</p><pre class="programlisting">/sbin/ldconfig -m /usr/local/pgsql/lib</pre><p>
+    我们不知道其它的系统有等效的命令。
+   </p></div><div class="sect2" id="idp19173536"><div class="titlepage"><div><div><h3 class="title">16.5.2. 环境变量</h3></div></div></div><a id="idp19173952" class="indexterm"></a><p>    如果你安装到<code class="filename">/usr/local/pgsql</code>或者其他默认不在搜索路径中的地方， 那你应该在你的<code class="envar">PATH</code>环境变量里面增加一个 <code class="filename">/usr/local/pgsql/bin</code>（或者是你在<a class="xref" href="install-procedure.html#CONFIGURE" title="配置">步骤 1</a>时给选项<code class="option"><code class="literal">--bindir</code></code>设置的任何值） 。严格来说，这些都不是必须的，但这么做可以让你使用<span class="productname">PostgreSQL</span>更方便。
+   </p><p>    要做这些事情，把下面几行加到你的 shell 启动文件，如<code class="filename">~/.bash_profile</code>（如果想影响所有用户就放在<code class="filename">/etc/profile</code>）：
+</p><pre class="programlisting">PATH=/usr/local/pgsql/bin:$PATH
+export PATH</pre><p>
+    如果你用的是<code class="command">csh</code>或者<code class="command">tcsh</code>，那么用这条命令：
+</p><pre class="programlisting">set path = ( /usr/local/pgsql/bin $path )</pre><p>
+   </p><p>    <a id="idp19184448" class="indexterm"></a>
+    为了让你的系统找得到<span class="application">man</span>文档，你需要加类似下面的一行到一个shell启动文件里 （除非你安装到了默认搜索的位置）：
+</p><pre class="programlisting">MANPATH=/usr/local/pgsql/share/man:$MANPATH
+export MANPATH</pre><p>
+   </p><p>    环境变量<code class="envar">PGHOST</code>和<code class="envar">PGPORT</code>为客户端应用指定了数据库服务器的主机和端口， 它们会覆盖编译时的默认项。如果你想从远程运行客户端应用， 那么为每个准备使用该数据库的用户都设置<code class="envar">PGHOST</code>将会非常方便。但这不是必须的，而且大部分客户端程序也可以通过命令行选项替换这些设置。
+   </p></div></div><div class="navfooter"><hr /><table width="100%" summary="Navigation footer"><tr><td width="40%" align="left"><a accesskey="p" href="install-procedure.html">上一页</a> </td><td width="20%" align="center"><a accesskey="u" href="installation.html">上一级</a></td><td width="40%" align="right"> <a accesskey="n" href="supported-platforms.html">下一页</a></td></tr><tr><td width="40%" align="left" valign="top">16.4. 安装过程 </td><td width="20%" align="center"><a accesskey="h" href="index.html">起始页</a></td><td width="40%" align="right" valign="top"> 16.6. 平台支持</td></tr></table></div></body></html>

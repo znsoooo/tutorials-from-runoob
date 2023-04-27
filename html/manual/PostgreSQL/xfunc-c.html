@@ -1,0 +1,970 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><title>37.9. C 语言函数</title><link rel="stylesheet" type="text/css" href="stylesheet.css" /><link rev="made" href="pgsql-docs@postgresql.org" /><meta name="generator" content="DocBook XSL Stylesheets V1.79.1" /><link rel="prev" href="xfunc-internal.html" title="37.8. 内部函数" /><link rel="next" href="xaggr.html" title="37.10. 用户定义的聚集" /></head><body><div xmlns="http://www.w3.org/TR/xhtml1/transitional" class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="5" align="center">37.9. C 语言函数</th></tr><tr><td width="10%" align="left"><a accesskey="p" href="xfunc-internal.html" title="37.8. 内部函数">上一页</a> </td><td width="10%" align="left"><a accesskey="u" href="extend.html" title="第 37 章 扩展 SQL">上一级</a></td><th width="60%" align="center">第 37 章 扩展 <acronym xmlns="http://www.w3.org/1999/xhtml" class="acronym">SQL</acronym></th><td width="10%" align="right"><a accesskey="h" href="index.html" title="PostgreSQL 10.1 手册">起始页</a></td><td width="10%" align="right"> <a accesskey="n" href="xaggr.html" title="37.10. 用户定义的聚集">下一页</a></td></tr></table><hr></hr></div><div class="sect1" id="XFUNC-C"><div class="titlepage"><div><div><h2 class="title" style="clear: both">37.9. C 语言函数</h2></div></div></div><div class="toc"><dl class="toc"><dt><span class="sect2"><a href="xfunc-c.html#XFUNC-C-DYNLOAD">37.9.1. 动态载入</a></span></dt><dt><span class="sect2"><a href="xfunc-c.html#XFUNC-C-BASETYPE">37.9.2. C 语言函数中的基本类型</a></span></dt><dt><span class="sect2"><a href="xfunc-c.html#idp33522800">37.9.3. 版本 1 的调用约定</a></span></dt><dt><span class="sect2"><a href="xfunc-c.html#idp33571440">37.9.4. 编写代码</a></span></dt><dt><span class="sect2"><a href="xfunc-c.html#DFUNC">37.9.5. 编译和链接动态载入的函数</a></span></dt><dt><span class="sect2"><a href="xfunc-c.html#idp33660960">37.9.6. 组合类型参数</a></span></dt><dt><span class="sect2"><a href="xfunc-c.html#idp33675488">37.9.7. 返回行（组合类型）</a></span></dt><dt><span class="sect2"><a href="xfunc-c.html#XFUNC-C-RETURN-SET">37.9.8. 返回集合</a></span></dt><dt><span class="sect2"><a href="xfunc-c.html#idp33756656">37.9.9. 多态参数和返回类型</a></span></dt><dt><span class="sect2"><a href="xfunc-c.html#XFUNC-TRANSFORM-FUNCTIONS">37.9.10. 转换函数</a></span></dt><dt><span class="sect2"><a href="xfunc-c.html#idp33789568">37.9.11. 共享内存和 LWLock</a></span></dt><dt><span class="sect2"><a href="xfunc-c.html#EXTEND-CPP">37.9.12. 把 C++ 用于可扩展性</a></span></dt></dl></div><a id="idp33395648" class="indexterm"></a><p>    用户定义的函数可以用 C 编写（或者可以与 C 兼容的语言，例如 C++）。
+    这类函数被编译成动态载入对象（也被称为共享库）并且由服务器在
+    需要时载入。动态载入是把<span class="quote">“<span class="quote">C 语言</span>”</span>函数和
+    <span class="quote">“<span class="quote">内部</span>”</span>函数区分开的特性 — 两者真正的编码习惯
+    实际上是一样的（因此，标准的内部函数库是用户定义的 C 函数很好
+    的源代码实例）。
+   </p><p>    目前只有一个调用约定用于C函数（<span class="quote">“<span class="quote">version 1</span>”</span>）。
+	通过为该函数写入一个<code class="literal">PG_FUNCTION_INFO_V1()</code>
+	宏调用来指示对该调用约定的支持，如下所示。
+   </p><div class="sect2" id="XFUNC-C-DYNLOAD"><div class="titlepage"><div><div><h3 class="title">37.9.1. 动态载入</h3></div></div></div><a id="idp33401072" class="indexterm"></a><p>    在一个会话中第一次调用一个特定可载入对象文件中的用户定义函数时，
+    动态载入器会把那个对象文件载入到内存以便该函数被调用。因此用户
+    定义的 C 函数的<code class="command">CREATE FUNCTION</code>必须
+    为该函数指定两块信息：可载入对象文件的名称，以及要在该对象文件中
+    调用的特定函数的 C 名称（链接符号）。如果没有显式指定 C 名称，则
+    它被假定为和 SQL 函数名相同。
+   </p><p>    下面的算法被用来基于<code class="command">CREATE FUNCTION</code>
+    命令中给定的名称来定位共享对象文件：
+
+    </p><div class="orderedlist"><ol class="orderedlist" type="1"><li class="listitem"><p>       如果名称是一个绝对路径，则载入给定的文件。
+      </p></li><li class="listitem"><p>       如果该名称以字符串<code class="literal">$libdir</code>开始，那么这一部分会被
+       <span class="productname">PostgreSQL</span>包的库目录名（在编译时确定）替换。
+       <a id="idp33407616" class="indexterm"></a>
+      </p></li><li class="listitem"><p>       如果该名称不包含目录部分，会在配置变量
+       <a class="xref" href="runtime-config-client.html#GUC-DYNAMIC-LIBRARY-PATH">dynamic_library_path</a>指定的路径中搜索该
+       文件。<a id="idp33409408" class="indexterm"></a>
+      </p></li><li class="listitem"><p>       否则（在该路径中没找到该文件，或者它包含一个非绝对目录），
+       动态载入器将尝试接受给定的名称，这大部分会导致失败（依赖
+       当前工作目录是不可靠的）。
+      </p></li></ol></div><p>
+
+    如果这个序列不起作用，会把平台相关的共享库文件名扩展（通常是
+    <code class="filename">.so</code>）追加到给定的名称并且再次尝试上述
+    的过程。如果还是失败，则载入失败。
+   </p><p>    我们推荐相对于<code class="literal">$libdir</code>或者通过动态库路径来
+    定位共享库。如果升级版本时新的安装在一个不同的位置，则可以
+    简化升级过程。<code class="literal">$libdir</code>实际表示的目录可以用
+    命令<code class="literal">pg_config --pkglibdir</code>来找到。
+   </p><p>    用于运行<span class="productname">PostgreSQL</span>服务器的
+    用户 ID 必须能够通过要载入文件的路径。常见的错误是把文件或
+    更高层的目录变得对<span class="systemitem">postgres</span>用户
+    不可读或者不可执行。
+   </p><p>    在任何情况下，<code class="command">CREATE FUNCTION</code>命令
+    中给定的文件名会被原封不动地记录在系统目录中，这样如果需要再次
+    载入该文件则会应用同样的过程。
+   </p><div class="note"><h3 class="title">注意</h3><p>     <span class="productname">PostgreSQL</span>不会自动编译 C 函数。在
+     从<code class="command">CREATE FUNCTION</code>命令中引用对象文件
+     之前，它必须先被编译好。更多信息请见<a class="xref" href="xfunc-c.html#DFUNC" title="37.9.5. 编译和链接动态载入的函数">第 37.9.5 节</a>。
+    </p></div><a id="idp33419360" class="indexterm"></a><p>    为了确保动态载入对象文件不会被载入到一个不兼容的服务器，
+    <span class="productname">PostgreSQL</span>会检查该文件是否包含一个
+    带有合适内容的<span class="quote">“<span class="quote">magic block</span>”</span>。这允许服务器检测到明显的不兼
+    容，例如为不同<span class="productname">PostgreSQL</span>主版本编译
+    的代码。从<span class="productname">PostgreSQL</span> 8.2 开始，动态
+    载入的函数要求有一个 magic block。要包括一个 magic block，在写上包括
+    头文件<code class="filename">fmgr.h</code>的语句之后，在该模块的源文件之一（并且只
+    能在其中一个）中写上这些：
+
+</p><pre class="programlisting">#ifdef PG_MODULE_MAGIC
+PG_MODULE_MAGIC;
+#endif</pre><p>
+
+    如果代码不需要针对 8.2 之前的<span class="productname">PostgreSQL</span>
+    发行版进行编译，则<code class="literal">#ifdef</code>测试可以被省略。
+   </p><p>    在被第一次使用后，动态载入对象文件会留在内存中。在同一个会话中
+    对该函数未来的调用将只会消耗很小的负荷进行符号表查找。如果需要
+    重新载入一个对象文件（例如重新编译以后），需要开始一个新的会话。
+   </p><a id="idp33427072" class="indexterm"></a><a id="idp33427936" class="indexterm"></a><a id="idp33428800" class="indexterm"></a><a id="idp33429664" class="indexterm"></a><p>    可以选择让一个动态载入文件包含初始化和终止化函数。如果文件包含一个
+    名为<code class="function">_PG_init</code>的函数，则文件被载入后会立刻调用该函数。
+    该函数不接受参数并且应该返回 void。如果文件包括一个名为
+    <code class="function">_PG_fini</code>的函数，则在卸载该文件之前会立即调用该函数。
+    同样地，该函数不接受参数并且应该返回 void。注意将只在卸载文件的过程
+    中会调用<code class="function">_PG_fini</code>，进程结束时不会调用它（当前，卸载被
+    禁用并且从不发生，但是未来可能会改变）。
+   </p></div><div class="sect2" id="XFUNC-C-BASETYPE"><div class="titlepage"><div><div><h3 class="title">37.9.2. C 语言函数中的基本类型</h3></div></div></div><a id="idp33434112" class="indexterm"></a><p>     要了解如何编写 C 语言函数，你需要了解
+     <span class="productname">PostgreSQL</span>如何在内部表达基本数据类型
+     以及如何与函数传递它们。在内部，
+     <span class="productname">PostgreSQL</span>把一个基本类型认为是
+     <span class="quote">“<span class="quote">一团内存</span>”</span>。在类型上定义的用户定义函数说明了
+     <span class="productname">PostgreSQL</span>在该类型上操作的方式。也就
+     是说，<span class="productname">PostgreSQL</span>将只负责把数据存在磁盘以
+     及从磁盘检索数据，而使用你的用户定义函数来输入、处理和输出该数据。
+    </p><p>     基本类型可以有三种内部格式之一：
+
+     </p><div class="itemizedlist"><ul class="itemizedlist" style="list-style-type: disc; "><li class="listitem"><p>        传值，定长
+       </p></li><li class="listitem"><p>        传引用，定长
+       </p></li><li class="listitem"><p>        串引用，变长
+       </p></li></ul></div><p>
+    </p><p>     传值类型在长度上只能是 1、2 或 4 字节（如果你的机器上
+     <code class="literal">sizeof(Datum)</code>是 8，则还有 8 字节）。你应当小心地
+     定义你的类型以便它们在所有的架构上都是相同的尺寸（字节）。例如，
+     <code class="literal">long</code>类型很危险，因为它在某些机器上是 4 字节但在
+     另外一些机器上是 8 字节，而<code class="type">int</code>类型在大部分 Unix 机器
+     上都是 4 字节。在 Unix 机器上<code class="type">int4</code>类型一种合理的实现
+     可能是：
+
+</p><pre class="programlisting">/* 4 字节整数，传值 */
+typedef int int4;</pre><p>
+
+     （实际的 PostgreSQL C 代码会把这种类型称为<code class="type">int32</code>，因为
+     C 中的习惯是<code class="type">int<em class="replaceable"><code>XX</code></em></code>
+     表示<em class="replaceable"><code>XX</code></em> <span class="emphasis"><em>位</em></span>。注意
+     因此还有尺寸为 1 字节的 C 类型<code class="type">int8</code>。SQL 类型
+     <code class="type">int8</code>在 C 中被称为<code class="type">int64</code>。另见
+     <a class="xref" href="xfunc-c.html#XFUNC-C-TYPE-TABLE" title="表 37.1. 内建 SQL 类型等效的 C 类型">表 37.1</a>）。
+    </p><p>     在另一方面，任何尺寸的定长类型可以用传引用的方法传递。例如，这里有一种
+     <span class="productname">PostgreSQL</span>类型的实现示例：
+
+</p><pre class="programlisting">/* 16 字节结构，传引用 */
+typedef struct
+{
+    double  x, y;
+} Point;</pre><p>
+
+     在<span class="productname">PostgreSQL</span>函数中传进或传出这种
+     类型时，只能使用指向这种类型的指针。要返回这样一种类型的值，用
+     <code class="literal">palloc</code>分配正确的内存量，然后填充分配好的内存，
+     并且返回一个指向该内存的指针（还有，如果只想返回与具有相同数据类型的
+     一个输入参数相同的值，可以跳过额外的<code class="literal">palloc</code>并且返回
+     指向该输入值的指针）。
+    </p><p>     最后，所有变长类型必须也以引用的方式传递。所有变长类型必须用一个
+     正好 4 字节的不透明长度域开始，该域会由<code class="symbol">SET_VARSIZE</code>
+     设置，绝不要直接设置该域！所有要被存储在该类型中的数据必须在内存
+     中接着该长度域的后面存储。长度域包含该结构的总长度，也就是包括长
+     度域本身的尺寸。
+    </p><p>     另一个重点是要避免在数据类型值中留下未被初始化的位。例如，要注意
+     把可能存在于结构中的任何对齐填充字节置零。如果不这样做，你的数据
+     类型的逻辑等价常量可能会被规划器认为是不等的，进而导致低效的（不过
+     还是正确的）计划。
+    </p><div class="warning"><h3 class="title">警告</h3><p>      <span class="emphasis"><em>绝不要</em></span>修改通过引用传递的输入值的内容。如果这样做
+      很可能会破坏磁盘上的数据，因为给出的指针可能直接指向一个磁盘缓冲
+      区。这条规则唯一的例外在<a class="xref" href="xaggr.html" title="37.10. 用户定义的聚集">第 37.10 节</a>中有解释。
+     </p></div><p>     例如，我们可以这样定义类型<code class="type">text</code>：
+
+</p><pre class="programlisting">typedef struct {
+    int32 length;
+    char data[FLEXIBLE_ARRAY_MEMBER];
+} text;</pre><p>
+
+     <code class="literal">[FLEXIBLE_ARRAY_MEMBER]</code>记号表示数据部分的实际
+     长度不由该声明指定。
+    </p><p>     在操纵变长字节时，我们必须小心地分配正确数量的内存并且正确地
+     设置长度域。例如，如果我们想在一个<code class="structname">text</code>结构
+     中存储 40 字节，我们可以使用这样的代码片段：
+
+</p><pre class="programlisting">#include "postgres.h"
+...
+char buffer[40]; /* our source data */
+...
+text *destination = (text *) palloc(VARHDRSZ + 40);
+SET_VARSIZE(destination, VARHDRSZ + 40);
+memcpy(destination-&gt;data, buffer, 40);
+...</pre><p>
+
+     <code class="literal">VARHDRSZ</code>和<code class="literal">sizeof(int32)</code>一样，
+     但是用宏<code class="literal">VARHDRSZ</code>来引用变长类型的载荷的
+     尺寸被认为是比较好的风格。还有，<span class="emphasis"><em>必须</em></span>
+     使用<code class="literal">SET_VARSIZE</code>宏来设置长度域，而不是用
+     简单的赋值来设置。
+    </p><p>     <a class="xref" href="xfunc-c.html#XFUNC-C-TYPE-TABLE" title="表 37.1. 内建 SQL 类型等效的 C 类型">表 37.1</a>指定在编写使用一种
+     <span class="productname">PostgreSQL</span>内建类型的 C 语言函数时，
+     哪一种 C 类型对应于哪一种 SQL 类型。
+     <span class="quote">“<span class="quote">定义文件</span>”</span>列给出了要得到该类型定义需要
+     包括的头文件（实际的定义可能在一个由列举文件包括的不同
+     文件中。推荐用户坚持使用已定义的接口）。注意在任何源文
+     件中应该总是首先包括<code class="filename">postgres.h</code>，
+     因为它声明了很多你需要的东西。
+    </p><div class="table" id="XFUNC-C-TYPE-TABLE"><p class="title"><strong>表 37.1. 内建 SQL 类型等效的 C 类型</strong></p><div class="table-contents"><table class="table" summary="内建 SQL 类型等效的 C 类型" border="1"><colgroup><col /><col /><col /></colgroup><thead><tr><th>          SQL 类型
+         </th><th>          C 类型
+         </th><th>          定义文件
+         </th></tr></thead><tbody><tr><td><code class="type">abstime</code></td><td><code class="type">AbsoluteTime</code></td><td><code class="filename">utils/nabstime.h</code></td></tr><tr><td><code class="type">bigint</code> (<code class="type">int8</code>)</td><td><code class="type">int64</code></td><td><code class="filename">postgres.h</code></td></tr><tr><td><code class="type">boolean</code></td><td><code class="type">bool</code></td><td><code class="filename">postgres.h</code>（可能是编译器内建）</td></tr><tr><td><code class="type">box</code></td><td><code class="type">BOX*</code></td><td><code class="filename">utils/geo_decls.h</code></td></tr><tr><td><code class="type">bytea</code></td><td><code class="type">bytea*</code></td><td><code class="filename">postgres.h</code></td></tr><tr><td><code class="type">"char"</code></td><td><code class="type">char</code></td><td>（编译器内建）</td></tr><tr><td><code class="type">character</code></td><td><code class="type">BpChar*</code></td><td><code class="filename">postgres.h</code></td></tr><tr><td><code class="type">cid</code></td><td><code class="type">CommandId</code></td><td><code class="filename">postgres.h</code></td></tr><tr><td><code class="type">date</code></td><td><code class="type">DateADT</code></td><td><code class="filename">utils/date.h</code></td></tr><tr><td><code class="type">smallint</code> (<code class="type">int2</code>)</td><td><code class="type">int16</code></td><td><code class="filename">postgres.h</code></td></tr><tr><td><code class="type">int2vector</code></td><td><code class="type">int2vector*</code></td><td><code class="filename">postgres.h</code></td></tr><tr><td><code class="type">integer</code> (<code class="type">int4</code>)</td><td><code class="type">int32</code></td><td><code class="filename">postgres.h</code></td></tr><tr><td><code class="type">real</code> (<code class="type">float4</code>)</td><td><code class="type">float4*</code></td><td><code class="filename">postgres.h</code></td></tr><tr><td><code class="type">double precision</code> (<code class="type">float8</code>)</td><td><code class="type">float8*</code></td><td><code class="filename">postgres.h</code></td></tr><tr><td><code class="type">interval</code></td><td><code class="type">Interval*</code></td><td><code class="filename">datatype/timestamp.h</code></td></tr><tr><td><code class="type">lseg</code></td><td><code class="type">LSEG*</code></td><td><code class="filename">utils/geo_decls.h</code></td></tr><tr><td><code class="type">name</code></td><td><code class="type">Name</code></td><td><code class="filename">postgres.h</code></td></tr><tr><td><code class="type">oid</code></td><td><code class="type">Oid</code></td><td><code class="filename">postgres.h</code></td></tr><tr><td><code class="type">oidvector</code></td><td><code class="type">oidvector*</code></td><td><code class="filename">postgres.h</code></td></tr><tr><td><code class="type">path</code></td><td><code class="type">PATH*</code></td><td><code class="filename">utils/geo_decls.h</code></td></tr><tr><td><code class="type">point</code></td><td><code class="type">POINT*</code></td><td><code class="filename">utils/geo_decls.h</code></td></tr><tr><td><code class="type">regproc</code></td><td><code class="type">regproc</code></td><td><code class="filename">postgres.h</code></td></tr><tr><td><code class="type">reltime</code></td><td><code class="type">RelativeTime</code></td><td><code class="filename">utils/nabstime.h</code></td></tr><tr><td><code class="type">text</code></td><td><code class="type">text*</code></td><td><code class="filename">postgres.h</code></td></tr><tr><td><code class="type">tid</code></td><td><code class="type">ItemPointer</code></td><td><code class="filename">storage/itemptr.h</code></td></tr><tr><td><code class="type">time</code></td><td><code class="type">TimeADT</code></td><td><code class="filename">utils/date.h</code></td></tr><tr><td><code class="type">time with time zone</code></td><td><code class="type">TimeTzADT</code></td><td><code class="filename">utils/date.h</code></td></tr><tr><td><code class="type">timestamp</code></td><td><code class="type">Timestamp*</code></td><td><code class="filename">datatype/timestamp.h</code></td></tr><tr><td><code class="type">tinterval</code></td><td><code class="type">TimeInterval</code></td><td><code class="filename">utils/nabstime.h</code></td></tr><tr><td><code class="type">varchar</code></td><td><code class="type">VarChar*</code></td><td><code class="filename">postgres.h</code></td></tr><tr><td><code class="type">xid</code></td><td><code class="type">TransactionId</code></td><td><code class="filename">postgres.h</code></td></tr></tbody></table></div></div><br class="table-break" /><p>     现在我们已经复习了基本类型所有可能的结构，现在可以展示一些
+     真实函数的例子了。
+    </p></div><div class="sect2" id="idp33522800"><div class="titlepage"><div><div><h3 class="title">37.9.3. 版本 1 的调用约定</h3></div></div></div><p>     版本-1 的调用规范依赖于宏来降低传参数和结果的复杂度。版本-1 函数的
+     C 声明总是：
+</p><pre class="programlisting">Datum funcname(PG_FUNCTION_ARGS)</pre><p>
+     此外，宏调用：
+</p><pre class="programlisting">PG_FUNCTION_INFO_V1(funcname);</pre><p>
+     必须出现在同一个源文件中（按惯例会正好写在该函数本身之前）。
+     这种宏调用不是<code class="literal">内部</code>语言函数所需要的，因为
+     <span class="productname">PostgreSQL</span>会假定所有内部函数都使用
+     版本-1 规范。不过，对于动态载入函数是必需的。
+    </p><p>     在版本-1 函数中，每一个实参都使用对应于该参数数据类型的
+     <code class="function">PG_GETARG_<em class="replaceable"><code>xxx</code></em>()</code>
+     宏取得。在非严格函数中，需要使用<code class="function">PG_ARGNULL_<em class="replaceable"><code>xxx</code></em>()</code>
+	 预先进行一次关于参数无效的检查。结果要用对应于返回类型的
+     <code class="function">PG_RETURN_<em class="replaceable"><code>xxx</code></em>()</code>
+     宏返回。
+     <code class="function">PG_GETARG_<em class="replaceable"><code>xxx</code></em>()</code>
+     的参数是要取得的函数参数的编号，从零开始计。
+     <code class="function">PG_RETURN_<em class="replaceable"><code>xxx</code></em>()</code>
+     的参数是实际要返回的值。
+    </p><p>     以下是使用版本-1调用约定的一些示例:
+    </p><pre class="programlisting">#include "postgres.h"
+#include &lt;string.h&gt;
+#include "fmgr.h"
+#include "utils/geo_decls.h"
+
+#ifdef PG_MODULE_MAGIC
+PG_MODULE_MAGIC;
+#endif
+
+/* 传值 */
+
+PG_FUNCTION_INFO_V1(add_one);
+
+Datum
+add_one(PG_FUNCTION_ARGS)
+{
+    int32   arg = PG_GETARG_INT32(0);
+
+    PG_RETURN_INT32(arg + 1);
+}
+
+/* 传引用，定长 */
+
+PG_FUNCTION_INFO_V1(add_one_float8);
+
+Datum
+add_one_float8(PG_FUNCTION_ARGS)
+{
+    /* FLOAT8 的宏隐藏了它的传引用本质。 */
+    float8   arg = PG_GETARG_FLOAT8(0);
+
+    PG_RETURN_FLOAT8(arg + 1.0);
+}
+
+PG_FUNCTION_INFO_V1(makepoint);
+
+Datum
+makepoint(PG_FUNCTION_ARGS)
+{
+    /* 这里，Point 的传引用本质没有被掩盖。 */
+    Point     *pointx = PG_GETARG_POINT_P(0);
+    Point     *pointy = PG_GETARG_POINT_P(1);
+    Point     *new_point = (Point *) palloc(sizeof(Point));
+
+    new_point-&gt;x = pointx-&gt;x;
+    new_point-&gt;y = pointy-&gt;y;
+
+    PG_RETURN_POINT_P(new_point);
+}
+
+/* 传引用，变长 */
+
+PG_FUNCTION_INFO_V1(copytext);
+
+Datum
+copytext(PG_FUNCTION_ARGS)
+{
+    text     *t = PG_GETARG_TEXT_PP(0);
+    /*
+     * VARSIZE_ANY_EXHDR 是结构的尺寸（字节）。减去其标题的VARHDRSZ或VARHDRSZ_SHORT。使用全长标题构建副本。
+     */
+    text     *new_t = (text *) palloc(VARSIZE_ANY_EXHDR(t) + VARHDRSZ);
+    SET_VARSIZE(new_t, VARSIZE_ANY_EXHDR(t) + VARHDRSZ);
+    /*
+     * VARDATA 是指向新结构的数据区域的指针。源可能是一个简短的数据，所以通过VARDATA_ANY检索它的数据。
+     */
+    memcpy((void *) VARDATA(new_t), /* 目标 */
+           (void *) VARDATA_ANY(t), /* 源 */
+           VARSIZE_ANY_EXHDR(t));   /* 多少字节 */
+    PG_RETURN_TEXT_P(new_t);
+}
+
+PG_FUNCTION_INFO_V1(concat_text);
+
+Datum
+concat_text(PG_FUNCTION_ARGS)
+{
+    text  *arg1 = PG_GETARG_TEXT_PP(0);
+    text  *arg2 = PG_GETARG_TEXT_PP(1);
+    int32 arg1_size = VARSIZE_ANY_EXHDR(arg1);
+    int32 arg2_size = VARSIZE_ANY_EXHDR(arg2);
+    int32 new_text_size = arg1_size + arg2_size + VARHDRSZ;
+    text *new_text = (text *) palloc(new_text_size);
+
+    SET_VARSIZE(new_text, new_text_size);
+    memcpy(VARDATA(new_text), VARDATA_ANY(arg1), arg1_size);
+    memcpy(VARDATA(new_text) + arg1_size, VARDATA_ANY(arg2), arg2_size);
+    PG_RETURN_TEXT_P(new_text);
+}</pre><p>     假定上述代码已经在文件<code class="filename">funcs.c</code>中准备好
+     并且已经被编译到一个共享对象中，我们可以用下面的命令在
+     <span class="productname">PostgreSQL</span>中定义这些函数：
+    </p><pre class="programlisting">CREATE FUNCTION add_one(integer) RETURNS integer
+     AS '<em class="replaceable"><code>DIRECTORY</code></em>/funcs', 'add_one'
+     LANGUAGE C STRICT;
+
+-- 注意这是重载名为 "add_one" 的 SQL 函数
+CREATE FUNCTION add_one(double precision) RETURNS double precision
+     AS '<em class="replaceable"><code>DIRECTORY</code></em>/funcs', 'add_one_float8'
+     LANGUAGE C STRICT;
+
+CREATE FUNCTION makepoint(point, point) RETURNS point
+     AS '<em class="replaceable"><code>DIRECTORY</code></em>/funcs', 'makepoint'
+     LANGUAGE C STRICT;
+
+CREATE FUNCTION copytext(text) RETURNS text
+     AS '<em class="replaceable"><code>DIRECTORY</code></em>/funcs', 'copytext'
+     LANGUAGE C STRICT;
+
+CREATE FUNCTION concat_text(text, text) RETURNS text
+     AS '<em class="replaceable"><code>DIRECTORY</code></em>/funcs', 'concat_text'
+     LANGUAGE C STRICT;</pre><p>     这里，<em class="replaceable"><code>DIRECTORY</code></em>表示共享库文件的
+     目录（例如<span class="productname">PostgreSQL</span>的教程目录，
+     它包含这一节使用的例子的代码）。（更好的风格是在把
+     <em class="replaceable"><code>DIRECTORY</code></em>增加到搜索路径后，只在
+     <code class="literal">AS</code>子句中使用<code class="literal">'funcs'</code>。在很多情况下，我们
+     可以省略共享库的系统相关的扩展，通常是<code class="literal">.so</code>）。
+    </p><p>     注意我们已经指定这些函数为<span class="quote">“<span class="quote">严格的</span>”</span>，表示如果任何
+     输入值为空系统应该自动假定它们会得到空值结果。通过这样做，我们可
+     以避免在函数代码中检测空值输入。如果不这样做，我们必须显式地使用
+	 <code class="function">PG_ARGISNULL()</code>检查空值。
+    </p><p>     乍一看，与使用纯<code class="literal">C</code>调用约定相比，版本-1编码约定可能看起来毫无意义的晦涩难懂。
+	 然而，它们允许处理可为<code class="literal">NULL</code>的参数/返回值和<span class="quote">“<span class="quote">toasted</span>”</span>（压缩或非线性）值。
+    </p><p>     宏<code class="function">PG_ARGISNULL(<em class="replaceable"><code>n</code></em>)</code>允许一个函数
+     测试是否每一个输入为空（当然，只需要在没有声明为<span class="quote">“<span class="quote">strict</span>”</span>
+     的函数中这样做）。和
+     <code class="function">PG_GETARG_<em class="replaceable"><code>xxx</code></em>()</code>宏
+     一样，输入参数也是从零开始计数。注意应该在验证了一个参数不是空之后才执行
+     <code class="function">PG_GETARG_<em class="replaceable"><code>xxx</code></em>()</code>。要
+     返回一个空结果，应执行<code class="function">PG_RETURN_NULL()</code>，它对
+     严格的以及非严格的函数都有用。
+    </p><p>     版本-1接口提供的其他选项是
+     <code class="function">PG_GETARG_<em class="replaceable"><code>xxx</code></em>()</code>宏
+     的两个变种。其中的第一种是
+     <code class="function">PG_GETARG_<em class="replaceable"><code>xxx</code></em>_COPY()</code>，
+     它确保返回的指定参数的拷贝可以被安全地写入（通常的宏有时会返回一个指向
+     表中物理存储的值，它不能被写入。使用
+     <code class="function">PG_GETARG_<em class="replaceable"><code>xxx</code></em>_COPY()</code>
+     宏可以保证得到一个可写的结果）。第二种变种
+    <code class="function">PG_GETARG_<em class="replaceable"><code>xxx</code></em>_SLICE()</code>
+    宏有三个参数。第一个是函数参数的编号（如上文）。第二个和第三个是要被返回的
+    段的偏移量和长度。偏移量从零开始计算，而负值的长度则表示要求返回该值的剩余
+    部分。当大型值的存储类型为<span class="quote">“<span class="quote">external</span>”</span>时，这些宏提供了访问这
+    些大型值的更有效的方法（列的存储类型可以使用
+    <code class="literal">ALTER TABLE <em class="replaceable"><code>tablename</code></em> ALTER
+    COLUMN <em class="replaceable"><code>colname</code></em> SET STORAGE
+    <em class="replaceable"><code>storagetype</code></em></code>来指定。
+    <em class="replaceable"><code>storagetype</code></em>取<code class="literal">plain</code>、
+    <code class="literal">external</code>、<code class="literal">extended</code>或者
+    <code class="literal">main</code>）。
+    </p><p>     最后，版本-1 的函数调用规范可以返回集合结果（
+     <a class="xref" href="xfunc-c.html#XFUNC-C-RETURN-SET" title="37.9.8. 返回集合">第 37.9.8 节</a>）、实现触发器函数（
+     <a class="xref" href="triggers.html" title="第 38 章 触发器">第 38 章</a>）和过程语言调用处理器（<a class="xref" href="plhandler.html" title="第 55 章 编写一个过程语言处理器">第 55 章</a>）。更多细节可见源代码发布中的
+     <code class="filename">src/backend/utils/fmgr/README</code>。
+    </p></div><div class="sect2" id="idp33571440"><div class="titlepage"><div><div><h3 class="title">37.9.4. 编写代码</h3></div></div></div><p>     在开始更高级的话题之前，我们应该讨论一下用于
+     <span class="productname">PostgreSQL</span> C 语言函数的编码规则。
+     虽然可以把不是 C 编写的函数载入到
+     <span class="productname">PostgreSQL</span>中，这通常是很困难的，
+     因为其他语言（例如 C++、FORTRAN 或者 Pascal）通常不会遵循和 C
+     相同的调用规范。也就是说，其他语言不会以同样的方式在函数之间传递
+     参数以及返回值。由于这个原因，我们会假定你的 C 语言函数确实是用 C
+     编写的。
+    </p><p>     编写和编译 C 函数的基本规则如下：
+
+     </p><div class="itemizedlist"><ul class="itemizedlist" style="list-style-type: disc; "><li class="listitem"><p>        使用<code class="literal">pg_config
+        --includedir-server</code><a id="idp33576112" class="indexterm"></a>
+        找出<span class="productname">PostgreSQL</span>服务器头文件安装在
+        系统的哪个位置。
+       </p></li><li class="listitem"><p>        编译并且链接你的代码（这样它就能被动态载入到
+        <span class="productname">PostgreSQL</span>中）总是
+        要求特殊的标志。对特定的操作系统的做法详见
+        <a class="xref" href="xfunc-c.html#DFUNC" title="37.9.5. 编译和链接动态载入的函数">第 37.9.5 节</a>。
+       </p></li><li class="listitem"><p>        记住为你的共享库按<a class="xref" href="xfunc-c.html#XFUNC-C-DYNLOAD" title="37.9.1. 动态载入">第 37.9.1 节</a>中所述
+        定义一个<span class="quote">“<span class="quote">magic block</span>”</span>。
+       </p></li><li class="listitem"><p>        在分配内存时，使用
+        <span class="productname">PostgreSQL</span>函数
+        <code class="function">palloc</code><a id="idp33583456" class="indexterm"></a>和 <code class="function">pfree</code><a id="idp33584864" class="indexterm"></a>，
+        而不是使用对应的 C 库函数
+        <code class="function">malloc</code>和<code class="function">free</code>。
+        在每个事务结束时会自动释放通过<code class="function">palloc</code>
+        分配的内存，以免内存泄露。
+       </p></li><li class="listitem"><p>        总是要使用<code class="function">memset</code>把你的结构中的字节置零（或者
+        最开始就用<code class="function">palloc0</code>分配它们）。即使你对结构中的
+        每个域都赋值，也可能有对齐填充（结构中的空洞）包含着垃圾值。
+        如果不这样做，很难支持哈希索引或哈希连接，因为你必须选出数据
+        结构中有意义的位进行哈希计算。规划器有时也依赖于用按位相等来
+        比较常量，因此如果逻辑等价的值不是按位相等的会导致出现不想要
+        的规划结果。
+       </p></li><li class="listitem"><p>        大部分的内部<span class="productname">PostgreSQL</span>类型
+        都声明在<code class="filename">postgres.h</code>中，不过函数管理器
+        接口（<code class="symbol">PG_FUNCTION_ARGS</code>等）在
+        <code class="filename">fmgr.h</code>中，因此你将需要包括至少这两个
+        文件。为了移植性，最好在包括任何其他系统或者用户头文件之前，
+        <span class="emphasis"><em>先</em></span>包括<code class="filename">postgres.h</code>。包
+        括<code class="filename">postgres.h</code>也将会为你包括
+        <code class="filename">elog.h</code>和<code class="filename">palloc.h</code>。
+       </p></li><li class="listitem"><p>        对象文件中定义的符号名不能相互冲突或者与
+        <span class="productname">PostgreSQL</span>服务器可执行程序中
+        定义的符号冲突。如果出现有关于此的错误消息，你将必须重命名你的
+        函数或者变量。
+       </p></li></ul></div><p>
+    </p></div><div class="sect2" id="DFUNC"><div class="titlepage"><div><div><h3 class="title">37.9.5. 编译和链接动态载入的函数</h3></div></div></div><p>  在使用 C 编写的<span class="productname">PostgreSQL</span>扩展函数之前，必须以一种特殊的方式编译并且链接它们，以便产生一个能被服务器动态载入的文件。简而言之，需要创建一个<em class="firstterm">共享库</em>。<a id="idp33601520" class="indexterm"></a>
+
+ </p><p>  超出本节所含内容之外的信息请参考你的操作系统文档，特别是 C 编译器（<code class="command">cc</code>）和链接编辑器（<code class="command">ld</code>）的手册页。另外，<span class="productname">PostgreSQL</span>源代码的<code class="filename">contrib</code>目录中包含了一些可以工作的例子。但是，如果你依靠这些例子，也会使你的模块依赖于<span class="productname">PostgreSQL</span>源码的可用性。
+ </p><p>  创建共享库通常与链接可执行文件相似：首先源文件被编译成对象文件，然后对象文件被链接起来。对象文件需要被创建为<em class="firstterm">独立位置代码</em>（<acronym class="acronym">PIC</acronym>），<a id="idp33607952" class="indexterm"></a>，这在概念上意味着当它们被可执行文件载入时，它们可以被放置在内存中的任意位置（用于可执行文件的对象文件通常不会以那种方式编译）。链接一个共享库的命令会包含特殊标志来把它与链接一个可执行文件区分开（至少在理论上 — 在某些系统上实际上很丑陋）。
+ </p><p>  在下列例子中，我们假定你的源代码在一个文件<code class="filename">foo.c</code>中，并且我们将创建一个共享库<code class="filename">foo.so</code>。除非特别注明，中间的对象文件将被称为<code class="filename">foo.o</code>。一个共享库能包含多于一个对象文件，但是我们在这里只使用一个。
+ </p><div class="variablelist"><dl class="variablelist"><dt><span class="term"><span class="systemitem">FreeBSD</span>
+    <a id="idp33613536" class="indexterm"></a></span></dt><dd><p>      用来创建<acronym class="acronym">PIC</acronym>的编译器标志是<code class="option">-fPIC</code>。要创建共享库，编译器标志是<code class="option">-shared</code>。
+</p><pre class="programlisting">gcc -fPIC -c foo.c
+gcc -shared -o foo.so foo.o</pre><p>
+      这适用于<span class="systemitem">FreeBSD</span>从 3.0 开始的版本。
+     </p></dd><dt><span class="term"><span class="systemitem">HP-UX</span>
+    <a id="idp33619280" class="indexterm"></a></span></dt><dd><p>      该系统编译器创建<acronym class="acronym">PIC</acronym>的编译器标志是<code class="option">+z</code>。当使用<span class="application">GCC</span>自己的<code class="option">-fPIC</code>时。用于共享库的链接器标志是<code class="option">-b</code>。因此：
+</p><pre class="programlisting">cc +z -c foo.c</pre><p>
+      或者：
+</p><pre class="programlisting">gcc -fPIC -c foo.c</pre><p>
+      并且然后：
+</p><pre class="programlisting">ld -b -o foo.sl foo.o</pre><p>
+      和大部分其他系统不同，<span class="systemitem">HP-UX</span>为共享库使用扩展<code class="filename">.sl</code>。
+     </p></dd><dt><span class="term"><span class="systemitem">Linux</span>
+    <a id="idp33628416" class="indexterm"></a></span></dt><dd><p>      创建<acronym class="acronym">PIC</acronym>的编译器标志是<code class="option">-fpic</code>。创建一个共享库的编译器标志是<code class="option">-shared</code>。一个完整的例子看起来像：
+</p><pre class="programlisting">cc -fPIC -c foo.c
+cc -shared -o foo.so foo.o</pre><p>
+     </p></dd><dt><span class="term"><span class="systemitem">macOS</span>
+    <a id="idp33633136" class="indexterm"></a></span></dt><dd><p>      这里是一个例子。它假定安装了开发者工具。
+</p><pre class="programlisting">cc -c foo.c
+cc -bundle -flat_namespace -undefined suppress -o foo.so foo.o</pre><p>
+     </p></dd><dt><span class="term"><span class="systemitem">NetBSD</span>
+    <a id="idp33636608" class="indexterm"></a></span></dt><dd><p>      创建<acronym class="acronym">PIC</acronym>的编译器标志是<code class="option">-fPIC</code>。对于<acronym class="acronym">ELF</acronym>系统，带着标志<code class="option">-shared</code>的编译器被用来链接共享库。在旧的非 ELF 系统上，<code class="literal">ld -Bshareable</code>会被使用。
+</p><pre class="programlisting">gcc -fPIC -c foo.c
+gcc -shared -o foo.so foo.o</pre><p>
+     </p></dd><dt><span class="term"><span class="systemitem">OpenBSD</span>
+    <a id="idp33642496" class="indexterm"></a></span></dt><dd><p>      创建<acronym class="acronym">PIC</acronym>的编译器标志是<code class="option">-fPIC</code>。<code class="literal">ld -Bshareable</code>被用来链接共享库。
+</p><pre class="programlisting">gcc -fPIC -c foo.c
+ld -Bshareable -o foo.so foo.o</pre><p>
+     </p></dd><dt><span class="term"><span class="systemitem">Solaris</span>
+    <a id="idp33647440" class="indexterm"></a></span></dt><dd><p>      创建<acronym class="acronym">PIC</acronym>的编译器标志是<code class="option">-KPIC</code>（用于 Sun 编译器）以及<code class="option">-fPIC</code>（用于<span class="application">GCC</span>）。要链接共享库，编译器选项对几种编译器都是<code class="option">-G</code>或者是对<span class="application">GCC</span>使用<code class="option">-shared</code>。
+</p><pre class="programlisting">cc -KPIC -c foo.c
+cc -G -o foo.so foo.o</pre><p>
+      or
+</p><pre class="programlisting">gcc -fPIC -c foo.c
+gcc -G -o foo.so foo.o</pre><p>
+     </p></dd></dl></div><div class="tip"><h3 class="title">提示</h3><p>   如果这对你来说太复杂，你应该考虑使用<a class="ulink" href="http://www.gnu.org/software/libtool/" target="_top">   <span class="productname">GNU Libtool</span></a>，它会用一个统一的接口隐藏平台差异。
+  </p></div><p>  结果的共享库文件接着就可以被载入到<span class="productname">PostgreSQL</span>。当把文件名指定给<code class="command">CREATE FUNCTION</code>命令时，必须把共享库文件的名字给它，而不是中间的对象文件。注意系统的标准共享库扩展（通常是<code class="literal">.so</code>或者<code class="literal">.sl</code>）在<code class="command">CREATE FUNCTION</code>命令中可以被忽略，并且通常为了最好的可移植性应该被忽略。
+ </p><p>  服务器会期望在哪里寻找共享库文件请参考<a class="xref" href="xfunc-c.html#XFUNC-C-DYNLOAD" title="37.9.1. 动态载入">第 37.9.1 节</a>。
+ </p></div><div class="sect2" id="idp33660960"><div class="titlepage"><div><div><h3 class="title">37.9.6. 组合类型参数</h3></div></div></div><p>     组合类型没有像 C 结构那样的固定布局。组合类型的实例可能包含
+     空值域。此外，继承层次中的组合类型可能具有和同一继承层次中
+     其他成员不同的域。因此，
+     <span class="productname">PostgreSQL</span>提供了函数接口
+     来访问 C 的组合类型的域。
+    </p><p>     假设我们想要写一个函数来回答查询：
+
+</p><pre class="programlisting">SELECT name, c_overpaid(emp, 1500) AS overpaid
+    FROM emp
+    WHERE name = 'Bill' OR name = 'Sam';</pre><p>
+
+     如果使用调用约定版本-1，我们可以定义
+     <code class="function">c_overpaid</code>为：
+
+</p><pre class="programlisting">#include "postgres.h"
+#include "executor/executor.h"  /* 用于 GetAttributeByName() */
+
+#ifdef PG_MODULE_MAGIC
+PG_MODULE_MAGIC;
+#endif
+
+PG_FUNCTION_INFO_V1(c_overpaid);
+
+Datum
+c_overpaid(PG_FUNCTION_ARGS)
+{
+    HeapTupleHeader  t = PG_GETARG_HEAPTUPLEHEADER(0);
+    int32            limit = PG_GETARG_INT32(1);
+    bool isnull;
+    Datum salary;
+
+    salary = GetAttributeByName(t, "salary", &amp;isnull);
+    if (isnull)
+        PG_RETURN_BOOL(false);
+    /* 另外，我们可能更想对空 salary 用 PG_RETURN_NULL() 。*/
+
+    PG_RETURN_BOOL(DatumGetInt32(salary) &gt; limit);
+}</pre><p>
+    </p><p>     <code class="function">GetAttributeByName</code>是返回指定行的属性的
+     <span class="productname">PostgreSQL</span>系统函数。它有三个参数：
+     类型为<code class="type">HeapTupleHeader</code>的传入参数、想要访问的函数名
+     以及一个说明该属性是否为空的返回参数。
+     <code class="function">GetAttributeByName</code>返回一个<code class="type">Datum</code>
+     值，可以把它用合适的<code class="function">DatumGet<em class="replaceable"><code>XXX</code></em>()</code>
+     宏转换成正确的数据类型。注意如果空值标志被设置，那么返回值是没有
+     意义的，所以在对结果做任何事情之前应该先检查空值标志。
+    </p><p>     也有<code class="function">GetAttributeByNum</code>函数，它可以用目标属性
+     的属性号而不是属性名来选择目标属性。
+    </p><p>     下面的命令声明 SQL 中的<code class="function">c_overpaid</code>：
+
+</p><pre class="programlisting">CREATE FUNCTION c_overpaid(emp, integer) RETURNS boolean
+    AS '<em class="replaceable"><code>DIRECTORY</code></em>/funcs', 'c_overpaid'
+    LANGUAGE C STRICT;</pre><p>
+
+     注意我们用了<code class="literal">STRICT</code>，这样我们不需要检查输入参数是否
+     为 NULL。
+    </p></div><div class="sect2" id="idp33675488"><div class="titlepage"><div><div><h3 class="title">37.9.7. 返回行（组合类型）</h3></div></div></div><p>     要从一个 C 语言函数中返回一个行或者组合类型值，你可以使用一种
+     特殊的 API，它提供的宏和函数隐藏了大部分的构建组合数据类型的
+     复杂性。要使用这种 API，源文件中必须包括：
+</p><pre class="programlisting">#include "funcapi.h"</pre><p>
+    </p><p>     有两种方式可以构建一个组合数据值（以后就叫一个<span class="quote">“<span class="quote">元组</span>”</span>）：
+     可以从一个 Datum 值的数组构造，或者从一个 C 字符串（可被传递给该元组
+     各列的数据类型的输入转换函数）的数组构造。在两种情况下，都首先需要为
+     该元组的结构获得或者构造一个<code class="structname">TupleDesc</code>描述符。在处
+     理 Datum 时，需要把该<code class="structname">TupleDesc</code>传递给
+     <code class="function">BlessTupleDesc</code>，接着为每一行调用
+     <code class="function">heap_form_tuple</code>。在处理 C 字符串时，需要把该
+     <code class="structname">TupleDesc</code>传递给
+     <code class="function">TupleDescGetAttInMetadata</code>，接着为每一行调用
+     <code class="function">BuildTupleFromCStrings</code>。对于返回一个元组集合的函数，
+     这些设置步骤可以在第一次调用该函数时一次性完成。
+    </p><p>     有一些助手函数可以用来设置所需的<code class="structname">TupleDesc</code>。在大部分
+     返回组合值的函数中推荐的方式是调用：
+</p><pre class="programlisting">TypeFuncClass get_call_result_type(FunctionCallInfo fcinfo,
+                                   Oid *resultTypeId,
+                                   TupleDesc *resultTupleDesc)</pre><p>
+     传递传给调用函数本身的同一个<code class="literal">fcinfo</code>结构（这当然要求使用的
+     是版本-1 的调用规范）。<code class="varname">resultTypeId</code>可以被指定为
+     <code class="literal">NULL</code>或者一个本地变量的地址以接收该函数的结果类型 OID。
+     <code class="varname">resultTupleDesc</code>应该是一个本地
+     <code class="structname">TupleDesc</code>变量的地址。检查结果是不是
+     <code class="literal">TYPEFUNC_COMPOSITE</code>，如果是则
+     <code class="varname">resultTupleDesc</code>已经被用所需的
+     <code class="structname">TupleDesc</code>填充（如果不是，你可以报告一个错误，并且
+     返回<span class="quote">“<span class="quote">function returning record called in context that
+     cannot accept type record</span>”</span>字样的消息）。
+    </p><div class="tip"><h3 class="title">提示</h3><p>      <code class="function">get_call_result_type</code>能够解析一个多态函数结果的实际类型，
+      因此不仅在返回组合类型的函数中，在返回标量多态结果的函数中它也是非常
+      有用的。<code class="varname">resultTypeId</code>输出主要用于返回多态标量的函数。
+     </p></div><div class="note"><h3 class="title">注意</h3><p>      <code class="function">get_call_result_type</code>有一个兄弟
+      <code class="function">get_expr_result_type</code>，它被用来解析被表示为一棵表达式
+      树的函数调用的输出类型。在尝试确定来自函数外部的结果类型时可以用它。
+      也有一个<code class="function">get_func_result_type</code>，当只有函数的 OID 可用时
+      可以用它。不过这些函数无法处理被声明为返回<code class="structname">record</code>的
+      函数，并且<code class="function">get_func_result_type</code>无法解析多态类型，因此你
+      应该优先使用<code class="function">get_call_result_type</code>。
+     </p></div><p>     比较老的，现在已经被废弃的获得<code class="structname">TupleDesc</code>的函数是：
+</p><pre class="programlisting">TupleDesc RelationNameGetTupleDesc(const char *relname)</pre><p>
+     它可以为一个提到的关系的行类型得到<code class="structname">TupleDesc</code>，
+     还有：
+</p><pre class="programlisting">TupleDesc TypeGetTupleDesc(Oid typeoid, List *colaliases)</pre><p>
+     可以基于一个类型 OID 得到<code class="structname">TupleDesc</code>。这可以被用来
+     为一种基础或者组合类型获得<code class="structname">TupleDesc</code>。不过，对于
+     返回<code class="structname">record</code>的函数它不起作用，并且它无法解析多态类型。
+    </p><p>     一旦有了一个<code class="structname">TupleDesc</code>，如果计划处理 Datum可以调用：
+</p><pre class="programlisting">TupleDesc BlessTupleDesc(TupleDesc tupdesc)</pre><p>
+     如果计划处理 C 字符串，可调用：
+</p><pre class="programlisting">AttInMetadata *TupleDescGetAttInMetadata(TupleDesc tupdesc)</pre><p>
+     如果正在编写一个返回集合的函数，你可以把这些函数的结果保存在
+     <code class="structname">FuncCallContext</code>结构中 — 分别使用
+     <code class="structfield">tuple_desc</code>或者<code class="structfield">attinmeta</code>域。
+    </p><p>     在处理 Datum 时，使用
+</p><pre class="programlisting">HeapTuple heap_form_tuple(TupleDesc tupdesc, Datum *values, bool *isnull)</pre><p>
+     来用 Datum 形式的用户数据构建一个<code class="structname">HeapTuple</code>。
+    </p><p>     在处理 C 字符串时，使用
+</p><pre class="programlisting">HeapTuple BuildTupleFromCStrings(AttInMetadata *attinmeta, char **values)</pre><p>
+     来用 C 字符串形式的用户数据构建一个<code class="structname">HeapTuple</code>。
+     <em class="parameter"><code>values</code></em>是一个 C 字符串数组，每一个元素是返回行
+     的一个属性。每一个 C 字符串应该是该属性数据类型的输入函数所期望
+     的格式。为了对一个属性返回空值，<em class="parameter"><code>values</code></em>数组中对
+     应的指针应该被设置为<code class="symbol">NULL</code>。对于你返回的每一行都将
+     再次调用这个函数。
+    </p><p>     一旦已经构建了一个要从函数中返回的元组，它必须被转换成一个
+     <code class="type">Datum</code>。使用
+</p><pre class="programlisting">HeapTupleGetDatum(HeapTuple tuple)</pre><p>
+     可把一个<code class="structname">HeapTuple</code>转换成合法的 Datum。如果你
+     只想返回一行，那么这个<code class="type">Datum</code>可以被直接返回，在一个
+     集合返回函数中它也可以被当做当前的返回值。
+    </p><p>     下一节中会有一个例子。
+    </p></div><div class="sect2" id="XFUNC-C-RETURN-SET"><div class="titlepage"><div><div><h3 class="title">37.9.8. 返回集合</h3></div></div></div><p>     也提供了一种特殊的 API 来支持从 C 语言函数中返回集合（多个行）。
+     集合返回函数必须遵循版本-1 的调用规范。如上文所述，源文件中还
+     必须包括<code class="filename">funcapi.h</code>。
+    </p><p>     对返回的每一个项，一个集合返回函数（<acronym class="acronym">SRF</acronym>）都会
+     被调用一次。因此，这个<acronym class="acronym">SRF</acronym>必须保存足够的状态来
+     记住它正在做什么并且在每次调用时返回下一个项。结构
+     <code class="structname">FuncCallContext</code>被提供来帮助控制这个过程。在
+     一个函数中，<code class="literal">fcinfo-&gt;flinfo-&gt;fn_extra</code>被用来在
+     多次调用中保持指向<code class="structname">FuncCallContext</code>的指针。
+</p><pre class="programlisting">typedef struct FuncCallContext
+{
+    /*
+     * 本次调用以前已经被调用过多少次
+     *
+     * SRF_FIRSTCALL_INIT() 会为你把 call_cntr 初始化为 0，
+     * 并且在每次调用 SRF_RETURN_NEXT() 时增加。
+     */
+    uint64 call_cntr;
+
+    /*
+     * 可选：最大调用次数
+     *
+     * 这里的 max_calls 只是为了方便，设置它是可选的。
+     * 如果没有设置，你必须提供替代的方法来了解函数什么时候做完。
+     */
+    uint64 max_calls;
+
+    /*
+     * 可选：指向结果槽的指针
+     *
+     * 这已经被废弃并且只为向后兼容而存在，也就是那些使用被废弃的
+     * TupleDescGetSlot() 的用户定义 SRF。.
+     */
+    TupleTableSlot *slot;
+
+    /*
+     * 可选：指向用户提供的上下文信息的指针
+     *
+     * user_fctx 是一个指向你自己的数据的指针，它可用来在函数的多次
+     * 调用之间保存任意的上下文信息。
+     */
+    void *user_fctx;
+
+    /*
+     * 可选：指向包含属性类型输入元数据的结构的指针
+     *
+     * attinmeta 被用在返回元组（即组合数据类型）时，在返回基本数据类型
+     * 时不会使用。只有想用BuildTupleFromCStrings()创建返回元组时才需要它。
+     */
+    AttInMetadata *attinmeta;
+
+    /*
+     * 用于保存必须在多次调用间都存在的结构的内存上下文
+     *
+     * SRF_FIRSTCALL_INIT() 会为你设置 multi_call_memory_ctx，并且由
+     * SRF_RETURN_DONE() 来清理。对于任何需要在 SRF 的多次调用间都
+     * 存在的内存来说，它是最合适的内存上下文。
+     */
+    MemoryContext multi_call_memory_ctx;
+
+    /*
+     * 可选：指向包含元组描述的结构的指针
+     *
+     * tuple_desc 被用在返回元组（即组合数据类型）时，并且只有在用
+     * heap_form_tuple() 而不是 BuildTupleFromCStrings() 构建元组时才需要它。
+     * 注意这里存储的 TupleDesc 指针通常已经被先运行过 BlessTupleDesc()。
+     */
+    TupleDesc tuple_desc;
+
+} FuncCallContext;</pre><p>
+    </p><p>     <acronym class="acronym">SRF</acronym>使用一些自动操纵<code class="structname">FuncCallContext</code>
+     （并且期望通过<code class="literal">fn_extra</code>找到它）的函数和宏。可使用：
+</p><pre class="programlisting">SRF_IS_FIRSTCALL()</pre><p>
+     来判断你的函数是否是第一次被调用。在第一次调用时（只能在第一次调用时）使用：
+</p><pre class="programlisting">SRF_FIRSTCALL_INIT()</pre><p>
+     可初始化<code class="structname">FuncCallContext</code>。在每一次函数调用时（包括第一次）
+     可使用：
+</p><pre class="programlisting">SRF_PERCALL_SETUP()</pre><p>
+     为使用<code class="structname">FuncCallContext</code>做适当的设置并且清除上一次
+     留下来的任何已返回的数据。
+    </p><p>     如果你的函数有数据要返回，可使用：
+</p><pre class="programlisting">SRF_RETURN_NEXT(funcctx, result)</pre><p>
+     把它返回给调用者（<code class="literal">result</code>必须是类型<code class="type">Datum</code>，
+     可以是一个单一值或者按上文所述准备好的元组）。最后，当函数完成了
+     数据返回后，可使用：
+</p><pre class="programlisting">SRF_RETURN_DONE(funcctx)</pre><p>
+     来清理并且结束<acronym class="acronym">SRF</acronym>。
+    </p><p>     <acronym class="acronym">SRF</acronym>被调用时的当前内存上下文被称作一个瞬时上下文，
+     在两次调用之间会清除它。这意味着你不必对用<code class="function">palloc</code>
+     分配的所有东西调用<code class="function">pfree</code>，它们将自动被释放。不过，
+     如果你想要分配任何需要在多次调用间都存在的数据结构，需要把它们
+     放在其他地方。对于任何需要在<acronym class="acronym">SRF</acronym>结束运行之前都存
+     在的数据来说，<code class="structfield">multi_call_memory_ctx</code>引用的内存
+     上下文是一个合适的位置。在大部分情况中，这意味着应该在做第一次
+     调用设置时就切换到<code class="structfield">multi_call_memory_ctx</code>中。
+    </p><div class="warning"><h3 class="title">警告</h3><p>      虽然函数的实参在多次调用之间保持不变，但如果在瞬时上下文中
+      反 TOAST 了参数（通常由
+      <code class="function">PG_GETARG_<em class="replaceable"><code>xxx</code></em></code>
+      宏完成），那么被反 TOAST 的拷贝将在每次循环中被释放。相应地，
+      如果你把这些值的引用保存在<code class="structfield">user_fctx</code>中，你也必
+      须在反 TOAST 之后把它们拷贝到
+      <code class="structfield">multi_call_memory_ctx</code>中，或者确保你只在那个
+      上下文中反 TOAST 这些值。
+     </p></div><p>     一个完整的伪代码例子：
+</p><pre class="programlisting">Datum
+my_set_returning_function(PG_FUNCTION_ARGS)
+{
+    FuncCallContext  *funcctx;
+    Datum             result;
+    <em class="replaceable"><code>further declarations as needed</code></em>
+
+    if (SRF_IS_FIRSTCALL())
+    {
+        MemoryContext oldcontext;
+
+        funcctx = SRF_FIRSTCALL_INIT();
+        oldcontext = MemoryContextSwitchTo(funcctx-&gt;multi_call_memory_ctx);
+        /* 这里是一次性设置代码： */
+        <em class="replaceable"><code>user code</code></em>
+        <em class="replaceable"><code>if returning composite</code></em>
+            <em class="replaceable"><code>build TupleDesc, and perhaps AttInMetadata</code></em>
+        <em class="replaceable"><code>endif returning composite</code></em>
+        <em class="replaceable"><code>user code</code></em>
+        MemoryContextSwitchTo(oldcontext);
+    }
+
+    /* 这里是每一次都要做的设置代码： */
+    <em class="replaceable"><code>user code</code></em>
+    funcctx = SRF_PERCALL_SETUP();
+    <em class="replaceable"><code>user code</code></em>
+
+    /* 这里只是一种测试是否执行完的方法： */
+    if (funcctx-&gt;call_cntr &lt; funcctx-&gt;max_calls)
+    {
+        /* 这里返回另一个项： */
+        <em class="replaceable"><code>user code</code></em>
+        <em class="replaceable"><code>obtain result Datum</code></em>
+        SRF_RETURN_NEXT(funcctx, result);
+    }
+    else
+    {
+        /* 这里已经完成了项的返回并且需要进行清理： */
+        <em class="replaceable"><code>user code</code></em>
+        SRF_RETURN_DONE(funcctx);
+    }
+}</pre><p>
+    </p><p>     一个返回组合类型的简单<acronym class="acronym">SRF</acronym>的完整例子：
+</p><pre class="programlisting">PG_FUNCTION_INFO_V1(retcomposite);
+
+Datum
+retcomposite(PG_FUNCTION_ARGS)
+{
+    FuncCallContext     *funcctx;
+    int                  call_cntr;
+    int                  max_calls;
+    TupleDesc            tupdesc;
+    AttInMetadata       *attinmeta;
+
+    /* 只在第一次函数调用时做的事情 */
+    if (SRF_IS_FIRSTCALL())
+    {
+        MemoryContext   oldcontext;
+
+        /* 创建一个函数上下文，让它在多次调用间都保持存在 */
+        funcctx = SRF_FIRSTCALL_INIT();
+
+        /* 切换到适合多次函数调用的内存上下文 */
+        oldcontext = MemoryContextSwitchTo(funcctx-&gt;multi_call_memory_ctx);
+
+        /* 要返回的元组总数 */
+        funcctx-&gt;max_calls = PG_GETARG_UINT32(0);
+
+        /* 为结果类型构造一个元组描述符 */
+        if (get_call_result_type(fcinfo, NULL, &amp;tupdesc) != TYPEFUNC_COMPOSITE)
+            ereport(ERROR,
+                    (errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+                     errmsg("function returning record called in context "
+                            "that cannot accept type record")));
+
+        /*
+         * 生成后面需要用来从原始 C 字符串产生元组的属性元数据
+         */
+        attinmeta = TupleDescGetAttInMetadata(tupdesc);
+        funcctx-&gt;attinmeta = attinmeta;
+
+        MemoryContextSwitchTo(oldcontext);
+    }
+
+    /* 在每一次函数调用都要完成的事情 */
+    funcctx = SRF_PERCALL_SETUP();
+
+    call_cntr = funcctx-&gt;call_cntr;
+    max_calls = funcctx-&gt;max_calls;
+    attinmeta = funcctx-&gt;attinmeta;
+
+    if (call_cntr &lt; max_calls)    /* 如果还有要发送的 */
+    {
+        char       **values;
+        HeapTuple    tuple;
+        Datum        result;
+
+        /*
+         * 为构建返回元组准备一个值数组。这应该是一个 C
+         * 字符串数组，之后类型输入函数会处理它。
+         */
+        values = (char **) palloc(3 * sizeof(char *));
+        values[0] = (char *) palloc(16 * sizeof(char));
+        values[1] = (char *) palloc(16 * sizeof(char));
+        values[2] = (char *) palloc(16 * sizeof(char));
+
+        snprintf(values[0], 16, "%d", 1 * PG_GETARG_INT32(1));
+        snprintf(values[1], 16, "%d", 2 * PG_GETARG_INT32(1));
+        snprintf(values[2], 16, "%d", 3 * PG_GETARG_INT32(1));
+
+        /* 构建一个元组 */
+        tuple = BuildTupleFromCStrings(attinmeta, values);
+
+        /* 把元组变成 datum */
+        result = HeapTupleGetDatum(tuple);
+
+        /* 清理（实际并不必要） */
+        pfree(values[0]);
+        pfree(values[1]);
+        pfree(values[2]);
+        pfree(values);
+
+        SRF_RETURN_NEXT(funcctx, result);
+    }
+    else    /* 如果没有要发送的 */
+    {
+        SRF_RETURN_DONE(funcctx);
+    }
+}</pre><p>
+
+     在 SQL 中声明这个函数的一种方法是：
+</p><pre class="programlisting">CREATE TYPE __retcomposite AS (f1 integer, f2 integer, f3 integer);
+
+CREATE OR REPLACE FUNCTION retcomposite(integer, integer)
+    RETURNS SETOF __retcomposite
+    AS '<em class="replaceable"><code>filename</code></em>', 'retcomposite'
+    LANGUAGE C IMMUTABLE STRICT;</pre><p>
+     一种不同的方法是使用 OUT 参数：
+</p><pre class="programlisting">CREATE OR REPLACE FUNCTION retcomposite(IN integer, IN integer,
+    OUT f1 integer, OUT f2 integer, OUT f3 integer)
+    RETURNS SETOF record
+    AS '<em class="replaceable"><code>filename</code></em>', 'retcomposite'
+    LANGUAGE C IMMUTABLE STRICT;</pre><p>
+     注意在这种方法中，函数的输出类型在形式上是一种匿名的
+     <code class="structname">record</code>类型。
+    </p><p>     源码中的目录<a class="link" href="tablefunc.html" title="F.39. tablefunc"><code class="filename">contrib/tablefunc</code></a>
+     下的模块包含集合返回函数更加复杂的例子。
+    </p></div><div class="sect2" id="idp33756656"><div class="titlepage"><div><div><h3 class="title">37.9.9. 多态参数和返回类型</h3></div></div></div><p>     C 语言函数可以被声明为接受和返回多态类型
+     <code class="type">anyelement</code>、<code class="type">anyarray</code>、
+     <code class="type">anynonarray</code>、
+     <code class="type">anyenum</code>以及<code class="type">anyrange</code>。
+     关于多态函数的详细介绍请见
+     <a class="xref" href="extend-type-system.html#EXTEND-TYPES-POLYMORPHIC" title="37.2.5. 多态类型">第 37.2.5 节</a>。当函数参数或者返回
+     类型被定义为多态类型时，函数的编写者无法提前知道会用什么数据类型
+     调用该函数或者该函数需要返回什么数据类型。在<code class="filename">fmgr.h</code>
+     中提供了两种例程来允许版本-1 的 C 函数发现其参数的实际数据类型以及
+     它要返回的类型。这些例程被称为
+     <code class="literal">get_fn_expr_rettype(FmgrInfo *flinfo)</code>和
+     <code class="literal">get_fn_expr_argtype(FmgrInfo *flinfo, int argnum)</code>。它们
+     返回结果或者参数的类型的 OID，或者当该信息不可用时返回
+     <code class="symbol">InvalidOid</code>。结构<code class="literal">flinfo</code>通常被当做
+     <code class="literal">fcinfo-&gt;flinfo</code>访问。参数<code class="literal">argnum</code>则是从零
+     开始计。<code class="function">get_call_result_type</code>也可被用作
+     <code class="function">get_fn_expr_rettype</code>的一种替代品。还有
+     <code class="function">get_fn_expr_variadic</code>，它可以被用来找出 variadic 参数
+     是否已经被合并到了一个数组中。这主要用于
+     <code class="literal">VARIADIC "any"</code>函数，因为对于接收普通数组类型的
+     variadic 函数来说总是会发生这类合并。
+    </p><p>     例如，假设我们想要写一个接收一个任意类型元素并且返回一个该类型的一维
+     数组的函数：
+
+</p><pre class="programlisting">PG_FUNCTION_INFO_V1(make_array);
+Datum
+make_array(PG_FUNCTION_ARGS)
+{
+    ArrayType  *result;
+    Oid         element_type = get_fn_expr_argtype(fcinfo-&gt;flinfo, 0);
+    Datum       element;
+    bool        isnull;
+    int16       typlen;
+    bool        typbyval;
+    char        typalign;
+    int         ndims;
+    int         dims[MAXDIM];
+    int         lbs[MAXDIM];
+
+    if (!OidIsValid(element_type))
+        elog(ERROR, "could not determine data type of input");
+
+    /* 得到提供的元素，小心它为 NULL 的情况 */
+    isnull = PG_ARGISNULL(0);
+    if (isnull)
+        element = (Datum) 0;
+    else
+        element = PG_GETARG_DATUM(0);
+
+    /* 只有一个维度 */
+    ndims = 1;
+    /* 和一个元素 */
+    dims[0] = 1;
+    /* 且下界是 1 */
+    lbs[0] = 1;
+
+    /* 得到该元素类型所需的信息 */
+    get_typlenbyvalalign(element_type, &amp;typlen, &amp;typbyval, &amp;typalign);
+
+    /* 现在构建数组 */
+    result = construct_md_array(&amp;element, &amp;isnull, ndims, dims, lbs,
+                                element_type, typlen, typbyval, typalign);
+
+    PG_RETURN_ARRAYTYPE_P(result);
+}</pre><p>
+    </p><p>     下面的命令在 SQL 中声明函数<code class="function">make_array</code>：
+
+</p><pre class="programlisting">CREATE FUNCTION make_array(anyelement) RETURNS anyarray
+    AS '<em class="replaceable"><code>DIRECTORY</code></em>/funcs', 'make_array'
+    LANGUAGE C IMMUTABLE;</pre><p>
+    </p><p>     有一种只对 C 语言函数可用的多态变体：它们可以被声明为接受类型为
+     <code class="literal">"any"</code>的参数（注意这种类型名必须用双引号引用，因为它也
+     是一个 SQL 保留字）。这和<code class="type">anyelement</code>相似，不过它不约束
+     不同的<code class="literal">"any"</code>参数为同一种类型，它们也不会帮助确定函数的
+     结果类型。C 语言函数也能声明它的第一个参数为
+     <code class="literal">VARIADIC "any"</code>。这可以匹配一个或者多个任意类型的实参（
+     不需要是同一种类型）。这些参数<span class="emphasis"><em>不会</em></span>像普通 variadic 函
+     数那样被收集到一个数组中，它们将被单独传递给该函数。使用这种特性时，
+     必须用<code class="function">PG_NARGS()</code>宏以及上述方法来判断实参的个数和类
+     型。还有，这种函数的用户可能希望在他们的函数调用中使用
+     <code class="literal">VARIADIC</code>关键词，以期让该函数将数组元素作为单独的参数
+     对待。如果想要这样，在使用<code class="function">get_fn_expr_variadic</code>检测被
+     标记为<code class="literal">VARIADIC</code>的实参之后，函数本身必须实现这种行为。
+    </p></div><div class="sect2" id="XFUNC-TRANSFORM-FUNCTIONS"><div class="titlepage"><div><div><h3 class="title">37.9.10. 转换函数</h3></div></div></div><p>     一些函数调用可以在规划期间基于该函数的特定的属性被简化。例如，
+     <code class="literal">int4mul(n, 1)</code>可以被简化为<code class="literal">n</code>。要定义这种
+     与函数相关的优化，可以写一个<em class="firstterm">转换函数</em>并且将其 OID
+     放在主函数的<code class="structname">pg_proc</code>项的
+     <code class="structfield">protransform</code>域中。该转换函数必须具有 SQL 式样
+     <code class="literal">protransform(internal) RETURNS internal</code>。其参数（实
+     际是<code class="type">FuncExpr *</code>）是一个表示对主函数调用的伪节点。如果
+     该转换函数对表达式树的研究证明一个简化的表达式树能够替代所有可能
+     的具体调用，则会构造并且返回简化的表达式。否则会返回一个
+     <code class="literal">NULL</code>指针（<span class="emphasis"><em>不是</em></span>一个 SQL 空值）。
+    </p><p>     我们不保证<span class="productname">PostgreSQL</span>在转换函数可以进行简化的
+     情况下绝不会调用主函数。要保证简化后的表达式和对主函数的一次实际
+     调用是严格等价的。
+    </p><p>     当前，由于安全性的考虑，这种功能没有在 SQL 层面上显示给用户。因此，
+     这种功能实际只用于优化内建函数。
+    </p></div><div class="sect2" id="idp33789568"><div class="titlepage"><div><div><h3 class="title">37.9.11. 共享内存和 LWLock</h3></div></div></div><p>     外接程序可以在服务器启动时保留 LWLock 和共享内存。
+     必须通过在<a class="xref" href="runtime-config-client.html#GUC-SHARED-PRELOAD-LIBRARIES">shared_preload_libraries</a>
+     <a id="idp33791168" class="indexterm"></a>中
+     指定外接程序的共享库来预先载入它。从<code class="function">_PG_init</code>
+     函数中调用
+</p><pre class="programlisting">void RequestAddinShmemSpace(int size)</pre><p>
+     可以保留共享内存。
+    </p><p>     通过从<code class="function">_PG_init</code>中调用
+</p><pre class="programlisting">void RequestNamedLWLockTranche(const char *tranche_name, int num_lwlocks)</pre><p>
+     可以保留 LWLock。这将确保一个名为<code class="literal">tranche_name</code>
+     的 LWLock 数组可用，该数组的长度为<code class="literal">num_lwlocks</code>。
+     使用<code class="function">GetNamedLWLockTranche</code>可得到该数组的指针。
+    </p><p>     为了避免可能的竞争情况，在连接并且初始化共享内存时，每一个
+     后端应该使用 LWLock
+     <code class="function">AddinShmemInitLock</code>，如下所示：
+</p><pre class="programlisting">static mystruct *ptr = NULL;
+
+if (!ptr)
+{
+        bool    found;
+
+        LWLockAcquire(AddinShmemInitLock, LW_EXCLUSIVE);
+        ptr = ShmemInitStruct("my struct name", size, &amp;found);
+        if (!found)
+        {
+                initialize contents of shmem area;
+                acquire any requested LWLocks using:
+                ptr-&gt;locks = GetNamedLWLockTranche("my tranche name");
+        }
+        LWLockRelease(AddinShmemInitLock);
+}</pre><p>
+    </p></div><div class="sect2" id="EXTEND-CPP"><div class="titlepage"><div><div><h3 class="title">37.9.12. 把 C++ 用于可扩展性</h3></div></div></div><a id="idp33801488" class="indexterm"></a><p>     尽管<span class="productname">PostgreSQL</span>后端是用 C 编写的，
+     只要遵循下面的指导方针也可以用 C++ 编写扩展：
+
+     </p><div class="itemizedlist"><ul class="itemizedlist" style="list-style-type: disc; "><li class="listitem"><p>         所有被后端访问的函数必须对后端呈现一种 C 接口，然后这些 C 函数
+         调用 C++ 函数。例如，对后端访问的函数要求<code class="literal">extern C</code>
+         链接。对需要在后端和 C++ 代码之间作为指针传递的任何函数也要
+         这样做。
+       </p></li><li class="listitem"><p>        使用合适的释放方法释放内存。例如，大部分后端内存是通过
+        <code class="function">palloc()</code>分配的，所以应使用<code class="function">pfree()</code>
+        来释放。在这种情况中使用 C++ 的<code class="function">delete</code>会失败。
+       </p></li><li class="listitem"><p>        防止异常传播到 C 代码中（在所有<code class="literal">extern C</code>函数的顶层
+        使用一个捕捉全部异常的块）。即使 C++ 代码不会显式地抛出任何
+        异常也需要这样做，因为类似内存不足等事件仍会抛出异常。任何异常
+        都必须被捕捉并且用适当的错误传回给 C 接口。如果可能，用
+        <code class="option">-fno-exceptions</code> 来编译 C++ 以完全消灭异常。在这种
+        情况下，你必须在 C++ 代码中检查失败，例如检查<code class="function">new()</code>
+        返回的 NULL。
+       </p></li><li class="listitem"><p>        如果从 C++ 代码调用后端函数，确定 C++ 调用栈值包含传统 C 风格
+        的数据结构（<acronym class="acronym">POD</acronym>）。这是必要的，因为后端错误会
+        产生远距离的<code class="function">longjmp()</code>，它无法正确的退回具有非
+        POD 对象的 C++ 调用栈。
+       </p></li></ul></div><p>
+    </p><p>     总之，最好把 C++ 代码放在与后端交互的<code class="literal">extern C</code>函数之后，
+     并且避免异常、内存和调用栈泄露。
+    </p></div></div><div class="navfooter"><hr /><table width="100%" summary="Navigation footer"><tr><td width="40%" align="left"><a accesskey="p" href="xfunc-internal.html">上一页</a> </td><td width="20%" align="center"><a accesskey="u" href="extend.html">上一级</a></td><td width="40%" align="right"> <a accesskey="n" href="xaggr.html">下一页</a></td></tr><tr><td width="40%" align="left" valign="top">37.8. 内部函数 </td><td width="20%" align="center"><a accesskey="h" href="index.html">起始页</a></td><td width="40%" align="right" valign="top"> 37.10. 用户定义的聚集</td></tr></table></div></body></html>

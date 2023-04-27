@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><title>11.8. 部分索引</title><link rel="stylesheet" type="text/css" href="stylesheet.css" /><link rev="made" href="pgsql-docs@postgresql.org" /><meta name="generator" content="DocBook XSL Stylesheets V1.79.1" /><link rel="prev" href="indexes-expressional.html" title="11.7. 表达式索引" /><link rel="next" href="indexes-opclass.html" title="11.9. 操作符类和操作符族" /></head><body><div xmlns="http://www.w3.org/TR/xhtml1/transitional" class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="5" align="center">11.8. 部分索引</th></tr><tr><td width="10%" align="left"><a accesskey="p" href="indexes-expressional.html" title="11.7. 表达式索引">上一页</a> </td><td width="10%" align="left"><a accesskey="u" href="indexes.html" title="第 11 章 索引">上一级</a></td><th width="60%" align="center">第 11 章 索引</th><td width="10%" align="right"><a accesskey="h" href="index.html" title="PostgreSQL 10.1 手册">起始页</a></td><td width="10%" align="right"> <a accesskey="n" href="indexes-opclass.html" title="11.9. 操作符类和操作符族">下一页</a></td></tr></table><hr></hr></div><div class="sect1" id="INDEXES-PARTIAL"><div class="titlepage"><div><div><h2 class="title" style="clear: both">11.8. 部分索引</h2></div></div></div><a id="idp16722960" class="indexterm"></a><p>   一个<em class="firstterm">部分索引</em>是建立在表的一个子集上，而该子集则由一个条件表达式（被称为部分索引的<em class="firstterm">谓词</em>）定义。而索引中只包含那些符合该谓词的表行的项。部分索引是一种专门的特性，但在很多种情况下它们也很有用。
+  </p><p>   使用部分索引的一个主要原因是避免索引公值。由于搜索一个公值的查询（一个在所有表行中占比查过一定百分比的值）不会使用索引，所以完全没有理由将这些行保留在索引中。这可以减小索引的尺寸，同时也将加速使用索引的查询。它也将加速很多表更新操作，因为这种索引并不需要在所有情况下都被更新。<a class="xref" href="indexes-partial.html#INDEXES-PARTIAL-EX1" title="例 11.1. 建立一个部分索引来排除公值">例 11.1</a>展示了一种可能的应用：
+  </p><div class="example" id="INDEXES-PARTIAL-EX1"><p class="title"><strong>例 11.1. 建立一个部分索引来排除公值</strong></p><div class="example-contents"><p>    假设我们要在一个数据库中保存网页服务器访问日志。大部分访问都来自于我们组织内的IP地址，但是有些来自于其他地方（如使用拨号连接的员工）。如果我们主要通过IP搜索来自于外部的访问，我们就没有必要索引对应于我们组织内网的IP范围。
+   </p><p>    假设有这样一个表：
+</p><pre class="programlisting">CREATE TABLE access_log (
+    url varchar,
+    client_ip inet,
+    ...
+);</pre><p>
+   </p><p>    用以下命令可以创建适用于我们的部分索引：
+</p><pre class="programlisting">CREATE INDEX access_log_client_ip_ix ON access_log (client_ip)
+WHERE NOT (client_ip &gt; inet '192.168.100.0' AND
+           client_ip &lt; inet '192.168.100.255');</pre><p>
+   </p><p>    一个使用该索引的典型查询是：
+</p><pre class="programlisting">SELECT *
+FROM access_log
+WHERE url = '/index.html' AND client_ip = inet '212.78.10.32';</pre><p>
+    一个不能使用该索引的查询：
+</p><pre class="programlisting">SELECT *
+FROM access_log
+WHERE client_ip = inet '192.168.100.23';</pre><p>
+   </p><p>    可以看到部分索引查询要求公值能被预知，因此部分索引最适合于数据分布不会改变的情况。当然索引也可以偶尔被重建来适应新的数据分布，但是这会增加维护负担。
+   </p></div></div><br class="example-break" /><p>   <a class="xref" href="indexes-partial.html#INDEXES-PARTIAL-EX2" title="例 11.2. 建立一个部分索引来排除不感兴趣的值">例 11.2</a>展示了部分索引的另一个可能的用途：从索引中排除那些查询不感兴趣的值。这导致了上述相同的好处，但它防止了通过索引来访问<span class="quote">“<span class="quote">不感兴趣的</span>”</span>值，即便在这种情况下一个索引扫描是有益的。显然，为这种场景建立部分索引需要很多考虑和实验。
+  </p><div class="example" id="INDEXES-PARTIAL-EX2"><p class="title"><strong>例 11.2. 建立一个部分索引来排除不感兴趣的值</strong></p><div class="example-contents"><p>    如果我们有一个表包含已上账和未上账的订单，其中未上账的订单在整个表中占据一小部分且它们是最经常被访问的行。我们可以通过只在未上账的行上创建一个索引来提高性能。创建索引的命令如下：
+</p><pre class="programlisting">CREATE INDEX orders_unbilled_index ON orders (order_nr)
+    WHERE billed is not true;</pre><p>
+   </p><p>    使用该索引的一个可能查询是：
+</p><pre class="programlisting">SELECT * FROM orders WHERE billed is not true AND order_nr &lt; 10000;</pre><p>
+    然而，索引也可以用于完全不涉及<code class="structfield">order_nr</code>的查询，例如：
+</p><pre class="programlisting">SELECT * FROM orders WHERE billed is not true AND amount &gt; 5000.00;</pre><p>
+    这并不如在<code class="structfield">amount</code>列上部分索引有效，因为系统必须扫描整个索引。然而，如果有相对较少的未上账订单，使用这个部分索引来查找未上账订单将会更好。
+   </p><p>    注意这个查询将不会使用该索引：
+</p><pre class="programlisting">SELECT * FROM orders WHERE order_nr = 3501;</pre><p>
+    订单3501可能在已上账订单或未上账订单中。
+   </p></div></div><br class="example-break" /><p>   <a class="xref" href="indexes-partial.html#INDEXES-PARTIAL-EX2" title="例 11.2. 建立一个部分索引来排除不感兴趣的值">例 11.2</a>也显示索引列和谓词中使用的列并不需要匹配。<span class="productname">PostgreSQL</span>支持使用任意谓词的部分索引，只要其中涉及的只有被索引表的列。然而，记住谓词必须匹配在将要受益于索引的查询中使用的条件。更准确地，只有当系统能识别查询的<code class="literal">WHERE</code>条件从数学上索引的谓词时，一个部分索引才能被用于一个查询。<span class="productname">PostgreSQL</span>并不能给出一个精致的定理证明器来识别写成不同形式在数学上等价的表达式（一方面创建这种证明器极端困难，另一方面即便能创建出来对于实用也过慢）。系统可以识别简单的不等蕴含，例如<span class="quote">“<span class="quote">x &lt; 1</span>”</span>蕴含<span class="quote">“<span class="quote">x &lt; 2</span>”</span>；否则谓词条件必须准确匹配查询的<code class="literal">WHERE</code>条件中的部分，或者索引将不会被识别为可用。匹配发生在查询规划期间而不是运行期间。因此，参数化查询子句无法配合一个部分索引工作。例如，对于参数的所有可能值来说，一个具有参数<span class="quote">“<span class="quote">x &lt; ?</span>”</span>的预备查询绝不会蕴含<span class="quote">“<span class="quote">x &lt; 2</span>”</span>。
+  </p><p>   部分索引的第三种可能的用途并不要求索引被用于查询。其思想是在一个表的子集上创建一个唯一索引，如<a class="xref" href="indexes-partial.html#INDEXES-PARTIAL-EX3" title="例 11.3. 建立一个部分唯一索引">例 11.3</a>所示。这对那些满足索引谓词的行强制了唯一性，而对那些不满足的行则没有影响。
+  </p><div class="example" id="INDEXES-PARTIAL-EX3"><p class="title"><strong>例 11.3. 建立一个部分唯一索引</strong></p><div class="example-contents"><p>    假设我们有一个描述测试结果的表。我们希望保证其中对于一个给定的主题和目标组合只有一个<span class="quote">“<span class="quote">成功</span>”</span>项，但其中可能会有任意多个<span class="quote">“<span class="quote">不成功</span>”</span>项。实现它的方式是：
+</p><pre class="programlisting">CREATE TABLE tests (
+    subject text,
+    target text,
+    success boolean,
+    ...
+);
+
+CREATE UNIQUE INDEX tests_success_constraint ON tests (subject, target)
+    WHERE success;</pre><p>
+    当有少数成功测试和很多不成功测试时这是一种特别有效的方法。
+   </p></div></div><br class="example-break" /><p>   最后，一个部分索引也可以被用来重载系统的查询规划选择。同样，具有特殊分布的数据集可能导致系统在它并不需要索引的时候选择使用索引。在此种情况下可以被建立，这样它将不会被那些无关的查询所用。通常，<span class="productname">PostgreSQL</span>会对索引使用做出合理的选择（例如，它会在检索公值时避开索引，这样前面的例子只能节约索引尺寸，它并非是避免索引使用所必需的），非常不正确的规划选择则需要作为故障报告。
+  </p><p>   记住建立一个部分索引意味着我们知道的至少和查询规划器所知的一样多，尤其是我们知道什么时候一个索引会是有益的。构建这些知识需要经验和对于<span class="productname">PostgreSQL</span>中索引工作方式的理解。在大部分情况下，一个部分索引相对于一个普通索引的优势很小。
+  </p><p>   关于部分索引的更多信息可以在<a class="xref" href="biblio.html#STON89B">[ston89b]</a>、<a class="xref" href="biblio.html#OLSON93" title="Partial indexing in POSTGRES: research project">[olson93]</a>和<a class="xref" href="biblio.html#SESHADRI95">[seshadri95]</a>中找到。
+   </p></div><div class="navfooter"><hr /><table width="100%" summary="Navigation footer"><tr><td width="40%" align="left"><a accesskey="p" href="indexes-expressional.html">上一页</a> </td><td width="20%" align="center"><a accesskey="u" href="indexes.html">上一级</a></td><td width="40%" align="right"> <a accesskey="n" href="indexes-opclass.html">下一页</a></td></tr><tr><td width="40%" align="left" valign="top">11.7. 表达式索引 </td><td width="20%" align="center"><a accesskey="h" href="index.html">起始页</a></td><td width="40%" align="right" valign="top"> 11.9. 操作符类和操作符族</td></tr></table></div></body></html>

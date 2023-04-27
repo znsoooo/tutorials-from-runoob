@@ -1,0 +1,99 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><title>45.7. 数据库访问</title><link rel="stylesheet" type="text/css" href="stylesheet.css" /><link rev="made" href="pgsql-docs@postgresql.org" /><meta name="generator" content="DocBook XSL Stylesheets V1.79.1" /><link rel="prev" href="plpython-trigger.html" title="45.6. 触发器函数" /><link rel="next" href="plpython-subtransaction.html" title="45.8. 显式子事务" /></head><body><div xmlns="http://www.w3.org/TR/xhtml1/transitional" class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="5" align="center">45.7. 数据库访问</th></tr><tr><td width="10%" align="left"><a accesskey="p" href="plpython-trigger.html" title="45.6. 触发器函数">上一页</a> </td><td width="10%" align="left"><a accesskey="u" href="plpython.html" title="第 45 章 PL/Python - Python 过程语言">上一级</a></td><th width="60%" align="center">第 45 章 PL/Python - Python 过程语言</th><td width="10%" align="right"><a accesskey="h" href="index.html" title="PostgreSQL 10.1 手册">起始页</a></td><td width="10%" align="right"> <a accesskey="n" href="plpython-subtransaction.html" title="45.8. 显式子事务">下一页</a></td></tr></table><hr></hr></div><div class="sect1" id="PLPYTHON-DATABASE"><div class="titlepage"><div><div><h2 class="title" style="clear: both">45.7. 数据库访问</h2></div></div></div><div class="toc"><dl class="toc"><dt><span class="sect2"><a href="plpython-database.html#idp38165584">45.7.1. 数据库访问函数</a></span></dt><dt><span class="sect2"><a href="plpython-database.html#PLPYTHON-TRAPPING">45.7.2. 捕捉错误</a></span></dt></dl></div><p>   PL/Python 语言模块会自动导入一个被称为<code class="literal">plpy</code>的 Python 模块。这个模块中的函数和常量在 Python 代码中可以用<code class="literal">plpy.<em class="replaceable"><code>foo</code></em></code>这样的方式访问。
+  </p><div class="sect2" id="idp38165584"><div class="titlepage"><div><div><h3 class="title">45.7.1. 数据库访问函数</h3></div></div></div><p>   <code class="literal">plpy</code>模块提供了几个函数来执行数据库命令：
+  </p><div class="variablelist"><dl class="variablelist"><dt><span class="term"><code class="literal">plpy.<code class="function">execute</code>(<em class="replaceable"><code>query</code></em> [, <em class="replaceable"><code>max-rows</code></em>])</code></span></dt><dd><p>      用一个查询字符串和一个可选的行限制参数调用<code class="function">plpy.execute</code>会让该查询运行并且其结果会被以一个结果对象返回。
+     </p><p>      结果对象模拟一个列表或者字典对象。可以用行号和列名来访问结果对象。例如：
+</p><pre class="programlisting">rv = plpy.execute("SELECT * FROM my_table", 5)</pre><p>
+      会从<code class="literal">my_table</code>中返回 5 行。如果<code class="literal">my_table</code>有一列是<code class="literal">my_column</code>，可以这样来访问它：
+</p><pre class="programlisting">foo = rv[i]["my_column"]</pre><p>
+      可以用内建的<code class="function">len</code>函数获得返回的行数。
+     </p><p>      结果对象有这些额外的方法：
+      </p><div class="variablelist"><dl class="variablelist"><dt><span class="term"><code class="literal"><code class="function">nrows</code>()</code></span></dt><dd><p>          返回被该命令处理的行数。注意这不一定与返回的行数相同。例如，<code class="command">UPDATE</code>命令将会设置这个值但是不返回任何行（除非使用<code class="literal">RETURNING</code>）。
+         </p></dd><dt><span class="term"><code class="literal"><code class="function">status</code>()</code></span></dt><dd><p>          <code class="function">SPI_execute()</code>的返回值。
+         </p></dd><dt><span class="term"><code class="literal"><code class="function">colnames</code>()</code><br /></span><span class="term"><code class="literal"><code class="function">coltypes</code>()</code><br /></span><span class="term"><code class="literal"><code class="function">coltypmods</code>()</code></span></dt><dd><p>          分别返回一个列名列表、列类型 OID 列表以及列的类型相关的类型修饰符列表。
+         </p><p>          在来自于不产生结果集合的命令的结果对象上调用这些方法会产生异常，例如不带<code class="literal">RETURNING</code>的<code class="command">UPDATE</code>或者<code class="command">DROP TABLE</code>。但是在包含的行数为零的结果集合上使用这些方法是 OK 的。
+         </p></dd><dt><span class="term"><code class="literal"><code class="function">__str__</code>()</code></span></dt><dd><p>          也定义了标准的<code class="literal">__str__</code>方法，例如可以使用<code class="literal">plpy.debug(rv)</code>来调试查询执行结果。
+         </p></dd></dl></div><p>
+     </p><p>      结果对象可以被修改。
+     </p><p>      注意调用<code class="literal">plpy.execute</code>将会导致整个结果集合被读入到内存中。只有当确信结果集相对比较小时才应使用这个函数。在取得大型结果时，如果不想冒着耗尽内存的风险，应使用<code class="literal">plpy.cursor</code>而不是<code class="literal">plpy.execute</code>。
+     </p></dd><dt><span class="term"><code class="literal">plpy.<code class="function">prepare</code>(<em class="replaceable"><code>query</code></em> [, <em class="replaceable"><code>argtypes</code></em>])</code><br /></span><span class="term"><code class="literal">plpy.<code class="function">execute</code>(<em class="replaceable"><code>plan</code></em> [, <em class="replaceable"><code>arguments</code></em> [, <em class="replaceable"><code>max-rows</code></em>]])</code></span></dt><dd><p>      <a id="idp38201248" class="indexterm"></a>
+      <code class="function">plpy.prepare</code>为一个查询准备执行计划。它的参数是一个查询串和一个参数类型列表（如果查询中有参数引用）。例如：
+</p><pre class="programlisting">plan = plpy.prepare("SELECT last_name FROM my_users WHERE first_name = $1", ["text"])</pre><p>
+      <code class="literal">text</code>是要为<code class="literal">$1</code>传递的变量的类型。如果不想给查询传递任何参数，第二个参数就是可选的。
+     </p><p>      在准备好一个语句后，可以使用函数<code class="function">plpy.execute</code>的一种变体来运行它：
+</p><pre class="programlisting">rv = plpy.execute(plan, ["name"], 5)</pre><p>
+      把计划作为第一个参数传递（而不是查询字符串），并且把要替换到查询中的值列表作为第二个参数传递。如果查询不需要任何参数，则第二个参数是可选的。和前面一样，第三个参数是可选的，它用来指定行数限制。
+     </p><p>      或者，您可以调用计划对象上的<code class="function">execute</code> 方法：
+</p><pre class="programlisting">rv = plan.execute(["name"], 5)</pre><p>
+     </p><p>      查询参数以及结果行域会按照<a class="xref" href="plpython-data.html" title="45.3. 数据值">第 45.3 节</a>中所述在 PostgreSQL 和 Python 数据类型之间转换。
+     </p><p>      在使用 PL/Python 模块准备一个计划时，它会被自动保存。其含义可以阅读 SPI 文档（<a class="xref" href="spi.html" title="第 46 章 服务器编程接口">第 46 章</a>）。为了有效在函数调用之间利用这种特性，需要使用一种持久化存储字典<code class="literal">SD</code>或者<code class="literal">GD</code>（见<a class="xref" href="plpython-sharing.html" title="45.4. 共享数据">第 45.4 节</a>）。例如：
+</p><pre class="programlisting">CREATE FUNCTION usesavedplan() RETURNS trigger AS $$
+    if "plan" in SD:
+        plan = SD["plan"]
+    else:
+        plan = plpy.prepare("SELECT 1")
+        SD["plan"] = plan
+    # 函数的剩余部分
+$$ LANGUAGE plpythonu;</pre><p>
+     </p></dd><dt><span class="term"><code class="literal">plpy.<code class="function">cursor</code>(<em class="replaceable"><code>query</code></em>)</code><br /></span><span class="term"><code class="literal">plpy.<code class="function">cursor</code>(<em class="replaceable"><code>plan</code></em> [, <em class="replaceable"><code>arguments</code></em>])</code></span></dt><dd><p>      <code class="literal">plpy.cursor</code>函数接受和<code class="literal">plpy.execute</code>相同的参数（行数限制除外）并且返回一个游标对象，它允许以较小的块来处理大型的结果集合。和<code class="literal">plpy.execute</code>一样（行数限制除外），既可以使用一个查询字符串，也可以使用带有参数列表的计划对象，
+	  或者可以调用<code class="function">cursor</code>函数作为计划对象的一种方法。
+     </p><p>      游标对象提供了一种<code class="literal">fetch</code>方法，它接受一个整数参数并返回一个结果对象。每次调用<code class="literal">fetch</code>，返回的对象将包含下一批行，行数不会超过参数值。一旦所有的行都被消耗掉，<code class="literal">fetch</code>会开始返回一个空的结果对象。游标对象也提供一种<a class="ulink" href="http://docs.python.org/library/stdtypes.html#iterator-types" target="_top">迭代器接口</a>，它一次得到一行直到所有行被耗尽。用这种方法取得的数据不会被作为结果对象返回，而是以字典的形式返回，每一个字典对应于一个结果行。
+     </p><p>      从一个大型表中以上述两种方式处理数据的例子：
+</p><pre class="programlisting">CREATE FUNCTION count_odd_iterator() RETURNS integer AS $$
+odd = 0
+for row in plpy.cursor("select num from largetable"):
+    if row['num'] % 2:
+         odd += 1
+return odd
+$$ LANGUAGE plpythonu;
+
+CREATE FUNCTION count_odd_fetch(batch_size integer) RETURNS integer AS $$
+odd = 0
+cursor = plpy.cursor("select num from largetable")
+while True:
+    rows = cursor.fetch(batch_size)
+    if not rows:
+        break
+    for row in rows:
+        if row['num'] % 2:
+            odd += 1
+return odd
+$$ LANGUAGE plpythonu;
+
+CREATE FUNCTION count_odd_prepared() RETURNS integer AS $$
+odd = 0
+plan = plpy.prepare("select num from largetable where num % $1 &lt;&gt; 0", ["integer"])
+rows = list(plpy.cursor(plan, [2]))  # or: = list(plan.cursor([2]))
+
+return len(rows)
+$$ LANGUAGE plpythonu;</pre><p>
+     </p><p>      游标会被自动丢弃掉。但是如果想要显式地释放游标所持有的所有资源，可使用<code class="literal">close</code>方法。一旦被关闭，就再也不能从游标中取得数据。
+     </p><div class="tip"><h3 class="title">提示</h3><p>        不要把<code class="literal">plpy.cursor</code>创建的游标对象与<a class="ulink" href="http://www.python.org/dev/peps/pep-0249/" target="_top">Python Database API specification</a>定义的 DB-API 游标弄混。除了名字之外，它们之间没有任何共同点。
+      </p></div></dd></dl></div></div><div class="sect2" id="PLPYTHON-TRAPPING"><div class="titlepage"><div><div><h3 class="title">45.7.2. 捕捉错误</h3></div></div></div><p>    访问数据库的函数可能会碰到错误，这将导致函数中止并且产生异常。<code class="function">plpy.execute</code>和<code class="function">plpy.prepare</code>都能产生<code class="literal">plpy.SPIError</code>的一个子类的实例，这默认将终止该函数。通过使用<code class="literal">try/except</code>结构，这种错误可以像其他 Python 异常一样被处理。例如：
+</p><pre class="programlisting">CREATE FUNCTION try_adding_joe() RETURNS text AS $$
+    try:
+        plpy.execute("INSERT INTO users(username) VALUES ('joe')")
+    except plpy.SPIError:
+        return "something went wrong"
+    else:
+        return "Joe added"
+$$ LANGUAGE plpythonu;</pre><p>
+   </p><p>    产生的异常的实际类对应于特定的导致该错误的情况。可能的情况列表请参考<a class="xref" href="errcodes-appendix.html#ERRCODES-TABLE" title="表 A.1. PostgreSQL错误代码">表 A.1</a>。模块<code class="literal">plpy.spiexceptions</code>为每一种<span class="productname">PostgreSQL</span>情况定义了一个异常类，并且根据情况的名称命名。例如：<code class="literal">division_by_zero</code>变成<code class="literal">DivisionByZero</code>，<code class="literal">unique_violation</code>变成<code class="literal">UniqueViolation</code>，<code class="literal">fdw_error</code>变成<code class="literal">FdwError</code>，等等等等。这些异常类的每一种都是从<code class="literal">SPIError</code>继承而来。这种分离让处理特定错误更加容易，例如：
+</p><pre class="programlisting">CREATE FUNCTION insert_fraction(numerator int, denominator int) RETURNS text AS $$
+from plpy import spiexceptions
+try:
+    plan = plpy.prepare("INSERT INTO fractions (frac) VALUES ($1 / $2)", ["int", "int"])
+    plpy.execute(plan, [numerator, denominator])
+except spiexceptions.DivisionByZero:
+    return "denominator cannot equal zero"
+except spiexceptions.UniqueViolation:
+    return "already have that fraction"
+except plpy.SPIError, e:
+    return "other error, SQLSTATE %s" % e.sqlstate
+else:
+    return "fraction inserted"
+$$ LANGUAGE plpythonu;</pre><p>
+    注意因为所有来自于<code class="literal">plpy.spiexceptions</code>模块的异常都继承自<code class="literal">SPIError</code>，一个处理它的<code class="literal">except</code>子句将捕捉任何数据库访问错误。
+   </p><p>    作为另一种处理不同错误情况的方法，可以捕捉<code class="literal">SPIError</code>异常并且在<code class="literal">except</code>块中通过查看异常对象的<code class="literal">sqlstate</code>属性来判断错误情况。这种属性是包含着<span class="quote">“<span class="quote">SQLSTATE</span>”</span>错误代码的一个字符串值。这种方法提供了近乎相同的功能
+   </p></div></div><div class="navfooter"><hr /><table width="100%" summary="Navigation footer"><tr><td width="40%" align="left"><a accesskey="p" href="plpython-trigger.html">上一页</a> </td><td width="20%" align="center"><a accesskey="u" href="plpython.html">上一级</a></td><td width="40%" align="right"> <a accesskey="n" href="plpython-subtransaction.html">下一页</a></td></tr><tr><td width="40%" align="left" valign="top">45.6. 触发器函数 </td><td width="20%" align="center"><a accesskey="h" href="index.html">起始页</a></td><td width="40%" align="right" valign="top"> 45.8. 显式子事务</td></tr></table></div></body></html>

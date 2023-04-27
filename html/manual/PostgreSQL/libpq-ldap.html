@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><title>33.17. 连接参数的 LDAP 查找</title><link rel="stylesheet" type="text/css" href="stylesheet.css" /><link rev="made" href="pgsql-docs@postgresql.org" /><meta name="generator" content="DocBook XSL Stylesheets V1.79.1" /><link rel="prev" href="libpq-pgservice.html" title="33.16. 连接服务文件" /><link rel="next" href="libpq-ssl.html" title="33.18. SSL 支持" /></head><body><div xmlns="http://www.w3.org/TR/xhtml1/transitional" class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="5" align="center">33.17. 连接参数的 LDAP 查找</th></tr><tr><td width="10%" align="left"><a accesskey="p" href="libpq-pgservice.html" title="33.16. 连接服务文件">上一页</a> </td><td width="10%" align="left"><a accesskey="u" href="libpq.html" title="第 33 章 libpq - C 库">上一级</a></td><th width="60%" align="center">第 33 章 <span xmlns="http://www.w3.org/1999/xhtml" class="application">libpq</span> - C 库</th><td width="10%" align="right"><a accesskey="h" href="index.html" title="PostgreSQL 10.1 手册">起始页</a></td><td width="10%" align="right"> <a accesskey="n" href="libpq-ssl.html" title="33.18. SSL 支持">下一页</a></td></tr></table><hr></hr></div><div class="sect1" id="LIBPQ-LDAP"><div class="titlepage"><div><div><h2 class="title" style="clear: both">33.17. 连接参数的 LDAP 查找</h2></div></div></div><a id="idp28733920" class="indexterm"></a><p>   如果<span class="application">libpq</span>已经在编译时打开了 LDAP 支持（<code class="command">configure</code>的选项<code class="literal"><code class="option">--with-ldap</code></code>），就可以通过 LDAP 从一个中央服务器检索<code class="literal">host</code>或<code class="literal">dbname</code>之类的连接参数。这样做的好处是如果一个数据库的连接参数改变，不需要在所有的客户端机器上更新连接信息。
+  </p><p>   LDAP 连接参数查找使用连接服务文件<code class="filename">pg_service.conf</code>（见<a class="xref" href="libpq-pgservice.html" title="33.16. 连接服务文件">第 33.16 节</a>）。<code class="filename">pg_service.conf</code>中一个以<code class="literal">ldap://</code>开始的行将被识别为一个 LDAP URL 并且将执行一个 LDAP 查询。结果必须是一个<code class="literal">keyword = value</code>对列表，它将被用来设置连接选项。URL 必须遵循 RFC 1959 并且是形式
+</p><pre class="synopsis">ldap://[<em class="replaceable"><code>hostname</code></em>[:<em class="replaceable"><code>port</code></em>]]/<em class="replaceable"><code>search_base</code></em>?<em class="replaceable"><code>attribute</code></em>?<em class="replaceable"><code>search_scope</code></em>?<em class="replaceable"><code>filter</code></em></pre><p>
+   其中<em class="replaceable"><code>hostname</code></em>默认为<code class="literal">localhost</code>并且<em class="replaceable"><code>port</code></em>默认为 389。
+  </p><p>   一次成功的 LDAP 查找后，<code class="filename">pg_service.conf</code>的处理被终止。但是如果联系不上 LDAP 则会继续处理<code class="filename">pg_service.conf</code>。这就提供了后手，可以加入更多指向不同 LDAP 服务器的 LDAP URL 行、经典的<code class="literal">keyword = value</code>对或者默认连接选项。如果你宁愿在这种情况下得到一个错误消息，在该 LDAP URL 之后增加一个语法错误的行。
+  </p><p>   一个和 LDIF 文件一起创建的 LDAP 条目实例
+</p><pre class="programlisting">version:1
+dn:cn=mydatabase,dc=mycompany,dc=com
+changetype:add
+objectclass:top
+objectclass:device
+cn:mydatabase
+description:host=dbserver.mycompany.com
+description:port=5439
+description:dbname=mydb
+description:user=mydb_user
+description:sslmode=require</pre><p>
+   可以用下面的 LDAP URL 查询到：
+</p><pre class="programlisting">ldap://ldap.mycompany.com/dc=mycompany,dc=com?description?one?(cn=mydatabase)</pre><p>
+  </p><p>   您还可以将常规服务文件条目与LDAP查找相混合。<code class="filename">pg_service.conf</code>
+   中的节的完整示例将是：
+</p><pre class="programlisting"># 只有主机和端口存储在LDAP中，明确指定dbname和user
+[customerdb]
+dbname=customer
+user=appuser
+ldap://ldap.acme.com/cn=dbserver,cn=hosts?pgconnectinfo?base?(objectclass=*)</pre><p>
+  </p></div><div class="navfooter"><hr /><table width="100%" summary="Navigation footer"><tr><td width="40%" align="left"><a accesskey="p" href="libpq-pgservice.html">上一页</a> </td><td width="20%" align="center"><a accesskey="u" href="libpq.html">上一级</a></td><td width="40%" align="right"> <a accesskey="n" href="libpq-ssl.html">下一页</a></td></tr><tr><td width="40%" align="left" valign="top">33.16. 连接服务文件 </td><td width="20%" align="center"><a accesskey="h" href="index.html">起始页</a></td><td width="40%" align="right" valign="top"> 33.18. SSL 支持</td></tr></table></div></body></html>

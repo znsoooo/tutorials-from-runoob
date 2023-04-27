@@ -1,0 +1,236 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><title>33.13. 事件系统</title><link rel="stylesheet" type="text/css" href="stylesheet.css" /><link rev="made" href="pgsql-docs@postgresql.org" /><meta name="generator" content="DocBook XSL Stylesheets V1.79.1" /><link rel="prev" href="libpq-notice-processing.html" title="33.12. 通知处理" /><link rel="next" href="libpq-envars.html" title="33.14. 环境变量" /></head><body><div xmlns="http://www.w3.org/TR/xhtml1/transitional" class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="5" align="center">33.13. 事件系统</th></tr><tr><td width="10%" align="left"><a accesskey="p" href="libpq-notice-processing.html" title="33.12. 通知处理">上一页</a> </td><td width="10%" align="left"><a accesskey="u" href="libpq.html" title="第 33 章 libpq - C 库">上一级</a></td><th width="60%" align="center">第 33 章 <span xmlns="http://www.w3.org/1999/xhtml" class="application">libpq</span> - C 库</th><td width="10%" align="right"><a accesskey="h" href="index.html" title="PostgreSQL 10.1 手册">起始页</a></td><td width="10%" align="right"> <a accesskey="n" href="libpq-envars.html" title="33.14. 环境变量">下一页</a></td></tr></table><hr></hr></div><div class="sect1" id="LIBPQ-EVENTS"><div class="titlepage"><div><div><h2 class="title" style="clear: both">33.13. 事件系统</h2></div></div></div><div class="toc"><dl class="toc"><dt><span class="sect2"><a href="libpq-events.html#LIBPQ-EVENTS-TYPES">33.13.1. 事件类型</a></span></dt><dt><span class="sect2"><a href="libpq-events.html#LIBPQ-EVENTS-PROC">33.13.2. 事件回调函数</a></span></dt><dt><span class="sect2"><a href="libpq-events.html#LIBPQ-EVENTS-FUNCS">33.13.3. 事件支持函数</a></span></dt><dt><span class="sect2"><a href="libpq-events.html#LIBPQ-EVENTS-EXAMPLE">33.13.4. 事件实例</a></span></dt></dl></div><p>   <span class="application">libpq</span>的事件系统被设计为通知已注册的事件处理器它感兴趣的<span class="application">libpq</span>事件，例如<code class="structname">PGconn</code>以及<code class="structname">PGresult</code>对象的创建和毁灭。一种主要的使用情况是这允许应用将自己的数据与一个<code class="structname">PGconn</code>或者<code class="structname">PGresult</code>关联在一起，并且确保那些数据在适当的时候被释放。
+  </p><p>   每一个已注册的事件处理器与两部分数据相关，对于<span class="application">libpq</span>它们只是透明的<code class="literal">void *</code>指针。当事件处理器被注册到一个<code class="structname">PGconn</code>时，会有一个应用提供的<em class="firstterm">转移</em>指针。该转移指针在<code class="structname">PGconn</code>及其产生的所有<code class="structname">PGresult</code>的生命期内都不会改变。因此，如果使用它，它必须指向长期存在的数据。此外，还有一个<em class="firstterm">instance data</em>指针，它在每一个<code class="structname">PGconn</code>和<code class="structname">PGresult</code>中都开始于<code class="symbol">NULL</code>。这个指针可以使用
+   <code class="function">PQinstanceData</code>、
+   <code class="function">PQsetInstanceData</code>、
+   <code class="function">PQresultInstanceData</code>和
+   <code class="function">PQsetResultInstanceData</code>函数操纵。注意和转移指针不同，一个<code class="structname">PGconn</code>的实例数据不会被从它创建的<code class="structname">PGresult</code>自动继承。<span class="application">libpq</span>不知道转移和实例数据指针指向的是什么（如果有），并且将不会尝试释放它们 — 那是事件处理器的责任。
+  </p><div class="sect2" id="LIBPQ-EVENTS-TYPES"><div class="titlepage"><div><div><h3 class="title">33.13.1. 事件类型</h3></div></div></div><p>    枚举<code class="literal">PGEventId</code>命名了事件系统处理的事件类型。它的所有值的名称都以<code class="literal">PGEVT</code>开始。对于每一种事件类型，都有一个相应的事件信息结构用来承载传递给事件处理器的参数。事件类型是：
+   </p><div class="variablelist"><dl class="variablelist"><dt id="LIBPQ-PGEVT-REGISTER"><span class="term"><code class="literal">PGEVT_REGISTER</code></span></dt><dd><p>       当<code class="function">PQregisterEventProc</code>被调用时，注册事件会发生。这是一个初始化每一个事件过程都可能需要的<code class="literal">instanceData</code>的最佳时机。每个连接的每个事件处理器只会触发一个注册事件。如果该事件过程失败，注册会被中止。
+
+</p><pre class="synopsis">typedef struct
+{
+    PGconn *conn;
+} PGEventRegister;</pre><p>
+
+       当收到一个<code class="literal">PGEVT_REGISTER</code>事件时，<em class="parameter"><code>evtInfo</code></em>指针应该被造型为<code class="structname">PGEventRegister *</code>。这个结构包含一个状态应该为<code class="literal">CONNECTION_OK</code>的<code class="structname">PGconn</code>，保证在得到一个良好的<code class="structname">PGconn</code>之后能马上调用<code class="function">PQregisterEventProc</code>。当返回一个失败代码时，所有的清理都必须被执行而不会发送<code class="literal">PGEVT_CONNDESTROY</code>事件。
+      </p></dd><dt id="LIBPQ-PGEVT-CONNRESET"><span class="term"><code class="literal">PGEVT_CONNRESET</code></span></dt><dd><p>       连接重置事件在<code class="function">PQreset</code>或<code class="function">PQresetPoll</code>完成时被触发。在两种情况中，只有重置成功才会触发该事件。如果事件过程失败，整个连接重置将失败，<code class="structname">PGconn</code>会被置为<code class="literal">CONNECTION_BAD</code>状态并且<code class="function">PQresetPoll</code>将返回<code class="literal">PGRES_POLLING_FAILED</code>。
+
+</p><pre class="synopsis">typedef struct
+{
+    PGconn *conn;
+} PGEventConnReset;</pre><p>
+
+       当收到一个<code class="literal">PGEVT_CONNRESET</code>事件时，<em class="parameter"><code>evtInfo</code></em>指针应该被造型为<code class="structname">PGEventConnReset *</code>。尽管所包含的<code class="structname">PGconn</code>刚被重置，所有的事件数据还是保持不变。这个事件应该被用来重置/重载/重新查询任何相关的<code class="literal">instanceData</code>。注意即使事件过程无法处理<code class="literal">PGEVT_CONNRESET</code>，它仍将在连接被关闭时接收到一个<code class="literal">PGEVT_CONNDESTROY</code>事件。
+      </p></dd><dt id="LIBPQ-PGEVT-CONNDESTROY"><span class="term"><code class="literal">PGEVT_CONNDESTROY</code></span></dt><dd><p>       为了响应<code class="function">PQfinish</code>，连接销毁事件会被触发。由于 libpq 没有能力管理事件数据，事件过程有责任正确地清理它的事件数据。清理失败将会导致内存泄露。
+
+</p><pre class="synopsis">typedef struct
+{
+    PGconn *conn;
+} PGEventConnDestroy;</pre><p>
+
+       当接收到一个<code class="literal">PGEVT_CONNDESTROY</code>事件时，<em class="parameter"><code>evtInfo</code></em>指针应该被造型为<code class="structname">PGEventConnDestroy *</code>。这个事件在<code class="function">PQfinish</code>执行任何其他清理之前被触发。该事件过程的返回值被忽略，因为没有办法指示一个来自<code class="function">PQfinish</code>的失败。还有，一个事件过程失败不该中断对不需要的内存的清理。
+      </p></dd><dt id="LIBPQ-PGEVT-RESULTCREATE"><span class="term"><code class="literal">PGEVT_RESULTCREATE</code></span></dt><dd><p>       为了响应任何生成一个结果的查询执行函数，结果创建事件会被触发。这些函数包括<code class="function">PQgetResult</code>。这个事件只有在结果被成功地创建之后才会被触发。
+
+</p><pre class="synopsis">typedef struct
+{
+    PGconn *conn;
+    PGresult *result;
+} PGEventResultCreate;</pre><p>
+
+       当接收到一个<code class="literal">PGEVT_RESULTCREATE</code>事件时，<em class="parameter"><code>evtInfo</code></em>指针应该被造型为<code class="structname">PGEventResultCreate *</code>。<em class="parameter"><code>conn</code></em>是用来产生结果的连接。这是初始化任何需要与结果关联的<code class="literal">instanceData</code>的理想位置。如果该事件过程失败，结果将被清除并且失败将会被传播。该事件过程不能尝试自己<code class="function">PQclear</code>结果对象。当返回一个失败代码时，所有清理必须被执行而不会发送<code class="literal">PGEVT_RESULTDESTROY</code>事件。
+      </p></dd><dt id="LIBPQ-PGEVT-RESULTCOPY"><span class="term"><code class="literal">PGEVT_RESULTCOPY</code></span></dt><dd><p>       为了响应<code class="function">PQcopyResult</code>，结果复制事件会被触发。这个事件只会在复制完成后才被触发。只有成功地处理了<code class="literal">PGEVT_RESULTCREATE</code>和<code class="literal">PGEVT_RESULTCOPY</code>事件的事件过程才将会收到<code class="literal">PGEVT_RESULTCOPY</code>事件。
+
+</p><pre class="synopsis">typedef struct
+{
+    const PGresult *src;
+    PGresult *dest;
+} PGEventResultCopy;</pre><p>
+
+       当收到一个<code class="literal">PGEVT_RESULTCOPY</code>事件时，<em class="parameter"><code>evtInfo</code></em>指针应该被造型为<code class="structname">PGEventResultCopy *</code>。<em class="parameter"><code>src</code></em>结果是要被复制的，而<em class="parameter"><code>dest</code></em>结果则是复制的目的地。这个事件可以被用来提供<code class="literal">instanceData</code>的一份深度副本，因为<code class="literal">PQcopyResult</code>没法这样做。如果该事件过程失败，整个复制操作将失败并且<em class="parameter"><code>dest</code></em>结果将被清除。当返回一个失败代码时，所有清理必须被执行而不会为目标结果发送<code class="literal">PGEVT_RESULTDESTROY</code>事件。
+      </p></dd><dt id="LIBPQ-PGEVT-RESULTDESTROY"><span class="term"><code class="literal">PGEVT_RESULTDESTROY</code></span></dt><dd><p>       为了响应<code class="function">PQclear</code>，结果销毁事件会被触发。由于 libpq 没有能力管理事件数据，事件过程有责任正确地清理它的事件数据。清理失败将会导致内存泄露。
+
+</p><pre class="synopsis">typedef struct
+{
+    PGresult *result;
+} PGEventResultDestroy;</pre><p>
+
+       当接收到一个<code class="literal">PGEVT_RESULTDESTROY</code>事件时，<em class="parameter"><code>evtInfo</code></em>指针应该被造型为<code class="structname">PGEventResultDestroy *</code>。这个事件在<code class="function">PQclear</code>执行任何其他清理之前被触发。该事件过程的返回值被忽略，因为没有办法指示来自<code class="function">PQclear</code>的失败。还有，一个事件过程失败不该中断不需要的内存的清理过程。
+      </p></dd></dl></div></div><div class="sect2" id="LIBPQ-EVENTS-PROC"><div class="titlepage"><div><div><h3 class="title">33.13.2. 事件回调函数</h3></div></div></div><div class="variablelist"><dl class="variablelist"><dt id="LIBPQ-PGEVENTPROC"><span class="term">      <code class="literal">PGEventProc</code>
+      <a id="idp28558272" class="indexterm"></a>
+     </span></dt><dd><p>       <code class="literal">PGEventProc</code>是到一个事件过程的指针的 typedef，也就是从 libpq 接收事件的用户回调函数。一个事件过程的原型必须是
+
+</p><pre class="synopsis">int eventproc(PGEventId evtId, void *evtInfo, void *passThrough)</pre><p>
+
+       <em class="parameter"><code>evtId</code></em>指示发生了哪一个<code class="literal">PGEVT</code>事件。<em class="parameter"><code>evtInfo</code></em>指针必须被造型为合适的结构类型才能获得关于事件的进一步信息。当事件过程已被注册时，<em class="parameter"><code>passThrough</code></em>参数是提供给<code class="function">PQregisterEventProc</code>的指针。如果成功，该函数应该返回非零值，失败则返回零。
+      </p><p>       在任何一个<code class="structname">PGconn</code>中，一个特定事件过程只能被注册一次。这是因为该过程的地址被用作查找键来标识相关的实例数据。
+      </p><div class="caution"><h3 class="title">小心</h3><p>        在 Windows 上，函数能够有两个不同的地址：一个对 DLL 之外可见而另一个对 DLL 之内可见。我们应当小心只有其中之一会被用于<span class="application">libpq</span>的事件过程函数，否则将会产生混淆。编写代码的最简单规则是将所有的事件过程声明为<code class="literal">static</code>。如果过程的地址必须对它自己的源代码文件之外可见，提供一个单独的函数来返回该地址。
+       </p></div></dd></dl></div></div><div class="sect2" id="LIBPQ-EVENTS-FUNCS"><div class="titlepage"><div><div><h3 class="title">33.13.3. 事件支持函数</h3></div></div></div><div class="variablelist"><dl class="variablelist"><dt id="LIBPQ-PQREGISTEREVENTPROC"><span class="term">      <code class="function">PQregisterEventProc</code>
+      <a id="idp28570704" class="indexterm"></a>
+     </span></dt><dd><p>       为 libpq 注册一个事件回调过程。
+
+</p><pre class="synopsis">int PQregisterEventProc(PGconn *conn, PGEventProc proc,
+                        const char *name, void *passThrough);</pre><p>
+      </p><p>       在每一个你想要接收事件的<code class="structname">PGconn</code>上必须注册一个事件过程。和内存不同，没有限制说一个连接上能注册多少个事件过程。如果该函数成功，它会返回一个非零值。如果它失败，则会返回零。
+      </p><p>       当一个 libpq 事件被触发时，<em class="parameter"><code>proc</code></em>参数将被调用。它的内存地址也被用来查找<code class="literal">instanceData</code>。<em class="parameter"><code>name</code></em>参数被用来在错误消息中引用该事件过程。这个值不能是<code class="symbol">NULL</code>或一个零长度串。名字串被复制到<code class="structname">PGconn</code>中，因此传递进来的东西不需要长期存在。当一个事件发生时，<em class="parameter"><code>passThrough</code></em>指针被传递给<em class="parameter"><code>proc</code></em>。这个参数可以是<code class="symbol">NULL</code>。
+      </p></dd><dt id="LIBPQ-PQSETINSTANCEDATA"><span class="term">      <code class="function">PQsetInstanceData</code>
+      <a id="idp28580800" class="indexterm"></a>
+     </span></dt><dd><p>       设置连接<em class="parameter"><code>conn</code></em>的用于过程<em class="parameter"><code>proc</code></em>的<code class="literal">instanceData</code>为<em class="parameter"><code>data</code></em>。它在成功时返回非零值，失败时返回零（只有<em class="parameter"><code>proc</code></em>没有被正确地注册在<em class="parameter"><code>conn</code></em>中，才可能会失败）。
+
+</p><pre class="synopsis">int PQsetInstanceData(PGconn *conn, PGEventProc proc, void *data);</pre><p>
+      </p></dd><dt id="LIBPQ-PQINSTANCEDATA"><span class="term">      <code class="function">PQinstanceData</code>
+      <a id="idp28588736" class="indexterm"></a>
+     </span></dt><dd><p>       返回连接<em class="parameter"><code>conn</code></em>的与过程<em class="parameter"><code>proc</code></em>相关的<code class="literal">instanceData</code>，如果没有则返回<code class="symbol">NULL</code>。
+
+</p><pre class="synopsis">void *PQinstanceData(const PGconn *conn, PGEventProc proc);</pre><p>
+      </p></dd><dt id="LIBPQ-PQRESULTSETINSTANCEDATA"><span class="term">      <code class="function">PQresultSetInstanceData</code>
+      <a id="idp28594912" class="indexterm"></a>
+     </span></dt><dd><p>       把结果的用于<em class="parameter"><code>proc</code></em>的<code class="literal">instanceData</code>设置为<em class="parameter"><code>data</code></em>。成功返回非零，失败返回零（只有<em class="parameter"><code>proc</code></em>没有被正确地注册在<em class="parameter"><code>conn</code></em>中，才可能会失败）。
+
+</p><pre class="synopsis">int PQresultSetInstanceData(PGresult *res, PGEventProc proc, void *data);</pre><p>
+      </p></dd><dt id="LIBPQ-PQRESULTINSTANCEDATA"><span class="term">      <code class="function">PQresultInstanceData</code>
+      <a id="idp28602112" class="indexterm"></a>
+     </span></dt><dd><p>       返回结果的与过程<em class="parameter"><code>proc</code></em>相关的<code class="literal">instanceData</code>，如果没有则返回<code class="symbol">NULL</code>。
+
+</p><pre class="synopsis">void *PQresultInstanceData(const PGresult *res, PGEventProc proc);</pre><p>
+      </p></dd></dl></div></div><div class="sect2" id="LIBPQ-EVENTS-EXAMPLE"><div class="titlepage"><div><div><h3 class="title">33.13.4. 事件实例</h3></div></div></div><p>    这里是一个管理与 libpq 连接和结果相关的私有数据的例子的框架。
+   </p><pre class="programlisting">/* 要求 libpq 事件的头文件（注意：包括 libpq-fe.h） */
+#include &lt;libpq-events.h&gt;
+
+/* The instanceData */
+typedef struct
+{
+    int n;
+    char *str;
+} mydata;
+
+/* PGEventProc */
+static int myEventProc(PGEventId evtId, void *evtInfo, void *passThrough);
+
+int
+main(void)
+{
+    mydata *data;
+    PGresult *res;
+    PGconn *conn = PQconnectdb("dbname = postgres");
+
+    if (PQstatus(conn) != CONNECTION_OK)
+    {
+        fprintf(stderr, "Connection to database failed: %s",
+                PQerrorMessage(conn));
+        PQfinish(conn);
+        return 1;
+    }
+
+    /* 在任何应该接收事件的连接上调用一次。
+     * 发送一个 PGEVT_REGISTER 给 myEventProc。
+     */
+    if (!PQregisterEventProc(conn, myEventProc, "mydata_proc", NULL))
+    {
+        fprintf(stderr, "Cannot register PGEventProc\n");
+        PQfinish(conn);
+        return 1;
+    }
+
+    /* conn 的 instanceData 可用 */
+    data = PQinstanceData(conn, myEventProc);
+
+    /* 发送一个 PGEVT_RESULTCREATE 给 myEventProc */
+    res = PQexec(conn, "SELECT 1 + 1");
+
+    /* 结果的 instanceData 可用 */
+    data = PQresultInstanceData(res, myEventProc);
+
+    /* 如果使用了 PG_COPYRES_EVENTS，发送一个 PGEVT_RESULTCOPY 给 myEventProc */
+    res_copy = PQcopyResult(res, PG_COPYRES_TUPLES | PG_COPYRES_EVENTS);
+
+    /* 如果在 PQcopyResult 调用时使用了 PG_COPYRES_EVENTS，结果的 instanceData 可用。*/
+    data = PQresultInstanceData(res_copy, myEventProc);
+
+    /* 两个清除都发送一个 PGEVT_RESULTDESTROY 给 myEventProc */
+    PQclear(res);
+    PQclear(res_copy);
+
+    /* 发送一个 PGEVT_CONNDESTROY 给 myEventProc */
+    PQfinish(conn);
+
+    return 0;
+}
+
+static int
+myEventProc(PGEventId evtId, void *evtInfo, void *passThrough)
+{
+    switch (evtId)
+    {
+        case PGEVT_REGISTER:
+        {
+            PGEventRegister *e = (PGEventRegister *)evtInfo;
+            mydata *data = get_mydata(e-&gt;conn);
+
+            /* 将应用相关的数据与连接关联起来 */
+            PQsetInstanceData(e-&gt;conn, myEventProc, data);
+            break;
+        }
+
+        case PGEVT_CONNRESET:
+        {
+            PGEventConnReset *e = (PGEventConnReset *)evtInfo;
+            mydata *data = PQinstanceData(e-&gt;conn, myEventProc);
+
+            if (data)
+              memset(data, 0, sizeof(mydata));
+            break;
+        }
+
+        case PGEVT_CONNDESTROY:
+        {
+            PGEventConnDestroy *e = (PGEventConnDestroy *)evtInfo;
+            mydata *data = PQinstanceData(e-&gt;conn, myEventProc);
+
+            /* 因为连接正在被销毁，释放示例数据 */
+            if (data)
+              free_mydata(data);
+            break;
+        }
+
+        case PGEVT_RESULTCREATE:
+        {
+            PGEventResultCreate *e = (PGEventResultCreate *)evtInfo;
+            mydata *conn_data = PQinstanceData(e-&gt;conn, myEventProc);
+            mydata *res_data = dup_mydata(conn_data);
+
+            /* 把应用相关的数据与结果（从 conn 复制过来）关联起来 */
+            PQsetResultInstanceData(e-&gt;result, myEventProc, res_data);
+            break;
+        }
+
+        case PGEVT_RESULTCOPY:
+        {
+            PGEventResultCopy *e = (PGEventResultCopy *)evtInfo;
+            mydata *src_data = PQresultInstanceData(e-&gt;src, myEventProc);
+            mydata *dest_data = dup_mydata(src_data);
+
+            /* 把应用相关的数据与结果（从一个结果复制过来）关联起来 */
+            PQsetResultInstanceData(e-&gt;dest, myEventProc, dest_data);
+            break;
+        }
+
+        case PGEVT_RESULTDESTROY:
+        {
+            PGEventResultDestroy *e = (PGEventResultDestroy *)evtInfo;
+            mydata *data = PQresultInstanceData(e-&gt;result, myEventProc);
+
+            /* 因为结果正在被销毁，释放实例数据 */
+            if (data)
+              free_mydata(data);
+            break;
+        }
+
+        /* 未知事件 ID，只返回 TRUE。 */
+        default:
+            break;
+    }
+
+    return TRUE; /* 事件处理成功 */
+}</pre></div></div><div class="navfooter"><hr /><table width="100%" summary="Navigation footer"><tr><td width="40%" align="left"><a accesskey="p" href="libpq-notice-processing.html">上一页</a> </td><td width="20%" align="center"><a accesskey="u" href="libpq.html">上一级</a></td><td width="40%" align="right"> <a accesskey="n" href="libpq-envars.html">下一页</a></td></tr><tr><td width="40%" align="left" valign="top">33.12. 通知处理 </td><td width="20%" align="center"><a accesskey="h" href="index.html">起始页</a></td><td width="40%" align="right" valign="top"> 33.14. 环境变量</td></tr></table></div></body></html>

@@ -1,0 +1,90 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><title>pg_recvlogical</title><link rel="stylesheet" type="text/css" href="stylesheet.css" /><link rev="made" href="pgsql-docs@postgresql.org" /><meta name="generator" content="DocBook XSL Stylesheets V1.79.1" /><link rel="prev" href="app-pgreceivewal.html" title="pg_receivewal" /><link rel="next" href="app-pgrestore.html" title="pg_restore" /></head><body><div xmlns="http://www.w3.org/TR/xhtml1/transitional" class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="5" align="center"><span xmlns="http://www.w3.org/1999/xhtml" class="application">pg_recvlogical</span></th></tr><tr><td width="10%" align="left"><a accesskey="p" href="app-pgreceivewal.html" title="pg_receivewal">上一页</a> </td><td width="10%" align="left"><a accesskey="u" href="reference-client.html" title="PostgreSQL 客户端应用">上一级</a></td><th width="60%" align="center">PostgreSQL 客户端应用</th><td width="10%" align="right"><a accesskey="h" href="index.html" title="PostgreSQL 10.1 手册">起始页</a></td><td width="10%" align="right"> <a accesskey="n" href="app-pgrestore.html" title="pg_restore">下一页</a></td></tr></table><hr></hr></div><div class="refentry" id="APP-PGRECVLOGICAL"><div class="titlepage"></div><a id="idp51577280" class="indexterm"></a><div class="refnamediv"><h2><span class="refentrytitle"><span class="application">pg_recvlogical</span></span></h2><p>pg_recvlogical — 控制 <span class="productname">PostgreSQL</span> 逻辑解码流</p></div><div class="refsynopsisdiv"><h2>大纲</h2><div class="cmdsynopsis"><p id="idp51581248"><code class="command">pg_recvlogical</code> [<em class="replaceable"><code>option</code></em>...]</p></div></div><div class="refsect1" id="idp51583104"><h2>描述</h2><p>   <code class="command">pg_recvlogical</code>控制逻辑解码复制槽以及来自这种复制槽的流数据。
+  </p><p>   它会创建一个复制模式的连接，因此它受到和<a class="xref" href="app-pgreceivewal.html" title="pg_receivewal"><span class="refentrytitle">pg_receivewal</span></a>
+   相同的约束，还有逻辑复制（<a class="xref" href="logicaldecoding.html" title="第 48 章 逻辑解码">第 48 章</a>）的约束。
+  </p><p>   <code class="command">pg_recvlogical</code>没有等同于逻辑解码SQL接口的窥视和获取模式。
+   它会在收到数据并在干净的退出时延迟地发送重播确认。
+   检查插槽上未处理的数据而不使用它，使用
+   <a class="link" href="functions-admin.html#FUNCTIONS-REPLICATION" title="9.26.6. Replication Functions"><code class="function">pg_logical_slot_peek_changes</code></a>。
+  </p></div><div class="refsect1" id="idp51588784"><h2>选项</h2><p>    必须至少要指定下列选项之一来选择一个动作：
+
+    </p><div class="variablelist"><dl class="variablelist"><dt><span class="term"><code class="option">--create-slot</code></span></dt><dd><p>        为<code class="option">--dbname</code>指定的数据库用<code class="option">--slot</code>
+        指定的名称创建一个新的逻辑复制槽，使用
+        <code class="option">--plugin</code>指定的输出插件。
+       </p></dd><dt><span class="term"><code class="option">--drop-slot</code></span></dt><dd><p>        删除名称由<code class="option">--slot</code>指定的复制槽，然后退出。
+       </p></dd><dt><span class="term"><code class="option">--start</code></span></dt><dd><p>        从<code class="option">--slot</code>指定的逻辑复制槽开始进行流式传送更改，一直继续
+        到被一个信号终止。如果服务器端关机或者断开连接导致更改流结束，会进入一个
+        循环一直重试，通过指定<code class="option">--no-loop</code>可以防止这种情况下进入
+        循环重试。
+       </p><p>        流格式由槽创建时指定的输出插件决定。
+       </p><p>        连接必须是连接到用于创建该槽的同一个数据库上。
+       </p></dd></dl></div><p>
+   </p><p>    <code class="option">--create-slot</code>和<code class="option">--start</code>可以被一起指定。
+    <code class="option">--drop-slot</code>不能和另一个动作组合在一起。
+   </p><p>    下面的命令行选项控制输出的位置和格式以及其他复制行为：
+
+    </p><div class="variablelist"><dl class="variablelist"><dt><span class="term"><code class="option">-E <em class="replaceable"><code>lsn</code></em></code><br /></span><span class="term"><code class="option">--endpos=<em class="replaceable"><code>lsn</code></em></code></span></dt><dd><p>        在<code class="option">--start</code>模式下，当接收到达指定的LSN时，
+		自动停止复制并以正常退出状态0退出。如果未在<code class="option">--start</code>模式下指定，
+		则会引发错误。
+       </p><p>        如果有一条记录的LSN完全等于<em class="replaceable"><code>lsn</code></em>，则记录将被输出。
+       </p><p>        <code class="option">--endpos</code>选项不知道事务边界，并可能在事务中途截断输出。
+		任何部分输出的事务都不会被使用，并且在下一次读取插槽时将再次播放。
+		个人消息不会被截断。
+       </p></dd><dt><span class="term"><code class="option">-f <em class="replaceable"><code>filename</code></em></code><br /></span><span class="term"><code class="option">--file=<em class="replaceable"><code>filename</code></em></code></span></dt><dd><p>        把接收到并且解码好的事务数据写入到一个文件。使用<code class="literal">-</code>可以写到<span class="systemitem">stdout</span>。
+       </p></dd><dt><span class="term"><code class="option">-F <em class="replaceable"><code>interval_seconds</code></em></code><br /></span><span class="term"><code class="option">--fsync-interval=<em class="replaceable"><code>interval_seconds</code></em></code></span></dt><dd><p>        指定<span class="application">pg_recvlogical</span>发出
+        <code class="function">fsync()</code>调用确保输出文件被安全地刷到磁盘的频度。
+       </p><p>        服务器将会偶尔要求客户端执行一次刷写并且把刷写位置报告给服务器。
+        这个设置可以在此之外更加频繁地执行刷写。
+       </p><p>        指定间隔为<code class="literal">0</code>会完全禁止发出<code class="function">fsync()</code>
+        调用，但是仍会报告进度给服务器。在这种情况下，发生崩溃会导致数据丢失。
+       </p></dd><dt><span class="term"><code class="option">-I <em class="replaceable"><code>lsn</code></em></code><br /></span><span class="term"><code class="option">--startpos=<em class="replaceable"><code>lsn</code></em></code></span></dt><dd><p>        在<code class="option">--start</code>模式中，从给定的 LSN 开始复制。这个参数的
+        效果请见<a class="xref" href="logicaldecoding.html" title="第 48 章 逻辑解码">第 48 章</a>和
+        <a class="xref" href="protocol-replication.html" title="52.4. 流复制协议">第 52.4 节</a>中的文档。在其他模式中会忽略这个参数。
+       </p></dd><dt><span class="term"><code class="option">--if-not-exists</code></span></dt><dd><p>        当指定<code class="option">--create-slot</code>并且具有指定名称
+        的槽已经存在时不要抛出错误。
+       </p></dd><dt><span class="term"><code class="option">-n</code><br /></span><span class="term"><code class="option">--no-loop</code></span></dt><dd><p>        当服务器连接丢失时，不要在循环中重试，直接退出。
+       </p></dd><dt><span class="term"><code class="option">-o <em class="replaceable"><code>name</code></em>[=<em class="replaceable"><code>value</code></em>]</code><br /></span><span class="term"><code class="option">--option=<em class="replaceable"><code>name</code></em>[=<em class="replaceable"><code>value</code></em>]</code></span></dt><dd><p>        如果指定了输出插件，把选项值<em class="replaceable"><code>value</code></em>
+        传递给选项<em class="replaceable"><code>name</code></em>。存在哪些选项以及它们的效果
+        取决于使用的输出插件。
+       </p></dd><dt><span class="term"><code class="option">-P <em class="replaceable"><code>plugin</code></em></code><br /></span><span class="term"><code class="option">--plugin=<em class="replaceable"><code>plugin</code></em></code></span></dt><dd><p>        在创建一个槽时使用指定的逻辑解码输出插件。
+        见<a class="xref" href="logicaldecoding.html" title="第 48 章 逻辑解码">第 48 章</a>。如果该槽已经存在，这个选项没有效果。
+       </p></dd><dt><span class="term"><code class="option">-s <em class="replaceable"><code>interval_seconds</code></em></code><br /></span><span class="term"><code class="option">--status-interval=<em class="replaceable"><code>interval_seconds</code></em></code></span></dt><dd><p>        这个选项和<a class="xref" href="app-pgreceivewal.html" title="pg_receivewal"><span class="refentrytitle">pg_receivewal</span></a>中的同名选项具有
+        相同的效果。请参考那里的描述。
+       </p></dd><dt><span class="term"><code class="option">-S <em class="replaceable"><code>slot_name</code></em></code><br /></span><span class="term"><code class="option">--slot=<em class="replaceable"><code>slot_name</code></em></code></span></dt><dd><p>        在<code class="option">--start</code>模式中，使用名为<em class="replaceable"><code>slot_name</code></em>
+        的已有逻辑复制槽。在<code class="option">--create-slot</code>模式中，使用这个名称
+        创建该槽。在<code class="option">--drop-slot</code>模式中，删除这个名称指定的槽。
+       </p></dd><dt><span class="term"><code class="option">-v</code><br /></span><span class="term"><code class="option">--verbose</code></span></dt><dd><p>        开启详细输出模式。
+       </p></dd></dl></div><p>
+   </p><p>    下列命令行选项控制数据库连接参数。
+ 
+    </p><div class="variablelist"><dl class="variablelist"><dt><span class="term"><code class="option">-d <em class="replaceable"><code>database</code></em></code><br /></span><span class="term"><code class="option">--dbname=<em class="replaceable"><code>database</code></em></code></span></dt><dd><p>         要连接的数据库。这个选项的详细含义请见动作的描述。它可以是一个
+         <span class="application">libpq</span>连接
+         字符串，详见<a class="xref" href="libpq-connect.html#LIBPQ-CONNSTRING" title="33.1.1. 连接字符串">第 33.1.1 节</a>。默认为用户名。
+        </p></dd><dt><span class="term"><code class="option">-h <em class="replaceable"><code>hostname-or-ip</code></em></code><br /></span><span class="term"><code class="option">--host=<em class="replaceable"><code>hostname-or-ip</code></em></code></span></dt><dd><p>         指定服务器正在运行的机器的主机名。如果该值开始于一个斜线，
+         它被用作一个 Unix 域套接字的目录。默认是从
+         <code class="envar">PGHOST</code>环境变量中取得（如果被设置），
+         否则将尝试一次 Unix 域套接字连接。
+        </p></dd><dt><span class="term"><code class="option">-p <em class="replaceable"><code>port</code></em></code><br /></span><span class="term"><code class="option">--port=<em class="replaceable"><code>port</code></em></code></span></dt><dd><p>         指定服务器正在监听连接的 TCP 端口或本地 Unix 域套接字文件扩展名。
+         默认是放在<code class="envar">PGPORT</code>环境变量中（如果被设置），
+         否则使用编译在程序中的默认值。
+        </p></dd><dt><span class="term"><code class="option">-U <em class="replaceable"><code>user</code></em></code><br /></span><span class="term"><code class="option">--username=<em class="replaceable"><code>user</code></em></code></span></dt><dd><p>         要作为哪个用户连接。默认是用当前操作系统用户名。
+        </p></dd><dt><span class="term"><code class="option">-w</code><br /></span><span class="term"><code class="option">--no-password</code></span></dt><dd><p>         从不发出一个口令提示。如果服务器要求口令认证并且没有
+         其他方式提供口令（例如一个<code class="filename">.pgpass</code>文件），
+         那么连接尝试将失败。这个选项对于批处理任务和脚本有用，
+         因为在其中没有一个用户来输入口令。
+        </p></dd><dt><span class="term"><code class="option">-W</code><br /></span><span class="term"><code class="option">--password</code></span></dt><dd><p>         强制<span class="application">pg_dump</span>在连接到一个数据库之前提示要求一个口令。
+        </p><p>         这个选项不是必须的，因为如果服务器要求口令认证，
+         <span class="application">pg_dump</span>将自动提示要求一个口令。
+         但是，<span class="application">pg_dump</span>将浪费一次连接尝试
+         来发现服务器想要一个口令。在某些情况下，值得键入
+         <code class="option">-W</code>来避免额外的连接尝试。
+        </p></dd></dl></div><p>
+   </p><p>    还有下列附加选项可用：
+
+    </p><div class="variablelist"><dl class="variablelist"><dt><span class="term"><code class="option">-V</code><br /></span><span class="term"><code class="option">--version</code></span></dt><dd><p>        打印<span class="application">pg_recvlogical</span>的版本并且退出。
+       </p></dd><dt><span class="term"><code class="option">-?</code><br /></span><span class="term"><code class="option">--help</code></span></dt><dd><p>         显示关于<span class="application">pg_recvlogical</span>命令行参数的帮助，并且退出。
+        </p></dd></dl></div><p>
+   </p></div><div class="refsect1" id="idp51658464"><h2>环境</h2><p>   和大部分其他<span class="productname">PostgreSQL</span>工具相似，这个工具也使用<span class="application">libpq</span>（见<a class="xref" href="libpq-envars.html" title="33.14. 环境变量">第 33.14 节</a>）支持的环境变量。
+  </p></div><div class="refsect1" id="idp51661376"><h2>例子</h2><p>   一个例子请见<a class="xref" href="logicaldecoding-example.html" title="48.1. 逻辑解码的例子">第 48.1 节</a>。
+  </p></div><div class="refsect1" id="idp51662816"><h2>另见</h2><span class="simplelist"><a class="xref" href="app-pgreceivewal.html" title="pg_receivewal"><span class="refentrytitle">pg_receivewal</span></a></span></div></div><div class="navfooter"><hr /><table width="100%" summary="Navigation footer"><tr><td width="40%" align="left"><a accesskey="p" href="app-pgreceivewal.html">上一页</a> </td><td width="20%" align="center"><a accesskey="u" href="reference-client.html">上一级</a></td><td width="40%" align="right"> <a accesskey="n" href="app-pgrestore.html">下一页</a></td></tr><tr><td width="40%" align="left" valign="top">pg_receivewal </td><td width="20%" align="center"><a accesskey="h" href="index.html">起始页</a></td><td width="40%" align="right" valign="top"> pg_restore</td></tr></table></div></body></html>

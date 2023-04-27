@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><title>B.1. 日期/时间输入解释</title><link rel="stylesheet" type="text/css" href="stylesheet.css" /><link rev="made" href="pgsql-docs@postgresql.org" /><meta name="generator" content="DocBook XSL Stylesheets V1.79.1" /><link rel="prev" href="datetime-appendix.html" title="附录 B. 日期/时间支持" /><link rel="next" href="datetime-keywords.html" title="B.2. 日期/时间关键词" /></head><body><div xmlns="http://www.w3.org/TR/xhtml1/transitional" class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="5" align="center">B.1. 日期/时间输入解释</th></tr><tr><td width="10%" align="left"><a accesskey="p" href="datetime-appendix.html" title="附录 B. 日期/时间支持">上一页</a> </td><td width="10%" align="left"><a accesskey="u" href="datetime-appendix.html" title="附录 B. 日期/时间支持">上一级</a></td><th width="60%" align="center">附录 B. 日期/时间支持</th><td width="10%" align="right"><a accesskey="h" href="index.html" title="PostgreSQL 10.1 手册">起始页</a></td><td width="10%" align="right"> <a accesskey="n" href="datetime-keywords.html" title="B.2. 日期/时间关键词">下一页</a></td></tr></table><hr></hr></div><div class="sect1" id="DATETIME-INPUT-RULES"><div class="titlepage"><div><div><h2 class="title" style="clear: both">B.1. 日期/时间输入解释</h2></div></div></div><p>    日期/时间类型输入都使用下面的过程解码。
+   </p><div class="procedure"><ol class="procedure" type="1"><li class="step"><p>      将输入字符串打断成记号并且把每一个记号分类为一个字符串、时间、时区或数字。
+     </p><ol type="a" class="substeps"><li class="step"><p>        如果数字记号包含一个分号（<code class="literal">:</code>），那么这是一个时间字符串。包括所有后续数位和分号。
+       </p></li><li class="step"><p>        如果数字记号包含一个连字符（<code class="literal">-</code>）、斜线（<code class="literal">/</code>）或两个以上的句点（<code class="literal">.</code>），那么这是一个日期字符串，它可能含有一个文本形式的月份。如果一个日期记号已经被看到，它会转而被解释为一个时区名（例如<code class="literal">America/New_York</code>）。
+       </p></li><li class="step"><p>        如果记号只是数字，那么它要么是一个单一域，要么是一个 ISO 8601 串连日期（例如 1999年1月13日是<code class="literal">19990113</code>）或时间（例如 14:15:16 是<code class="literal">141516</code>）。
+       </p></li><li class="step"><p>        如果记号以一个加号（<code class="literal">+</code>）或减号（<code class="literal">-</code>）开始，那么它要么是一个数字的时区，要么是一个特殊域。
+       </p></li></ol></li><li class="step"><p>      如果记号是一个文本字符串，使之匹配可能的串：
+     </p><ol type="a" class="substeps"><li class="step"><p>        对作为一个时区缩写的记号做一次二分法表查找。
+       </p></li><li class="step"><p>        如果没有找到，做一次类似的二分法表查找来将该记号匹配为一个特殊串（例如<code class="literal">today</code>）、日（例如<code class="literal">Thursday</code>）、月（例如<code class="literal">January</code>）或噪音词（例如<code class="literal">at</code>、<code class="literal">on</code>）。
+       </p></li><li class="step"><p>        如果仍然没有找到，则抛出一个错误。
+       </p></li></ol></li><li class="step"><p>      当记号是一个数字或数字域时：
+     </p><ol type="a" class="substeps"><li class="step"><p>        如果有 8 位或 6 位，并且之前没有读到其他日期域，那么解释为一个<span class="quote">“<span class="quote">串连日期</span>”</span>（例如<code class="literal">19990118</code>或<code class="literal">990118</code>）。翻译是<code class="literal">YYYYMMDD</code>或<code class="literal">YYMMDD</code>。
+       </p></li><li class="step"><p>        如果记号是 3 位并且已经读到了一个年域，那么解释为一年中的第几日。
+       </p></li><li class="step"><p>        如果是 4 位或 6 位并且已经读到了一个年域，那么解释为一个时间域（<code class="literal">HHMM</code>或<code class="literal">HHMMSS</code>）。
+       </p></li><li class="step"><p>        如果是 3 位或更多位并且还没有读到日期域，解释为一个年域（这会强制剩余日期域的 yy-mm-dd 顺序）。
+       </p></li><li class="step"><p>        否则日期域顺序被假定为遵循<code class="varname">DateStyle</code>设置：mm-dd-yy、dd-mm-yy 或 yy-mm-dd。如果一个月或日域被发现超过范围，则抛出一个错误。
+       </p></li></ol></li><li class="step"><p>      如果已经指定了 BC ，对年求反并且加一用于内部存储（在格里高利历中没有 0 年，因此数字的 1 BC 就是 0 年）。
+     </p></li><li class="step"><p>      如果没有指定 BC ，并且如果该年域长度为两位，那么把该年域调整为四位。如果该域小于 70，则增加 2000，否则增加 1900。
+
+      </p><div class="tip"><h3 class="title">提示</h3><p>        格里高利年 AD 1-99 可以使用带有前导零的 4 位形式录入（例如<code class="literal">0099</code>是 AD 99）。
+       </p></div><p>
+     </p></li></ol></div></div><div class="navfooter"><hr /><table width="100%" summary="Navigation footer"><tr><td width="40%" align="left"><a accesskey="p" href="datetime-appendix.html">上一页</a> </td><td width="20%" align="center"><a accesskey="u" href="datetime-appendix.html">上一级</a></td><td width="40%" align="right"> <a accesskey="n" href="datetime-keywords.html">下一页</a></td></tr><tr><td width="40%" align="left" valign="top">附录 B. 日期/时间支持 </td><td width="20%" align="center"><a accesskey="h" href="index.html">起始页</a></td><td width="40%" align="right" valign="top"> B.2. 日期/时间关键词</td></tr></table></div></body></html>

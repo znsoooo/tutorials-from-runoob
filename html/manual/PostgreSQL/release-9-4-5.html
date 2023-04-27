@@ -1,0 +1,182 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><title>E.31. 版本 9.4.5</title><link rel="stylesheet" type="text/css" href="stylesheet.css" /><link rev="made" href="pgsql-docs@postgresql.org" /><meta name="generator" content="DocBook XSL Stylesheets V1.79.1" /><link rel="prev" href="release-9-4-6.html" title="E.30. 版本 9.4.6" /><link rel="next" href="release-9-4-4.html" title="E.32. 版本 9.4.4" /></head><body><div xmlns="http://www.w3.org/TR/xhtml1/transitional" class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="5" align="center">E.31. 版本 9.4.5</th></tr><tr><td width="10%" align="left"><a accesskey="p" href="release-9-4-6.html" title="E.30. 版本 9.4.6">上一页</a> </td><td width="10%" align="left"><a accesskey="u" href="release.html" title="附录 E. 版本说明">上一级</a></td><th width="60%" align="center">附录 E. 版本说明</th><td width="10%" align="right"><a accesskey="h" href="index.html" title="PostgreSQL 10.1 手册">起始页</a></td><td width="10%" align="right"> <a accesskey="n" href="release-9-4-4.html" title="E.32. 版本 9.4.4">下一页</a></td></tr></table><hr></hr></div><div class="sect1" id="RELEASE-9-4-5"><div class="titlepage"><div><div><h2 class="title" style="clear: both">E.31. 版本 9.4.5</h2></div></div></div><div class="toc"><dl class="toc"><dt><span class="sect2"><a href="release-9-4-5.html#idp67372912">E.31.1. 迁移到版本9.4.5</a></span></dt><dt><span class="sect2"><a href="release-9-4-5.html#idp67374816">E.31.2. 修改列表</a></span></dt></dl></div><p><strong>发布日期：. </strong>2015-10-08</p><p>   这个版本包含自9.4.4以来的各种修复。关于9.4主版本的新特性信息，请查看
+   <a class="xref" href="release-9-4.html" title="E.36. 版本 9.4">第 E.36 节</a>。
+  </p><div class="sect2" id="idp67372912"><div class="titlepage"><div><div><h3 class="title">E.31.1. 迁移到版本9.4.5</h3></div></div></div><p>    运行9.4.X的用户不需要转储/恢复。
+   </p><p>    不过，如果您是从一个早于9.4.4的版本升级而来，请查看
+    <a class="xref" href="release-9-4-4.html" title="E.32. 版本 9.4.4">第 E.32 节</a>。
+   </p></div><div class="sect2" id="idp67374816"><div class="titlepage"><div><div><h3 class="title">E.31.2. 修改列表</h3></div></div></div><div class="itemizedlist"><ul class="itemizedlist" style="list-style-type: disc; "><li class="listitem"><p>      防止<code class="type">json</code>解析中的堆栈溢出
+      (Oskari Saarenmaa)
+     </p><p>      如果应用程序从任意用户输入构造PostgreSQL <code class="type">json</code>或<code class="type">jsonb</code>值，
+      则应用程序的用户可以可靠地崩溃PostgreSQL服务器，导致暂时的拒绝服务。 (CVE-2015-5289)
+     </p></li><li class="listitem"><p>      修复<code class="filename">contrib/pgcrypto</code>，检测和报告过短的
+      <code class="function">crypt()</code>盐 (Josh Kupershmidt)
+     </p><p>      某些无效的salt参数破坏了服务器或公开了几个字节的服务器内存。
+      我们没有排除在公开字节中安排机密信息存在的攻击的可行性，但似乎不大可能。 (CVE-2015-5288)
+     </p></li><li class="listitem"><p>      在属于外部子事务的门户（光标）失败后修复子事务清理 (Tom Lane, Michael Paquier)
+     </p><p>      在外部子事务游标中执行的函数可能会引用在内部子事务中创建的关系导致断言失败或崩溃。
+     </p></li><li class="listitem"><p>      在<code class="varname">commit_delay</code>设置时，修复WAL插入期间可能的死锁 (Heikki Linnakangas)
+     </p></li><li class="listitem"><p>      确保在可更新视图中引用的所有关系在更新语句期间被正确锁定 (Dean Rasheed)
+     </p></li><li class="listitem"><p>      将关系插入关系缓存<span class="quote">“<span class="quote">init文件</span>”</span>中
+      (Tom Lane)
+     </p><p>      在最近次要版本的修补程序中的监督会导致从init文件中省略
+      <code class="structname"> pg_trigger_tgrelid_tgname_index </code>。后续会话检测到这一点，
+      然后认为init文件被破坏，并且默认忽略它，导致会话启动时间显着降低。
+      除了修复错误之外，还要安装一些防护装置，以使任何类似的未来错误都会更加明显。
+     </p></li><li class="listitem"><p>      当将许多元组插入到SPI查询结果中时，避免使用O(N^2)行为 (Neil Conway)
+     </p></li><li class="listitem"><p>      当有许多未读通知时，改进<code class="command">LISTEN</code>启动时间 (Matt Newell)
+     </p></li><li class="listitem"><p>      当会话改变大量的外键约束时修复性能问题 (Jan Wieck, Tom Lane)
+     </p><p>      主要是在为具有数千个表的数据库恢复<span class="application">pg_dump</span>输出时出现。
+     </p></li><li class="listitem"><p>      默认情况下禁用SSL重新协商 (Michael Paquier, Andres Freund)
+     </p><p>      虽然使用SSL重新协商理论上是一个好主意，但我们在实践中看到了太多的错误，
+      包括底层的OpenSSL库和我们的使用。重新协商将在9.5及以后完全删除。
+      在较旧的分支中，只需将<code class="varname">ssl_renegotiation_limit</code>的默认值更改为零（禁用）。
+     </p></li><li class="listitem"><p>      降低<code class="literal">*_freeze_max_age</code>参数的最小值
+      (Andres Freund)
+     </p><p>      这主要是为了使相关行为的测试较少耗时，
+      但是对于具有有限磁盘空间的安装也可能是有价值的。
+     </p></li><li class="listitem"><p>      限制<code class="varname">wal_buffers</code>的最大值为2GB，以避免服务器崩溃 (Josh Berkus)
+     </p></li><li class="listitem"><p>      当只能在服务器启动时设置的参数在<code class="filename">postgresql.conf</code>中多次显示时，
+      请避免记录投诉，并修正<code class="literal">include_dir</code>指令后的行号计数 (Tom Lane)
+     </p></li><li class="listitem"><p>      修复<code class="type">numeric</code>值的乘法中罕见的内部溢出
+      (Dean Rasheed)
+     </p></li><li class="listitem"><p>      防止难以达到的堆栈溢出，包括记录类型、范围类型、<code class="type">json</code>、
+      <code class="type">jsonb</code>、<code class="type">tsquery</code>、<code class="type">ltxtquery</code>和<code class="type">query_int</code> (Noah Misch)
+     </p></li><li class="listitem"><p>      修复日期时间输入中<code class="literal">DOW</code>和<code class="literal">DOY</code>的处理
+      (Greg Stark)
+     </p><p>      这些令牌并不意味着在datetime值中使用，但以前它们导致不透明的内部错误消息而不是
+      <span class="quote">“<span class="quote">无效输入语法</span>”</span>。
+     </p></li><li class="listitem"><p>      向正则表达式匹配中添加更多查询取消检查 (Tom Lane)
+     </p></li><li class="listitem"><p>      向正则表达式添加递归深度保护，<code class="literal">SIMILAR
+      TO</code>和<code class="literal">LIKE</code>匹配 (Tom Lane)
+     </p><p>      合适的搜索模式和低堆栈深度限制可能会导致堆栈超载崩溃。
+     </p></li><li class="listitem"><p>      修复正则表达式执行中潜在的无限循环 (Tom Lane)
+     </p><p>      一个搜索模式可以表面上匹配零长度字符串，但是实际上因为反向引用并不匹配，
+      会导致一个无限循环。
+     </p></li><li class="listitem"><p>      在正则表达式执行中，即使当匹配为零长度时，
+      也可以正确记录用于捕获量词内的括号的匹配数据 (Tom Lane)
+     </p></li><li class="listitem"><p>      修复正则表达式编译中的低内存故障
+      (Andreas Seltenreich)
+     </p></li><li class="listitem"><p>      修复在正则表达式执行期间低概率的内存泄漏
+      (Tom Lane)
+     </p></li><li class="listitem"><p>      修复在事务中止期间锁清除中罕见的低内存故障
+      (Tom Lane)
+     </p></li><li class="listitem"><p>      修复在使用小的<code class="varname">work_mem</code>设置的tuplestores时，
+      <span class="quote">“<span class="quote">排序期间意外的内存不足情况</span>”</span>错误 (Tom
+      Lane)
+     </p></li><li class="listitem"><p>      修复<code class="function">qsort</code>中非常低可能性的堆栈溢出 (Tom Lane)
+     </p></li><li class="listitem"><p>      修复<span class="quote">“<span class="quote">无效内存分配请求大小</span>”</span>与大<code class="varname">work_mem</code>
+      设置的哈希连接失败 (Tomas Vondra, Tom Lane)
+     </p></li><li class="listitem"><p>      修复各种计划错误 (Tom Lane)
+     </p><p>      这些错误会导致不正确的查询计划会给出错误的答案，或者启用断言的构建中的断言失败，
+      或者奇怪的计划错误，比如<span class="quote">“<span class="quote">无法为给定的查询设计查询计划</span>”</span>、
+      <span class="quote">“<span class="quote">找不到要排序的路径项</span>”</span>、<span class="quote">“<span class="quote">计划不应该参考子计划的变量</span>”</span>
+      或<span class="quote">“<span class="quote">无法将所有NestLoopParams分配给计划节点</span>”</span>。
+      感谢Andreas Seltenreich和Piotr Stefaniak的模糊测试，揭露了这些问题。
+     </p></li><li class="listitem"><p>      提高规划者在大型继承集上的<code class="command">UPDATE</code>/<code class="command">DELETE</code>的性能 (Tom Lane, Dean Rasheed)
+     </p></li><li class="listitem"><p>      确保在postmaster启动时备用升级触发器文件被删除 (Michael Paquier, Fujii Masao)
+     </p><p>      如果这些文件出现在用于初始化一个新的备用服务器的数据库备份中，
+      则可以防止不必要的升级。
+     </p></li><li class="listitem"><p>      在postmaster关闭期间，确保移除每套接字锁文件并且在我们移除
+      <code class="filename">postmaster.pid</code>文件之前关闭监听套接字 (Tom Lane)
+     </p><p>      如果外部脚本尝试在<code class="literal">pg_ctl stop</code>返回时立即启动新的postmaster，
+      则可以避免竞争条件失败。
+     </p></li><li class="listitem"><p>      确保postmaster不会退出，直到它所有的子进程都消失，即使是立即关闭模式 (Tom Lane)
+     </p><p>      像上一项一样，这样可以避免与随后启动的postmaster发生竞争。
+     </p></li><li class="listitem"><p>      修复崩溃恢复期间主进程对启动进程崩溃的处理 (Tom Lane)
+     </p><p>      如果，在崩溃恢复循环期间，启动进程还未恢复数据库一致性就崩溃了，
+      我们会尝试加载一个新的启动进程，这通常会再次崩溃，导致无限循环。
+     </p></li><li class="listitem"><p>      使多重环绕的紧急自动清理更健壮
+      (Andres Freund)
+     </p></li><li class="listitem"><p>      当我们尝试发出信号并且自动清理工作者已经不在时，请勿打印<code class="literal">WARNING</code>，
+      并减少此类信号的日志冗长度 (Tom Lane)
+     </p></li><li class="listitem"><p>      如果服务器时钟向后大量移动，防止自动清理加载进程睡眠过长 (Álvaro Herrera)
+     </p></li><li class="listitem"><p>      确保GIN索引未完成插入列表的清理可以通过取消请求中断 (Jeff Janes)
+     </p></li><li class="listitem"><p>      允许重新使用GIN索引中的全零页面 (Heikki Linnakangas)
+     </p><p>      这样的页面可能会在崩溃后遗留下来。
+     </p></li><li class="listitem"><p>      修复SP-GiST索引中全零页面的处理 (Heikki
+      Linnakangas)
+     </p><p>      <code class="command">VACUUM</code>尝试回收这样的页面，但是执行的方式不是崩溃安全的。
+     </p></li><li class="listitem"><p>      修复了一个在subtrans/multixact截断中导致关于<span class="quote">“<span class="quote">明显回绕</span>”</span>
+      的其他无害警告的一个接一个的错误
+      (Thomas Munro)
+     </p></li><li class="listitem"><p>      修复<span class="application">PL/pgSQL</span>的错误内容信息中<code class="command">CONTINUE</code>和
+      <code class="command">MOVE</code>语句类型的错误报告
+      (Pavel Stehule, Tom Lane)
+     </p></li><li class="listitem"><p>      修复<span class="application">PL/Perl</span>以正确处理非<acronym class="acronym">ASCII</acronym>错误消息文本 (Alex Hunsaker)
+     </p></li><li class="listitem"><p>      修复当返回一个<code class="type">record</code>结果的字符串表示时，
+      <span class="application">PL/Python</span>的崩溃 (Tom Lane)
+     </p></li><li class="listitem"><p>      修复<span class="application">PL/Tcl</span>中忽略了检查<code class="function">malloc()</code>调用失败的某些地方
+      (Michael Paquier, Álvaro Herrera)
+     </p></li><li class="listitem"><p>      在<code class="filename">contrib/isn</code>中，修复以979开头的ISBN-13编号的输出 (Fabien Coelho)
+     </p><p>      以979（但不是9790）开头的EAN被认为是ISBN，但是它们必须以新的13位格式打印，
+      而不是10位格式。
+     </p></li><li class="listitem"><p>      改进<code class="filename">contrib/pg_stat_statements</code>对查询文本垃圾收集的处理 (Peter Geoghegan)
+     </p><p>      包含查询文本的外部文件可能会膨胀到非常大的大小；
+      一旦它超过1GB，修剪它的尝试将失败，很快导致文件无法读取的情况。
+     </p></li><li class="listitem"><p>      改进<code class="filename">contrib/postgres_fdw</code>对排序相关的决定的处理 (Tom Lane)
+     </p><p>      主要的用户可见效果预计是，在更多的情况下，
+      涉及<code class="type">varchar</code>列的比较将被发送到远程服务器执行。
+     </p></li><li class="listitem"><p>      改进<span class="application">libpq</span>对内存不足条件的处理
+      (Michael Paquier, Heikki Linnakangas)
+     </p></li><li class="listitem"><p>      修复<span class="application">ecpg</span>中内存泄露和缺少内存不足检查 (Michael Paquier)
+     </p></li><li class="listitem"><p>      修复<span class="application">psql</span>的数字输出区域感知格式的代码 (Tom Lane)
+     </p><p>      <code class="literal">\pset numericlocale on</code>调用的格式化代码对于一些不常见的情况
+      （例如具有指数而不是小数点的数字）做错了事情。它也可以从<code class="type">money</code>
+      数据类型中转移已经本地化的输出。
+     </p></li><li class="listitem"><p>      当没有当前连接时，在<span class="application">psql</span>的<code class="command">\c</code>命令中防止崩溃 (Noah Misch)
+     </p></li><li class="listitem"><p>      让<span class="application">pg_dump</span>正确处理继承的<code class="literal">NOT VALID</code>
+      检查约束 (Tom Lane)
+     </p></li><li class="listitem"><p>      修正在<span class="application">pg_dump</span>的目录输出格式中默认的<span class="application">zlib</span>
+      压缩级别的选择 (Andrew Dunstan)
+     </p></li><li class="listitem"><p>      确保在<span class="application">pg_dump</span>中使用<acronym class="acronym">tar</acronym>
+      格式输出创建的临时文件不是世界可读的 (Michael
+      Paquier)
+     </p></li><li class="listitem"><p>      修复<span class="application">pg_dump</span>和<span class="application">pg_upgrade</span>以支持
+      <code class="literal">postgres</code>或<code class="literal">template1</code>数据库在非缺省表空间中的情况
+      (Marti Raudsepp, Bruce Momjian)
+     </p></li><li class="listitem"><p>      修复<span class="application">pg_dump</span>在从过旧的服务器转储而获得特定的权限类型时，
+      正确地处理对象权限 (Tom Lane)
+     </p><p>      当从9.2之前的服务器转储数据类型，和从7.3之前的服务器转储函数或过程语言时，
+      <span class="application">pg_dump</span>
+      将产生撤销所有者的授予权限然后赋予所有权限给<code class="literal">PUBLIC</code>的
+      <code class="command">GRANT</code>/<code class="command">REVOKE</code>命令。因为权限仅包括<code class="literal">USAGE</code>
+      和<code class="literal">EXECUTE</code>，所以这不是一个安全问题，但是，对于旧系统的行为来说，
+      这当然是一个令人惊讶的表现。修复它在这些情况下单独保留默认权限状态。
+     </p></li><li class="listitem"><p>      修复<span class="application">pg_dump</span>以转储shell类型 (Tom Lane)
+     </p><p>      Shell类型(也就是还未完全定义的类型)对于很多方面是没有用的，
+      但是<span class="application">pg_dump</span>应该转储它们。
+     </p></li><li class="listitem"><p>      修复<span class="application">pg_dump</span>和其他客户端程序中的各种小内存泄漏 (Michael Paquier)
+     </p></li><li class="listitem"><p>      修复<span class="application">pgbench</span>的进度报告行为，当查询或
+      <span class="application">pgbench</span>本身卡住 (Fabien Coelho)
+     </p></li><li class="listitem"><p>      修复Alpha硬件的spinlock汇编代码 (Tom Lane)
+     </p></li><li class="listitem"><p>      修复PPC硬件的spinlock汇编代码与<acronym class="acronym">AIX</acronym>的本地汇编程序兼容 (Tom Lane)
+     </p><p>      如果<span class="application">gcc</span>被配置为使用本机汇编程序，这种情况正在变得越来越普遍，
+      那么使用<span class="application">gcc</span>构建就不起作用。
+     </p></li><li class="listitem"><p>      在<acronym class="acronym">AIX</acronym>上，测试<code class="literal">-qlonglong</code>编译器选项而不仅仅假设它是安全的
+       (Noah Misch)
+     </p></li><li class="listitem"><p>      在<acronym class="acronym">AIX</acronym>上，使用<code class="literal">-Wl,-brtllib</code>连接选项以允许在运行时解决符号
+      (Noah Misch)
+     </p><p>      Perl在5.8.0及以后的版本中依赖于此能力。
+     </p></li><li class="listitem"><p>      由于编译器错误，在使用32位<span class="application">xlc</span>编译时，
+      避免使用内联函数 (Noah Misch)
+     </p></li><li class="listitem"><p>      在需要时为<code class="function">sched_yield()</code>使用<code class="filename">librt</code>，
+      在某些Solaris版本上是这样的 (Oskari Saarenmaa)
+     </p></li><li class="listitem"><p>      将编码<code class="literal">UHC</code>转换为Windows代码页949
+      (Noah Misch)
+     </p><p>      这将修复非附加到任何特定数据库（如postmaster）的进程的非ASCII日志消息的表示。
+     </p></li><li class="listitem"><p>      在Windows上，在事务之外进行编码转换到UTF16时，避免失败，
+      例如日志消息 (Noah Misch)
+     </p></li><li class="listitem"><p>      修复postmaster由于没有拷贝<code class="function">setlocale()</code>
+      的返回值而启动失败 (Noah Misch)
+     </p><p>      这已在Windows系统上报告，其ANSI代码页设置为CP936（<span class="quote">“<span class="quote">Chinese (Simplified, PRC)</span>”</span>），
+      并且可能与其他多字节代码页一起发生。
+     </p></li><li class="listitem"><p>      修复Windows <code class="filename">install.bat</code>脚本以处理包含空格的目标路径名 (Heikki Linnakangas)
+     </p></li><li class="listitem"><p>      让<span class="productname">PostgreSQL</span>版本号的数值形式
+      (例如<code class="literal">90405</code>)对扩展Makefiles可用，
+      作为一个名为<code class="varname">VERSION_NUM</code>的变量 (Michael Paquier)
+     </p></li><li class="listitem"><p>      更新时区数据文件到<span class="application">tzdata</span>版本2015g，
+      因为DST规律在开曼群岛、斐济、摩尔多瓦、摩洛哥、诺福克岛、北朝鲜、
+      土耳其和乌拉圭发生了改变。加拿大北洛矶山脉有一个新的时区名
+      <code class="literal">America/Fort_Nelson</code>。
+     </p></li></ul></div></div></div><div class="navfooter"><hr /><table width="100%" summary="Navigation footer"><tr><td width="40%" align="left"><a accesskey="p" href="release-9-4-6.html">上一页</a> </td><td width="20%" align="center"><a accesskey="u" href="release.html">上一级</a></td><td width="40%" align="right"> <a accesskey="n" href="release-9-4-4.html">下一页</a></td></tr><tr><td width="40%" align="left" valign="top">E.30. 版本 9.4.6 </td><td width="20%" align="center"><a accesskey="h" href="index.html">起始页</a></td><td width="40%" align="right" valign="top"> E.32. 版本 9.4.4</td></tr></table></div></body></html>

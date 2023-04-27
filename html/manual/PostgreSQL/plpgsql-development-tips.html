@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><title>42.11. PL/pgSQL开发提示</title><link rel="stylesheet" type="text/css" href="stylesheet.css" /><link rev="made" href="pgsql-docs@postgresql.org" /><meta name="generator" content="DocBook XSL Stylesheets V1.79.1" /><link rel="prev" href="plpgsql-implementation.html" title="42.10. PL/pgSQL的内部" /><link rel="next" href="plpgsql-porting.html" title="42.12. 从Oracle PL/SQL 移植" /></head><body><div xmlns="http://www.w3.org/TR/xhtml1/transitional" class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="5" align="center">42.11. <span xmlns="http://www.w3.org/1999/xhtml" class="application">PL/pgSQL</span>开发提示</th></tr><tr><td width="10%" align="left"><a accesskey="p" href="plpgsql-implementation.html" title="42.10. PL/pgSQL的内部">上一页</a> </td><td width="10%" align="left"><a accesskey="u" href="plpgsql.html" title="第 42 章 PL/pgSQL - SQL过程语言">上一级</a></td><th width="60%" align="center">第 42 章 <span xmlns="http://www.w3.org/1999/xhtml" class="application">PL/pgSQL</span> - <acronym xmlns="http://www.w3.org/1999/xhtml" class="acronym">SQL</acronym>过程语言</th><td width="10%" align="right"><a accesskey="h" href="index.html" title="PostgreSQL 10.1 手册">起始页</a></td><td width="10%" align="right"> <a accesskey="n" href="plpgsql-porting.html" title="42.12. 从Oracle PL/SQL 移植">下一页</a></td></tr></table><hr></hr></div><div class="sect1" id="PLPGSQL-DEVELOPMENT-TIPS"><div class="titlepage"><div><div><h2 class="title" style="clear: both">42.11. <span class="application">PL/pgSQL</span>开发提示</h2></div></div></div><div class="toc"><dl class="toc"><dt><span class="sect2"><a href="plpgsql-development-tips.html#PLPGSQL-QUOTE-TIPS">42.11.1. 处理引号</a></span></dt><dt><span class="sect2"><a href="plpgsql-development-tips.html#PLPGSQL-EXTRA-CHECKS">42.11.2. 额外的编译时检查</a></span></dt></dl></div><p>    在<span class="application">PL/pgSQL</span>中进行开发的一种好方法是使用你自己选择的文本编辑器来创建函数，并且在另一个窗口中使用<span class="application">psql</span>来载入并且测试那些函数。如果你正在这样做，使用<code class="command">CREATE OR REPLACE FUNCTION</code>来编写函数是一个好主意。用那种方式你只需要重载该文件来更新函数的定义。例如：
+</p><pre class="programlisting">CREATE OR REPLACE FUNCTION testfunc(integer) RETURNS integer AS $$
+          ....
+$$ LANGUAGE plpgsql;</pre><p>
+   </p><p>    在运行<span class="application">psql</span>期间，你可以用下面的命令载入或者重载这样一个函数定义文件：
+</p><pre class="programlisting">\i filename.sql</pre><p>
+    并且接着立即发出 SQL 命令来测试该函数。
+   </p><p>    另一种在<span class="application">PL/pgSQL</span>中开发的方式是用一个 GUI 数据库访问工具，它能方便对过程语言的开发。这种工具的一个例子是<span class="application">pgAdmin</span>。这些工具通常提供方便的特性，例如转义单引号以及便于重新创建和调试函数。
+   </p><div class="sect2" id="PLPGSQL-QUOTE-TIPS"><div class="titlepage"><div><div><h3 class="title">42.11.1. 处理引号</h3></div></div></div><p>    一个<span class="application">PL/pgSQL</span>函数的代码在一个<code class="command">CREATE FUNCTION</code>中被指定为一个字符串。如果你用通常的方式把该字符串写在单引号中间，那么该函数体中的任何单引号都必须被双写；同样任何反斜线也必须被双写（假定使用了转义字符串语法）。双写引号最多有点冗长，并且在更复杂的情况中代码会变得完全无法理解，因为你很容易发现你需要半打或者更多相邻的引号。我们推荐你转而把函数体写成一个<span class="quote">“<span class="quote">美元引用</span>”</span>的字符串（见<a class="xref" href="sql-syntax-lexical.html#SQL-SYNTAX-DOLLAR-QUOTING" title="4.1.2.4. 美元引用的字符串常量">第 4.1.2.4 节</a>）。在美元引用方法中，你从不需要双写任何引号。但是要注意为你需要的每一层嵌套选择一个不同的美元引用定界符。例如，你可能把<code class="command">CREATE FUNCTION</code>命令写成：
+</p><pre class="programlisting">CREATE OR REPLACE FUNCTION testfunc(integer) RETURNS integer AS $PROC$
+          ....
+$PROC$ LANGUAGE plpgsql;</pre><p>
+    在这里面，你可以在 SQL 命令中为简单字符串使用引号并且用<code class="literal">$$</code>来界定被你组装成字符串的 SQL 命令片段。如果你需要引用包括<code class="literal">$$</code>的文本，你可以使用<code class="literal">$Q$</code>等等。
+   </p><p>    下列图表展示了在写没有美元引用的引号时需要做什么。在将之前用美元引用的代码翻译成更容易理解的代码时，它们会有所帮助。
+  </p><div class="variablelist"><dl class="variablelist"><dt><span class="term">1 个引号</span></dt><dd><p>      用来开始和结束函数体，例如：
+</p><pre class="programlisting">CREATE FUNCTION foo() RETURNS integer AS '
+          ....
+' LANGUAGE plpgsql;</pre><p>
+      在一个单引号引用的函数体中的任何位置，引号<span class="emphasis"><em>必须</em></span>成对出现。
+     </p></dd><dt><span class="term">2 个引号</span></dt><dd><p>      用于函数体内的字符串，例如：
+</p><pre class="programlisting">a_output := ''Blah'';
+SELECT * FROM users WHERE f_name=''foobar'';</pre><p>
+      在美元引用方法中，你只需要写：
+</p><pre class="programlisting">a_output := 'Blah';
+SELECT * FROM users WHERE f_name='foobar';</pre><p>
+      这恰好就是<span class="application">PL/pgSQL</span>在两种情况中会看到的。
+     </p></dd><dt><span class="term">4 个引号</span></dt><dd><p>      当你在函数内的一个字符串常量中需要一个单引号时，例如：
+</p><pre class="programlisting">a_output := a_output || '' AND name LIKE ''''foobar'''' AND xyz''</pre><p>
+      实际会被追加到<code class="literal">a_output</code>的值将是：<code class="literal"> AND name LIKE 'foobar' AND xyz</code>。
+     </p><p>      在美元引用方法中，你可以写：
+</p><pre class="programlisting">a_output := a_output || $$ AND name LIKE 'foobar' AND xyz$$</pre><p>
+      要小心在这周围的任何美元引用定界符不只是<code class="literal">$$</code>。
+     </p></dd><dt><span class="term">6 个引号</span></dt><dd><p>      当在函数体内的一个字符串中的一个单引号与该字符串常量末尾相邻，例如：
+</p><pre class="programlisting">a_output := a_output || '' AND name LIKE ''''foobar''''''</pre><p>
+      被追加到<code class="literal">a_output</code>的值则将是：<code class="literal"> AND name LIKE 'foobar'</code>。
+     </p><p>      在美元引用方法中，这会变成：
+</p><pre class="programlisting">a_output := a_output || $$ AND name LIKE 'foobar'$$</pre><p>
+     </p></dd><dt><span class="term">10 个引号</span></dt><dd><p>      当你想在一个字符串常量（占 8 个引号）中有两个单引号时并且这会挨着该字符串常量的末尾（另外 2 个）。如果你正在写一个产生其他函数的函数（如<a class="xref" href="plpgsql-porting.html#PLPGSQL-PORTING-EX2" title="例 42.10. 从PL/SQL移植一个创建另一个函数的函数到PL/pgSQL">例 42.10</a>中），你将很可能只需要这种。例如：
+</p><pre class="programlisting">a_output := a_output || '' if v_'' ||
+    referrer_keys.kind || '' like ''''''''''
+    || referrer_keys.key_string || ''''''''''
+    then return ''''''  || referrer_keys.referrer_type
+    || ''''''; end if;'';</pre><p>
+      <code class="literal">a_output</code>的值将是：
+</p><pre class="programlisting">if v_... like ''...'' then return ''...''; end if;</pre><p>
+     </p><p>      在美元引用方法中，这会变成：
+</p><pre class="programlisting">a_output := a_output || $$ if v_$$ || referrer_keys.kind || $$ like '$$
+    || referrer_keys.key_string || $$'
+    then return '$$  || referrer_keys.referrer_type
+    || $$'; end if;$$;</pre><p>
+      这里我们假定我们只需要把单引号放在<code class="literal">a_output</code>中，因为在使用前它将被再引用。
+     </p></dd></dl></div></div><div class="sect2" id="PLPGSQL-EXTRA-CHECKS"><div class="titlepage"><div><div><h3 class="title">42.11.2. 额外的编译时检查</h3></div></div></div><p>    为了辅助用户在一些简单但常见的问题产生危害之前找到它们，
+    <span class="application">PL/pgSQL</span>提供了额外的<em class="replaceable"><code>检查</code></em>。当被启用时，
+    根据配置，它们可以在一个函数的编译期间被用来发出
+    <code class="literal">WARNING</code>或者<code class="literal">ERROR</code>。一个已经收到了
+    <code class="literal">WARNING</code>的函数可以被继续执行而不会产生进一步的消息，
+    因此建议你在一个单独的开发环境中进行测试。
+   </p><p>  这些额外的检查通过配置变量<code class="varname">plpgsql.extra_warnings</code>
+  和<code class="varname">plpgsql.extra_errors</code>启用，其中前者用于警告而后者用
+  于错误。两者都可以被设置为一个用逗号分隔的检查列表、
+  <code class="literal">"none"</code>或者<code class="literal">"all"</code>。默认值是<code class="literal">"none"</code>。
+  当前列表中可用的检查只有一种：
+  </p><div class="variablelist"><dl class="variablelist"><dt><span class="term"><code class="varname">shadowed_variables</code></span></dt><dd><p>      检查一个声明是否遮盖了另一个之前定义的变量。
+     </p></dd></dl></div><p>
+
+  下面的例子展示了将<code class="varname">plpgsql.extra_warnings</code>
+  设置为<code class="varname">shadowed_variables</code>的效果：
+</p><pre class="programlisting">SET plpgsql.extra_warnings TO 'shadowed_variables';
+
+CREATE FUNCTION foo(f1 int) RETURNS int AS $$
+DECLARE
+f1 int;
+BEGIN
+RETURN f1;
+END
+$$ LANGUAGE plpgsql;
+WARNING:  variable "f1" shadows a previously defined variable
+LINE 3: f1 int;
+        ^
+CREATE FUNCTION</pre><p>
+ </p></div></div><div class="navfooter"><hr /><table width="100%" summary="Navigation footer"><tr><td width="40%" align="left"><a accesskey="p" href="plpgsql-implementation.html">上一页</a> </td><td width="20%" align="center"><a accesskey="u" href="plpgsql.html">上一级</a></td><td width="40%" align="right"> <a accesskey="n" href="plpgsql-porting.html">下一页</a></td></tr><tr><td width="40%" align="left" valign="top">42.10. <span class="application">PL/pgSQL</span>的内部 </td><td width="20%" align="center"><a accesskey="h" href="index.html">起始页</a></td><td width="40%" align="right" valign="top"> 42.12. 从<span class="productname">Oracle</span> PL/SQL 移植</td></tr></table></div></body></html>

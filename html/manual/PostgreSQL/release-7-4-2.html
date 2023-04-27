@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><title>E.282. 版本 7.4.2</title><link rel="stylesheet" type="text/css" href="stylesheet.css" /><link rev="made" href="pgsql-docs@postgresql.org" /><meta name="generator" content="DocBook XSL Stylesheets V1.79.1" /><link rel="prev" href="release-7-4-3.html" title="E.281. 版本 7.4.3" /><link rel="next" href="release-7-4-1.html" title="E.283. 版本 7.4.1" /></head><body><div xmlns="http://www.w3.org/TR/xhtml1/transitional" class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="5" align="center">E.282. 版本 7.4.2</th></tr><tr><td width="10%" align="left"><a accesskey="p" href="release-7-4-3.html" title="E.281. 版本 7.4.3">上一页</a> </td><td width="10%" align="left"><a accesskey="u" href="release.html" title="附录 E. 版本说明">上一级</a></td><th width="60%" align="center">附录 E. 版本说明</th><td width="10%" align="right"><a accesskey="h" href="index.html" title="PostgreSQL 10.1 手册">起始页</a></td><td width="10%" align="right"> <a accesskey="n" href="release-7-4-1.html" title="E.283. 版本 7.4.1">下一页</a></td></tr></table><hr></hr></div><div class="sect1" id="RELEASE-7-4-2"><div class="titlepage"><div><div><h2 class="title" style="clear: both">E.282. 版本 7.4.2</h2></div></div></div><div class="toc"><dl class="toc"><dt><span class="sect2"><a href="release-7-4-2.html#idp83088400">E.282.1. 迁移到版本 7.4.2</a></span></dt><dt><span class="sect2"><a href="release-7-4-2.html#idp83106176">E.282.2. 修改列表</a></span></dt></dl></div><p><strong>发布日期：. </strong>2004-03-08</p><p>这个版本包含各种自7.4.1以来的修复。关于7.4主版本的新特性的信息，
+请查阅<a class="xref" href="release-7-4.html" title="E.284. 版本 7.4">第 E.284 节</a>。</p><div class="sect2" id="idp83088400"><div class="titlepage"><div><div><h3 class="title">E.282.1. 迁移到版本 7.4.2</h3></div></div></div><p>运行7.4.X的用户不需要转储/恢复。不过，
+作为合并修复在最初的7.4.X系统目录中发现的两个错误的最简单的方法，这应该会是明智的。
+使用7.4.2的initdb的dump/initdb/reload序列将自动纠正这些问题。</p><p>更严重的两个错误是数据类型<code class="type">anyarray</code>有错误的对齐标签；
+这是一个问题，因为<code class="structname">pg_statistic</code>系统目录使用<code class="type">anyarray</code>字段。
+贴错标签会引起规划器错误估计甚至当包含<code class="literal">WHERE</code>
+子句的规划器查询在两端对齐的字段(如<code class="type">float8</code>和<code class="type">timestamp</code>)上时会崩溃。
+强烈建议所有安装都修复这个错误，通过initdb或遵循下面给出的手动修复程序。</p><p>较小的错误是系统视图<code class="structname">pg_settings</code>应该被标记为有公共更新访问，
+以允许<code class="literal">UPDATE pg_settings</code>用作<code class="command">SET</code>的替代。
+这也可以通过initdb或者手动修复，但是没有必要修复，除非你想要使用<code class="literal">UPDATE pg_settings</code>。</p><p>如果你不愿意做initdb，那么下面的程序将修复<code class="structname">pg_statistic</code>。
+作为数据库超级用户，执行：
+</p><pre class="programlisting">-- clear out old data in pg_statistic:
+DELETE FROM pg_statistic;
+VACUUM pg_statistic;
+-- this should update 1 row:
+UPDATE pg_type SET typalign = 'd' WHERE oid = 2277;
+-- this should update 6 rows:
+UPDATE pg_attribute SET attalign = 'd' WHERE atttypid = 2277;
+--
+-- At this point you MUST start a fresh backend to avoid a crash!
+--
+-- repopulate pg_statistic:
+ANALYZE;</pre><p>
+这可以在活动的数据库中完成，但是要注意所有运行在改变了的数据库中的后端都必须在
+重新填充<code class="structname">pg_statistic</code>是安全的之前重新启动。
+   </p><p>要修复<code class="structname">pg_statistic</code>错误，只需要做：
+</p><pre class="programlisting">GRANT SELECT, UPDATE ON pg_settings TO PUBLIC;</pre><p>上面的程序必须在<span class="emphasis"><em>每个</em></span>安装的数据库中执行，包括<code class="literal">template1</code>，
+理想上也包括<code class="literal">template0</code>。如果你没有修复模板数据库，
+那么任何随后创建的数据库都将包含相同的错误。<code class="literal">template1</code>的修复方式和其他数据库相同，
+但是修复<code class="literal">template0</code>需要额外的步骤。首先，从任意数据库中发出：
+</p><pre class="programlisting">UPDATE pg_database SET datallowconn = true WHERE datname = 'template0';</pre><p>
+下一步，连接到<code class="literal">template0</code>，并执行上面的修复步骤。最后，执行：
+</p><pre class="programlisting">-- re-freeze template0:
+VACUUM FREEZE;
+-- and protect it against future alterations:
+UPDATE pg_database SET datallowconn = false WHERE datname = 'template0';</pre><p>
+   </p></div><div class="sect2" id="idp83106176"><div class="titlepage"><div><div><h3 class="title">E.282.2. 修改列表</h3></div></div></div><p>版本7.4.2合并了所有包含在版本7.3.6中的修复，加上下面的修复：</p><div class="itemizedlist"><ul class="itemizedlist" style="list-style-type: disc; "><li class="listitem"><p>修复会使优化器崩溃的<code class="structname">pg_statistic</code>对齐错误</p><p>关于这个问题的详细信息请查看上文。</p></li><li class="listitem"><p>允许非超级用户更新<code class="structname">pg_settings</code></p></li><li class="listitem"><p>修复几个优化器错误，大多数会导致<span class="quote">“<span class="quote">variable not found in subplan target lists</span>”</span>错误</p></li><li class="listitem"><p>避免启动大的多个索引扫描期间的超出内存失败</p></li><li class="listitem"><p>修复<code class="command">COPY IN</code>期间可能导致<span class="quote">“<span class="quote">内存不足</span>”</span>错误的多字节问题</p></li><li class="listitem"><p>修复没有OID的表的<code class="command">SELECT INTO</code> / <code class="command">CREATE TABLE AS</code>问题</p></li><li class="listitem"><p>修复并行测试期间<code class="filename">alter_table</code>回归测试的问题</p></li><li class="listitem"><p>修复打开文件限制的问题，尤其是在macOS上 (Tom)</p></li><li class="listitem"><p>部分的修复Turkish区域设置问题</p><p>initdb在Turkish的区域设置现在将成功，但是仍然有一些与<code class="literal">i/I</code>问题相关的不便。</p></li><li class="listitem"><p>使得pg_dump在恢复时设置客户端编码</p></li><li class="listitem"><p>其他较小的pg_dump修复</p></li><li class="listitem"><p>允许ecpg再次使用C关键字作为字段名 (Michael)</p></li><li class="listitem"><p>添加ecpg <code class="literal">WHENEVER NOT_FOUND</code>到<code class="literal">SELECT/INSERT/UPDATE/DELETE</code> (Michael)</p></li><li class="listitem"><p>修复查询调用设置返回函数时的ecpg崩溃 (Michael)</p></li><li class="listitem"><p>各种其他ecpg修复 (Michael)</p></li><li class="listitem"><p>修复Borland编译器</p></li><li class="listitem"><p>线程构建的改进 (Bruce)</p></li><li class="listitem"><p>各种其他构建修复</p></li><li class="listitem"><p>各种JDBC修复</p></li></ul></div></div></div><div class="navfooter"><hr /><table width="100%" summary="Navigation footer"><tr><td width="40%" align="left"><a accesskey="p" href="release-7-4-3.html">上一页</a> </td><td width="20%" align="center"><a accesskey="u" href="release.html">上一级</a></td><td width="40%" align="right"> <a accesskey="n" href="release-7-4-1.html">下一页</a></td></tr><tr><td width="40%" align="left" valign="top">E.281. 版本 7.4.3 </td><td width="20%" align="center"><a accesskey="h" href="index.html">起始页</a></td><td width="40%" align="right" valign="top"> E.283. 版本 7.4.1</td></tr></table></div></body></html>

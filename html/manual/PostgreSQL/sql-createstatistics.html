@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><title>CREATE STATISTICS</title><link rel="stylesheet" type="text/css" href="stylesheet.css" /><link rev="made" href="pgsql-docs@postgresql.org" /><meta name="generator" content="DocBook XSL Stylesheets V1.79.1" /><link rel="prev" href="sql-createserver.html" title="CREATE SERVER" /><link rel="next" href="sql-createsubscription.html" title="CREATE SUBSCRIPTION" /></head><body><div xmlns="http://www.w3.org/TR/xhtml1/transitional" class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="5" align="center">CREATE STATISTICS</th></tr><tr><td width="10%" align="left"><a accesskey="p" href="sql-createserver.html" title="CREATE SERVER">上一页</a> </td><td width="10%" align="left"><a accesskey="u" href="sql-commands.html" title="SQL 命令">上一级</a></td><th width="60%" align="center">SQL 命令</th><td width="10%" align="right"><a accesskey="h" href="index.html" title="PostgreSQL 10.1 手册">起始页</a></td><td width="10%" align="right"> <a accesskey="n" href="sql-createsubscription.html" title="CREATE SUBSCRIPTION">下一页</a></td></tr></table><hr></hr></div><div class="refentry" id="SQL-CREATESTATISTICS"><div class="titlepage"></div><a id="idp44471536" class="indexterm"></a><div class="refnamediv"><h2><span class="refentrytitle">CREATE STATISTICS</span></h2><p>CREATE STATISTICS — 定义扩展统计</p></div><div class="refsynopsisdiv"><h2>大纲</h2><pre class="synopsis">CREATE STATISTICS [ IF NOT EXISTS ] <em class="replaceable"><code>statistics_name</code></em>
+    [ ( <em class="replaceable"><code>statistics_kind</code></em> [, ... ] ) ]
+    ON <em class="replaceable"><code>column_name</code></em>, <em class="replaceable"><code>column_name</code></em> [, ...]
+    FROM <em class="replaceable"><code>table_name</code></em></pre></div><div class="refsect1" id="SQL-CREATESTATISTICS-DESCRIPTION"><h2>描述</h2><p>   <code class="command">CREATE STATISTICS</code>将创建一个新的扩展统计对象，
+   追踪指定表、外部表或物化视图的数据。该统计对象将在当前数据库中创建，
+   被发出该命令的用户所有。
+  </p><p>   如果给定了模式名（比如，<code class="literal">CREATE STATISTICS myschema.mystat ...</code>），
+   那么在给定的模式中创建统计对象。否则在当前模式中创建。
+   统计对象的名称必须与相同模式中的任何其他统计对象不同。
+  </p></div><div class="refsect1" id="idp44481632"><h2>参数</h2><div class="variablelist"><dl class="variablelist"><dt><span class="term"><code class="literal">IF NOT EXISTS</code></span></dt><dd><p>      如果具有相同名称的统计对象已经存在，不会抛出一个错误，只会发出一个提示。
+	  请注意，这里只考虑统计对象的名称，不考虑其定义细节。
+     </p></dd><dt><span class="term"><em class="replaceable"><code>statistics_name</code></em></span></dt><dd><p>      要创建的统计对象的名称（可以有模式限定）。
+     </p></dd><dt><span class="term"><em class="replaceable"><code>statistics_kind</code></em></span></dt><dd><p>      在此统计对象中计算的统计种类。目前支持的种类是启用n-distinct统计的
+	  <code class="literal">ndistinct</code>，以及启用功能依赖性统计的<code class="literal">dependencies</code>。
+	  如果省略该子句，则统计对象中将包含所有支持的统计类型。
+	  有关更多信息，请参阅<a class="xref" href="planner-stats.html#PLANNER-STATS-EXTENDED" title="14.2.2. 扩展统计">第 14.2.2 节</a>和
+	  <a class="xref" href="multivariate-statistics-examples.html" title="68.2. 多变量统计例子">第 68.2 节</a>。
+     </p></dd><dt><span class="term"><em class="replaceable"><code>column_name</code></em></span></dt><dd><p>      被计算的统计信息包含的表格列的名称。至少必须给出两个列名。
+     </p></dd><dt><span class="term"><em class="replaceable"><code>table_name</code></em></span></dt><dd><p>      包含计算统计信息的列的表的名称（可以是模式限定的）。
+     </p></dd></dl></div></div><div class="refsect1" id="idp44492480"><h2>注意</h2><p>   你必须是表的所有者才能创建读取它的统计对象。不过，一旦创建，
+   统计对象的所有权与基础表无关。
+  </p></div><div class="refsect1" id="SQL-CREATESTATISTICS-EXAMPLES"><h2>示例</h2><p>   用两个功能相关的列创建表<code class="structname">t1</code>，
+   即第一列中的值的信息足以确定另一列中的值。然后，
+   在这些列上构建函数依赖关系统计信息：
+
+</p><pre class="programlisting">CREATE TABLE t1 (
+    a   int,
+    b   int
+);
+
+INSERT INTO t1 SELECT i/100, i/500
+                 FROM generate_series(1,1000000) s(i);
+
+ANALYZE t1;
+
+-- 匹配行的数量将被大大低估：
+EXPLAIN ANALYZE SELECT * FROM t1 WHERE (a = 1) AND (b = 0);
+
+CREATE STATISTICS s1 (dependencies) ON a, b FROM t1;
+
+ANALYZE t1;
+
+-- 现在行计数估计会更准确：
+EXPLAIN ANALYZE SELECT * FROM t1 WHERE (a = 1) AND (b = 0);</pre><p>
+
+   如果没有函数依赖性统计，规划器会认为两个<code class="literal">WHERE</code>条件是独立的，
+   并且会将它们的选择性乘以一起，以致得到太小的行数估计。
+   通过这样的统计，规划器认识到<code class="literal">WHERE</code>条件是多余的，并且不会低估行数。
+  </p></div><div class="refsect1" id="idp44498560"><h2>兼容性</h2><p>   SQL标准中没有<code class="command">CREATE STATISTICS</code>命令。
+  </p></div><div class="refsect1" id="idp44500016"><h2>又见</h2><span class="simplelist"><a class="xref" href="sql-alterstatistics.html" title="ALTER STATISTICS"><span class="refentrytitle">ALTER STATISTICS</span></a>, <a class="xref" href="sql-dropstatistics.html" title="DROP STATISTICS"><span class="refentrytitle">DROP STATISTICS</span></a></span></div></div><div class="navfooter"><hr /><table width="100%" summary="Navigation footer"><tr><td width="40%" align="left"><a accesskey="p" href="sql-createserver.html">上一页</a> </td><td width="20%" align="center"><a accesskey="u" href="sql-commands.html">上一级</a></td><td width="40%" align="right"> <a accesskey="n" href="sql-createsubscription.html">下一页</a></td></tr><tr><td width="40%" align="left" valign="top">CREATE SERVER </td><td width="20%" align="center"><a accesskey="h" href="index.html">起始页</a></td><td width="40%" align="right" valign="top"> CREATE SUBSCRIPTION</td></tr></table></div></body></html>

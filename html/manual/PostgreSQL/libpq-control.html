@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><title>33.10. 控制函数</title><link rel="stylesheet" type="text/css" href="stylesheet.css" /><link rev="made" href="pgsql-docs@postgresql.org" /><meta name="generator" content="DocBook XSL Stylesheets V1.79.1" /><link rel="prev" href="libpq-copy.html" title="33.9. COPY命令相关的函数" /><link rel="next" href="libpq-misc.html" title="33.11. 杂项函数" /></head><body><div xmlns="http://www.w3.org/TR/xhtml1/transitional" class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="5" align="center">33.10. 控制函数</th></tr><tr><td width="10%" align="left"><a accesskey="p" href="libpq-copy.html" title="33.9. COPY命令相关的函数">上一页</a> </td><td width="10%" align="left"><a accesskey="u" href="libpq.html" title="第 33 章 libpq - C 库">上一级</a></td><th width="60%" align="center">第 33 章 <span xmlns="http://www.w3.org/1999/xhtml" class="application">libpq</span> - C 库</th><td width="10%" align="right"><a accesskey="h" href="index.html" title="PostgreSQL 10.1 手册">起始页</a></td><td width="10%" align="right"> <a accesskey="n" href="libpq-misc.html" title="33.11. 杂项函数">下一页</a></td></tr></table><hr></hr></div><div class="sect1" id="LIBPQ-CONTROL"><div class="titlepage"><div><div><h2 class="title" style="clear: both">33.10. 控制函数</h2></div></div></div><p>   这些函数控制<span class="application">libpq</span>行为各种各样的细节。
+  </p><div class="variablelist"><dl class="variablelist"><dt id="LIBPQ-PQCLIENTENCODING"><span class="term">     <code class="function">PQclientEncoding</code>
+     <a id="idp28306544" class="indexterm"></a>
+    </span></dt><dd><p>      返回客户端编码。
+</p><pre class="synopsis">int PQclientEncoding(const PGconn *<em class="replaceable"><code>conn</code></em>);</pre><p>
+
+      请注意，它返回的是编码 ID，而不是一个符号串字符串，如<code class="literal">EUC_JP</code>。
+      如果不成功，它会返回 -1。要把一个编码 ID 转换为为一个编码名称，可以用：
+
+</p><pre class="synopsis">char *pg_encoding_to_char(int <em class="replaceable"><code>encoding_id</code></em>);</pre><p>
+     </p></dd><dt id="LIBPQ-PQSETCLIENTENCODING"><span class="term">     <code class="function">PQsetClientEncoding</code>
+     <a id="idp28312704" class="indexterm"></a>
+    </span></dt><dd><p>      设置客户端编码。
+</p><pre class="synopsis">int PQsetClientEncoding(PGconn *<em class="replaceable"><code>conn</code></em>, const char *<em class="replaceable"><code>encoding</code></em>);</pre><p>
+
+      <em class="replaceable"><code>conn</code></em>是一个到服务器的连接，而<em class="replaceable"><code>encoding</code></em>是你想使用的编码。如果函数成功地设置编码，则返回 0，否则返回 -1。这个连接的当前编码可以使用<code class="function">PQclientEncoding</code>确定。
+     </p></dd><dt id="LIBPQ-PQSETERRORVERBOSITY"><span class="term">     <code class="function">PQsetErrorVerbosity</code>
+     <a id="idp28318832" class="indexterm"></a>
+    </span></dt><dd><p>      决定<code class="function">PQerrorMessage</code>和<code class="function">PQresultErrorMessage</code>返回的消息的细节程度。
+</p><pre class="synopsis">typedef enum
+{
+    PQERRORS_TERSE,
+    PQERRORS_DEFAULT,
+    PQERRORS_VERBOSE
+} PGVerbosity;
+
+PGVerbosity PQsetErrorVerbosity(PGconn *conn, PGVerbosity verbosity);</pre><p>
+
+      <code class="function">PQsetErrorVerbosity</code>设置细节模式，并返回该连接的前一个设置。在<em class="firstterm">TERSE</em>模式下，返回的消息只包括严重性、主要文本以及位置；这些东西通常放在一个单一行中。缺省模式生成的消息包括上面的信息加上任何细节、提示或者上下文域（这些可能跨越多行）。<em class="firstterm">VERBOSE</em>模式包括所有可以可用的域。修改细节模式不会影响来自已有<code class="structname">PGresult</code>对象中的可用消息。只有随后创建的<code class="structname">PGresult</code>对象才受到影响。
+     </p></dd><dt id="LIBPQ-PQSETERRORCONTEXTVISIBILITY"><span class="term">     <code class="function">PQsetErrorContextVisibility</code>
+     <a id="idp28326752" class="indexterm"></a>
+    </span></dt><dd><p>      决定如何处理<code class="function">PQerrorMessage</code>和<code class="function">PQresultErrorMessage</code>
+      返回的消息中的<code class="literal">CONTEXT</code>域。
+</p><pre class="synopsis">typedef enum
+{
+    PQSHOW_CONTEXT_NEVER,
+    PQSHOW_CONTEXT_ERRORS,
+    PQSHOW_CONTEXT_ALWAYS
+} PGContextVisibility;
+
+PGContextVisibility PQsetErrorContextVisibility(PGconn *conn, PGContextVisibility show_context);</pre><p>
+
+      <code class="function">PQsetErrorContextVisibility</code>设置上下文显示模式，
+      返回该连接上之前的设置。这个模式控制消息中是否包括<code class="literal">CONTEXT</code>域
+      （除非 verbosity 设置是<em class="firstterm">TERSE</em>，那种情况下<code class="literal">CONTEXT</code>
+      不会被显示）。<em class="firstterm">NEVER</em>模式不会包括<code class="literal">CONTEXT</code>，
+      而<em class="firstterm">ALWAYS</em>则尽可能地包括这个域。在<em class="firstterm">ERRORS</em>模式（默认）中，
+      只在错误消息中包括<code class="literal">CONTEXT</code>域，而在通知和警告消息中不会包括。
+      更改这个模式不会影响从已经存在的<code class="structname">PGresult</code>对象项中得到的消息，
+      只会影响后续创建的<code class="structname">PGresult</code>对象
+      （如果想要用不同的显示模式打印之前的错误，
+      请见<code class="function">PQresultVerboseErrorMessage</code>）。
+     </p></dd><dt id="LIBPQ-PQTRACE"><span class="term">     <code class="function">PQtrace</code>
+     <a id="idp28340096" class="indexterm"></a>
+    </span></dt><dd><p>      启用对客户端/服务器通讯的跟踪，把跟踪信息输出到一个调试文件流中。
+</p><pre class="synopsis">void PQtrace(PGconn *conn, FILE *stream);</pre><p>
+     </p><div class="note"><h3 class="title">注意</h3><p>       在 Windows 商，如果<span class="application">libpq</span>库和应用使用了不同的标志编译，那么这个函数调用会导致应用崩溃，因为<code class="literal">FILE</code>指针的内部表达是不一样的。特别是多线程/单线程、发布/调试 以及静态/动态标志应该是库和所有使用库的应用都一致。
+      </p></div></dd><dt id="LIBPQ-PQUNTRACE"><span class="term">     <code class="function">PQuntrace</code>
+     <a id="idp28345920" class="indexterm"></a>
+    </span></dt><dd><p>      禁用<code class="function">PQtrace</code>打开的跟踪。
+</p><pre class="synopsis">void PQuntrace(PGconn *conn);</pre><p>
+     </p></dd></dl></div></div><div class="navfooter"><hr /><table width="100%" summary="Navigation footer"><tr><td width="40%" align="left"><a accesskey="p" href="libpq-copy.html">上一页</a> </td><td width="20%" align="center"><a accesskey="u" href="libpq.html">上一级</a></td><td width="40%" align="right"> <a accesskey="n" href="libpq-misc.html">下一页</a></td></tr><tr><td width="40%" align="left" valign="top">33.9. <code class="command">COPY</code>命令相关的函数 </td><td width="20%" align="center"><a accesskey="h" href="index.html">起始页</a></td><td width="40%" align="right" valign="top"> 33.11. 杂项函数</td></tr></table></div></body></html>

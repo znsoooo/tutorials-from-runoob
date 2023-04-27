@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><title>10.2. 操作符</title><link rel="stylesheet" type="text/css" href="stylesheet.css" /><link rev="made" href="pgsql-docs@postgresql.org" /><meta name="generator" content="DocBook XSL Stylesheets V1.79.1" /><link rel="prev" href="typeconv-overview.html" title="10.1. 概述" /><link rel="next" href="typeconv-func.html" title="10.3. 函数" /></head><body><div xmlns="http://www.w3.org/TR/xhtml1/transitional" class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="5" align="center">10.2. 操作符</th></tr><tr><td width="10%" align="left"><a accesskey="p" href="typeconv-overview.html" title="10.1. 概述">上一页</a> </td><td width="10%" align="left"><a accesskey="u" href="typeconv.html" title="第 10 章 类型转换">上一级</a></td><th width="60%" align="center">第 10 章 类型转换</th><td width="10%" align="right"><a accesskey="h" href="index.html" title="PostgreSQL 10.1 手册">起始页</a></td><td width="10%" align="right"> <a accesskey="n" href="typeconv-func.html" title="10.3. 函数">下一页</a></td></tr></table><hr></hr></div><div class="sect1" id="TYPECONV-OPER"><div class="titlepage"><div><div><h2 class="title" style="clear: both">10.2. 操作符</h2></div></div></div><a id="idp16340992" class="indexterm"></a><p>   被一个操作符表达式引用的特定操作符由下列过程决定。注意这个过程会被所涉及的操作符的优先级间接地影响，因为这将决定哪些子表达式被用作哪个操作符的输入。详见<a class="xref" href="sql-syntax-lexical.html#SQL-PRECEDENCE" title="4.1.6. 操作符优先级">第 4.1.6 节</a>。
+  </p><div class="procedure" id="idp16343856"><p class="title"><strong>操作符类型决定</strong></p><ol class="procedure" type="1"><li class="step" id="OP-RESOL-SELECT"><p>从系统目录<code class="classname">pg_operator</code>中选出要考虑的操作符。如果使用了一个不带模式限定的操作符 名（常见的情况），那么操作符被认为是那些在当前搜索路径中可见并有匹配的名字和参数个数的操作符（参见<a class="xref" href="ddl-schemas.html#DDL-SCHEMAS-PATH" title="5.8.3. 模式搜索路径">第 5.8.3 节</a>）。如果给出一个被限定的操作符名，那么只考虑指定模式中的操作符。</p><ol type="a" class="substeps"><li class="step"><p>如果搜索路径找到了多个有相同参数类型的操作符，那么只考虑最早出现在路径中的那一个。 但是不同参数类型的操作符将被平等看待，而不管它们在路径中的位置如何。</p></li></ol></li><li class="step" id="OP-RESOL-EXACT-MATCH"><p>查找一个正好接受输入参数类型的操作符。如果找到一个（在一组被考虑的操作符中，可能只存在一个正好匹配的），则使用之。</p><ol type="a" class="substeps"><li class="step" id="OP-RESOL-EXACT-UNKNOWN"><p>如果一个二元操作符调用中的一个参数是<code class="type">unknown</code>类型，则在本次检查中假设它与另一个参数类型相同。 对于涉及两个<code class="type">unknown</code>输入的调用或者带有一个<code class="type">unknown</code>输入的一元操作符，在这一步将永远找不到一个匹配。</p></li><li class="step" id="OP-RESOL-EXACT-DOMAIN"><p>如果一个二元操作符调用的其中一个参数是<code class="type">unknown</code>类型
+而另一个是一种域类型，下一次检查会看看是否有一个操作符正好在两边都
+接受该域的基类型，如果有就使用它。</p></li></ol></li><li class="step" id="OP-RESOL-BEST-MATCH"><p>寻找最优匹配。</p><ol type="a" class="substeps"><li class="step"><p>抛弃那些输入类型不匹配并且也不能被转换成匹配的候选操作符。
+<code class="type">unknown</code>文字被假定为可以为这个目的被转换为
+任何东西。如果只剩下一个候选操作符，则使用之，否则继续下一
+步。</p></li><li class="step"><p>如果任何输入参数是一种域类型，对所有后续步骤都把它当做是该
+域的基类型。这确保在做有歧义的操作符解析时，域的举止像它们
+的基类型。</p></li><li class="step"><p>遍历所有候选操作符，保留那些在输入类型上的匹配最准确的。如果没有一个操作符能准确匹配，则保留所有候选。如果只剩下一个候选操作符，则使用之，否则继续下一步。</p></li><li class="step"><p>遍历所有候选操作符，保留那些在最多个需要类型转换的位置上接受首选类型（属于输入数据类型的类型分类）的操作符。如果没有接受首选类型的操作符，则保留所有候选。如果只剩下一个候选操作符，则使用之， 否则继续下一步。</p></li><li class="step"><p>如果有任何输入参数是<code class="type">unknown</code>类型，检查被剩余候选操作符在那些参数位置上接受的类型分类。 在每一个位置，如果任何候选接受该分类，则选择<code class="type">string</code>分类（这种对字符串的偏爱是合适的， 因为未知类型的文本确实像字符串)。否则，如果所有剩下的候选操作符都接受相同的类型 分类，则选择该分类；否则抛出一个错误（因为在没有更多线索的条件下无法作出正确 的推断）。现在抛弃不接受选定的类型分类的候选操作符。然后，如果任意候选操作符接受那个分类中的首选类型， 则抛弃那些在该参数位置接受非首选类型的候选操作符。如果没有候选操作符能通过这些测试则保留全部候选者。如果只剩下一个候选者，则使用之；否则继续下一步。</p></li><li class="step" id="OP-RESOL-LAST-UNKNOWN"><p>如果既有<code class="type">unknown</code>参数也有已知类型的参数，并且所有已知类型参数具有相同的类型，则假定该<code class="type">unknown</code>参数也是那种类型的，并且检查哪些候选操作符可以在该<code class="type">unknown</code>参数的位置上接受那个类型。如果正好有一个候选者通过了这个测试，则使用之；否则失败。</p></li></ol></li></ol></div><p>下面是一些例子。</p><div class="example" id="idp16366336"><p class="title"><strong>例 10.1. 阶乘操作符类型决定</strong></p><div class="example-contents"><p>在标准目录中只有一个被定义的阶乘操作符（后缀<code class="literal">!</code>），它接受一个类型为<code class="type">bigint</code>的参数。在下面这个查询表达式中，扫描器会为该参数分配一个初始类型<code class="type">integer</code>：
+</p><pre class="screen">SELECT 40 ! AS "40 factorial";
+
+                   40 factorial
+--------------------------------------------------
+ 815915283247897734345611269596115894272000000000
+(1 row)</pre><p>
+
+因此，解析器在操作数上做了一个类型转换，该查询等价于：
+
+</p><pre class="screen">SELECT CAST(40 AS bigint) ! AS "40 factorial";</pre></div></div><br class="example-break" /><div class="example" id="idp16370416"><p class="title"><strong>例 10.2. 字符串连接操作符类型决定</strong></p><div class="example-contents"><p>一个类字符串的语法被用来处理字符串类型和处理复杂的扩展类型。未指定类型的字符串与可能的候选操作符匹配。</p><p>一个未指定参数的例子：
+</p><pre class="screen">SELECT text 'abc' || 'def' AS "text and unknown";
+
+ text and unknown
+------------------
+ abcdef
+(1 row)</pre><p>在这种情况下，解析器查看是否有一个操作符的两个参数都使用<code class="type">text</code>。既然有，那么它假设第二个参数应被解释为<code class="type">text</code>类型。</p><p>下面是两个未指定类型的值的连接：
+</p><pre class="screen">SELECT 'abc' || 'def' AS "unspecified";
+
+ unspecified
+-------------
+ abcdef
+(1 row)</pre><p>在这种情况下，没有对于使用哪种类型的初始提示，因为在查询中没有指定类型。 因此，解析器查找所有的候选操作符并找到候选者同时接受字符串分类和位串分类的输入。 因为字符串分类在可用时是首选的，该分类会被选中，并且接下来字符串的首选类型（<code class="type">text</code>）会被用作解决未知类型文字的指定类型。</p></div></div><br class="example-break" /><div class="example" id="idp16375920"><p class="title"><strong>例 10.3. 绝对值与否定操作符类型决定</strong></p><div class="example-contents"><p><span class="productname">PostgreSQL</span>操作符目录中有几个对于前缀操作符<code class="literal">@</code>的条目， 这些都现实了针对各种数字数据类型的绝对值操作。其中之一用于<code class="type">float8</code>类型，它是在数字分类中的首选类型。 因此，<span class="productname">PostgreSQL</span>将在遇到一个<code class="type">unknown</code>输入时使用它：
+</p><pre class="screen">SELECT @ '-4.5' AS "abs";
+ abs
+-----
+ 4.5
+(1 row)</pre><p>
+在这里，系统在应用所选操作符之前已经隐式地解决了将未知类型文字作为<code class="type">float8</code>类型。 我们可以验证我们使用的是<code class="type">float8</code>而不是别的类型：
+</p><pre class="screen">SELECT @ '-4.5e500' AS "abs";
+
+ERROR:  "-4.5e500" is out of range for type double precision</pre><p>另一方面，前缀符<code class="literal">~</code>（按位取反）只为整数数据类型定义，而没有为<code class="type">float8</code>定义。因此，如果我们尝试一个与使用<code class="literal">~</code>类似的情况，我们会得到：
+</p><pre class="screen">SELECT ~ '20' AS "negation";
+
+ERROR:  operator is not unique: ~ "unknown"
+HINT:  Could not choose a best candidate operator. You might need to add
+explicit type casts.</pre><p>
+这是因为系统不能决定在几个可能的<code class="literal">~</code>符号中应该选择哪一个。我们可以用一个显式造型来帮助它：
+</p><pre class="screen">SELECT ~ CAST('20' AS int8) AS "negation";
+
+ negation
+----------
+      -21
+(1 row)</pre></div></div><br class="example-break" /><div class="example" id="idp16386736"><p class="title"><strong>例 10.4. 数组包含操作符类型决定</strong></p><div class="example-contents"><p>这里是另一个决定带有一个已知和一个未知输入的操作符的例子：
+</p><pre class="screen">SELECT array[1,2] &lt;@ '{1,2,3}' as "is subset";
+
+ is subset
+-----------
+ t
+(1 row)</pre><p>
+<span class="productname">PostgreSQL</span>操作符目录有一些条目用于中缀操作符<code class="literal">&lt;@</code>，但是仅有的两个可以在左手边接受一个整数数组的是数组包含（<code class="type">anyarray</code> <code class="literal">&lt;@</code> <code class="type">anyarray</code>）和范围包含（<code class="type">anyelement</code> <code class="literal">&lt;@</code> <code class="type">anyrange</code>）。因为这些多态伪类型（见<a class="xref" href="datatype-pseudo.html" title="8.20. 伪类型">第 8.20 节</a>）中没有一个被认为是首选的，解析器不能以此为基础来解决歧义。不过，<a class="xref" href="typeconv-oper.html#OP-RESOL-LAST-UNKNOWN" title="步骤 3.f">步骤 3.f</a>告诉它假定位置类型的文字和其他输入的类型相同，即整数数组。现在这两个操作符中只有一个可以匹配，因此数组包含被选择（如果选择范围包含，我们将得到一个错误，因为该字符串没有成为一个范围文字的正确格式）。</p></div></div><br class="example-break" /><div class="example" id="idp16394944"><p class="title"><strong>例 10.5. 域类型上的自定义操作符</strong></p><div class="example-contents"><p>用户有时会尝试声明只适用于一种域类型的操作符。这是可能的，
+但是远非它看起来那么有用，因为操作符解析规则被设计为选择
+适用于域的基类型的操作符。考虑这个例子：
+</p><pre class="screen">CREATE DOMAIN mytext AS text CHECK(...);
+CREATE FUNCTION mytext_eq_text (mytext, text) RETURNS boolean AS ...;
+CREATE OPERATOR = (procedure=mytext_eq_text, leftarg=mytext, rightarg=text);
+CREATE TABLE mytable (val mytext);
+
+SELECT * FROM mytable WHERE val = 'foo';</pre><p>
+这个查询将不会使用自定义操作符。解析器将首先看看是否有一个
+<code class="type">mytext</code> <code class="literal">=</code> <code class="type">mytext</code>操作符（
+<a class="xref" href="typeconv-oper.html#OP-RESOL-EXACT-UNKNOWN" title="步骤 2.a">步骤 2.a</a>），当然这里没有；
+然后它将会考虑该域的基类型<code class="type">text</code>，并且看看是否有一
+个<code class="type">text</code> <code class="literal">=</code> <code class="type">text</code>操作符（
+<a class="xref" href="typeconv-oper.html#OP-RESOL-EXACT-DOMAIN" title="步骤 2.b">步骤 2.b</a>），这里也没有；因
+此它会把<code class="type">unknown</code>-类型文字解析为<code class="type">text</code>
+并使用<code class="type">text</code> <code class="literal">=</code> <code class="type">text</code>操作符。
+让自定义操作符能被使用的唯一方法是显式地转换改文字：
+</p><pre class="screen">SELECT * FROM mytable WHERE val = text 'foo';</pre><p>
+这样根据准确匹配规则会立即找到
+<code class="type">mytext</code> <code class="literal">=</code> <code class="type">text</code>操作符。如果
+到达最佳匹配规则，它们会积极地排斥域类型上的操作符。如果它
+们没有，这样一个操作符将创建太多歧义操作符失败，因为转换规
+则总是认为一个域可以和它的基类型相互转换，并且因此该域操作
+符在所有与该基类型上的一个类似命名的操作符相同的情况中都被
+认为可用。</p></div></div><br class="example-break" /></div><div class="navfooter"><hr /><table width="100%" summary="Navigation footer"><tr><td width="40%" align="left"><a accesskey="p" href="typeconv-overview.html">上一页</a> </td><td width="20%" align="center"><a accesskey="u" href="typeconv.html">上一级</a></td><td width="40%" align="right"> <a accesskey="n" href="typeconv-func.html">下一页</a></td></tr><tr><td width="40%" align="left" valign="top">10.1. 概述 </td><td width="20%" align="center"><a accesskey="h" href="index.html">起始页</a></td><td width="40%" align="right" valign="top"> 10.3. 函数</td></tr></table></div></body></html>

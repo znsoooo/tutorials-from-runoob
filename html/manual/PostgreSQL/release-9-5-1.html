@@ -1,0 +1,142 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><title>E.19. 版本 9.5.1</title><link rel="stylesheet" type="text/css" href="stylesheet.css" /><link rev="made" href="pgsql-docs@postgresql.org" /><meta name="generator" content="DocBook XSL Stylesheets V1.79.1" /><link rel="prev" href="release-9-5-2.html" title="E.18. 版本 9.5.2" /><link rel="next" href="release-9-5.html" title="E.20. 版本 9.5" /></head><body><div xmlns="http://www.w3.org/TR/xhtml1/transitional" class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="5" align="center">E.19. 版本 9.5.1</th></tr><tr><td width="10%" align="left"><a accesskey="p" href="release-9-5-2.html" title="E.18. 版本 9.5.2">上一页</a> </td><td width="10%" align="left"><a accesskey="u" href="release.html" title="附录 E. 版本说明">上一级</a></td><th width="60%" align="center">附录 E. 版本说明</th><td width="10%" align="right"><a accesskey="h" href="index.html" title="PostgreSQL 10.1 手册">起始页</a></td><td width="10%" align="right"> <a accesskey="n" href="release-9-5.html" title="E.20. 版本 9.5">下一页</a></td></tr></table><hr></hr></div><div class="sect1" id="RELEASE-9-5-1"><div class="titlepage"><div><div><h2 class="title" style="clear: both">E.19. 版本 9.5.1</h2></div></div></div><div class="toc"><dl class="toc"><dt><span class="sect2"><a href="release-9-5-1.html#idp66008416">E.19.1. 迁移到版本 9.5.1</a></span></dt><dt><span class="sect2"><a href="release-9-5-1.html#idp66009232">E.19.2. 修改列表</a></span></dt></dl></div><p><strong>发布日期. </strong>2016-02-11</p><p>
+
+   这个版本包含各种自9.5.0以来的修复。关于9.5主版本的新特性信息，
+   请查看<a class="xref" href="release-9-5.html" title="E.20. 版本 9.5">第 E.20 节</a>。
+  </p><div class="sect2" id="idp66008416"><div class="titlepage"><div><div><h3 class="title">E.19.1. 迁移到版本 9.5.1</h3></div></div></div><p>
+
+    运行9.5.X版本的用户不需要转储/恢复。
+   </p></div><div class="sect2" id="idp66009232"><div class="titlepage"><div><div><h3 class="title">E.19.2. 修改列表</h3></div></div></div><div class="itemizedlist"><ul class="itemizedlist" style="list-style-type: disc; "><li class="listitem"><p>
+
+
+
+
+      修复正则表达式中无限循环和缓冲区溢出问题
+      (Tom Lane)
+     </p><p>
+
+
+
+
+      在某些情况下，括号表达式中非常大的字符范围可能会导致无限循环，
+      并且在其他情况下内存会覆盖。 (CVE-2016-0773)
+     </p></li><li class="listitem"><p>
+
+      修复一个疏忽，导致散列连接在极少数情况下错过加入内部关系的一些元组 
+      (Tomas Vondra, Tom Lane)
+     </p></li><li class="listitem"><p>
+
+      当使用分组集时，避免下推<code class="literal">HAVING</code>子句 (Andrew Gierth)
+     </p></li><li class="listitem"><p>
+
+
+      修复对<code class="literal">ON CONFLICT</code> arbiter <code class="literal">WHERE</code>子句的解析 (Peter Geoghegan)
+     </p></li><li class="listitem"><p>
+      让<code class="varname">log_line_prefix</code>中的<code class="literal">%h</code>
+      和<code class="literal">%r</code>转义可用于<code class="varname">log_connections</code>
+      发出的消息 (Tom Lane)
+     </p><p>
+
+      以前，<code class="literal">%h</code>/<code class="literal">%r</code>仅在新会话发出<span class="quote">“<span class="quote">connection received</span>”</span>
+      日志消息后开始工作；现在它们也用于该消息。
+     </p></li><li class="listitem"><p>
+
+
+
+      避免在SSPI认证期间泄露令牌句柄
+      (Christian Ullrich)
+     </p></li><li class="listitem"><p>
+      修复<span class="application">psql</span>的<code class="literal">\det</code>命令，
+      与其他<code class="literal">\d</code>命令潜在模式限定模式相同的方式解释其模式参数 (Reece Hart)
+     </p></li><li class="listitem"><p>
+
+      在Windows上的<span class="application">pg_ctl</span>中，检查服务器状态以决定输出发送到哪里，
+      而不是检查标准输出是否是终端 (Michael Paquier)
+     </p></li><li class="listitem"><p>
+
+
+      修复<span class="application">pg_dump</span>处理扩展成员对象中的各种极端错误 (Tom Lane)
+     </p></li><li class="listitem"><p>
+
+      修复<span class="application">pg_dump</span>中对域约束名的不正确引用 (Elvis Pranskevichus)
+     </p></li><li class="listitem"><p>
+      让<span class="application">pg_dump</span>标记一个视图的触发器需要在其规则之后处理，
+      以阻止并行<span class="application">pg_restore</span>期间可能的失败 (Tom Lane)
+     </p></li><li class="listitem"><p>
+      在评估脚本指定的除法或模运算符期间，在<span class="application">pgbench</span>
+      中安装保护防止极端溢出条件 (Fabien Coelho, Michael Paquier)
+     </p></li><li class="listitem"><p>
+
+      当<span class="application">pg_receivexlog</span>连接到9.4之前的服务器时，
+      禁止无用的警告消息 (Marco Nenciarini)
+     </p></li><li class="listitem"><p>
+
+      在使用<span class="application">plpython2</span>和<span class="application">plpython3</span>
+      时，避免转储/重载问题 (Tom Lane)
+     </p><p>
+
+      原则上，两个版本的<span class="application">PL/Python</span>可以在同一个数据库中使用，
+      虽然不在同一个会话中（因为<span class="application">libpython</span>的两个版本不能安全地同时使用）。
+      然而，<span class="application">pg_restore</span>和<span class="application">pg_upgrade</span>
+      两者做的事情会使同一个会话限制冲突。通过改变检查的时间来解决。
+     </p></li><li class="listitem"><p>
+
+      修复<span class="application">PL/Python</span>回归测试以通过Python 3.5
+      (Peter Eisentraut)
+     </p></li><li class="listitem"><p>
+
+
+
+      阻止某些<span class="application">PL/Java</span>参数被非超级用户设置 (Noah Misch)
+     </p><p>      此更改通过将这些参数标记为仅限超级用户来缓解<span class="application">PL/Java</span>
+      安全性错误(CVE-2016-0766)，该错误在<span class="application">PL/Java</span>中已修复。
+      为了修复<span class="productname">PostgreSQL</span>比<span class="application">PL/Java</span>
+      更频繁更新的站点安全隐患，让核心代码也知道它们。
+     </p></li><li class="listitem"><p>      修复<span class="application">ecpg</span>提供的头文件不包含从预处理器指令行继续到下一行的注释
+      (Michael Meskes)
+     </p><p>      这样的注释被<span class="application">ecpg</span>拒绝。目前还不清楚是否应该更改
+      <span class="application">ecpg</span>本身。
+     </p></li><li class="listitem"><p>
+
+
+      修复<code class="function">hstore_to_json_loose()</code>，
+      测试<code class="type">hstore</code>值是否可以转换为JSON数字 (Tom Lane)
+     </p><p>
+
+
+
+
+
+
+      以前，此函数可能被非字母数字的尾随字符欺骗，导致发出句法上无效的JSON。
+     </p></li><li class="listitem"><p>
+
+      在<code class="filename">contrib/postgres_fdw</code>中，修复在数据修改命令中使用
+      <code class="literal">tableoid</code>触发的错误 (Etsuro Fujita,
+      Robert Haas)
+     </p></li><li class="listitem"><p>
+
+      修正<code class="literal">NAMEDATALEN</code>限制为小于256的不明智建议(Robert Haas, Tom Lane)
+     </p></li><li class="listitem"><p>
+
+
+      通过确保文件名以固定顺序提供给链接器来提高构建输出的可重复性 (Christoph Berg)
+     </p><p>
+
+
+      这避免了从一个构建到下一个构建生成的可执行文件的可能的逐位差异。
+     </p></li><li class="listitem"><p>
+
+
+      确保<code class="filename">dynloader.h</code>包含在MSVC版本中安装的头文件中 
+      (Bruce Momjian, Michael Paquier)
+     </p></li><li class="listitem"><p>
+
+
+
+
+      将时区数据文件更新为<span class="application">tzdata</span> release 2016a，
+      用于开曼群岛，Metlakatla和Trans-Baikal Territory（Zabaykalsky Krai）的DST法律变更，
+      以及巴基斯坦的历史修正。
+     </p></li></ul></div></div></div><div class="navfooter"><hr /><table width="100%" summary="Navigation footer"><tr><td width="40%" align="left"><a accesskey="p" href="release-9-5-2.html">上一页</a> </td><td width="20%" align="center"><a accesskey="u" href="release.html">上一级</a></td><td width="40%" align="right"> <a accesskey="n" href="release-9-5.html">下一页</a></td></tr><tr><td width="40%" align="left" valign="top">E.18. 版本 9.5.2 </td><td width="20%" align="center"><a accesskey="h" href="index.html">起始页</a></td><td width="40%" align="right" valign="top"> E.20. 版本 9.5</td></tr></table></div></body></html>

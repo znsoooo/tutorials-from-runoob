@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><title>F.44. unaccent</title><link rel="stylesheet" type="text/css" href="stylesheet.css" /><link rev="made" href="pgsql-docs@postgresql.org" /><meta name="generator" content="DocBook XSL Stylesheets V1.79.1" /><link rel="prev" href="tsm-system-time.html" title="F.43. tsm_system_time" /><link rel="next" href="uuid-ossp.html" title="F.45. uuid-ossp" /></head><body><div xmlns="http://www.w3.org/TR/xhtml1/transitional" class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="5" align="center">F.44. unaccent</th></tr><tr><td width="10%" align="left"><a accesskey="p" href="tsm-system-time.html" title="F.43. tsm_system_time">上一页</a> </td><td width="10%" align="left"><a accesskey="u" href="contrib.html" title="附录 F. 额外提供的模块">上一级</a></td><th width="60%" align="center">附录 F. 额外提供的模块</th><td width="10%" align="right"><a accesskey="h" href="index.html" title="PostgreSQL 10.1 手册">起始页</a></td><td width="10%" align="right"> <a accesskey="n" href="uuid-ossp.html" title="F.45. uuid-ossp">下一页</a></td></tr></table><hr></hr></div><div class="sect1" id="UNACCENT"><div class="titlepage"><div><div><h2 class="title" style="clear: both">F.44. unaccent</h2></div></div></div><div class="toc"><dl class="toc"><dt><span class="sect2"><a href="unaccent.html#idp88136976">F.44.1. 配置</a></span></dt><dt><span class="sect2"><a href="unaccent.html#idp88153264">F.44.2. 用法</a></span></dt><dt><span class="sect2"><a href="unaccent.html#idp88161840">F.44.3. 函数</a></span></dt></dl></div><a id="idp88132944" class="indexterm"></a><p>  <code class="filename">unaccent</code>是一个文本搜索字典，它能从词位中移除重音（附加符号）。它是一个过滤词典，这表示它的输出总是会被传递给下一个字典（如果有），这和字典的通常行为不同。这允许为全文搜索做与重音无关的处理。
+ </p><p>  <code class="filename">unaccent</code>的当前实现不能被用作<code class="filename">thesaurus</code>字典的正规化字典。
+ </p><div class="sect2" id="idp88136976"><div class="titlepage"><div><div><h3 class="title">F.44.1. 配置</h3></div></div></div><p>   <code class="literal">unaccent</code>字典接受下列选项：
+  </p><div class="itemizedlist"><ul class="itemizedlist" style="list-style-type: disc; "><li class="listitem"><p>     <code class="literal">RULES</code>是包含翻译规则列表的文件的基本名。这个文件必须被存储在<code class="filename">$SHAREDIR/tsearch_data/</code>（这里<code class="literal">$SHAREDIR</code>表示<span class="productname">PostgreSQL</span>安装的共享数据目录）中。它的名称必须以<code class="literal">.rules</code>（不包含在<code class="literal">RULES</code>参数中）结束。
+    </p></li></ul></div><p>   规则文件具有下面的格式：
+  </p><div class="itemizedlist"><ul class="itemizedlist" style="list-style-type: disc; "><li class="listitem"><p>     每一行表示一个由带有重音的字符和不带重音的字符构成的对。第一个字符将被翻译成第二个。例如：
+</p><pre class="programlisting">À        A
+Á        A
+Â        A
+Ã        A
+Ä        A
+Å        A
+Æ        AE</pre><p>
+     两个字符必须由空格分隔，并且一行上的任何前导或尾随空白都将被忽略。
+    </p></li><li class="listitem"><p>     或者，如果一行只给出一个字符，则删除该字符的实例; 
+     这在用单独的字符表示重音的语言中是有用的。
+    </p></li><li class="listitem"><p>     实际上，每个<span class="quote">“<span class="quote">字符</span>”</span>可以是不包含空格的任何字符串，因此，
+     除了去除变音符之外，<code class="filename">unaccent</code>字典也可以用于其他类型的字符串替换。
+    </p></li><li class="listitem"><p>     与其他<span class="productname">PostgreSQL</span>文本搜索配置文件一样，
+     规则文件必须以UTF-8编码方式存储。加载时，数据将自动转换为当前数据库的编码。
+     任何含有不可翻译字符的行都将被忽略，因此规则文件可以包含当前编码中不适用的规则。
+    </p></li></ul></div><p>   在<code class="filename">unaccent.rules</code>中可以找到一个更完整的例子，它可以直接用于大部分欧洲语言，当<code class="filename">unaccent</code>模块被安装时，它被安装在<code class="filename">$SHAREDIR/tsearch_data/</code>中。
+  </p></div><div class="sect2" id="idp88153264"><div class="titlepage"><div><div><h3 class="title">F.44.2. 用法</h3></div></div></div><p>   安装<code class="literal">unaccent</code>扩展会创建一个文本搜索模板<code class="literal">unaccent</code>和一个基于前者的字典<code class="literal">unaccent</code>。<code class="literal">unaccent</code>字典有默认的参数设置<code class="literal">RULES='unaccent'</code>，这会让该字典使用标准的<code class="filename">unaccent.rules</code>文件。如果希望修改该参数，可以
+
+</p><pre class="programlisting">mydb=# ALTER TEXT SEARCH DICTIONARY unaccent (RULES='my_rules');</pre><p>
+
+   或者基于该模板创建新的字典。
+  </p><p>   要测试该字典，你可以尝试：
+</p><pre class="programlisting">mydb=# select ts_lexize('unaccent','Hôtel');
+ ts_lexize
+-----------
+ {Hotel}
+(1 row)</pre><p>
+  </p><p>   这里是一个展示把<code class="filename">unaccent</code>字典插入到一个文本搜索配置的例子：
+</p><pre class="programlisting">mydb=# CREATE TEXT SEARCH CONFIGURATION fr ( COPY = french );
+mydb=# ALTER TEXT SEARCH CONFIGURATION fr
+        ALTER MAPPING FOR hword, hword_part, word
+        WITH unaccent, french_stem;
+mydb=# select to_tsvector('fr','Hôtels de la Mer');
+    to_tsvector
+-------------------
+ 'hotel':1 'mer':4
+(1 row)
+
+mydb=# select to_tsvector('fr','Hôtel de la Mer') @@ to_tsquery('fr','Hotels');
+ ?column?
+----------
+ t
+(1 row)
+
+mydb=# select ts_headline('fr','Hôtel de la Mer',to_tsquery('fr','Hotels'));
+      ts_headline
+------------------------
+ &lt;b&gt;Hôtel&lt;/b&gt; de la Mer
+(1 row)</pre><p>
+  </p></div><div class="sect2" id="idp88161840"><div class="titlepage"><div><div><h3 class="title">F.44.3. 函数</h3></div></div></div><p>  <code class="function">unaccent()</code>函数从一个给定的字符串中移除重音（附加符号）。基本上，它是<code class="filename">unaccent</code>字典的一个包装器，但是它能在普通的文本搜索环境之外使用。
+ </p><a id="idp88165504" class="indexterm"></a><pre class="synopsis">unaccent([<span class="optional"><em class="replaceable"><code>dictionary</code></em>, </span>] <em class="replaceable"><code>string</code></em>) returns <code class="type">text</code></pre><p>  如果省略了<em class="replaceable"><code>dictionary</code></em>参数，
+  则使用<code class="literal">unaccent</code>。
+ </p><p>  例如：
+</p><pre class="programlisting">SELECT unaccent('unaccent', 'Hôtel');
+SELECT unaccent('Hôtel');</pre><p>
+ </p></div></div><div class="navfooter"><hr /><table width="100%" summary="Navigation footer"><tr><td width="40%" align="left"><a accesskey="p" href="tsm-system-time.html">上一页</a> </td><td width="20%" align="center"><a accesskey="u" href="contrib.html">上一级</a></td><td width="40%" align="right"> <a accesskey="n" href="uuid-ossp.html">下一页</a></td></tr><tr><td width="40%" align="left" valign="top">F.43. tsm_system_time </td><td width="20%" align="center"><a accesskey="h" href="index.html">起始页</a></td><td width="40%" align="right" valign="top"> F.45. uuid-ossp</td></tr></table></div></body></html>

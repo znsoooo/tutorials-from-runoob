@@ -1,0 +1,94 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><title>CREATE TABLE AS</title><link rel="stylesheet" type="text/css" href="stylesheet.css" /><link rev="made" href="pgsql-docs@postgresql.org" /><meta name="generator" content="DocBook XSL Stylesheets V1.79.1" /><link rel="prev" href="sql-createtable.html" title="CREATE TABLE" /><link rel="next" href="sql-createtablespace.html" title="CREATE TABLESPACE" /></head><body><div xmlns="http://www.w3.org/TR/xhtml1/transitional" class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="5" align="center">CREATE TABLE AS</th></tr><tr><td width="10%" align="left"><a accesskey="p" href="sql-createtable.html" title="CREATE TABLE">上一页</a> </td><td width="10%" align="left"><a accesskey="u" href="sql-commands.html" title="SQL 命令">上一级</a></td><th width="60%" align="center">SQL 命令</th><td width="10%" align="right"><a accesskey="h" href="index.html" title="PostgreSQL 10.1 手册">起始页</a></td><td width="10%" align="right"> <a accesskey="n" href="sql-createtablespace.html" title="CREATE TABLESPACE">下一页</a></td></tr></table><hr></hr></div><div class="refentry" id="SQL-CREATETABLEAS"><div class="titlepage"></div><a id="idp45084512" class="indexterm"></a><div class="refnamediv"><h2><span class="refentrytitle">CREATE TABLE AS</span></h2><p>CREATE TABLE AS — 从一个查询的结果创建一个新表</p></div><div class="refsynopsisdiv"><h2>大纲</h2><pre class="synopsis">CREATE [ [ GLOBAL | LOCAL ] { TEMPORARY | TEMP } | UNLOGGED ] TABLE [ IF NOT EXISTS ] <em class="replaceable"><code>table_name</code></em>
+    [ (<em class="replaceable"><code>column_name</code></em> [, ...] ) ]
+    [ WITH ( <em class="replaceable"><code>storage_parameter</code></em> [= <em class="replaceable"><code>value</code></em>] [, ... ] ) | WITH OIDS | WITHOUT OIDS ]
+    [ ON COMMIT { PRESERVE ROWS | DELETE ROWS | DROP } ]
+    [ TABLESPACE <em class="replaceable"><code>tablespace_name</code></em> ]
+    AS <em class="replaceable"><code>query</code></em>
+    [ WITH [ NO ] DATA ]</pre></div><div class="refsect1" id="idp45091648"><h2>描述</h2><p>   <code class="command">CREATE TABLE AS</code>创建一个表，并且用
+   由一个<code class="command">SELECT</code>命令计算出来的数据填充
+   该表。该表的列具有和<code class="command">SELECT</code>的输出列
+   相关的名称和数据类型（不过可以通过给出一个显式的新列名列表来覆
+   盖这些列名）。
+  </p><p>   <code class="command">CREATE TABLE AS</code>和创建一个视图有些
+   相似，但是实际上非常不同：它会创建一个新表并且只计算该查询一次
+   用来初始填充新表。这个新表将不会跟踪该查询源表的后续变化。相反，
+   一个视图只要被查询，它的定义<code class="command">SELECT</code>
+   语句就会被重新计算。
+  </p></div><div class="refsect1" id="idp45096704"><h2>参数</h2><div class="variablelist"><dl class="variablelist"><dt><span class="term"><code class="literal">GLOBAL</code>或者<code class="literal">LOCAL</code></span></dt><dd><p>      为兼容性而忽略。不推荐使用这些关键词，详见
+      <a class="xref" href="sql-createtable.html" title="CREATE TABLE"><span class="refentrytitle">CREATE TABLE</span></a>。
+     </p></dd></dl></div><div class="variablelist"><dl class="variablelist"><dt><span class="term"><code class="literal">TEMPORARY</code>或者<code class="literal">TEMP</code></span></dt><dd><p>      如果被指定，该表会被创建为一个临时表。详见
+      <a class="xref" href="sql-createtable.html" title="CREATE TABLE"><span class="refentrytitle">CREATE TABLE</span></a>。
+     </p></dd><dt><span class="term"><code class="literal">UNLOGGED</code></span></dt><dd><p>      如果被指定，该表会被创建为一个不做日志的表。详见
+      <a class="xref" href="sql-createtable.html" title="CREATE TABLE"><span class="refentrytitle">CREATE TABLE</span></a>。
+     </p></dd><dt><span class="term"><code class="literal">IF NOT EXISTS</code></span></dt><dd><p>      如果已经存在一个同名的关系时不要抛出错误。这种情况下会发出一个
+      提示。详见<a class="xref" href="sql-createtable.html" title="CREATE TABLE"><span class="refentrytitle">CREATE TABLE</span></a>。
+     </p></dd><dt><span class="term"><em class="replaceable"><code>table_name</code></em></span></dt><dd><p>      要创建的表的名称（可以被模式限定）。
+     </p></dd><dt><span class="term"><em class="replaceable"><code>column_name</code></em></span></dt><dd><p>      新表中一列的名称。如果没有提供列名，会从查询的输出列名中得到。
+     </p></dd><dt><span class="term"><code class="literal">WITH ( <em class="replaceable"><code>storage_parameter</code></em> [= <em class="replaceable"><code>value</code></em>] [, ... ] )</code></span></dt><dd><p>      这个子句为新表指定可选的存储参数，详见
+      <a class="xref" href="sql-createtable.html#SQL-CREATETABLE-STORAGE-PARAMETERS" title="存储参数">存储参数</a>。
+      <code class="literal">WITH</code>子句也能包括<code class="literal">OIDS=TRUE</code>（或者只是
+      <code class="literal">OIDS</code>）来指定新表的行应该被分配 OID （对象标识符），
+      或者包括<code class="literal">OIDS=FALSE</code>来指定行没有 OID。详见
+      <a class="xref" href="sql-createtable.html" title="CREATE TABLE"><span class="refentrytitle">CREATE TABLE</span></a>。
+     </p></dd><dt><span class="term"><code class="literal">WITH OIDS</code><br /></span><span class="term"><code class="literal">WITHOUT OIDS</code></span></dt><dd><p>      这些是分别等效于<code class="literal">WITH (OIDS)</code>和
+      <code class="literal">WITH (OIDS=FALSE)</code>的即将过时的语法。如果你希望同时
+      给出<code class="literal">OIDS</code>设置和存储参数，你必须使用
+      <code class="literal">WITH ( ... )</code>语法，见上文。
+     </p></dd><dt><span class="term"><code class="literal">ON COMMIT</code></span></dt><dd><p>      临时表在事务块结束时的行为可以用<code class="literal">ON COMMIT</code>
+      控制。三个选项是：
+
+      </p><div class="variablelist"><dl class="variablelist"><dt><span class="term"><code class="literal">PRESERVE ROWS</code></span></dt><dd><p>          在事务结束时不采取特殊的动作。这是默认行为。
+         </p></dd><dt><span class="term"><code class="literal">DELETE ROWS</code></span></dt><dd><p>          在每一个事务块结束时临时表中的所有行都将被删除。本质上，
+          在每次提交时会完成一次自动的<a class="xref" href="sql-truncate.html" title="TRUNCATE"><span class="refentrytitle">TRUNCATE</span></a>。
+         </p></dd><dt><span class="term"><code class="literal">DROP</code></span></dt><dd><p>          在当前事务块结束时将删掉临时表。
+         </p></dd></dl></div></dd><dt><span class="term"><code class="literal">TABLESPACE <em class="replaceable"><code>tablespace_name</code></em></code></span></dt><dd><p>      <em class="replaceable"><code>tablespace_name</code></em>
+      是要在其中创建新表的表空间名称。如果没有指定，将会查询
+      <a class="xref" href="runtime-config-client.html#GUC-DEFAULT-TABLESPACE">default_tablespace</a>，临时表会查询
+      <a class="xref" href="runtime-config-client.html#GUC-TEMP-TABLESPACES">temp_tablespaces</a>。
+     </p></dd><dt><span class="term"><em class="replaceable"><code>query</code></em></span></dt><dd><p>      一个<a class="xref" href="sql-select.html" title="SELECT"><span class="refentrytitle">SELECT</span></a>、<a class="link" href="sql-select.html#SQL-TABLE" title="TABLE 命令">TABLE</a>或者<a class="xref" href="sql-values.html" title="VALUES"><span class="refentrytitle">VALUES</span></a>
+      命令，或者是一个运行准备好的<code class="command">SELECT</code>、
+      <code class="command">TABLE</code>或者
+      <code class="command">VALUES</code>查询的<a class="xref" href="sql-execute.html" title="EXECUTE"><span class="refentrytitle">EXECUTE</span></a>命令。
+     </p></dd><dt><span class="term"><code class="literal">WITH [ NO ] DATA</code></span></dt><dd><p>      这个子句指定查询产生的数据是否应该被复制到新表中。如果不是，只有
+      表结构会被复制。默认是复制数据。
+     </p></dd></dl></div></div><div class="refsect1" id="idp45140640"><h2>注解</h2><p>   这个命令在功能上类似于<a class="xref" href="sql-selectinto.html" title="SELECT INTO"><span class="refentrytitle">SELECT INTO</span></a>，但是它更好，
+   因为不太可能被<code class="command">SELECT INTO</code>语法的其他使用混淆。更
+   进一步，<code class="command">CREATE TABLE AS</code>提供了
+   <code class="command">SELECT INTO</code>的功能的一个超集。
+  </p><p>   <code class="command">CREATE TABLE AS</code>命令允许用户显式地指定
+   是否应该包括 OID。如果没有显式地指定 OID 的存在，将使用
+   <a class="xref" href="runtime-config-compatible.html#GUC-DEFAULT-WITH-OIDS">default_with_oids</a>配置变量来判断。
+  </p></div><div class="refsect1" id="idp45146240"><h2>示例</h2><p>   创建一个新表<code class="literal">films_recent</code>，它只由表
+   <code class="literal">films</code>中最近的项组成：
+
+</p><pre class="programlisting">CREATE TABLE films_recent AS
+  SELECT * FROM films WHERE date_prod &gt;= '2002-01-01';</pre><p>
+  </p><p>   要完全地复制一个表，也可以使用<code class="literal">TABLE</code>命令的
+   简短形式：
+
+</p><pre class="programlisting">CREATE TABLE films2 AS
+  TABLE films;</pre><p>
+  </p><p>   用一个预备语句创建一个新的临时表<code class="literal">films_recent</code>，
+   它仅由表<code class="literal">films</code>中最近的项组成。新表有 OID 
+   并且将在提交时被删除：
+
+</p><pre class="programlisting">PREPARE recentfilms(date) AS
+  SELECT * FROM films WHERE date_prod &gt; $1;
+CREATE TEMP TABLE films_recent WITH (OIDS) ON COMMIT DROP AS
+  EXECUTE recentfilms('2002-01-01');</pre></div><div class="refsect1" id="idp45153920"><h2>兼容性</h2><p>   <code class="command">CREATE TABLE AS</code>符合
+   <acronym class="acronym">SQL</acronym>标准。下面的是非标准扩展：
+
+   </p><div class="itemizedlist"><ul class="itemizedlist compact" style="list-style-type: disc; "><li class="listitem"><p>      标准要求在子查询子句周围有圆括号，在
+      <span class="productname">PostgreSQL</span>中这些圆括号是可选的。
+     </p></li><li class="listitem"><p>      在标准中，<code class="literal">WITH [ NO ] DATA</code>子句是必要的，而
+      PostgreSQL 中是可选的。
+     </p></li><li class="listitem"><p><span class="productname">PostgreSQL</span>处理临时表的方式和标准不同。
+     详见<a class="xref" href="sql-createtable.html" title="CREATE TABLE"><span class="refentrytitle">CREATE TABLE</span></a>。
+     </p></li><li class="listitem"><p>      <code class="literal">WITH</code>子句是一种
+      <span class="productname">PostgreSQL</span>扩展，
+      标准中既没有存储参数也没有 OID。
+     </p></li><li class="listitem"><p>      <span class="productname">PostgreSQL</span>的表空间概念是标准的
+      一部分。因此，子句<code class="literal">TABLESPACE</code>是一种扩展。
+     </p></li></ul></div></div><div class="refsect1" id="idp45164080"><h2>另见</h2><span class="simplelist"><a class="xref" href="sql-creatematerializedview.html" title="CREATE MATERIALIZED VIEW"><span class="refentrytitle">CREATE MATERIALIZED VIEW</span></a>, <a class="xref" href="sql-createtable.html" title="CREATE TABLE"><span class="refentrytitle">CREATE TABLE</span></a>, <a class="xref" href="sql-execute.html" title="EXECUTE"><span class="refentrytitle">EXECUTE</span></a>, <a class="xref" href="sql-select.html" title="SELECT"><span class="refentrytitle">SELECT</span></a>, <a class="xref" href="sql-selectinto.html" title="SELECT INTO"><span class="refentrytitle">SELECT INTO</span></a>, <a class="xref" href="sql-values.html" title="VALUES"><span class="refentrytitle">VALUES</span></a></span></div></div><div class="navfooter"><hr /><table width="100%" summary="Navigation footer"><tr><td width="40%" align="left"><a accesskey="p" href="sql-createtable.html">上一页</a> </td><td width="20%" align="center"><a accesskey="u" href="sql-commands.html">上一级</a></td><td width="40%" align="right"> <a accesskey="n" href="sql-createtablespace.html">下一页</a></td></tr><tr><td width="40%" align="left" valign="top">CREATE TABLE </td><td width="20%" align="center"><a accesskey="h" href="index.html">起始页</a></td><td width="40%" align="right" valign="top"> CREATE TABLESPACE</td></tr></table></div></body></html>

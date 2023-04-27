@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><title>10.5. UNION、CASE和相关结构</title><link rel="stylesheet" type="text/css" href="stylesheet.css" /><link rev="made" href="pgsql-docs@postgresql.org" /><meta name="generator" content="DocBook XSL Stylesheets V1.79.1" /><link rel="prev" href="typeconv-query.html" title="10.4. 值存储" /><link rel="next" href="typeconv-select.html" title="10.6. SELECT 输出列" /></head><body><div xmlns="http://www.w3.org/TR/xhtml1/transitional" class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="5" align="center">10.5. <code xmlns="http://www.w3.org/1999/xhtml" class="literal">UNION</code>、<code xmlns="http://www.w3.org/1999/xhtml" class="literal">CASE</code>和相关结构</th></tr><tr><td width="10%" align="left"><a accesskey="p" href="typeconv-query.html" title="10.4. 值存储">上一页</a> </td><td width="10%" align="left"><a accesskey="u" href="typeconv.html" title="第 10 章 类型转换">上一级</a></td><th width="60%" align="center">第 10 章 类型转换</th><td width="10%" align="right"><a accesskey="h" href="index.html" title="PostgreSQL 10.1 手册">起始页</a></td><td width="10%" align="right"> <a accesskey="n" href="typeconv-select.html" title="10.6. SELECT 输出列">下一页</a></td></tr></table><hr></hr></div><div class="sect1" id="TYPECONV-UNION-CASE"><div class="titlepage"><div><div><h2 class="title" style="clear: both">10.5. <code class="literal">UNION</code>、<code class="literal">CASE</code>和相关结构</h2></div></div></div><a id="idp16473264" class="indexterm"></a><a id="idp16474640" class="indexterm"></a><a id="idp16476016" class="indexterm"></a><a id="idp16477392" class="indexterm"></a><a id="idp16478768" class="indexterm"></a><a id="idp16480144" class="indexterm"></a><p>SQL <code class="literal">UNION</code>结构必须使可能不相似的类型匹配成为一个单一的结果集。该决定算法被独立地应用到一个联合查询的每个输出列。 <code class="literal">INTERSECT</code>和<code class="literal">EXCEPT</code>采用和<code class="literal">UNION</code>相同的方法来决定不相似的类型。<code class="literal">CASE</code>、<code class="literal">ARRAY</code>、<code class="literal">VALUES</code>、<code class="function">GREATEST</code>和<code class="function">LEAST</code>结构使用相同的算法来使它们的组成表达式匹配并选择一种结果数据类型。</p><div class="procedure" id="idp16488544"><p class="title"><strong><code class="literal">UNION</code>、<code class="literal">CASE</code>和相关结构的类型决定</strong></p><ol class="procedure" type="1"><li class="step"><p>如果所有的输入为相同类型，并且不是<code class="type">unknown</code>，那么就决定是该类型。</p></li><li class="step"><p>如果任何输入是一种域类型，在所有后续步骤中都把它当做
+该域的基类型。
+  <a href="#ftn.idp16492208" class="footnote"><sup class="footnote" id="idp16492208">[9]</sup></a></p></li><li class="step"><p>如果所有的输入为<code class="type">unknown</code>类型，则决定为<code class="type">text</code>（字符串分类的首选类型）类型。
+否则，为了其余规则，<code class="type">unknown</code>输入被忽略。</p></li><li class="step"><p>如果非未知输入不全是相同的类型分类，则失败。</p></li><li class="step"><p>如果有的话，选择第一个在其分类中作为首选类型的非未知输入类型。</p></li><li class="step"><p>否则，选择最后的非未知输入类型，它允许所有在前面的非未知输入被隐式地转换为它（总有这样的一种类型，因为至少在列表中的第一个类型必须满足这个条件）。</p></li><li class="step"><p>转换所有的输入为选定的类型。如果没有一个从给定输入到选定类型的转换将会失败。</p></li></ol></div><p>下面是一些例子。</p><div class="example" id="idp16499360"><p class="title"><strong>例 10.9. 联合中未指定类型的类型决定</strong></p><div class="example-contents"><pre class="screen">SELECT text 'a' AS "text" UNION SELECT 'b';
+
+ text
+------
+ a
+ b
+(2 rows)</pre><p>
+这里，未知类型文字<code class="literal">'b'</code>将被决定为类型<code class="type">text</code>。</p></div></div><br class="example-break" /><div class="example" id="idp16501936"><p class="title"><strong>例 10.10. 简单联合中的类型决定</strong></p><div class="example-contents"><pre class="screen">SELECT 1.2 AS "numeric" UNION SELECT 1;
+
+ numeric
+---------
+       1
+     1.2
+(2 rows)</pre><p>
+文字<code class="literal">1.2</code>是<code class="type">numeric</code>类型，且<code class="type">integer</code>值<code class="literal">1</code>可以被隐式地造型为<code class="type">numeric</code>，因此使用<code class="type">numeric</code>类型。</p></div></div><br class="example-break" /><div class="example" id="idp16506512"><p class="title"><strong>例 10.11. 可换位联合中的类型决定</strong></p><div class="example-contents"><pre class="screen">SELECT 1 AS "real" UNION SELECT CAST('2.2' AS REAL);
+
+ real
+------
+    1
+  2.2
+(2 rows)</pre><p>
+这里，由于类型<code class="type">real</code>被能被隐式地造型为<code class="type">integer</code>，而<code class="type">integer</code>可以被隐式地造型为<code class="type">real</code>，联合结果类型被决定为<code class="type">real</code>。</p></div></div><br class="example-break" /><div class="footnotes"><br /><hr style="width:100; text-align:left;margin-left: 0" /><div id="ftn.idp16492208" class="footnote"><p><a href="#idp16492208" class="para"><sup class="para">[9] </sup></a>    多少有些类似于对待用于操作符和函数的域输入的方式，这种行为允许
+    一种域类型能通过一个<code class="literal">UNION</code>或相似的结构保留下来，
+    只要用户小心地确保所有的输入都是（显式地或隐式地）准确类型。否
+    则会优先选择该域的基类型。
+   </p></div></div></div><div class="navfooter"><hr /><table width="100%" summary="Navigation footer"><tr><td width="40%" align="left"><a accesskey="p" href="typeconv-query.html">上一页</a> </td><td width="20%" align="center"><a accesskey="u" href="typeconv.html">上一级</a></td><td width="40%" align="right"> <a accesskey="n" href="typeconv-select.html">下一页</a></td></tr><tr><td width="40%" align="left" valign="top">10.4. 值存储 </td><td width="20%" align="center"><a accesskey="h" href="index.html">起始页</a></td><td width="40%" align="right" valign="top"> 10.6. <code class="literal">SELECT</code> 输出列</td></tr></table></div></body></html>

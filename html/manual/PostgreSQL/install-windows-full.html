@@ -1,0 +1,113 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><title>17.1. 使用Visual C++或Microsoft Windows SDK构建</title><link rel="stylesheet" type="text/css" href="stylesheet.css" /><link rev="made" href="pgsql-docs@postgresql.org" /><meta name="generator" content="DocBook XSL Stylesheets V1.79.1" /><link rel="prev" href="install-windows.html" title="第 17 章 在Windows上从源代码安装" /><link rel="next" href="runtime.html" title="第 18 章 服务器设置和操作" /></head><body><div xmlns="http://www.w3.org/TR/xhtml1/transitional" class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="5" align="center">17.1. 使用<span xmlns="http://www.w3.org/1999/xhtml" class="productname">Visual C++</span>或<span xmlns="http://www.w3.org/1999/xhtml" class="productname">Microsoft Windows SDK</span>构建</th></tr><tr><td width="10%" align="left"><a accesskey="p" href="install-windows.html" title="第 17 章 在Windows上从源代码安装">上一页</a> </td><td width="10%" align="left"><a accesskey="u" href="install-windows.html" title="第 17 章 在Windows上从源代码安装">上一级</a></td><th width="60%" align="center">第 17 章 在<span xmlns="http://www.w3.org/1999/xhtml" class="productname">Windows</span>上从源代码安装</th><td width="10%" align="right"><a accesskey="h" href="index.html" title="PostgreSQL 10.1 手册">起始页</a></td><td width="10%" align="right"> <a accesskey="n" href="runtime.html" title="第 18 章 服务器设置和操作">下一页</a></td></tr></table><hr></hr></div><div class="sect1" id="INSTALL-WINDOWS-FULL"><div class="titlepage"><div><div><h2 class="title" style="clear: both">17.1. 使用<span class="productname">Visual C++</span>或<span class="productname">Microsoft Windows SDK</span>构建</h2></div></div></div><div class="toc"><dl class="toc"><dt><span class="sect2"><a href="install-windows-full.html#idp19407040">17.1.1. 要求</a></span></dt><dt><span class="sect2"><a href="install-windows-full.html#idp19457408">17.1.2. 针对64位Windows的特殊考虑</a></span></dt><dt><span class="sect2"><a href="install-windows-full.html#idp19461488">17.1.3. 构建</a></span></dt><dt><span class="sect2"><a href="install-windows-full.html#idp19470640">17.1.4. 清理和安装</a></span></dt><dt><span class="sect2"><a href="install-windows-full.html#idp19478608">17.1.5. 运行回归测试</a></span></dt><dt><span class="sect2"><a href="install-windows-full.html#idp19498512">17.1.6. 构建文档</a></span></dt></dl></div><p>  PostgreSQL可以使用来自微软的Visual C++编译器套件构建。这些编译器可以来自于<span class="productname">Visual Studio</span>、<span class="productname">Visual Studio Express</span>或者<span class="productname">Microsoft Windows SDK</span>的某些版本。如果你还没有准备好一个<span class="productname">Visual Studio</span>环境设置，最简单的方式是使用<span class="productname">Visual Studio Express 2017 for Windows Desktop</span>中的编译器，或者<span class="productname">Windows SDK 8.1</span>中的，两者都可以从微软免费下载。
+ </p><p>  使用微软编译器套件可以编译得到 32 位和 64 位版本。32 位的 PostgreSQL 可以使用
+  <span class="productname">Visual Studio 2005</span>至
+  <span class="productname">Visual Studio 2017</span>（包括精简版）编译，
+  单独的Windows SDK 6.0至8.1亦可。64位PostgreSQL的构建只被
+  <span class="productname">Microsoft Windows SDK</span>版本6.0a至8.1或
+  <span class="productname">Visual Studio 2008</span>及以上版本支持。
+  使用<span class="productname">Visual Studio 2005</span>至
+  <span class="productname">Visual Studio 2013</span>编译时最低支持
+  <span class="productname">Windows XP</span>和
+  <span class="productname">Windows Server 2003</span>。使用
+  <span class="productname">Visual Studio 2015</span>编译时最低支持
+  <span class="productname">Windows Vista</span>和<span class="productname">Windows Server 2008</span>。
+  使用<span class="productname">Visual Studio 2017</span>编译时最低支持
+  <span class="productname">Windows 7 SP1</span>和<span class="productname">Windows Server 2008 R2 SP1</span>。
+ </p><p>  使用<span class="productname">Visual C++</span>或<span class="productname">Platform SDK</span>构建的工具在<code class="filename">src/tools/msvc</code>目录中。在构建时，请确定在系统路径中没有来自于<span class="productname">MinGW</span>或的<span class="productname">Cygwin</span>工具。同样，确保所有需要的Visual C++工具都在PATH中。在<span class="productname">Visual Studio</span>中，启动<span class="application">Visual Studio Command Prompt</span>。如果你希望构建一个64位版本，你必须使用64位版本的命令，反之亦然。在<span class="productname">Microsoft Windows SDK</span>中，启动该SDK在启动菜单中的<span class="application">CMD shell</span>。在最近的SDK版本中你可以使用<code class="command">setenv</code>命令改变目标CPU架构、构建类型以及目标OS，例如<code class="command">setenv /x86 /release /xp</code>会设置为Windows XP或更高版本上的32位发布构建。使用<code class="command">/?</code>来了解<code class="command">setenv</code>的其他选项。所有命令应该从<code class="filename">src\tools\msvc</code>目录运行。
+ </p><p>  在开始构建之前，你还需要编辑文件<code class="filename">config.pl</code>来反映任何你想改变的配置选项，或者要使用的任何第三方库目录。完整的配置在第一次读取并解析文件<code class="filename">config_default.pl</code>时确定，然后应用<code class="filename">config.pl</code>中的任何改变。例如，要制定你的<span class="productname">Python</span>安装的位置，将下面的内容放在<code class="filename">config.pl</code>中：
+</p><pre class="programlisting">$config-&gt;{python} = 'c:\python26';</pre><p>
+  你只需要指定那些和<code class="filename">config_default.pl</code>中不同的参数即可。
+ </p><p>  如果你希望设置任何其他环境变量，可创建一个名为<code class="filename">buildenv.pl</code>的文件并将需要的命令放在其中。例如，要把不在PATH中的bison路径加上，创建一个包含以下内容的文件：
+</p><pre class="programlisting">$ENV{PATH}=$ENV{PATH} . ';c:\some\where\bison\bin';</pre><p>
+ </p><p>  传递更多的命令行参数到Visual Studio构建命令(msbuild 或 vcbuild):
+</p><pre class="programlisting">$ENV{MSBFLAGS}="/m";</pre><p>
+ </p><div class="sect2" id="idp19407040"><div class="titlepage"><div><div><h3 class="title">17.1.1. 要求</h3></div></div></div><p>   构建<span class="productname">PostgreSQL</span>时需要下列附加产品。使用<code class="filename">config.pl</code>文件来指定这些库所在的目录。
+
+   </p><div class="variablelist"><dl class="variablelist"><dt><span class="term"><span class="productname">Microsoft Windows SDK</span></span></dt><dd><p>      如果你的构建环境中没有一个受支持的<span class="productname">Microsoft Windows SDK</span>版本，推荐你升级到最新版（当前版本为7.1，可从<a class="ulink" href="https://www.microsoft.com/download" target="_top">https://www.microsoft.com/download</a>下载）。
+     </p><p>      你必须总是包括SDK中的<span class="application">Windows头文件和库</span>部分。如果你安装的是一个包括<span class="application">Visual C++ 编译器</span>的<span class="productname">Windows SDK</span>，构建时不需要<span class="productname">Visual Studio</span>。注意在版本8.0a，Windows SDK中不再包括一个完整的命令行构建环境。
+     </p></dd><dt><span class="term"><span class="productname">ActiveState Perl</span></span></dt><dd><p>      ActiveState Perl被用来运行构建生成脚本。MinGW或Cygwin Perl是不符合要求的。AcitveState Perl也必须存在于PATH中。其二进制文件可以从<a class="ulink" href="http://www.activestate.com" target="_top">http://www.activestate.com</a>下载（注意：需要版本5.8.3及以上，免费标准发布就足够了）。
+     </p></dd></dl></div><p>
+  </p><p>   下面的附加产品在开始时并不要求，但是如果要构建完整的包就需要它们。使用<code class="filename">config.pl</code>文件来指定这些库所在的目录。
+
+   </p><div class="variablelist"><dl class="variablelist"><dt><span class="term"><span class="productname">ActiveState TCL</span></span></dt><dd><p>      用于构建<span class="application">PL/Tcl</span>（注意：要求版本8.4，免费标准发布即可）。
+     </p></dd><dt><span class="term"><span class="productname">Bison</span>和
+      <span class="productname">Flex</span></span></dt><dd><p>      <span class="productname">Bison</span>和<span class="productname">Flex</span>用来从Git构建，但使用发行文件构建时可以不要求。只有<span class="productname">Bison</span> 1.875或2.2及以上才能正常工作。<span class="productname">Flex</span>则必须是版本2.5.31或以上。
+     </p><p>    <span class="productname">Bison</span>和<span class="productname">Flex</span>
+    都包括在<span class="productname">msys</span>工具套件中，它作为
+    <span class="productname">MinGW</span>编译器套件的一部分可以从
+    <a class="ulink" href="http://www.mingw.org/wiki/MSYS" target="_top">http://www.mingw.org/wiki/MSYS</a>得到。
+     </p><p>      你将需要把包含<code class="filename">flex.exe</code>和<code class="filename">bison.exe</code>
+      的目录加入到<code class="filename">buildenv.pl</code>中的PATH环境变量中，
+      除非它们已经存在于PATH中。在MinGW的情况下，
+      目录将是MinGW安装目录的<code class="filename">\msys\1.0\bin</code>子目录。
+     </p><div class="note"><h3 class="title">注意</h3><p>        来自GnuWin32的Bison发布似乎有一个故障，它会导致Bison安装于名称中有空格的目录时发生故障，例如英语安装的默认位置<code class="filename">C:\Program Files\GnuWin32</code>。考虑将它安装到<code class="filename">C:\GnuWin32</code>或者在PATH环境设置中使用NTFS段路径名（例如<code class="filename">C:\PROGRA~1\GnuWin32</code>）。
+       </p></div><div class="note"><h3 class="title">注意</h3><p>       在PostgreSQL的FTP站点上的以及被旧文档引用的老式<code class="literal">winflex</code>二进制程序在64位Windows主机上会出现<span class="quote">“<span class="quote">flex: fatal
+       internal error, exec failed</span>”</span>的错误。请使用来自 MSYS 的 Flex。
+       </p></div></dd><dt><span class="term"><span class="productname">Diff</span></span></dt><dd><p>      Diff是回归测试所需要的，可以从<a class="ulink" href="http://gnuwin32.sourceforge.net" target="_top">http://gnuwin32.sourceforge.net</a>得到。
+     </p></dd><dt><span class="term"><span class="productname">Gettext</span></span></dt><dd><p>      Gettext用于NLS支持，可以从<a class="ulink" href="http://gnuwin32.sourceforge.net" target="_top">http://gnuwin32.sourceforge.net</a>得到。注意二进制程序、依赖文件以及开发者文件都需要。
+     </p></dd><dt><span class="term"><span class="productname">MIT Kerberos</span></span></dt><dd><p>      用于 GSSAPI 认证支持。MIT Kerberos可以从<a class="ulink" href="http://web.mit.edu/Kerberos/dist/index.html" target="_top">http://web.mit.edu/Kerberos/dist/index.html</a>下载。
+     </p></dd><dt><span class="term"><span class="productname">libxml2</span> and
+      <span class="productname">libxslt</span></span></dt><dd><p>      用于XML支持。二进制文件可以从<a class="ulink" href="http://zlatkovic.com/pub/libxml" target="_top">http://zlatkovic.com/pub/libxml</a>得到，源代码可以从<a class="ulink" href="http://xmlsoft.org" target="_top">http://xmlsoft.org</a>得到。注意libxml2需要iconv，后者也可以在相同的下载位置得到。
+     </p></dd><dt><span class="term"><span class="productname">openssl</span></span></dt><dd><p>      用于SSL支持。二进制文件可以从<a class="ulink" href="http://www.slproweb.com/products/Win32OpenSSL.html" target="_top">http://www.slproweb.com/products/Win32OpenSSL.html</a>下载，源代码可以从<a class="ulink" href="http://www.openssl.org" target="_top">http://www.openssl.org</a>下载。
+     </p></dd><dt><span class="term"><span class="productname">ossp-uuid</span></span></dt><dd><p>      用于UUID-OSSP支持（contrib only）。源代码可以从<a class="ulink" href="http://www.ossp.org/pkg/lib/uuid/" target="_top">http://www.ossp.org/pkg/lib/uuid/</a>下载。
+     </p></dd><dt><span class="term"><span class="productname">Python</span></span></dt><dd><p>      用于构建<span class="application">PL/Python</span>。二进制文件可以从<a class="ulink" href="http://www.python.org" target="_top">http://www.python.org</a>下载。
+     </p></dd><dt><span class="term"><span class="productname">zlib</span></span></dt><dd><p>      用于<span class="application">pg_dump</span>和<span class="application">pg_restore</span>中的压缩支持。二进制文件可以从<a class="ulink" href="http://www.zlib.net" target="_top">http://www.zlib.net</a>下载。
+     </p></dd></dl></div><p>
+  </p></div><div class="sect2" id="idp19457408"><div class="titlepage"><div><div><h3 class="title">17.1.2. 针对64位Windows的特殊考虑</h3></div></div></div><p>   在64位Windows上，PostgreSQL只能为x64架构构建，因此无法支持安腾处理器。
+  </p><p>   不支持在同一个构建树中混合32位和64位版本。构建系统会自动检测它运行在32位还是64位环境中，然后相应地构建PostgreSQL。鉴于此，在构建前启动正确的命令提示很重要。
+  </p><p>   要使用服务器端的第三方库如<span class="productname">python</span>或<span class="productname">openssl</span>，该库<span class="emphasis"><em>必须</em></span>也是64位。在一个64位服务器上载入一个32位库是不被支持的。PostgreSQL支持的一些第三方库可能只有32位版本，在这种情况下它们就不能被用于64位PostgreSQL。
+  </p></div><div class="sect2" id="idp19461488"><div class="titlepage"><div><div><h3 class="title">17.1.3. 构建</h3></div></div></div><p>   要在发行配置中构建PostgreSQL的所有部分（默认），运行命令：
+</p><pre class="screen"><strong class="userinput"><code>build</code></strong></pre><p>
+   要在调试配置中构建PostgreSQL的所有部分，运行命令：
+</p><pre class="screen"><strong class="userinput"><code>build DEBUG</code></strong></pre><p>
+   要构建单独一个对象，例如psql，运行命令：
+</p><pre class="screen"><strong class="userinput"><code>build psql</code></strong>
+<strong class="userinput"><code>build DEBUG psql</code></strong></pre><p>
+   要将默认的构建配置改变成调试，将下面的内容放在<code class="filename">buildenv.pl</code>文件中：
+</p><pre class="programlisting">$ENV{CONFIG}="Debug";</pre><p>
+  </p><p>   也可以在Visual Studio的图形界面中进行构建。在这种情况下，你需要在命令提示符下运行：
+</p><pre class="screen"><strong class="userinput"><code>perl mkvcbuild.pl</code></strong></pre><p>
+   然后在Visual Studio中打开生成的<code class="filename">pgsql.sln</code>（在源代码树的根目录中）。
+  </p></div><div class="sect2" id="idp19470640"><div class="titlepage"><div><div><h3 class="title">17.1.4. 清理和安装</h3></div></div></div><p>   在大部分时间里，Visual Studio的自动依赖跟踪会处理发生改变的文件。但是如果发生了大量的改变，你也许需要清理整个安装。为此，只要运行<code class="filename">clean.bat</code>命令，它将会自动清除所有生成的文件。你也可以使用<em class="parameter"><code>dist</code></em>参数运行它，这种情况下它的效果和<strong class="userinput"><code>make distclean</code></strong>一样，并且会移除flex/bison的输出文件。
+  </p><p>   默认情况下，所有的文件都被写入到名为<code class="filename">debug</code>或<code class="filename">release</code>的子目录中。要将这些文件以标准布局进行安装并且生成初始化和使用数据库所需的文件 ，运行命令：
+</p><pre class="screen"><strong class="userinput"><code>install c:\destination\directory</code></strong></pre><p>
+  </p><p>   如果你想只安装客户端应用和接口库，那么你可以使用这些命令：
+</p><pre class="screen"><strong class="userinput"><code>install c:\destination\directory client</code></strong></pre><p>
+  </p></div><div class="sect2" id="idp19478608"><div class="titlepage"><div><div><h3 class="title">17.1.5. 运行回归测试</h3></div></div></div><p>   要运行回归测试，确保你已经完成了所有所需部分的构建。另外，确保载入整个系统所需的DLL（例如Perl和Python过程语言所需的DLL）都在系统路径中。如果它们不在路径中，通过<code class="filename">buildenv.pl</code>文件设置。要运行测试，可以从<code class="filename">src\tools\msvc</code>目录运行以下命令之一：
+</p><pre class="screen"><strong class="userinput"><code>vcregress check</code></strong>
+<strong class="userinput"><code>vcregress installcheck</code></strong>
+<strong class="userinput"><code>vcregress plcheck</code></strong>
+<strong class="userinput"><code>vcregress contribcheck</code></strong>
+<strong class="userinput"><code>vcregress modulescheck</code></strong>
+<strong class="userinput"><code>vcregress ecpgcheck</code></strong>
+<strong class="userinput"><code>vcregress isolationcheck</code></strong>
+<strong class="userinput"><code>vcregress bincheck</code></strong>
+<strong class="userinput"><code>vcregress recoverycheck</code></strong>
+<strong class="userinput"><code>vcregress upgradecheck</code></strong></pre><p>
+
+   要更改使用的调度方式（默认为并行），在命令行后增加调度方式，如：
+</p><pre class="screen"><strong class="userinput"><code>vcregress check serial</code></strong></pre><p>
+
+   关于回归测试详见<a class="xref" href="regress.html" title="第 32 章 回归测试">第 32 章</a>。
+  </p><p>   用<code class="command">vcregress bincheck</code>和<code class="command">vcregress recoverycheck</code>
+   分别可以运行客户端程序上的回归测试和恢复测试，这要求
+   安装了额外的 Perl 模块：
+   </p><div class="variablelist"><dl class="variablelist"><dt><span class="term"><span class="productname">IPC::Run</span></span></dt><dd><p>      从编写这份文档时起，<code class="literal">IPC::Run</code>没有被包括在
+      ActiveState Perl 安装或者 ActiveState Perl Package
+      Manager (PPM) 库中。要安装，请从 CPAN （在
+      <a class="ulink" href="http://search.cpan.org/dist/IPC-Run/" target="_top">http://search.cpan.org/dist/IPC-Run/</a>）下载
+      <code class="filename">IPC-Run-&lt;version&gt;.tar.gz</code>源代码归档并且解压。
+      编辑<code class="filename">buildenv.pl</code>文件，并且增加一个 PERL5LIB 变量
+      指向解压得到的归档中的<code class="filename">lib</code>子目录。例如：
+</p><pre class="programlisting">$ENV{PERL5LIB}=$ENV{PERL5LIB} . ';c:\IPC-Run-0.94\lib';</pre><p>
+     </p></dd></dl></div><p>
+  </p></div><div class="sect2" id="idp19498512"><div class="titlepage"><div><div><h3 class="title">17.1.6. 构建文档</h3></div></div></div><p>   构建HTML格式的PostgreSQL文档需要一些工具和文件。为所有这些文件创建一个根目录，然后将下面列出的它们分别放在相应子目录中。   </p><div class="variablelist"><dl class="variablelist"><dt><span class="term">OpenJade 1.3.1-2</span></dt><dd><p>      从<a class="ulink" href="http://sourceforge.net/projects/openjade/files/openjade/1.3.1/openjade-1_3_1-2-bin.zip/download" target="_top">http://sourceforge.net/projects/openjade/files/openjade/1.3.1/openjade-1_3_1-2-bin.zip/download</a>下载并解压到<code class="filename">openjade-1.3.1</code>子目录。
+     </p></dd><dt><span class="term">DocBook DTD 4.2</span></dt><dd><p>      从<a class="ulink" href="http://www.oasis-open.org/docbook/sgml/4.2/docbook-4.2.zip" target="_top">http://www.oasis-open.org/docbook/sgml/4.2/docbook-4.2.zip</a>下载并解压到<code class="filename">docbook</code>子目录。
+     </p></dd><dt><span class="term">ISO字符实体</span></dt><dd><p>      从<a class="ulink" href="http://www.oasis-open.org/cover/ISOEnts.zip" target="_top">http://www.oasis-open.org/cover/ISOEnts.zip</a>下载并解压到<code class="filename">docbook</code>子目录。
+     </p></dd></dl></div><p>
+   编辑<code class="filename">buildenv.pl</code>文件，为根目录的位置增加一个变量，例如：
+</p><pre class="programlisting">$ENV{DOCROOT}='c:\docbook';</pre><p>
+   要构建文档，运行命令<code class="filename">builddoc.bat</code>。注意这实际会运行构建两次以生成索引。生成好的HTML文件将在<code class="filename">doc\src\sgml</code>中。
+  </p></div></div><div class="navfooter"><hr /><table width="100%" summary="Navigation footer"><tr><td width="40%" align="left"><a accesskey="p" href="install-windows.html">上一页</a> </td><td width="20%" align="center"><a accesskey="u" href="install-windows.html">上一级</a></td><td width="40%" align="right"> <a accesskey="n" href="runtime.html">下一页</a></td></tr><tr><td width="40%" align="left" valign="top">第 17 章 在<span class="productname">Windows</span>上从源代码安装 </td><td width="20%" align="center"><a accesskey="h" href="index.html">起始页</a></td><td width="40%" align="right" valign="top"> 第 18 章 服务器设置和操作</td></tr></table></div></body></html>

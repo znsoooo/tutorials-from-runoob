@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><title>35.3. 运行 SQL 命令</title><link rel="stylesheet" type="text/css" href="stylesheet.css" /><link rev="made" href="pgsql-docs@postgresql.org" /><meta name="generator" content="DocBook XSL Stylesheets V1.79.1" /><link rel="prev" href="ecpg-connect.html" title="35.2. 管理数据库连接" /><link rel="next" href="ecpg-variables.html" title="35.4. 使用主变量" /></head><body><div xmlns="http://www.w3.org/TR/xhtml1/transitional" class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="5" align="center">35.3. 运行 SQL 命令</th></tr><tr><td width="10%" align="left"><a accesskey="p" href="ecpg-connect.html" title="35.2. 管理数据库连接">上一页</a> </td><td width="10%" align="left"><a accesskey="u" href="ecpg.html" title="第 35 章 ECPG - C 中的嵌入式 SQL">上一级</a></td><th width="60%" align="center">第 35 章 <span xmlns="http://www.w3.org/1999/xhtml" class="application">ECPG</span> - C 中的嵌入式 <acronym xmlns="http://www.w3.org/1999/xhtml" class="acronym">SQL</acronym></th><td width="10%" align="right"><a accesskey="h" href="index.html" title="PostgreSQL 10.1 手册">起始页</a></td><td width="10%" align="right"> <a accesskey="n" href="ecpg-variables.html" title="35.4. 使用主变量">下一页</a></td></tr></table><hr></hr></div><div class="sect1" id="ECPG-COMMANDS"><div class="titlepage"><div><div><h2 class="title" style="clear: both">35.3. 运行 SQL 命令</h2></div></div></div><div class="toc"><dl class="toc"><dt><span class="sect2"><a href="ecpg-commands.html#ECPG-EXECUTING">35.3.1. 执行 SQL 语句</a></span></dt><dt><span class="sect2"><a href="ecpg-commands.html#ECPG-CURSORS">35.3.2. 使用游标</a></span></dt><dt><span class="sect2"><a href="ecpg-commands.html#ECPG-TRANSACTIONS">35.3.3. 管理事务</a></span></dt><dt><span class="sect2"><a href="ecpg-commands.html#ECPG-PREPARED">35.3.4. 预备语句</a></span></dt></dl></div><p>   任何 SQL 命令都可以在一个嵌入式 SQL 应用中被运行。下面是一些在嵌入式 SQL 应用中运行 SQL 命令的例子。
+  </p><div class="sect2" id="ECPG-EXECUTING"><div class="titlepage"><div><div><h3 class="title">35.3.1. 执行 SQL 语句</h3></div></div></div><p>   创建一个表：
+</p><pre class="programlisting">EXEC SQL CREATE TABLE foo (number integer, ascii char(16));
+EXEC SQL CREATE UNIQUE INDEX num1 ON foo(number);
+EXEC SQL COMMIT;</pre><p>
+  </p><p>   插入行：
+</p><pre class="programlisting">EXEC SQL INSERT INTO foo (number, ascii) VALUES (9999, 'doodad');
+EXEC SQL COMMIT;</pre><p>
+  </p><p>   删除行：
+</p><pre class="programlisting">EXEC SQL DELETE FROM foo WHERE number = 9999;
+EXEC SQL COMMIT;</pre><p>
+  </p><p>   更新：
+</p><pre class="programlisting">EXEC SQL UPDATE foo
+    SET ascii = 'foobar'
+    WHERE number = 9999;
+EXEC SQL COMMIT;</pre><p>
+  </p><p>   返回一个单一结果行的<code class="literal">SELECT</code>语句也可以直接使用<code class="literal">EXEC SQL</code>执行。要处理有多行的结果集，一个应用必须使用一个游标，可参考下面的<a class="xref" href="ecpg-commands.html#ECPG-CURSORS" title="35.3.2. 使用游标">第 35.3.2 节</a>（作为一种特殊情况，一个应用可以一次取出多行到一个数组主变量中，参考<a class="xref" href="ecpg-variables.html#ECPG-VARIABLES-ARRAYS" title="35.4.4.3.1. 数组">第 35.4.4.3.1 节</a>）。
+  </p><p>   单行选择：
+</p><pre class="programlisting">EXEC SQL SELECT foo INTO :FooBar FROM table1 WHERE ascii = 'doodad';</pre><p>
+  </p><p>   还有，一个配置参数可以用<code class="literal">SHOW</code>命令检索：
+</p><pre class="programlisting">EXEC SQL SHOW search_path INTO :var;</pre><p>
+  </p><p>   <code class="literal">:<em class="replaceable"><code>something</code></em></code>形式的记号是<em class="firstterm">主变量</em>，即它们指向 C 程序中的变量。它们在<a class="xref" href="ecpg-variables.html" title="35.4. 使用主变量">第 35.4 节</a>中解释。
+  </p></div><div class="sect2" id="ECPG-CURSORS"><div class="titlepage"><div><div><h3 class="title">35.3.2. 使用游标</h3></div></div></div><p>   要检索一个保持多行的结果集，一个应用必须声明一个游标并且从该游标中取得每一行。使用一个游标的步骤如下：声明一个游标、打开它、从该游标取得一行、重复并且最终关闭它。
+  </p><p>   使用游标选择：
+</p><pre class="programlisting">EXEC SQL DECLARE foo_bar CURSOR FOR
+    SELECT number, ascii FROM foo
+    ORDER BY ascii;
+EXEC SQL OPEN foo_bar;
+EXEC SQL FETCH foo_bar INTO :FooBar, DooDad;
+...
+EXEC SQL CLOSE foo_bar;
+EXEC SQL COMMIT;</pre><p>
+  </p><p>   有关声明游标的更多细节，可参考<a class="xref" href="ecpg-sql-declare.html" title="DECLARE">DECLARE</a>；<code class="literal">FETCH</code>命令的细节则可以参考<a class="xref" href="sql-fetch.html" title="FETCH"><span class="refentrytitle">FETCH</span></a>。
+  </p><div class="note"><h3 class="title">注意</h3><p>     ECPG <code class="command">DECLARE</code>命令实际上不会导致一个语句被发送到 PostgreSQL 后端。在<code class="command">OPEN</code>命令被执行时，游标会在后端被打开（使用后端的<code class="command">DECLARE</code>命令）。
+    </p></div></div><div class="sect2" id="ECPG-TRANSACTIONS"><div class="titlepage"><div><div><h3 class="title">35.3.3. 管理事务</h3></div></div></div><p>   在默认模式中，只有当<code class="command">EXEC SQL COMMIT</code>被发出时才会提交命令。嵌入式 SQL 接口也通过<code class="command">ecpg</code>的<code class="option">-t</code>命令行选项（见<a class="xref" href="app-ecpg.html" title="ecpg"><span class="refentrytitle"><span class="application">ecpg</span></span></a>）或者通过<code class="literal">EXEC SQL SET AUTOCOMMIT TO ON</code>语句支持事务的自动提交（类似于<span class="application">psql</span>的默认行为）。在自动提交模式中，除非位于一个显式事务块内，每一个命令都会被自动提交。这种模式可以使用<code class="literal">EXEC SQL SET AUTOCOMMIT TO OFF</code>显式地关闭。
+  </p><p>    可以使用下列事务管理命令：
+
+    </p><div class="variablelist"><dl class="variablelist"><dt><span class="term"><code class="literal">EXEC SQL COMMIT</code></span></dt><dd><p>        提交一个进行中的事务。
+       </p></dd><dt><span class="term"><code class="literal">EXEC SQL ROLLBACK</code></span></dt><dd><p>        回滚一个进行中的事务。
+       </p></dd><dt><span class="term"><code class="literal">EXEC SQL PREPARE TRANSACTION </code><em class="replaceable"><code>transaction_id</code></em></span></dt><dd><p>        准备两阶段提交的当前事务。
+       </p></dd><dt><span class="term"><code class="literal">EXEC SQL COMMIT PREPARED </code><em class="replaceable"><code>transaction_id</code></em></span></dt><dd><p>        提交处于准备状态的事务。
+       </p></dd><dt><span class="term"><code class="literal">EXEC SQL ROLLBACK PREPARED </code><em class="replaceable"><code>transaction_id</code></em></span></dt><dd><p>        回滚处于准备状态的事务。
+       </p></dd><dt><span class="term"><code class="literal">EXEC SQL SET AUTOCOMMIT TO ON</code></span></dt><dd><p>        启用自动提交模式。
+       </p></dd><dt><span class="term"><code class="literal">EXEC SQL SET AUTOCOMMIT TO OFF</code></span></dt><dd><p>        禁用自动提交模式。这是默认值。
+       </p></dd></dl></div><p>
+   </p></div><div class="sect2" id="ECPG-PREPARED"><div class="titlepage"><div><div><h3 class="title">35.3.4. 预备语句</h3></div></div></div><p>    当传递给 SQL 语句的值在编译时未知或者同一个语句要被使用多次时，那么预备语句就有用武之地了。
+   </p><p>    语句使用命令<code class="literal">PREPARE</code>进行预备。对于还未知的值，使用占位符<span class="quote">“<span class="quote"><code class="literal">?</code></span>”</span>：
+</p><pre class="programlisting">EXEC SQL PREPARE stmt1 FROM "SELECT oid, datname FROM pg_database WHERE oid = ?";</pre><p>
+   </p><p>    如果一个语句返回一个单一行，应用可以在<code class="literal">PREPARE</code>之后调用<code class="literal">EXECUTE</code>来执行该语句，同时要用一个<code class="literal">USING</code>子句为占位符提供真实的值：
+</p><pre class="programlisting">EXEC SQL EXECUTE stmt1 INTO :dboid, :dbname USING 1;</pre><p>
+   </p><p>    如果一个语句返回多行，应用可以使用一个基于该预备语句声明的游标。要绑定输入参数，该游标必须用一个<code class="literal">USING</code>子句打开：
+</p><pre class="programlisting">EXEC SQL PREPARE stmt1 FROM "SELECT oid,datname FROM pg_database WHERE oid &gt; ?";
+EXEC SQL DECLARE foo_bar CURSOR FOR stmt1;
+
+/* 当到达结果集末尾时，跳出 while 循环 */
+EXEC SQL WHENEVER NOT FOUND DO BREAK;
+
+EXEC SQL OPEN foo_bar USING 100;
+...
+while (1)
+{
+    EXEC SQL FETCH NEXT FROM foo_bar INTO :dboid, :dbname;
+    ...
+}
+EXEC SQL CLOSE foo_bar;</pre><p>
+   </p><p>    当你不再需要该预备语句时，你应该释放它：
+</p><pre class="programlisting">EXEC SQL DEALLOCATE PREPARE <em class="replaceable"><code>name</code></em>;</pre><p>
+   </p><p>    更多有关<code class="literal">PREPARE</code>的细节，可参考<a class="xref" href="ecpg-sql-prepare.html" title="PREPARE">PREPARE</a>。关于使用占位符和输入参数的细节，可参考<a class="xref" href="ecpg-dynamic.html" title="35.5. 动态 SQL">第 35.5 节</a>。
+   </p></div></div><div class="navfooter"><hr /><table width="100%" summary="Navigation footer"><tr><td width="40%" align="left"><a accesskey="p" href="ecpg-connect.html">上一页</a> </td><td width="20%" align="center"><a accesskey="u" href="ecpg.html">上一级</a></td><td width="40%" align="right"> <a accesskey="n" href="ecpg-variables.html">下一页</a></td></tr><tr><td width="40%" align="left" valign="top">35.2. 管理数据库连接 </td><td width="20%" align="center"><a accesskey="h" href="index.html">起始页</a></td><td width="40%" align="right" valign="top"> 35.4. 使用主变量</td></tr></table></div></body></html>

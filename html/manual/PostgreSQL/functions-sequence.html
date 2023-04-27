@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><title>9.16. 序列操作函数</title><link rel="stylesheet" type="text/css" href="stylesheet.css" /><link rev="made" href="pgsql-docs@postgresql.org" /><meta name="generator" content="DocBook XSL Stylesheets V1.79.1" /><link rel="prev" href="functions-json.html" title="9.15. JSON 函数和操作符" /><link rel="next" href="functions-conditional.html" title="9.17. 条件表达式" /></head><body><div xmlns="http://www.w3.org/TR/xhtml1/transitional" class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="5" align="center">9.16. 序列操作函数</th></tr><tr><td width="10%" align="left"><a accesskey="p" href="functions-json.html" title="9.15. JSON 函数和操作符">上一页</a> </td><td width="10%" align="left"><a accesskey="u" href="functions.html" title="第 9 章 函数和操作符">上一级</a></td><th width="60%" align="center">第 9 章 函数和操作符</th><td width="10%" align="right"><a accesskey="h" href="index.html" title="PostgreSQL 10.1 手册">起始页</a></td><td width="10%" align="right"> <a accesskey="n" href="functions-conditional.html" title="9.17. 条件表达式">下一页</a></td></tr></table><hr></hr></div><div class="sect1" id="FUNCTIONS-SEQUENCE"><div class="titlepage"><div><div><h2 class="title" style="clear: both">9.16. 序列操作函数</h2></div></div></div><a id="idp13522496" class="indexterm"></a><a id="idp13523184" class="indexterm"></a><a id="idp13523872" class="indexterm"></a><a id="idp13524560" class="indexterm"></a><a id="idp13525248" class="indexterm"></a><p>   本节描述用于操作<em class="firstterm">序列对象</em>的函数，序列对象也被称为序列生成器或者就是序列。序列对象都是用<a class="xref" href="sql-createsequence.html" title="CREATE SEQUENCE"><span class="refentrytitle">CREATE SEQUENCE</span></a>创建的特殊的单行表。序列对象通常用于为表的行生成唯一的标识符。<a class="xref" href="functions-sequence.html#FUNCTIONS-SEQUENCE-TABLE" title="表 9.47. 序列函数">表 9.47</a>中列出的这些序列函数，可以为我们从序列对象中获取连续的序列值提供了简单的、多用户安全的 方法。
+  </p><div class="table" id="FUNCTIONS-SEQUENCE-TABLE"><p class="title"><strong>表 9.47. 序列函数</strong></p><div class="table-contents"><table class="table" summary="序列函数" border="1"><colgroup><col /><col /><col /></colgroup><thead><tr><th>函数</th><th>返回类型</th><th>描述</th></tr></thead><tbody><tr><td><code class="literal"><code class="function">currval(<code class="type">regclass</code>)</code></code></td><td><code class="type">bigint</code></td><td>返回最近一次用<code class="function">nextval</code>获取的指定序列的值</td></tr><tr><td><code class="literal"><code class="function">lastval()</code></code></td><td><code class="type">bigint</code></td><td>返回最近一次用<code class="function">nextval</code>获取的任何序列的值</td></tr><tr><td><code class="literal"><code class="function">nextval(<code class="type">regclass</code>)</code></code></td><td><code class="type">bigint</code></td><td>递增序列并返回新值</td></tr><tr><td><code class="literal"><code class="function">setval(<code class="type">regclass</code>, <code class="type">bigint</code>)</code></code></td><td><code class="type">bigint</code></td><td>设置序列的当前值</td></tr><tr><td><code class="literal"><code class="function">setval(<code class="type">regclass</code>, <code class="type">bigint</code>, <code class="type">boolean</code>)</code></code></td><td><code class="type">bigint</code></td><td>设置序列的当前值以及<code class="literal">is_called</code>标志</td></tr></tbody></table></div></div><br class="table-break" /><p>   将要由序列函数调用操作的序列是用一个<code class="type">regclass</code>参数声明的， 它只是序列在<code class="structname">pg_class</code>系统表里面的 OID。不过，你不需要手工查找 OID， 因为<code class="type">regclass</code>数据类型的输入转换器会帮你做这件事情。 只要写出用单引号包围的序列名字即可，因此它看上去像文本常量。为了和普通<acronym class="acronym">SQL</acronym>名字处理兼容，这个字串将转换成小写形式， 除非在序列名字周围包含双引号。因此：
+</p><pre class="programlisting">nextval('foo')      <em class="lineannotation"><span class="lineannotation">操作序列<code class="literal">foo</code></span></em>
+nextval('FOO')      <em class="lineannotation"><span class="lineannotation">操作序列<code class="literal">foo</code></span></em>
+nextval('"Foo"')    <em class="lineannotation"><span class="lineannotation">操作序列<code class="literal">Foo</code></span></em></pre><p>
+   必要时序列名可以用模式限定∶
+</p><pre class="programlisting">nextval('myschema.foo')     <em class="lineannotation"><span class="lineannotation">操作<code class="literal">myschema.foo</code></span></em>
+nextval('"myschema".foo')   <em class="lineannotation"><span class="lineannotation">同上</span></em>
+nextval('foo')              <em class="lineannotation"><span class="lineannotation">在搜索路径中查找<code class="literal">foo</code></span></em></pre><p>
+   参阅<a class="xref" href="datatype-oid.html" title="8.18. 对象标识符类型">第 8.18 节</a>获取有关<code class="type">regclass</code>的更多信息。
+  </p><div class="note"><h3 class="title">注意</h3><p>    在<span class="productname">PostgreSQL</span> 8.1 之前，序列函数的参数类型是<code class="type">text</code>， 而不是 <code class="type">regclass</code>，并且前文所述的从文本串到 OID 值的转换将在每次调用的时候发生。 为了向后兼容，这个处理仍然存在，但是在内部实际上是通过在函数调用前隐式地将<code class="type">text</code>转换成<code class="type">regclass</code>实现的。
+   </p><p>    当你把一个序列函数的参数写成一个无修饰的文字串，那么它将变成类型为<code class="type">regclass</code>的常量。因为这只是一个 OID，它将跟踪最初标识的序列，而不管后面是否改名、模式变化等等。 这种<span class="quote">“<span class="quote">早期绑定</span>”</span>的行为通常是列默认值和视图中引用的序列所需要的。 但是有时候你可能想要<span class="quote">“<span class="quote">延迟绑定</span>”</span>，其中序列的引用是在运行时解析的。要得到延迟绑定的行为，我们可以强制常量被存储为<code class="type">text</code>常量，而不是<code class="type">regclass</code>：
+</p><pre class="programlisting">nextval('foo'::text)      <em class="lineannotation"><span class="lineannotation"><code class="literal">foo</code>在运行时查找</span></em></pre><p>
+    请注意，延迟绑定是<span class="productname">PostgreSQL</span>版本 8.1 之前唯一被支持的行为， 因此你可能需要做这些来保留旧应用的语义。
+   </p><p>    当然，序列函数的参数也可以是表达式。如果它是一个文本表达式，那么隐式的转换将导致运行时的查找。
+   </p></div><p>   可用的序列函数有∶
+
+    </p><div class="variablelist"><dl class="variablelist"><dt><span class="term"><code class="function">nextval</code></span></dt><dd><p>        递增序列对象到它的下一个值并且返回该值。这个动作是自动完成的： 即使多个会话并发执行<code class="function">nextval</code>，每个进程也会安全地收到一个唯一的序列值。
+       </p><p>        如果一个序列对象是用默认参数创建的，连续的<code class="function">nextval</code>调用将会返回从 1 开始的连续的值。其他的行为可以通过在<a class="xref" href="sql-createsequence.html" title="CREATE SEQUENCE"><span class="refentrytitle">CREATE SEQUENCE</span></a>命令中使用特殊参数来获得；详见该命令的参考页。
+       </p><div class="important"><h3 class="title">重要</h3><p>         为了避免从同一个序列获取值的并发事务被阻塞，
+         <code class="function">nextval</code>操作决不会回滚；也就是说，一旦一个值已经被抓取，
+         那么就认为它已经被用过了，并且不会再被返回。
+         即使周围的事务之后中断，或者如果调用查询结束不使用该值，那么为真。
+         例如，带有<code class="literal">ON CONFLICT</code>的<code class="command">INSERT</code>子句将计算被插入的元组，
+         包括执行任何所需的<code class="function">nextval</code>调用，
+         相反检测任何冲突之前将导致它遵循<code class="literal">ON CONFLICT</code>规则。
+         这种情况将在指定值的顺序中留下未使用的<span class="quote">“<span class="quote">空洞</span>”</span>。
+         因此，<span class="productname">PostgreSQL</span>序列对象<span class="emphasis"><em>不能用于获得<span class="quote">“<span class="quote">无间隙</span>”</span>序列</em></span>。
+        </p></div><p>        该函数需要序列上的<code class="literal">USAGE</code>或<code class="literal">UPDATE</code>权限。
+       </p></dd><dt><span class="term"><code class="function">currval</code></span></dt><dd><p>        在当前会话中返回最近一次<code class="function">nextval</code>取到的该序列的值（如果在本会话中从未在该序列上调用过<code class="function">nextval</code>，那么会报告一个错误）。请注意因为此函数返回一个会话本地的值，不论其它会话是否在当前会话之后执行过<code class="function">nextval</code>，它都能给出一个可预测的回答。
+       </p><p>        该函数需要序列上的<code class="literal">USAGE</code>或<code class="literal">SELECT</code>权限。
+       </p></dd><dt><span class="term"><code class="function">lastval</code></span></dt><dd><p>        返回当前会话里最近一次<code class="function">nextval</code>返回的值。
+        这个函数等效于<code class="function">currval</code>，
+        只是它不用序列名作参数，
+        它指的是哪个序列<code class="function">nextval</code>被应用到当前会话。
+        如果当前会话还没有调用过<code class="function">nextval</code>，
+        那么调用<code class="function">lastval</code>会报错。
+       </p><p>        该函数需要最后一次使用的序列上的<code class="literal">USAGE</code>
+        或<code class="literal">SELECT</code>权限。
+       </p></dd><dt><span class="term"><code class="function">setval</code></span></dt><dd><p>        重置序列对象的计数器值。双参数的形式设置序列的<code class="literal">last_value</code>域为指定值并且将其<code class="literal">is_called</code>域设置为 <code class="literal">true</code>，表示下一次<code class="function">nextval</code>将在返回值之前递增该序列。<code class="function">currval</code>报告的值也被设置为指定的值。在三参数形式里，<code class="literal">is_called</code>可以设置为<code class="literal">true</code>或<code class="literal">false</code>。<code class="literal">true</code>具有和双参数形式相同的效果。如果你把它设置为<code class="literal">false</code>，那么下一次<code class="function">nextval</code>将返回指定的值，而从随后的<code class="function">nextval</code>才开始递增该序列。此外，在这种情况中<code class="function">currval</code>报告的值不会被改变。 例如：
+
+</p><pre class="screen">SELECT setval('foo', 42);           <em class="lineannotation"><span class="lineannotation">下一次<code class="function">nextval</code>会返回 43</span></em>
+SELECT setval('foo', 42, true);     <em class="lineannotation"><span class="lineannotation">同上</span></em>
+SELECT setval('foo', 42, false);    <em class="lineannotation"><span class="lineannotation">下一次<code class="function">nextval</code>将返回 42</span></em></pre><p>
+
+        <code class="function">setval</code>返回的结果就是它的第二个参数的值。
+       </p><div class="important"><h3 class="title">重要</h3><p>         因为序列是非事务的，<code class="function">setval</code>造成的改变不会由于事务的回滚而撤销。
+        </p></div><p>        该函数需要序列上的<code class="literal">UPDATE</code>权限。
+       </p></dd></dl></div><p>
+  </p></div><div class="navfooter"><hr /><table width="100%" summary="Navigation footer"><tr><td width="40%" align="left"><a accesskey="p" href="functions-json.html">上一页</a> </td><td width="20%" align="center"><a accesskey="u" href="functions.html">上一级</a></td><td width="40%" align="right"> <a accesskey="n" href="functions-conditional.html">下一页</a></td></tr><tr><td width="40%" align="left" valign="top">9.15. JSON 函数和操作符 </td><td width="20%" align="center"><a accesskey="h" href="index.html">起始页</a></td><td width="40%" align="right" valign="top"> 9.17. 条件表达式</td></tr></table></div></body></html>

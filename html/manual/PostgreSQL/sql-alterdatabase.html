@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><title>ALTER DATABASE</title><link rel="stylesheet" type="text/css" href="stylesheet.css" /><link rev="made" href="pgsql-docs@postgresql.org" /><meta name="generator" content="DocBook XSL Stylesheets V1.79.1" /><link rel="prev" href="sql-alterconversion.html" title="ALTER CONVERSION" /><link rel="next" href="sql-alterdefaultprivileges.html" title="ALTER DEFAULT PRIVILEGES" /></head><body><div xmlns="http://www.w3.org/TR/xhtml1/transitional" class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="5" align="center">ALTER DATABASE</th></tr><tr><td width="10%" align="left"><a accesskey="p" href="sql-alterconversion.html" title="ALTER CONVERSION">上一页</a> </td><td width="10%" align="left"><a accesskey="u" href="sql-commands.html" title="SQL 命令">上一级</a></td><th width="60%" align="center">SQL 命令</th><td width="10%" align="right"><a accesskey="h" href="index.html" title="PostgreSQL 10.1 手册">起始页</a></td><td width="10%" align="right"> <a accesskey="n" href="sql-alterdefaultprivileges.html" title="ALTER DEFAULT PRIVILEGES">下一页</a></td></tr></table><hr></hr></div><div class="refentry" id="SQL-ALTERDATABASE"><div class="titlepage"></div><a id="idp39719808" class="indexterm"></a><div class="refnamediv"><h2><span class="refentrytitle">ALTER DATABASE</span></h2><p>ALTER DATABASE — 更改一个数据库</p></div><div class="refsynopsisdiv"><h2>大纲</h2><pre class="synopsis">ALTER DATABASE <em class="replaceable"><code>name</code></em> [ [ WITH ] <em class="replaceable"><code>option</code></em> [ ... ] ]
+
+<span class="phrase">这里 <em class="replaceable"><code>option</code></em> 可以是：</span>
+
+    ALLOW_CONNECTIONS <em class="replaceable"><code>allowconn</code></em>
+    CONNECTION LIMIT <em class="replaceable"><code>connlimit</code></em>
+    IS_TEMPLATE <em class="replaceable"><code>istemplate</code></em>
+
+ALTER DATABASE <em class="replaceable"><code>name</code></em> RENAME TO <em class="replaceable"><code>new_name</code></em>
+
+ALTER DATABASE <em class="replaceable"><code>name</code></em> OWNER TO { <em class="replaceable"><code>new_owner</code></em> | CURRENT_USER | SESSION_USER }
+
+ALTER DATABASE <em class="replaceable"><code>name</code></em> SET TABLESPACE <em class="replaceable"><code>new_tablespace</code></em>
+
+ALTER DATABASE <em class="replaceable"><code>name</code></em> SET <em class="replaceable"><code>configuration_parameter</code></em> { TO | = } { <em class="replaceable"><code>value</code></em> | DEFAULT }
+ALTER DATABASE <em class="replaceable"><code>name</code></em> SET <em class="replaceable"><code>configuration_parameter</code></em> FROM CURRENT
+ALTER DATABASE <em class="replaceable"><code>name</code></em> RESET <em class="replaceable"><code>configuration_parameter</code></em>
+ALTER DATABASE <em class="replaceable"><code>name</code></em> RESET ALL</pre></div><div class="refsect1" id="idp39736528"><h2>描述</h2><p>   <code class="command">ALTER DATABASE</code>更改一个数据库的属性。
+  </p><p>   第一种形式更改某些针对每个数据库的设置（详见下文）。只有数据库拥有者或者超级用户可以更改这些设置。
+  </p><p>   第二种形式更改数据库的名称。只有数据库拥有者或者超级用户可以重命名一个数据库，非超级用户拥有者还必须拥有<code class="literal">CREATEDB</code>特权。当前数据库不能被重命名（如果你需要这样做请连接到一个不同的数据库）。
+  </p><p>   第三种形式更改数据库的拥有者。要修改拥有者，你必须拥有该数据库并且也是新拥有角色的一个直接或间接成员，并且你必须具有<code class="literal">CREATEDB</code>特权（注意超级用户自动拥有所有这些特权）。
+  </p><p>   第四种形式更改数据库的默认表空间。只有数据库拥有者或超级用户能够这样做，你还必须对新表空间具有创建特权。这个命令会在物理上移动位于该数据库旧的默认表空间中的任何表或索引到新的表空间中。新的默认表空间对于这个数据库必须是空的，并且不能有人可以连接到该数据库。在非默认表空间中的表和索引不受影响。
+  </p><p>   剩下的形式更改用于一个<span class="productname">PostgreSQL</span>数据库的运行时配置变量的会话默认值。接下来只要一个新的会话在该数据库中开始，指定的值就会成为该会话的默认值。数据库相关的默认值会覆盖出现在<code class="filename">postgresql.conf</code>中或者从<code class="command">postgres</code>命令行接收到的设置。只有数据库拥有者或超级用户可以更改一个数据库的会话默认值。一些变量不能用这种方式设置或者只能由超级用户更改。
+  </p></div><div class="refsect1" id="idp39745072"><h2>参数</h2><div class="variablelist"><dl class="variablelist"><dt><span class="term"><em class="replaceable"><code>name</code></em></span></dt><dd><p>        要被修改属性的数据库名称。
+       </p></dd><dt><span class="term"><em class="replaceable"><code>allowconn</code></em></span></dt><dd><p>         如果为假，则没有人能连接到这个数据库。
+        </p></dd><dt><span class="term"><em class="replaceable"><code>connlimit</code></em></span></dt><dd><p>        与这个数据库可以建立多少个并发连接。-1 表示没有限制。
+       </p></dd><dt><span class="term"><em class="replaceable"><code>istemplate</code></em></span></dt><dd><p>         如果为真，则任何具有<code class="literal">CREATEDB</code>特权的用户都可以从这个数据库进行克隆。如果为假，则只有超级用户或者这个数据库的拥有者可以克隆它。
+        </p></dd><dt><span class="term"><em class="replaceable"><code>new_name</code></em></span></dt><dd><p>      数据库的新名称。
+     </p></dd><dt><span class="term"><em class="replaceable"><code>new_owner</code></em></span></dt><dd><p>      数据库的新拥有者。
+     </p></dd><dt><span class="term"><em class="replaceable"><code>new_tablespace</code></em></span></dt><dd><p>      数据库的新默认表空间。
+     </p><p>      这种形式的命令不能在事务块内执行。
+     </p></dd><dt><span class="term"><em class="replaceable"><code>configuration_parameter</code></em><br /></span><span class="term"><em class="replaceable"><code>value</code></em></span></dt><dd><p>        将这个数据库的指定配置参数的会话默认值设置为给定值。如果<em class="replaceable"><code>value</code></em>是<code class="literal">DEFAULT</code>，或者等效地使用了<code class="literal">RESET</code>，数据库相关的设置会被移除，因此系统范围的默认设置将会在新会话中继承。使用<code class="literal">RESET ALL</code>可清除所有数据库相关的设置。<code class="literal">SET FROM CURRENT</code>会保存该会话的当前参数值作为数据库相关的值。
+       </p><p>        更多关于允许的参数名称和值的信息可参考<a class="xref" href="sql-set.html" title="SET"><span class="refentrytitle">SET</span></a>和<a class="xref" href="runtime-config.html" title="第 19 章 服务器配置">第 19 章</a>。
+       </p></dd></dl></div></div><div class="refsect1" id="idp39762736"><h2>注解</h2><p>   也可以把一个会话的默认值绑定到一个特定角色而不是一个数据库，见<a class="xref" href="sql-alterrole.html" title="ALTER ROLE"><span class="refentrytitle">ALTER ROLE</span></a>。如果有冲突，角色相关的设置会覆盖数据库相关的值。
+  </p></div><div class="refsect1" id="idp39764384"><h2>例子</h2><p>   要在数据库<code class="literal">test</code>中默认禁用索引扫描：
+
+</p><pre class="programlisting">ALTER DATABASE test SET enable_indexscan TO off;</pre></div><div class="refsect1" id="idp39766400"><h2>兼容性</h2><p>   <code class="command">ALTER DATABASE</code>语句是一个<span class="productname">PostgreSQL</span>扩展。
+  </p></div><div class="refsect1" id="idp39768512"><h2>参见</h2><span class="simplelist"><a class="xref" href="sql-createdatabase.html" title="CREATE DATABASE"><span class="refentrytitle">CREATE DATABASE</span></a>, <a class="xref" href="sql-dropdatabase.html" title="DROP DATABASE"><span class="refentrytitle">DROP DATABASE</span></a>, <a class="xref" href="sql-set.html" title="SET"><span class="refentrytitle">SET</span></a>, <a class="xref" href="sql-createtablespace.html" title="CREATE TABLESPACE"><span class="refentrytitle">CREATE TABLESPACE</span></a></span></div></div><div class="navfooter"><hr /><table width="100%" summary="Navigation footer"><tr><td width="40%" align="left"><a accesskey="p" href="sql-alterconversion.html">上一页</a> </td><td width="20%" align="center"><a accesskey="u" href="sql-commands.html">上一级</a></td><td width="40%" align="right"> <a accesskey="n" href="sql-alterdefaultprivileges.html">下一页</a></td></tr><tr><td width="40%" align="left" valign="top">ALTER CONVERSION </td><td width="20%" align="center"><a accesskey="h" href="index.html">起始页</a></td><td width="40%" align="right" valign="top"> ALTER DEFAULT PRIVILEGES</td></tr></table></div></body></html>

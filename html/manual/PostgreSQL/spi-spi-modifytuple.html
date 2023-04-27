@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><title>SPI_modifytuple</title><link rel="stylesheet" type="text/css" href="stylesheet.css" /><link rev="made" href="pgsql-docs@postgresql.org" /><meta name="generator" content="DocBook XSL Stylesheets V1.79.1" /><link rel="prev" href="spi-spi-returntuple.html" title="SPI_returntuple" /><link rel="next" href="spi-spi-freetuple.html" title="SPI_freetuple" /></head><body><div xmlns="http://www.w3.org/TR/xhtml1/transitional" class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="5" align="center">SPI_modifytuple</th></tr><tr><td width="10%" align="left"><a accesskey="p" href="spi-spi-returntuple.html" title="SPI_returntuple">上一页</a> </td><td width="10%" align="left"><a accesskey="u" href="spi-memory.html" title="46.3. 内存管理">上一级</a></td><th width="60%" align="center">46.3. 内存管理</th><td width="10%" align="right"><a accesskey="h" href="index.html" title="PostgreSQL 10.1 手册">起始页</a></td><td width="10%" align="right"> <a accesskey="n" href="spi-spi-freetuple.html" title="SPI_freetuple">下一页</a></td></tr></table><hr></hr></div><div class="refentry" id="SPI-SPI-MODIFYTUPLE"><div class="titlepage"></div><a id="idp39218096" class="indexterm"></a><div class="refnamediv"><h2><span class="refentrytitle">SPI_modifytuple</span></h2><p>SPI_modifytuple — 通过替换一个给定行的选定域来创建一行</p></div><div class="refsynopsisdiv"><h2>大纲</h2><pre class="synopsis">HeapTuple SPI_modifytuple(Relation <em class="parameter"><code>rel</code></em>, HeapTuple <em class="parameter"><code>row</code></em>, int <em class="parameter"><code>ncols</code></em>,
+                          int * <em class="parameter"><code>colnum</code></em>, Datum * <em class="parameter"><code>values</code></em>, const char * <em class="parameter"><code>nulls</code></em>)</pre></div><div class="refsect1" id="idp39225104"><h2>描述</h2><p>   <code class="function">SPI_modifytuple</code>创建一个新行，其中选定的列
+   用新值替代，其他列则从输入行中拷贝。输入行本身不被修改。
+   新行在上层执行器上下文中返回。
+  </p><p>   该函数只能在连接到SPI时使用。否则，它会返回NULL并将<code class="varname">SPI_result</code>
+   设置为<code class="symbol">SPI_ERROR_UNCONNECTED</code>。
+  </p></div><div class="refsect1" id="idp39228000"><h2>参数</h2><div class="variablelist"><dl class="variablelist"><dt><span class="term"><code class="literal">Relation <em class="parameter"><code>rel</code></em></code></span></dt><dd><p>      只被用作该行的行描述符的来源（传递一个关系而不是
+      一个行描述符是一种令人头痛的设计）。
+     </p></dd><dt><span class="term"><code class="literal">HeapTuple <em class="parameter"><code>row</code></em></code></span></dt><dd><p>      要被修改的行
+     </p></dd><dt><span class="term"><code class="literal">int <em class="parameter"><code>ncols</code></em></code></span></dt><dd><p>      要被修改的列数
+     </p></dd><dt><span class="term"><code class="literal">int * <em class="parameter"><code>colnum</code></em></code></span></dt><dd><p>      一个长度为<em class="parameter"><code>ncols</code></em>的数组，包含了要被修改的列号
+      （列号从 1 开始）
+     </p></dd><dt><span class="term"><code class="literal">Datum * <em class="parameter"><code>values</code></em></code></span></dt><dd><p>      一个长度为<em class="parameter"><code>ncols</code></em>的数组，包含了指定列的新值
+     </p></dd><dt><span class="term"><code class="literal">const char * <em class="parameter"><code>nulls</code></em></code></span></dt><dd><p>      一个长度为<em class="parameter"><code>ncols</code></em>的数组，描述哪些新值为空值
+     </p><p>      如果<em class="parameter"><code>nulls</code></em>为<code class="symbol">NULL</code>，那么
+      <code class="function">SPI_modifytuple</code>假定没有新值为空值。否则，
+      如果对应的新值为非空，<em class="parameter"><code>nulls</code></em>数组的每一项都应
+      该是<code class="literal">' '</code>，而如果对应的新值为空值则为<code class="literal">'n'</code>（在
+      后一种情况中，对应的<em class="parameter"><code>values</code></em>项中的新值无关紧
+      要）。注意<em class="parameter"><code>nulls</code></em>不是一个文本字符串，只是一个
+      数组：它不需要一个<code class="literal">'\0'</code>终止符。
+     </p></dd></dl></div></div><div class="refsect1" id="idp39248704"><h2>返回值</h2><p>   应用了修改的新行，在上层执行器上下文中分配，或者错误时为
+   <code class="symbol">NULL</code>（参阅<code class="varname">SPI_result</code>获取错误指示）
+  </p><p>   出错时，<code class="varname">SPI_result</code>被设置如下：
+   </p><div class="variablelist"><dl class="variablelist"><dt><span class="term"><code class="symbol">SPI_ERROR_ARGUMENT</code></span></dt><dd><p>       如果<em class="parameter"><code>rel</code></em>为<code class="symbol">NULL</code>，或者
+       <em class="parameter"><code>row</code></em>为<code class="symbol">NULL</code>，或者<em class="parameter"><code>ncols</code></em>
+       小于等于 0，或者<em class="parameter"><code>colnum</code></em>为<code class="symbol">NULL</code>，
+       或者<em class="parameter"><code>values</code></em>为<code class="symbol">NULL</code>。
+      </p></dd><dt><span class="term"><code class="symbol">SPI_ERROR_NOATTRIBUTE</code></span></dt><dd><p>       如果<em class="parameter"><code>colnum</code></em>包含一个无效的列号（小于等于 0 或者大于
+       <em class="parameter"><code>row</code></em>中的列数）。
+      </p></dd><dt><span class="term"><code class="symbol">SPI_ERROR_UNCONNECTED</code></span></dt><dd><p>       如果SPI未激活
+      </p></dd></dl></div><p>
+  </p></div></div><div class="navfooter"><hr /><table width="100%" summary="Navigation footer"><tr><td width="40%" align="left"><a accesskey="p" href="spi-spi-returntuple.html">上一页</a> </td><td width="20%" align="center"><a accesskey="u" href="spi-memory.html">上一级</a></td><td width="40%" align="right"> <a accesskey="n" href="spi-spi-freetuple.html">下一页</a></td></tr><tr><td width="40%" align="left" valign="top">SPI_returntuple </td><td width="20%" align="center"><a accesskey="h" href="index.html">起始页</a></td><td width="40%" align="right" valign="top"> SPI_freetuple</td></tr></table></div></body></html>

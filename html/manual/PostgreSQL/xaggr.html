@@ -1,0 +1,171 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><title>37.10. 用户定义的聚集</title><link rel="stylesheet" type="text/css" href="stylesheet.css" /><link rev="made" href="pgsql-docs@postgresql.org" /><meta name="generator" content="DocBook XSL Stylesheets V1.79.1" /><link rel="prev" href="xfunc-c.html" title="37.9. C 语言函数" /><link rel="next" href="xtypes.html" title="37.11. 用户定义的类型" /></head><body><div xmlns="http://www.w3.org/TR/xhtml1/transitional" class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="5" align="center">37.10. 用户定义的聚集</th></tr><tr><td width="10%" align="left"><a accesskey="p" href="xfunc-c.html" title="37.9. C 语言函数">上一页</a> </td><td width="10%" align="left"><a accesskey="u" href="extend.html" title="第 37 章 扩展 SQL">上一级</a></td><th width="60%" align="center">第 37 章 扩展 <acronym xmlns="http://www.w3.org/1999/xhtml" class="acronym">SQL</acronym></th><td width="10%" align="right"><a accesskey="h" href="index.html" title="PostgreSQL 10.1 手册">起始页</a></td><td width="10%" align="right"> <a accesskey="n" href="xtypes.html" title="37.11. 用户定义的类型">下一页</a></td></tr></table><hr></hr></div><div class="sect1" id="XAGGR"><div class="titlepage"><div><div><h2 class="title" style="clear: both">37.10. 用户定义的聚集</h2></div></div></div><div class="toc"><dl class="toc"><dt><span class="sect2"><a href="xaggr.html#XAGGR-MOVING-AGGREGATES">37.10.1. 移动聚集模式</a></span></dt><dt><span class="sect2"><a href="xaggr.html#XAGGR-POLYMORPHIC-AGGREGATES">37.10.2. 多态和可变聚集</a></span></dt><dt><span class="sect2"><a href="xaggr.html#XAGGR-ORDERED-SET-AGGREGATES">37.10.3. 有序集聚集</a></span></dt><dt><span class="sect2"><a href="xaggr.html#XAGGR-PARTIAL-AGGREGATES">37.10.4. 部分聚集</a></span></dt><dt><span class="sect2"><a href="xaggr.html#XAGGR-SUPPORT-FUNCTIONS">37.10.5. 聚集的支持函数</a></span></dt></dl></div><a id="idp33815664" class="indexterm"></a><p>   <span class="productname">PostgreSQL</span>中的聚集函数用<em class="firstterm">状态值</em>和<em class="firstterm">状态转换函数</em>定义。也就是，一个聚集操作使用一个状态值，它在每一个后续输入行被处理时被更新。要定义一个新的聚集函数，我们要为状态值选择一种数据类型、一个状态的初始值和一个状态转换函数。状态转换函数接收前一个状态值和该聚集当前行的输入值，并且返回一个新的状态值。万一该聚集的预期结果与需要保存在运行状态之中的数据不同，还能指定一个<em class="firstterm">最终函数</em>。最终函数接受结束状态值并且返回作为聚集结果的任何东西。原则上，转换函数和最终函数只是也可以在聚集环境之外使用的普通函数（实际上，通常出于性能的原因，会创建特殊的只能作为聚集的一部分工作的转换函数）。
+  </p><p>   因此，除了该聚集的用户所见的参数和结果数据类型之外，还有一种可能不同于参数和结果状态的内部状态值数据类型。
+  </p><p>   如果我们定义一个聚集但不使用一个最终函数，我们就得到了一个从每一行的列值计算一个运行函数的聚集。<code class="function">sum</code>是这类聚集的一个例子。<code class="function">sum</code>从零开始，并且总是把当前行的值加到它的运行总和上。例如，如果我们希望让一个<code class="function">sum</code>聚集能工作在复数数据类型上，我们只需要该数据类型的加法函数。聚集定义是：
+
+</p><pre class="programlisting">CREATE AGGREGATE sum (complex)
+(
+    sfunc = complex_add,
+    stype = complex,
+    initcond = '(0,0)'
+);</pre><p>
+
+   我们可以这样使用：
+
+</p><pre class="programlisting">SELECT sum(a) FROM test_complex;
+
+   sum
+-----------
+ (34,53.9)</pre><p>
+
+   （注意我们依赖于函数重载：有多于一个名为<code class="function">sum</code>的聚集，但是<span class="productname">PostgreSQL</span>能够找出哪种 sum 适用于一个类型为<code class="type">complex</code>的列）。
+  </p><p>   如果没有非空输入值，上述的<code class="function">sum</code>定义将返回零（初始状态值）。也许我们想要在这种情况下返回空 —  SQL 标准期望<code class="function">sum</code>以这种方式行事。我们可以通过忽略<code class="literal">initcond</code>阶段简单地做到这一点，这样初始状态值就为空。通常这表示<code class="literal">sfunc</code>将需要检查一个空状态值输入。但是对于<code class="function">sum</code>和一些其他简单聚集（如<code class="function">max</code>和<code class="function">min</code>），把第一个非空输入值插入到状态变量中并且接着在第二个非空输入值上开始应用转换函数就足够了。如果初始状态值为空并且转换函数被标记为<span class="quote">“<span class="quote">strict</span>”</span>（即不为空输入调用），<span class="productname">PostgreSQL</span>会自动这样做。
+  </p><p>   <span class="quote">“<span class="quote">strict</span>”</span>转换函数的另一点默认行为是只要碰到了一个空输入值，之前的状态值就保持不变。因此，空值会被忽略。如果你需要某些其他用于空输入的行为，不要把你的转换函数声明为 strict，而是把它编码为测试空输入并且做所需要的事情。
+  </p><p>   <code class="function">avg</code>（均值）是一种更复杂的聚集例子。它要求两份运行状态：输入的总和以及输入的计数。最终结果通过将这些量相除而得到。均值是使用一个数组作为状态值的典型实现。例如，内建的<code class="function">avg(float8)</code>实现看起来像：
+
+</p><pre class="programlisting">CREATE AGGREGATE avg (float8)
+(
+    sfunc = float8_accum,
+    stype = float8[],
+    finalfunc = float8_avg,
+    initcond = '{0,0,0}'
+);</pre><p>
+   </p><div class="note"><h3 class="title">注意</h3><p>   （<code class="function">float8_accum</code>要求一个三元素的数组，而不只是两个元素，因为它累积平方和以及输入的总和以及计数。因此它也可以被用于其他聚集函数以及<code class="function">avg</code>）。
+  </p></div><p>   SQL 中的聚集函数调用允许用<code class="literal">DISTINCT</code>和<code class="literal">ORDER BY</code>选项控制以什么顺序把行传递给该聚集的转换函数。这些选项的实现不需要该聚集的支持函数关心。
+  </p><p>   进一步的细节可见<a class="xref" href="sql-createaggregate.html" title="CREATE AGGREGATE"><span class="refentrytitle">CREATE AGGREGATE</span></a>命令。   
+  </p><div class="sect2" id="XAGGR-MOVING-AGGREGATES"><div class="titlepage"><div><div><h3 class="title">37.10.1. 移动聚集模式</h3></div></div></div><a id="idp33844672" class="indexterm"></a><a id="idp33845360" class="indexterm"></a><p>   聚集函数可以选择性地支持<em class="firstterm">移动聚集模式</em>，这种模式允许很大程度上提高在具有移动帧起点的窗口中执行的聚集函数的速度（有关把聚集函数用作窗口函数请见<a class="xref" href="tutorial-window.html" title="3.5. 窗口函数">第 3.5 节</a>和<a class="xref" href="sql-expressions.html#SYNTAX-WINDOW-FUNCTIONS" title="4.2.8. 窗口函数调用">第 4.2.8 节</a>）。基本思想是在通常的<span class="quote">“<span class="quote">前向</span>”</span>转换函数之外，聚集提供一个<em class="firstterm">逆向转换函数</em>，该函数允许当行退出窗口帧时从聚集的运行状态值中移除它们的值。例如一个<code class="function">sum</code>聚集使用加法作为前向转换函数，它可以使用减法作为逆向转换函数。如果没有一个逆向转换函数，每一次帧起点移动时，窗口函数机制必须重新从头计算该聚集，这会导致运行时间与输入行的数量乘以平均帧长度成比例。如果有一个逆向转换函数，运行时间只与输入行的数量成比例。
+  </p><p>   当前状态值和包含在当前状态中最早的行的聚集输入值被传递给逆向转换函数。它必须重新构建出如果给定的输入行不再被聚集（只聚集其后的行）时状态值会是什么样。这有时要求前向转换函数保存比普通聚集模式下更多的状态。因此，移动聚集模式使用一种完全不同于普通模式的实现：它有自己的状态数据类型、自己的前向转换函数以及自己的状态函数（如果需要）。如果不需要额外的状态，这些可以和普通模式的数据类型和函数相同。
+  </p><p>   作为一个例子，我们可以把上面给定的<code class="function">sum</code>聚集扩展成支持移动聚集模式：
+
+</p><pre class="programlisting">CREATE AGGREGATE sum (complex)
+(
+    sfunc = complex_add,
+    stype = complex,
+    initcond = '(0,0)',
+    msfunc = complex_add,
+    minvfunc = complex_sub,
+    mstype = complex,
+    minitcond = '(0,0)'
+);</pre><p>
+
+   名称以<code class="literal">m</code>开始的参数定义移动聚集实现。除了逆向转换函数<code class="literal">minvfunc</code>，它们都对应于没有<code class="literal">m</code>的普通聚集参数。
+  </p><p>   用于移动聚集模式的前向转换函数不允许返回空值作为新状态值。如果逆向转换函数返回空值，这被当作一种指示，它表明该逆向函数无法为这个特定输入逆转状态计算，因此该聚集计算将根据当前的帧开始位置重新从头计算。这种习惯允许移动聚集模式被用在一些不适合逆转运行状态值的少数情况下。逆向转换函数在这些情况下可以<span class="quote">“<span class="quote">撒手不管</span>”</span>，然后在它能够工作的大部分情况中再出来干活。例如，一个浮点数的聚集可能会在必须从运行状态值中移除一个<code class="literal">NaN</code>（不是一个数字）输入时撒手不管。
+  </p><p>   在编写移动聚集支持函数时，很重要的是确保逆向转换函数能够准确地重构正确的状态值。否则会导致用不用移动聚集模式时结果中产生用户可见的差别。为一个聚集增加一个逆向转换函数的例子最初看起来很简单，但是却无法满足<code class="type">float4</code>或者<code class="type">float8</code>输入上的<code class="function">sum</code>的要求。<code class="function">sum(<code class="type">float8</code>)</code>的一种未经考虑的定义可以是
+
+</p><pre class="programlisting">CREATE AGGREGATE unsafe_sum (float8)
+(
+    stype = float8,
+    sfunc = float8pl,
+    mstype = float8,
+    msfunc = float8pl,
+    minvfunc = float8mi
+);</pre><p>
+
+   但是，这个聚集可能给出与没有逆向转换函数时很不同的结果。例如，考虑
+
+</p><pre class="programlisting">SELECT
+  unsafe_sum(x) OVER (ORDER BY n ROWS BETWEEN CURRENT ROW AND 1 FOLLOWING)
+FROM (VALUES (1, 1.0e20::float8),
+             (2, 1.0::float8)) AS v (n,x);</pre><p>
+
+   这个查询返回<code class="literal">0</code>作为它的第二个结果，而不是我们期待的<code class="literal">1</code>。其原因是浮点值的有限精度：把<code class="literal">1</code>加到<code class="literal">1e20</code>还是会得到<code class="literal">1e20</code>，因此从中减去<code class="literal">1e20</code>会得到<code class="literal">0</code>而不是<code class="literal">1</code>。这是对于浮点计算的一种一般性限制，而不是<span class="productname">PostgreSQL</span>的限制。
+  </p></div><div class="sect2" id="XAGGR-POLYMORPHIC-AGGREGATES"><div class="titlepage"><div><div><h3 class="title">37.10.2. 多态和可变聚集</h3></div></div></div><a id="idp33871280" class="indexterm"></a><a id="idp33872256" class="indexterm"></a><p>   聚集函数可以使用多态状态转换函数或最终函数，这样同样的函数能被用来实现多个聚集。关于多态函数的解释可参见<a class="xref" href="extend-type-system.html#EXTEND-TYPES-POLYMORPHIC" title="37.2.5. 多态类型">第 37.2.5 节</a>。更进一步，聚集函数本身可以被指定为具有多态输入类型和状态类型，允许一个聚集函数服务于多种输入数据类型。这里是一个多态聚集的例子：
+
+</p><pre class="programlisting">CREATE AGGREGATE array_accum (anyelement)
+(
+    sfunc = array_append,
+    stype = anyarray,
+    initcond = '{}'
+);</pre><p>
+
+   这里，每一次给定聚集调用的实际状态类型是把实际输入类型作为元素的数组类型。该聚集的行为是串接所有输入成一个该类型的数组（注意：内建的聚集<code class="function">array_agg</code>提供了相似的功能，但是具有比上述定义更好的性能）。
+  </p><p>   这里是使用两种不同实际数据类型作为参数的输出：
+
+</p><pre class="programlisting">SELECT attrelid::regclass, array_accum(attname)
+    FROM pg_attribute
+    WHERE attnum &gt; 0 AND attrelid = 'pg_tablespace'::regclass
+    GROUP BY attrelid;
+
+   attrelid    |              array_accum              
+---------------+---------------------------------------
+ pg_tablespace | {spcname,spcowner,spcacl,spcoptions}
+(1 row)
+
+SELECT attrelid::regclass, array_accum(atttypid::regtype)
+    FROM pg_attribute
+    WHERE attnum &gt; 0 AND attrelid = 'pg_tablespace'::regclass
+    GROUP BY attrelid;
+
+   attrelid    |        array_accum        
+---------------+---------------------------
+ pg_tablespace | {name,oid,aclitem[],text[]}
+(1 row)</pre><p>
+  </p><p>   如上述例子所示，通常一个具有多态结果类型的聚集函数有一个多态状态类型。这是必须的，因为否则就无法有意义地声明最终函数：它会需要有一个多态结果类型但是不能有多态参数类型，<code class="command">CREATE FUNCTION</code>将当场拒绝那些无法从调用中推断结果类型的函数。但是使用一个多态状态类型有时并不方便。最常见的情况是，聚集支持函数使用 C 编写并且状态类型应该被声明为<code class="type">internal</code>，因为在 SQL 层面上没有与它等效的类型。为了表述这种情况，可以声明最终函数为接受额外的匹配该聚集输入参数的<span class="quote">“<span class="quote">dummy</span>”</span>参数。这种假参数总是被传递为空值，因为当最终函数被调用时没有特定的值可用。它们的唯一用途是允许一个多态最终函数的结果类型被连接到该聚集的输入类型。例如，内建聚集<code class="function">array_agg</code>的定义等效于：
+
+</p><pre class="programlisting">CREATE FUNCTION array_agg_transfn(internal, anynonarray)
+  RETURNS internal ...;
+CREATE FUNCTION array_agg_finalfn(internal, anynonarray)
+  RETURNS anyarray ...;
+
+CREATE AGGREGATE array_agg (anynonarray)
+(
+    sfunc = array_agg_transfn,
+    stype = internal,
+    finalfunc = array_agg_finalfn,
+    finalfunc_extra
+);</pre><p>
+
+   这里，<code class="literal">finalfunc_extra</code>选项指定该最终函数接收除了状态值之外，还接收对应于该聚集输入参数的额外假参数。额外的<code class="type">anynonarray</code>参数允许<code class="function">array_agg_finalfn</code>的声明成为合法。
+  </p><p>   与常规函数的习惯大致相同，可以通过把一个聚集函数的最后一个参数声明为一个<code class="literal">VARIADIC</code>数组，这样可以让该函数接受可变数量的参数（见<a class="xref" href="xfunc-sql.html#XFUNC-SQL-VARIADIC-FUNCTIONS" title="37.4.5. 带有可变数量参数的SQL函数">第 37.4.5 节</a>）。该聚集的转换函数也必须有相同的数组类型作为它们的最后一个参数。通常这类转换函数也会被标上<code class="literal">VARIADIC</code>，但这不被严格要求。
+  </p><div class="note"><h3 class="title">注意</h3><p>    可变聚集最容易被误用的情况是与<code class="literal">ORDER BY</code>选项（见<a class="xref" href="sql-expressions.html#SYNTAX-AGGREGATES" title="4.2.7. 聚合表达式">第 4.2.7 节</a>）一起使用，因为解析器无法在这样一种组合中是否给出了错误的实际参数数量。要记住在<code class="literal">ORDER BY</code>右侧的任何东西都是一个排序键，而不是一个聚集的参数。例如，在
+</p><pre class="programlisting">SELECT myaggregate(a ORDER BY a, b, c) FROM ...</pre><p>
+    中，解析器将认为看到的是一个聚集函数参数和三个排序键。但是，用户可能想要的是
+</p><pre class="programlisting">SELECT myaggregate(a, b, c ORDER BY a) FROM ...</pre><p>
+    如果<code class="literal">myaggregate</code>是可变的，两种调用都是合法的。
+   </p><p>    出于相同的原因，在创建具有相同名称以及不同数量的常规参数的聚集函数时一定要三思而后行。
+   </p></div></div><div class="sect2" id="XAGGR-ORDERED-SET-AGGREGATES"><div class="titlepage"><div><div><h3 class="title">37.10.3. 有序集聚集</h3></div></div></div><a id="idp33895104" class="indexterm"></a><p>   目前为止我们已经描述的聚集都是<span class="quote">“<span class="quote">普通</span>”</span>聚集。<span class="productname">PostgreSQL</span>还支持<em class="firstterm">有序集聚集</em>，它和普通聚集在两个关键点上相区别。首先，除了对每个输入行都要计算一次的普通聚集参数之外，一个有序集聚集可以有<span class="quote">“<span class="quote">直接</span>”</span>参数，这类参数针对每次聚集操作只计算一次。其次，用于普通聚集参数的语法需要显式地为它们指定一个排序顺序。一个有续集聚集通常被用来实现一种依赖于特定行序的计算（例如排名或者百分位数），因此排序是任何调用都要求的。例如，<code class="function">percentile_disc</code>的内建定义等效于：
+
+</p><pre class="programlisting">CREATE FUNCTION ordered_set_transition(internal, anyelement)
+  RETURNS internal ...;
+CREATE FUNCTION percentile_disc_final(internal, float8, anyelement)
+  RETURNS anyelement ...;
+
+CREATE AGGREGATE percentile_disc (float8 ORDER BY anyelement)
+(
+    sfunc = ordered_set_transition,
+    stype = internal,
+    finalfunc = percentile_disc_final,
+    finalfunc_extra
+);</pre><p>
+   这个聚集接受一个<code class="type">float8</code>直接参数（百分位数分数）以及一个可以是任意可排序数据类型的聚集输入。它可以用来得到一个家庭收入的中位数：
+
+</p><pre class="programlisting">SELECT percentile_disc(0.5) WITHIN GROUP (ORDER BY income) FROM households;
+ percentile_disc
+-----------------
+           50489</pre><p>
+
+   这里<code class="literal">0.5</code>是一个直接参数，它对于要作为一个在行之间变化的百分位数分数没有意义。
+  </p><p>   和普通聚集的情况不同，用于有序集聚集的输入行排序<span class="emphasis"><em>不是</em></span>在幕后完成的，而是由该聚集的支持函数负责完成。典型的实现方法是在该聚集的状态值中保持对于一个<span class="quote">“<span class="quote">tuplesort</span>”</span>对象的引用，把到来的行输入给该对象，然后完成排序并且在最终函数中读出该数据。这种设计允许最终函数能够执行特殊操作，例如把附加的<span class="quote">“<span class="quote">假想</span>”</span>行注入到被排序的数据中。虽然用由<span class="application">PL/pgSQL</span>或另一种 PL 语言编写的支持函数通常能够实现普通聚集，但是有序集聚集通常必须用 C 编写，因为它们的状态值无法用任何 SQL 数据类型来定义（在上面的例子中，注意状态值被声明为类型<code class="type">internal</code> — 这很典型）。
+  </p><p>   用于一个有序集聚集的状态转移函数接收当前状态值外加对于每一行的聚集输入值，并且返回更新后的状态值。这和普通聚集的定义相同，但是注意没有提供直接参数（如果有）。最终函数接收最后的状态值、直接参数（如果有）的值以及对应于聚集输入的空值（如果指定了<code class="literal">finalfunc_extra</code>）。正如普通聚集，只有聚集是多态时<code class="literal">finalfunc_extra</code>才真正有用，那时就需要额外的假参数把最终函数的结果类型连接到该聚集的输入类型。
+  </p><p>   当前，有序集聚集不能被用做窗口函数，并且因此没有必要让它们支持移动聚集模式。
+  </p></div><div class="sect2" id="XAGGR-PARTIAL-AGGREGATES"><div class="titlepage"><div><div><h3 class="title">37.10.4. 部分聚集</h3></div></div></div><a id="idp33910800" class="indexterm"></a><p>   可选地，一个聚集函数可以支持<em class="firstterm">部分聚集</em>。部分聚集的思想是在输入数据的不同子集上独立的运行该聚集的状态转移函数，然后把从这些子集得到的状态值组合起来产生最终的状态值，这样得到的状态值与在单次聚集操作中扫描所有输入得到的状态值相同。这种模式可以被用来进行并行聚集，用不同的工作者进程扫描表的不同部分。每一个工作者产生一个部分状态值，最后把这些部分状态值组合产生最终状态值（在未来，这种模式可能也会被用于组合在本地表和远程表上的聚集，但目前还未实现）。
+  </p><p>   为了支持部分聚集，聚集定义必须提供一个<em class="firstterm">组合函数</em>，这个函数接收两个该聚集的状态类型（表示在输入行的两个不同子集上得到的聚集结果）并且产生一个该状态类型的新值，该结果表示组合哪些聚集结果后的状态。至于来自两个集合的输入行的相对顺序则并没有指定。这意味着通常不可能为对输入行顺序敏感的聚集定义出可用的组合函数。
+  </p><p>   作为简单的例子，通过指定组合函数为与其转移函数中相同的“两者中较大者”和“两者中较小者”比较函数，<code class="literal">MAX</code>和<code class="literal">MIN</code>聚集可以支持部分聚集。<code class="literal">SUM</code>聚集则只需要一个额外的函数作为组合函数（同样，组合函数与其转移函数相同，除非状态值的宽度比输入数据类型更宽）。
+  </p><p>   组合函数很像一个把状态类型值而不是底层输入类型值作为其第二个参数的转移函数。尤其是处理空值和严格函数的规则是相似的。此外，如果聚集定义指定了非空的<code class="literal">initcond</code>，记住那不仅会被作为每一次部分聚集运行的初始状态，还会被作为组合函数的初始状态，对每一个部分结果都会调用组合函数将部分结果组合到该初始状态中。
+  </p><p>   如果聚集的状态类型被声明为<code class="type">internal</code>，则组合函数应负责在用于聚集状态值的内存上下文中分配其结果。这意味着当第一个输入为<code class="literal">NULL</code>时，不能简单地返回第二个输入，因为那个值将会在错误的上下文中并且将不具有足够的寿命。
+  </p><p>   当聚集的状态类型被声明为<code class="type">internal</code>时，通常聚集定义提供<em class="firstterm">序列化函数</em>和<em class="firstterm">反序列化函数</em>也是合适的，这两个函数允许这样一种状态值被从一个进程复制到另一个进程。如果没有这些函数就无法执行并行聚集，并且未来的本地/远程聚集之类的应用也可能无法工作。
+  </p><p>   一个序列化函数必须接收一个单一的<code class="type">internal</code>类型参数并且返回一个<code class="type">bytea</code>类型的结果，它表示把状态值打包成一个平面化的字节串。反过来，反序列化函数是上述转换的逆变换。反序列化函数必须接收两个类型为<code class="type">bytea</code>和<code class="type">internal</code>的参数，并且返回类型为<code class="type">internal</code>的结果（第二个参数没有被使用并且总是为零，它的存在是由于类型安全性的原因）。反序列化函数的结果应该直接在当前内存上下文中分配，这与组合函数的结果不同，因为它不需要长期存在。
+  </p><p>   还有一点值得提示的是关于要被并行执行的聚集，聚集本身必须被标记上<code class="literal">PARALLEL SAFE</code>。其支持函数上的并行安全性标记不会被参考。
+  </p></div><div class="sect2" id="XAGGR-SUPPORT-FUNCTIONS"><div class="titlepage"><div><div><h3 class="title">37.10.5. 聚集的支持函数</h3></div></div></div><a id="idp33928688" class="indexterm"></a><p>   用 C 编写的函数能够通过调用<code class="function">AggCheckCallContext</code>检测它是作为聚集支持函数调用的，例如：
+</p><pre class="programlisting">if (AggCheckCallContext(fcinfo, NULL))</pre><p>
+   检查这个区别的原因是当它为真（即一个转换函数）时，第一个输入必须是一个临时状态值并且可以因此安全地被就地修改而不是分配一个新的副本。例子可见<code class="function">int8inc()</code>（这是一个函数能够安全地修改一个传引用输入的<span class="emphasis"><em>唯一</em></span>情况。特别地，任何情况下用于普通聚集的最终函数不能修改它们的输入，因为在某些情况下它们将会在相同的最终状态值上被重新执行）。
+  </p><p>   <code class="function">AggCheckCallContext</code>的第二个参数可以用来检索保存聚合状态值的内存上下文。
+    这对于希望使用<span class="quote">“<span class="quote">expanded</span>”</span>对象（参见<a class="xref" href="xtypes.html#XTYPES-TOAST" title="37.11.1. TOAST Considerations">第 37.11.1 节</a>）
+	作为其状态值的转换函数很有用。在第一次调用时，转换函数应该返回一个扩展对象，
+	其内存上下文是聚合状态上下文的子项，然后在随后的调用中保持返回相同的扩展对象。
+	有关示例，请参阅<code class="function">array_append()</code>。
+	（<code class="function">array_append()</code>不是任何内置聚合的转换函数，
+	但是它被编写为在用作自定义聚合的转换函数时有效运行。）
+  </p><p>   另一种可用于由 C 编写的聚集函数的支持例程是<code class="function">AggGetAggref</code>，它返回定义该聚集调用的<code class="literal">Aggref</code>解析节点。这主要对有序集聚集有用，它能检查<code class="literal">Aggref</code>的子结构来找出它们本应实现的排序顺序。在<span class="productname">PostgreSQL</span>源代码的<code class="filename">orderedsetaggs.c</code>中可以找到例子。
+  </p></div></div><div class="navfooter"><hr /><table width="100%" summary="Navigation footer"><tr><td width="40%" align="left"><a accesskey="p" href="xfunc-c.html">上一页</a> </td><td width="20%" align="center"><a accesskey="u" href="extend.html">上一级</a></td><td width="40%" align="right"> <a accesskey="n" href="xtypes.html">下一页</a></td></tr><tr><td width="40%" align="left" valign="top">37.9. C 语言函数 </td><td width="20%" align="center"><a accesskey="h" href="index.html">起始页</a></td><td width="40%" align="right" valign="top"> 37.11. 用户定义的类型</td></tr></table></div></body></html>

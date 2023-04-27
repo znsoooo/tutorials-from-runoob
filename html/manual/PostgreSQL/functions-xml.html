@@ -1,0 +1,467 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><title>9.14. XML 函数</title><link rel="stylesheet" type="text/css" href="stylesheet.css" /><link rev="made" href="pgsql-docs@postgresql.org" /><meta name="generator" content="DocBook XSL Stylesheets V1.79.1" /><link rel="prev" href="functions-textsearch.html" title="9.13. 文本搜索函数和操作符" /><link rel="next" href="functions-json.html" title="9.15. JSON 函数和操作符" /></head><body><div xmlns="http://www.w3.org/TR/xhtml1/transitional" class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="5" align="center">9.14. XML 函数</th></tr><tr><td width="10%" align="left"><a accesskey="p" href="functions-textsearch.html" title="9.13. 文本搜索函数和操作符">上一页</a> </td><td width="10%" align="left"><a accesskey="u" href="functions.html" title="第 9 章 函数和操作符">上一级</a></td><th width="60%" align="center">第 9 章 函数和操作符</th><td width="10%" align="right"><a accesskey="h" href="index.html" title="PostgreSQL 10.1 手册">起始页</a></td><td width="10%" align="right"> <a accesskey="n" href="functions-json.html" title="9.15. JSON 函数和操作符">下一页</a></td></tr></table><hr></hr></div><div class="sect1" id="FUNCTIONS-XML"><div class="titlepage"><div><div><h2 class="title" style="clear: both">9.14. XML 函数</h2></div></div></div><div class="toc"><dl class="toc"><dt><span class="sect2"><a href="functions-xml.html#FUNCTIONS-PRODUCING-XML">9.14.1. 产生 XML 内容</a></span></dt><dt><span class="sect2"><a href="functions-xml.html#FUNCTIONS-XML-PREDICATES">9.14.2. XML 谓词</a></span></dt><dt><span class="sect2"><a href="functions-xml.html#FUNCTIONS-XML-PROCESSING">9.14.3. 处理 XML</a></span></dt><dt><span class="sect2"><a href="functions-xml.html#FUNCTIONS-XML-MAPPING">9.14.4. 将表映射到 XML</a></span></dt></dl></div><p>   本节中描述的函数以及类函数的表达式都在类型<code class="type">xml</code>的值上操作。类型<code class="type">xml</code>的详细信息请参见<a class="xref" href="datatype-xml.html" title="8.13. XML类型">第 8.13 节</a>。用于在值和类型<code class="type">xml</code>之间转换的类函数的表达式<code class="function">xmlparse</code>和<code class="function">xmlserialize</code>就不在这里重复介绍。使用大部分这些函数要求安装时使用了<code class="command">configure --with-libxml</code>进行编译。
+  </p><div class="sect2" id="FUNCTIONS-PRODUCING-XML"><div class="titlepage"><div><div><h3 class="title">9.14.1. 产生 XML 内容</h3></div></div></div><p>    有一组函数和类函数的表达式可以用来从 SQL 数据产生 XML 内容。它们特别适合于将查询结果格式化成 XML 文档以便于在客户端应用中处理。
+   </p><div class="sect3" id="idp13032496"><div class="titlepage"><div><div><h4 class="title">9.14.1.1. <code class="literal">xmlcomment</code></h4></div></div></div><a id="idp13033312" class="indexterm"></a><pre class="synopsis"><code class="function">xmlcomment</code>(<em class="replaceable"><code>text</code></em>)</pre><p>     函数<code class="function">xmlcomment</code>创建了一个 XML 值，它包含一个使用指定文本作为内容的 XML 注释。该文本不包含<span class="quote">“<span class="quote"><code class="literal">--</code></span>”</span>或者也不会以一个<span class="quote">“<span class="quote"><code class="literal">-</code></span>”</span>结尾，这样结果的结构是一个合法的 XML 注释。如果参数为空，结果也为空。
+    </p><p>     例子：
+</p><pre class="screen">SELECT xmlcomment('hello');
+
+  xmlcomment
+--------------
+ &lt;!--hello--&gt;</pre><p>
+    </p></div><div class="sect3" id="idp13039440"><div class="titlepage"><div><div><h4 class="title">9.14.1.2. <code class="literal">xmlconcat</code></h4></div></div></div><a id="idp13040256" class="indexterm"></a><pre class="synopsis"><code class="function">xmlconcat</code>(<em class="replaceable"><code>xml</code></em>[<span class="optional">, ...</span>])</pre><p>     函数<code class="function">xmlconcat</code>将由单个 XML 值组成的列表串接成一个单独的值，这个值包含一个 XML 内容片断。空值会被忽略，只有当没有参数为非空时结果才为空。
+    </p><p>     例子：
+</p><pre class="screen">SELECT xmlconcat('&lt;abc/&gt;', '&lt;bar&gt;foo&lt;/bar&gt;');
+
+      xmlconcat
+----------------------
+ &lt;abc/&gt;&lt;bar&gt;foo&lt;/bar&gt;</pre><p>
+    </p><p>     如果 XML 声明存在，它们会按照下面的方式被组合。如果所有的参数值都有相同的 XML 版本声明，该版本将被用在结果中，否则将不使用版本。如果所有参数值有独立声明值<span class="quote">“<span class="quote">yes</span>”</span>，那么该值将被用在结果中。如果所有参数值都有一个独立声明值并且至少有一个为<span class="quote">“<span class="quote">no</span>”</span>，则<span class="quote">“<span class="quote">no</span>”</span>被用在结果中。否则结果中将没有独立声明。如果结果被决定要要求一个独立声明但是没有版本声明，将会使用一个版本 1.0 的版本声明，因为 XML 要求一个 XML 声明要包含一个版本声明。编码声明会被忽略并且在所有情况中都会被移除。
+    </p><p>     例子：
+</p><pre class="screen">SELECT xmlconcat('&lt;?xml version="1.1"?&gt;&lt;foo/&gt;', '&lt;?xml version="1.1" standalone="no"?&gt;&lt;bar/&gt;');
+
+             xmlconcat
+-----------------------------------
+ &lt;?xml version="1.1"?&gt;&lt;foo/&gt;&lt;bar/&gt;</pre><p>
+    </p></div><div class="sect3" id="idp13048992"><div class="titlepage"><div><div><h4 class="title">9.14.1.3. <code class="literal">xmlelement</code></h4></div></div></div><a id="idp13049808" class="indexterm"></a><pre class="synopsis"><code class="function">xmlelement</code>(name <em class="replaceable"><code>name</code></em> [<span class="optional">, xmlattributes(<em class="replaceable"><code>value</code></em> [<span class="optional">AS <em class="replaceable"><code>attname</code></em></span>] [<span class="optional">, ... </span>])</span>] [<span class="optional"><em class="replaceable"><code>, content, ...</code></em></span>])</pre><p>     表达式<code class="function">xmlelement</code>使用给定名称、属性和内容产生一个 XML 元素。
+    </p><p>     例子：
+</p><pre class="screen">SELECT xmlelement(name foo);
+
+ xmlelement
+------------
+ &lt;foo/&gt;
+
+SELECT xmlelement(name foo, xmlattributes('xyz' as bar));
+
+    xmlelement
+------------------
+ &lt;foo bar="xyz"/&gt;
+
+SELECT xmlelement(name foo, xmlattributes(current_date as bar), 'cont', 'ent');
+
+             xmlelement
+-------------------------------------
+ &lt;foo bar="2007-01-26"&gt;content&lt;/foo&gt;</pre><p>
+    </p><p>     不是合法 XML 名字的元素名和属性名将被逃逸，逃逸的方法是将违反的字符用序列<code class="literal">_x<em class="replaceable"><code>HHHH</code></em>_</code>替换，其中<em class="replaceable"><code>HHHH</code></em>是被替换字符的 Unicode 代码点的十六进制表示。例如：
+</p><pre class="screen">SELECT xmlelement(name "foo$bar", xmlattributes('xyz' as "a&amp;b"));
+
+            xmlelement
+----------------------------------
+ &lt;foo_x0024_bar a_x0026_b="xyz"/&gt;</pre><p>
+    </p><p>     如果属性值是一个列引用，则不需要指定一个显式的属性名，在这种情况下列的名字将被默认用于属性的名字。在其他情况下，属性必须被给定一个显式名称。因此这个例子是合法的：
+</p><pre class="screen">CREATE TABLE test (a xml, b xml);
+SELECT xmlelement(name test, xmlattributes(a, b)) FROM test;</pre><p>
+     但是下面这些不合法：
+</p><pre class="screen">SELECT xmlelement(name test, xmlattributes('constant'), a, b) FROM test;
+SELECT xmlelement(name test, xmlattributes(func(a, b))) FROM test;</pre><p>
+    </p><p>     如果指定了元素内容，它们将被根据其数据类型格式化。如果内容本身也是类型<code class="type">xml</code>，就可以构建复杂的 XML 文档。例如：
+</p><pre class="screen">SELECT xmlelement(name foo, xmlattributes('xyz' as bar),
+                            xmlelement(name abc),
+                            xmlcomment('test'),
+                            xmlelement(name xyz));
+
+                  xmlelement
+----------------------------------------------
+ &lt;foo bar="xyz"&gt;&lt;abc/&gt;&lt;!--test--&gt;&lt;xyz/&gt;&lt;/foo&gt;</pre><p>
+
+     其他类型的内容将被格式化为合法的 XML 字符数据。这意味着字符 &lt;, &gt;, 和 &amp; 将被转换为实体。二进制数据（数据类型<code class="type">bytea</code>）将被表示成 base64 或十六进制编码，具体取决于配置参数<a class="xref" href="runtime-config-client.html#GUC-XMLBINARY">xmlbinary</a>的设置。为了将 SQL 和 PostgreSQL 数据类型和 XML 模式声明对齐，我们期待单独数据类型的特定行为能够改进，到那时将会出现一个更为精确的描述。
+    </p></div><div class="sect3" id="idp13066512"><div class="titlepage"><div><div><h4 class="title">9.14.1.4. <code class="literal">xmlforest</code></h4></div></div></div><a id="idp13067296" class="indexterm"></a><pre class="synopsis"><code class="function">xmlforest</code>(<em class="replaceable"><code>content</code></em> [<span class="optional">AS <em class="replaceable"><code>name</code></em></span>] [<span class="optional">, ...</span>])</pre><p>     表达式<code class="function">xmlforest</code>使用给定名称和内容产生一个元素的 XML 森林（序列）。
+    </p><p>     例子：
+</p><pre class="screen">SELECT xmlforest('abc' AS foo, 123 AS bar);
+
+          xmlforest
+------------------------------
+ &lt;foo&gt;abc&lt;/foo&gt;&lt;bar&gt;123&lt;/bar&gt;
+
+
+SELECT xmlforest(table_name, column_name)
+FROM information_schema.columns
+WHERE table_schema = 'pg_catalog';
+
+                                         xmlforest
+-------------------------------------------------------------------------------------------
+ &lt;table_name&gt;pg_authid&lt;/table_name&gt;&lt;column_name&gt;rolname&lt;/column_name&gt;
+ &lt;table_name&gt;pg_authid&lt;/table_name&gt;&lt;column_name&gt;rolsuper&lt;/column_name&gt;
+ ...</pre><p>
+
+     如我们在第二个例子中所见，如果内容值是一个列引用，元素名称可以被忽略，这种情况下默认使用列名。否则，必须指定一个名字。
+    </p><p>     如上文<code class="function">xmlelement</code>所示，非法 XML 名字的元素名会被逃逸。相似地，内容数据也会被逃逸来产生合法的 XML 内容，除非它已经是一个<code class="type">xml</code>类型。
+    </p><p>     注意如果 XML 森林由多于一个元素组成，那么它不是合法的 XML 文档，因此在<code class="function">xmlelement</code>中包装<code class="function">xmlforest</code>表达式会有用处。
+    </p></div><div class="sect3" id="idp13077456"><div class="titlepage"><div><div><h4 class="title">9.14.1.5. <code class="literal">xmlpi</code></h4></div></div></div><a id="idp13078272" class="indexterm"></a><pre class="synopsis"><code class="function">xmlpi</code>(name <em class="replaceable"><code>target</code></em> [<span class="optional">, <em class="replaceable"><code>content</code></em></span>])</pre><p>     表达式<code class="function">xmlpi</code>创建一个 XML 处理指令。如果存在内容，内容不能包含字符序列<code class="literal">?&gt;</code>。
+    </p><p>     例子：
+</p><pre class="screen">SELECT xmlpi(name php, 'echo "hello world";');
+
+            xmlpi
+-----------------------------
+ &lt;?php echo "hello world";?&gt;</pre><p>
+    </p></div><div class="sect3" id="idp13084144"><div class="titlepage"><div><div><h4 class="title">9.14.1.6. <code class="literal">xmlroot</code></h4></div></div></div><a id="idp13084960" class="indexterm"></a><pre class="synopsis"><code class="function">xmlroot</code>(<em class="replaceable"><code>xml</code></em>, version <em class="replaceable"><code>text</code></em> | no value [<span class="optional">, standalone yes|no|no value</span>])</pre><p>     表达式<code class="function">xmlroot</code>修改一个 XML 值的根结点的属性。如果指定了一个版本，它会替换根节点的版本声明中的值；如果指定了一个独立设置，它会替换根节点的独立声明中的值。
+    </p><pre class="screen">SELECT xmlroot(xmlparse(document '&lt;?xml version="1.1"?&gt;&lt;content&gt;abc&lt;/content&gt;'),
+               version '1.0', standalone yes);
+
+                xmlroot
+----------------------------------------
+ &lt;?xml version="1.0" standalone="yes"?&gt;
+ &lt;content&gt;abc&lt;/content&gt;</pre><p>
+    </p></div><div class="sect3" id="FUNCTIONS-XML-XMLAGG"><div class="titlepage"><div><div><h4 class="title">9.14.1.7. <code class="literal">xmlagg</code></h4></div></div></div><a id="idp13091840" class="indexterm"></a><pre class="synopsis"><code class="function">xmlagg</code>(<em class="replaceable"><code>xml</code></em>)</pre><p>     和这里描述的其他函数不同，函数<code class="function">xmlagg</code>是一个聚集函数。它将聚集函数调用的输入值串接起来，非常像<code class="function">xmlconcat</code>所做的事情，除了串接是跨行发生的而不是在单一行的多个表达式上发生。聚集表达式的更多信息请见<a class="xref" href="functions-aggregate.html" title="9.20. 聚集函数">第 9.20 节</a>。
+    </p><p>     例子：
+</p><pre class="screen">CREATE TABLE test (y int, x xml);
+INSERT INTO test VALUES (1, '&lt;foo&gt;abc&lt;/foo&gt;');
+INSERT INTO test VALUES (2, '&lt;bar/&gt;');
+SELECT xmlagg(x) FROM test;
+        xmlagg
+----------------------
+ &lt;foo&gt;abc&lt;/foo&gt;&lt;bar/&gt;</pre><p>
+    </p><p>     为了决定串接的顺序，可以为聚集调用增加一个<code class="literal">ORDER BY</code>子句，如<a class="xref" href="sql-expressions.html#SYNTAX-AGGREGATES" title="4.2.7. 聚合表达式">第 4.2.7 节</a>中所述。例如：
+
+</p><pre class="screen">SELECT xmlagg(x ORDER BY y DESC) FROM test;
+        xmlagg
+----------------------
+ &lt;bar/&gt;&lt;foo&gt;abc&lt;/foo&gt;</pre><p>
+    </p><p>     我们推荐在以前的版本中使用下列非标准方法，并且它们在特定情况下仍然有用：
+
+</p><pre class="screen">SELECT xmlagg(x) FROM (SELECT * FROM test ORDER BY y DESC) AS tab;
+        xmlagg
+----------------------
+ &lt;bar/&gt;&lt;foo&gt;abc&lt;/foo&gt;</pre><p>
+    </p></div></div><div class="sect2" id="FUNCTIONS-XML-PREDICATES"><div class="titlepage"><div><div><h3 class="title">9.14.2. XML 谓词</h3></div></div></div><p>     这一节描述的表达式检查<code class="type">xml</code>值的属性。
+    </p><div class="sect3" id="idp13103808"><div class="titlepage"><div><div><h4 class="title">9.14.2.1. <code class="literal">IS DOCUMENT</code></h4></div></div></div><a id="idp13104624" class="indexterm"></a><pre class="synopsis"><em class="replaceable"><code>xml</code></em> IS DOCUMENT</pre><p>     如果参数 XML 值是一个正确的 XML 文档，则<code class="literal">IS DOCUMENT</code>返回真，如果不是则返回假（即它是一个内容片断），或者是参数为空时返回空。文档和内容片断之间的区别请见<a class="xref" href="datatype-xml.html" title="8.13. XML类型">第 8.13 节</a>。
+    </p></div><div class="sect3" id="XML-EXISTS"><div class="titlepage"><div><div><h4 class="title">9.14.2.2. <code class="literal">XMLEXISTS</code></h4></div></div></div><a id="idp13109232" class="indexterm"></a><pre class="synopsis"><code class="function">XMLEXISTS</code>(<em class="replaceable"><code>text</code></em> PASSING [<span class="optional">BY REF</span>] <em class="replaceable"><code>xml</code></em> [<span class="optional">BY REF</span>])</pre><p>     如果第一个参数中的 XPath 表达式返回任何结点，则函数<code class="function">xmlexists</code>返回真，否则返回假（如果哪一个参数为空，则结果就为空）。
+    </p><p>     例子：
+     </p><pre class="screen">SELECT xmlexists('//town[text() = ''Toronto'']' PASSING BY REF '&lt;towns&gt;&lt;town&gt;Toronto&lt;/town&gt;&lt;town&gt;Ottawa&lt;/town&gt;&lt;/towns&gt;');
+
+ xmlexists
+------------
+ t
+(1 row)</pre><p>
+    </p><p>     <code class="literal">BY REF</code>子句在 PostgreSQL 中没有作用，但是为了和其他实现保持 SQL 一致性和兼容性还是允许它出现。每一种 SQL 标准，第一个<code class="literal">BY REF</code>是被要求的，而第二个则是可选的。也要注意 SQL 标准指定<code class="function">xmlexists</code>结构来将一个 XQuery 表达式作为第一个参数，但 PostgreSQL 目前只支持 XPath，它是 XQuery的一个子集。
+    </p></div><div class="sect3" id="XML-IS-WELL-FORMED"><div class="titlepage"><div><div><h4 class="title">9.14.2.3. <code class="literal">xml_is_well_formed</code></h4></div></div></div><a id="idp13119264" class="indexterm"></a><a id="idp13119952" class="indexterm"></a><a id="idp13120656" class="indexterm"></a><pre class="synopsis"><code class="function">xml_is_well_formed</code>(<em class="replaceable"><code>text</code></em>)
+<code class="function">xml_is_well_formed_document</code>(<em class="replaceable"><code>text</code></em>)
+<code class="function">xml_is_well_formed_content</code>(<em class="replaceable"><code>text</code></em>)</pre><p>     这些函数检查一个<code class="type">text</code>串是不是一个良构的 XML，返回一个布尔结果。<code class="function">xml_is_well_formed_document</code>检查一个良构的文档，而<code class="function">xml_is_well_formed_content</code>检查良构的内容。如果<a class="xref" href="runtime-config-client.html#GUC-XMLOPTION">xmloption</a>配置参数被设置为<code class="literal">DOCUMENT</code>，<code class="function">xml_is_well_formed</code>会做第一个函数的工作；如果配置参数被设置为<code class="literal">CONTENT</code>，<code class="function">xml_is_well_formed</code>会做第二个函数的工作。这意味着<code class="function">xml_is_well_formed</code>对于检查一个到类型<code class="type">xml</code>的简单造型是否会成功非常有用，而其他两个函数对于检查<code class="function">XMLPARSE</code>的对应变体是否会成功有用。
+    </p><p>     例子：
+
+</p><pre class="screen">SET xmloption TO DOCUMENT;
+SELECT xml_is_well_formed('&lt;&gt;');
+ xml_is_well_formed 
+--------------------
+ f
+(1 row)
+
+SELECT xml_is_well_formed('&lt;abc/&gt;');
+ xml_is_well_formed 
+--------------------
+ t
+(1 row)
+
+SET xmloption TO CONTENT;
+SELECT xml_is_well_formed('abc');
+ xml_is_well_formed 
+--------------------
+ t
+(1 row)
+
+SELECT xml_is_well_formed_document('&lt;pg:foo xmlns:pg="http://postgresql.org/stuff"&gt;bar&lt;/pg:foo&gt;');
+ xml_is_well_formed_document 
+-----------------------------
+ t
+(1 row)
+
+SELECT xml_is_well_formed_document('&lt;pg:foo xmlns:pg="http://postgresql.org/stuff"&gt;bar&lt;/my:foo&gt;');
+ xml_is_well_formed_document 
+-----------------------------
+ f
+(1 row)</pre><p>
+
+     最后一个例子显示了这些检查也包括名字空间是否正确地匹配。
+    </p></div></div><div class="sect2" id="FUNCTIONS-XML-PROCESSING"><div class="titlepage"><div><div><h3 class="title">9.14.3. 处理 XML</h3></div></div></div><p>    要处理数据类型<code class="type">xml</code>的值， PostgreSQL 提供了函数<code class="function">xpath</code>和<code class="function">xpath_exists</code>，它们计算 XPath 1.0 表达式，还有<code class="function">XMLTABLE</code>表函数。
+   </p><div class="sect3" id="FUNCTIONS-XML-PROCESSING-XPATH"><div class="titlepage"><div><div><h4 class="title">9.14.3.1. <code class="literal">xpath</code></h4></div></div></div><a id="idp13140448" class="indexterm"></a><pre class="synopsis"><code class="function">xpath</code>(<em class="replaceable"><code>xpath</code></em>, <em class="replaceable"><code>xml</code></em> [<span class="optional">, <em class="replaceable"><code>nsarray</code></em></span>])</pre><p>    函数<code class="function">xpath</code>在 XML 值<em class="replaceable"><code>xml</code></em>上计算 XPath 表达式<em class="replaceable"><code>xpath</code></em> (a <code class="type">text</code> value)。它返回一个 XML 值的数组，该数组对应于该 XPath 表达式产生的结点集合。如果该 XPath 表达式返回一个标量值而不是一个结点集合，将会返回一个单一元素的数组。
+   </p><p>    第二个参数必须是一个良构的 XML 文档。特殊地，它必须有一个单一根结点元素。
+  </p><p>    该函数可选的第三个参数是一个名字空间映射的数组。这个数组应该是一个二维<code class="type">text</code>数组，其第二轴长度等于2（即它应该是一个数组的数组，其中每一个都由刚好 2 个元素组成）。每个数组项的第一个元素是名字空间的名称（别名），第二个元素是名字空间的 URI。并不要求在这个数组中提供的别名和在 XML 文档本身中使用的那些名字空间相同（换句话说，在 XML 文档中和在<code class="function">xpath</code>函数环境中，别名都是<span class="emphasis"><em>本地的</em></span>）。
+   </p><p>    例子：
+</p><pre class="screen">SELECT xpath('/my:a/text()', '&lt;my:a xmlns:my="http://example.com"&gt;test&lt;/my:a&gt;',
+             ARRAY[ARRAY['my', 'http://example.com']]);
+
+ xpath  
+--------
+ {test}
+(1 row)</pre><p>
+   </p><p>    要处理默认（匿名）名称空间，做这样的事情：
+</p><pre class="screen">SELECT xpath('//mydefns:b/text()', '&lt;a xmlns="http://example.com"&gt;&lt;b&gt;test&lt;/b&gt;&lt;/a&gt;',
+             ARRAY[ARRAY['mydefns', 'http://example.com']]);
+
+ xpath
+--------
+ {test}
+(1 row)</pre><p>
+   </p></div><div class="sect3" id="FUNCTIONS-XML-PROCESSING-XPATH-EXISTS"><div class="titlepage"><div><div><h4 class="title">9.14.3.2. <code class="literal">xpath_exists</code></h4></div></div></div><a id="idp13153936" class="indexterm"></a><pre class="synopsis"><code class="function">xpath_exists</code>(<em class="replaceable"><code>xpath</code></em>, <em class="replaceable"><code>xml</code></em> [<span class="optional">, <em class="replaceable"><code>nsarray</code></em></span>])</pre><p>    函数<code class="function">xpath_exists</code>是<code class="function">xpath</code>函数的一种特殊形式。这个函数不是返回满足 XPath 的单一 XML 值，它返回一个布尔值表示查询是否被满足。这个函数等价于标准的<code class="literal">XMLEXISTS</code>谓词，不过它还提供了对一个名字空间映射参数的支持。
+   </p><p>    例子：
+</p><pre class="screen">SELECT xpath_exists('/my:a/text()', '&lt;my:a xmlns:my="http://example.com"&gt;test&lt;/my:a&gt;',
+                     ARRAY[ARRAY['my', 'http://example.com']]);
+
+ xpath_exists  
+--------------
+ t
+(1 row)</pre><p>
+    </p></div><div class="sect3" id="FUNCTIONS-XML-PROCESSING-XMLTABLE"><div class="titlepage"><div><div><h4 class="title">9.14.3.3. <code class="literal">xmltable</code></h4></div></div></div><a id="idp13162624" class="indexterm"></a><a id="idp13163312" class="indexterm"></a><pre class="synopsis"><code class="function">xmltable</code>( [<span class="optional">XMLNAMESPACES(<em class="replaceable"><code>namespace uri</code></em> AS <em class="replaceable"><code>namespace name</code></em>[<span class="optional">, ...</span>]), </span>]
+          <em class="replaceable"><code>row_expression</code></em> PASSING [<span class="optional">BY REF</span>] <em class="replaceable"><code>document_expression</code></em> [<span class="optional">BY REF</span>]
+          COLUMNS <em class="replaceable"><code>name</code></em> { <em class="replaceable"><code>type</code></em> [<span class="optional">PATH <em class="replaceable"><code>column_expression</code></em></span>] [<span class="optional">DEFAULT <em class="replaceable"><code>default_expression</code></em></span>] [<span class="optional">NOT NULL | NULL</span>]
+                        | FOR ORDINALITY }
+                   [<span class="optional">, ...</span>]
+)</pre><p>     <code class="function">xmltable</code>函数根据给定的XML值、
+	 提取行的XPath过滤器以及一组可选的列定义生成一个表。
+    </p><p>     可选的<code class="literal">XMLNAMESPACES</code>子句是一个逗号分隔的名称空间列表。
+	 它指定了在文档中使用的XML的名称空间和它们的别名。当前不支持默认的名称空间声明。
+    </p><p>     所需的<em class="replaceable"><code>row_expression</code></em>参数是一个XPath表达式，
+	 该表达式根据提供的XML文档进行评估以获取有序的XML节点序列。
+	 这个顺序是<code class="function">xmltable</code>转换成输出行的顺序。
+    </p><p>     <em class="replaceable"><code>document_expression</code></em>提供了XML文档进行操作。
+	 <code class="literal">BY REF</code>子句在PostgreSQL中不起作用，
+	 但允许SQL符合性和与其他实现的兼容性。参数必须是格式良好的XML文档；
+	 不接受片段/格式混乱的大量文档。
+    </p><p>     必需的<code class="literal">COLUMNS</code>子句指定输出表中的字段列表。
+	 如果省略<code class="literal">COLUMNS</code>子句，那么结果集中的行包含一个包含匹配
+	 <em class="replaceable"><code>row_expression</code></em>的数据的<code class="literal">xml</code>类型的字段。
+	 如果指定了<code class="literal">COLUMNS</code>，每个项描述一个字段。
+	 格式参阅上面的语法摘要。字段名称和类型都是必需的；路径、默认和是否为空子句是可选的。
+    </p><p>     一个标记为<code class="literal">FOR ORDINALITY</code>的字段将填充行号，
+	 行号匹配输出行在原始输入XML文档中出现的顺序。
+     最多只有一个字段可以标记为<code class="literal">FOR ORDINALITY</code>。
+    </p><p>     一个列的<code class="literal">column_expression</code>是一个XPath表达式，
+     针对每行计算相对于<em class="replaceable"><code>row_expression</code></em>的结果的值，
+	 来找到该列的值。如果没有给出<code class="literal">column_expression</code>，
+	 那么字段名用作隐式路径。
+    </p><p>     如果一个字段的XPath表达式返回多个元素，则引发一个错误。
+	 如果表达式匹配空标签，结果是一个空字符串(不是<code class="literal">NULL</code>)。
+	 忽略任何<code class="literal">xsi:nil</code>属性。
+    </p><p>     与<em class="replaceable"><code>column_expression</code></em>匹配的XML的文本内容用作字段的值。
+	 一个元素中的多个<code class="literal">text()</code>节点按顺序连接起来。忽略任何子元素、
+	 处理指令和注释，但是子元素的文本内容连接到结果中。请注意，
+	 保留两个非文本元素之间只有空格的<code class="literal">text()</code>节点，
+	 并且不会压缩<code class="literal">text()</code>节点上的前导空白。
+    </p><p>     如果路径表达式与给定行不匹配，但指定了<em class="replaceable"><code>default_expression</code></em>，
+	 则使用评估该表达式得到的值。如果没有为列指定<code class="literal">DEFAULT</code>子句，
+	 则该字段将设置为<code class="literal">NULL</code>。一个<em class="replaceable"><code>default_expression</code></em>
+	 可能引用列列表中出现在其之前的输出列的值，因此一列的缺省值可能基于另一列的值。
+    </p><p>     列可能被标记为<code class="literal">NOT NULL</code>。如果<code class="literal">NOT NULL</code>列的
+	 <em class="replaceable"><code>column_expression</code></em>不匹配任何内容，并且没有
+	 <code class="literal">DEFAULT</code>或者<em class="replaceable"><code>default_expression</code></em>也计算为null，报告错误。
+    </p><p>     与普通PostgreSQL函数不同，在调用函数之前，<em class="replaceable"><code>column_expression</code></em>
+	 和<em class="replaceable"><code>default_expression</code></em>不会被评估为简单的值。
+	 通常每个输入行对<em class="replaceable"><code>column_expression</code></em>进行一次评估，
+	 每当字段需要缺省值时对<em class="replaceable"><code>default_expression</code></em>进行评估。
+	 如果表达式符合稳定或不可变，重复评估可能会被忽略。
+	 有效地<code class="function">xmltable</code>的行为更像是一个子查询而不是函数调用。
+	 这意味着您可以在<em class="replaceable"><code>default_expression</code></em>中使用诸如
+	 <code class="function">nextval</code>之类的易失性函数，并且<em class="replaceable"><code>column_expression</code></em>
+	 可能依赖于XML文档的其他部分。
+    </p><p>     示例:
+  </p><pre class="screen">CREATE TABLE xmldata AS SELECT
+xml $$
+&lt;ROWS&gt;
+  &lt;ROW id="1"&gt;
+    &lt;COUNTRY_ID&gt;AU&lt;/COUNTRY_ID&gt;
+    &lt;COUNTRY_NAME&gt;Australia&lt;/COUNTRY_NAME&gt;
+  &lt;/ROW&gt;
+  &lt;ROW id="5"&gt;
+    &lt;COUNTRY_ID&gt;JP&lt;/COUNTRY_ID&gt;
+    &lt;COUNTRY_NAME&gt;Japan&lt;/COUNTRY_NAME&gt;
+    &lt;PREMIER_NAME&gt;Shinzo Abe&lt;/PREMIER_NAME&gt;
+    &lt;SIZE unit="sq_mi"&gt;145935&lt;/SIZE&gt;
+  &lt;/ROW&gt;
+  &lt;ROW id="6"&gt;
+    &lt;COUNTRY_ID&gt;SG&lt;/COUNTRY_ID&gt;
+    &lt;COUNTRY_NAME&gt;Singapore&lt;/COUNTRY_NAME&gt;
+    &lt;SIZE unit="sq_km"&gt;697&lt;/SIZE&gt;
+  &lt;/ROW&gt;
+&lt;/ROWS&gt;
+$$ AS data;
+
+SELECT xmltable.*
+  FROM xmldata,
+       XMLTABLE('//ROWS/ROW'
+                PASSING data
+                COLUMNS id int PATH '@id',
+                        ordinality FOR ORDINALITY,
+                        "COUNTRY_NAME" text,
+                        country_id text PATH 'COUNTRY_ID',
+                        size_sq_km float PATH 'SIZE[@unit = "sq_km"]',
+                        size_other text PATH
+                             'concat(SIZE[@unit!="sq_km"], " ", SIZE[@unit!="sq_km"]/@unit)',
+                        premier_name text PATH 'PREMIER_NAME' DEFAULT 'not specified') ;
+
+ id | ordinality | COUNTRY_NAME | country_id | size_sq_km |  size_other  | premier_name  
+----+------------+--------------+------------+------------+--------------+---------------
+  1 |          1 | Australia    | AU         |            |              | not specified
+  5 |          2 | Japan        | JP         |            | 145935 sq_mi | Shinzo Abe
+  6 |          3 | Singapore    | SG         |        697 |              | not specified</pre><p>
+
+     以下示例显示了多个text()节点的连接，列名的用法作为XPath过滤器，
+	 以及处理空白、XML注释和处理指令：
+
+  </p><pre class="screen">CREATE TABLE xmlelements AS SELECT
+xml $$
+  &lt;root&gt;
+   &lt;element&gt;  Hello&lt;!-- xyxxz --&gt;2a2&lt;?aaaaa?&gt; &lt;!--x--&gt;  bbb&lt;x&gt;xxx&lt;/x&gt;CC  &lt;/element&gt;
+  &lt;/root&gt;
+$$ AS data;
+
+SELECT xmltable.*
+  FROM xmlelements, XMLTABLE('/root' PASSING data COLUMNS element text);
+       element        
+----------------------
+   Hello2a2   bbbCC  </pre><p>
+    </p><p>     以下示例说明了如何使用<code class="literal">XMLNAMESPACES</code>
+	 子句指定默认名称空间以及XML文档以及XPath表达式中使用的其他名称空间的列表：
+
+  </p><pre class="screen">WITH xmldata(data) AS (VALUES ('
+&lt;example xmlns="http://example.com/myns" xmlns:B="http://example.com/b"&gt;
+ &lt;item foo="1" B:bar="2"/&gt;
+ &lt;item foo="3" B:bar="4"/&gt;
+ &lt;item foo="4" B:bar="5"/&gt;
+&lt;/example&gt;'::xml)
+)
+SELECT xmltable.*
+  FROM XMLTABLE(XMLNAMESPACES('http://example.com/myns' AS x,
+                              'http://example.com/b' AS "B"),
+             '/x:example/x:item'
+                PASSING (SELECT data FROM xmldata)
+                COLUMNS foo int PATH '@foo',
+                  bar int PATH '@B:bar');
+ foo | bar
+-----+-----
+   1 |   2
+   3 |   4
+   4 |   5
+(3 rows)</pre><p>
+    </p></div></div><div class="sect2" id="FUNCTIONS-XML-MAPPING"><div class="titlepage"><div><div><h3 class="title">9.14.4. 将表映射到 XML</h3></div></div></div><a id="idp13212656" class="indexterm"></a><p>    下面的函数将会把关系表的内容映射成 XML 值。它们可以被看成是 XML 导出功能：
+</p><pre class="synopsis">table_to_xml(tbl regclass, nulls boolean, tableforest boolean, targetns text)
+query_to_xml(query text, nulls boolean, tableforest boolean, targetns text)
+cursor_to_xml(cursor refcursor, count int, nulls boolean,
+              tableforest boolean, targetns text)</pre><p>
+    每一个函数的返回值都是<code class="type">xml</code>。
+   </p><p>    <code class="function">table_to_xml</code>映射由参数<em class="parameter"><code>tbl</code></em>传递的命名表的内容。<code class="type">regclass</code>类型接受使用常见标记标识表的字符串，包括可选的模式限定和双引号。<code class="function">query_to_xml</code>执行由参数<em class="parameter"><code>query</code></em>传递的查询并且映射结果集。<code class="function">cursor_to_xml</code>从<em class="parameter"><code>cursor</code></em>指定的游标中取出指定数量的行。如果需要映射一个大型的表，我们推荐这种变体，因为每一个函数都是在内存中构建结果值的。
+   </p><p>    如果<em class="parameter"><code>tableforest</code></em>为假，则结果的 XML 文档看起来像这样：
+</p><pre class="screen">&lt;tablename&gt;
+  &lt;row&gt;
+    &lt;columnname1&gt;data&lt;/columnname1&gt;
+    &lt;columnname2&gt;data&lt;/columnname2&gt;
+  &lt;/row&gt;
+
+  &lt;row&gt;
+    ...
+  &lt;/row&gt;
+
+  ...
+&lt;/tablename&gt;</pre><p>
+
+    如果<em class="parameter"><code>tableforest</code></em>为真，结果是一个看起来像这样的 XML 内容片断：
+</p><pre class="screen">&lt;tablename&gt;
+  &lt;columnname1&gt;data&lt;/columnname1&gt;
+  &lt;columnname2&gt;data&lt;/columnname2&gt;
+&lt;/tablename&gt;
+
+&lt;tablename&gt;
+  ...
+&lt;/tablename&gt;
+
+...</pre><p>
+
+    如果没有表名可用，在映射一个查询或一个游标时，在第一种格式中使用串<code class="literal">table</code>，在第二种格式中使用<code class="literal">row</code>。
+   </p><p>    这几种格式的选择由用户决定。第一种格式是一个正确的 XML 文档，它在很多应用中都很重要。如果结果值要被重组为一个文档，第二种格式在<code class="function">cursor_to_xml</code>函数中更有用。前文讨论的产生 XML 内容的函数（特别是<code class="function">xmlelement</code>）可以被用来把结果修改成符合用户的要求。
+   </p><p>    数据值会被以前文的函数<code class="function">xmlelement</code>中描述的相同方法映射。
+   </p><p>    参数<em class="parameter"><code>nulls</code></em>决定空值是否会被包含在输出中。如果为真，列中的空值被表示为：
+</p><pre class="screen">&lt;columnname xsi:nil="true"/&gt;</pre><p>
+    其中<code class="literal">xsi</code>是 XML 模式实例的 XML 名字空间前缀。一个合适的名字空间声明将被加入到结果值中。如果为假，包含空值的列将被从输出中忽略掉。
+   </p><p>    参数<em class="parameter"><code>targetns</code></em>指定想要的结果的 XML 名字空间。如果没有想要的特定名字空间，将会传递一个空串。
+   </p><p>    下面的函数返回 XML 模式文档，这些文档描述上述对应函数所执行的映射：
+</p><pre class="synopsis">table_to_xmlschema(tbl regclass, nulls boolean, tableforest boolean, targetns text)
+query_to_xmlschema(query text, nulls boolean, tableforest boolean, targetns text)
+cursor_to_xmlschema(cursor refcursor, nulls boolean, tableforest boolean, targetns text)</pre><p>
+    最重要的是相同的参数被传递来获得匹配的 XML 数据映射和 XML 模式文档。
+   </p><p>    下面的函数产生 XML 数据映射和对应的 XML 模式，并把产生的结果链接在一起放在一个文档（或森林）中。在要求自包含和自描述的结果是它们非常有用：
+</p><pre class="synopsis">table_to_xml_and_xmlschema(tbl regclass, nulls boolean, tableforest boolean, targetns text)
+query_to_xml_and_xmlschema(query text, nulls boolean, tableforest boolean, targetns text)</pre><p>
+   </p><p>    另外，下面的函数可用于产生相似的整个模式或整个当前数据库的映射：
+</p><pre class="synopsis">schema_to_xml(schema name, nulls boolean, tableforest boolean, targetns text)
+schema_to_xmlschema(schema name, nulls boolean, tableforest boolean, targetns text)
+schema_to_xml_and_xmlschema(schema name, nulls boolean, tableforest boolean, targetns text)
+
+database_to_xml(nulls boolean, tableforest boolean, targetns text)
+database_to_xmlschema(nulls boolean, tableforest boolean, targetns text)
+database_to_xml_and_xmlschema(nulls boolean, tableforest boolean, targetns text)</pre><p>
+
+    注意这些函数可能产生很多数据，它们都需要在内存中被构建。在请求大型模式或数据库的内容映射时，可以考虑分别映射每一个表，甚至通过一个游标来映射。
+   </p><p>    一个模式内容映射的结果看起来像这样：
+
+</p><pre class="screen">&lt;schemaname&gt;
+
+table1-mapping
+
+table2-mapping
+
+...
+
+&lt;/schemaname&gt;</pre><p>
+
+    其中一个表映射的格式取决于上文解释的<em class="parameter"><code>tableforest</code></em>参数。
+   </p><p>    一个数据库内容映射的结果看起来像这样：
+
+</p><pre class="screen">&lt;dbname&gt;
+
+&lt;schema1name&gt;
+  ...
+&lt;/schema1name&gt;
+
+&lt;schema2name&gt;
+  ...
+&lt;/schema2name&gt;
+
+...
+
+&lt;/dbname&gt;</pre><p>
+
+    其中的模式映射如上所述。
+   </p><p>    作为一个使用这些函数产生的输出的例子，<a class="xref" href="functions-xml.html#XSLT-XML-HTML" title="图 9.1. 转换 SQL/XML 输出到 HTML 的 XSLT 样式表">图 9.1</a>展示了一个 XSLT 样式表，它将<code class="function">table_to_xml_and_xmlschema</code>的输出转换为一个包含表数据的扁平转印的 HTML 文档。以一种相似的方式，这些函数的结果可以被转换成其他基于 XML 的格式。
+   </p><div class="figure" id="XSLT-XML-HTML"><p class="title"><strong>图 9.1. 转换 SQL/XML 输出到 HTML 的 XSLT 样式表</strong></p><div class="figure-contents"><pre class="programlisting">&lt;?xml version="1.0"?&gt;
+&lt;xsl:stylesheet version="1.0"
+    xmlns:xsl="http://www.w3.org/1999/XSL/Transform"
+    xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+    xmlns="http://www.w3.org/1999/xhtml"
+&gt;
+
+  &lt;xsl:output method="xml"
+      doctype-system="http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"
+      doctype-public="-//W3C/DTD XHTML 1.0 Strict//EN"
+      indent="yes"/&gt;
+
+  &lt;xsl:template match="/*"&gt;
+    &lt;xsl:variable name="schema" select="//xsd:schema"/&gt;
+    &lt;xsl:variable name="tabletypename"
+                  select="$schema/xsd:element[@name=name(current())]/@type"/&gt;
+    &lt;xsl:variable name="rowtypename"
+                  select="$schema/xsd:complexType[@name=$tabletypename]/xsd:sequence/xsd:element[@name='row']/@type"/&gt;
+
+    &lt;html&gt;
+      &lt;head&gt;
+        &lt;title&gt;&lt;xsl:value-of select="name(current())"/&gt;&lt;/title&gt;
+      &lt;/head&gt;
+      &lt;body&gt;
+        &lt;table&gt;
+          &lt;tr&gt;
+            &lt;xsl:for-each select="$schema/xsd:complexType[@name=$rowtypename]/xsd:sequence/xsd:element/@name"&gt;
+              &lt;th&gt;&lt;xsl:value-of select="."/&gt;&lt;/th&gt;
+            &lt;/xsl:for-each&gt;
+          &lt;/tr&gt;
+
+          &lt;xsl:for-each select="row"&gt;
+            &lt;tr&gt;
+              &lt;xsl:for-each select="*"&gt;
+                &lt;td&gt;&lt;xsl:value-of select="."/&gt;&lt;/td&gt;
+              &lt;/xsl:for-each&gt;
+            &lt;/tr&gt;
+          &lt;/xsl:for-each&gt;
+        &lt;/table&gt;
+      &lt;/body&gt;
+    &lt;/html&gt;
+  &lt;/xsl:template&gt;
+
+&lt;/xsl:stylesheet&gt;</pre></div></div><br class="figure-break" /></div></div><div class="navfooter"><hr /><table width="100%" summary="Navigation footer"><tr><td width="40%" align="left"><a accesskey="p" href="functions-textsearch.html">上一页</a> </td><td width="20%" align="center"><a accesskey="u" href="functions.html">上一级</a></td><td width="40%" align="right"> <a accesskey="n" href="functions-json.html">下一页</a></td></tr><tr><td width="40%" align="left" valign="top">9.13. 文本搜索函数和操作符 </td><td width="20%" align="center"><a accesskey="h" href="index.html">起始页</a></td><td width="40%" align="right" valign="top"> 9.15. JSON 函数和操作符</td></tr></table></div></body></html>

@@ -1,0 +1,225 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><title>CREATE POLICY</title><link rel="stylesheet" type="text/css" href="stylesheet.css" /><link rev="made" href="pgsql-docs@postgresql.org" /><meta name="generator" content="DocBook XSL Stylesheets V1.79.1" /><link rel="prev" href="sql-createopfamily.html" title="CREATE OPERATOR FAMILY" /><link rel="next" href="sql-createpublication.html" title="CREATE PUBLICATION" /></head><body><div xmlns="http://www.w3.org/TR/xhtml1/transitional" class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="5" align="center">CREATE POLICY</th></tr><tr><td width="10%" align="left"><a accesskey="p" href="sql-createopfamily.html" title="CREATE OPERATOR FAMILY">上一页</a> </td><td width="10%" align="left"><a accesskey="u" href="sql-commands.html" title="SQL 命令">上一级</a></td><th width="60%" align="center">SQL 命令</th><td width="10%" align="right"><a accesskey="h" href="index.html" title="PostgreSQL 10.1 手册">起始页</a></td><td width="10%" align="right"> <a accesskey="n" href="sql-createpublication.html" title="CREATE PUBLICATION">下一页</a></td></tr></table><hr></hr></div><div class="refentry" id="SQL-CREATEPOLICY"><div class="titlepage"></div><a id="idp43844688" class="indexterm"></a><div class="refnamediv"><h2><span class="refentrytitle">CREATE POLICY</span></h2><p>CREATE POLICY — 为一个表定义一条新的行级安全性策略</p></div><div class="refsynopsisdiv"><h2>大纲</h2><pre class="synopsis">CREATE POLICY <em class="replaceable"><code>name</code></em> ON <em class="replaceable"><code>table_name</code></em>
+    [ AS { PERMISSIVE | RESTRICTIVE } ]
+    [ FOR { ALL | SELECT | INSERT | UPDATE | DELETE } ]
+    [ TO { <em class="replaceable"><code>role_name</code></em> | PUBLIC | CURRENT_USER | SESSION_USER } [, ...] ]
+    [ USING ( <em class="replaceable"><code>using_expression</code></em> ) ]
+    [ WITH CHECK ( <em class="replaceable"><code>check_expression</code></em> ) ]</pre></div><div class="refsect1" id="idp43851888"><h2>描述</h2><p>   <code class="command">CREATE POLICY</code>为一个表定义一条行级
+   安全性策略。注意为了应用已被创建的策略，在表上必须启用行级安全
+   性（使用<code class="command">ALTER TABLE ... ENABLE ROW LEVEL
+   SECURITY</code>）。
+  </p><p>   一条策略授予权限以选择、插入、更新或者删除匹配相关策略表达式的行。
+   现有的表行会按照<code class="literal">USING</code>中指定的表达式进行检查，
+   而将要通过<code class="literal">INSERT</code>或<code class="literal">UPDATE</code>创建
+   的新行会按照<code class="literal">WITH CHECK</code>中指定的表达式进行检查。
+   当<code class="literal">USING</code>表达式对于一个给定行返回真时，该行对用户
+   可见，而返回假或空时该行不可见。当一个<code class="literal">WITH CHECK</code>
+   表达式对一行返回真时，该行会被插入或更新，而如果返回假或空时会发生
+   一个错误。
+  </p><p>   对于<code class="command">INSERT</code>和
+   <code class="command">UPDATE</code>语句，在<code class="literal">BEFORE</code>
+   触发器被引发后并且在任何数据修改真正发生之前，
+   <code class="literal">WITH CHECK</code>表达式会被强制。因此，
+   一个<code class="literal">BEFORE ROW</code>触发器可以修改要被插入的数据，
+   从而影响安全性策略检查的结果。<code class="literal">WITH CHECK</code>表达式
+   在任何其他约束之前被强制。
+  </p><p>   策略名称是针对每个表的。因此，一个策略名称可以被用于很多个不同的表
+   并且对于不同的表呈现适合于该表的定义。
+  </p><p>   策略可以被应用于特定的命令或者特定的角色。除非特别指定，新创建的策略
+   的默认行为是适用于所有命令和角色。
+  </p><p>   对同时具有<code class="literal">USING</code>和<code class="literal">WITH CHECK</code>
+   表达式（<code class="literal">ALL</code>和<code class="literal">UPDATE</code>）的策略，
+   如果没有定义<code class="literal">WITH CHECK</code>表达式，那么
+   <code class="literal">USING</code>表达式将被用于决定哪些行可见（普通
+   <code class="literal">USING</code>情况）以及允许哪些行被增加（
+   <code class="literal">WITH CHECK</code>情况）。
+  </p><p>   如果为一个表启用了行级安全性但是没有适用的策略存在，将假定为一种
+   <span class="quote">“<span class="quote">默认否定</span>”</span>策略，这样任何行都不可见也不可更新。
+  </p></div><div class="refsect1" id="idp43872640"><h2>参数</h2><div class="variablelist"><dl class="variablelist"><dt><span class="term"><em class="replaceable"><code>name</code></em></span></dt><dd><p>      要创建的策略的名称。这必须和该表上已有的任何其他策略名称相区分。
+     </p></dd><dt><span class="term"><em class="replaceable"><code>table_name</code></em></span></dt><dd><p>      该策略适用的表的名称（可以被模式限定）。
+     </p></dd><dt><span class="term"><code class="literal">PERMISSIVE</code></span></dt><dd><p>      指定将策略创建为宽松策略。所有适用于给定查询的宽松策略将使用布尔的
+	  <span class="quote">“<span class="quote">OR</span>”</span>运算符组合在一起。通过创建宽松的策略，
+	  管理员可以添加到可以访问的记录集。策略默认是宽容的。
+     </p></dd><dt><span class="term"><code class="literal">RESTRICTIVE</code></span></dt><dd><p>      指定将该策略创建为限制性策略。所有适用于给定查询的限制性策略将使用布尔
+	  <span class="quote">“<span class="quote">AND</span>”</span>运算符组合在一起。通过创建限制性策略，
+	  管理员可以减少可以访问的记录集，因为必须为每条记录传递所有限制性策略。
+     </p><p>      请注意，在限制性策略可用于减少访问权限之前，
+	  需要至少有一项宽松策略来授予对记录的访问权限。如果只有限制性政策存在，
+	  则不能访问任何记录。如果存在一系列宽松策略和限制性策略，
+	  那么除了所有限制性政策之外，只有在至少有一项宽松政策通过的情况下才能获得记录。
+     </p></dd><dt><span class="term"><em class="replaceable"><code>command</code></em></span></dt><dd><p>      该策略适用的命令。合法的选项是
+      <code class="command">ALL</code>、<code class="command">SELECT</code>、
+      <code class="command">INSERT</code>、<code class="command">UPDATE</code>
+      以及<code class="command">DELETE</code>。
+      <code class="command">ALL</code>为默认。有关这些策略如何被应用的
+      细节见下文。
+     </p></dd><dt><span class="term"><em class="replaceable"><code>role_name</code></em></span></dt><dd><p>      该策略适用的角色。默认是<code class="literal">PUBLIC</code>，它将把策略应用
+      到所有的角色。
+     </p></dd><dt><span class="term"><em class="replaceable"><code>using_expression</code></em></span></dt><dd><p>      任意的<acronym class="acronym">SQL</acronym>条件表达式（返回
+      <code class="type">boolean</code>）。该条件表达式不能包含任何聚集或者窗口
+      函数。如果行级安全性被启用，这个表达式将被增加到引用该表的查询。
+      让这个表达式返回真的行将可见。让这个表达式返回假或者空的任何行
+      将对用户不可见（在<code class="command">SELECT</code>中）并且将对修改不可用（
+      在<code class="command">UPDATE</code>或<code class="command">DELETE</code>中）。这类行
+      会被悄悄地禁止而不会报告错误。
+     </p></dd><dt><span class="term"><em class="replaceable"><code>check_expression</code></em></span></dt><dd><p>      任意的<acronym class="acronym">SQL</acronym>条件表达式（返回
+      <code class="type">boolean</code>）。该条件表达式不能包含任何聚集或者窗口
+      函数。如果行级安全性被启用，这个表达式将被用在该表上的
+      <code class="command">INSERT</code>以及
+      <code class="command">UPDATE</code>查询中。只有让该表达式计算为真
+      的行才被允许。如果任何被插入的记录或者跟新后的记录导致该表达式计
+      算为假或者空，则会抛出一个错误。注意
+      <em class="replaceable"><code>check_expression</code></em>
+      是根据行的新内容而不是原始内容计算的。
+     </p></dd></dl></div><div class="refsect2" id="idp43898032"><h3>针对每种命令的策略</h3><div class="variablelist"><dl class="variablelist"><dt id="SQL-CREATEPOLICY-ALL"><span class="term"><code class="literal">ALL</code></span></dt><dd><p>         为一条策略使用<code class="literal">ALL</code>表示它将适用于所有命令，
+         不管命令的类型如何。如果存在一条<code class="literal">ALL</code>策略
+         以及更多特定的策略，则<code class="literal">ALL</code>策略和那些策略
+         都会应用。此外，
+         <code class="literal">ALL</code>策略将同时适用于一个查询的选择端和修
+         改端，如果只定义了一个<code class="literal">USING</code>表达式则将
+         该<code class="literal">USING</code>表达式用于两种情况。
+       </p><p>         例如，如果发出一个<code class="literal">UPDATE</code>，那么
+         <code class="literal">ALL</code>策略将同时影响<code class="literal">UPDATE</code>
+         能更新哪些行（应用<code class="literal">USING</code>表达式）以及更新后
+         的行是否被允许加入到表中（如果定义了<code class="literal">WITH CHECK</code>
+         表达式，则应用之；否则使用<code class="literal">USING</code>表达式）。
+         如果一条<code class="command">INSERT</code>
+         或者<code class="command">UPDATE</code>命令尝试增加行到表中，
+         但行没有通过<code class="literal">ALL</code>策略的
+         <code class="literal">WITH CHECK</code>表达式，则整个语句将会中断。
+       </p></dd><dt id="SQL-CREATEPOLICY-SELECT"><span class="term"><code class="literal">SELECT</code></span></dt><dd><p>         对一条策略使用<code class="literal">SELECT</code>表示它将适用于
+         <code class="literal">SELECT</code>查询，并且无论何时都要求该约束所在的关系上
+         的<code class="literal">SELECT</code>权限。其结果是在一次
+         <code class="literal">SELECT</code>查询期间，只有该关系中那些通过了
+         <code class="literal">SELECT</code>策略的记录才将被返回，并且查询要求
+         <code class="literal">SELECT</code>权限，例如
+         <code class="literal">UPDATE</code>也将只能看到那些
+         <code class="literal">SELECT</code>策略允许的行。一条
+         <code class="literal">SELECT</code>策略不能具有<code class="literal">WITH
+         CHECK</code>表达式，因为它只适用于正在从关系中检索记录的情况。
+       </p></dd><dt id="SQL-CREATEPOLICY-INSERT"><span class="term"><code class="literal">INSERT</code></span></dt><dd><p>         为一条策略使用<code class="literal">INSERT</code>表示它适用于
+         <code class="literal">INSERT</code>命令。没有通过这种策略的正在被插入的行
+         会导致策略违背错误，并且整个<code class="literal">INSERT</code>命令将会中止。
+         一条<code class="literal">INSERT</code>策略不能具有<code class="literal">USING</code>
+         表达式，因为它只适用于正在向关系增加记录的情况。
+       </p><p>         注意在带有<code class="literal">ON CONFLICT DO
+         UPDATE</code>的<code class="literal">INSERT</code>中，只有对通过
+         <code class="literal">INSERT</code>路径追加到关系的行才会检查
+         <code class="literal">INSERT</code>策略的<code class="literal">WITH CHECK</code>
+         表达式。
+       </p></dd><dt id="SQL-CREATEPOLICY-UPDATE"><span class="term"><code class="literal">UPDATE</code></span></dt><dd><p>         为一条策略使用<code class="literal">UPDATE</code>表示它适用于
+         <code class="literal">UPDATE</code>、<code class="literal">SELECT FOR UPDATE</code>
+		 和<code class="literal">SELECT FOR SHARE</code>命令，还有<code class="literal">INSERT</code>
+         命令的<code class="literal">ON CONFLICT DO UPDATE</code>子句。因为
+         <code class="literal">UPDATE</code>涉及到取出一个现有的记录并将其替换为新的修改记录，
+		 <code class="literal">UPDATE</code>
+         策略同时接受<code class="literal">USING</code>表达式和
+         <code class="literal">WITH CHECK</code>表达式。<code class="literal">USING</code>
+         表达式决定<code class="literal">UPDATE</code>命令将能看到哪些要对其操作
+         的记录，而<code class="literal">WITH CHECK</code>表达式定义哪些被修改的
+         行被允许存回到关系中。
+       </p><p>         任何更新后的值无法通过<code class="literal">WITH CHECK</code>表达式的行
+         将会导致错误，并且整个命令将被中止。如果只指定了一个
+         <code class="literal">USING</code>子句，那么该子句将被用于
+         <code class="literal">USING</code>和<code class="literal">WITH CHECK</code>两种情况。
+       </p><p>         通常，一个<code class="literal">UPDATE</code>命令还需要从正在更新的关系中的列中读取数据
+		 （例如，在<code class="literal">WHERE</code>子句或<code class="literal">RETURNING</code>子句中，
+		 或者在<code class="literal">SET</code>子句右侧的表达式中）。在这种情况下，
+		 正在更新的关系上还需要<code class="literal">SELECT</code>权限，并且除了
+		 <code class="literal">UPDATE</code>策略之外，还将会应用适当的
+		 <code class="literal">SELECT</code>或<code class="literal">ALL</code>策略。
+		 因此，用户必须有权访问通过<code class="literal">SELECT</code>或<code class="literal">ALL</code>
+		 策略更新的行，此外还要有权限更新通过<code class="literal">UPDATE</code>或
+		 <code class="literal">ALL</code>策略的行。
+       </p><p>         当<code class="literal">INSERT</code>命令具有<code class="literal">ON CONFLICT DO UPDATE</code>
+		 子句时，如果采用<code class="literal">UPDATE</code>路径，
+		 则首先检查要更新的行任何<code class="literal">UPDATE</code>策略的
+		 <code class="literal">USING</code>表达式，然后根据<code class="literal">WITH CHECK</code>
+		 表达式检查新更新的行。但是，请注意，与独立的<code class="literal">UPDATE</code>命令不同，
+		 如果现有的行没有通过<code class="literal">USING</code>表达式，将会抛出一个错误
+		 （<code class="literal">UPDATE</code>路径将<span class="emphasis"><em>永远不会</em></span> 被默默地绕开）。
+       </p></dd><dt id="SQL-CREATEPOLICY-DELETE"><span class="term"><code class="literal">DELETE</code></span></dt><dd><p>         为一条策略使用<code class="literal">DELETE</code>表示它适用于
+         <code class="literal">DELETE</code>命令。只有通过这条策略的行才将能被
+         <code class="literal">DELETE</code>命令所看到。如果有的行不能通过该
+         <code class="literal">DELETE</code>策略的<code class="literal">USING</code>表达式，则
+         它们可以通过<code class="literal">SELECT</code>看到但不能被删除。
+       </p><p>         在大部分情况下，<code class="literal">DELETE</code>命令还需要读取要被删除的关系中的列上的数据
+		 （例如，在<code class="literal">WHERE</code>子句或<code class="literal">RETURNING</code>子句中）。
+		 在这种情况下，还要求该关系上的<code class="literal">SELECT</code>权限，
+		 并且除了<code class="literal">DELETE</code>策略之外，还会应用合适的<code class="literal">SELECT</code>
+		 或<code class="literal">ALL</code>测了。因此，用户有权访问通过<code class="literal">SELECT</code>
+		 或<code class="literal">ALL</code>策略删除的行，此外还要有权限删除通过
+		 <code class="literal">DELETE</code>或<code class="literal">ALL</code>策略的行。
+       </p><p>         <code class="literal">DELETE</code>策略不能具有<code class="literal">WITH
+         CHECK</code>表达式，因为它只适用于正在从关系中删除记录的情况，
+         所以没有新行需要检查。
+       </p></dd></dl></div></div><div class="refsect2" id="idp43979408"><h3>多重策略的应用</h3><p>    当不同命令类型的多个策略应用于相同命令时（例如，应用于<code class="literal">UPDATE</code>
+	命令的<code class="literal">SELECT</code>和<code class="literal">UPDATE</code>策略），
+	则用户必须拥有两种类型的权限（例如，从关系中选择行的权限以及更新它们的权限）。
+	因此，使用<code class="literal">AND</code>运算符将一种策略类型的表达式与其他类型策略
+	的表达式组合在一起。
+   </p><p>    当同一命令类型的多个策略应用于同一个命令时，必须至少有一个允许访问该关系的
+	<code class="literal">PERMISSIVE</code>策略，并且必须通过所有的<code class="literal">RESTRICTIVE</code>
+	策略。因此，所有<code class="literal">PERMISSIVE</code>策略表达式都使用
+	<code class="literal">OR</code>进行组合，所有<code class="literal">RESTRICTIVE</code>策略表达式都使用
+	<code class="literal">AND</code>进行组合，并且结果使用<code class="literal">AND</code>进行组合。
+	如果没有<code class="literal">PERMISSIVE</code>策略，则访问被拒绝。
+   </p><p>    请注意，出于合并多个策略的目的，<code class="literal">ALL</code>
+	策略被视为具有与应用其他任何类型的策略相同的类型。
+   </p><p>    例如，在一个需要<code class="literal">SELECT</code>和<code class="literal">UPDATE</code>权限的
+	<code class="literal">UPDATE</code>命令中，如果每个类型都有多个可以应用的策略，
+	则它们将如下组合：
+
+</p><pre class="programlisting"><em class="replaceable"><code>expression</code></em> from RESTRICTIVE SELECT/ALL policy 1
+AND
+<em class="replaceable"><code>expression</code></em> from RESTRICTIVE SELECT/ALL policy 2
+AND
+...
+AND
+(
+  <em class="replaceable"><code>expression</code></em> from PERMISSIVE SELECT/ALL policy 1
+  OR
+  <em class="replaceable"><code>expression</code></em> from PERMISSIVE SELECT/ALL policy 2
+  OR
+  ...
+)
+AND
+<em class="replaceable"><code>expression</code></em> from RESTRICTIVE UPDATE/ALL policy 1
+AND
+<em class="replaceable"><code>expression</code></em> from RESTRICTIVE UPDATE/ALL policy 2
+AND
+...
+AND
+(
+  <em class="replaceable"><code>expression</code></em> from PERMISSIVE UPDATE/ALL policy 1
+  OR
+  <em class="replaceable"><code>expression</code></em> from PERMISSIVE UPDATE/ALL policy 2
+  OR
+  ...
+)</pre><p>
+   </p></div></div><div class="refsect1" id="idp43997792"><h2>注解</h2><p>   要为一个表创建或者修改策略，你必须是该表的拥有者。
+  </p><p>   虽然策略将被应用于针对数据库中表的显式查询上，但当系统正在执行
+   内部引用完整性检查或者验证约束时不会应用它们。这意味着有间接的
+   方法来决定一个给定的值是否存在。一个例子是向一个作为主键或者拥
+   有唯一约束的列中尝试插入重复值。如果插入失败则用户可以推导出该
+   值已经存在（这个例子假设用户被策略允许插入他们看不到的记录）。
+   另一个例子是一个用户被允许向一个引用了其他表的表中插入，然而另
+   一个表是隐藏表。通过用户向引用表中插入值可以判断存在性，
+   成功表示该值存在于被引用表中。为了解决这些问题，应该仔细地制作
+   策略以完全阻止用户插入、删除或者更新那些可能指示他们不能看到的
+   值的记录，或者使用生成的值（例如代理键）来代替具有外部含义的键。
+  </p><p>   通常，系统将在应用用户查询中出现的条件之前先强制由安全性策略施
+   加的过滤条件，这是为了防止无意中把受保护的数据暴露给可能不可信
+   的用户定义函数。不过，被系统（或者系统管理员）标记为
+   <code class="literal">LEAKPROOF</code>的函数和操作符可以在策略表达式之前
+   被计算，因为它们已经被假定为可信。
+  </p><p>   因为策略表达式会被直接加到用户查询上，它们将使用运行整个查询的用户的
+   权限运行。因此，使用一条给定策略的用户必须能够访问表达式中引用的任何
+   表或函数，否则在尝试查询启用了行级安全性的表时，他们将简单地收到一条
+   没有权限的错误。不过，这不会改变视图的工作方式。就普通查询和视图来说，
+   权限检查和视图所引用的表的策略将使用视图拥有者的权限以及任何适用于视
+   图拥有者的策略。
+  </p><p>   在<a class="xref" href="ddl-rowsecurity.html" title="5.7. 行安全性策略">第 5.7 节</a>中可以找到额外的讨论和实际的例子。
+  </p></div><div class="refsect1" id="idp44004272"><h2>兼容性</h2><p>   <code class="command">CREATE POLICY</code>是一种<span class="productname">PostgreSQL</span>扩展。
+  </p></div><div class="refsect1" id="idp44006352"><h2>另见</h2><span class="simplelist"><a class="xref" href="sql-alterpolicy.html" title="ALTER POLICY"><span class="refentrytitle">ALTER POLICY</span></a>, <a class="xref" href="sql-droppolicy.html" title="DROP POLICY"><span class="refentrytitle">DROP POLICY</span></a>, <a class="xref" href="sql-altertable.html" title="ALTER TABLE"><span class="refentrytitle">ALTER TABLE</span></a></span></div></div><div class="navfooter"><hr /><table width="100%" summary="Navigation footer"><tr><td width="40%" align="left"><a accesskey="p" href="sql-createopfamily.html">上一页</a> </td><td width="20%" align="center"><a accesskey="u" href="sql-commands.html">上一级</a></td><td width="40%" align="right"> <a accesskey="n" href="sql-createpublication.html">下一页</a></td></tr><tr><td width="40%" align="left" valign="top">CREATE OPERATOR FAMILY </td><td width="20%" align="center"><a accesskey="h" href="index.html">起始页</a></td><td width="40%" align="right" valign="top"> CREATE PUBLICATION</td></tr></table></div></body></html>

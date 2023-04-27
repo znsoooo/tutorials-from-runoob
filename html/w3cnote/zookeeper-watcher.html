@@ -1,0 +1,521 @@
+<!Doctype html>
+<html>
+<head>
+	<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+	<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+	<title>11.0 Zookeeper watcher 事件机制原理剖析 | 菜鸟教程</title>
+
+  <meta name='robots' content='max-image-preview:large' />
+<link rel='stylesheet' id='classic-theme-styles-css' href='http://www.runoob.com/wp-includes/css/classic-themes.min.css?ver=6.2' type='text/css' media='all' />
+<link rel="canonical" href="http://www.runoob.com/w3cnote/zookeeper-watcher.html" />
+<meta name="keywords" content="11.0 Zookeeper watcher 事件机制原理剖析">
+<meta name="description" content="zookeeper 的 watcher 机制，可以分为四个过程：  客户端注册 watcher。 服务端处理 watcher。 服务端触发 watcher 事件。 客户端回调 watcher。  其中客户端注册 watcher 有三种方式，调用客户端 API 可以分别通过 getData、exists、getChildren 实现，利用前面章节创建的 maven 工程，新建 WatcherDemo 类，以 exists 方法举例说明其原..">
+		
+	<link rel="shortcut icon" href="https://static.runoob.com/images/favicon.ico">
+	<link rel="stylesheet" href="/wp-content/themes/runoob/style.css?v=1.170" type="text/css" media="all" />	
+	<link rel="stylesheet" href="https://cdn.staticfile.org/font-awesome/4.7.0/css/font-awesome.min.css" media="all" />	
+  <!--[if gte IE 9]><!-->
+  <script src="https://cdn.staticfile.org/jquery/2.0.3/jquery.min.js"></script>
+  <!--<![endif]-->
+  <!--[if lt IE 9]>
+     <script src="https://cdn.staticfile.org/jquery/1.9.1/jquery.min.js"></script>
+     <script src="https://cdn.staticfile.org/html5shiv/r29/html5.min.js"></script>
+  <![endif]-->
+  <link rel="apple-touch-icon" href="https://static.runoob.com/images/icon/mobile-icon.png"/>
+  <meta name="apple-mobile-web-app-title" content="菜鸟教程">
+</head>
+<body>
+
+<!--  头部 -->
+<div class="container logo-search">
+
+  <div class="col search row-search-mobile">
+    <form action="index.php">
+      <input class="placeholder" placeholder="搜索……" name="s" autocomplete="off">
+      
+    </form>
+  </div>
+
+  <div class="row">
+    <div class="col logo">
+      <h1><a href="/">菜鸟教程 -- 学的不仅是技术，更是梦想！</a></h1>
+    </div>
+        <div class="col right-list"> 
+    <button class="btn btn-responsive-nav btn-inverse" data-toggle="collapse" data-target=".nav-main-collapse" id="pull" style=""> <i class="fa fa-navicon"></i> </button>
+    </div>
+        
+    <div class="col search search-desktop last">
+      <div class="search-input" >
+      <form action="//www.runoob.com/" target="_blank">
+        <input class="placeholder" id="s" name="s" placeholder="搜索……"  autocomplete="off" style="height: 44px;">
+      </form>
+      
+      </div>
+    </div>
+  </div>
+</div>
+
+
+
+<!-- 导航栏 -->
+<div class="container navigation">
+    <div class="row">
+        <div class="col nav">
+            
+
+                        <ul class="pc-nav" id="note-nav">
+                <li><a href="//www.runoob.com/">首页</a></li>
+                <li><a href="/w3cnote">笔记首页</a></li>
+                <li><a href="/w3cnote/android-tutorial-intro.html" title="Android 基础入门教程">Android</a></li>
+                <li><a href="/w3cnote/es6-tutorial.html" title="ES6 教程">ES6 教程</a></li>
+                <li><a href="/w3cnote/ten-sorting-algorithm.html" title="排序算法">排序算法</a></li>
+                <li><a href="/w3cnote/hadoop-tutorial.html" title="Hadoop 教程">Hadoop</a></li>
+                <li><a href="/w3cnote/zookeeper-tutorial.html" title="Zookeeper 教程">Zookeeper</a></li>
+                <li><a href="/w3cnote/verilog-tutorial.html" title="Verilog 教程">Verilog</a></li>
+                <li><a href="/w3cnote_genre/code" title="编程技术">编程技术</a></li> 
+                <li><a href="/w3cnote_genre/coderlife" title="程序员人生">程序员人生</a></li>
+                
+                <!--<li><a href="javascript:;" class="runoob-pop">登录</a></li>
+                
+                
+                        <li>
+                <a style="font-weight:bold;" href="https://www.runoob.com/linux/linux-tutorial.html#yunserver" target="_blank" onclick="_hmt.push(['_trackEvent', 'aliyun', 'click', 'aliyun'])" title="kkb">云服务器</a>
+                </li>
+                <li><a href="http://gk.link/a/104mQ" target="_blank" style="font-weight: bold;"onclick="_hmt.push(['_trackEvent', '极客时间', 'click', 'jike'])" title="我的圈子">极客时间</a></li>
+            
+                
+                <li><a target="_blank" href="/shoppinglist" rel="nofollow">知识店铺</a></li> 
+        -->
+            </ul>
+                        
+              
+            <ul class="mobile-nav">
+                <li><a href="/w3cnote">首页</a></li>
+                <li><a href="/w3cnote_genre/android" target="_blank" title="Android 基础入门教程">Android</a></li>
+                <li><a href="/w3cnote/es6-tutorial.html" target="_blank" title="ES6 教程">ES6</a></li>
+                <li><a href="/w3cnote_genre/joke" target="_blank" title="程序员笑话">逗乐</a></li>
+                
+                <a href="javascript:void(0)" class="search-reveal">Search</a> 
+            </ul>
+            
+        </div>
+    </div>
+</div>
+
+
+<!--  内容  -->
+<div class="container main">
+	<div class="row">
+
+		<!--  Android 基础入门教程 start  -->
+	<div class="col left-column" style="display:none;">
+		<div class="tab">Zookeeper 教程</div>
+		<div class="sidebar-box gallery-list">
+			<div class="design" id="leftcolumn">  
+			</div> 
+		</div> 
+	</div>
+	<!--  Android 基础入门教程 end  -->
+		<div class="col middle-column big-middle-column">
+	 			<div class="article">
+			<div class="article-heading">
+				<h2>11.0 Zookeeper watcher 事件机制原理剖析</h2>				<h3><em>分类</em> <a href="/w3cnote_genre/zookeeper" title="Zookeeper 教程" >Zookeeper 教程</a> </h3>
+			</div>
+			<div class="article-body note-body">
+				<div class="article-intro">
+					<p>zookeeper 的 watcher 机制，可以分为四个过程：</p>
+<ul><li>
+客户端注册 watcher。</li><li>
+服务端处理 watcher。</li><li>
+服务端触发 watcher 事件。</li><li>
+客户端回调 watcher。</li></ul>
+
+<p>其中客户端注册 watcher 有三种方式，调用客户端 API 可以分别通过 getData、exists、getChildren 实现，利用前面章节创建的 maven 工程，新建 WatcherDemo 类，以 exists 方法举例说明其原理。</p>
+<div class="example"><h2 class="example">实例</h2> <div class="example_code">
+<span style="color: #000000; font-weight: bold;">public</span> <span style="color: #000000; font-weight: bold;">class</span> WatcherDemo <span style="color: #000000; font-weight: bold;">implements</span> Watcher <span style="color: #009900;">&#123;</span><br />
+&nbsp; &nbsp; <span style="color: #000000; font-weight: bold;">static</span> ZooKeeper zooKeeper<span style="color: #339933;">;</span><br />
+&nbsp; &nbsp; <span style="color: #000000; font-weight: bold;">static</span> <span style="color: #009900;">&#123;</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; <span style="color: #000000; font-weight: bold;">try</span> <span style="color: #009900;">&#123;</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; zooKeeper <span style="color: #339933;">=</span> <span style="color: #000000; font-weight: bold;">new</span> ZooKeeper<span style="color: #009900;">&#40;</span><span style="color: #0000ff;">&quot;192.168.3.39:2181&quot;</span>, <span style="color: #cc66cc;">4000</span>,<span style="color: #000000; font-weight: bold;">new</span> WatcherDemo<span style="color: #009900;">&#40;</span><span style="color: #009900;">&#41;</span><span style="color: #009900;">&#41;</span><span style="color: #339933;">;</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; <span style="color: #009900;">&#125;</span> <span style="color: #000000; font-weight: bold;">catch</span> <span style="color: #009900;">&#40;</span><span style="color: #003399;">IOException</span> e<span style="color: #009900;">&#41;</span> <span style="color: #009900;">&#123;</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; e.<span style="color: #006633;">printStackTrace</span><span style="color: #009900;">&#40;</span><span style="color: #009900;">&#41;</span><span style="color: #339933;">;</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; <span style="color: #009900;">&#125;</span><br />
+&nbsp; &nbsp; <span style="color: #009900;">&#125;</span><br />
+&nbsp; &nbsp; @Override<br />
+&nbsp; &nbsp; <span style="color: #000000; font-weight: bold;">public</span> <span style="color: #000066; font-weight: bold;">void</span> process<span style="color: #009900;">&#40;</span>WatchedEvent event<span style="color: #009900;">&#41;</span> <span style="color: #009900;">&#123;</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; <span style="color: #003399;">System</span>.<span style="color: #006633;">out</span>.<span style="color: #006633;">println</span><span style="color: #009900;">&#40;</span><span style="color: #0000ff;">&quot;eventType:&quot;</span><span style="color: #339933;">+</span>event.<span style="color: #006633;">getType</span><span style="color: #009900;">&#40;</span><span style="color: #009900;">&#41;</span><span style="color: #009900;">&#41;</span><span style="color: #339933;">;</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; <span style="color: #000000; font-weight: bold;">if</span><span style="color: #009900;">&#40;</span>event.<span style="color: #006633;">getType</span><span style="color: #009900;">&#40;</span><span style="color: #009900;">&#41;</span><span style="color: #339933;">==</span><span style="color: #003399;">Event</span>.<span style="color: #006633;">EventType</span>.<span style="color: #006633;">NodeDataChanged</span><span style="color: #009900;">&#41;</span><span style="color: #009900;">&#123;</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; <span style="color: #000000; font-weight: bold;">try</span> <span style="color: #009900;">&#123;</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; zooKeeper.<span style="color: #006633;">exists</span><span style="color: #009900;">&#40;</span>event.<span style="color: #006633;">getPath</span><span style="color: #009900;">&#40;</span><span style="color: #009900;">&#41;</span>,<span style="color: #000066; font-weight: bold;">true</span><span style="color: #009900;">&#41;</span><span style="color: #339933;">;</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; <span style="color: #009900;">&#125;</span> <span style="color: #000000; font-weight: bold;">catch</span> <span style="color: #009900;">&#40;</span>KeeperException e<span style="color: #009900;">&#41;</span> <span style="color: #009900;">&#123;</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; e.<span style="color: #006633;">printStackTrace</span><span style="color: #009900;">&#40;</span><span style="color: #009900;">&#41;</span><span style="color: #339933;">;</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; <span style="color: #009900;">&#125;</span> <span style="color: #000000; font-weight: bold;">catch</span> <span style="color: #009900;">&#40;</span><span style="color: #003399;">InterruptedException</span> e<span style="color: #009900;">&#41;</span> <span style="color: #009900;">&#123;</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; e.<span style="color: #006633;">printStackTrace</span><span style="color: #009900;">&#40;</span><span style="color: #009900;">&#41;</span><span style="color: #339933;">;</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; <span style="color: #009900;">&#125;</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; <span style="color: #009900;">&#125;</span><br />
+&nbsp; &nbsp; <span style="color: #009900;">&#125;</span><br />
+&nbsp; &nbsp; <span style="color: #000000; font-weight: bold;">public</span> <span style="color: #000000; font-weight: bold;">static</span> <span style="color: #000066; font-weight: bold;">void</span> main<span style="color: #009900;">&#40;</span><span style="color: #003399;">String</span><span style="color: #009900;">&#91;</span><span style="color: #009900;">&#93;</span> args<span style="color: #009900;">&#41;</span> <span style="color: #000000; font-weight: bold;">throws</span> <span style="color: #003399;">IOException</span>, KeeperException, <span style="color: #003399;">InterruptedException</span> <span style="color: #009900;">&#123;</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; <span style="color: #003399;">String</span> path<span style="color: #339933;">=</span><span style="color: #0000ff;">&quot;/watcher&quot;</span><span style="color: #339933;">;</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; <span style="color: #000000; font-weight: bold;">if</span><span style="color: #009900;">&#40;</span>zooKeeper.<span style="color: #006633;">exists</span><span style="color: #009900;">&#40;</span>path,<span style="color: #000066; font-weight: bold;">false</span><span style="color: #009900;">&#41;</span><span style="color: #339933;">==</span><span style="color: #000066; font-weight: bold;">null</span><span style="color: #009900;">&#41;</span> <span style="color: #009900;">&#123;</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; zooKeeper.<span style="color: #006633;">create</span><span style="color: #009900;">&#40;</span><span style="color: #0000ff;">&quot;/watcher&quot;</span>, <span style="color: #0000ff;">&quot;0&quot;</span>.<span style="color: #006633;">getBytes</span><span style="color: #009900;">&#40;</span><span style="color: #009900;">&#41;</span>, ZooDefs.<span style="color: #006633;">Ids</span>.<span style="color: #006633;">OPEN_ACL_UNSAFE</span>, CreateMode.<span style="color: #006633;">PERSISTENT</span><span style="color: #009900;">&#41;</span><span style="color: #339933;">;</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; <span style="color: #009900;">&#125;</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; <span style="color: #003399;">Thread</span>.<span style="color: #006633;">sleep</span><span style="color: #009900;">&#40;</span><span style="color: #cc66cc;">1000</span><span style="color: #009900;">&#41;</span><span style="color: #339933;">;</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; <span style="color: #003399;">System</span>.<span style="color: #006633;">out</span>.<span style="color: #006633;">println</span><span style="color: #009900;">&#40;</span><span style="color: #0000ff;">&quot;-----------&quot;</span><span style="color: #009900;">&#41;</span><span style="color: #339933;">;</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; <span style="color: #666666; font-style: italic;">//true表示使用zookeeper实例中配置的watcher</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; Stat stat<span style="color: #339933;">=</span>zooKeeper.<span style="color: #006633;">exists</span><span style="color: #009900;">&#40;</span>path,<span style="color: #000066; font-weight: bold;">true</span><span style="color: #009900;">&#41;</span><span style="color: #339933;">;</span><br />
+&nbsp; &nbsp; &nbsp; &nbsp; <span style="color: #003399;">System</span>.<span style="color: #006633;">in</span>.<span style="color: #006633;">read</span><span style="color: #009900;">&#40;</span><span style="color: #009900;">&#41;</span><span style="color: #339933;">;</span><br />
+&nbsp; &nbsp; <span style="color: #009900;">&#125;</span><br />
+<span style="color: #009900;">&#125;</span><br />
+</div></div>
+<p>运行完程序，控制台显示:</p>
+<p><img decoding="async" src="https://www.runoob.com/wp-content/uploads/2020/09/watcher-01.png"></p>
+
+<p>此时启动 zookeeper 命令行终端，查看并且删除 <strong>watcher</strong> 节点：</p>
+<p><img decoding="async" src="https://www.runoob.com/wp-content/uploads/2020/09/watcher-02.png"></p>
+<p>IDE 控制台输出，触发了节点删除事件：</p>
+<p><img decoding="async" src="https://www.runoob.com/wp-content/uploads/2020/09/watcher-03.png"></p><p>
+客户端发送请求给服务端是通过 TCP 长连接建立网络通道，底层默认是通过 java 的 NIO 方式，也可以配置 netty 实现方式。</p>
+
+<p><img decoding="async" src="https://www.runoob.com/wp-content/uploads/2020/09/watcher-04.png"></p>
+<p>注册 watcher 监听事件流程图：</p>
+
+<p><img decoding="async" src="https://www.runoob.com/wp-content/uploads/2020/09/watcher-05.png"></p>
+
+<h3>1、客户端发送事件通知请求</h3>
+<p>在 Zookeeper 类调用 exists 方法时候，把创建事件监听封装到 request 对象中，watch 属性设置为 true，待服务端返回 response 后把监听事件封装到客户端的 ZKWatchManager 类中。</p>
+<p><img decoding="async" src="https://www.runoob.com/wp-content/uploads/2020/09/watcher-06.png"></p>
+
+<h3>2、服务端处理 watcher 事件的请求</h3>
+<p>服务端 NIOServerCnxn 类用来处理客户端发送过来的请求，最终调用到 FinalRequestProcessor，其中有一段源码添加客户端发送过来的 watcher 事件：</p>
+<p><img decoding="async" src="https://www.runoob.com/wp-content/uploads/2020/09/watcher-07.png"></p>
+<p>
+然后进入 statNode 方法，在 DataTree 类方法中添加 watcher 事件，并保存至 WatchManager 的 watchTable 与 watchTable 中。</p>
+<p><img decoding="async" src="https://www.runoob.com/wp-content/uploads/2020/09/watcher-08.png"></p>
+<p><img decoding="async" src="https://www.runoob.com/wp-content/uploads/2020/09/watcher-09.png"></p>
+<h3>3、服务端触发 watcher 事件流程：</h3><p>
+若服务端某个被监听的节点发生事务请求，服务端处理请求过程中调用 FinalRequestProcessor 类 processRequest 方法中的代码如下所示：</p>
+<p><img decoding="async" src="https://www.runoob.com/wp-content/uploads/2020/09/watcher-10.png"></p>
+<p>删除调用链最终到 DataTree 类中删除节点分支的触发代码段:</p>
+<p><img decoding="async" src="https://www.runoob.com/wp-content/uploads/2020/09/watcher-11.png"></p>
+<p>进入 WatchManager 类的 triggerWatch 方法:</p>
+<p><img decoding="async" src="https://www.runoob.com/wp-content/uploads/2020/09/watcher-12.png"></p><p>
+继续跟踪进入 NIOServerCnxn，构建了一个 xid 为 -1，zxid 为 -1 的 ReplyHeader 对象，然后再调用 sendResonpe 方法。</p>
+<p><img decoding="async" src="https://www.runoob.com/wp-content/uploads/2020/09/watcher-13.png"></p>
+
+<h3>4、客户端回调 watcher 事件</h3><p>
+客户端 SendThread 类 readResponse 方法接收服务端触发的事件通知，进入 xid 为 -1 流程，处理 Event 事件。</p>
+<p><img decoding="async" src="https://www.runoob.com/wp-content/uploads/2020/09/watcher-14.png"></p>
+<p><img decoding="async" src="https://www.runoob.com/wp-content/uploads/2020/09/watcher-15.png"></p>
+<h3>本章源码下载</h3><p>
+<a class="download" href="https://www.runoob.com/wp-content/uploads/2020/09/zookeeper-demo-watcher.zip">Download</a></p>				</div>
+			</div>
+			<div class="previous-next-links">
+			<div class="previous-design-link">← <a href="http://www.runoob.com/w3cnote/zookeeper-acl.html" rel="prev"> 10.0 Zookeeper 权限控制 ACL</a> </div>
+			<div class="next-design-link"><a href="http://www.runoob.com/w3cnote/zookeeper-data-sync.html" rel="next"> 12.0 Zookeeper 数据同步流程</a> →</div>
+			</div>
+						<div class="article-heading-ad" id="w3cnote-ad728">
+			<script async src="//pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script>
+			<!-- 移动版 自动调整 -->
+			<ins class="adsbygoogle"
+			     style="display:inline-block;min-width:300px;max-width:970px;width:100%;height:90px"
+			     data-ad-client="ca-pub-5751451760833794"
+			     data-ad-slot="1691338467"
+			     data-ad-format="horizontal"></ins>
+			<script>
+			(adsbygoogle = window.adsbygoogle || []).push({});
+			</script>
+			</div>
+			<style>
+@media screen and (max-width: 768px) {
+	#w3cnote-ad728 {
+		display: none;
+	}
+}
+p.note-author {
+    border-bottom: 1px solid #ddd;
+    font-size: 18px;
+    font-weight: bold;
+    color: #78a15a;
+    padding-bottom: 2px;
+    margin-bottom: 4px;
+}
+</style>
+<script>
+var aid = 22824;
+</script>
+	</div>
+		
+	</div>
+	<div class="listcol last right-column">
+
+	<script type="text/javascript">
+jQuery(document).ready(function ($){
+	var total = $(".membership li").length;
+	var left_list = '';
+	href = window.location.href;
+	
+	$(".membership li").each(function(index, value){
+
+		left_list += $(this).html();
+
+		cur_href = $(this).find("a").attr("href");
+		cur_obj = $(this);
+		
+		if(href.match(cur_href) != null) {
+			if(index==0) {
+				$(".previous-design-link").hide();
+			}
+			if(index==(total-1)) {
+				$(".next-design-link").hide();
+			}
+			prev_href = cur_obj.prev("li").find("a").attr("href");
+			prev_title = cur_obj.prev("li").find("a").attr("title");
+
+			next_href = cur_obj.next("li").find("a").attr("href");
+			next_title = cur_obj.next("li").find("a").attr("title");
+			if(prev_title) {
+				$(".previous-design-link a").attr("href", prev_href);
+				$(".previous-design-link a").attr("title", prev_title);
+				$(".previous-design-link a").text(prev_title);
+			} else {
+				$(".previous-design-link").html("");
+			}
+
+			if(next_title) {
+				$(".next-design-link a").attr("href", next_href);
+				$(".next-design-link a").attr("title", next_title);
+				$(".next-design-link a").text(next_title);
+			} else {
+				$(".next-design-link").html("");
+			}
+		}
+	});
+
+	$("#leftcolumn").html(left_list);
+});
+	</script>
+	<div class="sidebar-box cate-list">
+	<div class="sidebar-box recommend-here list-link">
+	<a href="javascript:void(0);">Zookeeper 教程</a>	</div>
+	
+	<ul class="membership">
+		
+	<li><a target="_top" data-id="22726" title="1.0 Zookeeper 教程" href="http://www.runoob.com/w3cnote/zookeeper-tutorial.html" >1.0 Zookeeper 教程</a></li>
+	
+		
+	<li><a target="_top" data-id="22725" title="2.0 Zookeeper 安装配置" href="http://www.runoob.com/w3cnote/zookeeper-setup.html" >2.0 Zookeeper 安装配置</a></li>
+	
+		
+	<li><a target="_top" data-id="22745" title="3.0 Zookeeper  linux 服务端集群搭建步骤" href="http://www.runoob.com/w3cnote/zookeeper-linux-cluster.html" >3.0 Zookeeper  linux 服务端集群搭建步骤</a></li>
+	
+		
+	<li><a target="_top" data-id="22757" title="4.0 Zookeeper Java 客户端搭建" href="http://www.runoob.com/w3cnote/zookeeper-java-setup.html" >4.0 Zookeeper Java 客户端搭建</a></li>
+	
+		
+	<li><a target="_top" data-id="22764" title="5.0 ZooKeeper 数据模型 znode 结构详解" href="http://www.runoob.com/w3cnote/zookeeper-znode-data-model.html" >5.0 ZooKeeper 数据模型 znode 结构详解</a></li>
+	
+		
+	<li><a target="_top" data-id="22770" title="6.0 Zookeeper session 基本原理" href="http://www.runoob.com/w3cnote/zookeeper-session.html" >6.0 Zookeeper session 基本原理</a></li>
+	
+		
+	<li><a target="_top" data-id="22775" title="7.0 Zookeeper 客户端基础命令使用" href="http://www.runoob.com/w3cnote/zookeeper-bs-command.html" >7.0 Zookeeper 客户端基础命令使用</a></li>
+	
+		
+	<li><a target="_top" data-id="22803" title="8.0 Zookeeper 四字命令" href="http://www.runoob.com/w3cnote/zookeeper-sc-4lw.html" >8.0 Zookeeper 四字命令</a></li>
+	
+		
+	<li><a target="_top" data-id="22810" title="9.0 Zookeeper 节点特性" href="http://www.runoob.com/w3cnote/zookeeper-node-feature.html" >9.0 Zookeeper 节点特性</a></li>
+	
+		
+	<li><a target="_top" data-id="22819" title="10.0 Zookeeper 权限控制 ACL" href="http://www.runoob.com/w3cnote/zookeeper-acl.html" >10.0 Zookeeper 权限控制 ACL</a></li>
+	
+		<li>
+	11.0 Zookeeper watcher 事件机制原理剖析	</li>
+	
+		
+	<li><a target="_top" data-id="22841" title="12.0 Zookeeper 数据同步流程" href="http://www.runoob.com/w3cnote/zookeeper-data-sync.html" >12.0 Zookeeper 数据同步流程</a></li>
+	
+		
+	<li><a target="_top" data-id="22843" title="13.0 Zookeeper Leader 选举原理" href="http://www.runoob.com/w3cnote/zookeeper-leader.html" >13.0 Zookeeper Leader 选举原理</a></li>
+	
+		
+	<li><a target="_top" data-id="22845" title="14.0 Zookeeper 分布式锁实现原理" href="http://www.runoob.com/w3cnote/zookeeper-locks.html" >14.0 Zookeeper 分布式锁实现原理</a></li>
+	
+	</ul></div>	</div>
+</div>
+
+
+<!-- 底部 -->
+<div id="footer" class="mar-t50">
+   <div class="runoob-block">
+    <div class="runoob cf">
+     <dl>
+      <dt>
+       在线实例
+      </dt>
+      <dd>
+       &middot;<a target="_blank" href="/html/html-examples.html">HTML 实例</a>
+      </dd>
+      <dd>
+       &middot;<a target="_blank" href="/css/css-examples.html">CSS 实例</a>
+      </dd>
+      <dd>
+       &middot;<a target="_blank" href="/js/js-examples.html">JavaScript 实例</a>
+      </dd>
+      <dd>
+       &middot;<a target="_blank" href="/ajx/ajax-examples.html">Ajax 实例</a>
+      </dd>
+       <dd>
+       &middot;<a target="_blank" href="/jquery/jquery-examples.html">jQuery 实例</a>
+      </dd>
+      <dd>
+       &middot;<a target="_blank" href="/xml/xml-examples.html">XML 实例</a>
+      </dd>
+      <dd>
+       &middot;<a target="_blank" href="/java/java-examples.html">Java 实例</a>
+      </dd>
+     
+     </dl>
+     <dl>
+      <dt>
+      字符集&工具
+      </dt>
+      <dd>
+       &middot; <a target="_blank" href="/charsets/html-charsets.html">HTML 字符集设置</a>
+      </dd>
+      <dd>
+       &middot; <a target="_blank" href="/tags/html-ascii.html">HTML ASCII 字符集</a>
+      </dd>
+     <dd>
+       &middot; <a target="_blank" href="https://c.runoob.com/front-end/6939/">JS 混淆/加密</a>
+      </dd> 
+      <dd>
+       &middot; <a target="_blank" href="https://c.runoob.com/front-end/6232/">PNG/JPEG 图片压缩</a>
+      </dd>
+      <dd>
+       &middot; <a target="_blank" href="/tags/html-colorpicker.html">HTML 拾色器</a>
+      </dd>
+      <dd>
+       &middot; <a target="_blank" href="//c.runoob.com/front-end/53">JSON 格式化工具</a>
+      </dd>
+      <dd>
+       &middot; <a target="_blank" href="//c.runoob.com/front-end/6680/">随机数生成器</a>
+      </dd>
+     </dl>
+     <dl>
+      <dt>
+       最新更新
+      </dt>
+                   <dd>
+       &middot;
+      <a href="http://www.runoob.com/matplotlib/matplotlib-imread.html" title="Matplotlib imread() 方法">Matplotlib imre...</a>
+      </dd>
+              <dd>
+       &middot;
+      <a href="http://www.runoob.com/matplotlib/matplotlib-imsave.html" title="Matplotlib imsave() 方法">Matplotlib imsa...</a>
+      </dd>
+              <dd>
+       &middot;
+      <a href="http://www.runoob.com/matplotlib/matplotlib-imshow.html" title="Matplotlib imshow() 方法">Matplotlib imsh...</a>
+      </dd>
+              <dd>
+       &middot;
+      <a href="http://www.runoob.com/matplotlib/matplotlib-hist.html" title="Matplotlib 直方图">Matplotlib 直方图</a>
+      </dd>
+              <dd>
+       &middot;
+      <a href="http://www.runoob.com/python3/python-func-object.html" title="Python object() 函数">Python object()...</a>
+      </dd>
+              <dd>
+       &middot;
+      <a href="http://www.runoob.com/python3/python-ai-draw.html" title="Python AI 绘画">Python AI 绘画</a>
+      </dd>
+              <dd>
+       &middot;
+      <a href="http://www.runoob.com/w3cnote/cursor-editor.html" title="神辅助 Cursor 编辑器，加入 GPT-4 让编码更轻松！">神辅助 Cursor ...</a>
+      </dd>
+             </dl>
+     <dl>
+      <dt>
+       站点信息
+      </dt>
+      <dd>
+       &middot;
+       <a target="_blank" href="mailto:admin@runoob.com" rel="external nofollow">意见反馈</a>
+       </dd>
+      <dd>
+       &middot;
+      <a target="_blank" href="/disclaimer">免责声明</a>
+       </dd>
+      <dd>
+       &middot;
+       <a target="_blank" href="/aboutus">关于我们</a>
+       </dd>
+      <dd>
+       &middot;
+      <a target="_blank" href="/archives">文章归档</a>
+      </dd>
+    
+     </dl>
+    
+     <div class="search-share">
+      <div class="app-download">
+        <div>
+         <strong>关注微信</strong>
+        </div>
+      </div>
+      <div class="share">
+      <img width="128" height="128" src="/wp-content/themes/runoob/assets/images/qrcode.png" />
+       </div>
+     </div>
+     
+    </div>
+   </div>
+   <div class="w-1000 copyright">
+     Copyright &copy; 2013-2023    <strong><a href="//www.runoob.com/" target="_blank">菜鸟教程</a></strong>&nbsp;
+    <strong><a href="//www.runoob.com/" target="_blank">runoob.com</a></strong> All Rights Reserved. 备案号：<a target="_blank" rel="nofollow" href="https://beian.miit.gov.cn/">闽ICP备15012807号-1</a>
+   </div>
+  </div>
+  <div class="fixed-btn">
+    <a class="go-top" href="javascript:void(0)" title="返回顶部"> <i class="fa fa-angle-up"></i></a>
+    <a class="qrcode"  href="javascript:void(0)" title="关注我们"><i class="fa fa-qrcode"></i></a>
+    <a class="writer" style="display:none" href="javascript:void(0)"   title="标记/收藏"><i class="fa fa-star" aria-hidden="true"></i></a>
+    <!-- qrcode modal -->
+    <div id="bottom-qrcode" class="modal panel-modal hide fade in">
+      <h4>微信关注</h4>
+      <div class="panel-body"><img alt="微信关注" width="128" height="128" src="/wp-content/themes/runoob/assets/images/qrcode.png"></div> 
+    </div>
+  </div>
+
+ <div style="display:none;">
+<script async src="https://www.googletagmanager.com/gtag/js?id=UA-84264393-2"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+
+  gtag('config', 'UA-84264393-2');
+</script>
+<script>
+var _hmt = _hmt || [];
+(function() {
+  var hm = document.createElement("script");
+  hm.src = "https://hm.baidu.com/hm.js?3eec0b7da6548cf07db3bc477ea905ee";
+  var s = document.getElementsByTagName("script")[0]; 
+  s.parentNode.insertBefore(hm, s);
+})();
+</script>
+
+</div>
+<script>
+window.jsui={
+    www: 'https://www.runoob.com',
+    uri: 'https://www.runoob.com/wp-content/themes/runoob'
+};
+</script>
+
+<script src="https://static.runoob.com/assets/libs/hl/run_prettify.js"></script>
+<script src="/wp-content/themes/runoob/assets/js/main.min.js?v=1.156"></script>
+
+</body>
+</html>

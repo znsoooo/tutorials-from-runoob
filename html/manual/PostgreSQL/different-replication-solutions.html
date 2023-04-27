@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><title>26.1. 不同方案的比较</title><link rel="stylesheet" type="text/css" href="stylesheet.css" /><link rev="made" href="pgsql-docs@postgresql.org" /><meta name="generator" content="DocBook XSL Stylesheets V1.79.1" /><link rel="prev" href="high-availability.html" title="第 26 章 高可用、负载均衡和复制" /><link rel="next" href="warm-standby.html" title="26.2. 日志传送后备服务器" /></head><body><div xmlns="http://www.w3.org/TR/xhtml1/transitional" class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="5" align="center">26.1. 不同方案的比较</th></tr><tr><td width="10%" align="left"><a accesskey="p" href="high-availability.html" title="第 26 章 高可用、负载均衡和复制">上一页</a> </td><td width="10%" align="left"><a accesskey="u" href="high-availability.html" title="第 26 章 高可用、负载均衡和复制">上一级</a></td><th width="60%" align="center">第 26 章 高可用、负载均衡和复制</th><td width="10%" align="right"><a accesskey="h" href="index.html" title="PostgreSQL 10.1 手册">起始页</a></td><td width="10%" align="right"> <a accesskey="n" href="warm-standby.html" title="26.2. 日志传送后备服务器">下一页</a></td></tr></table><hr></hr></div><div class="sect1" id="DIFFERENT-REPLICATION-SOLUTIONS"><div class="titlepage"><div><div><h2 class="title" style="clear: both">26.1. 不同方案的比较</h2></div></div></div><div class="variablelist"><dl class="variablelist"><dt><span class="term">共享磁盘故障转移</span></dt><dd><p>     共享磁盘故障转移避免了只使用一份数据库拷贝带来的同步开销。
+     它使用一个由多个服务器共享的单一磁盘阵列。如果主数据库服务器失效，
+     后备服务器则可以挂载并启动数据库，就好像它从一次数据库崩溃中恢复过来了。
+     这是一种快速的故障转移，并且不存在数据丢失。
+    </p><p>     共享硬件功能在网络存储设备中很常见。也可以使用一个网络文件系统，
+     但是要注意的是该文件系统应具有完全的<acronym class="acronym">POSIX</acronym>行为
+     （见<a class="xref" href="creating-cluster.html#CREATING-CLUSTER-NFS" title="18.2.2. 网络文件系统的使用">第 18.2.2 节</a>）。
+     这种方法的一个重大限制是如果共享磁盘阵列失效或损坏，
+     主要和后备服务器都会变得无法工作。另一个问题是在主要服务器运行时，
+     后备服务器永远不能访问共享存储。
+    </p></dd><dt><span class="term">文件系统（块设备）复制</span></dt><dd><p>     共享硬件功能的一种修改版本是文件系统复制，
+     在其中对一个文件系统的所有改变会被镜像到位于另一台计算机上的一个文件系统。
+     唯一的限制是该镜像过程必须能保证后备服务器有一份该文件系统的一致的拷贝
+     — 特别是对后备服务器的写入必须按照主控机上相同的顺序进行。
+     <span class="productname">DRBD</span>是用于 Linux 的一种流行的文件系统复制方案。
+    </p></dd><dt><span class="term">预写日志传送</span></dt><dd><p>     温备和热备服务器能够通过读取一个预写式日志（<acronym class="acronym">WAL</acronym>）
+     记录的流来保持为当前状态。如果主服务器失效，
+     后备服务器拥有主服务器的几乎所有数据，
+     并且能够快速地被变成新的主数据库服务器。这可以是同步的或异步的，
+     并且只能用于整个数据库服务器。
+    </p><p>     可以使用基于文件的日志传送（<a class="xref" href="warm-standby.html" title="26.2. 日志传送后备服务器">第 26.2 节</a>）、
+     流复制（见<a class="xref" href="warm-standby.html#STREAMING-REPLICATION" title="26.2.5. 流复制">第 26.2.5 节</a>）
+     或两者的组合来实现一个后备服务器。关于热备的信息可见
+     <a class="xref" href="hot-standby.html" title="26.5. 热备">第 26.5 节</a>。
+    </p></dd><dt><span class="term">逻辑复制</span></dt><dd><p>     逻辑复制允许数据库服务器将数据修改流发送到另一台服务器。
+	 <span class="productname">PostgreSQL</span>逻辑复制从WAL构造一个逻辑数据修改流。
+	 逻辑复制允许复制单个表中的数据更改。逻辑复制不需要将特定服务器指定为主服务器或副本，
+	 但允许数据在多个方向上流动。有关逻辑复制的更多信息，
+	 请参阅&lt;<a class="xref" href="logical-replication.html" title="第 31 章 逻辑复制">第 31 章</a>。通过逻辑解码接口
+	 （<a class="xref" href="logicaldecoding.html" title="第 48 章 逻辑解码">第 48 章</a>），第三方扩展还可以提供类似的功能。
+    </p></dd><dt><span class="term">基于触发器的主-备复制</span></dt><dd><p>     一个主-备复制设置会把所有数据修改查询发送到主服务器。
+     主服务器异步地将数据修改发送给后备服务器。当主服务器正在运行时，
+     后备服务器可以回答只读查询。后备服务器对数据仓库查询是一种理想的选择。
+    </p><p>     <span class="productname">Slony-I</span>是这种复制类型的一个例子。它使用表粒度，
+     并且支持多个后备服务器。因为它会异步更新后备服务器（批量），
+     在故障转移时可能会有数据丢失。
+    </p></dd><dt><span class="term">基于语句的复制中间件</span></dt><dd><p>     通过基于语句的复制中间件，一个程序拦截每一个 SQL 查询并把它发送给一个或所有服务器。
+     每一个服务器独立地操作。读写查询必须被发送给所有服务器，
+     这样每一个服务器都能接收到任何修改。但只读查询可以被只发送给一个服务器，
+     这样允许读负载在服务器之间分布。
+    </p><p>     如果查询被简单地且未经修改地广播，<code class="function">random()</code>、
+     <code class="function">CURRENT_TIMESTAMP</code>之类的函数以及序列在不同服务器上可能有不同的值。
+     这是因为每一个服务器会独立地操作，并且 SQL 查询被广播（而不是真正被修改的行）。
+     如果这不可接受，中间件或应用必须从一个单一服务器查询这样的值并且然后将那些值用在写查询中。
+     另一个选项是将这个复制选项和一种传统主-备设置一起使用，
+     即数据修改查询只被发送给主服务器并且通过主-备复制传播到后备服务器，
+     而不是通过复制中间件。必须要注意的是，所有事务要么在所有服务器上都提交，
+     要么在所有服务器上都中止，也许可以使用两阶段提交（<a class="xref" href="sql-prepare-transaction.html" title="PREPARE TRANSACTION"><span class="refentrytitle">PREPARE TRANSACTION</span></a>
+     和<a class="xref" href="sql-commit-prepared.html" title="COMMIT PREPARED"><span class="refentrytitle">COMMIT PREPARED</span></a>）。<span class="productname">Pgpool-II</span>
+     和<span class="productname">Continuent Tungsten</span>是这种复制类型的例子。
+    </p></dd><dt><span class="term">异步多主控机复制</span></dt><dd><p>     对于不会被定期连接的服务器（如笔记本或远程服务器），
+     保持服务器间的数据一致是一个挑战。通过使用异步的多主控机复制，
+     每一个服务器独立工作并且定期与其他服务器通信来确定冲突的事务。
+     这些冲突可以由用户或冲突解决规则来解决。Bucardo 是这种复制类型的一个例子。
+    </p></dd><dt><span class="term">同步多主控机复制</span></dt><dd><p>     在同步多主控机复制中，每一个服务器能够接受写请求，并且在每一个事务提交之前，
+     被修改的数据会被从原始服务器传送给每一个其他服务器。
+     繁重的写活动可能导致过多的锁定，进而导致很差的性能。事实上，
+     写性能通常比一个单一服务器还要糟。读请求可以被发送给任意服务器。
+     某些实现使用共享磁盘来减少通信负荷。同步多主控机复制主要对于大多数读负载是最好的，
+     尽管它的大优点是任意服务器都能接受写请求 — 
+     没有必要在主服务器和后备服务器之间划分负载，
+     并且因为数据修改被从一个服务器发送到另一个服务器，
+     不会有非确定函数（如<code class="function">random()</code>）的问题。
+    </p><p>     <span class="productname">PostgreSQL</span>不提供这种复制类型，
+     尽管在应用代码或中间件中可以使用<span class="productname">PostgreSQL</span>的两阶段提交
+     （<a class="xref" href="sql-prepare-transaction.html" title="PREPARE TRANSACTION"><span class="refentrytitle">PREPARE TRANSACTION</span></a>和<a class="xref" href="sql-commit-prepared.html" title="COMMIT PREPARED"><span class="refentrytitle">COMMIT PREPARED</span></a>）
+     来实现这种复制。
+    </p></dd><dt><span class="term">商业方案</span></dt><dd><p>     因为<span class="productname">PostgreSQL</span>是开源的并且很容易被扩展，
+     一些公司已经使用<span class="productname">PostgreSQL</span>并且创建了带有唯一故障转移、
+     复制和负载均衡能力的商业性的闭源方案。
+    </p></dd></dl></div><p>  <a class="xref" href="different-replication-solutions.html#HIGH-AVAILABILITY-MATRIX" title="表 26.1. 高可用、负载均衡和复制特性矩阵">表 26.1</a>总结了上述多种方案的能力。
+ </p><div class="table" id="HIGH-AVAILABILITY-MATRIX"><p class="title"><strong>表 26.1. 高可用、负载均衡和复制特性矩阵</strong></p><div class="table-contents"><table class="table" summary="高可用、负载均衡和复制特性矩阵" border="1"><colgroup><col /><col /><col /><col /><col /><col /><col /><col /><col /></colgroup><thead><tr><th>特性</th><th>共享磁盘故障转移</th><th>文件系统复制</th><th>预写日志传送</th><th>逻辑复制</th><th>基于触发器的主-备复制</th><th>基于语句的复制中间件</th><th>异步多主控机复制</th><th>同步多主控机复制</th></tr></thead><tbody><tr><td>最通用的实现</td><td align="center">NAS</td><td align="center">DRBD</td><td align="center">内置流复制</td><td align="center">内置逻辑复制，pglogical</td><td align="center">Londiste, Slony</td><td align="center">pgpool-II</td><td align="center">Bucardo</td><td align="center"> </td></tr><tr><td>通信方法</td><td align="center">共享磁盘</td><td align="center">磁盘锁</td><td align="center">WAL</td><td align="center">逻辑解码</td><td align="center">表行</td><td align="center">SQL</td><td align="center">表行</td><td align="center">表行和行锁</td></tr><tr><td>不要求特殊硬件</td><td align="center"> </td><td align="center">•</td><td align="center">•</td><td align="center">•</td><td align="center">•</td><td align="center">•</td><td align="center">•</td><td align="center">•</td></tr><tr><td>允许多个主控机服务器</td><td align="center"> </td><td align="center"> </td><td align="center"> </td><td align="center">•</td><td align="center"> </td><td align="center">•</td><td align="center">•</td><td align="center">•</td></tr><tr><td>无主服务器负载</td><td align="center">•</td><td align="center"> </td><td align="center">•</td><td align="center">•</td><td align="center"> </td><td align="center">•</td><td align="center"> </td><td align="center"> </td></tr><tr><td>不等待多个服务器</td><td align="center">•</td><td align="center"> </td><td align="center">with sync off</td><td align="center">with sync off</td><td align="center">•</td><td align="center"> </td><td align="center">•</td><td align="center"> </td></tr><tr><td>主控机失效将永不丢失数据</td><td align="center">•</td><td align="center">•</td><td align="center">with sync on</td><td align="center">with sync on</td><td align="center"> </td><td align="center">•</td><td align="center"> </td><td align="center">•</td></tr><tr><td>复制接受只读查询</td><td align="center"> </td><td align="center"> </td><td align="center">with hot standby</td><td align="center">•</td><td align="center">•</td><td align="center">•</td><td align="center">•</td><td align="center">•</td></tr><tr><td>每个表粒度</td><td align="center"> </td><td align="center"> </td><td align="center"> </td><td align="center">•</td><td align="center">•</td><td align="center"> </td><td align="center">•</td><td align="center">•</td></tr><tr><td>不需要冲突解决</td><td align="center">•</td><td align="center">•</td><td align="center">•</td><td align="center"> </td><td align="center">•</td><td align="center"> </td><td align="center"> </td><td align="center">•</td></tr></tbody></table></div></div><br class="table-break" /><p>  有一些方案不适合上述的类别：
+ </p><div class="variablelist"><dl class="variablelist"><dt><span class="term">数据分区</span></dt><dd><p>     数据分区将表分开成数据集。每个集合只能被一个服务器修改。例如，
+     数据可以根据办公室划分，如伦敦和巴黎，每一个办公室有一个服务器。
+     如果查询有必要组合伦敦和巴黎的数据，一个应用可以查询两个服务器，
+     或者可以使用主/备复制来在每一台服务器上保持其他办公室数据的一个只读拷贝。
+    </p></dd><dt><span class="term">多服务器并行查询执行</span></dt><dd><p>     上述的很多方案允许多个服务器来处理多个查询，
+     但是没有一个允许一个单一查询使用多个服务器来更快完成。
+     这种方案允许多个服务器在一个单一查询上并发工作。
+     这通常通过把数据在服务器之间划分并且让每一个服务器执行该查询中属于它的部分，
+     然后将结果返回给一个中心服务器，由它整合结果并发回给用户。
+     <span class="productname">Pgpool-II</span>具有这种能力。同样，也可以使用
+     <span class="productname">PL/Proxy</span>工具集来实现这种方案。
+    </p></dd></dl></div></div><div class="navfooter"><hr /><table width="100%" summary="Navigation footer"><tr><td width="40%" align="left"><a accesskey="p" href="high-availability.html">上一页</a> </td><td width="20%" align="center"><a accesskey="u" href="high-availability.html">上一级</a></td><td width="40%" align="right"> <a accesskey="n" href="warm-standby.html">下一页</a></td></tr><tr><td width="40%" align="left" valign="top">第 26 章 高可用、负载均衡和复制 </td><td width="20%" align="center"><a accesskey="h" href="index.html">起始页</a></td><td width="40%" align="right" valign="top"> 26.2. 日志传送后备服务器</td></tr></table></div></body></html>
