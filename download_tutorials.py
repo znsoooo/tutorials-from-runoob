@@ -32,28 +32,34 @@ def GetContent(url, cache=True, save=True):
 
 
 def WalkHtmls(url):
-    urls = [url]
-    history = []
-    while urls:
-        url = urls.pop(0)
-        print(f'Done: {len(history)}, Todo: {len(urls)}, Err: {len(errors)}, Url: {url}')
+    todo = [url]
+    done = []
+    cnt = 0
+    while todo:
+        url = todo.pop(0)
+        cnt += 1
+        if cnt % 100 == 1:
+            print(f'Done: {len(done)}, Todo: {len(todo)}, Err: {len(errors)}, Url: {url}')
         try:
             realurl, data = GetContent(url)
-            history.append(url)
+            done.append(url)
             url = realurl # for `urljoin` get correct suburl
         except Exception as e: # urllib.error.HTTPError:
-            print('Error:', e)
+            print(f'Error: {e}, Url: {url}')
             errors.append(url)
             continue
         for suburl in re.findall(b'''href=['"]([^'"]*?\.html)['"]''', data):
             suburl = urllib.parse.urljoin(url, suburl.decode())
             suburl = re.sub(r'^https?', 'http', suburl)
-            if suburl.startswith(HOME_PAGE) and suburl not in urls + history + errors:
-                urls.append(suburl)
+            if suburl.startswith(HOME_PAGE) and suburl not in todo + done + errors:
+                todo.append(suburl)
 
 
 def WashHtmls():
-    for file in glob.glob('html/**/*.html', recursive=True):
+    for cnt, file in enumerate(glob.glob('html/**/*.html', recursive=True)):
+        if cnt % 1000 == 0:
+            print(f'Wash: {cnt + 1}, File: {file}')
+
         with open(file, 'rb') as f:
             text = f.read()
 
