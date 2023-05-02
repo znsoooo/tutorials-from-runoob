@@ -12,6 +12,17 @@ HOME_PAGE = 'http://' + WWW
 errors = []
 
 
+def SaveHtml(url, data):
+    path = re.sub(r'^https?://[^/]*?/', 'html/', url)
+    if path.endswith('/'):
+        path += 'index.html'
+    folder = os.path.dirname(path)
+    if folder:
+        os.makedirs(folder, exist_ok=True)
+    with open(path, 'wb') as f:
+        f.write(data)
+
+
 def GetContent(url, cache=True, save=True):
     path = re.sub(r'^https?://[^/]*?/', 'html/', url)
     if cache and os.path.exists(path) and os.path.getsize(path): # read from cache
@@ -20,14 +31,9 @@ def GetContent(url, cache=True, save=True):
     else:
         req = urllib.request.urlopen(url)
         data = req.read()
+        save and SaveHtml(url, data) # save to reltive path
         url = req.geturl() # get real url
-        if save:
-            path = re.sub(r'^https?://[^/]*?/', 'html/', url)
-            if path.endswith('/'):
-                path += 'index.html'
-            os.makedirs(os.path.dirname(path), exist_ok=True)
-            with open(path, 'wb') as f:
-                f.write(data)
+        save and SaveHtml(url, data) # save to real path
     return url, data
 
 
