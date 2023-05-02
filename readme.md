@@ -10,9 +10,10 @@ Tutorials From Runoob
 2. 教程内容支持网页内的链接跳转
 3. 爬虫项目，适合python初学者实战练手，通过这个项目，可以了解：
 
-   - 爬虫原理，`lxml`库与`xpath`语法
-   - 对压缩网页的解压处理
-   - python对文件的读写操作
+   - 爬虫原理，正则表达式语法
+   - 在访问链接时使用cache
+   - 绝对路径和相对路径的转换
+   - 递归调用下载网页资源
 
 
 ## 快速开始 ##
@@ -20,7 +21,6 @@ Tutorials From Runoob
 ``` shell
 git clone https://github.com/znsoooo/tutorials-from-runoob
 cd tutorials-from-runoob
-pip install lxml
 python download_tutorials.py
 ```
 
@@ -34,3 +34,7 @@ python download_tutorials.py
 - [v2.0.0](https://github.com/znsoooo/tutorials-from-runoob/releases/tag/v2.0.0)
 
   fork的版本，由[znsoooo](https://github.com/znsoooo)完成，更新了2023年的网站API和CSS资源文件，采用下载所有HTML文件，并通过相对链接实现在浏览器内的点击跳转。文档入口为`html/index.html`。
+
+- [v2.1.0](https://github.com/znsoooo/tutorials-from-runoob/releases/tag/v2.1.0)
+
+  采用了递归遍历的方法查找HTML文件href属性内的所有属于当前站点的HTML文件链接，递归完成下载。避免二级以上目录死链，HTML文件中的所有链接可在浏览器内访问跳转。菜鸟网站中存在部分错误链接，按照错误路径和重定向路径本地双备份，避免无法访问或循环递归。文档入口为`html/index.html`。
